@@ -1,0 +1,254 @@
+#!/bin/bash
+# ═══════════════════════════════════════════════════════════════════════════════
+# HOOK 0721-silence — MERGED INTO 0720-alfred-sacred-rest.hook.chroot
+#
+# ALL CONTENT PRESERVED — The Silence (40 Minutes of Sacred Stillness)
+# now lives as Part B of Hook 0720: Sacred Rest.
+#
+# "And he was there with the LORD forty days and forty nights."
+#  — Exodus 34:28
+#
+# This file is a merge stub. The full implementation runs via sacred-rest.
+# Nothing was removed. Nothing was watered down. Content was COMBINED.
+# ═══════════════════════════════════════════════════════════════════════════════
+echo "[0721-silence] Content merged into 0720-alfred-sacred-rest (Part B). Skipping."
+exit 0
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# ORIGINAL CONTENT BELOW (preserved for reference, does not execute)
+# ═══════════════════════════════════════════════════════════════════════════════
+
+set -e
+chmod 1777 /tmp 2>/dev/null || true
+
+echo "╔═══════════════════════════════════════════════════════════╗"
+echo "║  [0721] The Silence — 40 Minutes of Sacred Stillness    ║"
+echo "║  'He was there with the LORD forty days' — Exodus 34:28 ║"
+echo "╚═══════════════════════════════════════════════════════════╝"
+
+# ═══════════════════════════════════════════════════
+# 1. DEPENDENCIES
+# ═══════════════════════════════════════════════════
+echo "[SILENCE-01] Installing dependencies..."
+apt-get install -y --no-install-recommends \
+    redshift \
+    libnotify-bin \
+    sox \
+    2>/dev/null || true
+
+# ═══════════════════════════════════════════════════
+# 2. GENERATE SHOFAR-LIKE CHIME
+# ═══════════════════════════════════════════════════
+echo "[SILENCE-02] Creating sacred chime sound..."
+mkdir -p /usr/share/alfred/sounds
+
+# Generate a gentle chime with sox (sine wave with fade)
+if command -v sox &>/dev/null; then
+    sox -n /usr/share/alfred/sounds/shofar-chime.wav \
+        synth 3 sine 440:880 fade h 0.5 3 1.5 \
+        gain -10 \
+        2>/dev/null || true
+fi
+
+# ═══════════════════════════════════════════════════
+# 3. THE SILENCE SCRIPT
+# ═══════════════════════════════════════════════════
+echo "[SILENCE-03] Installing alfred-silence..."
+
+cat > /usr/local/bin/alfred-silence << 'SILENCE'
+#!/bin/bash
+# ═══════════════════════════════════════════════════════════════
+# alfred-silence — Enter the prayer closet
+#
+# "But thou, when thou prayest, enter into thy closet, and when
+#  thou hast shut thy door, pray to thy Father which is in secret."
+#  — Matthew 6:6
+# ═══════════════════════════════════════════════════════════════
+
+GOLD='\033[38;5;220m'; GREEN='\033[0;32m'; CYAN='\033[0;36m'
+NC='\033[0m'; BOLD='\033[1m'; DIM='\033[2m'
+
+SILENCE_LOCK="/tmp/.alfred-silence-$$"
+SILENCE_MINUTES="${1:-40}"
+CHIME="/usr/share/alfred/sounds/shofar-chime.wav"
+MUSIC_DIR="/usr/share/alfred/music"
+ORIGINAL_VOLUME=""
+
+cleanup() {
+    echo ""
+    echo -e "${GOLD}The Silence has ended.${NC}"
+
+    # Restore screen temperature
+    pkill redshift 2>/dev/null
+    redshift -x 2>/dev/null
+
+    # Restore notifications
+    if command -v xfconf-query &>/dev/null; then
+        xfconf-query -c xfce4-notifyd -p /do-not-disturb -s false 2>/dev/null
+    fi
+
+    # Restore audio volume
+    if [ -n "$ORIGINAL_VOLUME" ]; then
+        amixer set Master "${ORIGINAL_VOLUME}" 2>/dev/null
+    fi
+
+    # Stop background worship
+    pkill -f "alfred-silence-worship" 2>/dev/null
+
+    # Play chime
+    if [ -f "$CHIME" ] && command -v aplay &>/dev/null; then
+        amixer set Master 30% 2>/dev/null
+        aplay "$CHIME" 2>/dev/null
+        [ -n "$ORIGINAL_VOLUME" ] && amixer set Master "${ORIGINAL_VOLUME}" 2>/dev/null
+    fi
+
+    rm -f "$SILENCE_LOCK"
+
+    echo -e "${GOLD}\"He maketh me to lie down in green pastures:${NC}"
+    echo -e "${GOLD} he leadeth me beside the still waters.\" — Psalm 23:2${NC}"
+    exit 0
+}
+
+trap cleanup EXIT INT TERM
+
+# Check if already in silence
+if ls /tmp/.alfred-silence-* 2>/dev/null | head -1 | grep -q .; then
+    echo "Already in The Silence. Be still."
+    exit 0
+fi
+
+touch "$SILENCE_LOCK"
+
+clear
+
+echo -e "${GOLD}"
+echo "  ╔═══════════════════════════════════════════════════════╗"
+echo "  ║                                                       ║"
+echo "  ║            ✝  THE  SILENCE  ✝                        ║"
+echo "  ║                                                       ║"
+echo "  ║    \"But thou, when thou prayest, enter into thy       ║"
+echo "  ║     closet, and when thou hast shut thy door,         ║"
+echo "  ║     pray to thy Father which is in secret.\"           ║"
+echo "  ║                                  — Matthew 6:6        ║"
+echo "  ║                                                       ║"
+echo "  ║    ${SILENCE_MINUTES} minutes of sacred stillness begins now.       ║"
+echo "  ║    Press Ctrl+C when you are ready to return.         ║"
+echo "  ║                                                       ║"
+echo "  ╚═══════════════════════════════════════════════════════╝"
+echo -e "${NC}"
+
+# Save current volume
+ORIGINAL_VOLUME=$(amixer get Master 2>/dev/null | grep -o '[0-9]*%' | head -1)
+
+# 1. Amber screen (warm 2700K)
+echo -e "  ${DIM}Setting amber glow...${NC}"
+pkill redshift 2>/dev/null
+redshift -P -O 2700 2>/dev/null &
+
+# 2. Silence notifications
+echo -e "  ${DIM}Silencing notifications...${NC}"
+if command -v xfconf-query &>/dev/null; then
+    xfconf-query -c xfce4-notifyd -p /do-not-disturb -s true 2>/dev/null
+fi
+
+# 3. Quiet worship (10% volume)
+echo -e "  ${DIM}Playing worship softly...${NC}"
+amixer set Master 10% 2>/dev/null
+if [ -d "$MUSIC_DIR" ] && command -v aplay &>/dev/null; then
+    # Find a random worship track
+    TRACK=$(find "$MUSIC_DIR" -name "*.mp3" -o -name "*.wav" 2>/dev/null | shuf -n 1)
+    if [ -n "$TRACK" ] && command -v mpg123 &>/dev/null; then
+        (mpg123 -q --loop -1 "$TRACK" 2>/dev/null &)
+        echo "$!" > /tmp/.alfred-silence-worship-pid
+    fi
+fi
+
+echo ""
+echo -e "  ${GOLD}Be still, and know that I am God. — Psalm 46:10${NC}"
+echo ""
+
+# 4. Wait for the appointed time
+SECONDS_TOTAL=$((SILENCE_MINUTES * 60))
+ELAPSED=0
+
+while [ "$ELAPSED" -lt "$SECONDS_TOTAL" ]; do
+    sleep 60
+    ELAPSED=$((ELAPSED + 60))
+    REMAINING=$(( (SECONDS_TOTAL - ELAPSED) / 60 ))
+    # No clock — just a gentle dot every 5 minutes
+    if [ $((ELAPSED % 300)) -eq 0 ] && [ "$REMAINING" -gt 0 ]; then
+        echo -ne "  ${DIM}·${NC}"
+    fi
+done
+
+echo ""
+echo ""
+echo -e "  ${GOLD}✝  The appointed time has come.  ✝${NC}"
+echo ""
+
+# cleanup will handle restoration via trap
+SILENCE
+chmod +x /usr/local/bin/alfred-silence
+
+# ═══════════════════════════════════════════════════
+# 4. KEYBOARD SHORTCUT (Super+S)
+# ═══════════════════════════════════════════════════
+echo "[SILENCE-04] Registering keyboard shortcut..."
+
+mkdir -p /etc/skel/.config/xfce4/xfconf/xfce-perchannel-xml
+
+# We can't set runtime xfconf in chroot, but we can create the XML config
+cat > /etc/skel/.config/xfce4/xfconf/xfce-perchannel-xml/xfce4-keyboard-shortcuts-silence.xml << 'SHORTCUT'
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Alfred Linux — The Silence: Super+S shortcut -->
+<!-- This file is merged with existing keyboard shortcuts on first login -->
+<channel name="xfce4-keyboard-shortcuts" version="1.0">
+  <property name="commands" type="empty">
+    <property name="custom" type="empty">
+      <property name="&lt;Super&gt;s" type="string" value="xfce4-terminal --maximize -e alfred-silence"/>
+    </property>
+  </property>
+</channel>
+SHORTCUT
+
+# Also add a first-login script to set the shortcut properly
+mkdir -p /etc/skel/.config/autostart
+cat > /etc/skel/.config/autostart/alfred-silence-shortcut.desktop << 'AUTOSTART'
+[Desktop Entry]
+Type=Application
+Name=Alfred Silence Shortcut Setup
+Exec=sh -c "xfconf-query -c xfce4-keyboard-shortcuts -p '/commands/custom/<Super>s' -s 'xfce4-terminal --maximize -e alfred-silence' --create -t string 2>/dev/null; rm -f ~/.config/autostart/alfred-silence-shortcut.desktop"
+Hidden=false
+NoDisplay=true
+X-GNOME-Autostart-enabled=true
+Comment=Sets up Super+S shortcut for The Silence (runs once)
+AUTOSTART
+
+# ═══════════════════════════════════════════════════
+# 5. DESKTOP LAUNCHER
+# ═══════════════════════════════════════════════════
+echo "[SILENCE-05] Creating desktop launcher..."
+
+cat > /usr/share/applications/alfred-silence.desktop << 'DESKTOP'
+[Desktop Entry]
+Type=Application
+Name=The Silence
+GenericName=Sacred Stillness
+Comment=40 minutes of prayer and stillness (Super+S)
+Exec=xfce4-terminal --maximize -e "alfred-silence"
+Icon=appointment-soon
+Terminal=false
+Categories=Alfred;
+Keywords=prayer;silence;stillness;meditation;worship;
+DESKTOP
+
+echo "╔═══════════════════════════════════════════════════════════╗"
+echo "║  [0721] The Silence — COMPLETE                           ║"
+echo "║  ✓ Super+S keyboard shortcut                             ║"
+echo "║  ✓ Amber screen (2700K via redshift)                     ║"
+echo "║  ✓ Notification silencing                                ║"
+echo "║  ✓ Worship at 10% volume                                 ║"
+echo "║  ✓ 40-minute timer with shofar chime                     ║"
+echo "║  ✓ No clock visible — just stillness                     ║"
+echo "║  Be still, and know that I am God. — Psalm 46:10         ║"
+echo "╚═══════════════════════════════════════════════════════════╝"

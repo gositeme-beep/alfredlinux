@@ -1,0 +1,66 @@
+# Build outputs and logs
+*.log
+build.log
+binary.log
+build-*.log
+# Entire live-build workspace (regenerates from config/ + hooks)
+build/
+binary/
+chroot/
+cache/
+iso-output/*.iso
+iso-output/*.iso.sha256
+iso-output/*.iso.sig
+iso-output/*.zsync
+*.squashfs
+*.squashfs.old-*
+
+# Backups and tempfiles
+*.bak
+*.bak.*
+*~
+*.swp
+.DS_Store
+
+# Secrets — NEVER commit
+.vault/
+.kingdom/
+.env
+.env.*
+*.key
+*.pem
+*.p12
+*.pfx
+id_rsa*
+id_ed25519*
+*_token*
+*token*.txt
+.htpasswd
+
+# Server-side / commerce code that does NOT belong in the OS repo
+commander-*.php
+api/commander-*.php
+pay/
+account/
+shield-*.conf
+customer-*.db
+customer-*.sql
+
+# IDE / OS noise
+.vscode/
+.idea/
+node_modules/
+__pycache__/
+*.pyc
+
+# Archive (keep separate)
+archive/
+
+# Staging inside build-assets (regenerable)
+build-assets/chroot-staging/
+
+# Large shipped media — keep on forge as Release artifacts or rsync mirror;
+# remove these lines from .gitignore if you use Git LFS for them instead.
+build-assets/videos/
+build-assets/music/
+build-assets/wallpapers/

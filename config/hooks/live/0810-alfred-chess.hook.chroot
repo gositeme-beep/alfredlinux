@@ -1,0 +1,318 @@
+#!/bin/bash
+# ═══════════════════════════════════════════════════════════════
+# HOOK 0810-chess — MERGED INTO 0800-alfred-store.hook.chroot
+#
+# ALL CONTENT PRESERVED — Alfred Chess (The Commander's Game)
+# now lives as Part B of Hook 0800: Alfred Store + Chess.
+#
+# "Every king needs a chess board." — Commander Danny William Perez
+#
+# This file is a merge stub. The full implementation runs via store hook.
+# Nothing was removed. Nothing was watered down. Content was COMBINED.
+# ═══════════════════════════════════════════════════════════════
+echo "[0810-chess] Content merged into 0800-alfred-store (Part B). Skipping."
+exit 0
+
+# ═══════════════════════════════════════════════════════════════
+# ORIGINAL CONTENT BELOW (preserved for reference, does not execute)
+# ═══════════════════════════════════════════════════════════════
+
+set -e
+echo "╔═══════════════════════════════════════════════════════════╗"
+echo "║  [0810] Alfred Chess — The Commander's Game              ║"
+echo "║  'Every king needs a chess board.'                       ║"
+echo "╚═══════════════════════════════════════════════════════════╝"
+export DEBIAN_FRONTEND=noninteractive
+
+# ═══════════════════════════════════════════════════
+# 1. INSTALL CHESS ENGINE
+# ═══════════════════════════════════════════════════
+echo "[CHESS-01] Installing Stockfish chess engine..."
+apt-get install -y --no-install-recommends stockfish 2>/dev/null || true
+
+# ═══════════════════════════════════════════════════
+# 2. CREATE CHESS DIRECTORY STRUCTURE
+# ═══════════════════════════════════════════════════
+echo "[CHESS-02] Creating chess directory structure..."
+CHESS_DIR="/opt/alfred/games/chess"
+mkdir -p "$CHESS_DIR/masters/js"
+mkdir -p "$CHESS_DIR/masters/css"
+mkdir -p "$CHESS_DIR/masters/assets/audio"
+mkdir -p "$CHESS_DIR/masters/assets/textures"
+mkdir -p "$CHESS_DIR/arena"
+
+# ═══════════════════════════════════════════════════
+# 3. DOWNLOAD VR CHESS MASTERS (3D WebXR Experience)
+# ═══════════════════════════════════════════════════
+echo "[CHESS-03] Downloading VR Chess Masters..."
+CHESS_URL="https://gositeme.com/vr/chess-masters"
+
+# Download main HTML
+curl -fsSL "$CHESS_URL/index.html" -o "$CHESS_DIR/masters/index.html" 2>/dev/null || true
+
+# Download all JS modules
+for JS_FILE in chess-engine.js chess-renderer.js chess-ui.js chess-multiplayer.js \
+               chess-audio.js chess-betting.js chess-classics.js chess-openings.js \
+               chess-puzzles.js chess-world.js; do
+    echo "  Downloading $JS_FILE..."
+    curl -fsSL "$CHESS_URL/js/$JS_FILE" -o "$CHESS_DIR/masters/js/$JS_FILE" 2>/dev/null || true
+done
+
+# Download CSS
+curl -fsSL "$CHESS_URL/css/style.css" -o "$CHESS_DIR/masters/css/style.css" 2>/dev/null || true
+curl -fsSL "$CHESS_URL/css/chess-ui.css" -o "$CHESS_DIR/masters/css/chess-ui.css" 2>/dev/null || true
+
+# Download assets (audio, textures)
+for ASSET in move.mp3 capture.mp3 check.mp3 castle.mp3 victory.mp3 defeat.mp3 draw.mp3 tick.mp3; do
+    curl -fsSL "$CHESS_URL/assets/audio/$ASSET" -o "$CHESS_DIR/masters/assets/audio/$ASSET" 2>/dev/null || true
+done
+
+# ═══════════════════════════════════════════════════
+# 4. PATCH FOR OFFLINE + UNLOCK FOR ALFRED LINUX
+# ═══════════════════════════════════════════════════
+echo "[CHESS-04] Patching Chess Masters for offline + Alfred Linux..."
+
+# Create offline-ready index that works locally
+if [ -f "$CHESS_DIR/masters/index.html" ]; then
+    # Remove external CDN dependencies — make paths relative
+    sed -i 's|https://cdnjs.cloudflare.com/ajax/libs/three.js/[^/]*/three.min.js|js/three.min.js|g' "$CHESS_DIR/masters/index.html"
+    sed -i 's|https://cdn.jsdelivr.net/npm/three@[^/]*/build/three.module.js|js/three.module.js|g' "$CHESS_DIR/masters/index.html"
+    
+    # Download Three.js locally for full offline capability
+    curl -fsSL "https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js" \
+        -o "$CHESS_DIR/masters/js/three.min.js" 2>/dev/null || true
+    
+    # Remove paywall checks — Alfred Linux users get the full experience
+    for JSFILE in "$CHESS_DIR/masters/js/"*.js; do
+        [ -f "$JSFILE" ] || continue
+        # Replace paywall/subscription checks with always-true
+        sed -i 's/isPremium\s*=\s*false/isPremium = true/g' "$JSFILE" 2>/dev/null || true
+        sed -i 's/isSubscribed\s*=\s*false/isSubscribed = true/g' "$JSFILE" 2>/dev/null || true
+        sed -i 's/hasPremiumAccess()/true/g' "$JSFILE" 2>/dev/null || true
+        # Update API endpoints to local paths
+        sed -i "s|https://gositeme.com/vr/chess-masters|.|g" "$JSFILE" 2>/dev/null || true
+        sed -i "s|https://gositeme.com/api/chess|./api|g" "$JSFILE" 2>/dev/null || true
+    done
+fi
+
+# ═══════════════════════════════════════════════════
+# 5. DOWNLOAD 2D CHESS ARENA (Stockfish-powered)  
+# ═══════════════════════════════════════════════════
+echo "[CHESS-05] Downloading 2D Chess Arena..."
+ARENA_URL="https://gositeme.com/chess"
+
+curl -fsSL "$ARENA_URL/index.html" -o "$CHESS_DIR/arena/index.html" 2>/dev/null || true
+
+# Download chess libraries
+for LIB in js/chess.js js/chessboard.js css/chessboard.css img/chesspieces; do
+    DIRNAME=$(dirname "$LIB")
+    mkdir -p "$CHESS_DIR/arena/$DIRNAME"
+    if [[ "$LIB" == *"chesspieces" ]]; then
+        # Download piece images
+        mkdir -p "$CHESS_DIR/arena/img/chesspieces/wikipedia"
+        for PIECE in wK wQ wR wB wN wP bK bQ bR bB bN bP; do
+            curl -fsSL "$ARENA_URL/img/chesspieces/wikipedia/${PIECE}.png" \
+                -o "$CHESS_DIR/arena/img/chesspieces/wikipedia/${PIECE}.png" 2>/dev/null || true
+        done
+    else
+        curl -fsSL "$ARENA_URL/$LIB" -o "$CHESS_DIR/arena/$LIB" 2>/dev/null || true
+    fi
+done
+
+# Download Stockfish WASM for browser
+curl -fsSL "$ARENA_URL/js/stockfish.js" -o "$CHESS_DIR/arena/js/stockfish.js" 2>/dev/null || true
+curl -fsSL "$ARENA_URL/js/stockfish.wasm" -o "$CHESS_DIR/arena/js/stockfish.wasm" 2>/dev/null || true
+
+# Patch 2D chess for offline
+if [ -f "$CHESS_DIR/arena/index.html" ]; then
+    sed -i "s|https://gositeme.com/chess|.|g" "$CHESS_DIR/arena/index.html" 2>/dev/null || true
+    sed -i 's|https://code.jquery.com/jquery[^"]*"|js/jquery.min.js"|g' "$CHESS_DIR/arena/index.html" 2>/dev/null || true
+    # Download jQuery locally
+    curl -fsSL "https://code.jquery.com/jquery-3.7.1.min.js" \
+        -o "$CHESS_DIR/arena/js/jquery.min.js" 2>/dev/null || true
+fi
+
+# ═══════════════════════════════════════════════════
+# 6. ALFRED-CHESS CLI LAUNCHER
+# ═══════════════════════════════════════════════════
+echo "[CHESS-06] Creating alfred-chess launcher..."
+
+cat > /usr/local/bin/alfred-chess << 'CHESSCLI'
+#!/bin/bash
+# ═══════════════════════════════════════════════════
+# alfred-chess — The Commander's Game
+# Launch VR or 2D chess from Alfred Linux
+# ═══════════════════════════════════════════════════
+CHESS_DIR="/opt/alfred/games/chess"
+PORT=7777
+CYAN='\033[0;36m'; GREEN='\033[0;32m'; YELLOW='\033[0;33m'
+BOLD='\033[1m'; NC='\033[0m'
+
+banner() {
+    echo -e "${CYAN}╔═══════════════════════════════════════════════════════╗${NC}"
+    echo -e "${CYAN}║${NC}  ${BOLD}♚ Alfred Chess${NC} — The Commander's Game            ${CYAN}║${NC}"
+    echo -e "${CYAN}║${NC}    'Every king needs a chess board.'              ${CYAN}║${NC}"
+    echo -e "${CYAN}╚═══════════════════════════════════════════════════════╝${NC}"
+}
+
+start_server() {
+    # Kill any existing chess server
+    pkill -f "python3.*SimpleHTTPServer.*$PORT" 2>/dev/null || true
+    pkill -f "python3.*http.server.*$PORT" 2>/dev/null || true
+    
+    # Start local web server
+    cd "$CHESS_DIR"
+    python3 -m http.server $PORT --bind 127.0.0.1 &>/dev/null &
+    SERVER_PID=$!
+    echo "$SERVER_PID" > /tmp/alfred-chess-server.pid
+    sleep 1
+    echo -e "  ${GREEN}Chess server running at http://127.0.0.1:$PORT${NC}"
+}
+
+stop_server() {
+    if [ -f /tmp/alfred-chess-server.pid ]; then
+        kill "$(cat /tmp/alfred-chess-server.pid)" 2>/dev/null || true
+        rm -f /tmp/alfred-chess-server.pid
+    fi
+    pkill -f "python3.*http.server.*$PORT" 2>/dev/null || true
+    echo "Chess server stopped."
+}
+
+case "${1:-help}" in
+    vr|3d|masters)
+        banner
+        echo ""
+        echo -e "${BOLD}Launching VR Chess Masters...${NC}"
+        start_server
+        xdg-open "http://127.0.0.1:$PORT/masters/" 2>/dev/null
+        echo ""
+        echo "  3D Chess with 20 AI personalities"
+        echo "  WebXR support for VR headsets"
+        echo "  Press Ctrl+C or run 'alfred-chess stop' when done"
+        ;;
+    2d|arena|classic)
+        banner
+        echo ""
+        echo -e "${BOLD}Launching 2D Chess Arena...${NC}"
+        start_server
+        xdg-open "http://127.0.0.1:$PORT/arena/" 2>/dev/null
+        echo ""
+        echo "  Classic 2D chess with Stockfish AI"
+        echo "  Press Ctrl+C or run 'alfred-chess stop' when done"
+        ;;
+    engine)
+        echo "Starting Stockfish engine (CLI)..."
+        exec stockfish
+        ;;
+    stop)
+        stop_server
+        ;;
+    help|*)
+        banner
+        echo ""
+        echo "Usage: alfred-chess <command>"
+        echo ""
+        echo "  ${BOLD}vr${NC}       — Launch VR Chess Masters (3D, WebXR, 20 AI)"
+        echo "  ${BOLD}2d${NC}       — Launch 2D Chess Arena (Stockfish AI)"
+        echo "  ${BOLD}engine${NC}   — Start Stockfish engine (CLI mode)"
+        echo "  ${BOLD}stop${NC}     — Stop the chess server"
+        echo "  ${BOLD}help${NC}     — Show this help"
+        echo ""
+        echo "VR Chess Masters features:"
+        echo "  ♚ 20 AI personalities (from beginner to grandmaster)"
+        echo "  ♛ Full 3D board with WebXR VR headset support"
+        echo "  ♝ 100+ classic games (Fischer, Kasparov, Morphy...)"
+        echo "  ♞ Puzzle library with progressive difficulty"
+        echo "  ♜ Opening explorer with 50+ named openings"
+        echo "  ♟ Multiplayer support (LAN or internet)"
+        echo ""
+        echo "'Every king needs a chess board.' — Commander"
+        ;;
+esac
+CHESSCLI
+chmod +x /usr/local/bin/alfred-chess
+
+# ═══════════════════════════════════════════════════
+# 7. DESKTOP SHORTCUTS
+# ═══════════════════════════════════════════════════
+echo "[CHESS-07] Creating desktop shortcuts..."
+
+mkdir -p /usr/share/applications
+mkdir -p /usr/share/icons/alfred/
+
+# Create a simple chess icon (SVG)
+cat > /usr/share/icons/alfred/chess-masters.svg << 'ICON'
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <rect width="64" height="64" rx="8" fill="#1a1a2e"/>
+  <text x="32" y="44" text-anchor="middle" font-size="36" fill="#e6e6e6">♚</text>
+  <text x="32" y="60" text-anchor="middle" font-size="8" fill="#4cc9f0" font-family="sans-serif">CHESS</text>
+</svg>
+ICON
+
+cat > /usr/share/applications/alfred-chess-vr.desktop << 'DESKTOP'
+[Desktop Entry]
+Name=VR Chess Masters
+Comment=3D Chess with 20 AI personalities, WebXR VR support
+Exec=alfred-chess vr
+Icon=/usr/share/icons/alfred/chess-masters.svg
+Terminal=false
+Type=Application
+Categories=Game;BoardGame;
+Keywords=chess;vr;3d;game;strategy;
+DESKTOP
+
+cat > /usr/share/applications/alfred-chess-2d.desktop << 'DESKTOP'
+[Desktop Entry]
+Name=Chess Arena
+Comment=Classic 2D Chess with Stockfish AI engine
+Exec=alfred-chess 2d
+Icon=/usr/share/icons/alfred/chess-masters.svg
+Terminal=false
+Type=Application
+Categories=Game;BoardGame;
+Keywords=chess;stockfish;game;strategy;classic;
+DESKTOP
+
+# ═══════════════════════════════════════════════════
+# 8. ADD TO ALFRED STORE REGISTRY
+# ═══════════════════════════════════════════════════
+echo "[CHESS-08] Registering in Alfred Store..."
+mkdir -p /usr/share/alfred/store
+
+cat > /usr/share/alfred/store/chess-masters.json << 'STOREJSON'
+{
+  "id": "alfred-chess-masters",
+  "name": "VR Chess Masters",
+  "version": "1.0.0",
+  "category": "Games",
+  "description": "Full 3D chess experience with 20 AI personalities, WebXR VR headset support, classic games database, puzzle library, and multiplayer.",
+  "author": "GoSiteMe / Commander Danny William Perez",
+  "installed": true,
+  "bundled": true,
+  "launch": "alfred-chess vr",
+  "icon": "/usr/share/icons/alfred/chess-masters.svg",
+  "size": "91MB",
+  "features": [
+    "20 AI personalities (Beginner to Grandmaster)",
+    "Full 3D WebXR board (VR headset support)",
+    "100+ classic games (Fischer, Kasparov, Morphy)",
+    "Puzzle library with progressive difficulty",
+    "50+ opening explorer (Sicilian, Queen's Gambit...)",
+    "Stockfish engine for AI analysis",
+    "Multiplayer (LAN or internet)",
+    "Audio feedback and ambient sounds",
+    "Works fully offline"
+  ]
+}
+STOREJSON
+
+echo "╔═══════════════════════════════════════════════════════════╗"
+echo "║  [0810] Alfred Chess — INSTALLED                         ║"
+echo "║  ♚ VR Chess Masters (3D, 20 AI, WebXR, multiplayer)     ║"
+echo "║  ♛ 2D Chess Arena (Stockfish engine)                     ║"
+echo "║  ♝ 100+ classic games, puzzles, openings                 ║"
+echo "║  ♞ Desktop shortcuts + Alfred Store registered           ║"
+echo "║  Run: alfred-chess vr | alfred-chess 2d                  ║"
+echo "║                                                          ║"
+echo "║  'Every king needs a chess board.' — Commander           ║"
+echo "╚═══════════════════════════════════════════════════════════╝"

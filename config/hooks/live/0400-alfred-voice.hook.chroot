@@ -1,0 +1,171 @@
+#!/bin/bash
+# ═══════════════════════════════════════════════════════════════
+# Alfred Linux v2.0-b4 — Voice (Kokoro TTS + Welcome Greeting)
+#
+# Installs Kokoro TTS for offline voice synthesis.
+# Alfred speaks on first boot.
+# BUILD: v2.0-b4 (Voice)
+# ═══════════════════════════════════════════════════════════════
+
+set +e  # Voice is optional — don't kill the build if TTS install fails
+
+echo "[Alfred Linux v2.0-b4] Installing Voice subsystem..."
+
+# ── 0. Ensure DNS works inside chroot ──
+if ! getent hosts deb.debian.org &>/dev/null 2>&1; then
+    rm -f /etc/resolv.conf 2>/dev/null || true
+    printf 'nameserver 9.9.9.9\nnameserver 1.1.1.1\n' > /etc/resolv.conf
+fi
+
+# ── 1. Install audio dependencies (lightweight — stays in ISO) ──
+PYVER=$(python3 --version 2>/dev/null | grep -oP '\d+\.\d+' | head -1)
+apt-get install -y python3-pip "python${PYVER}-venv" espeak-ng sox libsox-fmt-all 2>/dev/null || \
+apt-get install -y python3-pip python3-venv espeak-ng sox libsox-fmt-all 2>/dev/null || true
+
+# ── 2. Kokoro TTS — DEFERRED TO FIRST BOOT ──
+# Kokoro + PyTorch + spacy + blis adds ~2GB to the chroot which causes lb_binary
+# to exceed limits and fail with exit code 32. Instead, install on first boot.
+# espeak-ng is the immediate fallback until Kokoro is set up.
+echo "[Alfred Voice] Kokoro TTS will be installed on first boot (deferred to keep ISO buildable)"
+
+# Create the first-boot installer script
+cat > /usr/local/bin/alfred-voice-setup << 'VOICESETUP'
+#!/bin/bash
+# Alfred Linux — Kokoro TTS First-Boot Installer
+# Runs once on first login, installs Kokoro TTS into /opt/alfred-voice venv.
+# Until this completes, espeak-ng is used as fallback.
+
+MARKER="/opt/alfred-voice/.installed"
+LOG="/var/log/alfred-voice-setup.log"
+
+if [[ -f "$MARKER" ]]; then
+    exit 0
+fi
+
+echo "[Alfred Voice Setup] Installing Kokoro TTS (this may take a few minutes)..." | tee "$LOG"
+
+# Ensure network is up
+for i in {1..30}; do
+    ping -c1 -W2 pypi.org &>/dev/null && break
+    sleep 2
+done
+
+# Create venv and install
+python3 -m venv /opt/alfred-voice 2>>"$LOG" || { echo "FAILED: venv creation" >> "$LOG"; exit 1; }
+/opt/alfred-voice/bin/pip install --upgrade pip 2>>"$LOG" || true
+/opt/alfred-voice/bin/pip install torch --index-url https://download.pytorch.org/whl/cpu 2>>"$LOG" || true
+/opt/alfred-voice/bin/pip install kokoro 2>>"$LOG" || {
+    echo "[Alfred Voice Setup] Kokoro install failed — espeak-ng remains the voice engine." >> "$LOG"
+    exit 0
+}
+
+ln -sf /opt/alfred-voice/bin/python3 /usr/local/bin/alfred-voice-python
+touch "$MARKER"
+echo "[Alfred Voice Setup] Kokoro TTS installed successfully." | tee -a "$LOG"
+
+# Send desktop notification
+if command -v notify-send &>/dev/null; then
+    notify-send -i audio-speakers "Alfred Voice" "Kokoro TTS is now installed. Alfred has his full voice." 2>/dev/null || true
+fi
+VOICESETUP
+chmod +x /usr/local/bin/alfred-voice-setup
+
+# Autostart the voice setup on first login (runs in background)
+mkdir -p /etc/skel/.config/autostart
+cat > /etc/skel/.config/autostart/alfred-voice-setup.desktop << 'VSDESK'
+[Desktop Entry]
+Type=Application
+Name=Alfred Voice Setup
+Comment=Install Kokoro TTS on first boot
+Exec=bash -c "/usr/local/bin/alfred-voice-setup &"
+Hidden=false
+X-GNOME-Autostart-enabled=true
+X-GNOME-Autostart-Delay=10
+VSDESK
+
+# ── 3. Create welcome script ──
+cat > /usr/local/bin/alfred-welcome.sh << 'WELCOME'
+#!/bin/bash
+# Alfred Linux — First Boot Welcome
+# Speaks a greeting via Kokoro TTS on first login
+
+if [[ -f "$HOME/.alfred-welcomed" ]]; then
+    exit 0
+fi
+
+# Try Kokoro TTS first
+VOICE_PYTHON="python3"
+[[ -x /usr/local/bin/alfred-voice-python ]] && VOICE_PYTHON="/usr/local/bin/alfred-voice-python"
+
+$VOICE_PYTHON -c "
+try:
+    from kokoro import KPipeline
+    pipe = KPipeline(lang_code='a')
+    generator = pipe('Welcome to Alfred Linux. I am Alfred, your AI companion. Everything here is sovereign. Everything here is yours.', voice='af_heart', speed=1.0)
+    import soundfile as sf
+    for i, (gs, ps, audio) in enumerate(generator):
+        sf.write('/tmp/alfred-welcome.wav', audio, 24000)
+        break
+except Exception as e:
+    print(f'Kokoro TTS failed: {e}')
+    import subprocess
+    subprocess.run(['espeak-ng', '-w', '/tmp/alfred-welcome.wav', 
+        'Welcome to Alfred Linux. I am Alfred, your AI companion.'])
+" 2>/dev/null
+
+# Play the audio
+if [[ -f /tmp/alfred-welcome.wav ]]; then
+    aplay /tmp/alfred-welcome.wav 2>/dev/null || paplay /tmp/alfred-welcome.wav 2>/dev/null || true
+    rm -f /tmp/alfred-welcome.wav
+fi
+
+# Mark as welcomed
+touch "$HOME/.alfred-welcomed"
+WELCOME
+chmod +x /usr/local/bin/alfred-welcome.sh
+
+# ── 4. XFCE autostart entry ──
+mkdir -p /etc/skel/.config/autostart
+cat > /etc/skel/.config/autostart/alfred-welcome.desktop << 'DESK'
+[Desktop Entry]
+Type=Application
+Name=Alfred Welcome
+Comment=Alfred greets you on first login
+Exec=/usr/local/bin/alfred-welcome.sh
+Hidden=false
+X-GNOME-Autostart-enabled=true
+X-GNOME-Autostart-Delay=3
+DESK
+
+# ── 5. Alfred TTS CLI wrapper ──
+cat > /usr/local/bin/alfred-say << 'SAY'
+#!/bin/bash
+# Alfred TTS — speak any text
+# Usage: alfred-say "Hello, Commander"
+
+TEXT="${*:-Hello, I am Alfred.}"
+VOICE_PYTHON="python3"
+[[ -x /usr/local/bin/alfred-voice-python ]] && VOICE_PYTHON="/usr/local/bin/alfred-voice-python"
+
+$VOICE_PYTHON -c "
+try:
+    from kokoro import KPipeline
+    pipe = KPipeline(lang_code='a')
+    generator = pipe('''$TEXT''', voice='af_heart', speed=1.0)
+    import soundfile as sf
+    for i, (gs, ps, audio) in enumerate(generator):
+        sf.write('/tmp/alfred-tts.wav', audio, 24000)
+        break
+except Exception:
+    import subprocess
+    subprocess.run(['espeak-ng', '-w', '/tmp/alfred-tts.wav', '''$TEXT'''])
+" 2>/dev/null
+
+if [[ -f /tmp/alfred-tts.wav ]]; then
+    aplay /tmp/alfred-tts.wav 2>/dev/null || paplay /tmp/alfred-tts.wav 2>/dev/null
+    rm -f /tmp/alfred-tts.wav
+fi
+SAY
+chmod +x /usr/local/bin/alfred-say
+
+echo "[Alfred Linux v2.0-b4] Voice subsystem installed."

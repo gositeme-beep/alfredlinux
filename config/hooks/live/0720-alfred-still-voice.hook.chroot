@@ -1,0 +1,146 @@
+#!/bin/bash
+# ═══════════════════════════════════════════════════════════════════════════════
+# HOOK 0720-still-voice — MERGED INTO 0720-alfred-sacred-rest.hook.chroot
+#
+# ALL CONTENT PRESERVED — The Still Small Voice (Scripture Screensaver)
+# now lives as Part A of Hook 0720: Sacred Rest.
+#
+# "And after the earthquake a fire; but the LORD was not in the fire:
+#  and after the fire a still small voice." — 1 Kings 19:12
+#
+# This file is a merge stub. The full implementation runs via sacred-rest.
+# Nothing was removed. Nothing was watered down. Content was COMBINED.
+# ═══════════════════════════════════════════════════════════════════════════════
+echo "[0720-still-voice] Content merged into 0720-alfred-sacred-rest (Part A). Skipping."
+exit 0
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# ORIGINAL CONTENT BELOW (preserved for reference, does not execute)
+# ═══════════════════════════════════════════════════════════════════════════════
+
+set -e
+chmod 1777 /tmp 2>/dev/null || true
+
+echo "╔═══════════════════════════════════════════════════════════╗"
+echo "║  [0720] The Still Small Voice — Scripture Screensaver    ║"
+echo "║  'A still small voice' — 1 Kings 19:12                  ║"
+echo "╚═══════════════════════════════════════════════════════════╝"
+
+# ═══════════════════════════════════════════════════
+# 1. XSCREENSAVER DEPENDENCY
+# ═══════════════════════════════════════════════════
+echo "[VOICE-01] Installing screensaver support..."
+apt-get install -y --no-install-recommends \
+    xscreensaver \
+    xscreensaver-data \
+    2>/dev/null || true
+
+# ═══════════════════════════════════════════════════
+# 2. VERSE DISPLAY SCRIPT
+# ═══════════════════════════════════════════════════
+echo "[VOICE-02] Creating still small voice script..."
+
+mkdir -p /usr/share/alfred/screensaver
+
+cat > /usr/local/bin/alfred-still-voice << 'VOICE'
+#!/bin/bash
+# ═══════════════════════════════════════════════════════════════
+# alfred-still-voice — The machine whispers Scripture
+#
+# Designed to be called by xscreensaver as a text source.
+# Outputs one verse at a time, slowly, like breathing.
+# ═══════════════════════════════════════════════════════════════
+
+BIBLE="/usr/share/alfred/bible/akjv-bible.tsv"
+
+if [ ! -f "$BIBLE" ]; then
+    echo "The LORD is my shepherd; I shall not want. — Psalm 23:1"
+    exit 0
+fi
+
+# Curated verses for the still small voice
+# These are the verses God speaks when you are still
+VERSES=(
+    "Psalms|23|1|The LORD is my shepherd; I shall not want."
+    "Psalms|46|10|Be still, and know that I am God."
+    "Psalms|91|1|He that dwelleth in the secret place of the most High shall abide under the shadow of the Almighty."
+    "Psalms|121|1|I will lift up mine eyes unto the hills, from whence cometh my help."
+    "Psalms|27|1|The LORD is my light and my salvation; whom shall I fear?"
+    "Psalms|34|8|O taste and see that the LORD is good: blessed is the man that trusteth in him."
+    "Psalms|37|4|Delight thyself also in the LORD; and he shall give thee the desires of thine heart."
+    "Psalms|119|105|Thy word is a lamp unto my feet, and a light unto my path."
+    "Psalms|139|14|I will praise thee; for I am fearfully and wonderfully made."
+    "Isaiah|40|31|But they that wait upon the LORD shall renew their strength."
+    "Isaiah|41|10|Fear thou not; for I am with thee: be not dismayed; for I am thy God."
+    "Isaiah|26|3|Thou wilt keep him in perfect peace, whose mind is stayed on thee."
+    "Isaiah|43|2|When thou passest through the waters, I will be with thee."
+    "Jeremiah|29|11|For I know the thoughts that I think toward you, saith the LORD, thoughts of peace, and not of evil."
+    "Jeremiah|33|3|Call unto me, and I will answer thee, and shew thee great and mighty things."
+    "Matthew|11|28|Come unto me, all ye that labour and are heavy laden, and I will give you rest."
+    "Matthew|6|33|But seek ye first the kingdom of God, and his righteousness."
+    "John|14|27|Peace I leave with you, my peace I give unto you."
+    "John|3|16|For God so loved the world, that he gave his only begotten Son."
+    "John|8|12|I am the light of the world: he that followeth me shall not walk in darkness."
+    "Romans|8|28|And we know that all things work together for good to them that love God."
+    "Romans|8|38|For I am persuaded, that neither death, nor life... shall be able to separate us from the love of God."
+    "Philippians|4|13|I can do all things through Christ which strengtheneth me."
+    "Philippians|4|7|And the peace of God, which passeth all understanding, shall keep your hearts and minds."
+    "Proverbs|3|5|Trust in the LORD with all thine heart; and lean not unto thine own understanding."
+    "Proverbs|3|6|In all thy ways acknowledge him, and he shall direct thy paths."
+    "Lamentations|3|22|It is of the LORD's mercies that we are not consumed, because his compassions fail not."
+    "Lamentations|3|23|They are new every morning: great is thy faithfulness."
+    "Revelation|21|4|And God shall wipe away all tears from their eyes."
+    "1 Kings|19|12|And after the fire a still small voice."
+)
+
+# Pick a random verse from the curated list
+TOTAL=${#VERSES[@]}
+INDEX=$((RANDOM % TOTAL))
+VERSE="${VERSES[$INDEX]}"
+
+IFS='|' read -r book chapter verse text <<< "$VERSE"
+
+echo ""
+echo ""
+echo "    $text"
+echo ""
+echo "                    — $book $chapter:$verse"
+echo ""
+echo ""
+VOICE
+chmod +x /usr/local/bin/alfred-still-voice
+
+# ═══════════════════════════════════════════════════
+# 3. XSCREENSAVER CONFIGURATION
+# ═══════════════════════════════════════════════════
+echo "[VOICE-03] Configuring screensaver..."
+
+# Default xscreensaver config for new users
+mkdir -p /etc/skel
+cat > /etc/skel/.xscreensaver << 'XSCR'
+# XScreenSaver — Alfred Linux 7.77 Kingdom of God Edition
+# The Still Small Voice — 1 Kings 19:12
+
+timeout:        0:03:00
+cycle:          0:00:30
+lock:           False
+lockTimeout:    0:00:00
+passwdTimeout:  0:00:30
+dpmsEnabled:    False
+mode:           one
+selected:       -1
+
+programs:                                                                     \
+              "The Still Small Voice"  phosphor                              \n\
+                -scale 3 -delay 10000                                        \n\
+                -program "/usr/local/bin/alfred-still-voice"                 \n
+XSCR
+
+echo "╔═══════════════════════════════════════════════════════════╗"
+echo "║  [0720] The Still Small Voice — COMPLETE                 ║"
+echo "║  ✓ 30 curated Scripture verses                           ║"
+echo "║  ✓ xscreensaver with phosphor (green terminal glow)     ║"
+echo "║  ✓ 3-minute idle → Scripture breathes on screen          ║"
+echo "║  ✓ No config needed — it just exists                     ║"
+echo "║  After the fire... a still small voice. — 1 Kings 19:12 ║"
+echo "╚═══════════════════════════════════════════════════════════╝"
