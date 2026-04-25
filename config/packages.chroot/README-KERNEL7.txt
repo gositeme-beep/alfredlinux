@@ -16,14 +16,14 @@ Layering (what “7.1 on top of 7.0” means here)
    intent survives; resolve new Kconfig symbols; add **7.1-specific fixes**
    you care about (stable commits, security, hardware).
 4. **Package** — same `bindeb-pkg` flow; bump **KDEB_PKGVERSION** so the
-   installed package name is **linux-image-7.1*** (required by hook 0050).
+   installed binary package name matches `^linux-image-7\.1\.` (required by hook 0050).
 
 Before running `lb build` on the build host
 --------------------------------------------
 1. Produce debs from the **7.1** tree, e.g.:
      make bindeb-pkg LOCALVERSION= KDEB_PKGVERSION=7.1.0-1alfred
    (Your revision string may differ; package **name** must still match
-   `linux-image-7.1*` as produced by the kernel Makefile.)
+   `linux-image-7.1.*` as produced by the kernel Makefile.)
 
 2. Copy into THIS directory (same folder as alfred-browser_*.deb):
      linux-image-*_amd64.deb
