@@ -1,38 +1,30 @@
-Alfred Kernel 7.1 — required .deb files for ISO build
-=====================================================
+Alfred Linux — Linux 7.0.1 kernel .deb files (required for ISO)
+===============================================================
 
-This live-build tree does NOT use the Debian metapackage linux-image-amd64.
-The ISO must ship **Linux 7.1** with your **Alfred kernel work carried forward
-from 7.0** (config, LOCALVERSION, patches, out-of-tree fixes)—not a bare
-upstream tarball alone, and not a 7.0-only image.
+Upstream fact (do not guess): kernel.org v7.x **stable is 7.0.1**, not “7.1”.
+- Index: https://cdn.kernel.org/pub/linux/kernel/v7.x/
+- Tarball: https://cdn.kernel.org/pub/linux/kernel/v7.x/linux-7.0.1.tar.xz
+- Small step from 7.0:     https://cdn.kernel.org/pub/linux/kernel/v7.x/patch-7.0.1.xz
 
-Layering (what “7.1 on top of 7.0” means here)
-----------------------------------------------
-1. **7.0 Alfred baseline** — the .config, Alfred-specific options, and any
-   patches you already proved on `linux-7.0-rc7` (or equivalent).
-2. **7.1 upstream base** — move the build to **linux-7.1.y** (stable line or
-   the exact 7.1 tag you choose from kernel.org).
-3. **Merge / replay** — `make olddefconfig` (or `merge_config.sh`) so 7.0
-   intent survives; resolve new Kconfig symbols; add **7.1-specific fixes**
-   you care about (stable commits, security, hardware).
-4. **Package** — same `bindeb-pkg` flow; bump **KDEB_PKGVERSION** so the
-   installed binary package name matches `^linux-image-7\.1\.` (required by hook 0050).
+This live-build tree does **not** install `linux-image-amd64`. The ISO must
+include **your** `bindeb-pkg` output built from **linux-7.0.1** with Alfred
+config and patches carried forward from any earlier 7.0-rc / 7.0.0 work.
 
-Before running `lb build` on the build host
---------------------------------------------
-1. Produce debs from the **7.1** tree, e.g.:
-     make bindeb-pkg LOCALVERSION= KDEB_PKGVERSION=7.1.0-1alfred
-   (Your revision string may differ; package **name** must still match
-   `linux-image-7.1.*` as produced by the kernel Makefile.)
-
-2. Copy into THIS directory (same folder as alfred-browser_*.deb):
+Workflow
+--------
+1. Fetch and verify checksum of `linux-7.0.1.tar.xz` from cdn.kernel.org.
+2. Merge your Alfred `.config` / patches from the older 7.0-rc tree; run
+   `make olddefconfig` (or equivalent) and resolve new symbols.
+3. `make bindeb-pkg LOCALVERSION= KDEB_PKGVERSION=7.0.1-1alfred`  
+   (revision string is yours; **binary package name** must still be
+   `linux-image-7.0.1...` as emitted by the kernel build.)
+4. Copy into **this directory** next to `alfred-browser_*.deb`:
      linux-image-*_amd64.deb
      linux-headers-*_amd64.deb
-   Add linux-libc-dev_*.deb from the same build if apt complains.
+   plus `linux-libc-dev_*.deb` from the same build if apt demands it.
 
-3. Hook check (must pass):
-     dpkg-query -W -f '${binary:Package}\n' | grep -E '^linux-image-7\.1\.'
+Hook gate (must pass before ISO is “good”)
+------------------------------------------
+  dpkg-query -W -f '${binary:Package}\n' | grep -E '^linux-image-7\.0\.1'
 
-4. Large *.deb files are gitignored — keep them on the build host or artifact store.
-
-If these debs are missing or still 7.0-only names, hook 0050 fails the build on purpose.
+Large `linux-*.deb` files are gitignored — keep them on the build host.

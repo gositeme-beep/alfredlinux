@@ -1,35 +1,35 @@
 #!/bin/bash
 # ═══════════════════════════════════════════════════════════════
-# HOOK 0050 — Alfred Kernel 7.1 MUST ship on the ISO
+# HOOK 0050 — Alfred Linux MUST ship upstream-stable Linux 7.0.1 on the ISO
 #
-# Policy: ship Linux 7.1 with Alfred fixes layered on the 7.0-era work
-# (.config, LOCALVERSION, driver/feature patches). Build from linux-7.1.y
-# sources, merge forward your 7.0 tree, then bindeb-pkg.
+# Verified against kernel.org (2026-04-25): v7.x stable is 7.0.1
+#   https://cdn.kernel.org/pub/linux/kernel/v7.x/linux-7.0.1.tar.xz
+# mainline 7.0; stable 7.0.1 (e.g. 2026-04-22 on kernel.org listing).
+#
+# Alfred work from earlier 7.0-rc / 7.0.0 trees is merged onto linux-7.0.1
+# (.config, LOCALVERSION, patches), then bindeb-pkg.
 #
 # linux-image-amd64 (Debian default) is intentionally NOT installed.
-# Before `lb build`, copy bindeb-pkg outputs into config/packages.chroot/
-# at minimum:
-#   linux-image-*_amd64.deb   (binary package name MUST be linux-image-7.1.*)
-#   linux-headers-*_amd64.deb (same build / same KDEB_PKGVERSION)
+# Copy bindeb-pkg outputs into config/packages.chroot/ before `lb build`:
+#   linux-image-*_amd64.deb   (binary package name MUST match ^linux-image-7\.0\.1)
+#   linux-headers-*_amd64.deb (same build)
 #
-# Example (adjust revision to match your tag):
-#   make bindeb-pkg LOCALVERSION= KDEB_PKGVERSION=7.1.0-1alfred
+# Example (adjust Debian revision to your policy):
+#   make bindeb-pkg LOCALVERSION= KDEB_PKGVERSION=7.0.1-1alfred
 # ═══════════════════════════════════════════════════════════════
 set -euo pipefail
 
 echo "╔═══════════════════════════════════════════════════════════╗"
-echo "║  [0050] Alfred Kernel 7.1 — verify ISO kernel package set    ║"
+echo "║  [0050] Linux 7.0.1 (Alfred) — verify ISO kernel package set ║"
 echo "╚═══════════════════════════════════════════════════════════╝"
 
-# Require 7.1.x line (not 7.0, not a hypothetical 7.10 false match on ^linux-image-7\.1)
-if dpkg-query -W -f '${binary:Package}\n' 2>/dev/null | grep -qE '^linux-image-7\.1\.'; then
-  VER=$(dpkg-query -W -f '${binary:Package} ${Version}\n' | grep -E '^linux-image-7\.1\.' | head -1)
-  echo "[0050] OK — Alfred Kernel 7.1 image package present: $VER"
+if dpkg-query -W -f '${binary:Package}\n' 2>/dev/null | grep -qE '^linux-image-7\.0\.1'; then
+  VER=$(dpkg-query -W -f '${binary:Package} ${Version}\n' | grep -E '^linux-image-7\.0\.1' | head -1)
+  echo "[0050] OK — linux-image-7.0.1* present: $VER"
   exit 0
 fi
 
-echo "[0050] FATAL: No linux-image-7.1.* package is installed in this chroot."
-echo "[0050] ISO must ship 7.1 (Alfred fixes on top of 7.0 work), not 7.0-only debs."
-echo "[0050] Copy 7.1 bindeb-pkg outputs into config/packages.chroot/ before lb build:"
-echo "       linux-image-*_amd64.deb  linux-headers-*_amd64.deb  (and linux-libc-dev_*.deb if produced)"
+echo "[0050] FATAL: No linux-image-7.0.1* package in this chroot."
+echo "[0050] ISO must ship kernel.org stable 7.0.1 + Alfred merge (not 7.0.0-only / not guessed versions)."
+echo "[0050] Build from linux-7.0.1 sources, bindeb-pkg, copy .deb files into config/packages.chroot/"
 exit 1
