@@ -19,8 +19,9 @@
   Alfred Linux is a sovereign, privacy-first desktop operating system built
   for families, developers, and digital citizens who refuse to be surveilled.
 
-  Based on Debian Trixie (13) with the Alfred-built Linux 7.x kernel (see hook 0050
-  and config/packages.chroot/README-KERNEL7.txt), Alfred Linux ships
+  Based on Debian Trixie (13) with the Alfred-built Linux 7.1 kernel (7.0-era
+  config and fixes merged forward; see hook 0050 and
+  config/packages.chroot/README-KERNEL7.txt), Alfred Linux ships
   with zero telemetry, zero tracking, and the most comprehensive security
   hardening stack ever assembled in a desktop distribution:
 
