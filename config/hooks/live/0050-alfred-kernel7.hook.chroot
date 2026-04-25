@@ -1,0 +1,31 @@
+#!/bin/bash
+# ═══════════════════════════════════════════════════════════════
+# HOOK 0050 — Alfred Kernel 7 (custom tree) MUST ship on the ISO
+#
+# linux-image-amd64 (Debian default) is intentionally NOT installed.
+# Before `lb build`, copy the output of your bindeb-pkg build into:
+#   config/packages.chroot/
+# at minimum:
+#   linux-image-*_amd64.deb   (package name must be linux-image-7*)
+#   linux-headers-*_amd64.deb (recommended, same LOCALVERSION)
+#
+# Example build (from your session notes):
+#   make bindeb-pkg LOCALVERSION= KDEB_PKGVERSION=7.0.0~rc7-1alfred
+# ═══════════════════════════════════════════════════════════════
+set -euo pipefail
+
+echo "╔═══════════════════════════════════════════════════════════╗"
+echo "║  [0050] Alfred Kernel 7 — verify ISO kernel package set      ║"
+echo "╚═══════════════════════════════════════════════════════════╝"
+
+if dpkg-query -W -f '${binary:Package}\n' 2>/dev/null | grep -qE '^linux-image-7'; then
+  VER=$(dpkg-query -W -f '${binary:Package} ${Version}\n' | grep -E '^linux-image-7' | head -1)
+  echo "[0050] OK — Alfred Kernel 7 image package present: $VER"
+  exit 0
+fi
+
+echo "[0050] FATAL: No linux-image-7* package is installed in this chroot."
+echo "[0050] This ISO is configured to ship Alfred Kernel 7 only (no linux-image-amd64)."
+echo "[0050] Copy your bindeb-pkg outputs into config/packages.chroot/ before lb build:"
+echo "       linux-image-*_amd64.deb  linux-headers-*_amd64.deb  (and linux-libc-dev_*.deb if produced)"
+exit 1
