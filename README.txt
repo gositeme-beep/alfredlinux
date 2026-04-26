@@ -389,7 +389,7 @@
   ────────────────────────────────────────
   
   Linux:
-    sudo dd if=alfred-linux-7.77-ga-amd64-*.iso of=/dev/sdX bs=4M status=progress
+    sudo dd if=alfred-linux-7.77-ga-intel-amd64-*.iso of=/dev/sdX bs=4M status=progress
     (Replace /dev/sdX with your USB device — use 'lsblk' to find it)
 
   Windows:
@@ -403,7 +403,7 @@
   macOS:
     diskutil list    # Find your USB device (e.g., /dev/disk2)
     diskutil unmountDisk /dev/diskN
-    sudo dd if=alfred-linux-7.77-ga-amd64-*.iso of=/dev/rdiskN bs=4m
+    sudo dd if=alfred-linux-7.77-ga-intel-amd64-*.iso of=/dev/rdiskN bs=4m
 
   METHOD 2: VIRTUAL MACHINE
   ────────────────────────────────────────
