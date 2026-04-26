@@ -3,6 +3,14 @@
 build.log
 binary.log
 build-*.log
+# Accidental `lb config` from repo root (canonical cwd is build/ — see ALFRED-LINUX-BUILD-TEST.txt)
+.build/
+config/binary
+config/bootstrap
+config/chroot
+config/common
+config/source
+
 # Entire live-build workspace (regenerates from config/ + hooks)
 build/
 binary/
