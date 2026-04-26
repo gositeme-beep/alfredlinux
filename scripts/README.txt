@@ -34,6 +34,12 @@ kernel-docker-bindeb.sh + kernel-docker-inner-bindeb.sh
 copy-kernel-debs-to-chroot.sh
   After .deb exist under KERNEL_WORK: copy into `config/packages.chroot/`, then `iso-preflight.sh`.
 
+lb-docker-build.sh + lb-docker-inner-build.sh
+  **No host sudo:** privileged Debian container runs `lb build` with repo at `/work`.
+    bash scripts/lb-docker-build.sh detach
+  Log: `lb-docker-build.log` (repo root). Name: `lb-docker.containername`.
+  Requires Docker; can take many hours; `--privileged` is intentional for mounts/chroot.
+
 Law copies (same ideas, paths fixed for gositeme home):
   /home/gositeme/law/alfred-build-preflight.sh
   /home/gositeme/law/alfred-kernel-download-sources.sh
