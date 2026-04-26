@@ -33,7 +33,8 @@ ufw --force enable
 # ── 3. SSH hardening ──
 cat > /etc/ssh/sshd_config.d/alfred-hardening.conf << 'SSHD'
 PermitRootLogin no
-PasswordAuthentication yes
+# Key-only SSH (matches 0270 sovereign audit + alfred-heal repair).
+PasswordAuthentication no
 PubkeyAuthentication yes
 X11Forwarding no
 AllowAgentForwarding no
@@ -99,7 +100,8 @@ alias ll='ls -lah --color=auto'
 alias la='ls -A --color=auto'
 alias update='sudo apt update && sudo apt upgrade -y'
 alias ports='ss -tulpn'
-alias myip='curl -s ifconfig.me'
+# Local default route — no third-party “what is my IP” beacon (sovereignty / privacy).
+alias myip='ip -4 route get 1.1.1.1 2>/dev/null | awk "{for(i=1;i<=NF;i++) if($i==\"src\") {print $(i+1); exit}}"'
 alias cls='clear'
 
 # Welcome message

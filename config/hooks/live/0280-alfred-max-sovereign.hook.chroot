@@ -2,8 +2,6 @@
 set -e
 # Fix /tmp permissions (may be restricted by earlier hooks in chroot)
 chmod 1777 /tmp 2>/dev/null || true
-# Fix /tmp permissions (may be restricted by earlier hooks in chroot)
-chmod 1777 /tmp 2>/dev/null || true
 echo "╔════════════════════════════════════════════════════════════╗"
 echo "║  HOOK 0280: Alfred MAX — Total Sovereign Compute v5.0     ║"
 echo "║  Max Cores • Max RAM • Mesh Cloud • Self-Evolution        ║"
@@ -188,7 +186,11 @@ NC='\033[0m'
 
 MESH_DIR="$HOME/.config/alfred/mesh"
 CLOUD_DIR="$HOME/.config/alfred/omahon-cloud"
-mkdir -p "$MESH_DIR" "$CLOUD_DIR"
+SSH_KH="${HOME}/.config/alfred/ssh-mesh/known_hosts"
+mkdir -p "$MESH_DIR" "$CLOUD_DIR" "${HOME}/.config/alfred/ssh-mesh"
+touch "$SSH_KH"
+# No StrictHostKeyChecking=no — accept-new records host keys on first success (MITM-resistant after first connect).
+SSH_MESH=(ssh -o BatchMode=yes -o ConnectTimeout=3 -o UserKnownHostsFile="$SSH_KH" -o StrictHostKeyChecking=accept-new)
 
 discover_peers() {
     echo -e "${CYAN}[Omahon Cloud] Discovering mesh peers...${NC}"
@@ -263,8 +265,8 @@ distribute_task() {
     if [ -f "$CLOUD_DIR/active-peers.txt" ]; then
         while read -r peer; do
             echo -e "${YELLOW}[Peer: $peer] Dispatching...${NC}"
-            ssh -o ConnectTimeout=3 -o StrictHostKeyChecking=no "$peer" \
-                "omahon '$PROMPT' 2>/dev/null" &
+            REM=$(printf '%q' "$PROMPT")
+            "${SSH_MESH[@]}" "$peer" bash -lc "command -v omahon >/dev/null && omahon $REM" 2>/dev/null &
         done < "$CLOUD_DIR/active-peers.txt"
     fi
 
@@ -307,7 +309,10 @@ NC='\033[0m'
 
 SKYNET_DIR="$HOME/.config/alfred/skynet"
 SKYNET_PORT=7331
-mkdir -p "$SKYNET_DIR"
+SSH_KH="${HOME}/.config/alfred/ssh-mesh/known_hosts"
+mkdir -p "$SKYNET_DIR" "${HOME}/.config/alfred/ssh-mesh"
+touch "$SSH_KH"
+SSH_MESH=(ssh -o BatchMode=yes -o ConnectTimeout=3 -o UserKnownHostsFile="$SSH_KH" -o StrictHostKeyChecking=accept-new)
 
 # Node identity
 NODE_ID=$(cat "$SKYNET_DIR/node-id" 2>/dev/null)
@@ -353,25 +358,34 @@ skynet_join() {
     echo "$PEER" >> "$SKYNET_DIR/swarm-members.txt"
     sort -u -o "$SKYNET_DIR/swarm-members.txt" "$SKYNET_DIR/swarm-members.txt"
     echo -e "${GREEN}Added $PEER to swarm${NC}"
-    # Share our existence with the peer
-    ssh -o ConnectTimeout=3 -o StrictHostKeyChecking=no "$PEER" \
-        "mkdir -p ~/.config/alfred/skynet && echo '$(hostname -I | awk '{print $1}')' >> ~/.config/alfred/skynet/swarm-members.txt && sort -u -o ~/.config/alfred/skynet/swarm-members.txt ~/.config/alfred/skynet/swarm-members.txt" 2>/dev/null \
+    # Learn host key first (no blind StrictHostKeyChecking=no).
+    ssh-keyscan -T 5 "$PEER" 2>/dev/null >> "$SSH_KH" || true
+    ME=$(hostname -I | awk '{print $1}')
+    REM=$(printf '%q' "$ME")
+    # Share our existence with the peer (remote runs a fixed shell snippet; IP is quoted).
+    "${SSH_MESH[@]}" "$PEER" bash -lc "mkdir -p ~/.config/alfred/skynet && echo $REM >> ~/.config/alfred/skynet/swarm-members.txt && sort -u -o ~/.config/alfred/skynet/swarm-members.txt ~/.config/alfred/skynet/swarm-members.txt" 2>/dev/null \
         && echo -e "${GREEN}Bidirectional mesh established with $PEER${NC}" \
         || echo -e "${RED}Could not reach peer — added locally only${NC}"
 }
 
 skynet_distribute() {
-    CMD="$*"
-    echo -e "${CYAN}[Skynet] Distributing command to swarm: $CMD${NC}"
-    # Run locally
+    if [ "$#" -eq 0 ]; then
+        echo "Usage: alfred-skynet distribute <command> [args...]"
+        return 1
+    fi
+    echo -e "${CYAN}[Skynet] Distributing command to swarm:${NC} $*"
+    # Run locally — argv execution only (no eval / shell injection from \$*).
     echo -e "${GREEN}[Local]${NC}"
-    eval "$CMD" &
+    "$@" &
 
-    # Fan out to swarm
+    # Fan out to swarm — remote runs the same argv via bash -lc + printf %q (no trailing space).
+    RCMD=$(printf '%q' "$1")
+    shift || true
+    for a in "$@"; do RCMD+=" $(printf '%q' "$a")"; done
     if [ -f "$SKYNET_DIR/swarm-members.txt" ]; then
         while read -r member; do
             echo -e "${CYAN}[Node: $member]${NC}"
-            ssh -o ConnectTimeout=3 -o StrictHostKeyChecking=no "$member" "$CMD" 2>/dev/null &
+            "${SSH_MESH[@]}" "$member" bash -lc "$RCMD" 2>/dev/null &
         done < "$SKYNET_DIR/swarm-members.txt"
     fi
     wait
@@ -381,7 +395,11 @@ skynet_distribute() {
 case "${1:-help}" in
     status)      skynet_status ;;
     join)        skynet_join "$2" ;;
-    leave)       sed -i "/$2/d" "$SKYNET_DIR/swarm-members.txt" 2>/dev/null; echo "Removed $2" ;;
+    leave)
+        [ -z "$2" ] && echo "Usage: alfred-skynet leave <ip>" && exit 1
+        [ -f "$SKYNET_DIR/swarm-members.txt" ] && grep -vxF "$2" "$SKYNET_DIR/swarm-members.txt" > "$SKYNET_DIR/swarm-members.txt.tmp" && mv "$SKYNET_DIR/swarm-members.txt.tmp" "$SKYNET_DIR/swarm-members.txt"
+        echo "Removed $2 (if present)"
+        ;;
     distribute)  shift; skynet_distribute "$@" ;;
     id)          echo "$NODE_ID" ;;
     help|*)
@@ -391,7 +409,7 @@ case "${1:-help}" in
         echo "  status       — Show node info and swarm members"
         echo "  join <ip>    — Add a node to the swarm (bidirectional)"
         echo "  leave <ip>   — Remove a node from the swarm"
-        echo "  distribute   — Run a command across all swarm nodes"
+        echo "  distribute <cmd [args…]> — Run argv across all swarm nodes (no shell eval)"
         echo "  id           — Show this node's unique ID"
         ;;
 esac

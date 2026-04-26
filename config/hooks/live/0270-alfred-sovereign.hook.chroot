@@ -209,21 +209,40 @@ cat > /usr/local/bin/alfred-security-audit << 'AUDIT'
 #!/bin/bash
 SCORE=0; TOTAL=0
 RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[0;33m'; CYAN='\033[0;36m'; NC='\033[0m'
-chk() { ((TOTAL++)); echo -n "  [$TOTAL] $1... "
-    if eval "$2" &>/dev/null; then echo -e "${GREEN}PASS${NC}"; ((SCORE++)); else echo -e "${RED}FAIL${NC}"; fi; }
+
+_chk_firewall() { nft list ruleset 2>/dev/null | grep -q 'chain input'; }
+_chk_apparmor() { aa-status --enabled 2>/dev/null; }
+_chk_ssh_root() { grep -rq 'PermitRootLogin no' /etc/ssh/ 2>/dev/null; }
+_chk_ssh_pass() { grep -rq 'PasswordAuthentication no' /etc/ssh/ 2>/dev/null; }
+_chk_syn_cookies() { [ "$(cat /proc/sys/net/ipv4/tcp_syncookies 2>/dev/null)" = "1" ]; }
+_chk_aslr() { [ "$(cat /proc/sys/kernel/randomize_va_space 2>/dev/null)" -ge 2 ]; }
+_chk_etc_ww() { [ "$(find /etc -type f -perm -0002 2>/dev/null | wc -l)" -eq 0 ]; }
+_chk_unattended() { systemctl is-enabled unattended-upgrades &>/dev/null; }
+_chk_aide() { command -v aide >/dev/null; }
+_chk_fail2ban() { systemctl is-active --quiet fail2ban 2>/dev/null; }
+_chk_clamav() { command -v clamscan >/dev/null; }
+_chk_rkhunter() { command -v rkhunter >/dev/null; }
+
+chk() {
+    local label=$1 fn=$2
+    ((TOTAL++))
+    echo -n "  [$TOTAL] $label... "
+    if $fn; then echo -e "${GREEN}PASS${NC}"; ((SCORE++)); else echo -e "${RED}FAIL${NC}"; fi
+}
+
 echo -e "${CYAN}═══ Alfred Linux Security Audit ═══${NC}"
-chk "Firewall active" "nft list ruleset 2>/dev/null | grep -q 'chain input'"
-chk "AppArmor enforcing" "aa-status --enabled 2>/dev/null"
-chk "SSH root disabled" "grep -rq 'PermitRootLogin no' /etc/ssh/ 2>/dev/null"
-chk "SSH password disabled" "grep -rq 'PasswordAuthentication no' /etc/ssh/ 2>/dev/null"
-chk "SYN cookies" "[ \$(cat /proc/sys/net/ipv4/tcp_syncookies 2>/dev/null) = '1' ]"
-chk "ASLR enabled" "[ \$(cat /proc/sys/kernel/randomize_va_space 2>/dev/null) -ge 2 ]"
-chk "No world-writable /etc" "[ \$(find /etc -type f -perm -0002 2>/dev/null | wc -l) -eq 0 ]"
-chk "Auto-updates" "systemctl is-enabled unattended-upgrades 2>/dev/null"
-chk "AIDE installed" "command -v aide"
-chk "Fail2ban active" "systemctl is-active fail2ban 2>/dev/null"
-chk "ClamAV installed" "command -v clamscan"
-chk "rkhunter installed" "command -v rkhunter"
+chk "Firewall active" _chk_firewall
+chk "AppArmor enforcing" _chk_apparmor
+chk "SSH root disabled" _chk_ssh_root
+chk "SSH password disabled" _chk_ssh_pass
+chk "SYN cookies" _chk_syn_cookies
+chk "ASLR enabled" _chk_aslr
+chk "No world-writable /etc" _chk_etc_ww
+chk "Auto-updates" _chk_unattended
+chk "AIDE installed" _chk_aide
+chk "Fail2ban active" _chk_fail2ban
+chk "ClamAV installed" _chk_clamav
+chk "rkhunter installed" _chk_rkhunter
 echo ""
 PCT=$((SCORE * 100 / TOTAL))
 if [ $PCT -ge 90 ]; then G="A"; C=$GREEN; elif [ $PCT -ge 80 ]; then G="B"; C=$GREEN

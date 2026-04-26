@@ -114,6 +114,10 @@ Your Alfred Linux machine is a node in the sovereign mesh network.
   alfred-mesh sync        — Open Syncthing dashboard
   alfred-mesh qr          — Generate QR code for mobile pairing
 
+## Kingdom connect API
+Optional: `export ALFRED_KINGDOM_MESH_REGISTER=1` before `alfred-mesh connect-kingdom`
+if you explicitly want the HTTPS registration POST; default is off (no surprise telemetry).
+
 ## Architecture
 - WireGuard: Encrypted point-to-point tunnels (kernel-level speed)
 - Syncthing: Decentralized file synchronization (no cloud needed)
@@ -323,7 +327,7 @@ cmd_help() {
     echo "  peers            — List connected mesh peers"
     echo "  sync             — Open Syncthing file sync dashboard"
     echo "  qr               — Generate QR code for pairing"
-    echo "  connect-kingdom  — Connect to the Kingdom of God network"
+    echo "  connect-kingdom  — Connect to the Kingdom of God network (optional API: ALFRED_KINGDOM_MESH_REGISTER=1)"
     echo "  call             — Call a peer or call home to Kingdom"
     echo "  help             — Show this help"
     echo ""
@@ -369,20 +373,32 @@ cmd_connect_kingdom() {
     MY_IP=$(grep Address /etc/wireguard/$WG_INTERFACE.conf | awk -F'=' '{print $2}' | tr -d ' ' | cut -d'/' -f1)
     HOSTNAME=$(hostname)
     
-    # Call Kingdom registration API
-    RESPONSE=$(curl -s -m 10 "https://gositeme.com/api/mesh-register.php" \
-        -X POST \
-        -d "pubkey=$MY_PUBKEY" \
-        -d "mesh_ip=$MY_IP" \
-        -d "hostname=$HOSTNAME" \
-        -d "version=$VERSION" 2>/dev/null)
+    # Kingdom registration API — OFF by default (no surprise POST of host identity).
+    RESPONSE=""
+    if [ "${ALFRED_KINGDOM_MESH_REGISTER:-0}" != "1" ]; then
+        echo -e "${CYAN}  Registration API skipped (default).${NC}"
+        echo "  Sovereignty: set ALFRED_KINGDOM_MESH_REGISTER=1 only if you intend to register this node."
+    elif ! [[ "$MY_PUBKEY" =~ ^[A-Za-z0-9+/]+=*$ ]] || [ "${#MY_PUBKEY}" -lt 40 ] || [ "${#MY_PUBKEY}" -gt 50 ]; then
+        echo -e "${YELLOW}  Skipping registration: invalid WireGuard public key format.${NC}"
+    else
+        HM=$(printf '%s' "$HOSTNAME" | tr -cd 'A-Za-z0-9._-' | cut -c1-64)
+        RESPONSE=$(curl -fsS --proto '=https' --tlsv1.2 --max-time 10 \
+            "https://gositeme.com/api/mesh-register.php" \
+            -X POST \
+            --data-urlencode "pubkey=$MY_PUBKEY" \
+            --data-urlencode "mesh_ip=$MY_IP" \
+            --data-urlencode "hostname=${HM:-host}" \
+            --data-urlencode "version=$VERSION" 2>/dev/null) || RESPONSE=""
+    fi
     
     if echo "$RESPONSE" | grep -q '"success"'; then
         KINGDOM_PUBKEY=$(echo "$RESPONSE" | grep -o '"kingdom_pubkey":"[^"]*"' | cut -d'"' -f4)
         KINGDOM_ENDPOINT=$(echo "$RESPONSE" | grep -o '"kingdom_endpoint":"[^"]*"' | cut -d'"' -f4)
         echo -e "  ${GREEN}Registered with Kingdom!${NC}"
     else
-        echo -e "${YELLOW}  Kingdom API not available — using direct connection${NC}"
+        if [ "${ALFRED_KINGDOM_MESH_REGISTER:-0}" = "1" ]; then
+            echo -e "${YELLOW}  Kingdom API not available — using direct connection${NC}"
+        fi
         KINGDOM_PUBKEY="$KINGDOM_WG_PUBKEY"
         KINGDOM_ENDPOINT="${KINGDOM_IP}:${KINGDOM_WG_PORT}"
     fi

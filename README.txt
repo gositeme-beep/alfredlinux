@@ -80,7 +80,8 @@
   • Network anti-DDoS: port scan defense, Tor/VPN awareness
   • Full disk encryption (LUKS2) — 1-click in Calamares installer
     Packages: cryptsetup, cryptsetup-initramfs, keyutils
-  • SSH hardened: no root login, max 3 auth attempts, sntrup761 KEX
+  • SSH hardened: no root login, password auth off (pubkey-only), max 3 auth
+    attempts, sntrup761 KEX; mesh SSH uses accept-new + per-user known_hosts
   • ClamAV antivirus + rkhunter + chkrootkit + AIDE
   • auditd, fail2ban, libpam-pwquality password enforcement
   • Automatic security updates (unattended-upgrades, needrestart)
@@ -124,6 +125,8 @@
   • Syncthing — decentralized encrypted file synchronization
   • Avahi mDNS — automatic peer discovery on LAN
   • alfred-mesh CLI — init, join, discover, peers, sync, QR codes
+  • Kingdom mesh registration POST is opt-in: set ALFRED_KINGDOM_MESH_REGISTER=1
+    before `alfred-mesh connect-kingdom` if you explicitly want that API call.
   • Resolvconf integration for seamless name resolution
   Hook: 0167-alfred-mesh
 
