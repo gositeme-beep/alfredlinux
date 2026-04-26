@@ -5,10 +5,12 @@
 # "And they were all filled with the Holy Ghost, and began to speak
 #  with other tongues, as the Spirit gave them utterance." — Acts 2:4
 #
-# Multilingual Bible: English (AKJV), Spanish, French, Hebrew, Greek (LXX/NT
-# samples), Latin (Vulgate-style samples), German, Portuguese, Russian,
-# Chinese, Japanese, Arabic, Hindi, Italian — seed verses offline; full
-# texts may be added under /usr/share/alfred/bible/*.tsv later.
+# Multilingual Bible: English (AKJV) plus seed tongues offline (Spanish,
+# French, Hebrew, Greek, Latin, German, Portuguese, Russian, Chinese, Japanese,
+# Arabic, Hindi, Italian, Romanian, Polish, Ukrainian, Korean, Turkish, Dutch,
+# Vietnamese, Tagalog, Swahili, Amharic, Yoruba, Igbo, Hausa, Zulu, Xhosa,
+# Afrikaans, Somali, Twi, …); full texts may be added under
+# /usr/share/alfred/bible/*.tsv later.
 #
 # BUILD: v7.77 Kingdom of God Edition
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -46,6 +48,24 @@ ja|日本語|ja-bible.tsv|Japanese (public-domain samples)
 ar|العربية|ar-bible.tsv|Arabic Van Dyke–style (public-domain samples)
 hi|हिन्दी|hi-bible.tsv|Hindi (public-domain samples)
 it|Italiano|it-bible.tsv|Italian Diodati-style (public-domain samples)
+ro|Română|ro-bible.tsv|Romanian (traditional evangelical samples)
+pl|Polski|pl-bible.tsv|Polish (public-domain samples)
+uk|Українська|uk-bible.tsv|Ukrainian (public-domain samples)
+ko|한국어|ko-bible.tsv|Korean (public-domain samples)
+tr|Türkçe|tr-bible.tsv|Turkish (public-domain samples)
+nl|Nederlands|nl-bible.tsv|Dutch Statenvertaling-style (public-domain samples)
+vi|Tiếng Việt|vi-bible.tsv|Vietnamese (public-domain samples)
+tl|Tagalog|tl-bible.tsv|Tagalog (public-domain samples)
+sw|Kiswahili|sw-bible.tsv|Swahili (public-domain samples)
+am|አማርኛ|am-bible.tsv|Amharic (public-domain samples)
+yo|Yorùbá|yo-bible.tsv|Yoruba (public-domain samples)
+ig|Igbo|ig-bible.tsv|Igbo (public-domain samples)
+ha|Hausa|ha-bible.tsv|Hausa (public-domain samples)
+zu|isiZulu|zu-bible.tsv|Zulu (public-domain samples)
+xh|isiXhosa|xh-bible.tsv|Xhosa (public-domain samples)
+af|Afrikaans|af-bible.tsv|Afrikaans (public-domain samples)
+so|Soomaali|so-bible.tsv|Somali (public-domain samples)
+tw|Twi|tw-bible.tsv|Twi / Akan (public-domain samples)
 CONF
 
 # ═══════════════════════════════════════════════════
@@ -265,6 +285,330 @@ Filippesi	4	13	Ogni cosa posso in colui che mi fortifica.
 Apocalisse	22	21	La grazia del Signore nostro Gesù Cristo sia con tutti voi. Amen.
 SEED
 
+echo "[TONGUES-04l] Romanian seed..."
+cat > "$BIBLE_DIR/ro-bible-seed.tsv" << 'SEED'
+Book	Chapter	Verse	Text
+Geneza	1	1	La început Dumnezeu a creat cerurile și pământul.
+Geneza	1	2	Pământul era pustiu și gol; întuneric era deasupra adâncului, și Duhul lui Dumnezeu plutea pe deasupra apelor.
+Geneza	1	3	Și Dumnezeu a zis: „Să fie lumină!” Și a fost lumină.
+Psalmii	23	1	Domnul este păstorul meu: nu voi duce lipsă de nimic.
+Psalmii	23	2	El mă paște în pășuni verzi, mă duce la apele de odihnă.
+Psalmii	23	3	Îmi înviorează sufletul; mă povățește pe cărările neprihănirii, din pricina Numelui Său.
+Psalmii	23	4	Chiar dacă ar fi să umblu prin valea umbrei morții, nu mă tem de niciun rău, căci Tu ești cu mine; toiagul și nuiaua Ta mă mângâie.
+Psalmii	91	1	Cel ce locuiește la adăpostul Celui Preaînalt și se odihnește la umbra Celui Atotputernic.
+Ioan	3	16	Fiindcă atât a iubit Dumnezeu lumea, că a dat pe singurul Lui Fiu, pentru ca oricine crede în El să nu piară, ci să aibă viața veșnică.
+Ioan	14	6	Iisus i-a zis: „Eu sunt Calea, Adevărul și Viața. Nimeni nu vine la Tatăl decât prin Mine.”
+Romani	8	28	Și știm că totul lucrează împreună spre binele celor ce iubesc pe Dumnezeu.
+Filipeni	4	13	Totul pot în Hristos, care mă întărește.
+Apocalipsa	22	21	Harul Domnului nostru Isus Hristos fie cu voi cu toți! Amin.
+SEED
+
+echo "[TONGUES-04m] Polish seed..."
+cat > "$BIBLE_DIR/pl-bible-seed.tsv" << 'SEED'
+Book	Chapter	Verse	Text
+Rodzaju	1	1	Na początku Bóg stworzył niebo i ziemię.
+Rodzaju	1	2	A ziemia była bezładem i pustkowiem i ciemność była nad powierzchnią bezmiaru, a Duch Boży unosił się nad wodami.
+Rodzaju	1	3	I rzekł Bóg: Niechaj się stanie światłość. I stała się światłość.
+Psalmów	23	1	Psalm Dawidowy. Pan jest moim pasterzem, nie braknie mi niczego.
+Psalmów	23	2	Po zielonych pastwiskach pasie mnie, Prowadzi mnie nad wody spokojne.
+Psalmów	23	3	Posila duszę moją, wiedzie mnie ścieżkami sprawiedliwości przez wzgląd na imię swoje.
+Psalmów	23	4	Chociażbym chodził ciemną doliną, zła się nie ulęknę, boś Ty ze mną; laska twoja i kij twój, one mnie pocieszają.
+Psalmów	91	1	Kto mieszka w ukryciu Najwyższego, ten w cieniu Wszechmocnego będzie przebywał.
+Jana	3	16	Tak bowiem Bóg umiłował świat, że Syna swego jednorodzonego dał, aby każdy, kto weń wierzy, nie zginął, ale miał żywot wieczny.
+Jana	14	6	Rzekł mu Jezus: Jam jest drogą i prawdą, i żywotem; nikt nie przychodzi do Ojca, tylko przez mnie.
+Rzymian	8	28	A wiemy, że tym, którzy miłują Boga, wszystkie rzeczy współdziałają ku dobremu.
+Filipian	4	13	Wszystko mogę w tym, który mnie umacnia.
+Objawienia	22	21	Łaska Pana naszego Jezusa Chrystusa z wami wszystkimi. Amen.
+SEED
+
+echo "[TONGUES-04n] Ukrainian seed..."
+cat > "$BIBLE_DIR/uk-bible-seed.tsv" << 'SEED'
+Book	Chapter	Verse	Text
+Буття	1	1	На початку Бог створив небо та землю.
+Буття	1	2	А земля була пуста і порожня, і темрява була над безоднею, і Дух Божий носився над водами.
+Буття	1	3	І сказав Бог: Нехай буде світло. І стало світло.
+Псалми	23	1	Псалом Давидів. Господь — Пастир мій; я ні в чому не буду нуждатися.
+Псалми	23	2	Він покоїть мене на зелених пажитях, веде мене до тихих вод.
+Псалми	23	3	Він підбадьорює душу мою, веде мене стежками правди ради Ймення Свого.
+Псалми	23	4	Хоч би я йшов долиною смертної тіні, не злякаюся зла, бо Ти зі мною; Твій жезл і Твій посох — вони мене втішають.
+Псалми	91	1	Хто живе в сховку Всевишнього, той перебуває в тіні Всемогутнього.
+Івана	3	16	Бо так полюбив Бог світ, що дав Сина Свого Однородженого, щоб кожен, хто вірує в Нього, не загинув, але мав життя вічне.
+Івана	14	6	Ісус йому каже: Я — дорога, і правда, і життя; ніхто не приходить до Отця, як тільки через Мене.
+До римлян	8	28	А знаємо, що тим, які люблять Бога, усе співдіє на добре.
+До филипян	4	13	Усе можу в Тім, Хто мене підкріпляє.
+Об’явлення	22	21	Благодать Господа нашого Ісуса Христа зо всіма вами. Амінь.
+SEED
+
+echo "[TONGUES-04o] Korean seed..."
+cat > "$BIBLE_DIR/ko-bible-seed.tsv" << 'SEED'
+Book	Chapter	Verse	Text
+창세기	1	1	태초에 하나님이 천지를 창조하시니라
+창세기	1	2	땅이 혼돈하고 공허하며 흑암이 깊음 위에 있고 하나님의 영은 수면에 운행하시니라
+창세기	1	3	하나님이 이르시되 빛이 있으라 하시니 빛이 있으니라
+시편	23	1	여호와는 나의 목자시니 내게 부족함이 없으리로다
+시편	23	2	그가 나를 푸른 초장에 누이시며 쉴 만한 물 가으로 인도하시는도다
+시편	23	3	내 영혼을 소생시키시고 자기 이름을 위하여 의의 길로 인도하시는도다
+시편	23	4	내가 사망의 음침한 골짜기로 다닐지라도 해를 두려워하지 않을 것은 주께서 나와 함께 하심이라 주의 지팡이와 막대기가 나를 안위하시리이다
+시편	91	1	지존하신 이의 은밀한 곳에 거하는 자는 전능하신 이의 그늘 아래 거하리로다
+요한복음	3	16	하나님이 세상을 이처럼 사랑하사 독생자를 주셨으니 이는 저를 믿는 자마다 멸망하지 않고 영생을 얻게 하려 하심이니라
+요한복음	14	6	예수께서 가라사대 내가 곧 길이요 진리요 생명이니 나로 말미암지 않고는 아버지께로 올 자가 없느니라
+로마서	8	28	우리가 알거니와 하나님을 사랑하는 자 곧 그의 뜻대로 부르심을 입은 자들에게는 모든 것이 합력하여 선이 되느니라
+빌립보서	4	13	내게 능력 주시는 자 안에서 내가 모든 것을 할 수 있느니라
+요한계시록	22	21	주 예수의 은혜가 모든 성도와 함께할지어다 아멘
+SEED
+
+echo "[TONGUES-04p] Turkish seed..."
+cat > "$BIBLE_DIR/tr-bible-seed.tsv" << 'SEED'
+Book	Chapter	Verse	Text
+Yaratılış	1	1	Başlangıçta Tanrı gökleri ve yeri yarattı.
+Yaratılış	1	2	Yer boştu, yapaynaklıktı; karanlık enginin üstündeydi. Tanrı'nın Ruhu suların üstünde geziniyordu.
+Yaratılış	1	3	Tanrı, «Işık olsun» dedi ve ışık oldu.
+Mezmurlar	23	1	Davut'un Mezmuru. Rab benim çobanımdır; eksikliğim olmaz.
+Mezmurlar	23	2	Beni yeşil otlaklara yatırır, huzurlu suların yanına götürür.
+Mezmurlar	23	3	Canımı yeniler, doğruluğun yollarında yürütür adının hatırı için.
+Mezmurlar	23	4	Ölüm gölgesinin vadisinden geçsem bile, sana kötülük gelmez; çünkü sen benimlesin; değneğin ve çoban çubuğun beni avutuyor.
+Mezmurlar	91	1	Yüceler Yücesi'nin sığınak yerinde oturan, Her Güçlü'nün gölgesinde barınır.
+Yuhanna	3	16	Çünkü Tanrı dünyayı o kadar sevdi ki, biricik Oğlu'nu verdi; böylece ona her iman eden yok olmasın, ama sonsuz yaşama kavuşsun.
+Yuhanna	14	6	İsa ona şöyle dedi: Ben yolun, gerçeğin ve yaşamın benim. Baba'ya gelmek için benden başka kimse yoktur.
+Romalılar	8	28	Biliyoruz ki, Tanrı'yı sevenlere her şey iyilik için işbirliği eder.
+Filipililer	4	13	Her şeyi bende güçlendiren aracılığıyla yapabilirim.
+Vahiy	22	21	Rab İsa Mesih'in lütfu hepinizle olsun. Amin.
+SEED
+
+echo "[TONGUES-04q] Dutch seed..."
+cat > "$BIBLE_DIR/nl-bible-seed.tsv" << 'SEED'
+Book	Chapter	Verse	Text
+Genesis	1	1	In den beginne schiep God den hemel en de aarde.
+Genesis	1	2	En de aarde was woest en ledig, en duisternis was op den afgrond; en de Geest Gods zweefde over de wateren.
+Genesis	1	3	En God zeide: Da zij licht. En het werd licht.
+Psalmen	23	1	Een psalm van David. De HEERE is mijn Herder; het zal mij aan niets ontbreken.
+Psalmen	23	2	Hij doet mij nederliggen in grazige weiden; Hij voert mij zachtjes aan zeer stille wateren.
+Psalmen	23	3	Hij verkwikt mijn ziel; Hij leidt mij om der gerechtigheid wil in het spoor, om Zijns Naams wil.
+Psalmen	23	4	Al ging ik ook in het dal der schaduw des doods, ik zou geen kwaad vrezen, want Gij zijt met mij; Uw stok en Uw staf, die vertroosten mij.
+Psalmen	91	1	Wie in de schuilplaats des Allerhoogsten zit, zal verkeeren in de schaduw des Almachtigen.
+Johannes	3	16	Want alzo heeft God de wereld liefgehad, dat Hij den Zoon, den eniggeborenen, gegeven heeft, opdat een iegelijk die in Hem gelooft, niet verloren zou gaan, maar het eeuwige leven hebbe.
+Johannes	14	6	Jezus zeide tot hem: Ik ben de Weg en de Waarheid en het Leven; niemand komt tot den Vader dan door Mij.
+Romeinen	8	28	En wij weten, dat dengenen, die God liefhebben, alle dingen medewerken ten goede.
+Filippenzen	4	13	Ik vermag alle dingen door Dengene, Die mij kracht geeft.
+Openbaring	22	21	De genade van onzen Heere Jezus Christus zij met u allen! Amen.
+SEED
+
+echo "[TONGUES-04r] Vietnamese seed..."
+cat > "$BIBLE_DIR/vi-bible-seed.tsv" << 'SEED'
+Book	Chapter	Verse	Text
+Sáng-thế-ký	1	1	Lúc ban đầu, Đức Chúa Trời dựng nên trời đất.
+Sáng-thế-ký	1	2	Đất vẫn còn trống rỗng; sự mờ tối bao phủ vực sâu, và Thần của Đức Chúa Trời bay đặt trên mặt nước.
+Sáng-thế-ký	1	3	Đức Chúa Trời phán: Phải có sáng! Liền có sáng.
+Thi-thiên	23	1	Thơ của Đa-vít, cậy Đức Giê-hô-va làm tôi chúa tôi, tôi sẽ chẳng thiếu thốn gì.
+Thi-thiên	23	2	Ngài khiến tôi nằm nghỉ nơi đồng cỏ xanh tươi, dẫn tôi tới nước yên ổn.
+Thi-thiên	23	3	Ngài bổ lại linh hồn tôi, dẫn tôi trong các lối công bình, vì cớ danh Ngài.
+Thi-thiên	23	4	Dầu khi tôi đi trong nơi tối tăm của thần chết, cũng chẳng sợ tai họa nào; vì Chúa ở cùng tôi; cây gậy và cây roi Chúa an ủi tôi.
+Thi-thiên	91	1	Kẻ nào ngồi nơi kín mật của Đấng Chí Cao, sẽ ở dưới bóng của Đấng Toàn Năng.
+Giăng	3	16	Vì Đức Chúa Trời yêu thương thế gian, đến nỗi đã ban Con một của Ngài, hầu cho hễ ai tin Con ấy không bị hư mất mà được sự sống đời đời.
+Giăng	14	6	Đức Chúa Jêsus phán rằng: Ta là đường, là sự thật, và là sự sống; chẳng bởi ta thì không ai đến được cùng Cha.
+Rô-ma	8	28	Vả, chúng ta biết rằng mọi sự hiệp lại làm ích cho những kẻ yêu mến Đức Chúa Trời.
+Phi-líp	4	13	Ta làm mọi sự nhờ Đấng ban thêm sức cho ta.
+Khải-huyền	22	21	Ân điển của Chúa chúng ta là Đức Chúa Jêsus Christ ở cùng anh em hết thảy! A-men.
+SEED
+
+echo "[TONGUES-04s] Tagalog seed..."
+cat > "$BIBLE_DIR/tl-bible-seed.tsv" << 'SEED'
+Book	Chapter	Verse	Text
+Genesis	1	1	Nang pasimula ay nilikha ng Dios ang langit at ang lupa.
+Genesis	1	2	At ang lupa ay walang anyo at walang laman; at ang kadiliman ay sumasa ibabaw ng kalaliman; at ang Espiritu ng Dios ay sumasa ibabaw ng tubig.
+Genesis	1	3	At sinabi ng Dios: Magkaroon ng liwanag; at nagkaroon ng liwanag.
+Awit	23	1	Ang Panginoon ay aking pastor; hindi ako mangangailangan.
+Awit	23	2	Sa sariwang pastulan ay pinapahiga niya ako; sa mga tubig na pahingahan ay pinapatnubayan niya ako.
+Awit	23	3	Iniibigan niya ang aking kaluluwa; pinapatnubayan niya ako sa mga landas ng katuwiran alang-alang sa kaniyang pangalan.
+Awit	23	4	Oo, kung ako'y maglakad man sa libis ng lilim ng kamatayan, wala akong katatakutang kasamaan; sapagka't ikaw ay sumasa akin: ang iyong tungkod at ang iyong pamalo, ay nagsisialiw sa akin.
+Awit	91	1	Ang nananahan sa lihim na dako ng Kataastaasan ay magpapahinga sa lilim ng Makapangyarihan sa lahat.
+Juan	3	16	Sapagka't gayon na lamang ang pag-ibig ng Dios sa sanglibutan, na ibinigay niya ang kaniyang bugtong na Anak, upang ang sinomang sa kaniya'y sumampalataya ay huwag mapahamak, kundi magkaroon ng buhay na walang hanggan.
+Juan	14	6	Sinabi sa kaniya ni Jesus, Ako ang daan, at ang katotohanan, at ang buhay: sinoman ay hindi makakaparoon sa Ama, kundi sa pamamagitan ko.
+Roma	8	28	At nalalaman natin na sa mga umiibig sa Dios ang lahat ng mga bagay ay nagsasamang gumagawa para sa mabuti.
+Filipos	4	13	Lahat ng mga bagay ay aking magagawa sa pamamagitan niyaong nagpapalakas sa akin.
+Apocalipsis	22	21	Ang biyaya ng ating Panginoong Jesucristo ay sumainyo nang lahat. Siya nawa.
+SEED
+
+echo "[TONGUES-04t] Swahili seed..."
+cat > "$BIBLE_DIR/sw-bible-seed.tsv" << 'SEED'
+Book	Chapter	Verse	Text
+Mwanzo	1	1	Hapo mwanzo Mungu aliziumba mbingu na dunia.
+Mwanzo	1	2	Nayo dunia ilikuwa utupu, tena tupu; na giza lilikuwa juu ya uso wa vilindi vya maji; Roho wa Mungu alikuwa ametanda juu ya uso wa maji.
+Mwanzo	1	3	Mungu akasema, Iwe nuru; ikawa nuru.
+Zaburi	23	1	Bwana ndiye mchungaji wangu, sitapungukiwa kitu.
+Zaburi	23	2	Huniweka katika malisho ya majani mabichi; Huniongoza kando ya maji ya utulivu.
+Zaburi	23	3	Huiburudisha roho yangu; Huniongoza katika njia za haki kwa ajili ya jina lake.
+Zaburi	23	4	Hata nikitembea katika bonde la kivuli cha mauti, sitaogopa mabaya; maana wewe u pamoja nami; Fimbo yako na mkono wako, ndivyo vinavyonifariji.
+Zaburi	91	1	Huyu akaaye katika sitiri ya Aliye Juu Sana, Atakaa kivuli cha Shaddai.
+Yohana	3	16	Kwa maana jinsi hivi Mungu aliupenda ulimwengu, hata akamtoa Mwana wake wa pekee, ili kila mtu amwaminiye asipotee, bali awe na uzima wa milele.
+Yohana	14	6	Yesu akamwambia, Mimi ndiyo njia, na kweli, na uzima; mtu haji kwa Baba ila kwa njia ya mimi.
+Warumi	8	28	Tena twajua ya kwamba wale wampendao Mungu mambo yote yanafanya kazi pamoja kwa ajili ya mema.
+Wafilipi	4	13	Naweza mambo yote katika yeye anenipa nguvu.
+Ufunuo	22	21	Neema ya Bwana wetu Yesu Kristo iwe pamoja nanyi nyote. Amina.
+SEED
+
+echo "[TONGUES-04u] Amharic seed..."
+cat > "$BIBLE_DIR/am-bible-seed.tsv" << 'SEED'
+Book	Chapter	Verse	Text
+ፍጥረት	1	1	በመጀመሪያ እግዚአብሔር ሰማይንና ምድርን ፈጠረ።
+ፍጥረት	1	2	ምድርም ባዶ ነበረች፤ የማይኖርባትም ነበረች፤ ጨላማውም በጥልቁ ላይ ነበር፤ የእግዚአብሔርም መንፈስ በውሃዎች ላይ ይንቀሳቀስ ነበር።
+ፍጥረት	1	3	እግዚአብሔርም። ብርሃን ይሁን አለ። ብርሃንም ሆነ።
+መዝሙር ዳዊት	23	1	እግዚአብሔር እረኛዬ ነው፥ ምንም ከጎደለኝ አይሆንም።
+መዝሙር ዳዊት	23	2	በለመለመ መስክ ውስጥ ያሳርፈኛል፤ ወደ ውሃዎች ረጋ ባለቦታ ይመራኛል።
+መዝሙር ዳዊት	23	3	ነፍሴን ይመልሳል፤ ስለ ስሙ በጽድቅ መንገድ ይመራኛል።
+መዝሙር ዳዊት	23	4	የሞት ጥላ በሆነ ሸለቆ ውስጥ ብወጣ እንኳን ክፉን አልፈራም፤ አንተ ከእኔ ጋር ነህና፤ በትርህና ማዕድህ እነርሱ ያጸናኛሉ።
+መዝሙር ዳዊት	91	1	ልዑል በሆነው በልዑሉ ድንኳን ውስጥ የሚኖር በሁሉንም ለሚችል በእርሱ ጥላ በታች ያርፋል።
+ዮሐንስ	3	16	እግዚአብሔር ዓለምን እንዲህ ወዶታልና፥ ወንድ ልጁን ብቻውን እንዲሰጥ አደረገ፥ በእርሱ የሚያምን ሁሉ እንዳይጠፋ ዘላለማዊ ሕይወት እንዲኖረው ነው።
+ዮሐንስ	14	6	ኢየሱስ። እኔ መንገድና እውነትና ሕይወት ነኝ አለው። ወደ አብ ከማንም በእኔ ብቻ ካልሆነ አይመጣም።
+ሮሜ	8	28	ወደ እግዚአብሔር ለሚወዱ ሁሉ እንደ አሳቡ ለተጠሩት ሁሉ ነገር ሁሉ በጎ እንዲሆን እናውቃለን።
+ፊልጵስዮስ	4	13	በሚገፋፈኝ በሁሉ በእርሱ እችላለሁ።
+ራእይ ዮሐንስ	22	21	የጌታችን የኢየሱስ ክርስቶስ ጸጋ ከሁላችሁ ጋር ይሁን። አሜን።
+SEED
+
+echo "[TONGUES-04v] Yoruba seed..."
+cat > "$BIBLE_DIR/yo-bible-seed.tsv" << 'SEED'
+Book	Chapter	Verse	Text
+Genesi	1	1	Ni ibere Olorun da orun ati aiye.
+Genesi	1	2	Aiye si wa asan ati ofo; okunkun si wa lori oju omi. Emi Olorun si ma fi ipa re lori omi.
+Genesi	1	3	Olorun si wipe, Je ki imole wa: imole si wa.
+Orin Dafidi	23	1	Oluwa ni oluso agutan mi, emi ki yio funfun kan ni.
+Orin Dafidi	23	2	O fi mi sinu oko koriko: o mu mi si ibi omi ti o simi.
+Orin Dafidi	23	3	O fi emi mi pada: o si mu mi li ona ododo fun oruko re.
+Orin Dafidi	23	4	Bi emi tile rin ninu afonifoji ikú, emi ki yio beru ibi: nitori iwo wa pelu mi: pa ati opa re ni o fi itunu fun mi.
+Orin Dafidi	91	1	Eniti o ngun ni abo Olorun julọ yio si simi labe abo Olodumare.
+Johannu	3	16	Nitori wipe Olorun fe aiye toto, ti o fi Omo re tikarar eni kan fun un, ki enikeni to ba gbagbo bo, kio peribalaye ayeraye ni imole.
+Johannu	14	6	Jesu si wipe fun un, Emi ni ona, ati otito, ati iye: enikeni ko si ti o ba fi wa si Baba, bikose emi.
+Romu	8	28	A mo si pe awon ti nfe Olorun, ohun gbogbo si nba ara mu si ire fun won.
+Filipi	4	13	Ohun gbogbo ni mo le se nipasẹ olugbala mi.
+Ifihan	22	21	Ore-ọfẹ Jesu Kristi Oluwa wa kio wa pẹlu gbogbo nyin. Amin.
+SEED
+
+echo "[TONGUES-04w] Igbo seed..."
+cat > "$BIBLE_DIR/ig-bible-seed.tsv" << 'SEED'
+Book	Chapter	Verse	Text
+Jenesisị	1	1	Nꞌmmalite Chineke kere eluigwe na ala.
+Jenesisị	1	2	Ala bụghị ihe ma ọ bụ ihe efu; ọchịchịrị dị nꞌelu ọdụmiri. Mmụọ Chineke na-efe elu mmiri.
+Jenesisị	1	3	Chineke kwuru okwu sị, Ọ bụrụ na ọ bụ ọkụ. Ọkụ bụrụ.
+Abụọma	23	1	Ọ bụrụ na Onyenwe anyị bụ onye na-azụ m, agaghị m enwe ihe ọ bụla na-adịghị m mma.
+Abụọma	23	2	Ọ na-eme ka m dina nꞌọhịa ọhịa; ọ na-eduga m nꞌebe mmiri jụụ ọjụụ.
+Abụọma	23	3	Ọ na-edozi mkpụrụ obi m; ọ na-eduga m nꞌụzọ ezi omume nꞌihi aha ya.
+Abụọma	23	4	Ọ bụrụ na agafe m nꞌọgbọ nke ọnwụ, agaghị m atụ egwu ihe ọjọọ: nꞌihi na ị nọnyeere m; mkpara gị na ọgba agha gị ka ha na-eme ka m nwee obi ike.
+Abụọma	91	1	Onye bi nꞌebe nzuzo Onyenwe elu kpọrọ nkụ, ga-ezuru ala nꞌokpuru onye ike nile.
+Jọn	3	16	Nꞌihi na Chineke hụrụ ụwa nꞌanya nke ukwuu, o nyere ha Ọkpara ya amam ama, ka onye ọ bụla kwere nꞌya ghara ịfụ, kama ọ nwee ndụ ebighị ebi.
+Jọn	14	6	Jisọs zara ya sị ya, Abụ m ụzọ, na eziokwu, na ndụ: onye ọ bụla abịaghị na Nna ma ọ bụghị site nꞌamụ.
+Rom	8	28	Anyị maara na ihe niile na-arụkọ ọrụ ọnụ maka nma nꞌebe ndị hụrụ Chineke nꞌanya.
+Filip	4	13	Ihe niile m nwere ike ime site nꞌOnye na-enye m ike.
+Ọpụkpụ ọchịchị	22	21	Amara Onyenwe anyị Jisọs Kraịst nọnyeere unu niile. Amen.
+SEED
+
+echo "[TONGUES-04x] Hausa seed..."
+cat > "$BIBLE_DIR/ha-bible-seed.tsv" << 'SEED'
+Book	Chapter	Verse	Text
+Farawa	1	1	A farko Allah ya halicci sammai da ƙasa.
+Farawa	1	2	Ƙasa kuwa tana banza da tana fanko; duhu kuma yana bisa gefen zurfi; kuma ruhin Allah yana tashi bisa ruwa.
+Farawa	1	3	Allah kuma ya ce, Hasali da haske. Haske kuwa ya wanzu.
+Zabura	23	1	Ubangiji makiyayina ne, ba zan yi rashin komai ba.
+Zabura	23	2	Yana sa in kwana a cikin shanu masu kore rabi; yana kai ni kusa da ruwa masu nutsuwa.
+Zabura	23	3	Yana mayar da raina; yana shiryar da ni a hanyoyin adalci saboda sunansa.
+Zabura	23	4	Ko da in wuce ta kwurin inuwar mutuwa, ba zan ji tsoron mummukan abu ba; gama kai kana tare da ni; sandarka da bulalarka suna ta ƙarfafa ni.
+Zabura	91	1	Duk wanda yake zaune a wurin boye na Mai Girma zai yi hutu a karkashin inuwar Mai Iko Duka.
+Yohanna	3	16	Gama Allah ya ƙauna duniya haka, har ya ba da ɗansa ɗaya da ɗaya, don duk wanda ya gaskata da shi kada ya hallaka, amma ya sami rai madawwami.
+Yohanna	14	6	Yesu ya ce masa, Ni ne hanya, da gaskiya, da rai: babu wanda yake zuwa wurin Uba face ta wurina.
+Romawa	8	28	Kuma mun sani cewa dukan abubuwa suna aiki tare don alheri ga waɗanda suke ƙaunar Allah.
+Filipawa	4	13	Dukan abubuwa ina iya yin su ta wurin wanda yake ƙarfafa ni.
+Bayyanawa	22	21	Alherin Ubangijinmu Yesu Kristi ya kasance tare da ku duka. Amin.
+SEED
+
+echo "[TONGUES-04y] Zulu seed..."
+cat > "$BIBLE_DIR/zu-bible-seed.tsv" << 'SEED'
+Book	Chapter	Verse	Text
+Genesisi	1	1	Ekuqaleni uNkulunkulu wadala izulu nomhlaba.
+Genesisi	1	2	Umhlaba wawuyize futhi awunakho lutho; ubumnyama busenkabeni yenkanyezi; uMoya kaNkulunkulu uheha phezu kwamanzi.
+Genesisi	1	3	UNKulunkulu wathi: Makube khona ukukhanya. Kwaba khona ukukhanya.
+IHlabelelo	23	1	INKosi ingumalusi wami, angiyukuphuthelwa lutho.
+IHlabelelo	23	2	Ingibekise esivandeni sezulu; ingiholela ngasemanzini athokozisayo.
+IHlabelelo	23	3	Ingiyaphilisa umphefumulo wami; ingihola ezindleleni zobulungiswa ngenxa yegama layo.
+IHlabelelo	23	4	Noma ngingahamba esigodini sobubini sokufa, ngeke ngesabe okubi, ngoba unami; intonga yakho nodondolo lwakho kungiduduza.
+IHlabelelo	91	1	Ohlala esithenjini soPhezukonke uyakuhlala ethunzini likaSomandla.
+uJohane	3	16	Ngokuba uNkulunkulu walithanda izulu nomhlaba kangaka, waze wanika iNdodana yakhe ezelwe eyodwa, ukuze bonke abakholwa yiyo bangabhubhi, kodwa babe nokuphila okuphakade.
+uJohane	14	6	UJesu wathi kuye, Mina yindlela, iqiniso, nokuphila; akakho ozayo kuYise, kungekho kimi.
+KwabaseRoma	8	28	Siyazi ukuthi konke kusebenzisana kube kulungile kwabathanda uNkulunkulu.
+KwabaseFilipi	4	13	Konke ngiyakwazi ngaye ongiphezinamandla.
+IsAmbulo	22	21	Umusa weNkosi yethu uJesu Kristu malube nani nonke. Amen.
+SEED
+
+echo "[TONGUES-04z] Xhosa seed..."
+cat > "$BIBLE_DIR/xh-bible-seed.tsv" << 'SEED'
+Book	Chapter	Verse	Text
+IGenesis	1	1	Ekuqaleni uThixo wadala izulu nomhlaba.
+IGenesis	1	2	Wawusenkqantosini umhlaba, wawungenanto; ubumnyama babusentantini; uMoya kaThixo uthe wathi jaji phezu kwamanzi.
+IGenesis	1	3	Wathi uThixo, Makubekho ukukhanya. Kwabakho ukukhanya.
+INgoma	23	1	UYehova ngumalusi wam, andiyi kuphuthelwa nto.
+INgoma	23	2	Wondibeka embalasweni yengca; wondisa emanzini athozamisayo.
+INgoma	23	3	Woyibuyisa umphefumlo wam; wondihambisa ezindleleni zobulungisa ngenxa yegama lakhe.
+INgoma	23	4	Nokuba ndihamba esihlanjeni sobumnyama obufana nokufa, andiyi koyika ububi, ngokuba unam; intonga yakho, intonga yakho nodondolo lwakho zindiduduza.
+INgoma	91	1	Ohlala esithenjini soPhezukonke uhlala ethunzini likaSomandla.
+uYohane	3	16	Kuba uThixo walithanda ngokungako ihlabathi, waze wanika uNyana wakhe owodwa, ukuze bonke abakholwa yena bangatshabalali, kodwa babe nobomi obungunaphakade.
+uYohane	14	6	Wathi uYesu kuye, Mna ndiyindlela, neyenene, nobomi; akukho namnye uyeza kuYihlo, kungekho mna.
+KumaRoma	8	28	Siyazi ukuba konke kusebenzisana kube kulungile kwabathanda uThixo.
+KuFilipi	4	13	Zonke ndinako ukwenza ngaye undinika amandla.
+IsAmbalo	22	21	Umusa weNkosi yethu uYesu Krestu malube nani nonke. Amen.
+SEED
+
+echo "[TONGUES-04aa] Afrikaans seed..."
+cat > "$BIBLE_DIR/af-bible-seed.tsv" << 'SEED'
+Book	Chapter	Verse	Text
+Genesis	1	1	In die begin het God die hemel en die aarde geskape.
+Genesis	1	2	Die aarde was woes en leeg, en duisternis was op die diepte; en die Gees van God het oor die waters gesweef.
+Genesis	1	3	En God het gesê: Laat daar lig wees! En daar was lig.
+Psalms	23	1	Die Here is my Herder; ek kom niks kort nie.
+Psalms	23	2	Hy laat my neerlê in groen weivelde; na stille waters lei Hy my heen.
+Psalms	23	3	Hy verkwik my siel; Hy lei my in die spore van geregtigheid om sy Naam ontwil.
+Psalms	23	4	Selfs al gaan ek deur die dal van die skaduwee van die dood, sal ek geen kwaad vrees nie, want U is met my; u stok en u staf, dit vertroos my.
+Psalms	91	1	Hy wat in die skuilplek van die Allerhoogste woon, sal verkeer in die skaduwee van die Almagtige.
+Johannes	3	16	Want so lief het God die wêreld gehad, dat Hy sy eniggebore Seun gegee het, sodat elkeen wat in Hom glo, nie verlore mag gaan nie, maar die ewige lewe kan hê.
+Johannes	14	6	Jesus sê vir hom: Ek is die weg en die waarheid en die lewe; niemand kom na die Vader behalwe deur My nie.
+Romeine	8	28	En ons weet dat vir die wat God liefhet, alle dinge saamwerk ten goede.
+Filippense	4	13	Ek kan alle dinge doen deur Hom wat my krag gee.
+Openbaring	22	21	Die genade van onse Here Jesus Christus sy met julle almal! Amen.
+SEED
+
+echo "[TONGUES-04ab] Somali seed..."
+cat > "$BIBLE_DIR/so-bible-seed.tsv" << 'SEED'
+Book	Chapter	Verse	Text
+Bilowgii	1	1	Bilowgii Ilaahay samada iyo dhulka abuuray.
+Bilowgii	1	2	Dhulku wuu madhan yahay oo cidla ah, mugdi ayaa korka moolka ah, ruuxa Ilaahayna wuxuu ku dul socday biyaha.
+Bilowgii	1	3	Ilaahayna wuxuu yidhi, Iftiin ha jiro. Iftiin ayaa jiray.
+Sabuurrada	23	1	Rabbigu waa adhijirkaygii, wax walbana waan hayn doonaa.
+Sabuurrada	23	2	Wuxuu igu fadhiisiyaa cawska cagaaran; wuxuu i hoggaamiyaa biyaha xasilloon.
+Sabuurrada	23	3	Wuxuu naftayda dib ugu celiyaa; wuxuu igu hoggaamiyaa waddooyinka xaqnimada magiciisa awgood.
+Sabuurrada	23	4	Xataa haddaan ku dhex socdo dooxada hooska dhimashada, shar ma baqi doono; waayo, adigu waad ila joogtaa; ushaada iyo ulahaaguna way i qalbi qaboojinayaan.
+Sabuurrada	91	1	Kii ku degan meesha qarsoon ee Sareeya, wuxuu degayaa hooska kan wax walba xoogga leh.
+Yooxanaa	3	16	Waayo, Ilaahay wuxuu adduunka sidaa u jeclaaday inuu wiilkiisa keli ahaantiis siiyey, si mid kasta oo isaga rumaysta uusan lumin, laakiinse uu haysto nolosha weligeed ah.
+Yooxanaa	14	6	Ciise ayaa isaga ku yidhi, Anigu waa jidka, runta, iyo nolosha; ninna uma imanayo Aabbaha haddaan anigu ahayn.
+Rooma	8	28	Waxaan ognahay in wax walba ay wada shaqeeyaan si wanaagsan kuwa Ilaahay jecel yihiin.
+Filibi	4	13	Wax walba waan awoodaa isaga igu xoojinaya.
+Muujinta	22	21	Nimco Rabbigeenna Ciise Masiix ha idinla jirto dhammaantiin. Aamiin.
+SEED
+
+echo "[TONGUES-04ac] Twi seed..."
+cat > "$BIBLE_DIR/tw-bible-seed.tsv" << 'SEED'
+Book	Chapter	Verse	Text
+Bereisoh	1	1	Bereisoh no Onyankopɔn bɔɔ ɔsoro ne asase.
+Bereisoh	1	2	Na asase no na ɛteɛ ne hunu; sum sum maa ɛkata twenten; na Honhom Onyankopɔn kyerɛɛ ne ho wɔ nsu no so.
+Bereisoh	1	3	Na Onyankopɔn kae se, Hene mmra: na hene bae.
+Dwom	23	1	Awurade ne me hwɛfo; me de, me renhia hwee.
+Dwom	23	2	Ɔma me da asase a ɛyɛ kɔkɔɔ so; ɔde me si nsu a ɛhome no ho.
+Dwom	23	3	Ɔde me kra san kɔ; ɔde me fa trenee akwan so wɔ ne din nti.
+Dwom	23	4	Sɛ me mpo fa owu sum kabii mu a, me rennsuro bɔne biara; efisɛ wo ne me wɔ hɔ; wo poma ne wo rod no na ɛma me ahotɔ.
+Dwom	91	1	Ɔno a ɔte Ɔsorosoroni no hintabea mu no, ɔbɛtena Otumfo no animsuma no ase.
+Yohane	3	16	Efonyam nyia Onyankopɔn dɔ wiase yi, maa ɔde ne Ba korɔ no mae, na obiara a onyi ne din no ankora bɔ anan bewu na mmerehya asetra a.
+Yohane	14	6	Yohane mu no Yesu kae se, Me ne ɔkwan no, ne nokware no, ne nkwa no; obiara mfa nnto Agya no nkyɛn gye me so.
+Roma	8	28	Na yɛnim sɛ ma wɔn a wɔdɔ Onyankopɔn no, nneɛma nyinaa ne papa na ɛbɔ mu.
+Filipi	4	13	Mepɛ ne nyinaa wɔ nea ɔhyɛ me ma me tumi mu.
+Yohane Adiyisɛm	22	21	Yɛn Awurade Yesu Kristo adom nka mo nyinaa nka. Amen.
+SEED
+
 # ═══════════════════════════════════════════════════
 # 5. BIBLE TONGUES CLI WRAPPER
 # ═══════════════════════════════════════════════════
@@ -283,6 +627,63 @@ BIBLE_DIR="/usr/share/alfred/bible"
 GOLD='\033[38;5;220m'; CYAN='\033[0;36m'; NC='\033[0m'; BOLD='\033[1m'
 
 LANGUAGE="${1:-list}"
+
+# Any code listed in languages.conf (add new tongues there + seed TSV only).
+do_lookup() {
+        CODE="$1"
+        BOOK="${2:-}"
+        CHAPTER="${3:-}"
+
+        LINE=$(grep "^${CODE}|" "$BIBLE_DIR/languages.conf" 2>/dev/null)
+        if [ -z "$LINE" ]; then
+            echo "Language '$CODE' not found. Run: alfred-bible-lang list"
+            exit 1
+        fi
+
+        FILE=$(echo "$LINE" | cut -d'|' -f3)
+        NAME=$(echo "$LINE" | cut -d'|' -f2)
+        SOURCE=$(echo "$LINE" | cut -d'|' -f4)
+
+        BIBLE_FILE="$BIBLE_DIR/$FILE"
+        SEED_FILE="$BIBLE_DIR/${FILE%.tsv}-seed.tsv"
+
+        if [ -f "$BIBLE_FILE" ]; then
+            ACTIVE_FILE="$BIBLE_FILE"
+        elif [ -f "$SEED_FILE" ]; then
+            ACTIVE_FILE="$SEED_FILE"
+            echo -e "${GOLD}(Using seed Bible — key verses only. Full: alfred-bible download $CODE)${NC}"
+            echo ""
+        else
+            echo "No Bible data for $NAME."
+            exit 1
+        fi
+
+        if [ -z "$BOOK" ]; then
+            TOTAL=$(tail -n +2 "$ACTIVE_FILE" | wc -l)
+            LINE_NUM=$((RANDOM % TOTAL + 2))
+            IFS=$'\t' read -r b c v text <<< "$(sed -n "${LINE_NUM}p" "$ACTIVE_FILE")"
+            echo -e "${GOLD}✝ $b $c:$v${NC} ($NAME — $SOURCE)"
+            echo "$text"
+        elif [ -z "$CHAPTER" ]; then
+            echo -e "${GOLD}✝ $BOOK${NC} ($NAME)"
+            echo ""
+            while IFS=$'\t' read -r b c v text; do
+                [[ "$b" == "Book" ]] && continue
+                if [[ "$b" == "$BOOK" ]]; then
+                    echo -e "  ${CYAN}$c:$v${NC} $text"
+                fi
+            done < "$ACTIVE_FILE"
+        else
+            echo -e "${GOLD}✝ $BOOK $CHAPTER${NC} ($NAME)"
+            echo ""
+            while IFS=$'\t' read -r b c v text; do
+                [[ "$b" == "Book" ]] && continue
+                if [[ "$b" == "$BOOK" && "$c" == "$CHAPTER" ]]; then
+                    echo -e "  ${CYAN}$v${NC} $text"
+                fi
+            done < "$ACTIVE_FILE"
+        fi
+}
 
 case "$LANGUAGE" in
     list)
@@ -306,96 +707,63 @@ case "$LANGUAGE" in
         echo "  Usage: alfred-bible-lang <code> [book] [chapter]"
         echo "  Example: alfred-bible-lang es Salmos 23"
         echo "  Example: alfred-bible-lang fr Jean 3"
+        echo "  Example: alfred-bible-lang ro Ioan 3"
+        echo "  Example: alfred-bible-lang uk Івана 3"
         echo "  Example: alfred-bible-lang he"
         echo "  Example: alfred-bible-lang gr Ιωάννης 3"
         echo "  Example: alfred-bible-lang la Ioannes 3"
+        echo "  Example: alfred-bible-lang zu Genesisi 1"
+        echo "  Example: alfred-bible-lang am ዮሐንስ 3"
         ;;
 
-    en|es|fr|he|gr|la|de|pt|ru|zh|ja|ar|hi|it)
-        CODE="$LANGUAGE"
-        BOOK="${2:-}"
-        CHAPTER="${3:-}"
-
-        # Find the right file
-        LINE=$(grep "^${CODE}|" "$BIBLE_DIR/languages.conf" 2>/dev/null)
-        if [ -z "$LINE" ]; then
-            echo "Language '$CODE' not found. Run: alfred-bible-lang list"
-            exit 1
-        fi
-
-        FILE=$(echo "$LINE" | cut -d'|' -f3)
-        NAME=$(echo "$LINE" | cut -d'|' -f2)
-        SOURCE=$(echo "$LINE" | cut -d'|' -f4)
-
-        BIBLE_FILE="$BIBLE_DIR/$FILE"
-        SEED_FILE="$BIBLE_DIR/${FILE%.tsv}-seed.tsv"
-
-        # Use full Bible if available, otherwise seed
-        if [ -f "$BIBLE_FILE" ]; then
-            ACTIVE_FILE="$BIBLE_FILE"
-        elif [ -f "$SEED_FILE" ]; then
-            ACTIVE_FILE="$SEED_FILE"
-            echo -e "${GOLD}(Using seed Bible — key verses only. Full: alfred-bible download $CODE)${NC}"
-            echo ""
-        else
-            echo "No Bible data for $NAME."
-            exit 1
-        fi
-
-        if [ -z "$BOOK" ]; then
-            # Show random verse
-            TOTAL=$(tail -n +2 "$ACTIVE_FILE" | wc -l)
-            LINE_NUM=$((RANDOM % TOTAL + 2))
-            IFS=$'\t' read -r b c v text <<< "$(sed -n "${LINE_NUM}p" "$ACTIVE_FILE")"
-            echo -e "${GOLD}✝ $b $c:$v${NC} ($NAME — $SOURCE)"
-            echo "$text"
-        elif [ -z "$CHAPTER" ]; then
-            # Show all chapters of book
-            echo -e "${GOLD}✝ $BOOK${NC} ($NAME)"
-            echo ""
-            while IFS=$'\t' read -r b c v text; do
-                [[ "$b" == "Book" ]] && continue
-                if [[ "$b" == "$BOOK" ]]; then
-                    echo -e "  ${CYAN}$c:$v${NC} $text"
-                fi
-            done < "$ACTIVE_FILE"
-        else
-            # Show specific chapter
-            echo -e "${GOLD}✝ $BOOK $CHAPTER${NC} ($NAME)"
-            echo ""
-            while IFS=$'\t' read -r b c v text; do
-                [[ "$b" == "Book" ]] && continue
-                if [[ "$b" == "$BOOK" && "$c" == "$CHAPTER" ]]; then
-                    echo -e "  ${CYAN}$v${NC} $text"
-                fi
-            done < "$ACTIVE_FILE"
-        fi
-        ;;
-
-    help|*)
+    help|--help|-h)
         echo -e "${GOLD}═══ alfred-bible-lang — The Word in Every Tongue ═══${NC}"
         echo ""
         echo "  alfred-bible-lang list           — Show available languages"
         echo "  alfred-bible-lang es              — Random verse in Spanish"
         echo "  alfred-bible-lang fr Jean 3       — John 3 in French"
+        echo "  alfred-bible-lang ro Ioan 3       — John 3 in Romanian (seed)"
         echo "  alfred-bible-lang he              — Random Hebrew verse"
         echo "  alfred-bible-lang gr              — Random Greek verse (LXX/NT seed)"
         echo "  alfred-bible-lang la Ioannes 3    — John 3 in Latin (seed)"
         echo "  alfred-bible-lang de Johannes 3   — John 3 in German (seed)"
         echo "  alfred-bible-lang zh 约翰福音 3     — John 3 in Chinese (seed)"
+        echo "  alfred-bible-lang zu Genesisi 1    — Genesis 1 in Zulu (seed)"
+        echo "  alfred-bible-lang am ዮሐንስ 3       — John 3 in Amharic (seed)"
         echo ""
         echo "  \"They began to speak with other tongues,"
         echo "   as the Spirit gave them utterance.\" — Acts 2:4"
+        ;;
+
+    *)
+        if ! grep -q "^${LANGUAGE}|" "$BIBLE_DIR/languages.conf" 2>/dev/null; then
+            echo "Language '${LANGUAGE}' not found. Run: alfred-bible-lang list" >&2
+            exit 1
+        fi
+        do_lookup "$LANGUAGE" "${2:-}" "${3:-}"
         ;;
 esac
 LANG
 chmod +x /usr/local/bin/alfred-bible-lang
 
+echo "[TONGUES-06] Desktop entry — public discovery on the ISO..."
+mkdir -p /usr/share/applications
+cat > /usr/share/applications/alfred-bible-tongues.desktop << 'DESKBT'
+[Desktop Entry]
+Name=Bible in Many Languages
+Comment=32 tongues offline (seed verses) — Acts 2:4; no Internet required
+Exec=x-terminal-emulator -e bash -c 'echo "══ Bible tongues (offline seeds) ══"; echo "List codes, then try a random verse or a book/chapter."; echo ""; alfred-bible-lang list; echo ""; echo "Try:  alfred-bible-lang es"; echo "      alfred-bible-lang ro Ioan 3"; echo "      alfred-bible tongues list"; echo ""; exec bash'
+Icon=accessories-dictionary
+Terminal=false
+Type=Application
+Categories=Education;Reference;
+Keywords=bible;scripture;languages;multilingual;tongues;romanian;spanish;i18n;
+DESKBT
+
 echo "╔═══════════════════════════════════════════════════════════╗"
 echo "║  [0292] Bible Tongues — COMPLETE                         ║"
-echo "║  ✓ English AKJV (full) + 13 seed tongues (es fr he +    ║"
-echo "║    Greek Latin German Portuguese Russian Chinese Japanese║"
-echo "║    Arabic Hindi Italian) — alfred-bible-lang list       ║"
+echo "║  ✓ English AKJV (full) + 31 seed tongues — list for codes ║"
+echo "║    (+ am yo ig ha zu xh af so tw Africa & diaspora) Acts 2:4 ║"
 echo "║  ✓ alfred-bible-lang — run: alfred-bible-lang list       ║"
 echo "║  They spoke with other tongues. — Acts 2:4               ║"
 echo "╚═══════════════════════════════════════════════════════════╝"
