@@ -10,7 +10,8 @@
 # Arabic (MSA + Darija / Egyptian / Levantine / Gulf vernacular seeds), Hindi,
 # Italian, Romanian, Polish, Ukrainian, Korean, Turkish, Dutch,
 # Vietnamese, Tagalog, Filipino, Urdu, Swahili, Amharic, Yoruba, Igbo, Hausa,
-# Zulu, Xhosa, Afrikaans, Somali, Twi, Jamaican Patwa, Haitian Creole, …); full texts may be added under
+# Zulu, Xhosa, Afrikaans, Somali, Twi, Jamaican Patwa, Haitian Creole, Indonesian,
+# Persian (Farsi), Burmese, …); full texts may be added under
 # /usr/share/alfred/bible/*.tsv later.
 #
 # BUILD: v7.77 Kingdom of God Edition
@@ -76,6 +77,9 @@ so|Soomaali|so-bible.tsv|Somali (public-domain samples)
 tw|Twi|tw-bible.tsv|Twi / Akan (public-domain samples)
 jam|Jamaican Patwa|jam-bible.tsv|Jamaica — Jamaican Creole (public-domain style samples)
 ht|Kreyòl ayisyen|ht-bible.tsv|Haitian Creole (public-domain style samples)
+id|Bahasa Indonesia|id-bible.tsv|Indonesian (public-domain style samples)
+fa|فارسی|fa-bible.tsv|Persian / Farsi (public-domain style samples)
+my|မြန်မာ|my-bible.tsv|Burmese / Myanmar (public-domain style samples)
 CONF
 
 # ═══════════════════════════════════════════════════
@@ -783,6 +787,60 @@ Filip	4	13	Mwen kapab fè tout bagay atravè moun ki bay m fòs la.
 Revelasyon	22	21	Gras Senyè nou Jezi Kri a ve ak nou tout. Amèn.
 SEED
 
+echo "[TONGUES-04ah] Indonesian (id) seed..."
+cat > "$BIBLE_DIR/id-bible-seed.tsv" << 'SEED'
+Book	Chapter	Verse	Text
+Kejadian	1	1	Pada mulanya Allah menciptakan langit dan bumi.
+Kejadian	1	2	Bumi itu belum berbentuk dan kosong; gelap gulita menutupi samudera raya, dan Roh Allah melayang-layang di atas permukaan air.
+Kejadian	1	3	Berfirman Allah: Jadilah terang. Lalu terang itu jadi.
+Mazmur	23	1	Nyanyian Daud: TUHAN adalah gembalaku, takkan kurang aku suatu apapun.
+Mazmur	23	2	Ia membaringkan aku di padang yang berumput hijau; Ia membimbing aku ke air yang tenang.
+Mazmur	23	3	Ia menyegarkan jiwaku; Ia menuntun aku ke jalan yang benar oleh karena nama-Nya.
+Mazmur	23	4	Sekalipun aku berjalan dalam lembah kelam, aku tidak akan takut bahaya, sebab Engkau bersertaku; tongkat-Mu dan gada-Mu, itulah yang menenangkan aku.
+Mazmur	91	1	Orang yang diam dalam naungan Yang Mahatinggi dan bermalam dalam bayangan Yang Mahakuasa.
+Yohanes	3	16	Karena begitu besar kasih Allah akan dunia ini, sehingga Ia telah mengaruniakan Anak-Nya yang Tunggal, supaya setiap orang yang percaya kepada-Nya tidak binasa, melainkan beroleh hidup yang kekal.
+Yohanes	14	6	Kata Yesus kepadanya: Akulah jalan dan kebenaran dan hidup; tidak ada seorang pun yang datang kepada Bapa, melainkan melalui Aku.
+Roma	8	28	Dan kita tahu, bahwa Allah turut bekerja dalam segala sesuatu untuk mendatangkan kebaikan bagi mereka yang mengasihi Dia.
+Filipi	4	13	Segala perkara dapat kutanggungkan di dalam Dia yang memberi kekuatan kepadaku.
+Wahyu	22	21	Kasih karunia Tuhan kita Yesus Kristus menyertai kamu sekalian! Amin.
+SEED
+
+echo "[TONGUES-04ai] Persian / Farsi (fa) seed..."
+cat > "$BIBLE_DIR/fa-bible-seed.tsv" << 'SEED'
+Book	Chapter	Verse	Text
+پیدایش	1	1	در آغاز، خدا آسمانها و زمین را آفرید.
+پیدایش	1	2	و زمین بی‌شکل و تهی بود و تاریکی بر روی لجه بود؛ و روح خدا بر روی آبها حرکت می‌کرد.
+پیدایش	1	3	و خدا فرمود: نور باشد؛ پس نور شد.
+مزامیر	23	1	مزمور داود: خداوند شبان من است؛ چیزی کم نخواهم داشت.
+مزامیر	23	2	مرا در چراگاههای سبز می‌خواباند و مرا کنار آبهای آرام رهبری می‌کند.
+مزامیر	23	3	جانم را تازه می‌سازد؛ مرا به راههای عدالت هدایت می‌کند، برای نام خودش.
+مزامیر	23	4	گرچه در میان دره سایهٔ مرگ راه بروم، از بدی نخواهم ترسید، زیرا تو با منی؛ عصا و چوب‌دستت مرا تسلّی می‌دهد.
+مزامیر	91	1	آنکه در پناه حضرت اعلی ساکن است، در سایهٔ قادر مطلق آرام می‌گیرد.
+یوحنا	3	16	زیرا خدا جهان را اینقدر محبت نمود که پسر یگانهٔ خود را داد تا هر که به او ایمان آورد هلاک نگردد، بلکه حیات ابدی یابد.
+یوحنا	14	6	عیسی گفت: من راه و راستی و حیات هستم؛ هیچ‌کس جز به وسیلهٔ من به پدر نمی‌آید.
+رومیان	8	28	و می‌دانیم که خدا برای کسانی که او را دوست دارند، همهٔ چیزها را برای خیر با هم همکاری می‌دهد.
+فیلیپیان	4	13	همهٔ چیز را در آن که مرا تقویت می‌کند توانا هستم.
+مکاشفه	22	21	فیض خداوند ما عیسی مسیح با همهٔ شما باد! آمین.
+SEED
+
+echo "[TONGUES-04aj] Burmese / Myanmar (my) seed..."
+cat > "$BIBLE_DIR/my-bible-seed.tsv" << 'SEED'
+Book	Chapter	Verse	Text
+ကမ္ဘာဦးကျမ်း	1	1	အစက ဘုရားသခင်သည် ကောင်းကင်နှင့်မြေကြီးကို ဖန်ဆင်းတော်မူ၏။
+ကမ္ဘာဦးကျမ်း	1	2	မြေကြီးသည် ပုံသဏ္ဌာန်မရှိဘဲ ဗလာဖြစ်လေသည်။ အမှောင်သည် ရေပြင်ပေါ်တွင် အုပ်ဆိုင်းလျက် ရှိခဲ့သည်။ ဘုရားသခင်၏ဝိညာဉ်သည် ရေပြင်ထက် လှုပ်ရှားလေသည်။
+ကမ္ဘာဦးကျမ်း	1	3	ဘုရားသခင်က မိန့်တော်မူလျှင် အလင်းဖြစ်စေတော်မူ၏။ အလင်းဖြစ်လာသည်။
+ဆာလမ်	23	1	ဒါဝိဒ်၏သီချင်း။ ထာဝရမြတ်သည် ကျွန်ုပ်ကို နေရာချထားသော မင်းဖြစ်တော်မူ၏၊ ကျွန်ုပ်မှာ မလိုအပ်ပါ။
+ဆာလမ်	23	2	မြက်ခင်းစိမ်းလန်း၍ ကျွန်ုပ်ကို အိပ်စေတော်မူ၏။ အေးဆေးတည်ငြိမ်သော ရေအိုင်ဆီသို့ ဦးဆောင်တော်မူ၏။
+ဆာလမ်	23	3	ကျွန်ုပ်၏ဝိညာဉ်ကို ပြန်လည်စေတော်မူ၏။ သူ၏နာမတော်ကြောင့် ဖြောင့်မတ်သောလမ်းများသို့ ဦးဆောင်တော်မူ၏။
+ဆာလမ်	23	4	သေခြင်းတောင်ကြားမှောင်ထုကို လျှောက်လာသော်လည်း ကျွန်ုပ်သည် မကောင်းမှုကို မကြောက်ရှာပါ၊ သင်သည် ကျွန်ုပ်နှင့်အတူရှိသောကြောင့် ဖြစ်သည်။ သင်၏တုတ်နှင့်ချိန်သည် ကျွန်ုပ်ကိုသိမ့်ကြသည်။
+ဆာလမ်	91	1	အမြင့်ဆုံးသူ၏အရိပ်အောက်တွင် နေထိုင်သောသူသည် ကြွားကြားသူ၏အရိပ်အောက်တွင် စံမြန်းလိမ့်မည်။
+ယောဟာန်	3	16	ဘာကြောင့်ဆိုသော ဘုရားသခင်သည် လောကကိုချစ်မြတ်သောကြောင့်၊ သူ၏တစ်ဦးတည်းသောသားကို ပေးတော်မူသည်နှင့်တကွ၊ ယုံကြည်သောသူတိုင်းသည် ပျက်မသွားဘဲ ထာဝရချမ်းသာကို ရစေခြင်းငှါ ဖြစ်သည်။
+ယောဟာန်	14	6	ယေရှုက ဖြေဆိုလေသည်။ ငါသည်လမ်း၊ သစ္စာနှင့် အသက်ဖြစ်၏၊ အဖအားထားသော်လက်မှ တစ်ပါးပါးသို့ မလာရကြပါ။
+ရောမ	8	28	မျက်မှောက်အားဖြင့် သူသည် ဘုရားကို ချစ်ကြသည်တို့အတွက် အားလုံးကောင်းစွာဖြစ်သည်ဟု ကျွန်ုပ်တို့သိကြ၏။
+ဖိလိပ္ပီ	4	13	ငါ၏အင်ကို ပြုတော်မူသည့်သူနှင့်အတူ ငါသည် အရာခပ်သိမ်းကို နိုင်၏။
+ဝိဝေဓခြင်း	22	21	ကျေးဇူးတော်မူသော သခင်ယေရှုခရစ္တလ်သည် သင်တို့အားလုံးနှင့်အတူရှိပါစေသော။ အာမီန။
+SEED
+
 # ═══════════════════════════════════════════════════
 # 5. BIBLE TONGUES CLI WRAPPER
 # ═══════════════════════════════════════════════════
@@ -898,6 +956,9 @@ case "$LANGUAGE" in
         echo "  Example: alfred-bible-lang fil \"Mga Taga-Filipos\" 4"
         echo "  Example: alfred-bible-lang jam John 3"
         echo "  Example: alfred-bible-lang ht Jan 3"
+        echo "  Example: alfred-bible-lang id Yohanes 3"
+        echo "  Example: alfred-bible-lang fa یوحنا 3"
+        echo "  Example: alfred-bible-lang my ယောဟာန် 3"
         echo "  Example: alfred-bible-lang ary یوحنا 3   — John 3 in Moroccan Darija (seed)"
         echo "  Example: alfred-bible-lang arz یوحنا 3  — John 3 in Egyptian Arabic (seed)"
         ;;
@@ -920,6 +981,9 @@ case "$LANGUAGE" in
         echo "  alfred-bible-lang fil \"Mga Taga-Filipos\" 4 — Philippians 4 in Filipino (seed)"
         echo "  alfred-bible-lang jam John 3       — John 3 in Jamaican Patwa (seed)"
         echo "  alfred-bible-lang ht Jan 3         — John 3 in Haitian Creole (seed)"
+        echo "  alfred-bible-lang id Yohanes 3     — John 3 in Indonesian (seed)"
+        echo "  alfred-bible-lang fa یوحنا 3       — John 3 in Persian (seed)"
+        echo "  alfred-bible-lang my ယောဟာန် 3     — John 3 in Burmese (seed)"
         echo "  alfred-bible-lang ary یوحنا 3      — John 3 in Moroccan Darija (seed)"
         echo "  alfred-bible-lang arz یوحنا 3     — John 3 in Egyptian Arabic (seed)"
         echo ""
@@ -943,19 +1007,19 @@ mkdir -p /usr/share/applications
 cat > /usr/share/applications/alfred-bible-tongues.desktop << 'DESKBT'
 [Desktop Entry]
 Name=Bible in Many Languages
-Comment=41 tongues offline (seed verses) — Acts 2:4; no Internet required
+Comment=44 tongues offline (seed verses) — Acts 2:4; no Internet required
 Exec=x-terminal-emulator -e bash -c 'echo "══ Bible tongues (offline seeds) ══"; echo "List codes, then try a random verse or a book/chapter."; echo ""; alfred-bible-lang list; echo ""; echo "Try:  alfred-bible-lang es"; echo "      alfred-bible-lang ro Ioan 3"; echo "      alfred-bible tongues list"; echo ""; exec bash'
 Icon=accessories-dictionary
 Terminal=false
 Type=Application
 Categories=Education;Reference;
-Keywords=bible;scripture;languages;multilingual;tongues;creole;haitian;kreyol;yiddish;romanian;spanish;i18n;
+Keywords=bible;scripture;languages;multilingual;tongues;indonesian;persian;farsi;burmese;creole;haitian;kreyol;yiddish;romanian;spanish;i18n;
 DESKBT
 
 echo "╔═══════════════════════════════════════════════════════════╗"
 echo "║  [0292] Bible Tongues — COMPLETE                         ║"
-echo "║  ✓ English AKJV (full) + 40 seed tongues — list for codes ║"
-echo "║    (+ ht Haitian Creole; yi Yiddish; ary arz apc afb; fil ur jam; Africa) Acts 2:4 ║"
+echo "║  ✓ English AKJV (full) + 43 seed tongues — list for codes ║"
+echo "║    (+ id fa my; ht yi; ary arz apc afb; fil ur jam; Africa) Acts 2:4 ║"
 echo "║  ✓ alfred-bible-lang — run: alfred-bible-lang list       ║"
 echo "║  They spoke with other tongues. — Acts 2:4               ║"
 echo "╚═══════════════════════════════════════════════════════════╝"
