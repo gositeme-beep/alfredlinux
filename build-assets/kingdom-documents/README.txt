@@ -24,5 +24,5 @@ reference corpora (e.g. Wikipedia / Kiwix .zim), prefer a second torrent or post
 bundle per docs/ISO-777-GiB-PLAN.txt — do not bloat the hybrid ISO past what you can
 boot-test unless you widen the size gate on purpose.
 
-After staging files, rebuild GA and run:
+After staging files, rebuild GA and run (from alfred-linux-v2 repo root; site mirror: build/scripts/):
   bash scripts/check-iso-777gib.sh path/to/your.iso
