@@ -1,0 +1,66 @@
+Alfred ISO / live-build (Docker lb) — risk register (forecast)
+===============================================================
+Maintainer intent: what has failed or can fail again, and what to check first.
+This is not a promise of completeness; update when new failure modes appear.
+
+(Law copy may also exist at …/law/alfred-build-control-plane/ISO-BUILD-RISK-REGISTER.txt)
+
+References
+----------
+  Inner driver:     scripts/lb-docker-inner-build.sh
+  Isolinux patch:   scripts/patch-live-build-isolinux-dangling.sh
+  Nap dashboard:    (local) …/law/alfred-build-control-plane/last-lb-docker.json
+  Host build log:   lb-docker-build.log (repo root / build tree)
+
+HIGH — likely or already seen
+-------------------------------
+1) binary_syslinux / isolinux / GNU cp
+   Symptom:  cp: not writing through dangling symlink 'chroot/root/isolinux/…'
+   Cause:    Stacked copies into chroot/root/${_BOOTLOADER}; cp refuses some symlink targets.
+   Mitigate: Prefer cp --remove-destination on those cp lines in live-build’s binary_syslinux,
+             or normalize the tree before the first copy. find -xtype l after first cp only
+             helps when dangling links exist at that moment and match GNU find’s -xtype l.
+
+2) Patching /usr/lib/live/build/binary_syslinux inside Docker
+   Symptom:  E: Unknown command: binary_syslinux
+   Cause:    /usr/bin/lb requires -x on the handler; mktemp+mv can drop +x (chmod +x after patch).
+   Mitigate: Keep chmod +x in patch script; if live-build package changes line text, patch may
+             no-op — watch for WARN from patch-live-build-isolinux-dangling.sh.
+
+3) Resume / partial binary stage
+   Symptom:  W: Skipping … already done then odd failure at binary_*.
+   Cause:    Stale stagefiles or half-written chroot/root/isolinux.
+   Mitigate: lb clean / remove build/chroot/binary as policy after a failed binary (time cost).
+
+4) docker --rm + watch / JSON
+   Symptom:  last-lb-docker.json stuck waiting; docker_exit unknown; duplicate watchers.
+   Mitigate: One watch per run; re-run watch if container already gone; supervise-lb-docker-nap.sh
+             for single-shot flow.
+
+5) Trixie chroot + Bookworm live-build host
+   Symptom:  Packaging or bootloader path surprises at binary_*.
+   Mitigate: Pin or document live-build version; test after Debian point releases.
+
+MEDIUM
+------
+6) Disk / I/O — full disk or slow array → apt or squashfs failures (opaque E: lines).
+7) Network / mirrors — intermittent apt during bootstrap or binary apt.
+8) Custom kernel 7.0.1 debs + hook 0050 — name / version drift breaks install expectations.
+9) lb config ordering — lb build without prior lb config → “config stage required first”
+   (mitigated in lb-docker-inner-build.sh).
+10) ABCP — two iso-docker jobs overlapping; use on-disk ABCP_DB (not /tmp sqlite).
+
+LOW — still painful
+-------------------
+11) Many chroot hooks — any can break on trixie package renames or missing paths (late E:).
+12) cryptsetup / dm-* messages in logs — often chroot noise; verify only if boot/crypto path fails.
+13) Wrong git commit on host vs expected — bind-mounted /work shows whatever is checked out.
+
+Quick triage table
+------------------
+  cp … dangling symlink under chroot/root/isolinux  → isolinux cp path (see HIGH #1).
+  Unknown command: binary_syslinux                  → +x / patch drift (HIGH #2).
+  JSON phase waiting forever                        → watcher / race (HIGH #4).
+  Skipping … already done + weird binary error     → resume state (HIGH #3).
+
+Last review: 2026-04-26 (from live-build Docker + lb log forensics in-session).
