@@ -26,6 +26,8 @@ echo "╚═══════════════════════�
 if dpkg-query -W -f '${binary:Package}\n' 2>/dev/null | grep -qE '^linux-image-7\.0\.1'; then
   VER=$(dpkg-query -W -f '${binary:Package} ${Version}\n' | grep -E '^linux-image-7\.0\.1' | head -1)
   echo "[0050] OK — linux-image-7.0.1* present: $VER"
+  echo "[0050] Same sovereign Alfred image also carries the Authorized King Jesus"
+  echo "[0050] Version (AKJV) under /usr/share/alfred/bible/ (hook 0290) — not embedded in vmlinux."
   exit 0
 fi
 

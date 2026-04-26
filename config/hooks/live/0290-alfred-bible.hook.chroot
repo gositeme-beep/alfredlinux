@@ -11,7 +11,7 @@ echo "║   but the word of our God will stand forever.' — Isaiah 40:8        
 echo "╚══════════════════════════════════════════════════════════════════════╝"
 
 ###############################################################################
-# 1. AKJV BIBLE — 94 books, 39,482 verses
+# 1. AKJV — Authorized King Jesus Version — 94 books, 39,482 verses
 ###############################################################################
 echo "[BIBLE] Installing the Authorized King Jesus Version..."
 BIBLE_DIR="/usr/share/alfred/bible"
@@ -59,7 +59,7 @@ show_verse() {
     local B="$1" C="$2" V="$3"
     if [ -n "$V" ]; then
         R=$(awk -F'\t' -v b="$B" -v c="$C" -v v="$V" 'tolower($1)==tolower(b)&&$2==c&&$3==v{print $4}' "$BIBLE")
-        [ -n "$R" ] && echo -e "\n${GOLD}  $B $C:$V${NC}\n  ${BOLD}$R${NC}\n" || echo -e "${RED}Not found: $B $C:$V${NC}"
+        [ -n "$R" ] && echo -e "\n${GOLD}  $B $C:$V${NC}\n  ${BOLD}$R${NC}\n  ${DIM}(AKJV — Authorized King Jesus Version)${NC}\n" || echo -e "${RED}Not found: $B $C:$V${NC}"
     elif [ -n "$C" ]; then
         echo -e "\n${GOLD}═══ $B — Chapter $C ═══${NC}\n"
         awk -F'\t' -v b="$B" -v c="$C" 'tolower($1)==tolower(b)&&$2==c{printf "  \033[38;5;220m%d\033[0m  %s\n",$3,$4}' "$BIBLE"
@@ -85,17 +85,17 @@ daily_verse() {
     echo -e "\n${GOLD}╔══════════════════════════════════════════╗${NC}"
     echo -e "${GOLD}║     Daily Verse — $(date +%B\ %d,\ %Y)        ║${NC}"
     echo -e "${GOLD}╚══════════════════════════════════════════╝${NC}"
-    echo -e "\n  ${BOLD}\"$t\"${NC}\n\n  ${GOLD}— $b $c:$v (AKJV)${NC}\n  ${DIM}Perez Family Edition${NC}\n"
+    echo -e "\n  ${BOLD}\"$t\"${NC}\n\n  ${GOLD}— $b $c:$v (AKJV — Authorized King Jesus Version)${NC}\n  ${DIM}Perez Family Edition${NC}\n"
 }
 
 random_verse() {
     local T=$(($(wc -l < "$BIBLE")-1)) L=$((RANDOM%T+2))
     IFS=$'\t' read -r b c v t <<< "$(sed -n "${L}p" "$BIBLE")"
-    echo -e "\n  ${BOLD}\"$t\"${NC}\n  ${GOLD}— $b $c:$v (AKJV)${NC}\n"
+    echo -e "\n  ${BOLD}\"$t\"${NC}\n  ${GOLD}— $b $c:$v (AKJV — Authorized King Jesus Version)${NC}\n"
 }
 
 list_books() {
-    echo -e "\n${GOLD}AKJV Bible — 94 Books — Perez Family Edition${NC}\n"
+    echo -e "\n${GOLD}AKJV — Authorized King Jesus Version — 94 Books — Perez Family Edition${NC}\n"
     awk -F'\t' 'NR>1{b[$1]++;c[$1" "$2]=1}END{for(x in b)printf "  %-25s %5d verses\n",x,b[x]}' "$BIBLE" | sort
 }
 

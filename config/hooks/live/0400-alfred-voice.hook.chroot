@@ -146,6 +146,11 @@ case "$lang" in
     ESPEAK=ja
     MSG=$'主があなたを祝福し、守られますように。主の御顔があなたの上に照り、恵みを与えられますように。主の霊がここにあります。アルフレッド・リナックス、神の国エディションへようこそ。私はアルフレッド、あなたの主権ある仲間です。主の霊があるところに、自由があります。'
     ;;
+  he|iw)
+    USE_K=0
+    ESPEAK=he
+    MSG="יהוה יברך אותך וישמרך. יאר יהוה פניו אליך ויחנך. רוח אדוני כאן. ברוכים הבאים לאלפרד לינוקס, מהדורת ממלכת האלוהים. אני אלפרד, המלווה הריבוני שלך. היכן שרוח אדוני שם חירות."
+    ;;
   en|*)
     USE_K=1
     ESPEAK=en-us
@@ -221,7 +226,7 @@ cat > /etc/skel/.config/autostart/alfred-welcome.desktop << 'DESK'
 [Desktop Entry]
 Type=Application
 Name=Alfred Welcome
-Comment=The Spirit of the Lord — first spoken welcome (Luke 4:18; 2 Cor 3:17)
+Comment=First spoken welcome — locale-aware TTS (Numbers 6 + Luke 4:18; 2 Cor 3:17)
 Exec=/usr/local/bin/alfred-welcome.sh
 Hidden=false
 X-GNOME-Autostart-enabled=true

@@ -152,6 +152,10 @@
   ── AI & LOCAL INTELLIGENCE (2 hooks) ───────────────────────────────────────
 
   • Ollama — local LLM inference engine (systemd, 127.0.0.1:11434)
+  • Groq Python SDK (groq) — call GroqCloud when you set GROQ_API_KEY; model IDs
+    change over time (see https://console.groq.com/docs/models). Reasoning-style
+    APIs include e.g. openai/gpt-oss-120b / gpt-oss-20b; Llama 4 Scout/Maverick
+    also ship on Groq — there is no single fixed “4.4” product version to pin.
   • Meilisearch v1.13.3 — local zero-tracking search engine
   • alfred-search CLI for indexing files, bookmarks, and documents
   • Only desktop OS with native AI agent harness
@@ -165,7 +169,7 @@
   • alfred-voice-doctor diagnostic CLI
   • First-boot spoken greeting — Aaronic blessing (Numbers 6:24–26) plus
     Spirit of the Lord (Luke 4:18; 2 Corinthians 3:17). Text + espeak-ng
-    voice follow LC_ALL / LC_MESSAGES / LANG (en, es, fr, de, it, pt, zh, ja);
+    voice follow LC_ALL / LC_MESSAGES / LANG (en, es, fr, de, it, pt, zh, ja, he);
     Kokoro is used only for English. Slower espeak pacing for clarity.
   Hook: 0400-alfred-voice (stage 2: 0900-alfred-voice-v2)
 
@@ -203,9 +207,12 @@
 
   ── THE WORD OF GOD — AKJV SACRED LIBRARY (8 hooks) ────────────────────────
 
-  • AKJV Bible — 94 books, 39,482 verses (TSV format)
+  • AKJV — Authorized King Jesus Version (same Alfred dataset as “AKJV” in
+    paths): 94 books, 39,482 verses (TSV). Installed with the sovereign image
+    under /usr/share/alfred/bible/ (not inside the kernel vmlinux).
   • 4 languages: English (AKJV), Spanish (Reina-Valera 1960),
-    French (Louis Segond 1910), Hebrew (Westminster Leningrad Codex)
+    French (Louis Segond 1910), Hebrew (Westminster Leningrad Codex — use
+    alfred-bible --lang he; Hebrew seeds from hook 0292)
   • Children's Bible — 33 illustrated stories
   • alfred-bible CLI with --lang support
   • Family Bible Generator — personalized covenant certificates,
@@ -259,7 +266,7 @@
 
   • Kingdom welcome dialog on first boot (zenity) — Scripture block is
     always English (Numbers 6, Luke 4:18, 2 Cor 3:17); title and intro/footer
-    follow locale for es, fr, de, pt (else English).
+    follow locale for es, fr, de, pt, he (else English).
   • System MOTD with Psalm 23:1, Spirit-of-the-Lord verses, build summary
   • Welcome.txt for non-believers — built in faith, built for everyone
   Hooks: 0700-alfred-welcome, 0701-alfred-stranger

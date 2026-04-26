@@ -87,6 +87,13 @@ model = "phi3:mini"
 # Set your API key: export ANTHROPIC_API_KEY=sk-ant-...
 # model = "claude-sonnet-4-20250514"
 
+# GroqCloud (optional cloud path — Python groq SDK is installed below).
+# There is no fixed product version "4.4"; model IDs rotate. Check current list:
+#   https://console.groq.com/docs/models
+# Reasoning-capable (see Groq "Reasoning" docs): e.g. openai/gpt-oss-120b, openai/gpt-oss-20b
+# Llama 4 on Groq: e.g. meta-llama/llama-4-scout-17b-16e-instruct, meta-llama/llama-4-maverick-17b-128e-instruct
+# Wire Omahon/your agent to https://api.groq.com/openai/v1 when your build adds a Groq provider; export GROQ_API_KEY.
+
 [memory]
 enabled = true
 path = "~/.local/share/omahon/memory.db"
@@ -132,6 +139,8 @@ if [ "$1" = "--status" ] || [ "$1" = "status" ]; then
     echo -n "Omahon:     " && (command -v omahon &>/dev/null && echo -e "${GREEN}INSTALLED${NC}" || echo -e "${RED}NOT FOUND${NC}")
     echo -n "Ollama:     " && (pgrep -x ollama &>/dev/null && echo -e "${GREEN}RUNNING${NC}" || echo -e "${RED}STOPPED${NC}")
     echo -n "Claude:     " && ([ -n "$ANTHROPIC_API_KEY" ] && echo -e "${GREEN}API KEY SET${NC}" || echo -e "${RED}NO API KEY${NC}")
+    echo -n "Groq SDK:   " && (python3 -c "import groq" 2>/dev/null && echo -e "${GREEN}groq (pip)${NC}" || echo -e "${RED}MISSING${NC}")
+    echo -n "Groq key:   " && ([ -n "${GROQ_API_KEY:-}" ] && echo -e "${GREEN}GROQ_API_KEY set${NC}" || echo -e "${CYAN}export GROQ_API_KEY for GroqCloud${NC}")
     echo ""
     echo -n "Models:     " && (ollama list 2>/dev/null | tail -n +2 | wc -l || echo "0") && echo " installed"
     echo -e "${GOLD}════════════════════════${NC}"
@@ -173,6 +182,7 @@ echo "[AI] Installing Python AI libraries..."
 pip3 install --break-system-packages --no-cache-dir \
     anthropic \
     openai \
+    groq \
     2>/dev/null || true
 
 # ── 5. Desktop Integration ──
@@ -186,7 +196,7 @@ Icon=applications-science
 Terminal=false
 Type=Application
 Categories=Development;Science;AI;
-Keywords=ai;agent;llm;omahon;claude;ollama;
+Keywords=ai;agent;llm;omahon;claude;ollama;groq;
 DESK
 
 cat > /usr/share/applications/ollama.desktop << 'DESK2'
