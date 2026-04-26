@@ -11,6 +11,9 @@ This folder mirrors the **small, copy-safe** operator files so Forge clones stay
   • `check-iso-777gib.sh` — size gate (~7.77 GiB binary); same as site `build/scripts/` copy.
   • `smoke-test-iso.sh` — runs check-iso + optional `VERIFY_SITE=1` verify (mirrors `/home/ubuntu/smoke-test-iso.sh` pattern in /reseal).
 
+Verify scripts inspect **on-disk** `downloads/` (symlink to iso-output is fine). They do not
+curl plain `/downloads/*.iso` — that must stay **denied** on the live vhost (`downloads/.htaccess`).
+
 After editing the canonical copies on the site repo, refresh these files here (or vice versa)
 before tagging a GA release.
 

@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 # GA ISO operator smoke — size gate (7.77 GiB binary) + optional site alignment check.
+# VERIFY_SITE=1 runs verify-ga-publish-alignment.sh (on-disk SUMS/torrent vs ga-release-state).
 # Typical deploy: copy to /home/ubuntu/smoke-test-iso.sh on the build host (see /reseal operator block).
 #
 # Usage:

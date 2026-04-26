@@ -2,6 +2,9 @@
 # Level-4 lite: compare on-disk GA artifacts with includes/ga-release-state.php.
 # Default: script lives in <site>/build/scripts → site root is ../..
 # From a Forge-only clone, set: ALFRED_SITE_ROOT=/path/to/alfredlinux.com/public_html
+#
+# Stat(1)s files under $ROOT/downloads/ — not HTTP. Live site denies plain GET *.iso
+# (downloads/.htaccess); bytes via /download (P2P) or downloads/iso.php?t=… after /covenant.
 set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 if [[ -n "${ALFRED_SITE_ROOT:-}" ]]; then
