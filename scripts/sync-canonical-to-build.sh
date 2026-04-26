@@ -11,8 +11,10 @@
 #   • ALFRED_FULL_BUILD_ASSETS=1 (set by lb-docker-inner-build.sh): full `rsync -a`
 #     merge (no --delete) so missing gitignored media on thin checkouts is preserved
 #     in build/includes.
-#   • Otherwise: rsync only hook-critical subtrees (bible, kingdom-documents, omahon,
-#     ollama) + root-level *.sh / *.py / *.txt / *.tar.gz — fast for CI and dev.
+#   • Otherwise (“fast”): rsync hook-heavy subtrees + **every file** at build-assets/
+#     depth 1 (preserves execute bit via cp -a: omahon, helm, rustup-init, keys,
+#     code-server*.deb, etc.) — still skips a full deep walk of huge gitignored trees
+#     unless you set ALFRED_FULL_BUILD_ASSETS=1.
 #
 # Usage (repo root):  bash scripts/sync-canonical-to-build.sh
 # Docker: lb-docker-inner-build.sh runs this before lb config.
@@ -54,17 +56,25 @@ if [[ -d build-assets ]]; then
     rsync -a "${ROOT}/build-assets/" "$dst/"
     echo "[sync-canonical] build-assets/ → includes/build-assets/ (FULL rsync)"
   else
-    for sub in bible kingdom-documents omahon ollama; do
+    # Subtrees hooks read often (dirs only — omahon/ollama may be single files at root).
+    for sub in bible kingdom-documents videos wallpapers music nodejs-20-debs; do
       if [[ -d "build-assets/${sub}" ]]; then
         mkdir -p "$dst/${sub}"
         rsync -a "build-assets/${sub}/" "$dst/${sub}/"
       fi
     done
-    shopt -s nullglob
-    for f in build-assets/*.sh build-assets/*.py build-assets/*.txt build-assets/*.tar.gz; do
-      [[ -f "$f" ]] || continue
-      install -m0644 "$f" "$dst/$(basename "$f")"
-    done
-    echo "[sync-canonical] build-assets/ (subtree + root artifacts → includes/build-assets/)"
+    # Every depth-1 file: binaries (omahon, helm, zoxide, starship, rustup-init…),
+    # keys, .deb, .tar.gz, placeholders — cp -a keeps +x.
+    while IFS= read -r -d '' f; do
+      cp -a "$f" "$dst/"
+    done < <(find "${ROOT}/build-assets" -maxdepth 1 -type f -print0)
+    echo "[sync-canonical] build-assets/ (FAST: media/dev subtrees + all root files)"
   fi
+fi
+
+# live-build `local/` hooks (repo root local/ → build/local) — keep in sync if present.
+if [[ -d local ]] && [[ -n "$(ls -A local 2>/dev/null)" ]]; then
+  mkdir -p build/local
+  rsync -a "${ROOT}/local/" "${ROOT}/build/local/"
+  echo "[sync-canonical] local/ → build/local/"
 fi

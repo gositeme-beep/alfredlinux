@@ -453,6 +453,7 @@
   From a clone (metadata drift): scripts/release-integrity.sh check-repo
     (bible_tongues vs 0292 languages.conf; api/version.json hooks must be 42.)
   Before `lb build`: scripts/sync-canonical-to-build.sh (see “ISO packs” above).
+  Staging gaps / optional binaries: docs/ISO-STAGING-SHIP-GAPS.txt
 
   Anyone can check before install:
     gpg --verify SHA256SUMS.asc SHA256SUMS && sha256sum -c SHA256SUMS

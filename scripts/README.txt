@@ -23,8 +23,10 @@ sync-canonical-to-build.sh
   **Full staging:** hooks + `config/package-lists/*.list.chroot` + `config/packages.chroot/*`
   + selective or full `build-assets/` → `build/config/includes.chroot/build-assets/`.
   Docker inner runs this with `ALFRED_FULL_BUILD_ASSETS=1` before `lb config`.
+  Also syncs repo `local/` → `build/local/` when present (live-build local hooks).
     bash scripts/sync-canonical-to-build.sh
     ALFRED_FULL_BUILD_ASSETS=1 bash scripts/sync-canonical-to-build.sh   # mirror all media
+  Ship-gap audit: docs/ISO-STAGING-SHIP-GAPS.txt
 
 release-integrity.sh
   After ISOs exist in one directory: SHA256SUMS + SHA512SUMS, then GPG-detached sign.
