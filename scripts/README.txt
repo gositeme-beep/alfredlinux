@@ -39,6 +39,7 @@ release-integrity.sh
 kernel-download-7.0.1.sh
   Downloads linux-7.0.1.tar.xz + patch-7.0.1.xz into ../kernel-7.0.1-work/ (or KERNEL_WORK=…).
   Does not compile. Then follow config/packages.chroot/README-KERNEL7.txt.
+  Kernel security scope + maintainer “best effort”: docs/KERNEL-7.0.1-SECURITY-MANIFEST.txt
 
 remote-apt-live-build.sh
   Run on Ubuntu builder as root (`sudo su -`) to apt install live-build stack.

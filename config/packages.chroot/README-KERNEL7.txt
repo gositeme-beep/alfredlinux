@@ -37,3 +37,7 @@ Runtime policy (on the ISO)
 - `/etc/apt/preferences.d/99alfred-no-debian-default-kernel` (from hook **0710**) blocks Debian
   meta-packages such as `linux-image-amd64` so `apt` / upgrades do not replace the Alfred kernel.
   Publish a new `linux-image-7.0.1*.deb` (and headers) when you ship kernel updates.
+
+Security manifest (scope + “do our best” — not a CVE-by-CVE claim)
+-----------------------------------------------------------------
+  See: `docs/KERNEL-7.0.1-SECURITY-MANIFEST.txt`
