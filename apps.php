@@ -4,8 +4,8 @@
  * Central hub for all Alfred ecosystem downloads.
  */
 $isoVersion = "7.77 GA";
-$isoFile    = "alfred-linux-7.77-ga-amd64-20260412.iso";
-$isoSize    = "~7.8 GB";
+$isoFile    = "alfred-linux-7.77-ga-intel-amd64-20260426.iso";
+$isoSize    = "~7.77 GiB";
 ?>
 <!DOCTYPE html>
 <html lang="en">
