@@ -1,0 +1,114 @@
+Alfred Linux / GoForge — infrastructure upgrade runbook (beat SaaS on merit)
+=============================================================================
+Last updated: 2026-04-26  
+Audience: operators hosting **GoForge** (Gitea / Forgejo–class) for Alfred Linux
+and related repos. This is **not** a theme pack: it is **runners + pipelines +
+artifacts** so CI can do real work (including optional **kernel-tree** jobs).
+
+──────────────────────────────────────────────────────────────────────────────
+0) What “upgrade” must mean
+──────────────────────────────────────────────────────────────────────────────
+  • **UI-only** forge upgrades do **not** replace workflows that **unpack Linux**
+    and run scanners. See docs/KERNEL-7.0.1-SUPPLY-CHAIN-AUDIT.txt (“bigger picture”).
+
+  • **Infrastructure upgrade** = capacity and ergonomics for **CI you define**:
+    - **act_runner** (or Woodpecker/Drone agents) with honest **disk / RAM / CPU**
+    - **Actions** (Gitea Actions / Forgejo Actions) enabled and **version-pinned**
+    - **Artifact storage** (built-in or S3/MinIO-compatible) with retention policy
+    - Optional **Git LFS** if you mirror large sources in git form
+    - Optional **second repository** for kernel-heavy jobs so Alfred stays fast
+
+  • **Competitive bar:** GitHub parity for **kernel-sized** and **release-integrity**
+    workloads is proven in **job logs + artifact hashes**, not slogans.
+
+──────────────────────────────────────────────────────────────────────────────
+1) Forge application — minimum feature / version posture
+──────────────────────────────────────────────────────────────────────────────
+  • Run a **supported** Forgejo or Gitea release; track **security advisories**
+    for your exact minor version.
+
+  • Enable **Actions** (or your chosen CI engine) in server config only after you
+    have **runner registration** and **network egress policy** decided (fork PRs,
+    outbound curl, secret scopes).
+
+  • Prefer **TLS everywhere**; separate **runner** network from public web if you
+    can (runner pulls from internal registry / git mirror).
+
+──────────────────────────────────────────────────────────────────────────────
+2) Runners (act_runner) — sizing for Alfred vs kernel
+──────────────────────────────────────────────────────────────────────────────
+  **Alfred integration repo (this tree)** — “lite” CI (default in repo):
+    • `scripts/security-audit.sh` + `sync-canonical-to-build.sh` checks
+    • Typical **ubuntu** VM: 2 vCPU, 4–8 GiB RAM, **10+ GiB** free disk after image
+    • Label e.g. `ubuntu-latest` mapped to your docker/VM runner
+
+  **Kernel mirror / heavy repo** (separate repo or manual dispatch only):
+    • Full `linux-7.0.1` tree extract + ccache: plan **≥ 40–60 GiB** free disk,
+      **8–16+ GiB** RAM for parallel `make` smoke jobs (team-dependent)
+    • Use a **dedicated runner pool** label, e.g. `kernel-heavy`, so Alfred PRs
+      never queue behind a kernel job
+
+  **Registration hygiene:** one runner identity per machine; rotate **runner tokens**
+    on compromise; do not reuse the same registration token across untrusted tenants.
+
+──────────────────────────────────────────────────────────────────────────────
+3) Workflows shipped in Alfred Linux (GoForge-native path)
+──────────────────────────────────────────────────────────────────────────────
+  • **GitHub:** `.github/workflows/security-audit.yml` (push/PR to main|master).
+
+  • **GoForge / Gitea Actions:** `.gitea/workflows/security-audit.yml` — same job
+    graph; enable Actions on the server and ensure `act_runner` picks up jobs.
+
+  If your forge only reads one path, symlink or duplicate the YAML until you
+  standardize on a single forge flavor.
+
+──────────────────────────────────────────────────────────────────────────────
+4) Artifacts, caches, and release linkage
+──────────────────────────────────────────────────────────────────────────────
+  • Publish **SARIF / logs / SBOM** as workflow **artifacts** on kernel jobs; link
+    **artifact digest** or checksum file in **release notes** next to ISO hashes.
+
+  • Configure **retention** so disks do not fill (kernel logs are large).
+
+  • Optional: **object storage** for Actions artifacts (S3-compatible) so web nodes
+    stay thin.
+
+──────────────────────────────────────────────────────────────────────────────
+5) Repository layout (recommended)
+──────────────────────────────────────────────────────────────────────────────
+  • **commander/alfredlinux.com** (or `alfred-linux-v2`) — hooks, live-build policy,
+    download-verify scripts, **lite CI** (this repo).
+
+  • **`linux-alfred-7.0`** (example name) — tag/branch of tree you build; **heavy CI**
+    only here; **no** silent replacement of the signed GA `.deb` without human policy.
+
+  • Release pipeline: build host (Option A) remains **signing authority** unless you
+    deliberately move signing into a controlled HSM + CI gate.
+
+──────────────────────────────────────────────────────────────────────────────
+6) Security knobs (short list)
+──────────────────────────────────────────────────────────────────────────────
+  • Restrict **fork PR** workflows to **read-only** secrets; use **environments**
+    for anything that can touch signing.
+
+  • Pin third-party actions to **commit SHA** when mirroring from GitHub.
+
+  • Audit **curl** egress from CI; kernel download job should only hit **cdn.kernel.org**
+    (or your internal mirror).
+
+──────────────────────────────────────────────────────────────────────────────
+7) Verify after upgrade
+──────────────────────────────────────────────────────────────────────────────
+  • Open a trivial PR → lite workflow **green** on GoForge.
+
+  • Manually dispatch a **kernel-heavy** workflow (when you add one) on a
+    `kernel-heavy` runner → artifact appears; disk headroom unchanged post-cleanup.
+
+  • Public transparency page: https://alfredlinux.com/security-kernel
+
+──────────────────────────────────────────────────────────────────────────────
+8) Related Alfred docs
+──────────────────────────────────────────────────────────────────────────────
+  • docs/KERNEL-7.0.1-SUPPLY-CHAIN-AUDIT.txt
+  • docs/KERNEL-7.0.1-SECURITY-MANIFEST.txt
+  • scripts/SECURITY-WAVES.txt (Wave 2 CI pointers)

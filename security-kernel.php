@@ -78,6 +78,7 @@ footer a{color:#6366f1;text-decoration:none;}
         <h2>GoForge — canonical technical documents (AGPL source)</h2>
         <p style="color:var(--dim);font-size:.92rem;margin-bottom:12px;">These are the same files shipped in the Alfred Linux repository; raw links follow the GoForge <code>…/raw/branch/main/docs/…</code> layout. If a link 404s after a rename, open the repo tree and browse <code>docs/</code>.</p>
         <div class="links">
+            <a href="<?= htmlspecialchars($forgeDocsRaw) ?>/GOFORGE-INFRASTRUCTURE-UPGRADE.txt">GoForge infrastructure upgrade</a>
             <a href="<?= htmlspecialchars($forgeDocsRaw) ?>/KERNEL-7.0.1-SECURITY-MANIFEST.txt">Security manifest</a>
             <a href="<?= htmlspecialchars($forgeDocsRaw) ?>/KERNEL-7.0.1-SUPPLY-CHAIN-AUDIT.txt">Supply-chain &amp; trojan-path audit</a>
             <a href="<?= htmlspecialchars($forgeDocsRaw) ?>/ISO-STAGING-SHIP-GAPS.txt">ISO staging ship gaps</a>
