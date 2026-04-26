@@ -1,15 +1,15 @@
 #!/bin/bash
 # ═══════════════════════════════════════════════════════════════
-# Alfred Linux v2.0-b4 — Voice (Kokoro TTS + Welcome Greeting)
+# Alfred Linux 7.77 — Voice (Kokoro TTS + Welcome Greeting)
 #
 # Installs Kokoro TTS for offline voice synthesis.
-# Alfred speaks on first boot.
-# BUILD: v2.0-b4 (Voice)
+# Alfred speaks on first boot — "The Spirit of the Lord" (Luke 4:18; 2 Cor 3:17).
+# BUILD: 7.77 (Voice — Spirit of the Lord greeting)
 # ═══════════════════════════════════════════════════════════════
 
 set +e  # Voice is optional — don't kill the build if TTS install fails
 
-echo "[Alfred Linux v2.0-b4] Installing Voice subsystem..."
+echo "[Alfred Voice 7.77] Installing Voice subsystem..."
 
 # ── 0. Ensure DNS works inside chroot ──
 if ! getent hosts deb.debian.org &>/dev/null 2>&1; then
@@ -86,8 +86,8 @@ VSDESK
 # ── 3. Create welcome script ──
 cat > /usr/local/bin/alfred-welcome.sh << 'WELCOME'
 #!/bin/bash
-# Alfred Linux — First Boot Welcome
-# Speaks a greeting via Kokoro TTS on first login
+# Alfred Linux — First Boot Welcome ("The Spirit of the Lord")
+# Speaks a greeting via Kokoro TTS on first login (Luke 4:18; 2 Corinthians 3:17).
 
 if [[ -f "$HOME/.alfred-welcomed" ]]; then
     exit 0
@@ -101,7 +101,11 @@ $VOICE_PYTHON -c "
 try:
     from kokoro import KPipeline
     pipe = KPipeline(lang_code='a')
-    generator = pipe('Welcome to Alfred Linux. I am Alfred, your AI companion. Everything here is sovereign. Everything here is yours.', voice='af_heart', speed=1.0)
+    msg = (
+        'The Spirit of the Lord is here. Welcome to Alfred Linux, Kingdom of God Edition. '
+        'I am Alfred, your sovereign companion. Where the Spirit of the Lord is, there is liberty.'
+    )
+    generator = pipe(msg, voice='af_heart', speed=1.0)
     import soundfile as sf
     for i, (gs, ps, audio) in enumerate(generator):
         sf.write('/tmp/alfred-welcome.wav', audio, 24000)
@@ -109,8 +113,9 @@ try:
 except Exception as e:
     print(f'Kokoro TTS failed: {e}')
     import subprocess
-    subprocess.run(['espeak-ng', '-w', '/tmp/alfred-welcome.wav', 
-        'Welcome to Alfred Linux. I am Alfred, your AI companion.'])
+    subprocess.run(['espeak-ng', '-w', '/tmp/alfred-welcome.wav',
+        'The Spirit of the Lord is here. Welcome to Alfred Linux, Kingdom of God Edition. '
+        'I am Alfred, your sovereign companion. Where the Spirit of the Lord is, there is liberty.'])
 " 2>/dev/null
 
 # Play the audio
@@ -130,7 +135,7 @@ cat > /etc/skel/.config/autostart/alfred-welcome.desktop << 'DESK'
 [Desktop Entry]
 Type=Application
 Name=Alfred Welcome
-Comment=Alfred greets you on first login
+Comment=The Spirit of the Lord — first spoken welcome (Luke 4:18; 2 Cor 3:17)
 Exec=/usr/local/bin/alfred-welcome.sh
 Hidden=false
 X-GNOME-Autostart-enabled=true
@@ -168,4 +173,4 @@ fi
 SAY
 chmod +x /usr/local/bin/alfred-say
 
-echo "[Alfred Linux v2.0-b4] Voice subsystem installed."
+echo "[Alfred Voice 7.77] Voice subsystem installed."

@@ -6,6 +6,10 @@
 #  The LORD make his face shine upon thee, and be gracious unto thee:
 #  The LORD lift up his countenance upon thee, and give thee peace."
 #                                              — Numbers 6:24-26
+#
+# "The Spirit of the Lord is upon me, because he hath anointed me to preach
+#  the gospel to the poor." — Luke 4:18 (AKJV)  |  "Where the Spirit of the
+#  Lord is, there is liberty." — 2 Corinthians 3:17
 # ═══════════════════════════════════════════════════════════════
 
 set -e
@@ -32,6 +36,10 @@ cat > /etc/motd << 'MOTD'
   ║                                                          ║
   ║   "The LORD is my shepherd; I shall not want."           ║
   ║                                  — Psalm 23:1            ║
+  ║                                                          ║
+  ║   "The Spirit of the Lord is upon me…" — Luke 4:18       ║
+  ║   "Where the Spirit of the Lord is, there is liberty."   ║
+  ║                                  — 2 Corinthians 3:17    ║
   ║                                                          ║
   ║   SOLI DEO GLORIA                                        ║
   ╚══════════════════════════════════════════════════════════╝
@@ -62,7 +70,7 @@ if command -v zenity >/dev/null 2>&1 && [[ -n "${DISPLAY:-}" ]]; then
   zenity --info \
     --title="✝ Welcome to the Kingdom of God Edition" \
     --width=560 \
-    --text="Welcome to Alfred Linux 7.77\nKingdom of God Edition\n\n✝  'The LORD bless thee, and keep thee:\n    The LORD make his face shine upon thee,\n    and be gracious unto thee.'\n                                    — Numbers 6:24-25\n\n♪  27 worship tracks are ready — open Kingdom Worship\n📖  39,482 Bible verses (AKJV) — type alfred-bible\n🔐  Kyber-1024 post-quantum encryption active\n🌐  Sovereign mesh network ready\n\nBuilt with love by Commander Danny William Perez\nand his daughter Eden, for the glory of God.\n\nSOLI DEO GLORIA"
+    --text="Welcome to Alfred Linux 7.77\nKingdom of God Edition\n\n✝  'The LORD bless thee, and keep thee:\n    The LORD make his face shine upon thee,\n    and be gracious unto thee.'\n                                    — Numbers 6:24-25\n\n✝  The Spirit of the Lord\n    'The Spirit of the Lord is upon me, because he hath anointed me to preach the gospel to the poor.'\n                                    — Luke 4:18\n    'Where the Spirit of the Lord is, there is liberty.'\n                                    — 2 Corinthians 3:17\n\n♪  27 worship tracks are ready — open Kingdom Worship\n📖  39,482 Bible verses (AKJV) — type alfred-bible\n🔐  Kyber-1024 post-quantum encryption active\n🌐  Sovereign mesh network ready\n\nBuilt with love by Commander Danny William Perez\nand his daughter Eden, for the glory of God.\n\nSOLI DEO GLORIA"
 fi
 
 # Play a gentle notification sound if possible
@@ -92,6 +100,6 @@ chmod 0644 /etc/xdg/autostart/alfred-first-boot.desktop
 echo "╔═══════════════════════════════════════════════════════════╗"
 echo "║  [0700] Kingdom Welcome — COMPLETE                        ║"
 echo "║  ✓ Kingdom MOTD replaces Debian default                   ║"
-echo "║  ✓ First-boot blessing with God's Word                    ║"
+echo "║  ✓ First-boot blessing — Numbers 6, Spirit of the Lord   ║"
 echo "║  ✓ Tool reminders (Bible, Worship, Mesh, Quantum)         ║"
 echo "╚═══════════════════════════════════════════════════════════╝"
