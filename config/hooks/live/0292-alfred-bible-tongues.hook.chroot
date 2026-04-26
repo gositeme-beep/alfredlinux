@@ -7,7 +7,8 @@
 #
 # Multilingual Bible: English (AKJV) plus seed tongues offline (Spanish,
 # French, Hebrew, Greek, Latin, German, Portuguese, Russian, Chinese, Japanese,
-# Arabic, Hindi, Italian, Romanian, Polish, Ukrainian, Korean, Turkish, Dutch,
+# Arabic (MSA + Darija / Egyptian / Levantine / Gulf vernacular seeds), Hindi,
+# Italian, Romanian, Polish, Ukrainian, Korean, Turkish, Dutch,
 # Vietnamese, Tagalog, Filipino, Urdu, Swahili, Amharic, Yoruba, Igbo, Hausa,
 # Zulu, Xhosa, Afrikaans, Somali, Twi, Jamaican Patwa, …); full texts may be added under
 # /usr/share/alfred/bible/*.tsv later.
@@ -45,7 +46,11 @@ pt|Português|pt-bible.tsv|Portuguese (public-domain samples)
 ru|Русский|ru-bible.tsv|Russian Synodal-style (public-domain samples)
 zh|中文|zh-bible.tsv|Chinese Union–style (public-domain samples)
 ja|日本語|ja-bible.tsv|Japanese (public-domain samples)
-ar|العربية|ar-bible.tsv|Arabic Van Dyke–style (public-domain samples)
+ar|العربية|ar-bible.tsv|Arabic (MSA — Van Dyke–style public-domain samples)
+ary|الدارجة المغربية|ary-bible.tsv|Moroccan Arabic Darija (colloquial samples; book names MSA)
+arz|مصري|arz-bible.tsv|Egyptian Arabic عامية (colloquial samples; book names MSA)
+apc|عربي شامي|apc-bible.tsv|Levantine Arabic (colloquial samples; book names MSA)
+afb|عربي خليجي|afb-bible.tsv|Gulf Arabic vernacular (colloquial samples; book names MSA)
 hi|हिन्दी|hi-bible.tsv|Hindi (public-domain samples)
 it|Italiano|it-bible.tsv|Italian Diodati-style (public-domain samples)
 ro|Română|ro-bible.tsv|Romanian (traditional evangelical samples)
@@ -256,6 +261,78 @@ Book	Chapter	Verse	Text
 رومية	8	28	ونعلم أن كل الأشياء تعمل معاً للخير للذين يحبون الله.
 فيلبي	4	13	كل أقدر عليه في المقويني.
 رؤيا	22	21	نعمة ربنا يسوع المسيح مع جميعكم. آمين.
+SEED
+
+echo "[TONGUES-04i2] Moroccan Arabic (Darija, ISO 639-3 ary) seed..."
+cat > "$BIBLE_DIR/ary-bible-seed.tsv" << 'SEED'
+Book	Chapter	Verse	Text
+التكوين	1	1	ف البداية، الله خلق السما والأرض.
+التكوين	1	2	الأرض كان خاوية وفاضية، والظلام كان على وجه الغمر، وروح الله كانت تتحرك فوق الماء.
+التكوين	1	3	قال الله: يكون النور. فكان النور.
+مزمور	23	1	مزمور لداود: الرب راعيّ ما نقصني والو.
+مزمور	23	2	كيرقدني ف مراع خضر، كيقربني ل جنب الما الساكت.
+مزمور	23	3	كيرد الروح ديالي، كيدلني ف طرق العدل من أجل سمويتو.
+مزمور	23	4	ولا مشيت ف وادي ظل الموت، ما نخافش الشر، حيت أنت معايا؛ عصاك وعكازك هما يسكنوني.
+مزمور	91	1	اللي كايسكن ف الخبيئة ديال العلي، كايبقى تحت ظل القدير.
+يوحنا	3	16	حيت الله حبّ الدنيا بزاف، عطى ولدو الوحيد، باش كل من يؤمن بيه ما يهلكش، يكون عندو الحياة د الأبد.
+يوحنا	14	6	قالو يسوع: أنا هو الطريق والحق والحياة؛ ما كاين حد كيجي عند الآب إلا بياّ.
+رومية	8	28	كنعلمو بلي كلشي كيخدم مع بعضو للخير ديال اللي كيحبو الله.
+فيلبي	4	13	كلشي نقدر عليه باللي كيقويني.
+رؤيا	22	21	نعمة ربنا يسوع المسيح معكم كاملين. آمين.
+SEED
+
+echo "[TONGUES-04i3] Egyptian Arabic (عامية, ISO 639-3 arz) seed..."
+cat > "$BIBLE_DIR/arz-bible-seed.tsv" << 'SEED'
+Book	Chapter	Verse	Text
+التكوين	1	1	في الأول خالق الله السماوات والأرض.
+التكوين	1	2	والأرض كانت فاضية وفاضية، والظلمة على وجه الغمر، وروح الله كان بيتحرك على الوش الماية.
+التكوين	1	3	وقال الله: يكون نور. فكان نور.
+مزمور	23	1	مزمور لداود: الرب راعيّ، فمش هينقصني حاجة.
+مزمور	23	2	بيحطني في مراعٍ خضرا، بيقودني جنب مية الراحة.
+مزمور	23	3	بيرد نفسي، بيقودني في سبل البرّ لأجل اسمه.
+مزمور	23	4	ولو مشيت في وادي ظل الموت، مش هخاف شر، لأنك أنت معايا؛ عصاك وعكّازك هما يعزّوني.
+مزمور	91	1	اللي ساكن في مستور العلي، هيستريح في ظل القدير.
+يوحنا	3	16	لأن الله حبّ العالم كده، إنه اداه ابنه الوحيد، عشان كل اللي يؤمن بيه ما يهلكش، لكن يكون له حياة أبدية.
+يوحنا	14	6	قال له يسوع: أنا هو الطريق والحق والحياة؛ ما فيش حد يجي للآب إلا بيّ.
+رومية	8	28	وعارفين إن كل حاجة بتشتغل مع بعض للخير لعشان اللي بيحبوا الله.
+فيلبي	4	13	أنا أقدر كل حاجة باللي بيقوّيني.
+رؤيا	22	21	نعمة ربنا يسوع المسيح تكون معاكم كلكم. آمين.
+SEED
+
+echo "[TONGUES-04i4] Levantine Arabic (شامي, ISO 639-3 apc) seed..."
+cat > "$BIBLE_DIR/apc-bible-seed.tsv" << 'SEED'
+Book	Chapter	Verse	Text
+التكوين	1	1	بالمبدأ خلق الله السماوات والأرض.
+التكوين	1	2	والأرض كانت فاضية وفاضية، وظلمة على تْسْر الهاوية، وروح الله كانت تتحرك فوق المي.
+التكوين	1	3	وقال الله: يصير نور. فصار نور.
+مزمور	23	1	مزمور لداود: الرب راعيّ، ما بينقصني شي.
+مزمور	23	2	بيخليني أرتاح بمراع خضرا، بيقودني جنب مي الراحة.
+مزمور	23	3	بيرد نفسي، بيقودني على سبل البرّ لأجل اسمو.
+مزمور	23	4	ولو مشيت بوادي ظل الموت، ما بخاف من الشر، لأنك أنت معي؛ عصاك وعكّازك هني يعزّوني.
+مزمور	91	1	اللي ساكن بمخبأ العلي، بيرتاح بظل القدير.
+يوحنا	3	16	لأن الله هيك أحبّ العالم، إنه بعث ابنو الوحيد، مشان كل يلي بيؤمن فيه ما يهلك، يكون عندو حياة أبدية.
+يوحنا	14	6	قال له يسوع: أنا هو الطريق والحق والحياة؛ ما في حدا بيجي للآب إلا مني.
+رومية	8	28	ونحن عارفين إنو كل شي عم يشتغل سوا للخير لعشان يلي بيحبوا الله.
+فيلبي	4	13	أنا بقدر كل شي باللي بيقوّيني.
+رؤيا	22	21	نعمة ربنا يسوع المسيح تكون معكم كلكم. آمين.
+SEED
+
+echo "[TONGUES-04i5] Gulf Arabic vernacular (ISO 639-3 afb) seed..."
+cat > "$BIBLE_DIR/afb-bible-seed.tsv" << 'SEED'
+Book	Chapter	Verse	Text
+التكوين	1	1	في البداية خلق الله السماوات والأرض.
+التكوين	1	2	والأرض كانت خالية وفاضية، والظلام على وجه الغمر، وروح الله يتحرك على وجه المياه.
+التكوين	1	3	وقال الله: تكون نور. فصار نور.
+مزمور	23	1	مزمور لداود: الرب راعي ما ينقصني شي.
+مزمور	23	2	يربضني في مراعٍ خضر، ويقودني إلى مياه الراحة.
+مزمور	23	3	يرد نفسي، يقودني في سبل البر لأجل اسمه.
+مزمور	23	4	ولو مشيت في وادي ظل الموت، ما أخاف شر لأنك أنت معي؛ عصاك وعكازك يعزوني.
+مزمور	91	1	الساكن في مستور العلي يرتاح في ظل القدير.
+يوحنا	3	16	لأن الله أحب العالم إلى هذا الحدّ إنه أعطى ابنه الوحيد، لكي لا يهلك كل من يؤمن به، بل تكون له الحياة الأبدية.
+يوحنا	14	6	قال له يسوع: أنا هو الطريق والحق والحياة؛ ما أحد يجي إلى الآب إلا بي.
+رومية	8	28	ونعلم أن كل الأشياء تعمل معاً للخير للذين يحبون الله.
+فيلبي	4	13	أنا أقدر كل شيء باللي يقواني.
+رؤيا	22	21	نعمة ربنا يسوع المسيح معكم كلكم. آمين.
 SEED
 
 echo "[TONGUES-04j] Hindi seed..."
@@ -779,6 +856,8 @@ case "$LANGUAGE" in
         echo "  Example: alfred-bible-lang ur یوحنا 3"
         echo "  Example: alfred-bible-lang fil \"Mga Taga-Filipos\" 4"
         echo "  Example: alfred-bible-lang jam John 3"
+        echo "  Example: alfred-bible-lang ary یوحنا 3   — John 3 in Moroccan Darija (seed)"
+        echo "  Example: alfred-bible-lang arz یوحنا 3  — John 3 in Egyptian Arabic (seed)"
         ;;
 
     help|--help|-h)
@@ -819,7 +898,7 @@ mkdir -p /usr/share/applications
 cat > /usr/share/applications/alfred-bible-tongues.desktop << 'DESKBT'
 [Desktop Entry]
 Name=Bible in Many Languages
-Comment=35 tongues offline (seed verses) — Acts 2:4; no Internet required
+Comment=39 tongues offline (seed verses) — Acts 2:4; no Internet required
 Exec=x-terminal-emulator -e bash -c 'echo "══ Bible tongues (offline seeds) ══"; echo "List codes, then try a random verse or a book/chapter."; echo ""; alfred-bible-lang list; echo ""; echo "Try:  alfred-bible-lang es"; echo "      alfred-bible-lang ro Ioan 3"; echo "      alfred-bible tongues list"; echo ""; exec bash'
 Icon=accessories-dictionary
 Terminal=false
@@ -830,8 +909,8 @@ DESKBT
 
 echo "╔═══════════════════════════════════════════════════════════╗"
 echo "║  [0292] Bible Tongues — COMPLETE                         ║"
-echo "║  ✓ English AKJV (full) + 34 seed tongues — list for codes ║"
-echo "║    (+ fil ur jam Jamaica; Africa set) Acts 2:4           ║"
+echo "║  ✓ English AKJV (full) + 38 seed tongues — list for codes ║"
+echo "║    (+ ary arz apc afb Arabic; fil ur jam; Africa set) Acts 2:4 ║"
 echo "║  ✓ alfred-bible-lang — run: alfred-bible-lang list       ║"
 echo "║  They spoke with other tongues. — Acts 2:4               ║"
 echo "╚═══════════════════════════════════════════════════════════╝"
