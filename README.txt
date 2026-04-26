@@ -510,6 +510,8 @@
   not “UI skin” upgrades): docs/GOFORGE-INFRASTRUCTURE-UPGRADE.txt
     Native Actions: .gitea/workflows/security-audit.yml and .forgejo/workflows/security-audit.yml
     (GitHub mirror: .github/workflows/security-audit.yml)
+    After editing the Gitea workflow: bash scripts/sync-forgejo-actions-yaml.sh
+    (CI fails on drift — first step in security-audit workflows.)
 
   Private witness (birth / family / Israel story) stays OUT of AGPL clones:
     ~/private-docs/COMMANDER-WITNESS.md

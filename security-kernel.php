@@ -101,6 +101,7 @@ footer a{color:#6366f1;text-decoration:none;}
 <footer>
     &copy; <?= date('Y') ?> <a href="https://gositeme.com">GoSiteMe Inc.</a> &mdash; Alfred Linux &middot; Open Source (AGPL-3.0)
     &middot; <a href="/apps">Apps</a> &middot; <a href="/verify">Verify</a>
+    &middot; <a href="/docs">Docs</a> &middot; <a href="/developers">Developers</a>
 </footer>
 
 <?php include __DIR__ . '/includes/shabbat-banner.php'; ?>
