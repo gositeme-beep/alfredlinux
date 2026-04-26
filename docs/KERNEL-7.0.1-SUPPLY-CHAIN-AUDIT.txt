@@ -77,3 +77,39 @@ Recommended next steps (outside this doc)
     hardening checklist; track **stable@** / CVE list for **7.0.y** and rebuild.
   • Sign **published** `linux-image-7.0.1*.deb` or publish **SBOM** + hashes next
     to ISO (already aligned with release-integrity story).
+
+──────────────────────────────────────────────────────────────────────────────
+The bigger picture: “upgrade GoForge” vs **where** kernel audit runs
+──────────────────────────────────────────────────────────────────────────────
+  **GoForge (Gitea/Forgejo-style forge)** does not, by itself, understand the Linux
+  kernel. What you “upgrade” for is usually **capacity to run CI** you define:
+  Actions / Woodpecker / Drone, **large runners** (disk + RAM), **artifact storage**,
+  and maybe **LFS** if you choose to host a kernel mirror in git form.
+
+  **Separation of repos (normal industry pattern):**
+    • **Alfred Linux** — OS hooks, live-build, policy (this tree). It **points at**
+      upstream tarballs and ships **policy + gates** (0050, 0160, download SHA256).
+    • **Kernel line** — millions of lines, huge `cc` graph. Most teams either:
+        (a) keep **`KERNEL_WORK`** on a **private build host** and run scanners there, or
+        (b) open a **second forge repo** (e.g. `linux-alfred-7.0`) that tracks a **tag
+        or branch** of the tree you build, and attach **heavy CI** only to that repo:
+        `make check`, `checkstack`, sparse, Smatch/Coccinelle smoke, reproducible
+        `allnoconfig`/`allyesconfig` spot checks, publish **SBOM** + signed `.deb`
+        artifacts back to Alfred’s release pipeline.
+
+  **What you were “not seeing”:** expecting the **Alfred** repo to contain or CI-scan
+  the full kernel is the wrong shape. The right shape is **two pipelines** (or one
+  pipeline with a **checkout step** that pulls linux into CI cache — still heavy):
+    1) **Transport + identity:** verified tarball (done in `kernel-download-7.0.1.sh`)
+       + optional **GPG** on `sha256sums.asc`.
+    2) **Source + build integrity:** runs **where the tree exists** (builder or
+       kernel-mirror repo CI), not implied by “upgrade forge UI” alone.
+
+  **Practical GoForge upgrade checklist** (if you want forge-driven audit):
+    • Enable / scale **CI runners** with **≥ free space for full `linux-7.0.1` tree +
+      ccache** and enough RAM for parallel `make`.
+    • Add a **workflow** on a **kernel mirror repo** (or scheduled job) that:
+      fetch verified tag → `make CHECK=check` subset or your distro’s checklist →
+      archive logs + SARIF if tools emit it.
+    • Keep **Alfred** CI **light** (hooks, metadata, small sync) so PRs stay fast;
+      link releases to **kernel job** artifact hashes in **COMMANDER** / release notes.
