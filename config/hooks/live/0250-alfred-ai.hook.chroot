@@ -92,9 +92,12 @@ model = "phi3:mini"
 
 # Optional cloud BACKUP — keys live in ~/.config/alfred/ai-providers.env (see
 # /usr/share/alfred/ai-providers.env.example). Uncomment when your Omahon build
-# exposes matching provider blocks (OpenAI-compatible URLs below).
+# exposes matching provider blocks. Verify current IDs at:
+#   https://docs.anthropic.com/en/docs/about-claude/models
+# Anthropic (Messages API — not OpenAI-compatible): ANTHROPIC_API_KEY
 # [providers.anthropic]
-# model = "claude-sonnet-4-20250514"
+# model = "claude-sonnet-4-6"   # balanced; or claude-opus-4-7 (strongest), claude-haiku-4-5-20251001 (fast)
+# Deprecated mid-2026: claude-sonnet-4-20250514, claude-opus-4-20250514 — migrate to Sonnet 4.6 / Opus 4.7
 # [providers.openai]          # base_url = "https://api.openai.com/v1"     OPENAI_API_KEY
 # [providers.together]      # base_url = "https://api.together.xyz/v1"   TOGETHER_API_KEY
 # [providers.groq]          # base_url = "https://api.groq.com/openai/v1" GROQ_API_KEY
@@ -121,8 +124,9 @@ cat > /usr/local/bin/alfred-ai << 'ALFRED_AI'
 # ═══════════════════════════════════════════════
 # alfred-ai — The sovereign intelligence gateway
 # ═══════════════════════════════════════════════
-# Routes: 1) Omahon  2) Ollama  3) optional Claude if ANTHROPIC_API_KEY
-# Optional keys for OpenAI, Together.ai, Groq, xAI Grok: ~/.config/alfred/ai-providers.env
+# Routes: 1) Omahon  2) Ollama  3) optional Claude CLI if ANTHROPIC_API_KEY
+# Optional keys (OpenAI, Together, Groq, xAI, Anthropic): ~/.config/alfred/ai-providers.env
+# Claude API model examples: claude-opus-4-7, claude-sonnet-4-6, claude-haiku-4-5-20251001
 # Run: alfred-ai keys   (shows template; copy, chmod 600, uncomment exports you need)
 
 RED='\033[0;31m'
@@ -143,7 +147,8 @@ if [[ "${1:-}" == "keys" || "${1:-}" == "--keys" ]]; then
     echo -e "${GOLD}═══ Optional cloud API keys (backup / enrichment) ═══${NC}"
     echo ""
     echo "  Primary path stays Omahon + Ollama on this machine."
-    echo "  Copy the template, restrict permissions, then uncomment only the providers you trust:"
+    echo "  Copy the template, restrict permissions, then uncomment only the providers you trust."
+    echo "  Anthropic: set ANTHROPIC_API_KEY — use model IDs in ~/.config/omahon/config.toml (see comments: Opus 4.7, Sonnet 4.6, Haiku 4.5)."
     echo ""
     echo "    mkdir -p ~/.config/alfred"
     echo "    cp /usr/share/alfred/ai-providers.env.example ~/.config/alfred/ai-providers.env"
@@ -168,7 +173,7 @@ if [ "$1" = "--status" ] || [ "$1" = "status" ]; then
     echo -n "Omahon:     " && (command -v omahon &>/dev/null && echo -e "${GREEN}INSTALLED${NC}" || echo -e "${RED}NOT FOUND${NC}")
     echo -n "Ollama:     " && (pgrep -x ollama &>/dev/null && echo -e "${GREEN}RUNNING${NC}" || echo -e "${RED}STOPPED${NC}")
     echo -e "${CYAN}Primary:${NC}   Omahon + Ollama (local, no keys required)"
-    echo -e "${CYAN}Backup:${NC}    Claude CLI if installed + ANTHROPIC_API_KEY set"
+    echo -e "${CYAN}Backup:${NC}    Claude CLI + ANTHROPIC_API_KEY (Claude model IDs in Omahon config.toml comments)"
     echo -n "Secrets file: " && { [[ -f "${HOME}/.config/alfred/ai-providers.env" ]] && echo -e "${GREEN}~/.config/alfred/ai-providers.env${NC}" || echo -e "${CYAN}none — run: alfred-ai keys${NC}"; }
     echo -n "ANTHROPIC:  " && ([ -n "${ANTHROPIC_API_KEY:-}" ] && echo -e "${GREEN}set${NC}" || echo -e "${CYAN}unset${NC}")
     echo -n "OPENAI:     " && ([ -n "${OPENAI_API_KEY:-}" ] && echo -e "${GREEN}set${NC}" || echo -e "${CYAN}unset${NC}")
@@ -241,8 +246,14 @@ cat > /usr/share/alfred/ai-providers.env.example << 'AIENVEX'
 # 3) chmod 600 ~/.config/alfred/ai-providers.env
 # 4) Uncomment only the exports you use. alfred-ai loads that file automatically.
 
-# --- Anthropic (Claude) — also used by alfred-ai fallback when local tools absent ---
+# --- Anthropic (Claude Messages API) — alfred-ai → Claude CLI when Omahon+Ollama absent ---
 #export ANTHROPIC_API_KEY=
+# Pick model in Omahon ~/.config/omahon/config.toml (skel ships commented examples).
+# Current API examples (verify on docs.anthropic.com — strings change per release):
+#   claude-opus-4-7              Claude Opus 4.7
+#   claude-sonnet-4-6            Claude Sonnet 4.6
+#   claude-haiku-4-5-20251001    Claude Haiku 4.5 (dated snapshot)
+# Aliases track latest snapshots; pin a dated model ID when you need stable behavior.
 
 # --- OpenAI (ChatGPT / API) ---
 #export OPENAI_API_KEY=

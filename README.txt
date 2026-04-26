@@ -157,7 +157,10 @@
   • Optional backup on disk: pip anthropic, openai, groq, together + Claude CLI
     if you set keys. Put exports in ~/.config/alfred/ai-providers.env (chmod 600);
     template at /usr/share/alfred/ai-providers.env.example; run alfred-ai keys or
-    alfred-ai status. OpenAI, Together.ai, Groq, xAI Grok, Anthropic — all optional.
+    alfred-ai status. Anthropic Claude API IDs (e.g. claude-opus-4-7,
+    claude-sonnet-4-6, claude-haiku-4-5-20251001) are documented there and in
+    /etc/skel/.config/omahon/config.toml — confirm current strings on Anthropic docs.
+    OpenAI, Together.ai, Groq, xAI Grok — all optional.
   • GPU hooks prefer local acceleration for Ollama when drivers allow (0275).
   • Meilisearch v1.13.3 — local zero-tracking search engine
   • alfred-search CLI for indexing files, bookmarks, and documents
@@ -214,13 +217,19 @@
     dataset as paths `akjv-*.tsv`): 94 books, 39,482 verses (TSV). Installed
     with the sovereign image under /usr/share/alfred/bible/ (not inside the
     kernel vmlinux).
-  • 14 Bible tongues in languages.conf: English (full AKJV on disk) plus
+  • 23 Bible tongues in languages.conf: English (full AKJV on disk) plus
     Spanish, French, Hebrew, Greek (LXX/NT samples), Latin (Vulgate-style
     samples), German, Portuguese, Russian, Chinese, Japanese, Arabic, Hindi,
-    Italian — each ships key verses under /usr/share/alfred/bible/*-seed.tsv
+    Italian, Romanian, Polish, Ukrainian, Korean, Turkish, Dutch, Vietnamese,
+    Tagalog, Swahili — key verses under /usr/share/alfred/bible/*-seed.tsv
     (offline). Read with: alfred-bible-lang list  then  alfred-bible-lang <code>
+  • On the live ISO / for the public: open the menu entry **Bible in Many
+    Languages** (Education), or run `alfred-bible-lang list` in any terminal,
+    then `alfred-bible-lang <code>` for a random seed verse (e.g. `es`, `ro`,
+    `uk`). Same discovery via `alfred-bible tongues list` (wraps the same tool).
+    English full text remains `alfred-bible read …` / AKJV Bible launcher.
   • Children's Bible — 33 illustrated stories
-  • alfred-bible CLI with --lang support
+  • alfred-bible CLI (AKJV) plus `alfred-bible tongues …` → alfred-bible-lang
   • Family Bible Generator — personalized covenant certificates,
     family tree template (4 generations), Kingdom seal, PDF output
   • Kingdom Album — "Jesus Christ The Light Our Universe"
@@ -397,6 +406,14 @@
   VERIFICATION — TRUST BUT VERIFY
 ═══════════════════════════════════════════════════════════════════════════════
 
+  No one — including any corporation — can be stopped from *making* a
+  modified .iso on their own machines. What keeps *you* safe is detecting
+  fakes: compare hashes to those published by Alfred Linux, and verify a
+  detached GPG signature made with the project key (only the holder of the
+  secret key can produce a valid .asc for the published SHA256SUMS file).
+  The Kingdom Covenant License and trademarks also forbid others from passing
+  off unofficial builds as authorized "Alfred Linux" releases.
+
   Verify your download before installing.
 
   AVAILABLE NOW:
@@ -404,11 +421,19 @@
 
   ONLINE:     https://alfredlinux.com/verify
 
-  PLANNED (not yet available):
-    SHA-512, BLAKE3, and GPG detached signature (.asc) will be published
-    before GA launch. Check the downloads page for updates.
+  Maintainer workflow (after building ISOs in one directory):
+    scripts/release-integrity.sh hash *.iso
+    scripts/release-integrity.sh sign
+    Publish SHA256SUMS, SHA512SUMS, and SHA256SUMS.asc next to the images.
 
-  GPG KEY (available for import — ISO signature pending):
+  Anyone can check before install:
+    gpg --verify SHA256SUMS.asc SHA256SUMS && sha256sum -c SHA256SUMS
+    (or: scripts/release-integrity.sh verify)
+
+  PLANNED (optional hardening): BLAKE3 line in SUM files; reproducible builds
+  so independent rebuilders can confirm bit-identical artifacts from source.
+
+  GPG KEY (import before verify):
     curl -fsSL https://alfredlinux.com/downloads/GPG-KEY.asc | gpg --import
 
 ═══════════════════════════════════════════════════════════════════════════════
