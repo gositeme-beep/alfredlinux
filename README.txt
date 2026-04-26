@@ -206,9 +206,10 @@
 
   ── THE WORD OF GOD — AKJV SACRED LIBRARY (8 hooks) ────────────────────────
 
-  • AKJV — Authorized King Jesus Version (same Alfred dataset as “AKJV” in
-    paths): 94 books, 39,482 verses (TSV). Installed with the sovereign image
-    under /usr/share/alfred/bible/ (not inside the kernel vmlinux).
+  • AKJV — Authorized King Jesus Version — Perez Family Edition (same
+    dataset as paths `akjv-*.tsv`): 94 books, 39,482 verses (TSV). Installed
+    with the sovereign image under /usr/share/alfred/bible/ (not inside the
+    kernel vmlinux).
   • 4 languages: English (AKJV), Spanish (Reina-Valera 1960),
     French (Louis Segond 1910), Hebrew (Westminster Leningrad Codex — use
     alfred-bible --lang he; Hebrew seeds from hook 0292)
