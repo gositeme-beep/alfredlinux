@@ -11,7 +11,7 @@
 # - Avahi/mDNS — local peer auto-discovery
 # - alfred-mesh CLI — join/leave/status/peers/discover
 #
-# BUILD: v4.0+ Kingdom Edition
+# BUILD: v7.77+ Kingdom Edition
 # ═══════════════════════════════════════════════════════════════
 set -e
 # Fix /tmp permissions (may be restricted by earlier hooks in chroot)
@@ -89,7 +89,7 @@ cat > /etc/avahi/services/alfred-mesh.service << 'AVAHI'
   <service>
     <type>_alfred-mesh._tcp</type>
     <port>22000</port>
-    <txt-record>version=4.0</txt-record>
+    <txt-record>version=7.77</txt-record>
     <txt-record>os=alfred-linux</txt-record>
   </service>
 </service-group>

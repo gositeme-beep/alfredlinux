@@ -189,7 +189,7 @@ cat > /etc/avahi/services/alfred.service << 'AVAHI'
     <type>_alfred._tcp</type>
     <port>8443</port>
     <txt-record>os=alfred-linux</txt-record>
-    <txt-record>version=4.1</txt-record>
+    <txt-record>version=7.77</txt-record>
   </service>
 </service-group>
 AVAHI
@@ -238,13 +238,13 @@ chmod +x /usr/local/bin/alfred-security-audit
 # ═══════════════════════════════════════════════════
 # 7. VERSION + BRANDING
 # ═══════════════════════════════════════════════════
-echo "4.1" > /etc/alfred-version
+echo "7.77" > /etc/alfred-version
 cat > /etc/alfred-release << 'REL'
 NAME="Alfred Linux"
-VERSION="4.1"
+VERSION="7.77"
 ID=alfred
 ID_LIKE=debian
-PRETTY_NAME="Alfred Linux 4.1 — The Sovereign Desktop"
+PRETTY_NAME="Alfred Linux 7.77 — Kingdom of God Edition"
 HOME_URL="https://alfredlinux.com"
 REL
 
@@ -256,7 +256,7 @@ cat > /etc/update-motd.d/10-alfred << 'MOTD'
 C='\033[0;36m'; G='\033[0;33m'; N='\033[0m'
 echo ""
 echo -e "${C}  ╔═══════════════════════════════════════════╗${N}"
-echo -e "${C}  ║${N}  ${G}A L F R E D   L I N U X${N}   v$(cat /etc/alfred-version 2>/dev/null || echo '4.1')        ${C}║${N}"
+echo -e "${C}  ║${N}  ${G}A L F R E D   L I N U X${N}   v$(cat /etc/alfred-version 2>/dev/null || echo '7.77')        ${C}║${N}"
 echo -e "${C}  ║${N}  Your computer. Your rules. Yours.        ${C}║${N}"
 echo -e "${C}  ╠═══════════════════════════════════════════╣${N}"
 echo -e "${C}  ║${N}  alfred-ai      → AI agent               ${C}║${N}"
