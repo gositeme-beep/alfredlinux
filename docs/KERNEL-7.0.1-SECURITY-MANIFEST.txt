@@ -40,6 +40,10 @@ What “do our best” **does** mean (Kingdom standard of care)
   6) **Transparency:** When the world asks, we point here + `README-KERNEL7.txt`
      + hooks — not a hidden process.
 
+  7) **Supply-chain audit (trojan / fetch path):** `docs/KERNEL-7.0.1-SUPPLY-CHAIN-AUDIT.txt`
+     — `kernel-download-7.0.1.sh` now **fails** if SHA256 of tarball/patch does not
+     match lines from `sha256sums.asc` on cdn.kernel.org (unless explicitly skipped).
+
 ──────────────────────────────────────────────────────────────────────────────
 In-repo pointers (enumerable today)
 ──────────────────────────────────────────────────────────────────────────────

@@ -1,0 +1,79 @@
+Alfred Linux — Kernel 7.0.1 supply-chain & “trojan” audit (repo scope)
+========================================================================
+Last reviewed: 2026-04-26  
+Scope: **This git repository only.** The upstream **linux-7.0.1** source tree is
+**not** vendored here; a full static analysis of Linus’s tree belongs on the
+build host after `tar xf` (sparse / coccinelle / your own SBOM), not in Alfred’s
+hooks repo alone.
+
+──────────────────────────────────────────────────────────────────────────────
+What we **cannot** prove from this repo
+──────────────────────────────────────────────────────────────────────────────
+  • No trojan / backdoor **inside** `vmlinux` or millions of lines of kernel
+    sources — those files are **not** committed.
+
+  • No guarantee that **future** tarballs at the same URL are unchanged (kernel.org
+    compromise) — that is an **organizational** trust boundary; we reduce **blind
+    byte trust** with checksum verification (below).
+
+──────────────────────────────────────────────────────────────────────────────
+Deep scan — **Alfred-controlled** kernel path (findings)
+──────────────────────────────────────────────────────────────────────────────
+  1) **Download URLs** (`scripts/kernel-download-7.0.1.sh`)
+     • Uses **HTTPS** `https://cdn.kernel.org/pub/linux/kernel/v7.x/` only — no
+       typosquat hosts found in-tree.
+     • **No** `curl … | sh` / `wget … | sh` on the kernel path.
+     • **Hardening added:** after fetch, **SHA256** of `linux-7.0.1.tar.xz` and
+       `patch-7.0.1.xz` is checked with **`sha256sum -c`** against lines extracted
+       from **`sha256sums.asc`** on the same CDN path. Mismatch **fails the script**
+       (skip only with `ALFRED_SKIP_KERNEL_SHA256_VERIFY=1`, loud WARN — not for
+       production ISO builds).
+     • **Optional stronger:** import kernel.org PGP keys and `gpg --verify
+       sha256sums.asc` before trusting extracted lines (maintainer procedure).
+
+  2) **Docker kernel build** (`scripts/kernel-docker-bindeb.sh`,
+     `scripts/kernel-docker-inner-bindeb.sh`)
+     • Bind-mounts **`KERNEL_WORK`** into `/work` — if the **host directory** is
+       writable by untrusted users, they could swap `linux-7.0.1.tar.xz` or
+       `docker-inner-bindeb.sh` **before** docker runs. Mitigation: **root-owned**
+       `kernel-7.0.1-work`, tight permissions, run from trusted CI.
+     • Inner script runs **`make … bindeb-pkg`** — supply chain is then **Debian
+       container + your tree**, not random curl from hooks.
+
+  3) **Host `bindeb-pkg` nohup** (`scripts/kernel-bindeb-pkg-nohup.sh`)
+     • If **`ALFRED_KERNEL_CONFIG`** unset, uses **`x86_64_defconfig`** — that is
+       **upstream generic**, not Alfred’s hardened `.config`; security **relevance**
+       is **Kconfig posture**, not malware. Prefer shipping Alfred’s `.config` for
+       reproducible hardening.
+
+  4) **`.deb` copy** (`scripts/copy-kernel-debs-to-chroot.sh`)
+     • Copies whatever matches `linux-image-7.0.1*.deb` from **`KERNEL_WORK`** —
+       trojan if **WORK** is poisoned. Same host-trust model as (2).
+
+  5) **Hooks**
+     • **0050** — version gate only (no fetch).
+     • **0160** — sysctl / audit / module policy (reduces exploitability; not
+       source scanning).
+     • **0166** — builds **liboqs / oqs-provider** from **staged tarballs** under
+       `/build-assets/` in chroot; those tarballs must be **trusted artifacts**
+       (verify upstream hashes for liboqs/oqs-provider releases separately).
+
+  6) **Gitignored binaries** (`config/packages.chroot/*.deb`)
+     • Not scanned by `git`; integrity is **organizational** (who built, where
+       copied). Pair with **published SHA256** for released ISO kernel debs.
+
+──────────────────────────────────────────────────────────────────────────────
+“Anything else dirty” — grep-style sweep (this repo)
+──────────────────────────────────────────────────────────────────────────────
+  • Kernel-related scripts: **no** `eval `, **no** `curl|sh`, **no** `http://`
+    kernel URLs in the paths above.
+  • Broader hook sweep for supply chain remains **`scripts/security-audit.sh`**
+    (Wave 2) on `config/hooks/live/*.hook.chroot`.
+
+──────────────────────────────────────────────────────────────────────────────
+Recommended next steps (outside this doc)
+──────────────────────────────────────────────────────────────────────────────
+  • On extracted `linux-7.0.1/`: `make checkstack` / sparse / your distro’s kernel
+    hardening checklist; track **stable@** / CVE list for **7.0.y** and rebuild.
+  • Sign **published** `linux-image-7.0.1*.deb` or publish **SBOM** + hashes next
+    to ISO (already aligned with release-integrity story).
