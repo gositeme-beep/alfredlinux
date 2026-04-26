@@ -22,10 +22,11 @@ and live-build configuration used to produce that ISO:**
   B) **Manifest honor:** the chroot received everything the **active profile**
      commits to install — `config/package-lists/*.list.chroot`, kernel debs and
      policy under `config/packages.chroot/` per `README-KERNEL7.txt`, and **every
-     hook file** under `config/hooks/live/*.hook.chroot` was copied into
-     `build/config/hooks/` by `scripts/sync-hooks-to-build.sh` (or the Docker
-     inner driver, which runs that script before `lb config`) so no billed Alfred
-     stage was left out because the build tree had gone stale.
+     hook file** under `config/hooks/live/*.hook.chroot` was staged into
+     `build/config/hooks/` by `scripts/sync-canonical-to-build.sh` (Docker inner
+     runs it with `ALFRED_FULL_BUILD_ASSETS=1` before `lb config`), together with
+     `config/package-lists/`, `config/packages.chroot/`, and `build-assets/` into
+     `build/config/` so no billed Alfred stage or package list drifted stale.
 
   C) **Integrity in the user’s hands:** published hashes match the bytes on
      disk; the verification flow in `README.txt` (gpg + sha256sum -c) detects
@@ -41,7 +42,8 @@ can violate the covenant if ignored. Update it whenever a new failure mode appea
 
 References
 ----------
-  Hook sync:        scripts/sync-hooks-to-build.sh  (full `config/hooks/live` → `build/config/hooks`)
+  Staging (full):   scripts/sync-canonical-to-build.sh  (hooks + lists + packages.chroot + build-assets)
+  Hooks-only:       scripts/sync-hooks-to-build.sh
   Inner driver:     scripts/lb-docker-inner-build.sh
   Isolinux patch:   scripts/patch-live-build-isolinux-dangling.sh
   Nap dashboard:    (local) …/law/alfred-build-control-plane/last-lb-docker.json
@@ -94,10 +96,12 @@ LOW — still painful
 12) cryptsetup / dm-* messages in logs — often chroot noise; verify only if boot/crypto path fails.
 13) Wrong git commit on host vs expected — bind-mounted /work shows whatever is checked out.
 
-14) Stale `build/config/hooks/*.hook.chroot` — ISO omits new work under
-    `config/hooks/live/` (historically caused “subset” drift vs the repo).
-    Mitigate: always run `bash scripts/sync-hooks-to-build.sh` before `lb config`
-    on the host; Docker inner runs it automatically.
+14) Stale `build/config/` — hooks, `alfred.list` / `alfred-b2.list`, kernel debs in
+    `packages.chroot/`, or `includes.chroot/build-assets/` no longer match repo
+    `config/*` + `build-assets/` (silent drift vs what engineers thought they shipped).
+    Mitigate: run `bash scripts/sync-canonical-to-build.sh` before `lb config` on
+    the host (use `ALFRED_FULL_BUILD_ASSETS=1` when mirroring all media); Docker
+    inner runs full staging automatically.
 
 Quick triage table
 ------------------

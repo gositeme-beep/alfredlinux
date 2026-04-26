@@ -16,10 +16,15 @@ iso-preflight.sh
   unless you maintain an executable `build/auto/config` script.
 
 sync-hooks-to-build.sh
-  Copies **all** `config/hooks/live/*.hook.chroot` into `build/config/hooks/` so the
-  ISO matches the canonical tree (kernel7, chess, voice-v2, 0720/0721, etc.). Run on
-  the host before `lb config` if not using Docker inner (which runs this for you).
+  Hooks only: `config/hooks/live/*.hook.chroot` → `build/config/hooks/`.
     bash scripts/sync-hooks-to-build.sh
+
+sync-canonical-to-build.sh
+  **Full staging:** hooks + `config/package-lists/*.list.chroot` + `config/packages.chroot/*`
+  + selective or full `build-assets/` → `build/config/includes.chroot/build-assets/`.
+  Docker inner runs this with `ALFRED_FULL_BUILD_ASSETS=1` before `lb config`.
+    bash scripts/sync-canonical-to-build.sh
+    ALFRED_FULL_BUILD_ASSETS=1 bash scripts/sync-canonical-to-build.sh   # mirror all media
 
 release-integrity.sh
   After ISOs exist in one directory: SHA256SUMS + SHA512SUMS, then GPG-detached sign.

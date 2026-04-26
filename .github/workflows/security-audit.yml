@@ -13,14 +13,20 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Kingdom hooks sync (config/hooks/live → build/config/hooks)
+      - name: Canonical → build (hooks + lists + packages.chroot + build-assets)
         run: |
-          mkdir -p build/config/hooks
-          bash scripts/sync-hooks-to-build.sh
+          mkdir -p build/config/hooks build/config/package-lists build/config/packages.chroot \
+            build/config/includes.chroot/build-assets
+          bash scripts/sync-canonical-to-build.sh
           for f in config/hooks/live/*.hook.chroot; do
             b=$(basename "$f")
-            test -f "build/config/hooks/$b" || { echo "missing after sync: $b" >&2; exit 1; }
+            test -f "build/config/hooks/$b" || { echo "missing hook after sync: $b" >&2; exit 1; }
           done
+          for f in config/package-lists/*.list.chroot; do
+            b=$(basename "$f")
+            test -f "build/config/package-lists/$b" || { echo "missing package list after sync: $b" >&2; exit 1; }
+          done
+          cmp -s config/package-lists/alfred.list.chroot build/config/package-lists/alfred.list.chroot
 
       - name: Repo metadata (bible_tongues vs languages.conf)
         run: bash scripts/release-integrity.sh check-repo

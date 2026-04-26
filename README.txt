@@ -46,12 +46,14 @@
   42 hooks — one for each generation from Abraham to Christ (Matthew 1:17).
   Kingdom count is always 42; some numbered stages split across multiple
   `*.hook.chroot` files under `config/hooks/live/` (merge shards — do not add
-  to the 42). **ISO packs:** before every `lb build`, run
-  `bash scripts/sync-hooks-to-build.sh` (Docker `lb-docker-inner-build.sh` does
-  this automatically) so `build/config/hooks/` receives **every** canonical hook
-  from `config/hooks/live/` — kernel7 (0050), chess (0810), voice-v2 (0900),
-  sacred rest / still voice / silence (0720/0721), and the rest — no stale
-  subset left in the build tree.
+  to the 42).   **ISO packs:** before every `lb build`, run
+  `bash scripts/sync-canonical-to-build.sh` (Docker `lb-docker-inner-build.sh`
+  does this with `ALFRED_FULL_BUILD_ASSETS=1`) so `build/config/` receives the
+  full canonical surface: **hooks** from `config/hooks/live/`, **package lists**
+  from `config/package-lists/` (incl. `alfred-b2`), **local .deb** payloads from
+  `config/packages.chroot/`, and **build-assets** into `includes.chroot/` (full
+  tree in Docker; subtree-only for fast local/CI — export `ALFRED_FULL_BUILD_ASSETS=1`
+  locally when you need every media byte mirrored before `lb`).
   2 package lists, 1,200+ installed packages, and 100+ curated applications.
   Frozen v7.77 GA ISO (2026-04-12) shipped a lean chroot once; **current policy**
   is full-tree hook sync for the next GA pack so the image matches the repo.
@@ -450,6 +452,7 @@
 
   From a clone (metadata drift): scripts/release-integrity.sh check-repo
     (bible_tongues vs 0292 languages.conf; api/version.json hooks must be 42.)
+  Before `lb build`: scripts/sync-canonical-to-build.sh (see “ISO packs” above).
 
   Anyone can check before install:
     gpg --verify SHA256SUMS.asc SHA256SUMS && sha256sum -c SHA256SUMS
