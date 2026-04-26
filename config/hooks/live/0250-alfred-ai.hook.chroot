@@ -11,6 +11,12 @@
 #  and man became a living soul." — Genesis 2:7
 #
 # Omahon = the breath. Alfred Linux = the living soul.
+#
+# Sovereign profile: no cloud inference, no third-party API keys — only
+# Omahon + Ollama on 127.0.0.1. Models and memory evolve on your machine
+# (local GPU when present — see hook 0275). Offline-capable once weights
+# are present; air-gap friendly when binaries are pre-staged in build-assets.
+# One with the Lord — His breath first; silicon serves the household.
 # ═══════════════════════════════════════════════════════════════
 set -e
 
@@ -83,17 +89,6 @@ default = "ollama"
 base_url = "http://localhost:11434"
 model = "phi3:mini"
 
-[providers.anthropic]
-# Set your API key: export ANTHROPIC_API_KEY=sk-ant-...
-# model = "claude-sonnet-4-20250514"
-
-# GroqCloud (optional cloud path — Python groq SDK is installed below).
-# There is no fixed product version "4.4"; model IDs rotate. Check current list:
-#   https://console.groq.com/docs/models
-# Reasoning-capable (see Groq "Reasoning" docs): e.g. openai/gpt-oss-120b, openai/gpt-oss-20b
-# Llama 4 on Groq: e.g. meta-llama/llama-4-scout-17b-16e-instruct, meta-llama/llama-4-maverick-17b-128e-instruct
-# Wire Omahon/your agent to https://api.groq.com/openai/v1 when your build adds a Groq provider; export GROQ_API_KEY.
-
 [memory]
 enabled = true
 path = "~/.local/share/omahon/memory.db"
@@ -115,11 +110,10 @@ cat > /usr/local/bin/alfred-ai << 'ALFRED_AI'
 # ═══════════════════════════════════════════════
 # alfred-ai — The sovereign intelligence gateway
 # ═══════════════════════════════════════════════
-# Routes to the best available AI:
-#   1. Omahon (local agent harness — always preferred)
-#   2. Claude Code (if API key set)
-#   3. Ollama direct (if running)
-#   4. Helpful error with setup instructions
+# Routes to local sovereign AI only:
+#   1. Omahon (local agent harness — preferred)
+#   2. Ollama direct (127.0.0.1 — if Omahon absent)
+#   3. Helpful error (pull a model, pre-stage binaries, or use air-gapped media)
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -138,9 +132,7 @@ if [ "$1" = "--status" ] || [ "$1" = "status" ]; then
     echo -e "${GOLD}═══ Alfred AI Status ═══${NC}"
     echo -n "Omahon:     " && (command -v omahon &>/dev/null && echo -e "${GREEN}INSTALLED${NC}" || echo -e "${RED}NOT FOUND${NC}")
     echo -n "Ollama:     " && (pgrep -x ollama &>/dev/null && echo -e "${GREEN}RUNNING${NC}" || echo -e "${RED}STOPPED${NC}")
-    echo -n "Claude:     " && ([ -n "$ANTHROPIC_API_KEY" ] && echo -e "${GREEN}API KEY SET${NC}" || echo -e "${RED}NO API KEY${NC}")
-    echo -n "Groq SDK:   " && (python3 -c "import groq" 2>/dev/null && echo -e "${GREEN}groq (pip)${NC}" || echo -e "${RED}MISSING${NC}")
-    echo -n "Groq key:   " && ([ -n "${GROQ_API_KEY:-}" ] && echo -e "${GREEN}GROQ_API_KEY set${NC}" || echo -e "${CYAN}export GROQ_API_KEY for GroqCloud${NC}")
+    echo -e "${CYAN}Profile:${NC}    sovereign-local (no cloud API keys in default path)"
     echo ""
     echo -n "Models:     " && (ollama list 2>/dev/null | tail -n +2 | wc -l || echo "0") && echo " installed"
     echo -e "${GOLD}════════════════════════${NC}"
@@ -155,8 +147,6 @@ fi
 
 if command -v omahon &>/dev/null; then
     exec omahon "$@"
-elif command -v claude &>/dev/null && [ -n "$ANTHROPIC_API_KEY" ]; then
-    exec claude "$@"
 elif command -v ollama &>/dev/null; then
     echo -e "${CYAN}Omahon not installed. Using Ollama directly.${NC}"
     echo -e "${CYAN}For the full agent experience: sudo apt install omahon${NC}"
@@ -166,37 +156,30 @@ elif command -v ollama &>/dev/null; then
         exec ollama run phi3:mini
     fi
 else
-    echo -e "${RED}No AI tools available.${NC}"
+    echo -e "${RED}No local AI tools available.${NC}"
     echo ""
-    echo "Install options:"
-    echo "  1. Pull a model:  alfred-ai pull"
-    echo "  2. Set Claude key: export ANTHROPIC_API_KEY=sk-ant-..."
+    echo "Sovereign setup (no cloud keys):"
+    echo "  • Pre-stage /build-assets/omahon and ollama in the live-build tree, or"
+    echo "  • Run alfred-ai pull once when you have connectivity to fetch phi3:mini, or"
+    echo "  • Copy Ollama model blobs into /usr/share/ollama/models from removable media."
     echo ""
     exit 1
 fi
 ALFRED_AI
 chmod +x /usr/local/bin/alfred-ai
 
-# ── 4. Python AI Libraries ──
-echo "[AI] Installing Python AI libraries..."
-pip3 install --break-system-packages --no-cache-dir \
-    anthropic \
-    openai \
-    groq \
-    2>/dev/null || true
-
-# ── 5. Desktop Integration ──
+# ── 4. Desktop Integration ──
 echo "[AI] Creating desktop entries..."
 cat > /usr/share/applications/alfred-ai.desktop << 'DESK'
 [Desktop Entry]
 Name=Alfred AI
-Comment=Sovereign AI Agent — talk to your computer
+Comment=Sovereign local AI — Omahon + Ollama (no cloud keys)
 Exec=xfce4-terminal -e "alfred-ai"
 Icon=applications-science
 Terminal=false
 Type=Application
 Categories=Development;Science;AI;
-Keywords=ai;agent;llm;omahon;claude;ollama;groq;
+Keywords=ai;agent;llm;omahon;ollama;local;sovereign;offline;
 DESK
 
 cat > /usr/share/applications/ollama.desktop << 'DESK2'
@@ -210,13 +193,13 @@ Type=Application
 Categories=Development;Science;AI;
 DESK2
 
-# ── 6. First-boot AI setup hint ──
+# ── 5. First-boot AI setup hint ──
 mkdir -p /etc/skel/.config/autostart
 cat > /etc/skel/.config/autostart/alfred-ai-hint.desktop << 'HINT'
 [Desktop Entry]
 Type=Application
 Name=Alfred AI Setup
-Exec=bash -c 'if [ ! -f ~/.alfred-ai-setup-done ]; then notify-send "Alfred AI" "Type alfred-ai in terminal to meet your AI agent. Run alfred-ai pull to download a local model." -i applications-science; touch ~/.alfred-ai-setup-done; fi'
+Exec=bash -c 'if [ ! -f ~/.alfred-ai-setup-done ]; then notify-send "Alfred AI" "Local sovereign path: alfred-ai (Omahon + Ollama on this machine). No cloud API keys. Add models via alfred-ai pull when online once, or copy blobs from trusted media." -i applications-science; touch ~/.alfred-ai-setup-done; fi'
 Hidden=false
 NoDisplay=true
 X-GNOME-Autostart-enabled=true

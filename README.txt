@@ -151,11 +151,10 @@
 
   ── AI & LOCAL INTELLIGENCE (2 hooks) ───────────────────────────────────────
 
-  • Ollama — local LLM inference engine (systemd, 127.0.0.1:11434)
-  • Groq Python SDK (groq) — call GroqCloud when you set GROQ_API_KEY; model IDs
-    change over time (see https://console.groq.com/docs/models). Reasoning-style
-    APIs include e.g. openai/gpt-oss-120b / gpt-oss-20b; Llama 4 Scout/Maverick
-    also ship on Groq — there is no single fixed “4.4” product version to pin.
+  • Ollama — local LLM inference engine (systemd, 127.0.0.1:11434); models and
+    Omahon memory stay on disk — self-contained, no vendor API keys in the
+    default Alfred path (air-gap friendly when binaries are pre-staged).
+  • GPU hooks prefer local acceleration for Ollama when drivers allow (0275).
   • Meilisearch v1.13.3 — local zero-tracking search engine
   • alfred-search CLI for indexing files, bookmarks, and documents
   • Only desktop OS with native AI agent harness
