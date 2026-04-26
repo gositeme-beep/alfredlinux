@@ -10,8 +10,8 @@ apt-get install -y --no-install-recommends \
   live-build debootstrap cdebootstrap ca-certificates cpio wget gnupg \
   rsync xz-utils bzip2 gzip file
 
-# Debian trixie chroot + bookworm live-build: binary_syslinux stacked cp into chroot/root/isolinux
-# can hit GNU cp refusing dangling symlinks — patched after first cp (see patch-live-build-isolinux-dangling.sh).
+# Debian trixie chroot + bookworm live-build: binary_syslinux cp into chroot/root/isolinux can fail on
+# dangling symlinks — patch adds GNU cp --remove-destination (see patch-live-build-isolinux-dangling.sh).
 bash /work/scripts/patch-live-build-isolinux-dangling.sh
 
 cd /work/build

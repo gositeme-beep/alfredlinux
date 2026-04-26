@@ -17,9 +17,9 @@ HIGH — likely or already seen
 1) binary_syslinux / isolinux / GNU cp
    Symptom:  cp: not writing through dangling symlink 'chroot/root/isolinux/…'
    Cause:    Stacked copies into chroot/root/${_BOOTLOADER}; cp refuses some symlink targets.
-   Mitigate: Prefer cp --remove-destination on those cp lines in live-build’s binary_syslinux,
-             or normalize the tree before the first copy. find -xtype l after first cp only
-             helps when dangling links exist at that moment and match GNU find’s -xtype l.
+   Mitigate: scripts/patch-live-build-isolinux-dangling.sh injects cp --remove-destination on the
+             four cp lines into chroot/root/${_BOOTLOADER}/ (idempotent). If this regresses,
+             re-check live-build line text after apt upgrades.
 
 2) Patching /usr/lib/live/build/binary_syslinux inside Docker
    Symptom:  E: Unknown command: binary_syslinux
