@@ -151,9 +151,11 @@
 
   ── AI & LOCAL INTELLIGENCE (2 hooks) ───────────────────────────────────────
 
-  • Ollama — local LLM inference engine (systemd, 127.0.0.1:11434); models and
-    Omahon memory stay on disk — self-contained, no vendor API keys in the
-    default Alfred path (air-gap friendly when binaries are pre-staged).
+  • Ollama — local LLM (hook pins current upstream binary, e.g. v0.21.x line;
+    pre-stage in build-assets for air-gap); systemd on 127.0.0.1:11434.
+  • Omahon — sovereign agent harness; default path is Omahon → Ollama, no keys.
+  • Optional backup on disk: pip anthropic, openai, groq + Claude CLI if you set
+    ANTHROPIC_API_KEY (custom Omahon / operator use — not required for Alfred).
   • GPU hooks prefer local acceleration for Ollama when drivers allow (0275).
   • Meilisearch v1.13.3 — local zero-tracking search engine
   • alfred-search CLI for indexing files, bookmarks, and documents

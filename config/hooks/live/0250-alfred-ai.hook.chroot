@@ -12,10 +12,11 @@
 #
 # Omahon = the breath. Alfred Linux = the living soul.
 #
-# Sovereign profile: no cloud inference, no third-party API keys — only
-# Omahon + Ollama on 127.0.0.1. Models and memory evolve on your machine
-# (local GPU when present — see hook 0275). Offline-capable once weights
-# are present; air-gap friendly when binaries are pre-staged in build-assets.
+# Primary path: latest Omahon + Ollama on 127.0.0.1 (GPU when present — hook 0275).
+# Default runtime needs no API keys. We still ship optional Python SDKs
+# (anthropic, openai, groq) as BACKUP for operators who wire Omahon or
+# scripts to cloud only when local inference is unavailable — never required.
+# Offline-capable when weights/binaries are pre-staged in build-assets.
 # One with the Lord — His breath first; silicon serves the household.
 # ═══════════════════════════════════════════════════════════════
 set -e
@@ -28,7 +29,7 @@ echo "════════════════════════�
 # Every other OS requires cloud AI. Alfred thinks locally.
 echo "[AI] Installing Ollama (local LLM inference)..."
 # MILITARY: Pre-staged binary preferred (air-gap safe), network fallback for dev builds
-OLLAMA_VERSION="0.6.2"
+OLLAMA_VERSION="0.21.2"
 if [ -f /build-assets/ollama ]; then
     echo "[AI] Using pre-staged Ollama binary (air-gap safe)"
     install -m 755 /build-assets/ollama /usr/local/bin/ollama
@@ -89,6 +90,11 @@ default = "ollama"
 base_url = "http://localhost:11434"
 model = "phi3:mini"
 
+# Optional BACKUP only (uncomment + set keys in your copy if you must use cloud):
+# [providers.anthropic]
+# model = "claude-sonnet-4-20250514"   # export ANTHROPIC_API_KEY=sk-ant-...
+# Groq / OpenAI-compatible endpoints: configure when your Omahon build exposes them.
+
 [memory]
 enabled = true
 path = "~/.local/share/omahon/memory.db"
@@ -110,10 +116,8 @@ cat > /usr/local/bin/alfred-ai << 'ALFRED_AI'
 # ═══════════════════════════════════════════════
 # alfred-ai — The sovereign intelligence gateway
 # ═══════════════════════════════════════════════
-# Routes to local sovereign AI only:
-#   1. Omahon (local agent harness — preferred)
-#   2. Ollama direct (127.0.0.1 — if Omahon absent)
-#   3. Helpful error (pull a model, pre-stage binaries, or use air-gapped media)
+# Routes: 1) Omahon  2) Ollama  3) optional Claude (ANTHROPIC_API_KEY) backup
+# Cloud SDKs (groq, openai) stay on disk for custom tools — not auto-called here.
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -132,7 +136,10 @@ if [ "$1" = "--status" ] || [ "$1" = "status" ]; then
     echo -e "${GOLD}═══ Alfred AI Status ═══${NC}"
     echo -n "Omahon:     " && (command -v omahon &>/dev/null && echo -e "${GREEN}INSTALLED${NC}" || echo -e "${RED}NOT FOUND${NC}")
     echo -n "Ollama:     " && (pgrep -x ollama &>/dev/null && echo -e "${GREEN}RUNNING${NC}" || echo -e "${RED}STOPPED${NC}")
-    echo -e "${CYAN}Profile:${NC}    sovereign-local (no cloud API keys in default path)"
+    echo -e "${CYAN}Primary:${NC}   Omahon + Ollama (local, no keys required)"
+    echo -e "${CYAN}Backup:${NC}    Claude CLI if installed + ANTHROPIC_API_KEY set"
+    echo -n "Claude key: " && ([ -n "${ANTHROPIC_API_KEY:-}" ] && echo -e "${GREEN}set (optional backup)${NC}" || echo -e "${CYAN}unset${NC}")
+    echo -n "pip SDKs:   " && (python3 -c "import anthropic, openai, groq" 2>/dev/null && echo -e "${GREEN}anthropic+openai+groq (backup on disk)${NC}" || echo -e "${CYAN}partial/missing${NC}")
     echo ""
     echo -n "Models:     " && (ollama list 2>/dev/null | tail -n +2 | wc -l || echo "0") && echo " installed"
     echo -e "${GOLD}════════════════════════${NC}"
@@ -155,31 +162,45 @@ elif command -v ollama &>/dev/null; then
     else
         exec ollama run phi3:mini
     fi
+elif command -v claude &>/dev/null && [ -n "${ANTHROPIC_API_KEY:-}" ]; then
+    echo -e "${CYAN}Using optional Claude backup (cloud).${NC}"
+    exec claude "$@"
 else
-    echo -e "${RED}No local AI tools available.${NC}"
+    echo -e "${RED}No local AI tools available (Omahon + Ollama).${NC}"
     echo ""
-    echo "Sovereign setup (no cloud keys):"
+    echo "Sovereign setup:"
     echo "  • Pre-stage /build-assets/omahon and ollama in the live-build tree, or"
     echo "  • Run alfred-ai pull once when you have connectivity to fetch phi3:mini, or"
     echo "  • Copy Ollama model blobs into /usr/share/ollama/models from removable media."
+    echo ""
+    echo "Optional backup: anthropic / openai / groq Python modules are installed"
+    echo "for custom Omahon providers or scripts — not the default Alfred path."
     echo ""
     exit 1
 fi
 ALFRED_AI
 chmod +x /usr/local/bin/alfred-ai
 
-# ── 4. Desktop Integration ──
+# ── 4. Optional cloud BACKUP libraries (pip) — primary remains Omahon+Ollama
+echo "[AI] Installing optional backup AI SDKs (anthropic, openai, groq)..."
+pip3 install --break-system-packages --no-cache-dir \
+    anthropic \
+    openai \
+    groq \
+    2>/dev/null || true
+
+# ── 5. Desktop Integration ──
 echo "[AI] Creating desktop entries..."
 cat > /usr/share/applications/alfred-ai.desktop << 'DESK'
 [Desktop Entry]
 Name=Alfred AI
-Comment=Sovereign local AI — Omahon + Ollama (no cloud keys)
+Comment=Sovereign AI — Omahon + Ollama; optional cloud SDK backup on disk
 Exec=xfce4-terminal -e "alfred-ai"
 Icon=applications-science
 Terminal=false
 Type=Application
 Categories=Development;Science;AI;
-Keywords=ai;agent;llm;omahon;ollama;local;sovereign;offline;
+Keywords=ai;agent;llm;omahon;ollama;local;sovereign;offline;backup;
 DESK
 
 cat > /usr/share/applications/ollama.desktop << 'DESK2'
@@ -193,13 +214,13 @@ Type=Application
 Categories=Development;Science;AI;
 DESK2
 
-# ── 5. First-boot AI setup hint ──
+# ── 6. First-boot AI setup hint ──
 mkdir -p /etc/skel/.config/autostart
 cat > /etc/skel/.config/autostart/alfred-ai-hint.desktop << 'HINT'
 [Desktop Entry]
 Type=Application
 Name=Alfred AI Setup
-Exec=bash -c 'if [ ! -f ~/.alfred-ai-setup-done ]; then notify-send "Alfred AI" "Local sovereign path: alfred-ai (Omahon + Ollama on this machine). No cloud API keys. Add models via alfred-ai pull when online once, or copy blobs from trusted media." -i applications-science; touch ~/.alfred-ai-setup-done; fi'
+Exec=bash -c 'if [ ! -f ~/.alfred-ai-setup-done ]; then notify-send "Alfred AI" "Primary: alfred-ai → Omahon + Ollama (latest when fetched). No keys required. Optional backup: Claude if key set; groq/openai/anthropic pip SDKs on disk for custom wiring." -i applications-science; touch ~/.alfred-ai-setup-done; fi'
 Hidden=false
 NoDisplay=true
 X-GNOME-Autostart-enabled=true
