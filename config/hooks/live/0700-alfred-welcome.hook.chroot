@@ -66,11 +66,61 @@ if [[ -f "$STAMP_FILE" ]]; then
   exit 0
 fi
 
+_raw="${LC_ALL:-}"
+[[ -z "$_raw" ]] && _raw="${LC_MESSAGES:-}"
+[[ -z "$_raw" ]] && _raw="${LANG:-en_US.UTF-8}"
+_raw="${_raw%.UTF-8}"
+_raw="${_raw%.utf8}"
+_raw="${_raw#C.}"
+[[ -z "$_raw" || "$_raw" == C || "$_raw" == POSIX ]] && _raw="en_US"
+lang="${_raw%%_*}"
+lang="${lang,,}"
+
 if command -v zenity >/dev/null 2>&1 && [[ -n "${DISPLAY:-}" ]]; then
-  zenity --info \
-    --title="✝ Welcome to the Kingdom of God Edition" \
-    --width=560 \
-    --text="Welcome to Alfred Linux 7.77\nKingdom of God Edition\n\n✝  'The LORD bless thee, and keep thee:\n    The LORD make his face shine upon thee,\n    and be gracious unto thee.'\n                                    — Numbers 6:24-25\n\n✝  The Spirit of the Lord\n    'The Spirit of the Lord is upon me, because he hath anointed me to preach the gospel to the poor.'\n                                    — Luke 4:18\n    'Where the Spirit of the Lord is, there is liberty.'\n                                    — 2 Corinthians 3:17\n\n♪  27 worship tracks are ready — open Kingdom Worship\n📖  39,482 Bible verses (AKJV) — type alfred-bible\n🔐  Kyber-1024 post-quantum encryption active\n🌐  Sovereign mesh network ready\n\nBuilt with love by Commander Danny William Perez\nand his daughter Eden, for the glory of God.\n\nSOLI DEO GLORIA"
+  case "$lang" in
+    es)
+      ZTITLE="✝ Bienvenido — Edición Reino de Dios"
+      INTRO=$'Bienvenido a Alfred Linux 7.77\nEdición Reino de Dios'
+      REST=$'♪  27 pistas de adoración — abre Kingdom Worship\n📖  39,482 versículos (AKJV y más) — escribe alfred-bible\n🔐  Cifrado post-cuántico Kyber-1024 activo\n🌐  Red en malla soberana lista\n\nConstruido con amor por Commander Danny William Perez\ny su hija Eden, para la gloria de Dios.\n\nSOLI DEO GLORIA'
+      ;;
+    fr)
+      ZTITLE="✝ Bienvenue — Édition Royaume de Dieu"
+      INTRO=$'Bienvenue dans Alfred Linux 7.77\nÉdition Royaume de Dieu'
+      REST=$'♪  27 morceaux de louange — ouvrez Kingdom Worship\n📖  39,482 versets (AKJV, etc.) — tapez alfred-bible\n🔐  Chiffrement post-quantique Kyber-1024 actif\n🌐  Réseau maillé souverain prêt\n\nConstruit avec amour par Commander Danny William Perez\net sa fille Eden, pour la gloire de Dieu.\n\nSOLI DEO GLORIA'
+      ;;
+    de)
+      ZTITLE="✝ Willkommen — Königreich-Gott-Ausgabe"
+      INTRO=$'Willkommen bei Alfred Linux 7.77\nKönigreich-Gott-Ausgabe'
+      REST=$'♪  27 Lobpreis-Titel — Kingdom Worship öffnen\n📖  39,482 Bibelverse (u.a. AKJV) — alfred-bible eingeben\n🔐  Post-Quanten-Kryptografie Kyber-1024 aktiv\n🌐  Souveränes Mesh-Netz bereit\n\nMit Liebe gebaut von Commander Danny William Perez\nund seiner Tochter Eden, zur Ehre Gottes.\n\nSOLI DEO GLORIA'
+      ;;
+    pt)
+      ZTITLE="✝ Bem-vindo — Edição Reino de Deus"
+      INTRO=$'Bem-vindo ao Alfred Linux 7.77\nEdição Reino de Deus'
+      REST=$'♪  27 faixas de adoração — abra o Kingdom Worship\n📖  39,482 versículos (AKJV e mais) — digite alfred-bible\n🔐  Criptografia pós-quântica Kyber-1024 ativa\n🌐  Rede mesh soberana pronta\n\nConstruído com amor por Commander Danny William Perez\ne sua filha Eden, para a glória de Deus.\n\nSOLI DEO GLORIA'
+      ;;
+    *)
+      ZTITLE="✝ Welcome — Kingdom of God Edition"
+      INTRO=$'Welcome to Alfred Linux 7.77\nKingdom of God Edition'
+      REST=$'♪  27 worship tracks are ready — open Kingdom Worship\n📖  39,482 Bible verses (AKJV) — type alfred-bible\n🔐  Kyber-1024 post-quantum encryption active\n🌐  Sovereign mesh network ready\n\nBuilt with love by Commander Danny William Perez\nand his daughter Eden, for the glory of God.\n\nSOLI DEO GLORIA'
+      ;;
+  esac
+
+  SCRIPTURE=$(cat <<'SFX'
+✝  'The LORD bless thee, and keep thee:
+    The LORD make his face shine upon thee,
+    and be gracious unto thee.'
+                                    — Numbers 6:24-25
+
+✝  The Spirit of the Lord
+    'The Spirit of the Lord is upon me, because he hath anointed me to preach the gospel to the poor.'
+                                    — Luke 4:18
+    'Where the Spirit of the Lord is, there is liberty.'
+                                    — 2 Corinthians 3:17
+SFX
+)
+
+  ZBODY=$(printf '%s\n\n%s\n\n%s' "$INTRO" "$SCRIPTURE" "$REST")
+  zenity --info --title="$ZTITLE" --width=580 --text "$ZBODY" || true
 fi
 
 # Play a gentle notification sound if possible

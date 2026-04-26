@@ -163,8 +163,10 @@
   • espeak-ng fallback TTS
   • PipeWire real-time audio stack (replaces PulseAudio)
   • alfred-voice-doctor diagnostic CLI
-  • First-boot spoken greeting — The Spirit of the Lord (Luke 4:18;
-    2 Corinthians 3:17) via Kokoro or espeak-ng
+  • First-boot spoken greeting — Aaronic blessing (Numbers 6:24–26) plus
+    Spirit of the Lord (Luke 4:18; 2 Corinthians 3:17). Text + espeak-ng
+    voice follow LC_ALL / LC_MESSAGES / LANG (en, es, fr, de, it, pt, zh, ja);
+    Kokoro is used only for English. Slower espeak pacing for clarity.
   Hook: 0400-alfred-voice (stage 2: 0900-alfred-voice-v2)
 
   ── DEVELOPMENT — "THE ARSENAL" (4 hooks) ───────────────────────────────────
@@ -255,8 +257,9 @@
 
   ── USER EXPERIENCE ─────────────────────────────────────────────────────────
 
-  • Kingdom welcome dialog on first boot (zenity) — Aaronic blessing plus
-    The Spirit of the Lord (Luke 4:18; 2 Corinthians 3:17)
+  • Kingdom welcome dialog on first boot (zenity) — Scripture block is
+    always English (Numbers 6, Luke 4:18, 2 Cor 3:17); title and intro/footer
+    follow locale for es, fr, de, pt (else English).
   • System MOTD with Psalm 23:1, Spirit-of-the-Lord verses, build summary
   • Welcome.txt for non-believers — built in faith, built for everyone
   Hooks: 0700-alfred-welcome, 0701-alfred-stranger

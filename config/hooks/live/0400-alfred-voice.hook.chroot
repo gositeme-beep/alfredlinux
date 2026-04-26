@@ -87,44 +87,130 @@ VSDESK
 cat > /usr/local/bin/alfred-welcome.sh << 'WELCOME'
 #!/bin/bash
 # Alfred Linux — First Boot Welcome ("The Spirit of the Lord")
-# Speaks a greeting via Kokoro TTS on first login (Luke 4:18; 2 Corinthians 3:17).
+# Speaks the Aaronic blessing + welcome in the session locale when we have a
+# translation; espeak-ng voice matches LC_* / LANG. Kokoro is English-only here.
 
 if [[ -f "$HOME/.alfred-welcomed" ]]; then
     exit 0
 fi
 
-# Try Kokoro TTS first
+_raw="${LC_ALL:-}"
+[[ -z "$_raw" ]] && _raw="${LC_MESSAGES:-}"
+[[ -z "$_raw" ]] && _raw="${LANG:-en_US.UTF-8}"
+_raw="${_raw%.UTF-8}"
+_raw="${_raw%.utf8}"
+_raw="${_raw#C.}"
+[[ -z "$_raw" || "$_raw" == C || "$_raw" == POSIX ]] && _raw="en_US"
+lang="${_raw%%_*}"
+lang="${lang,,}"
+terr=""
+if [[ "$_raw" == *_* ]]; then
+  terr="${_raw#*_}"
+  terr="${terr%%.*}"
+  terr="${terr,,}"
+fi
+
+case "$lang" in
+  es)
+    USE_K=0
+    ESPEAK=es
+    MSG=$'El Señor te bendiga, y te guarde. El Señor haga resplandecer su rostro sobre ti, y tenga de ti misericordia. El Espíritu del Señor está aquí. Bienvenido a Alfred Linux, edición Reino de Dios. Soy Alfred, tu compañero soberano. Donde está el Espíritu del Señor, hay libertad.'
+    ;;
+  fr)
+    USE_K=0
+    ESPEAK=fr
+    MSG="Que l'Éternel te bénisse, et qu'il te garde! Que l'Éternel fasse resplendir son visage sur toi et t'accorde sa grâce! L'Esprit du Seigneur est ici. Bienvenue dans Alfred Linux, édition Royaume de Dieu. Je suis Alfred, ton compagnon souverain. Là où est l'Esprit du Seigneur, là est la liberté."
+    ;;
+  de)
+    USE_K=0
+    ESPEAK=de
+    MSG="Der HERR segne dich und behüte dich. Der HERR lasse sein Angesicht über dir leuchten und sei dir gnädig. Der Geist des Herrn ist hier. Willkommen bei Alfred Linux, Königreich-Gott-Ausgabe. Ich bin Alfred, dein souveräner Begleiter. Wo der Geist des Herrn ist, ist Freiheit."
+    ;;
+  it)
+    USE_K=0
+    ESPEAK=it
+    MSG="Il Signore ti benedica e ti custodisca; il Signore faccia risplendere il suo volto su di te e ti sia benigno. Lo Spirito del Signore è qui. Benvenuto in Alfred Linux, edizione Regno di Dio. Sono Alfred, il tuo compagno sovrano. Dove è lo Spirito del Signore, c'è libertà."
+    ;;
+  pt)
+    USE_K=0
+    if [[ "$terr" == br ]]; then ESPEAK=pt-br; else ESPEAK=pt; fi
+    MSG=$'O Senhor te abençoe e te guarde; o Senhor faça resplandecer o seu rosto sobre ti e tenha misericórdia de ti. O Espírito do Senhor está aqui. Bem-vindo ao Alfred Linux, edição Reino de Deus. Eu sou Alfred, o teu companheiro soberano. Onde está o Espírito do Senhor, há liberdade.'
+    ;;
+  zh|cmn)
+    USE_K=0
+    ESPEAK=cmn
+    MSG=$'愿耶和华赐福给你，保护你。愿耶和华使他的脸光照你，赐恩给你。主的灵在这里。欢迎使用 Alfred Linux 神国版。我是 Alfred，你的主权同伴。主的灵在哪里，哪里就有自由。'
+    ;;
+  ja)
+    USE_K=0
+    ESPEAK=ja
+    MSG=$'主があなたを祝福し、守られますように。主の御顔があなたの上に照り、恵みを与えられますように。主の霊がここにあります。アルフレッド・リナックス、神の国エディションへようこそ。私はアルフレッド、あなたの主権ある仲間です。主の霊があるところに、自由があります。'
+    ;;
+  en|*)
+    USE_K=1
+    ESPEAK=en-us
+    MSG='The LORD bless thee, and keep thee. The LORD make his face shine upon thee, and be gracious unto thee. The Spirit of the Lord is here. Welcome to Alfred Linux, Kingdom of God Edition. I am Alfred, your sovereign companion. Where the Spirit of the Lord is, there is liberty.'
+    ;;
+esac
+
+export ALFRED_WELCOME_TTS="$MSG"
+export ALFRED_ESPEAK_VOICE="$ESPEAK"
+export ALFRED_USE_KOKORO="$USE_K"
+
 VOICE_PYTHON="python3"
 [[ -x /usr/local/bin/alfred-voice-python ]] && VOICE_PYTHON="/usr/local/bin/alfred-voice-python"
 
-$VOICE_PYTHON -c "
-try:
-    from kokoro import KPipeline
-    pipe = KPipeline(lang_code='a')
-    msg = (
-        'The Spirit of the Lord is here. Welcome to Alfred Linux, Kingdom of God Edition. '
-        'I am Alfred, your sovereign companion. Where the Spirit of the Lord is, there is liberty.'
-    )
-    generator = pipe(msg, voice='af_heart', speed=1.0)
-    import soundfile as sf
-    for i, (gs, ps, audio) in enumerate(generator):
-        sf.write('/tmp/alfred-welcome.wav', audio, 24000)
-        break
-except Exception as e:
-    print(f'Kokoro TTS failed: {e}')
-    import subprocess
-    subprocess.run(['espeak-ng', '-w', '/tmp/alfred-welcome.wav',
-        'The Spirit of the Lord is here. Welcome to Alfred Linux, Kingdom of God Edition. '
-        'I am Alfred, your sovereign companion. Where the Spirit of the Lord is, there is liberty.'])
-" 2>/dev/null
+"$VOICE_PYTHON" - <<'PY'
+import os
+import subprocess
 
-# Play the audio
+msg = os.environ["ALFRED_WELCOME_TTS"]
+esk = os.environ.get("ALFRED_ESPEAK_VOICE", "en-us")
+use_k = os.environ.get("ALFRED_USE_KOKORO") == "1"
+path = "/tmp/alfred-welcome.wav"
+ok = False
+
+if use_k:
+    try:
+        from kokoro import KPipeline
+        import soundfile as sf
+
+        pipe = KPipeline(lang_code="a")
+        generator = pipe(msg, voice="af_heart", speed=0.92)
+        for _i, (_gs, _ps, audio) in enumerate(generator):
+            sf.write(path, audio, 24000)
+            ok = True
+            break
+    except Exception:
+        ok = False
+
+if not ok or not os.path.isfile(path) or os.path.getsize(path) < 80:
+    subprocess.run(
+        [
+            "espeak-ng",
+            "-v",
+            esk,
+            "-s",
+            "125",
+            "-p",
+            "48",
+            "-a",
+            "88",
+            "-g",
+            "8",
+            "-w",
+            path,
+            msg,
+        ],
+        check=False,
+    )
+PY
+
 if [[ -f /tmp/alfred-welcome.wav ]]; then
     aplay /tmp/alfred-welcome.wav 2>/dev/null || paplay /tmp/alfred-welcome.wav 2>/dev/null || true
     rm -f /tmp/alfred-welcome.wav
 fi
 
-# Mark as welcomed
 touch "$HOME/.alfred-welcomed"
 WELCOME
 chmod +x /usr/local/bin/alfred-welcome.sh
