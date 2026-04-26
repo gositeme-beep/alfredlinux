@@ -18,7 +18,10 @@ lb-docker.containername
 .lb-docker-watch.lock
 
 # Entire live-build workspace (regenerates from config/ + hooks)
-build/
+# Ignore build/* but keep tracked operator helpers under build/scripts/
+build/*
+!build/scripts/
+!build/scripts/**
 binary/
 chroot/
 cache/
