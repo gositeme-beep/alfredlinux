@@ -28,3 +28,12 @@ Hook gate (must pass before ISO is “good”)
   dpkg-query -W -f '${binary:Package}\n' | grep -E '^linux-image-7\.0\.1'
 
 Large `linux-*.deb` files are gitignored — keep them on the build host.
+
+Runtime policy (on the ISO)
+---------------------------
+- `unattended-upgrades` is limited to Debian + Debian-Security origins; it does **not** remove
+  “unused” kernel packages (`Remove-Unused-Kernel-Packages` is false) so `linux-image-7.0.1*`
+  is never auto-pruned.
+- `/etc/apt/preferences.d/99alfred-no-debian-default-kernel` blocks Debian meta-packages such as
+  `linux-image-amd64` so `apt` / upgrades do not replace the Alfred kernel with the stock image.
+  Publish a new `linux-image-7.0.1*.deb` (and headers) when you ship kernel updates.

@@ -1,0 +1,15 @@
+#!/bin/bash
+# Alfred Linux — APT policy: keep Alfred kernel 7.0.1 as the only shipped image.
+# Blocks Debian default meta-packages from apt so unattended-upgrades cannot
+# replace linux-image-7.0.1* with stock linux-image-amd64.
+set -e
+echo "[Alfred APT] Installing kernel pin preferences (no Debian default kernel meta)…"
+install -d -m 0755 /etc/apt/preferences.d
+cat > /etc/apt/preferences.d/99alfred-no-debian-default-kernel << 'PREF'
+# Alfred ISO ships linux-image-7.0.1* from packages.chroot (hook 0050).
+# Never pull linux-image-amd64 / generic metapackages from the mirror.
+Package: linux-image-amd64 linux-image-amd64-unsigned linux-headers-amd64 linux-image-generic linux-headers-generic linux-image-rt-amd64 linux-headers-rt-amd64
+Pin: release *
+Pin-Priority: -1
+PREF
+echo "[Alfred APT] 99alfred-no-debian-default-kernel installed."

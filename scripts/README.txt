@@ -44,7 +44,14 @@ watch-lb-docker-build.sh
   After `detach`, **wait until the container exits**, print summary + ISO paths + log tail.
     bash scripts/watch-lb-docker-build.sh
   Optional: `--status-json /path/state.json` (machine-readable), `--webhook URL` (POST JSON on exit).
+  With `--status-json`, a non-blocking **flock** on `.lb-docker-watch.lock` prevents two parallel
+  watchers corrupting the same JSON; second instance exits 3. `ALFRED_WATCH_NO_FLOCK=1` bypasses.
   Law wrapper: `/home/gositeme/law/alfred-watch-lb-docker.sh`
+
+check-lb-docker-status.sh
+  One-shot triage: container name, `docker ps`, `last-lb-docker.json`, ISO `find`, log grep/tail.
+    bash scripts/check-lb-docker-status.sh
+    bash scripts/check-lb-docker-status.sh /path/to/last-lb-docker.json
 
 supervise-lb-docker-nap.sh
   **Before sleep:** `detach` + `docker wait` + ISO check + `last-lb-docker.json` + optional `NAP_WEBHOOK`.

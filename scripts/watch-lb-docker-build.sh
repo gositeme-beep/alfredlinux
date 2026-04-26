@@ -10,6 +10,7 @@
 # Before sleep: uses systemd-inhibit (when installed) so the host does not suspend during docker wait.
 #   ALFRED_NO_INHIBIT_SLEEP=1  — skip inhibit.  ALFRED_NAP_HEARTBEAT_SEC=120 — heartbeat interval.
 # With --status-json: writes phase=waiting immediately, then .lb-docker-watch.heartbeat timestamps.
+# One writer at a time: flock on .lb-docker-watch.lock (ALFRED_WATCH_NO_FLOCK=1 to bypass).
 set -euo pipefail
 REPO="$(cd "$(dirname "$0")/.." && pwd)"
 # shellcheck disable=SC1091
@@ -33,6 +34,14 @@ done
 [[ -f "$NAME_FILE" ]] || { echo "Missing $NAME_FILE — run lb-docker-build.sh detach first." >&2; exit 1; }
 NAME="$(tr -d '\n' <"$NAME_FILE")"
 [[ -n "$NAME" ]] || { echo "Empty container name in $NAME_FILE" >&2; exit 1; }
+
+if [[ -n "$STATUS_JSON" && -z "${ALFRED_WATCH_NO_FLOCK:-}" ]]; then
+  exec 201>>"$REPO/.lb-docker-watch.lock"
+  if ! flock -n 201; then
+    echo "Another watch-lb-docker-build.sh holds $REPO/.lb-docker-watch.lock — exiting. Use ALFRED_WATCH_NO_FLOCK=1 to bypass." >&2
+    exit 3
+  fi
+fi
 
 EXIT="unknown"
 HB_PID=""
