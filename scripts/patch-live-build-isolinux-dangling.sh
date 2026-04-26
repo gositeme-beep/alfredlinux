@@ -2,31 +2,33 @@
 # Idempotent: patch live-build's binary_syslinux so stacked `cp` into chroot/root/isolinux
 # does not fail on dangling symlinks (Debian trixie isolinux/syslinux-common + GNU cp).
 #
-# Upstream order: Install_packages, then rm/mkdir chroot/root/${_BOOTLOADER}, then several
-# `cp` lines. The first copies can leave dangling symlinks; later `cp -af` errors with:
+# Upstream copies in order:
+#   cp -a ${_SOURCE_COMMON}/* chroot/root/${_BOOTLOADER}/
+#   cp -af ${_SOURCE}/* chroot/root/${_BOOTLOADER}/
+# The first copy can leave dangling symlinks; the second `cp -af` then errors with:
 #   cp: not writing through dangling symlink 'chroot/root/isolinux/...'
 #
-# We insert a `find -xtype l -delete` immediately before the Chroot line that copies the
-# tree out of the chroot staging dir (after all those cp lines).
+# A `find` *before* the final `Chroot ... cp -aL` runs too late — insert cleanup right after
+# the first `cp` line instead.
 set -euo pipefail
 TARGET="${1:-/usr/lib/live/build/binary_syslinux}"
-MARK='ALFRED_DANGLING_SYMLINK_PRE_CP'
+MARK='ALFRED_ISOLINUX_FIND_AFTER_FIRST_CP'
 [[ -f "$TARGET" ]] || { echo "skip patch: $TARGET missing" >&2; exit 0; }
 if grep -q "$MARK" "$TARGET"; then
-  # mktemp+mv from an older patch left this script non-executable; lb then errors
-  # "Unknown command: binary_syslinux" because /usr/bin/lb requires -x on the handler.
   chmod +x "$TARGET" 2>/dev/null || true
   echo "skip patch: already applied ($TARGET)"
   exit 0
 fi
-needle=$'\t\tChroot chroot cp -aL /root/${_BOOTLOADER} /root/${_BOOTLOADER}.tmp > /dev/null 2>&1 || true'
+needle=$'\t\tcp -a ${_SOURCE_COMMON}/* chroot/root/${_BOOTLOADER}/'
 tmp="$(mktemp)"
 found=
 while IFS= read -r line || [[ -n "$line" ]]; do
   if [[ -z "$found" && "$line" == "$needle" ]]; then
+    printf '%s\n' "$line" >>"$tmp"
     printf '%s\n' $'\t\t# '"$MARK"' (Debian trixie isolinux; GNU cp vs dangling symlinks)' >>"$tmp"
     printf '%s\n' $'\t\tfind "chroot/root/${_BOOTLOADER}" -mindepth 1 -maxdepth 1 -xtype l -delete 2>/dev/null || true' >>"$tmp"
     found=1
+    continue
   fi
   printf '%s\n' "$line" >>"$tmp"
 done <"$TARGET"
