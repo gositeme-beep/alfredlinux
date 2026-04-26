@@ -13,6 +13,9 @@ TARGET="${1:-/usr/lib/live/build/binary_syslinux}"
 MARK='ALFRED_DANGLING_SYMLINK_PRE_CP'
 [[ -f "$TARGET" ]] || { echo "skip patch: $TARGET missing" >&2; exit 0; }
 if grep -q "$MARK" "$TARGET"; then
+  # mktemp+mv from an older patch left this script non-executable; lb then errors
+  # "Unknown command: binary_syslinux" because /usr/bin/lb requires -x on the handler.
+  chmod +x "$TARGET" 2>/dev/null || true
   echo "skip patch: already applied ($TARGET)"
   exit 0
 fi
@@ -33,4 +36,5 @@ if [[ -z "$found" ]]; then
   exit 0
 fi
 mv "$tmp" "$TARGET"
+chmod +x "$TARGET"
 echo "patched $TARGET ($MARK)"
