@@ -717,6 +717,11 @@ do_lookup() {
 
         if [ -z "$BOOK" ]; then
             TOTAL=$(tail -n +2 "$ACTIVE_FILE" | wc -l)
+            TOTAL=$((TOTAL + 0))
+            if [ "$TOTAL" -lt 1 ]; then
+                echo "No verses in Bible data for $NAME."
+                exit 1
+            fi
             LINE_NUM=$((RANDOM % TOTAL + 2))
             IFS=$'\t' read -r b c v text <<< "$(sed -n "${LINE_NUM}p" "$ACTIVE_FILE")"
             echo -e "${GOLD}✝ $b $c:$v${NC} ($NAME — $SOURCE)"

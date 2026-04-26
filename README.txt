@@ -44,6 +44,8 @@
 ═══════════════════════════════════════════════════════════════════════════════
 
   42 hooks — one for each generation from Abraham to Christ (Matthew 1:17).
+  Source tree ships 46 live-build `*.hook.chroot` files (merge stubs included);
+  frozen GA ISO profiles may enable a subset (see hook numbering).
   2 package lists, 1,200+ installed packages, and 100+ curated applications.
   Frozen v7.77 GA ISO (2026-04-12): 29 hooks shipped in the frozen profile.
   Full 42-hook profile targets v7.77.1 GA.
@@ -181,7 +183,7 @@
 
   ── DEVELOPMENT — "THE ARSENAL" (4 hooks) ───────────────────────────────────
 
-  • Alfred IDE — code-server 4.114.1 with Alfred Commander extension 5.0.0
+  • Alfred IDE — code-server 4.115.0 with Alfred Commander extension 5.0.0
     Per-install random password, systemd user service, 127.0.0.1:8443
   • Node.js 20 LTS (nodesource), Go (golang-go), Rust installer
   • Python 3, pip, build-essential, cmake, ninja-build, gcc/g++
