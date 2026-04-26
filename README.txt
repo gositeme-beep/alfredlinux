@@ -440,10 +440,12 @@
 
   Verify your download before installing.
 
-  AVAILABLE NOW:
-    sha256sum -c alfred-linux-7.77-ga-amd64-20260412.iso.sha256
+  AVAILABLE NOW (canonical GA basename — Intel **and** AMD x86_64, stamp 20260426):
+    sha256sum -c alfred-linux-7.77-ga-intel-amd64-20260426.iso.sha256
 
   ONLINE:     https://alfredlinux.com/verify
+  Covenant gate (required before /download P2P page): https://alfredlinux.com/covenant
+    Phrase + session match downloads/iso.php Ring-1 policy; redirect target is `next=` (default /download).
   Public kernel / supply-chain transparency: https://alfredlinux.com/security-kernel
     (source: security-kernel.php in repo — deploy beside apps.php; add /security-kernel
     to includes/nav.php on the server if not already linked.)

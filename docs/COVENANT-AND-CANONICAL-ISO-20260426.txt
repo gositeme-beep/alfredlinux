@@ -1,0 +1,44 @@
+Alfred Linux — covenant gate, canonical GA ISO basename, Bible URL (saved 2026-04-26)
+===================================================================================
+
+CANONICAL FROZEN GA BASENAME (no .iso suffix) — single source in PHP:
+  $gaIsoBasename = 'alfred-linux-7.77-ga-intel-amd64-20260426';
+  File: includes/ga-release-state.php (live site public_html)
+
+  Meaning: v7.77 GA, x86_64 image suitable for Intel **and** AMD 64-bit PCs
+  (“intel-amd64” wording — not a slash in the filename). Stamp **20260426**.
+
+README (Forge commander/alfredlinux.com repo) verification stanza matches this basename.
+
+COVENANT (https://alfredlinux.com/covenant)
+  REQUIRED typed phrase (exact match, case-insensitive compare in PHP):
+    I receive Yeshua Jesus, the Son of God, as Lord and Saviour, and I accept the Authorized King Jesus Version, Perez Family Edition, as the inerrant Word of God.
+
+  Checkbox copy references the same edition + links to **alfredlinux.com/bible**
+  and gositeme.com/bible.
+
+  After POST: sets $_SESSION['akjv_accepted'] (+ token/HMAC audit chain) and
+  redirects to **next** (hidden field, sanitized — internal paths only; default
+  from GET ?next=). Default flow: /covenant?next=/download  →  /download
+
+/DOWNLOAD
+  download.php now **session_start** + requires **akjv_accepted** or redirects
+  to /covenant?next=<current path>. Same session keys as covenant.php and
+  downloads/iso.php.
+
+BIBLE
+  https://alfredlinux.com/bible  →  bible-read.php (see .htaccess).
+  Reader file header: Authorized King Jesus Version (Perez Family Edition).
+
+OPS AFTER FINAL ISO PACK
+  1) Place or symlink frozen ISO at:
+       public_html/downloads/alfred-linux-7.77-ga-intel-amd64-20260426.iso
+  2) Publish .sha256 / .torrent / SHA256SUMS as your pipeline requires.
+  3) Flip $finalGaIsoPublished (and P2P flags) in ga-release-state.php only when
+     Omahon checklist is satisfied.
+  4) Smoke: incognito browser — hit /download → must bounce to /covenant → seal →
+     lands back on /download with WebTorrent UI.
+
+Note: Older covenant log lines used the prior “Authorized King James Version …”
+phrase; new seals use King Jesus / Perez Family Edition text. Chain verification
+is structural (prev → hmac), not phrase text equality across history.
