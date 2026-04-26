@@ -6,7 +6,7 @@
 #  with other tongues, as the Spirit gave them utterance." — Acts 2:4
 #
 # Multilingual Bible: English (AKJV) plus seed tongues offline (Spanish,
-# French, Hebrew, Greek, Latin, German, Portuguese, Russian, Chinese, Japanese,
+# French, Hebrew, Yiddish, Greek, Latin, German, Portuguese, Russian, Chinese, Japanese,
 # Arabic (MSA + Darija / Egyptian / Levantine / Gulf vernacular seeds), Hindi,
 # Italian, Romanian, Polish, Ukrainian, Korean, Turkish, Dutch,
 # Vietnamese, Tagalog, Filipino, Urdu, Swahili, Amharic, Yoruba, Igbo, Hausa,
@@ -39,6 +39,7 @@ en|English|akjv-bible.tsv|Authorized King Jesus Version — Perez Family Edition
 es|Español|rvr-bible.tsv|Reina-Valera Revisada 1960
 fr|Français|lsg-bible.tsv|Louis Segond 1910
 he|עברית|hebrew-bible.tsv|Westminster Leningrad Codex (OT)
+yi|ייִדיש|yi-bible.tsv|Yiddish — Hebrew-letter samples (public-domain style)
 gr|Ἑλληνικά|greek-bible.tsv|LXX / Greek NT (public-domain samples)
 la|Latina|latin-bible.tsv|Latin Vulgate-style (public-domain samples)
 de|Deutsch|de-bible.tsv|Luther 1912 (public-domain samples)
@@ -138,6 +139,26 @@ Book	Chapter	Verse	Text
 תהלים	23	2	בִּנְא֣וֹת דֶּ֭שֶׁא יַרְבִּיצֵ֑נִי עַל־מֵ֖י מְנֻח֣וֹת יְנַהֲלֵֽנִי׃
 תהלים	23	3	נַפְשִׁ֥י יְשׁוֹבֵ֑ב יַֽנְחֵ֥נִי בְמַעְגְּלֵי־צֶ֝֗דֶק לְמַ֣עַן שְׁמֽוֹ׃
 תהלים	23	4	גַּ֤ם כִּֽי־אֵלֵ֨ךְ בְּגֵ֪יא צַלְמָ֡וֶת לֹא־אִירָ֣א רָ֭ע כִּי־אַתָּ֣ה עִמָּדִ֑י שִׁבְטְךָ֥ וּ֝מִשְׁעַנְתֶּ֗ךָ הֵ֣מָּה יְנַֽחֲמֻֽנִי׃
+SEED
+
+# ═══════════════════════════════════════════════════
+# 4a. YIDDISH (yi) — Hebrew-letter samples
+# ═══════════════════════════════════════════════════
+echo "[TONGUES-04a] Yiddish seed..."
+cat > "$BIBLE_DIR/yi-bible-seed.tsv" << 'SEED'
+Book	Chapter	Verse	Text
+בראשית	1	1	אין אָנהײַב באַשאַף גאָט די הימל און די ערד׃
+בראשית	1	2	און די ערד איז געווען טוהו און װוהואָ; און פֿינסטערניש איז געווען אויף פּני תהום; און רוח האָט געשװומען איבער די װאַסערן׃
+בראשית	1	3	און גאָט האָט געזאָגט: זאָל זײַן ליכט! און עס איז געווען ליכט׃
+תהלים	23	1	מזמור לדוד: דער הער איז מײַן שעפֿער; איך װעל נישט מײַנגלען׃
+תהלים	23	2	ער לײַגט מיך אין גרינע וועזן; ער פֿירט מיך צו שטילע װאַסערן׃
+תהלים	23	3	ער באַנייט מײַן נשמה; ער פֿירט מיך אויף סטעגן פון גערעכטיקײַט, צוליב זײַן נאָמען׃
+תהלים	23	4	און אפילו ווען איך גיי אין טאָל פון טויטשאַטן, וועל איך נישט פֿירכטן קין רע; ווײַל דו ביסט בײַ מיר; דײַן שטעקן און דײַן שטאָק טרייסטן מיך׃
+יוחנן	3	16	ווײַל גאָט האָט די וועלט אַזוי ליב געהאַט, אַז ער האָט זיין אײַנציקן זון געגעבן, אַז יעדער וועלכער גלייבט אין אים זאָל נישט פֿערלירן, נאָר האָבן אייביק לעבן׃
+יוחנן	14	6	יעזוס האָט אים געזאָגט: איך בין דער װעג און די אמת און דעם לעבן; קיינער קומט נישט צום טאַטן אָן נאָר דורך מיך׃
+רומים	8	28	מיר װייסן, אַז אלץ איז גוט פֿאַר די וועלכע ליב האָבן גאָט, די וועלכע זײַנען גערופן לויט זײַן פלאַן׃
+פיליפּער	4	13	איך קען אלץ דורך דעם וועלכער מאַכט מיך שטאַרק׃
+חזון	22	21	די גנאָדע פון אונזער האערן יעזוס כריסטוס זאָל זײַן מיט אלעמען׃ אמן׃
 SEED
 
 # ═══════════════════════════════════════════════════
@@ -849,6 +870,7 @@ case "$LANGUAGE" in
         echo "  Example: alfred-bible-lang ro Ioan 3"
         echo "  Example: alfred-bible-lang uk Івана 3"
         echo "  Example: alfred-bible-lang he"
+        echo "  Example: alfred-bible-lang yi יוחנן 3"
         echo "  Example: alfred-bible-lang gr Ιωάννης 3"
         echo "  Example: alfred-bible-lang la Ioannes 3"
         echo "  Example: alfred-bible-lang zu Genesisi 1"
@@ -900,19 +922,19 @@ mkdir -p /usr/share/applications
 cat > /usr/share/applications/alfred-bible-tongues.desktop << 'DESKBT'
 [Desktop Entry]
 Name=Bible in Many Languages
-Comment=39 tongues offline (seed verses) — Acts 2:4; no Internet required
+Comment=40 tongues offline (seed verses) — Acts 2:4; no Internet required
 Exec=x-terminal-emulator -e bash -c 'echo "══ Bible tongues (offline seeds) ══"; echo "List codes, then try a random verse or a book/chapter."; echo ""; alfred-bible-lang list; echo ""; echo "Try:  alfred-bible-lang es"; echo "      alfred-bible-lang ro Ioan 3"; echo "      alfred-bible tongues list"; echo ""; exec bash'
 Icon=accessories-dictionary
 Terminal=false
 Type=Application
 Categories=Education;Reference;
-Keywords=bible;scripture;languages;multilingual;tongues;romanian;spanish;i18n;
+Keywords=bible;scripture;languages;multilingual;tongues;yiddish;romanian;spanish;i18n;
 DESKBT
 
 echo "╔═══════════════════════════════════════════════════════════╗"
 echo "║  [0292] Bible Tongues — COMPLETE                         ║"
-echo "║  ✓ English AKJV (full) + 38 seed tongues — list for codes ║"
-echo "║    (+ ary arz apc afb Arabic; fil ur jam; Africa set) Acts 2:4 ║"
+echo "║  ✓ English AKJV (full) + 39 seed tongues — list for codes ║"
+echo "║    (+ yi Yiddish; ary arz apc afb Arabic; fil ur jam; Africa) Acts 2:4 ║"
 echo "║  ✓ alfred-bible-lang — run: alfred-bible-lang list       ║"
 echo "║  They spoke with other tongues. — Acts 2:4               ║"
 echo "╚═══════════════════════════════════════════════════════════╝"
