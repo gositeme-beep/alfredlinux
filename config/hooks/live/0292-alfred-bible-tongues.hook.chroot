@@ -5,8 +5,10 @@
 # "And they were all filled with the Holy Ghost, and began to speak
 #  with other tongues, as the Spirit gave them utterance." — Acts 2:4
 #
-# Multilingual Bible support: English (AKJV), Spanish (Reina-Valera),
-# French (Louis Segond), and Hebrew. alfred-bible --lang support.
+# Multilingual Bible: English (AKJV), Spanish, French, Hebrew, Greek (LXX/NT
+# samples), Latin (Vulgate-style samples), German, Portuguese, Russian,
+# Chinese, Japanese, Arabic, Hindi, Italian — seed verses offline; full
+# texts may be added under /usr/share/alfred/bible/*.tsv later.
 #
 # BUILD: v7.77 Kingdom of God Edition
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -30,10 +32,20 @@ echo "[TONGUES-01] Creating language index..."
 cat > "$BIBLE_DIR/languages.conf" << 'CONF'
 # Alfred Bible — Supported Languages
 # Format: code|name|file|source
-en|English|akjv-bible.tsv|Authorized King James Version
+en|English|akjv-bible.tsv|Authorized King Jesus Version — Perez Family Edition (AKJV)
 es|Español|rvr-bible.tsv|Reina-Valera Revisada 1960
 fr|Français|lsg-bible.tsv|Louis Segond 1910
 he|עברית|hebrew-bible.tsv|Westminster Leningrad Codex (OT)
+gr|Ἑλληνικά|greek-bible.tsv|LXX / Greek NT (public-domain samples)
+la|Latina|latin-bible.tsv|Latin Vulgate-style (public-domain samples)
+de|Deutsch|de-bible.tsv|Luther 1912 (public-domain samples)
+pt|Português|pt-bible.tsv|Portuguese (public-domain samples)
+ru|Русский|ru-bible.tsv|Russian Synodal-style (public-domain samples)
+zh|中文|zh-bible.tsv|Chinese Union–style (public-domain samples)
+ja|日本語|ja-bible.tsv|Japanese (public-domain samples)
+ar|العربية|ar-bible.tsv|Arabic Van Dyke–style (public-domain samples)
+hi|हिन्दी|hi-bible.tsv|Hindi (public-domain samples)
+it|Italiano|it-bible.tsv|Italian Diodati-style (public-domain samples)
 CONF
 
 # ═══════════════════════════════════════════════════
@@ -101,6 +113,159 @@ Book	Chapter	Verse	Text
 SEED
 
 # ═══════════════════════════════════════════════════
+# 4b–4k. GREEK, LATIN, AND OTHER MAJOR TONGUES (seed corpora)
+# ═══════════════════════════════════════════════════
+echo "[TONGUES-04b] Greek (LXX/NT) seed..."
+cat > "$BIBLE_DIR/greek-bible-seed.tsv" << 'SEED'
+Book	Chapter	Verse	Text
+Γένεσις	1	1	Ἐν ἀρχῇ ἐποίησεν ὁ θεὸς τὸν οὐρανὸν καὶ τὴν γῆν.
+Γένεσις	1	2	ἡ δὲ γῆ ἦν ἀόρατος καὶ ἀκατασκεύαστος, καὶ σκότος ἐπάνω τῆς ἀβύσσου, καὶ πνεῦμα θεοῦ ἐπεφέρετο ἐπάνω τοῦ ὕδατος.
+Γένεσις	1	3	καὶ εἶπεν ὁ θεός· γενηθήτω φῶς· καὶ ἐγένετο φῶς.
+Ψαλμοί	23	1	Ψαλμὸς τῷ Δαυίδ· κύριος ποιμαίνει με, καὶ οὐδέν με ὑστερήσει.
+Ψαλμοί	23	2	ἐν τόπῳ χλόης ἐκεῖ με ἐγέννησεν, ἐπὶ ὕδατος ἀναπαύσεως ἐξέθρεψέν με.
+Ιωάννης	3	16	οὕτως γὰρ ἠγάπησεν ὁ θεὸς τὸν κόσμον, ὥστε τὸν υἱὸν αὐτοῦ τὸν μονογενῆ ἔδωκεν, ἵνα πᾶς ὁ πιστεύων εἰς αὐτὸν μὴ ἀπόληται ἀλλ' ἔχῃ ζωὴν αἰώνιον.
+Ιωάννης	14	6	λέγει αὐτῷ ὁ Ἰησοῦς· ἐγώ εἰμι ἡ ὁδὸς καὶ ἡ ἀλήθεια καὶ ἡ ζωή· οὐδεὶς ἔρχεται πρὸς τὸν πατέρα εἰ μὴ δι' ἐμοῦ.
+Πρὸς Ῥωμαίους	8	28	Οἴδαμεν δὲ ὅτι τοῖς ἀγαπῶσι τὸν θεὸν πάντα συνεργεῖ εἰς ἀγαθόν, τοῖς κατὰ πρόθεσιν κλητοῖς οὖσιν.
+Πρὸς Φιλιππησίους	4	13	πάντα ἰσχύω ἐν τῷ ἐνδυναμοῦντί με.
+Ἀποκάλυψις Ἰωάννου	22	21	ἡ χάρις τοῦ κυρίου Ἰησοῦ Χριστοῦ μετὰ πάντων.
+SEED
+
+echo "[TONGUES-04c] Latin (Vulgate-style) seed..."
+cat > "$BIBLE_DIR/latin-bible-seed.tsv" << 'SEED'
+Book	Chapter	Verse	Text
+Genesis	1	1	In principio creavit Deus cælum et terram.
+Genesis	1	2	Terra autem erat inanis et vacua, et tenebræ super faciem abyssi: et spiritus Dei ferebatur super aquas.
+Genesis	1	3	Dixitque Deus: Fiat lux. Et facta est lux.
+Psalmi	23	1	Dominus regit me, et nihil mihi deerit.
+Psalmi	23	2	In pascuis virentibus me collocavit, super aquam refectionis educavit me.
+Ioannes	3	16	Sic enim dilexit Deus mundum, ut Filium suum unigenitum daret, ut omnis qui credit in eum non pereat, sed habeat vitam æternam.
+Ioannes	14	6	Dicit ei Jesus: Ego sum via, et veritas, et vita; nemo venit ad Patrem, nisi per me.
+Romanos	8	28	Scimus autem quoniam diligentibus Deum omnia cooperantur in bonum, iis qui secundum propositum vocati sunt sancti.
+Philippenses	4	13	Omnia possum in eo qui me confortat.
+Apocalypsis	22	21	Gratia Domini nostri Jesu Christi cum omnibus vobis. Amen.
+SEED
+
+echo "[TONGUES-04d] German (Luther-style) seed..."
+cat > "$BIBLE_DIR/de-bible-seed.tsv" << 'SEED'
+Book	Chapter	Verse	Text
+1 Mose	1	1	Am Anfang schuf Gott Himmel und Erde.
+1 Mose	1	2	Und die Erde war wüst und leer, und Finsternis war auf der Tiefe; und der Geist Gottes schwebete auf dem Wasser.
+1 Mose	1	3	Und Gott sprach: Es werde Licht! Und es ward Licht.
+Psalm	23	1	Ein Psalm Davids. Der HERR ist mein Hirt; mir wird nichts mangeln.
+Psalm	23	2	Er weidet mich auf grüner Aue und führet mich zum frischen Wasser.
+Johannes	3	16	Also hat Gott die Welt geliebt, daß er seinen eingeborenen Sohn gab, damit alle, die an ihn glauben, nicht verloren werden, sondern das ewige Leben haben.
+Johannes	14	6	Jesus spricht zu ihm: Ich bin der Weg und die Wahrheit und das Leben; niemand kommt zum Vater denn durch mich.
+Römer	8	28	Wir wissen aber, daß denen, die Gott lieben, alle Dinge zum Besten dienen, denen, die nach dem Ratschluß berufen sind.
+Philipper	4	13	Ich vermag alles durch den, der mich mächtig macht, Christus.
+Offenbarung	22	21	Die Gnade unsers HERRN Jesu Christi sei mit euch allen! Amen.
+SEED
+
+echo "[TONGUES-04e] Portuguese seed..."
+cat > "$BIBLE_DIR/pt-bible-seed.tsv" << 'SEED'
+Book	Chapter	Verse	Text
+Gênesis	1	1	No princípio criou Deus os céus e a terra.
+Gênesis	1	2	E a terra era sem forma e vazia; e havia trevas sobre a face do abismo; e o Espírito de Deus se movia sobre a face das águas.
+Gênesis	1	3	E disse Deus: Haja luz; e houve luz.
+Salmos	23	1	O Senhor é o meu pastor; nada me faltará.
+Salmos	23	2	Deitar-me faz em verdes pastos, guia-me mansamente a águas tranquilas.
+João	3	16	Porque Deus amou o mundo de tal maneira que deu o seu Filho unigênito, para que todo aquele que nele crê não pereça, mas tenha a vida eterna.
+João	14	6	Disse-lhe Jesus: Eu sou o caminho, e a verdade e a vida; ninguém vem ao Pai senão por mim.
+Romanos	8	28	E sabemos que todas as coisas contribuem juntamente para o bem daqueles que amam a Deus.
+Filipenses	4	13	Tudo posso naquele que me fortalece.
+Apocalipse	22	21	A graça de nosso Senhor Jesus Cristo seja com todos vós. Amém.
+SEED
+
+echo "[TONGUES-04f] Russian seed..."
+cat > "$BIBLE_DIR/ru-bible-seed.tsv" << 'SEED'
+Book	Chapter	Verse	Text
+Бытие	1	1	В начале сотворил Бог небо и землю.
+Бытие	1	2	Земля же была безвидна и пуста, и тьма над бездною, и Дух Божий носился над водою.
+Бытие	1	3	И сказал Бог: да будет свет. И стал свет.
+Псалом	23	1	Господь — Пастырь мой; я ни в чем не буду нуждаться.
+Псалом	23	2	Покоит меня на злачных пажитях и водит меня к водам тихим.
+Иоанн	3	16	Ибо так возлюбил Бог мир, что отдал Сына Своего Единородного, дабы всякий верующий в Него, не погиб, но имел жизнь вечную.
+Иоанн	14	6	Иисус сказал ему: Я есмь путь и истина и жизнь; никто не приходит к Отцу, как только через Меня.
+Римлянам	8	28	А мы знаем, что любящим Бога все содействует ко благу.
+Филиппийцам	4	13	Все могу в укрепляющем меня Иисусе Христе.
+Откровение	22	21	Благодать Господа нашего Иисуса Христа со всеми вами. Аминь.
+SEED
+
+echo "[TONGUES-04g] Chinese seed..."
+cat > "$BIBLE_DIR/zh-bible-seed.tsv" << 'SEED'
+Book	Chapter	Verse	Text
+创世记	1	1	起初神创造天地。
+创世记	1	2	地是空虚混沌，渊面黑暗；神的灵运行在水面上。
+创世记	1	3	神说，要有光，就有了光。
+诗篇	23	1	耶和华是我的牧者，我必不至缺乏。
+诗篇	23	2	他使我躺卧在青草地上，领我在可安歇的水边。
+约翰福音	3	16	神爱世人，甚至将他的独生子赐给他们，叫一切信他的，不致灭亡，反得永生。
+约翰福音	14	6	耶稣说，我就是道路、真理、生命；若不藉着我，没有人能到父那里去。
+罗马书	8	28	我们晓得万事都互相效力，叫爱神的人得益处。
+腓立比书	4	13	我靠着那加给我力量的，凡事都能做。
+启示录	22	21	愿主耶稣的恩惠常与众圣徒同在。阿们。
+SEED
+
+echo "[TONGUES-04h] Japanese seed..."
+cat > "$BIBLE_DIR/ja-bible-seed.tsv" << 'SEED'
+Book	Chapter	Verse	Text
+創世記	1	1	はじめに神は天と地を創られた。
+創世記	1	2	地は混沌としており、闇が淵の面にあった。神の霊が水の面を動いていた。
+創世記	1	3	神は言われた。「光あれ。」すると光があった。
+詩篇	23	1	ダビデの歌。主はわが牧者。わたしは、乏しいことがない。
+詩篇	23	2	主は、わたしを緑の牧場に伏させ、いこいの水のほとりに伴われる。
+ヨハネによる福音書	3	16	神はそのひとり子をお与えになったほどに世を愛された。それは、彼を信じる者がひとりも滅びることなく、永遠の命を得るためである。
+ヨハネによる福音書	14	6	イエスは言われた。「わたしは道であり、真理であり、命である。だれも、父のもとに来るのは、わたしを通ってしかない。」
+ローマ人への手紙	8	28	また、わたしたちは知っている。神に愛される者には、万事が共に益となることを。
+フィリピ人への手紙	4	13	わたしには、わたしを強くしてくださる方によって、万事ができる。
+ヨハネの黙示録	22	21	どうか、主イエスの恵みが、聖徒たち一同とともにあるように。アーメン。
+SEED
+
+echo "[TONGUES-04i] Arabic seed..."
+cat > "$BIBLE_DIR/ar-bible-seed.tsv" << 'SEED'
+Book	Chapter	Verse	Text
+التكوين	1	1	في البدء خلق الله السموات والأرض.
+التكوين	1	2	وكانت الأرض خربة وخالية، وعلى وجه الغمر ظلمة، وروح الله يرف على وجه المياه.
+التكوين	1	3	وقال الله: ليكن نور. فكان نور.
+مزمور	23	1	مزمور لداود: الرب راعيّ فلا يعوزني شيء.
+مزمور	23	2	في مراعٍ خضر يربضني، إلى مياه الراحة يهديني.
+يوحنا	3	16	لأنه هكذا أحب الله العالم حتى بذل ابنه الوحيد، لكي لا يهلك كل من يؤمن به، بل تكون له الحياة الأبدية.
+يوحنا	14	6	قال له يسوع: أنا هو الطريق والحق والحياة. لا أحد يأتي إلى الآب إلا بي.
+رومية	8	28	ونعلم أن كل الأشياء تعمل معاً للخير للذين يحبون الله.
+فيلبي	4	13	كل أقدر عليه في المقويني.
+رؤيا	22	21	نعمة ربنا يسوع المسيح مع جميعكم. آمين.
+SEED
+
+echo "[TONGUES-04j] Hindi seed..."
+cat > "$BIBLE_DIR/hi-bible-seed.tsv" << 'SEED'
+Book	Chapter	Verse	Text
+उत्पत्ति	1	1	आदि में परमेश्वर ने आकाश और पृथ्वी की सृष्टि की।
+उत्पत्ति	1	2	और पृथ्वी बेडौल और सुनसान थी; और घोर अन्धकार गहिरे जल के ऊपर था, और परमेश्वर का आत्मा जल के ऊपर मण्डल कर रहा था।
+उत्पत्ति	1	3	और परमेश्वर ने कहा, उजियाला हो जाए; और उजियाला हो गया।
+भजन संहिता	23	1	प्रभु मेरा चरवाहा है; मुझे कुछ घटी न होगी।
+भजन संहिता	23	2	वह मुझे हरे हरे चरागाहों में बैठाता है। मुझे शान्त जल के पास ले जाता है।
+यूहन्ना	3	16	क्योंकि परमेश्वर ने जगत से ऐसा प्रेम किया कि उसने अपना एकलौता पुत्र दिया, ताकि जो कोई उस पर विश्वास करे वह नाश न हो, परन्तु अनन्त जीवन पाए।
+यूहन्ना	14	6	यीशु ने उस से कहा, मैं मार्ग और सच्चाई और जीवन हूँ; कोई पिता के पास नहीं आता, परन्तु मेरे द्वारा।
+रोमियों	8	28	और हम जानते हैं कि जो लोग परमेश्वर से प्रेम रखते हैं, उनके लिये सब बातें भले के लिये मिलकर काम करती हैं।
+फिलिप्पियों	4	13	मैं सब कुछ उसके द्वारा कर सकता हूँ जो मुझे बल देता है।
+प्रकाशितवाक्य	22	21	प्रभु यीशु का अनुग्रह पवित्र लोगों के साथ हो। आमीन।
+SEED
+
+echo "[TONGUES-04k] Italian seed..."
+cat > "$BIBLE_DIR/it-bible-seed.tsv" << 'SEED'
+Book	Chapter	Verse	Text
+Genesi	1	1	Nel principio Iddio creò il cielo e la terra.
+Genesi	1	2	E la terra era informe e vuota, e le tenebre coprivano la faccia dell'abisso, e lo Spirito di Dio aleggiava sulla superficie delle acque.
+Genesi	1	3	E Iddio disse: Sia la luce. E la luce fu.
+Salmi	23	1	Salmo di Davide. L'Eterno è il mio pastore; io non mancherò di nulla.
+Salmi	23	2	Egli mi fa riposare in verde pascolo, mi conduce lungo le acque chete.
+Giovanni	3	16	Perciocché Iddio ha tanto amato il mondo, che ha dato il suo unigenito Figliuolo, affinché chiunque crede in lui non perisca, ma abbia vita eterna.
+Giovanni	14	6	Gli disse Gesù: Io sono la via, la verità, e la vita; niuno viene al Padre, se non per mezzo di me.
+Romani	8	28	Or noi sappiamo che tutte le cose cooperano a bene di quelli che amano Dio.
+Filippesi	4	13	Ogni cosa posso in colui che mi fortifica.
+Apocalisse	22	21	La grazia del Signore nostro Gesù Cristo sia con tutti voi. Amen.
+SEED
+
+# ═══════════════════════════════════════════════════
 # 5. BIBLE TONGUES CLI WRAPPER
 # ═══════════════════════════════════════════════════
 echo "[TONGUES-05] Installing Bible tongues extension..."
@@ -142,9 +307,11 @@ case "$LANGUAGE" in
         echo "  Example: alfred-bible-lang es Salmos 23"
         echo "  Example: alfred-bible-lang fr Jean 3"
         echo "  Example: alfred-bible-lang he"
+        echo "  Example: alfred-bible-lang gr Ιωάννης 3"
+        echo "  Example: alfred-bible-lang la Ioannes 3"
         ;;
 
-    en|es|fr|he)
+    en|es|fr|he|gr|la|de|pt|ru|zh|ja|ar|hi|it)
         CODE="$LANGUAGE"
         BOOK="${2:-}"
         CHAPTER="${3:-}"
@@ -212,6 +379,10 @@ case "$LANGUAGE" in
         echo "  alfred-bible-lang es              — Random verse in Spanish"
         echo "  alfred-bible-lang fr Jean 3       — John 3 in French"
         echo "  alfred-bible-lang he              — Random Hebrew verse"
+        echo "  alfred-bible-lang gr              — Random Greek verse (LXX/NT seed)"
+        echo "  alfred-bible-lang la Ioannes 3    — John 3 in Latin (seed)"
+        echo "  alfred-bible-lang de Johannes 3   — John 3 in German (seed)"
+        echo "  alfred-bible-lang zh 约翰福音 3     — John 3 in Chinese (seed)"
         echo ""
         echo "  \"They began to speak with other tongues,"
         echo "   as the Spirit gave them utterance.\" — Acts 2:4"
@@ -222,10 +393,9 @@ chmod +x /usr/local/bin/alfred-bible-lang
 
 echo "╔═══════════════════════════════════════════════════════════╗"
 echo "║  [0292] Bible Tongues — COMPLETE                         ║"
-echo "║  ✓ English (AKJV) — 39,482 verses                       ║"
-echo "║  ✓ Spanish (Reina-Valera) — seed installed               ║"
-echo "║  ✓ French (Louis Segond) — seed installed                ║"
-echo "║  ✓ Hebrew (Westminster Codex) — seed installed           ║"
-echo "║  ✓ alfred-bible-lang CLI — multilingual reader           ║"
+echo "║  ✓ English AKJV (full) + 13 seed tongues (es fr he +    ║"
+echo "║    Greek Latin German Portuguese Russian Chinese Japanese║"
+echo "║    Arabic Hindi Italian) — alfred-bible-lang list       ║"
+echo "║  ✓ alfred-bible-lang — run: alfred-bible-lang list       ║"
 echo "║  They spoke with other tongues. — Acts 2:4               ║"
 echo "╚═══════════════════════════════════════════════════════════╝"

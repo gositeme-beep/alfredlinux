@@ -210,9 +210,11 @@
     dataset as paths `akjv-*.tsv`): 94 books, 39,482 verses (TSV). Installed
     with the sovereign image under /usr/share/alfred/bible/ (not inside the
     kernel vmlinux).
-  • 4 languages: English (AKJV), Spanish (Reina-Valera 1960),
-    French (Louis Segond 1910), Hebrew (Westminster Leningrad Codex — use
-    alfred-bible --lang he; Hebrew seeds from hook 0292)
+  • 14 Bible tongues in languages.conf: English (full AKJV on disk) plus
+    Spanish, French, Hebrew, Greek (LXX/NT samples), Latin (Vulgate-style
+    samples), German, Portuguese, Russian, Chinese, Japanese, Arabic, Hindi,
+    Italian — each ships key verses under /usr/share/alfred/bible/*-seed.tsv
+    (offline). Read with: alfred-bible-lang list  then  alfred-bible-lang <code>
   • Children's Bible — 33 illustrated stories
   • alfred-bible CLI with --lang support
   • Family Bible Generator — personalized covenant certificates,
