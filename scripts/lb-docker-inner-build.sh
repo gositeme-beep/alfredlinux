@@ -17,6 +17,11 @@ if [[ ! -f chroot/etc/debian_version ]]; then
   rm -rf chroot binary .build 2>/dev/null || true
 fi
 
+# live-build requires the `config` stage before chroot stages (error otherwise:
+# "E: the following stage is required to be done first: config").
+echo "[inner] lb config at $(date -Is)"
+lb config --ignore-system-defaults || lb config
+
 echo "[inner] lb build starting at $(date -Is)"
 lb build
 RC=$?
