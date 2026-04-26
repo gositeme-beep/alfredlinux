@@ -262,14 +262,15 @@ install -m 0644 /usr/share/alfred/ai-providers.env.example /etc/skel/.config/alf
 echo "[AI] Creating desktop entries..."
 cat > /usr/share/applications/alfred-ai.desktop << 'DESK'
 [Desktop Entry]
-Name=Alfred AI
-Comment=Sovereign AI — Omahon + Ollama; optional cloud SDK backup on disk
+Name=Talk To Your Omputer
+GenericName=Sovereign AI Agent
+Comment=Talk to your computer — Omahon + Ollama; local first, no cloud keys required :)
 Exec=xfce4-terminal -e "alfred-ai"
 Icon=applications-science
 Terminal=false
 Type=Application
 Categories=Development;Science;AI;
-Keywords=ai;agent;llm;omahon;ollama;local;sovereign;offline;backup;
+Keywords=ai;agent;llm;omahon;ollama;omputer;talk;local;sovereign;offline;
 DESK
 
 cat > /usr/share/applications/ollama.desktop << 'DESK2'
@@ -289,7 +290,7 @@ cat > /etc/skel/.config/autostart/alfred-ai-hint.desktop << 'HINT'
 [Desktop Entry]
 Type=Application
 Name=Alfred AI Setup
-Exec=bash -c 'if [ ! -f ~/.alfred-ai-setup-done ]; then notify-send "Alfred AI" "Primary: alfred-ai → Omahon + Ollama (latest when fetched). No keys required. Optional backup: Claude if key set; groq/openai/anthropic pip SDKs on disk for custom wiring." -i applications-science; touch ~/.alfred-ai-setup-done; fi'
+Exec=bash -c 'if [ ! -f ~/.alfred-ai-setup-done ]; then notify-send "Talk To Your Omputer" "alfred-ai → Omahon + Ollama on your machine. No cloud keys to start. Optional keys: alfred-ai keys" -i applications-science; touch ~/.alfred-ai-setup-done; fi'
 Hidden=false
 NoDisplay=true
 X-GNOME-Autostart-enabled=true
