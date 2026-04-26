@@ -21,7 +21,15 @@ kernel-install-build-deps.sh
   sudo once on build host: debhelper, libdw-dev, etc. (required for bindeb-pkg).
 
 kernel-bindeb-pkg-nohup.sh
-  After deps + tarball: background `fakeroot make bindeb-pkg`. Watch log under KERNEL_WORK.
+  After host `sudo` deps: background `fakeroot make bindeb-pkg` on gositeme.
+
+kernel-docker-bindeb.sh + kernel-docker-inner-bindeb.sh
+  **No host sudo:** build inside `debian:bookworm` Docker. Usage:
+    bash scripts/kernel-docker-bindeb.sh detach
+  Then `docker logs -f <name>` (name in ../kernel-7.0.1-work/docker-bindeb.containername).
+
+copy-kernel-debs-to-chroot.sh
+  After .deb exist under KERNEL_WORK: copy into `config/packages.chroot/`, then `iso-preflight.sh`.
 
 Law copies (same ideas, paths fixed for gositeme home):
   /home/gositeme/law/alfred-build-preflight.sh
