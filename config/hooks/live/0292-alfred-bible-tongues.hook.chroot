@@ -8,8 +8,8 @@
 # Multilingual Bible: English (AKJV) plus seed tongues offline (Spanish,
 # French, Hebrew, Greek, Latin, German, Portuguese, Russian, Chinese, Japanese,
 # Arabic, Hindi, Italian, Romanian, Polish, Ukrainian, Korean, Turkish, Dutch,
-# Vietnamese, Tagalog, Swahili, Amharic, Yoruba, Igbo, Hausa, Zulu, Xhosa,
-# Afrikaans, Somali, Twi, …); full texts may be added under
+# Vietnamese, Tagalog, Filipino, Urdu, Swahili, Amharic, Yoruba, Igbo, Hausa,
+# Zulu, Xhosa, Afrikaans, Somali, Twi, …); full texts may be added under
 # /usr/share/alfred/bible/*.tsv later.
 #
 # BUILD: v7.77 Kingdom of God Edition
@@ -56,6 +56,8 @@ tr|Türkçe|tr-bible.tsv|Turkish (public-domain samples)
 nl|Nederlands|nl-bible.tsv|Dutch Statenvertaling-style (public-domain samples)
 vi|Tiếng Việt|vi-bible.tsv|Vietnamese (public-domain samples)
 tl|Tagalog|tl-bible.tsv|Tagalog (public-domain samples)
+fil|Filipino|fil-bible.tsv|Filipino Philippines (public-domain samples; same seed set as Tagalog)
+ur|اردو|ur-bible.tsv|Urdu (public-domain samples)
 sw|Kiswahili|sw-bible.tsv|Swahili (public-domain samples)
 am|አማርኛ|am-bible.tsv|Amharic (public-domain samples)
 yo|Yorùbá|yo-bible.tsv|Yoruba (public-domain samples)
@@ -609,6 +611,42 @@ Filipi	4	13	Mepɛ ne nyinaa wɔ nea ɔhyɛ me ma me tumi mu.
 Yohane Adiyisɛm	22	21	Yɛn Awurade Yesu Kristo adom nka mo nyinaa nka. Amen.
 SEED
 
+echo "[TONGUES-04ad] Filipino seed (Philippines — same key verses as Tagalog)..."
+cat > "$BIBLE_DIR/fil-bible-seed.tsv" << 'SEED'
+Book	Chapter	Verse	Text
+Genesis	1	1	Nang pasimula ay nilikha ng Diyos ang langit at ang lupa.
+Genesis	1	2	At ang lupa ay walang anyo at walang laman; at ang kadiliman ay sumasa ibabaw ng kalaliman; at ang Espiritu ng Diyos ay sumasa ibabaw ng tubig.
+Genesis	1	3	At sinabi ng Diyos: Magkaroon ng liwanag; at nagkaroon ng liwanag.
+Awit	23	1	Ang Panginoon ay aking pastor; hindi ako mangangailangan.
+Awit	23	2	Sa sariwang pastulan ay pinapahiga niya ako; sa mga tubig na pahingahan ay pinapatnubayan niya ako.
+Awit	23	3	Iniibigan niya ang aking kaluluwa; pinapatnubayan niya ako sa mga landas ng katuwiran alang-alang sa kaniyang pangalan.
+Awit	23	4	Oo, kung ako'y maglakad man sa libis ng lilim ng kamatayan, wala akong katatakutang kasamaan; sapagka't ikaw ay sumasa akin: ang iyong tungkod at ang iyong pamalo, ay nagsisialiw sa akin.
+Awit	91	1	Ang nananahan sa lihim na dako ng Kataastaasan ay magpapahinga sa lilim ng Makapangyarihan sa lahat.
+Juan	3	16	Sapagka't gayon na lamang ang pag-ibig ng Diyos sa sanglibutan, na ibinigay niya ang kaniyang bugtong na Anak, upang ang sinomang sa kaniya'y sumampalataya ay huwag mapahamak, kundi magkaroon ng buhay na walang hanggan.
+Juan	14	6	Sinabi sa kaniya ni Jesus, Ako ang daan, at ang katotohanan, at ang buhay: sinoman ay hindi makakaparoon sa Ama, kundi sa pamamagitan ko.
+Mga Taga-Roma	8	28	At nalalaman natin na sa mga umiibig sa Diyos ang lahat ng mga bagay ay nagsasamang gumagawa para sa mabuti.
+Mga Taga-Filipos	4	13	Lahat ng mga bagay ay aking magagawa sa pamamagitan niyaong nagpapalakas sa akin.
+Apocalipsis	22	21	Ang biyaya ng ating Panginoong Jesucristo ay sumainyo nang lahat. Siya nawa.
+SEED
+
+echo "[TONGUES-04ae] Urdu seed..."
+cat > "$BIBLE_DIR/ur-bible-seed.tsv" << 'SEED'
+Book	Chapter	Verse	Text
+پیدائش	1	1	شروع میں خدا نے آسمان اور زمین کو پیدا کیا۔
+پیدائش	1	2	زمین بے سروپ اور خالی تھی۔ تاریکی گہرے پانی پر تھی۔ اور خدا کی روح پانی کے اوپر حرکت کر رہی تھی۔
+پیدائش	1	3	خدا نے کہا کہ روشنی ہو۔ روشنی ہوگئی۔
+زبور	23	1	خداوند میرا چرواہا ہے۔ مجھے کمی نہ ہوگی۔
+زبور	23	2	وہ مجھے ہرے بھرے چراگاہوں میں لیٹاتا ہے۔ وہ مجھے آرام کے پانیوں کے پاس لے جاتا ہے۔
+زبور	23	3	وہ میری جان کو بحال کرتا ہے۔ وہ مجھے اپنی ناموس کی راہوں پر چلاتا ہے۔
+زبور	23	4	اگرچہ میں موت کے سایہ کی وادی میں سے ہوں گا تو بھی میں کسی شر سے نہیں ڈرونگا کیونکہ تو میرے ساتھ ہے۔ تیرا لاٹھی اور تیرا ڈنڈا مجھے تسلّی دیتے ہیں۔
+زبور	91	1	جو شخص خدا تعالیٰ کی پناہ گاہ میں رہتا ہے وہ ہر قادر کی چھاؤں میں ٹھہرے گا۔
+یوحنا	3	16	کیونکہ خدا نے جہان سے اَیسی محبت کی کہ اُس نے اپنا اِکلَوتا بیٹا بخشا تاکہ جو کوئی اُس پر ایمان لائے ہلاک نہ ہو بلکہ ہمیشہ کی زندگی پائے۔
+یوحنا	14	6	یسوع نے اُس سے کہا، میں راستہ اور سچّائی اور زندگی ہوں۔ کوئی شخص باپ کے پاس نہیں آ سکتا مگر میرے وسیلے سے۔
+رومیوں	8	28	اور ہم جانتے ہیں کہ خدا سے محبت رکھنے والوں کے لیے سب چیزیں مل کر بھلائی کے لیے کام کرتی ہیں۔
+فلپیوں	4	13	میں اُس کی قوت کے وسیلے سے جو مجھے مضبوط کرتا ہے سب کچھ کر سکتا ہوں۔
+مکاشفہ	22	21	ہمارے خداوند یسوع مسیح کا فضل تم سب پر ہو۔ آمین۔
+SEED
+
 # ═══════════════════════════════════════════════════
 # 5. BIBLE TONGUES CLI WRAPPER
 # ═══════════════════════════════════════════════════
@@ -714,6 +752,8 @@ case "$LANGUAGE" in
         echo "  Example: alfred-bible-lang la Ioannes 3"
         echo "  Example: alfred-bible-lang zu Genesisi 1"
         echo "  Example: alfred-bible-lang am ዮሐንስ 3"
+        echo "  Example: alfred-bible-lang ur یوحنا 3"
+        echo "  Example: alfred-bible-lang fil \"Mga Taga-Filipos\" 4"
         ;;
 
     help|--help|-h)
@@ -730,6 +770,8 @@ case "$LANGUAGE" in
         echo "  alfred-bible-lang zh 约翰福音 3     — John 3 in Chinese (seed)"
         echo "  alfred-bible-lang zu Genesisi 1    — Genesis 1 in Zulu (seed)"
         echo "  alfred-bible-lang am ዮሐንስ 3       — John 3 in Amharic (seed)"
+        echo "  alfred-bible-lang ur یوحنا 3       — John 3 in Urdu (seed)"
+        echo "  alfred-bible-lang fil \"Mga Taga-Filipos\" 4 — Philippians 4 in Filipino (seed)"
         echo ""
         echo "  \"They began to speak with other tongues,"
         echo "   as the Spirit gave them utterance.\" — Acts 2:4"
@@ -751,7 +793,7 @@ mkdir -p /usr/share/applications
 cat > /usr/share/applications/alfred-bible-tongues.desktop << 'DESKBT'
 [Desktop Entry]
 Name=Bible in Many Languages
-Comment=32 tongues offline (seed verses) — Acts 2:4; no Internet required
+Comment=34 tongues offline (seed verses) — Acts 2:4; no Internet required
 Exec=x-terminal-emulator -e bash -c 'echo "══ Bible tongues (offline seeds) ══"; echo "List codes, then try a random verse or a book/chapter."; echo ""; alfred-bible-lang list; echo ""; echo "Try:  alfred-bible-lang es"; echo "      alfred-bible-lang ro Ioan 3"; echo "      alfred-bible tongues list"; echo ""; exec bash'
 Icon=accessories-dictionary
 Terminal=false
@@ -762,8 +804,8 @@ DESKBT
 
 echo "╔═══════════════════════════════════════════════════════════╗"
 echo "║  [0292] Bible Tongues — COMPLETE                         ║"
-echo "║  ✓ English AKJV (full) + 31 seed tongues — list for codes ║"
-echo "║    (+ am yo ig ha zu xh af so tw Africa & diaspora) Acts 2:4 ║"
+echo "║  ✓ English AKJV (full) + 33 seed tongues — list for codes ║"
+echo "║    (+ fil ur; Africa set) Acts 2:4                       ║"
 echo "║  ✓ alfred-bible-lang — run: alfred-bible-lang list       ║"
 echo "║  They spoke with other tongues. — Acts 2:4               ║"
 echo "╚═══════════════════════════════════════════════════════════╝"
