@@ -3,9 +3,9 @@
  * Alfred Linux — Apps & Downloads
  * Central hub for all Alfred ecosystem downloads.
  */
-$isoVersion = "4.0 GA";
-$isoFile    = "alfred-linux-4.0-ga-amd64-20260408.iso";
-$isoSize    = "2.3 GB";
+$isoVersion = "7.77 GA";
+$isoFile    = "alfred-linux-7.77-ga-amd64-20260412.iso";
+$isoSize    = "~7.8 GB";
 ?>
 <!DOCTYPE html>
 <html lang="en">
