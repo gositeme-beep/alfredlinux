@@ -10,6 +10,10 @@ apt-get install -y --no-install-recommends \
   live-build debootstrap cdebootstrap ca-certificates cpio wget gnupg \
   rsync xz-utils bzip2 gzip file
 
+# Debian trixie chroot + bookworm live-build: binary_syslinux can hit GNU cp refusing to
+# overwrite dangling symlinks under chroot/root/isolinux (see scripts/patch-live-build-isolinux-dangling.sh).
+bash /work/scripts/patch-live-build-isolinux-dangling.sh
+
 cd /work/build
 # Recover from broken/partial chroot (e.g. failed Docker run left dev/proc only).
 if [[ ! -f chroot/etc/debian_version ]]; then
