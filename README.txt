@@ -44,8 +44,9 @@
 ═══════════════════════════════════════════════════════════════════════════════
 
   42 hooks — one for each generation from Abraham to Christ (Matthew 1:17).
-  Source tree ships 46 live-build `*.hook.chroot` files (merge stubs included);
-  frozen GA ISO profiles may enable a subset (see hook numbering).
+  Kingdom count is always 42; some numbered stages split across multiple
+  `*.hook.chroot` files under `config/hooks/live/` (merge shards — do not add
+  to the 42). Frozen GA ISO profiles may enable a subset (see hook numbering).
   2 package lists, 1,200+ installed packages, and 100+ curated applications.
   Frozen v7.77 GA ISO (2026-04-12): 29 hooks shipped in the frozen profile.
   Full 42-hook profile targets v7.77.1 GA.
