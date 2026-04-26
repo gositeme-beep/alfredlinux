@@ -427,6 +427,10 @@
   The Kingdom Covenant License and trademarks also forbid others from passing
   off unofficial builds as authorized "Alfred Linux" releases.
 
+  Published GA ISO — completeness promise: docs/ISO-BUILD-RISK-REGISTER.txt
+  section **0) COMPLETENESS COVENANT** (what “complete” means, gates, manifest,
+  and explicit profile boundary vs later GA lines).
+
   Verify your download before installing.
 
   AVAILABLE NOW:

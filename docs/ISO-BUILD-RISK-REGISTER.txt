@@ -1,9 +1,44 @@
-Alfred ISO / live-build (Docker lb) — risk register (forecast)
-===============================================================
-Maintainer intent: what has failed or can fail again, and what to check first.
-This is not a promise of completeness; update when new failure modes appear.
+Alfred ISO / live-build (Docker lb) — completeness covenant + risk register
+===========================================================================
+Maintainer intent: first the **promise** shipped to the Kingdom; then what can
+break on the way there, and what to check first.
 
 (Law copy may also exist at …/law/alfred-build-control-plane/ISO-BUILD-RISK-REGISTER.txt)
+
+0) COMPLETENESS COVENANT — Kingdom promise (published GA ISO)
+---------------------------------------------------------------
+Alfred Linux **promises** every **published GA Alfred Linux ISO** — meaning an
+artifact whose checksums are published for verification (e.g. `api/version.json`
+checksum fields, site `SHA256SUMS` / companion files, and detached GPG where the
+project publishes signatures) — is **complete for its declared generation**.
+
+**“Complete” here means all of the following were true for the exact git commit
+and live-build configuration used to produce that ISO:**
+
+  A) **Gates before burn:** `bash scripts/iso-preflight.sh` passed; `bash
+     scripts/release-integrity.sh check-repo` passed; `bash scripts/security-audit.sh`
+     reported **CRITICAL=0** on that commit (same tree bound into the build).
+
+  B) **Manifest honor:** the chroot received everything the **active profile**
+     commits to install — `config/package-lists/*.list.chroot`, kernel debs and
+     policy under `config/packages.chroot/` per `README-KERNEL7.txt`, and every
+     `*.hook.chroot` stage **enabled for that build** ran to completion without
+     intentional omission of a billed deliverable. (README’s “WHAT’S INCLUDED” /
+     GA notes describe the product line; the live-build tree is the mechanical
+     source of truth for what that profile installs.)
+
+  C) **Integrity in the user’s hands:** published hashes match the bytes on
+     disk; the verification flow in `README.txt` (gpg + sha256sum -c) detects
+     substitution or truncation.
+
+**Explicit boundary:** features **not** in the active GA profile (e.g. README’s
+note that the frozen v7.77 GA line may ship a **subset** of the 42-hook lineage
+while the full 42-hook profile targets a later GA) are **out of scope** for that
+ISO’s completeness — they are a **different** promised generation, not a missing
+slice of the one you downloaded.
+
+The **risk register** below is not a disclaimer of duty; it is a forecast of what
+can violate the covenant if ignored. Update it whenever a new failure mode appears.
 
 References
 ----------
@@ -66,4 +101,4 @@ Quick triage table
   JSON phase waiting forever                        → watcher / race (HIGH #4).
   Skipping … already done + weird binary error     → resume state (HIGH #3).
 
-Last review: 2026-04-26 (isolinux, nap_ok, kernel APT policy, watch flock).
+Last review: 2026-04-26 — completeness covenant added; isolinux, nap_ok, kernel APT policy, watch flock.
