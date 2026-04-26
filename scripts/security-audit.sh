@@ -32,6 +32,17 @@ non_comment_hits() {
 
 log "=== Alfred security-audit (wave 2) ==="
 
+# --- CRITICAL: api/version.json bible_tongues vs 0292 languages.conf rows ---
+if [ -f api/version.json ] && [ -f config/hooks/live/0292-alfred-bible-tongues.hook.chroot ]; then
+  want=$(python3 -c "import json; print(json.load(open('api/version.json')).get('bible_tongues', ''))" 2>/dev/null || echo "")
+  got=$(sed -n '/cat > .*languages\.conf/,/^CONF$/p' config/hooks/live/0292-alfred-bible-tongues.hook.chroot | grep '|' | grep -cvE '^[[:space:]]*#')
+  if [ -z "$want" ] || [ "$want" = "None" ]; then
+    warn "api/version.json missing bible_tongues (expected integer)"
+  elif [ "$got" != "$want" ]; then
+    crit "bible_tongues mismatch: api/version.json says $want but 0292 languages.conf has $got data rows"
+  fi
+fi
+
 # --- CRITICAL: known SSH / auth footguns in live hooks ---
 while IFS= read -r hit; do
   [ -z "$hit" ] && continue

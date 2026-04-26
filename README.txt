@@ -107,6 +107,9 @@
   • Kingdom Covenant License (KCL) v1.0 installed to every copy
   • Trademark protections and succession provisions
   • Heir named: Eden Sarai Gabrielle Vallee Perez
+  • SPDX / what is open vs closed: **LICENSING.md** in this repo (AGPL matrix +
+    CC sections); **LICENSE** is the KCL covenant text. **api/version.json** holds
+    GA metadata (e.g. `hooks`, `bible_tongues`).
   Hook: 0176-kingdom-covenant-shield
 
   ── POST-QUANTUM CRYPTOGRAPHY ───────────────────────────────────────────────

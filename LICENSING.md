@@ -8,6 +8,12 @@ This document is the single source of truth for what is open vs closed across
 the Alfred Linux ecosystem. If a file's header conflicts with this document,
 this document wins until the header is fixed.
 
+**How this relates to `LICENSE` (Kingdom Covenant, KCL):**  
+`LICENSE` is the covenant text (branding, succession, stewardship). For
+**what you may do with published source in this tree** (hooks, scripts, docs),
+use this file: **Section 1 (AGPL-3.0-or-later)** is the redistribution license
+for that code unless an individual file header says otherwise.
+
 ---
 
 ## 1. Operating System (this repository: `alfred-linux-v2/`)
@@ -131,4 +137,5 @@ implying official endorsement: no).
 
 ## Changelog
 
+- 2026-04-26 — Bridge paragraph: how `LICENSE` (KCL) relates to Section 1 AGPL for published source.
 - 2026-04-24 — Initial unified LICENSING.md (was scattered across pages).
