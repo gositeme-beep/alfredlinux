@@ -32,10 +32,13 @@ non_comment_hits() {
 
 log "=== Alfred security-audit (wave 2) ==="
 
+# shellcheck source=shlib/bible_tongues_counts.sh
+. "$(dirname "$0")/shlib/bible_tongues_counts.sh"
+
 # --- CRITICAL: api/version.json bible_tongues vs 0292 languages.conf rows ---
 if [ -f api/version.json ] && [ -f config/hooks/live/0292-alfred-bible-tongues.hook.chroot ]; then
-  want=$(python3 -c "import json; print(json.load(open('api/version.json')).get('bible_tongues', ''))" 2>/dev/null || echo "")
-  got=$(sed -n '/cat > .*languages\.conf/,/^CONF$/p' config/hooks/live/0292-alfred-bible-tongues.hook.chroot | grep '|' | grep -cvE '^[[:space:]]*#')
+  want=$(bible_tongues_version_field)
+  got=$(bible_tongues_conf_rows)
   if [ -z "$want" ] || [ "$want" = "None" ]; then
     warn "api/version.json missing bible_tongues (expected integer)"
   elif [ "$got" != "$want" ]; then

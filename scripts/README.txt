@@ -19,6 +19,7 @@ release-integrity.sh
   After ISOs exist in one directory: SHA256SUMS + SHA512SUMS, then GPG-detached sign.
     scripts/release-integrity.sh hash *.iso
     scripts/release-integrity.sh sign
+  From repo root: `scripts/release-integrity.sh check-repo` (bible_tongues vs languages.conf).
   Verifiers: `scripts/release-integrity.sh verify` or manual gpg + sha256sum -c.
   See README.txt "VERIFICATION — TRUST BUT VERIFY".
 
