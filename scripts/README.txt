@@ -5,6 +5,8 @@ iso-preflight.sh
   Run before `lb build`. Fails if linux-image-7.0.1*.deb missing from
   config/packages.chroot/ (hook 0050). Usage:
     bash scripts/iso-preflight.sh
+  Run `lb` from `build/` (see ALFRED-LINUX-BUILD-TEST.txt). An empty `build/auto/` is normal
+  unless you maintain an executable `build/auto/config` script.
 
 kernel-download-7.0.1.sh
   Downloads linux-7.0.1.tar.xz + patch-7.0.1.xz into ../kernel-7.0.1-work/ (or KERNEL_WORK=…).
