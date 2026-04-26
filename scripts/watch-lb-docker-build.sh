@@ -78,7 +78,8 @@ import json, sys, time
 path, name, exit_s, iso_list = sys.argv[1:5]
 with open(iso_list) as f:
     iso_paths = [ln.strip() for ln in f if ln.strip()]
-nap_ok = exit_s == "0" and len(iso_paths) > 0
+# docker wait often returns empty after --rm (unknown) even when lb build succeeded and wrote .iso
+nap_ok = len(iso_paths) > 0 and exit_s in ("0", "unknown")
 data = {
     "phase": "done",
     "ts": time.time(),
@@ -95,7 +96,7 @@ PY
 fi
 
 if [[ -n "$WEBHOOK" ]]; then
-  BODY=$(python3 -c "import json,time; print(json.dumps({'ts':time.time(),'container':'${NAME}','docker_exit':'${EXIT}','iso_count':int(${ISO_COUNT}),'nap_ok':('${EXIT}'=='0' and int(${ISO_COUNT})>0)}))")
+  BODY=$(python3 -c "import json,time; n=int(${ISO_COUNT}); ex='${EXIT}'; print(json.dumps({'ts':time.time(),'container':'${NAME}','docker_exit':ex,'iso_count':n,'nap_ok':(n>0 and ex in ('0','unknown'))}))")
   curl -sS -X POST -H 'Content-Type: application/json' -d "$BODY" "$WEBHOOK" -o /dev/null -w 'webhook_http:%{http_code}\n' || echo "webhook: curl failed"
 fi
 
