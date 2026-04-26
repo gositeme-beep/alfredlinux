@@ -29,6 +29,15 @@ Unattended-Upgrade::Origins-Pattern {
 };
 EOF
 
+# Keep Alfred linux-image-7.0.1* only (same hook — no extra chroot hook file).
+echo "[Alfred Update] APT preferences: block Debian default kernel metapackages…"
+install -d -m 0755 /etc/apt/preferences.d
+cat > /etc/apt/preferences.d/99alfred-no-debian-default-kernel << 'PREF'
+Package: linux-image-amd64 linux-image-amd64-unsigned linux-headers-amd64 linux-image-generic linux-headers-generic linux-image-rt-amd64 linux-headers-rt-amd64
+Pin: release *
+Pin-Priority: -1
+PREF
+
 install -d -m 0755 /usr/local/sbin
 cat > /usr/local/sbin/alfred-update-healthcheck << 'EOF'
 #!/bin/bash
