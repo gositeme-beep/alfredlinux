@@ -9,7 +9,7 @@
 # French, Hebrew, Greek, Latin, German, Portuguese, Russian, Chinese, Japanese,
 # Arabic, Hindi, Italian, Romanian, Polish, Ukrainian, Korean, Turkish, Dutch,
 # Vietnamese, Tagalog, Filipino, Urdu, Swahili, Amharic, Yoruba, Igbo, Hausa,
-# Zulu, Xhosa, Afrikaans, Somali, Twi, …); full texts may be added under
+# Zulu, Xhosa, Afrikaans, Somali, Twi, Jamaican Patwa, …); full texts may be added under
 # /usr/share/alfred/bible/*.tsv later.
 #
 # BUILD: v7.77 Kingdom of God Edition
@@ -68,6 +68,7 @@ xh|isiXhosa|xh-bible.tsv|Xhosa (public-domain samples)
 af|Afrikaans|af-bible.tsv|Afrikaans (public-domain samples)
 so|Soomaali|so-bible.tsv|Somali (public-domain samples)
 tw|Twi|tw-bible.tsv|Twi / Akan (public-domain samples)
+jam|Jamaican Patwa|jam-bible.tsv|Jamaica — Jamaican Creole (public-domain style samples)
 CONF
 
 # ═══════════════════════════════════════════════════
@@ -647,6 +648,24 @@ Book	Chapter	Verse	Text
 مکاشفہ	22	21	ہمارے خداوند یسوع مسیح کا فضل تم سب پر ہو۔ آمین۔
 SEED
 
+echo "[TONGUES-04af] Jamaican Patwa seed (Jamaica — ISO 639-3 jam)..."
+cat > "$BIBLE_DIR/jam-bible-seed.tsv" << 'SEED'
+Book	Chapter	Verse	Text
+Genesis	1	1	Inna di biginin Gad mek di iem an di ort.
+Genesis	1	2	Di ort did emti an no av no shiep; dankies did uova di dip; an di Spirit a Gad did muuv uova di waata.
+Genesis	1	3	An Gad se, “Mek liet kom.” An liet kom.
+Psalms	23	1	Di Laad a mi shipaad; mi naa du widout notn.
+Psalms	23	2	Im mek mi lii dong pan griis pastyaa; im liid mi bai kwaiet waata.
+Psalms	23	3	Im bring bak mi suul; im liid mi ina paat a raitnis fi im niem sakes.
+Psalms	23	4	Iven if mi waak chuu di shiedou a det, mi no ba fi nuo evl, bikaaz yu de wid mi; yu rod an yu staf dem komfaat mi.
+Psalms	91	1	Wu eva siddung unda di shado a di Mais Ai, im a go riest unda di wing a di Wan we av aal paa.
+John	3	16	Bikaaz Gad lov di worl so muoch, im gi im wan an ongl Son, so dat evribadi we biliv pahn im no go ded bot av laif we no go don.
+John	14	6	Jiizas se to im, “A mi a di wie, an di chuu, an di laif; no wan no kyan kom to di Fada if a no chuu mi.”
+Romans	8	28	An wi nuo se evriting a wok toutgidha fi gud fi dem we lov Gad.
+Philippians	4	13	Mi kyan du evriting chuu Krais wea gi mi strench.
+Revelation	22	21	Di griis fi wi Laad Jesas Krais be wid aal a unu. A-mien.
+SEED
+
 # ═══════════════════════════════════════════════════
 # 5. BIBLE TONGUES CLI WRAPPER
 # ═══════════════════════════════════════════════════
@@ -754,6 +773,7 @@ case "$LANGUAGE" in
         echo "  Example: alfred-bible-lang am ዮሐንስ 3"
         echo "  Example: alfred-bible-lang ur یوحنا 3"
         echo "  Example: alfred-bible-lang fil \"Mga Taga-Filipos\" 4"
+        echo "  Example: alfred-bible-lang jam John 3"
         ;;
 
     help|--help|-h)
@@ -772,6 +792,7 @@ case "$LANGUAGE" in
         echo "  alfred-bible-lang am ዮሐንስ 3       — John 3 in Amharic (seed)"
         echo "  alfred-bible-lang ur یوحنا 3       — John 3 in Urdu (seed)"
         echo "  alfred-bible-lang fil \"Mga Taga-Filipos\" 4 — Philippians 4 in Filipino (seed)"
+        echo "  alfred-bible-lang jam John 3       — John 3 in Jamaican Patwa (seed)"
         echo ""
         echo "  \"They began to speak with other tongues,"
         echo "   as the Spirit gave them utterance.\" — Acts 2:4"
@@ -793,7 +814,7 @@ mkdir -p /usr/share/applications
 cat > /usr/share/applications/alfred-bible-tongues.desktop << 'DESKBT'
 [Desktop Entry]
 Name=Bible in Many Languages
-Comment=34 tongues offline (seed verses) — Acts 2:4; no Internet required
+Comment=35 tongues offline (seed verses) — Acts 2:4; no Internet required
 Exec=x-terminal-emulator -e bash -c 'echo "══ Bible tongues (offline seeds) ══"; echo "List codes, then try a random verse or a book/chapter."; echo ""; alfred-bible-lang list; echo ""; echo "Try:  alfred-bible-lang es"; echo "      alfred-bible-lang ro Ioan 3"; echo "      alfred-bible tongues list"; echo ""; exec bash'
 Icon=accessories-dictionary
 Terminal=false
@@ -804,8 +825,8 @@ DESKBT
 
 echo "╔═══════════════════════════════════════════════════════════╗"
 echo "║  [0292] Bible Tongues — COMPLETE                         ║"
-echo "║  ✓ English AKJV (full) + 33 seed tongues — list for codes ║"
-echo "║    (+ fil ur; Africa set) Acts 2:4                       ║"
+echo "║  ✓ English AKJV (full) + 34 seed tongues — list for codes ║"
+echo "║    (+ fil ur jam Jamaica; Africa set) Acts 2:4           ║"
 echo "║  ✓ alfred-bible-lang — run: alfred-bible-lang list       ║"
 echo "║  They spoke with other tongues. — Acts 2:4               ║"
 echo "╚═══════════════════════════════════════════════════════════╝"
