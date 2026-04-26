@@ -9,6 +9,7 @@ This folder mirrors the **small, copy-safe** operator files so Forge clones stay
   • `ga-iso-release.conf` — basename + btih; must match `includes/ga-release-state.php` on site.
   • `verify-ga-publish-alignment.sh` — run on the web host after ISO + `.torrent` + SUMS land.
   • `check-iso-777gib.sh` — size gate (~7.77 GiB binary); same as site `build/scripts/` copy.
+  • `smoke-test-iso.sh` — runs check-iso + optional `VERIFY_SITE=1` verify (mirrors `/home/ubuntu/smoke-test-iso.sh` pattern in /reseal).
 
 After editing the canonical copies on the site repo, refresh these files here (or vice versa)
 before tagging a GA release.
