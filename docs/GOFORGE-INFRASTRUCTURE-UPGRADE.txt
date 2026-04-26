@@ -67,6 +67,8 @@ artifacts** so CI can do real work (including optional **kernel-tree** jobs).
 
   **Keep duplicates identical:** after changing `.gitea/workflows/security-audit.yml`,
   run `bash scripts/sync-forgejo-actions-yaml.sh` so `.forgejo/workflows/` stays in sync.
+  **CI enforces this:** the first job step after checkout runs that script and
+  `git diff --exit-code` on `.forgejo/workflows/security-audit.yml` (GitHub + Gitea YAML).
 
 ──────────────────────────────────────────────────────────────────────────────
 4) Artifacts, caches, and release linkage

@@ -13,6 +13,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: .forgejo workflow matches canonical .gitea copy
+        run: |
+          bash scripts/sync-forgejo-actions-yaml.sh
+          git diff --exit-code .forgejo/workflows/security-audit.yml
+
       - name: Canonical → build (hooks + lists + packages.chroot + build-assets)
         run: |
           mkdir -p build/config/hooks build/config/package-lists build/config/packages.chroot \
