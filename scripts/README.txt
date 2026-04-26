@@ -15,6 +15,7 @@ remote-apt-live-build.sh
 
 build-on-ubuntu.sh
   From gositeme (or laptop): rsync repo to ubuntu@BUILD_HOST, optional ssh.
+  On the builder: interactive `sudo su -` (password if required), then `lb` from …/build.
   See /home/gositeme/law/ALFRED-LINUX-BUILD-TEST.txt for full flow.
 
 kernel-install-build-deps.sh
