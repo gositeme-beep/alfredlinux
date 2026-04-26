@@ -5,8 +5,8 @@
 # "And they were all filled with the Holy Ghost, and began to speak
 #  with other tongues, as the Spirit gave them utterance." — Acts 2:4
 #
-# Multilingual Bible: English (AKJV) plus seed tongues offline (Spanish,
-# French, Hebrew, Yiddish, Greek, Latin, German, Portuguese, Russian, Chinese, Japanese,
+# Multilingual Bible: English (AKJV) plus seed tongues offline (Spanish es + es-419 + es-ES,
+# Ladino, Chavacano; French, Hebrew, Yiddish, Greek, Latin, German, Portuguese, Russian, Chinese, Japanese,
 # Arabic (MSA + Darija / Egyptian / Levantine / Gulf vernacular seeds), Hindi,
 # Italian, Romanian, Polish, Ukrainian, Korean, Turkish, Dutch,
 # Vietnamese, Tagalog, Filipino, Urdu, Swahili, Amharic, Yoruba, Igbo, Hausa,
@@ -37,7 +37,11 @@ cat > "$BIBLE_DIR/languages.conf" << 'CONF'
 # Alfred Bible — Supported Languages
 # Format: code|name|file|source
 en|English|akjv-bible.tsv|Authorized King Jesus Version — Perez Family Edition (AKJV)
-es|Español|rvr-bible.tsv|Reina-Valera Revisada 1960
+es|Español|rvr-bible.tsv|Reina-Valera Revisada 1960 (Spanish — general / liturgical)
+es-419|Español (419 — América Latina)|es-419-bible.tsv|Latin-American Spanish (public-domain style samples)
+es-ES|Español (España)|es-ES-bible.tsv|Peninsular Spanish (public-domain style samples; vosotros where marked)
+lad|Ladino / Djudeo-espanyol|lad-bible.tsv|Ladino / Judeo-Spanish (Latin-letter samples)
+cbk|Chabacano|cbk-bible.tsv|Chavacano — Spanish-lexifier creole, Zamboanga-style (public-domain style samples)
 fr|Français|lsg-bible.tsv|Louis Segond 1910
 he|עברית|hebrew-bible.tsv|Westminster Leningrad Codex (OT)
 yi|ייִדיש|yi-bible.tsv|Yiddish — Hebrew-letter samples (public-domain style)
@@ -106,6 +110,78 @@ Juan	14	6	Jesús le dijo: Yo soy el camino, y la verdad, y la vida; nadie viene 
 Romanos	8	28	Y sabemos que a los que aman a Dios, todas las cosas les ayudan a bien, esto es, a los que conforme a su propósito son llamados.
 Filipenses	4	13	Todo lo puedo en Cristo que me fortalece.
 Apocalipsis	22	21	La gracia de nuestro Señor Jesucristo sea con todos vosotros. Amén.
+SEED
+
+echo "[TONGUES-02b] Spanish — Latin America (BCP es-419 style) seed..."
+cat > "$BIBLE_DIR/es-419-bible-seed.tsv" << 'SEED'
+Book	Chapter	Verse	Text
+Génesis	1	1	En el principio creó Dios los cielos y la tierra.
+Génesis	1	2	La tierra estaba sin forma y vacía; tinieblas cubrían la faz del abismo, y el Espíritu de Dios se movía sobre la faz de las aguas.
+Génesis	1	3	Y dijo Dios: Haya luz; y fue la luz.
+Salmos	23	1	Salmo de David: El Señor es mi pastor; nada me faltará.
+Salmos	23	2	En lugares de pastos delicados me hará descansar; junto a aguas de reposo me pastoreará.
+Salmos	23	3	Confortará mi alma; me guiará por sendas de justicia por amor de su nombre.
+Salmos	23	4	Aunque ande en valle de sombra de muerte, no temeré mal alguno, porque tú estarás conmigo; tu vara y tu cayado me infundirán aliento.
+Salmos	91	1	El que habita al abrigo del Altísimo morará bajo la sombra del Omnipotente.
+Juan	3	16	Porque de tal manera amó Dios al mundo, que dio a su Hijo unigénito, para que todo aquel que en él cree, no se pierda, sino que tenga vida eterna.
+Juan	14	6	Jesús le dijo: Yo soy el camino, y la verdad, y la vida; nadie viene al Padre, sino por mí.
+Romanos	8	28	Y sabemos que para los que aman a Dios, todas las cosas cooperan para bien, a los que conforme a su propósito son llamados.
+Filipenses	4	13	Todo lo puedo en Cristo que me fortalece.
+Apocalipsis	22	21	La gracia del Señor Jesús sea con todos ustedes. Amén.
+SEED
+
+echo "[TONGUES-02c] Spanish — España (Península) seed..."
+cat > "$BIBLE_DIR/es-ES-bible-seed.tsv" << 'SEED'
+Book	Chapter	Verse	Text
+Génesis	1	1	En el principio creó Dios los cielos y la tierra.
+Génesis	1	2	La tierra estaba informe y vacía, y la tiniebla estaba sobre la faz del abismo; y el Espíritu de Dios se movía sobre la faz de las aguas.
+Génesis	1	3	Y dijo Dios: Sea la luz; y hubo luz.
+Salmos	23	1	Cántico de David: Jehová es mi pastor; nada me faltará.
+Salmos	23	2	En lugares de delicados pastos me hará descansar; junto a aguas de reposo me pastoreará.
+Salmos	23	3	Confortará mi alma; me guiará por sendas de justicia por amor de su nombre.
+Salmos	23	4	Aunque ande en valle de sombra de muerte, no temeré mal alguno, porque tú estarás conmigo; tu vara y tu cayado me infundirán aliento.
+Salmos	91	1	El que habita al abrigo del Altísimo morará bajo la sombra del Omnipotente.
+Juan	3	16	Porque tanto amó Dios al mundo, que dio a su Hijo unigénito, para que todo el que cree en él no se pierda, sino que tenga vida eterna.
+Juan	14	6	Jesús le dijo: Yo soy el camino, y la verdad, y la vida; nadie viene al Padre, sino por mí.
+Romanos	8	28	Y sabemos que a los que aman a Dios, todas las cosas les ayudan a bien, a los que conforme a su propósito son llamados.
+Filipenses	4	13	Todo lo puedo en el que me fortalece.
+Apocalipsis	22	21	La gracia de nuestro Señor Jesucristo sea con todos vosotros. Amén.
+SEED
+
+echo "[TONGUES-02d] Ladino (Djudeo-espanyol) seed..."
+cat > "$BIBLE_DIR/lad-bible-seed.tsv" << 'SEED'
+Book	Chapter	Verse	Text
+Génesis	1	1	En el prinzipio krió el Dio el syelo i la tierra.
+Génesis	1	2	La tierra era vazía i sin forma, i tinieblas sobre la faz del abismo; i el espíritu de Dio se movía sobre las aguas.
+Génesis	1	3	I dixo el Dio: Sea la luz; i fue la luz.
+Salmos	23	1	Salmo de David: El Dio es mi pastór; dinguna koza me faltará.
+Salmos	23	2	Me faze repozar en verdes pastos; me guía a aguas quiétas.
+Salmos	23	3	Refreska mi alma; me guía por sendas de djustisia por su nombre.
+Salmos	23	4	Aunke ande en valle de ombre de muerte, no temeré mal, porque tu estás conmigo; tu vara i tu gayato me konsuelan.
+Salmos	91	1	El ke mora al abrigo del Altísimo repozará a la sombra del Todopoderoso.
+Juan	3	16	Porke tanto amó el Dio al mundo, ke dio a su hijo uniko, para ke todo el ke kree en él no se pierda, ma tenga vida eterna.
+Juan	14	6	Le dixo Jeshúa: Yo so el kamino, la verdad i la vida; ninguno viene al Padre si no por mi.
+Romanos	8	28	Sabemos ke para los ke aman al Dio, todas las kozas ayudan a bien, a los ke son yamados konforme a su proposito.
+Filipenses	4	13	Todo lo puedo en Kristo, el ke me da fuerza.
+Apocalipsis	22	21	La grasia de nuestro Señor Jeshúa Kristo sea con todos vosotros. Amén.
+SEED
+
+echo "[TONGUES-02e] Chabacano (cbk) seed..."
+cat > "$BIBLE_DIR/cbk-bible-seed.tsv" << 'SEED'
+Book	Chapter	Verse	Text
+Génesis	1	1	Na principio Dios ha creá el cielo y el tierra.
+Génesis	1	2	El tierra ta vacío y sin forma; tinieblas ta encima del abismo, y el Espíritu de Dios ta mové encima del agua.
+Génesis	1	3	Dios hablá: «Hacé luz», y ta salé luz.
+Salmos	23	1	Salmo de David: El Señor es mi pastor; nada yo ta falta conmigo.
+Salmos	23	2	Él ta hacé conmigo descansá en pasto verde; llevá conmigo cerca del agua quieta.
+Salmos	23	3	Ta restaurá mi alma; ta guía conmigo por el camino del justo por su nombre.
+Salmos	23	4	Aunque yo ta andá en el valle de sombra de muerte, no ta tené miedo del mal, porque tu ta conmigo; tu báculo y tu cayado ta consolá conmigo.
+Salmos	91	1	El que ta habitá en el escondite del Altísimo, ta descansá bajo la sombra del Todopoderoso.
+Juan	3	16	Porque Dios ta amá con el mundo mucho, que ta dá su Hijo único, para que todo el que cree con Él no ta perecé, sino que ta tené vida eterna.
+Juan	14	6	Jesús hablá con él: «Yo soy el camino, el verdad, y el vida; nadie ta vení con el Padre si no por mí.»
+Romanos	8	28	Sabemos que para con los que aman con Dios, todas las cosas ta juntá para bien, con los que ta llamá según su propósito.
+Filipenses	4	13	Todo cosa yo puede con Cristo, el que ta dá conmigo fuerza.
+Apocalipsis	22	21	El gracia de nuestro Señor Jesucristo sea con todos ustedes. Amén.
 SEED
 
 # ═══════════════════════════════════════════════════
@@ -943,6 +1019,10 @@ case "$LANGUAGE" in
         echo ""
         echo "  Usage: alfred-bible-lang <code> [book] [chapter]"
         echo "  Example: alfred-bible-lang es Salmos 23"
+        echo "  Example: alfred-bible-lang es-419 Juan 3"
+        echo "  Example: alfred-bible-lang es-ES Juan 3"
+        echo "  Example: alfred-bible-lang lad Juan 3"
+        echo "  Example: alfred-bible-lang cbk Juan 3"
         echo "  Example: alfred-bible-lang fr Jean 3"
         echo "  Example: alfred-bible-lang ro Ioan 3"
         echo "  Example: alfred-bible-lang uk Івана 3"
@@ -967,7 +1047,11 @@ case "$LANGUAGE" in
         echo -e "${GOLD}═══ alfred-bible-lang — The Word in Every Tongue ═══${NC}"
         echo ""
         echo "  alfred-bible-lang list           — Show available languages"
-        echo "  alfred-bible-lang es              — Random verse in Spanish"
+        echo "  alfred-bible-lang es              — Random verse in Spanish (RVR-style)"
+        echo "  alfred-bible-lang es-419 Juan 3   — John 3 in Latin-American Spanish (seed)"
+        echo "  alfred-bible-lang es-ES Juan 3    — John 3 in Peninsular Spanish (seed)"
+        echo "  alfred-bible-lang lad Juan 3      — John 3 in Ladino (seed)"
+        echo "  alfred-bible-lang cbk Juan 3      — John 3 in Chavacano (seed)"
         echo "  alfred-bible-lang fr Jean 3       — John 3 in French"
         echo "  alfred-bible-lang ro Ioan 3       — John 3 in Romanian (seed)"
         echo "  alfred-bible-lang he              — Random Hebrew verse"
@@ -1007,19 +1091,19 @@ mkdir -p /usr/share/applications
 cat > /usr/share/applications/alfred-bible-tongues.desktop << 'DESKBT'
 [Desktop Entry]
 Name=Bible in Many Languages
-Comment=44 tongues offline (seed verses) — Acts 2:4; no Internet required
+Comment=48 tongues offline (seed verses) — Acts 2:4; no Internet required
 Exec=x-terminal-emulator -e bash -c 'echo "══ Bible tongues (offline seeds) ══"; echo "List codes, then try a random verse or a book/chapter."; echo ""; alfred-bible-lang list; echo ""; echo "Try:  alfred-bible-lang es"; echo "      alfred-bible-lang ro Ioan 3"; echo "      alfred-bible tongues list"; echo ""; exec bash'
 Icon=accessories-dictionary
 Terminal=false
 Type=Application
 Categories=Education;Reference;
-Keywords=bible;scripture;languages;multilingual;tongues;indonesian;persian;farsi;burmese;creole;haitian;kreyol;yiddish;romanian;spanish;i18n;
+Keywords=bible;scripture;languages;multilingual;tongues;spanish;ladino;chavacano;indonesian;persian;farsi;burmese;creole;haitian;kreyol;yiddish;romanian;i18n;
 DESKBT
 
 echo "╔═══════════════════════════════════════════════════════════╗"
 echo "║  [0292] Bible Tongues — COMPLETE                         ║"
-echo "║  ✓ English AKJV (full) + 43 seed tongues — list for codes ║"
-echo "║    (+ id fa my; ht yi; ary arz apc afb; fil ur jam; Africa) Acts 2:4 ║"
+echo "║  ✓ English AKJV (full) + 47 seed tongues — list for codes ║"
+echo "║    (+ es-419 es-ES lad cbk; id fa my; ht yi; ary arz apc afb; fil ur jam) Acts 2:4 ║"
 echo "║  ✓ alfred-bible-lang — run: alfred-bible-lang list       ║"
 echo "║  They spoke with other tongues. — Acts 2:4               ║"
 echo "╚═══════════════════════════════════════════════════════════╝"
