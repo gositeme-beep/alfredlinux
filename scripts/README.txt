@@ -40,6 +40,12 @@ lb-docker-build.sh + lb-docker-inner-build.sh
   Log: `lb-docker-build.log` (repo root). Name: `lb-docker.containername`.
   Requires Docker; can take many hours; `--privileged` is intentional for mounts/chroot.
 
+watch-lb-docker-build.sh
+  After `detach`, **wait until the container exits**, print summary + ISO paths + log tail.
+    bash scripts/watch-lb-docker-build.sh
+  Optional: `--status-json /path/state.json` (machine-readable), `--webhook URL` (POST JSON on exit).
+  Law wrapper: `/home/gositeme/law/alfred-watch-lb-docker.sh`
+
 Law copies (same ideas, paths fixed for gositeme home):
   /home/gositeme/law/alfred-build-preflight.sh
   /home/gositeme/law/alfred-kernel-download-sources.sh
