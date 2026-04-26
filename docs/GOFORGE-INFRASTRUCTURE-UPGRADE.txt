@@ -113,7 +113,8 @@ artifacts** so CI can do real work (including optional **kernel-tree** jobs).
     `kernel-heavy` runner → artifact appears; disk headroom unchanged post-cleanup.
 
   • Public transparency page: https://alfredlinux.com/security-kernel
-    (also linked from /download checksum section, /verify, /security, /docs, /developers.)
+    (also linked from /download checksum section, /releases, /roadmap, /verify, /security,
+    /docs, /developers.)
 
 ──────────────────────────────────────────────────────────────────────────────
 8) Related Alfred docs
@@ -165,3 +166,12 @@ artifacts** so CI can do real work (including optional **kernel-tree** jobs).
   KERNEL_WORK under the job temp dir; tar xf linux-7.0.1.tar.xz; apply patch-7.0.1.xz;
   then extend with sparse, checkstack, checkpatch, or your distro checklist; upload
   logs/SARIF as workflow artifacts with retention limits.
+
+──────────────────────────────────────────────────────────────────────────────
+11) Maintainer hygiene — staging the public_html site repo
+──────────────────────────────────────────────────────────────────────────────
+  Large PHP pages (download.php, index.php, …) often carry **multiple unrelated**
+  local edits. Before `git commit`, prefer **`git add -p`** (patch staging) or your
+  editor’s “stage selection” so a single commit does not accidentally merge a full
+  page refresh with a four-line cross-link. This keeps `git bisect` and rollbacks
+  honest when production needs a surgical revert.
