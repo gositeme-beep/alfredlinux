@@ -1,5 +1,4 @@
 #!/bin/bash
-# SPDX-License-Identifier: AGPL-3.0-or-later
 # release-integrity.sh — checksum + GPG for Alfred Linux release artifacts
 #
 # Why: No vendor can be stopped from *creating* a modified .iso on their own
@@ -25,7 +24,7 @@ usage() {
     echo "  hash <files...>   Write ${SUM256} and ${SUM512} for given artifacts."
     echo "  sign              Detached-sign ${SUM256} -> ${SUM256}.asc (needs GPG secret key)."
     echo "  verify            gpg --verify ${SUM256}.asc && sha256sum -c ${SUM256}"
-    echo "  check-repo        From repo root: bible_tongues vs 0292 languages.conf (exit 1 on mismatch)."
+    echo "  check-repo        From repo root: bible_tongues + hooks==42 vs metadata (exit 1 on mismatch)."
 }
 
 cmd_check_repo() {
@@ -48,6 +47,16 @@ cmd_check_repo() {
         exit 1
     fi
     echo "OK: bible_tongues ($want) matches languages.conf row count."
+    hj=$(version_json_hooks_field)
+    if [ -z "$hj" ] || [ "$hj" = "None" ]; then
+        echo "error: api/version.json missing numeric hooks" >&2
+        exit 1
+    fi
+    if [ "$hj" != "$ALFRED_KINGDOM_HOOKS_EXPECTED" ]; then
+        echo "error: hooks mismatch — version.json=$hj expected $ALFRED_KINGDOM_HOOKS_EXPECTED (Kingdom lineage)" >&2
+        exit 1
+    fi
+    echo "OK: hooks ($hj) matches Kingdom lineage ($ALFRED_KINGDOM_HOOKS_EXPECTED)."
 }
 
 cmd_hash() {

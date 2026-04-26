@@ -46,6 +46,16 @@ if [ -f api/version.json ] && [ -f config/hooks/live/0292-alfred-bible-tongues.h
   fi
 fi
 
+# --- CRITICAL: api/version.json hooks == Kingdom lineage (42) ---
+if [ -f api/version.json ]; then
+  hj=$(version_json_hooks_field)
+  if [ -z "$hj" ] || [ "$hj" = "None" ]; then
+    warn "api/version.json missing hooks (expected $ALFRED_KINGDOM_HOOKS_EXPECTED)"
+  elif [ "$hj" != "$ALFRED_KINGDOM_HOOKS_EXPECTED" ]; then
+    crit "hooks mismatch: api/version.json says $hj but Kingdom lineage is $ALFRED_KINGDOM_HOOKS_EXPECTED (README / LICENSING.md)"
+  fi
+fi
+
 # --- WARN: SPDX on Kingdom hooks (LICENSING.md §1; REUSE-friendly) ---
 for f in "${HOOK_GLOB[@]}"; do
   [ -f "$f" ] || continue

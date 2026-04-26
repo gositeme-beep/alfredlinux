@@ -440,7 +440,7 @@
     Publish SHA256SUMS, SHA512SUMS, and SHA256SUMS.asc next to the images.
 
   From a clone (metadata drift): scripts/release-integrity.sh check-repo
-    (confirms api/version.json bible_tongues matches 0292 languages.conf rows.)
+    (bible_tongues vs 0292 languages.conf; api/version.json hooks must be 42.)
 
   Anyone can check before install:
     gpg --verify SHA256SUMS.asc SHA256SUMS && sha256sum -c SHA256SUMS
