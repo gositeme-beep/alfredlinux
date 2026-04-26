@@ -6,7 +6,8 @@ security-audit.sh
   Optional: ALFRED_SHELLCHECK_ALL=1 to shellcheck every scripts/*.sh.
     bash scripts/security-audit.sh
   Wave checklist: scripts/SECURITY-WAVES.txt
-  CI: .github/workflows/security-audit.yml
+  CI: .github/workflows/security-audit.yml; GoForge: .gitea/workflows/security-audit.yml
+  After editing the Gitea workflow: bash scripts/sync-forgejo-actions-yaml.sh
 
 iso-preflight.sh
   Run before `lb build`. Fails if linux-image-7.0.1*.deb missing from
