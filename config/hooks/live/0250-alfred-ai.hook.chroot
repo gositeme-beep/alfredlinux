@@ -14,7 +14,7 @@
 #
 # Primary path: latest Omahon + Ollama on 127.0.0.1 (GPU when present — hook 0275).
 # Default runtime needs no API keys. We still ship optional Python SDKs
-# (anthropic, openai, groq) as BACKUP for operators who wire Omahon or
+# (anthropic, openai, groq, together) as BACKUP for operators who wire Omahon or
 # scripts to cloud only when local inference is unavailable — never required.
 # Offline-capable when weights/binaries are pre-staged in build-assets.
 # One with the Lord — His breath first; silicon serves the household.
@@ -90,10 +90,15 @@ default = "ollama"
 base_url = "http://localhost:11434"
 model = "phi3:mini"
 
-# Optional BACKUP only (uncomment + set keys in your copy if you must use cloud):
+# Optional cloud BACKUP — keys live in ~/.config/alfred/ai-providers.env (see
+# /usr/share/alfred/ai-providers.env.example). Uncomment when your Omahon build
+# exposes matching provider blocks (OpenAI-compatible URLs below).
 # [providers.anthropic]
-# model = "claude-sonnet-4-20250514"   # export ANTHROPIC_API_KEY=sk-ant-...
-# Groq / OpenAI-compatible endpoints: configure when your Omahon build exposes them.
+# model = "claude-sonnet-4-20250514"
+# [providers.openai]          # base_url = "https://api.openai.com/v1"     OPENAI_API_KEY
+# [providers.together]      # base_url = "https://api.together.xyz/v1"   TOGETHER_API_KEY
+# [providers.groq]          # base_url = "https://api.groq.com/openai/v1" GROQ_API_KEY
+# [providers.xai_grok]      # base_url = "https://api.x.ai/v1"           XAI_API_KEY
 
 [memory]
 enabled = true
@@ -116,14 +121,40 @@ cat > /usr/local/bin/alfred-ai << 'ALFRED_AI'
 # ═══════════════════════════════════════════════
 # alfred-ai — The sovereign intelligence gateway
 # ═══════════════════════════════════════════════
-# Routes: 1) Omahon  2) Ollama  3) optional Claude (ANTHROPIC_API_KEY) backup
-# Cloud SDKs (groq, openai) stay on disk for custom tools — not auto-called here.
+# Routes: 1) Omahon  2) Ollama  3) optional Claude if ANTHROPIC_API_KEY
+# Optional keys for OpenAI, Together.ai, Groq, xAI Grok: ~/.config/alfred/ai-providers.env
+# Run: alfred-ai keys   (shows template; copy, chmod 600, uncomment exports you need)
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 CYAN='\033[0;36m'
 GOLD='\033[0;33m'
 NC='\033[0m'
+
+SECRETS="${HOME}/.config/alfred/ai-providers.env"
+if [[ -f "$SECRETS" ]]; then
+    set -a
+    # shellcheck disable=SC1090
+    source "$SECRETS"
+    set +a
+fi
+
+if [[ "${1:-}" == "keys" || "${1:-}" == "--keys" ]]; then
+    echo -e "${GOLD}═══ Optional cloud API keys (backup / enrichment) ═══${NC}"
+    echo ""
+    echo "  Primary path stays Omahon + Ollama on this machine."
+    echo "  Copy the template, restrict permissions, then uncomment only the providers you trust:"
+    echo ""
+    echo "    mkdir -p ~/.config/alfred"
+    echo "    cp /usr/share/alfred/ai-providers.env.example ~/.config/alfred/ai-providers.env"
+    echo "    chmod 600 ~/.config/alfred/ai-providers.env"
+    echo "    \$EDITOR ~/.config/alfred/ai-providers.env"
+    echo ""
+    echo -e "${CYAN}── Template (${GOLD}/usr/share/alfred/ai-providers.env.example${CYAN}) ──${NC}"
+    cat /usr/share/alfred/ai-providers.env.example 2>/dev/null || echo "(template missing)"
+    echo ""
+    exit 0
+fi
 
 # Start ollama if not running
 if command -v ollama &>/dev/null && ! pgrep -x ollama &>/dev/null; then
@@ -138,8 +169,13 @@ if [ "$1" = "--status" ] || [ "$1" = "status" ]; then
     echo -n "Ollama:     " && (pgrep -x ollama &>/dev/null && echo -e "${GREEN}RUNNING${NC}" || echo -e "${RED}STOPPED${NC}")
     echo -e "${CYAN}Primary:${NC}   Omahon + Ollama (local, no keys required)"
     echo -e "${CYAN}Backup:${NC}    Claude CLI if installed + ANTHROPIC_API_KEY set"
-    echo -n "Claude key: " && ([ -n "${ANTHROPIC_API_KEY:-}" ] && echo -e "${GREEN}set (optional backup)${NC}" || echo -e "${CYAN}unset${NC}")
-    echo -n "pip SDKs:   " && (python3 -c "import anthropic, openai, groq" 2>/dev/null && echo -e "${GREEN}anthropic+openai+groq (backup on disk)${NC}" || echo -e "${CYAN}partial/missing${NC}")
+    echo -n "Secrets file: " && { [[ -f "${HOME}/.config/alfred/ai-providers.env" ]] && echo -e "${GREEN}~/.config/alfred/ai-providers.env${NC}" || echo -e "${CYAN}none — run: alfred-ai keys${NC}"; }
+    echo -n "ANTHROPIC:  " && ([ -n "${ANTHROPIC_API_KEY:-}" ] && echo -e "${GREEN}set${NC}" || echo -e "${CYAN}unset${NC}")
+    echo -n "OPENAI:     " && ([ -n "${OPENAI_API_KEY:-}" ] && echo -e "${GREEN}set${NC}" || echo -e "${CYAN}unset${NC}")
+    echo -n "TOGETHER:   " && ([ -n "${TOGETHER_API_KEY:-}" ] && echo -e "${GREEN}set${NC}" || echo -e "${CYAN}unset${NC}")
+    echo -n "GROQ:       " && ([ -n "${GROQ_API_KEY:-}" ] && echo -e "${GREEN}set${NC}" || echo -e "${CYAN}unset${NC}")
+    echo -n "XAI (Grok): " && ([ -n "${XAI_API_KEY:-}" ] && echo -e "${GREEN}set${NC}" || echo -e "${CYAN}unset${NC}")
+    echo -n "pip SDKs:   " && (python3 -c "import anthropic, openai, groq, together" 2>/dev/null && echo -e "${GREEN}anthropic+openai+groq+together${NC}" || echo -e "${CYAN}partial/missing${NC}")
     echo ""
     echo -n "Models:     " && (ollama list 2>/dev/null | tail -n +2 | wc -l || echo "0") && echo " installed"
     echo -e "${GOLD}════════════════════════${NC}"
@@ -173,8 +209,8 @@ else
     echo "  • Run alfred-ai pull once when you have connectivity to fetch phi3:mini, or"
     echo "  • Copy Ollama model blobs into /usr/share/ollama/models from removable media."
     echo ""
-    echo "Optional backup: anthropic / openai / groq Python modules are installed"
-    echo "for custom Omahon providers or scripts — not the default Alfred path."
+    echo "Optional backup: anthropic / openai / groq / together pip modules on disk."
+    echo "Cloud keys (OpenAI, Together, Groq, xAI Grok, Anthropic):  alfred-ai keys"
     echo ""
     exit 1
 fi
@@ -182,12 +218,45 @@ ALFRED_AI
 chmod +x /usr/local/bin/alfred-ai
 
 # ── 4. Optional cloud BACKUP libraries (pip) — primary remains Omahon+Ollama
-echo "[AI] Installing optional backup AI SDKs (anthropic, openai, groq)..."
+echo "[AI] Installing optional backup AI SDKs (anthropic, openai, groq, together)..."
 pip3 install --break-system-packages --no-cache-dir \
     anthropic \
     openai \
     groq \
+    together \
     2>/dev/null || true
+
+echo "[AI] Installing API key template for optional cloud providers..."
+install -d -m 0755 /usr/share/alfred /etc/skel/.config/alfred
+cat > /usr/share/alfred/ai-providers.env.example << 'AIENVEX'
+# Alfred Linux — optional cloud API keys (enrichment / backup paths only).
+# Primary intelligence: Omahon + Ollama on this machine (no keys required).
+#
+# Stewardship: treat keys like household keys — needful for honest work,
+# never the master of the home (Matthew 6:24; Proverbs 3:5–6). Do not commit
+# secrets to git; never paste keys into untrusted chat.
+#
+# 1) mkdir -p ~/.config/alfred
+# 2) cp this file to ~/.config/alfred/ai-providers.env
+# 3) chmod 600 ~/.config/alfred/ai-providers.env
+# 4) Uncomment only the exports you use. alfred-ai loads that file automatically.
+
+# --- Anthropic (Claude) — also used by alfred-ai fallback when local tools absent ---
+#export ANTHROPIC_API_KEY=
+
+# --- OpenAI (ChatGPT / API) ---
+#export OPENAI_API_KEY=
+
+# --- Together.ai (OpenAI-compatible: https://api.together.xyz/v1 ) ---
+#export TOGETHER_API_KEY=
+
+# --- GroqCloud (fast inference; OpenAI-compatible: https://api.groq.com/openai/v1 ) ---
+#export GROQ_API_KEY=
+
+# --- xAI Grok (see https://docs.x.ai for current env names; often XAI_API_KEY) ---
+#export XAI_API_KEY=
+AIENVEX
+install -m 0644 /usr/share/alfred/ai-providers.env.example /etc/skel/.config/alfred/ai-providers.env.example
 
 # ── 5. Desktop Integration ──
 echo "[AI] Creating desktop entries..."
