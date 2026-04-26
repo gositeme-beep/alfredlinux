@@ -90,6 +90,7 @@
   Hooks: 0160-alfred-security, 0165-alfred-network-hardening,
          0170-alfred-fde, 0175-omahon-seal, 0270-alfred-sovereign,
          0710-alfred-update
+  • CI / dev static sweep: bash scripts/security-audit.sh (see scripts/SECURITY-WAVES.txt)
 
   ── THE OMAHON SEAL — 6 MODULES ────────────────────────────────────────────
 

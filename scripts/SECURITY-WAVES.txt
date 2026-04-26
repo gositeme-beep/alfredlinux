@@ -1,0 +1,30 @@
+Alfred Linux — security hardening waves (living checklist)
+===========================================================
+
+Wave 1 (landed)
+  • 0280 mesh SSH: accept-new + known_hosts; skynet no eval; safe leave/join.
+  • 0100 SSH pubkey-only; myip local (no ifconfig.me).
+  • 0270 alfred-security-audit: no eval.
+  • 0167 Kingdom mesh POST: ALFRED_KINGDOM_MESH_REGISTER=1 opt-in; TLS + urlencode.
+  • 0166 PQ SSH self-test: accept-new.
+
+Wave 2 (this release)
+  • scripts/security-audit.sh — static CI sweep (hooks + optional shellcheck).
+  • install-rust: two-step rustup (curl -o file → verify shebang → sh file).
+  • SECURITY-WAVES.txt + optional GitHub workflow.
+
+Wave 3 (prepare next — backlog)
+  • LICENSE vs LICENSING.md / KCL vs AGPL: single legal story + SPDX headers.
+  • AppArmor: aa-genprof cycle for /usr/local/bin/alfred-mesh (WireGuard paths,
+    wg-quick, avahi, curl to fixed endpoints); start in complain, then enforce.
+  • SBOM: SPDX or CycloneDX export for ISO packages + hook-generated debs.
+  • curl|bash audit for build-assets / law wrappers outside config/hooks/live.
+  • README “8 hooks” vs six IDs; Elyon naming drift; 0160 .bak policy.
+  • mesh-register: optional TLS public-key pinning file for gositeme.com.
+  • alfred-skynet distribute: optional command allowlist config file.
+
+How to run the audit locally
+  bash scripts/security-audit.sh
+
+CI
+  .github/workflows/security-audit.yml runs the same script on push/PR.

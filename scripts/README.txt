@@ -1,12 +1,26 @@
 Alfred Linux — helper scripts (ISO / builder)
 ==============================================
 
+security-audit.sh
+  Static sweep of config/hooks/live/*.hook.chroot (SSH footguns, curl|sh, etc.).
+  Optional: ALFRED_SHELLCHECK_ALL=1 to shellcheck every scripts/*.sh.
+    bash scripts/security-audit.sh
+  Wave checklist: scripts/SECURITY-WAVES.txt
+  CI: .github/workflows/security-audit.yml
+
 iso-preflight.sh
   Run before `lb build`. Fails if linux-image-7.0.1*.deb missing from
   config/packages.chroot/ (hook 0050). Usage:
     bash scripts/iso-preflight.sh
   Run `lb` from `build/` (see ALFRED-LINUX-BUILD-TEST.txt). An empty `build/auto/` is normal
   unless you maintain an executable `build/auto/config` script.
+
+release-integrity.sh
+  After ISOs exist in one directory: SHA256SUMS + SHA512SUMS, then GPG-detached sign.
+    scripts/release-integrity.sh hash *.iso
+    scripts/release-integrity.sh sign
+  Verifiers: `scripts/release-integrity.sh verify` or manual gpg + sha256sum -c.
+  See README.txt "VERIFICATION — TRUST BUT VERIFY".
 
 kernel-download-7.0.1.sh
   Downloads linux-7.0.1.tar.xz + patch-7.0.1.xz into ../kernel-7.0.1-work/ (or KERNEL_WORK=…).
