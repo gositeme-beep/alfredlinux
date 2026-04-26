@@ -5,7 +5,14 @@
  */
 $isoVersion = "7.77 GA";
 $isoFile    = "alfred-linux-7.77-ga-intel-amd64-20260426.iso";
-$isoSize    = "~7.77 GiB";
+$isoSize    = '~7.77 GiB target';
+$appsIsoPath = __DIR__ . '/downloads/' . $isoFile;
+if (is_readable($appsIsoPath)) {
+    $appsIsoBytes = (int) @filesize($appsIsoPath);
+    if ($appsIsoBytes > 0) {
+        $isoSize = sprintf('%.2f GiB binary', $appsIsoBytes / pow(1024, 3));
+    }
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
