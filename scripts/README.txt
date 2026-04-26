@@ -17,6 +17,12 @@ build-on-ubuntu.sh
   From gositeme (or laptop): rsync repo to ubuntu@BUILD_HOST, optional ssh.
   See /home/gositeme/law/ALFRED-LINUX-BUILD-TEST.txt for full flow.
 
+kernel-install-build-deps.sh
+  sudo once on build host: debhelper, libdw-dev, etc. (required for bindeb-pkg).
+
+kernel-bindeb-pkg-nohup.sh
+  After deps + tarball: background `fakeroot make bindeb-pkg`. Watch log under KERNEL_WORK.
+
 Law copies (same ideas, paths fixed for gositeme home):
   /home/gositeme/law/alfred-build-preflight.sh
   /home/gositeme/law/alfred-kernel-download-sources.sh
