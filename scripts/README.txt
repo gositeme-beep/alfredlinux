@@ -46,6 +46,11 @@ watch-lb-docker-build.sh
   Optional: `--status-json /path/state.json` (machine-readable), `--webhook URL` (POST JSON on exit).
   Law wrapper: `/home/gositeme/law/alfred-watch-lb-docker.sh`
 
+supervise-lb-docker-nap.sh
+  **Before sleep:** `detach` + `docker wait` + ISO check + `last-lb-docker.json` + optional `NAP_WEBHOOK`.
+    bash scripts/supervise-lb-docker-nap.sh
+  Canonical script: `/home/gositeme/law/alfred-build-control-plane/supervise-lb-docker-nap.sh`
+
 Law copies (same ideas, paths fixed for gositeme home):
   /home/gositeme/law/alfred-build-preflight.sh
   /home/gositeme/law/alfred-kernel-download-sources.sh
