@@ -134,6 +134,7 @@ body { font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-se
             <a href="/downloads/<?= htmlspecialchars($isoFile) ?>.sha256" class="cross-link" style="color:var(--dim);font-size:.75rem;">🔒 SHA-256</a>
             <a href="/downloads/<?= htmlspecialchars($isoFile) ?>.blake3" class="cross-link" style="color:var(--dim);font-size:.75rem;">🔒 BLAKE3</a>
             <a href="/releases" class="cross-link" style="color:var(--dim);font-size:.75rem;">📋 Release Notes</a>
+            <a href="/security-kernel" class="cross-link" style="color:var(--accent2);font-size:.75rem;">🛡 Kernel security &amp; supply chain</a>
         </div>
     </div>
 
@@ -294,6 +295,8 @@ body { font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-se
     <div class="notice">
         <strong>🔒 Integrity Verification</strong><br>
         Alfred Linux ISO checksums (SHA-256 + BLAKE3) are alongside the ISO.
+        Kernel 7.0.1 download verification, trust boundaries, and links to full technical manifests:
+        <a href="/security-kernel">/security-kernel</a>.
         GoSiteMe app checksums are available at
         <a href="https://gositeme.com/downloads/SHA256SUMS.txt">SHA256SUMS.txt</a>.<br><br>
         <strong>🧲 P2P / WebTorrent Only</strong><br>

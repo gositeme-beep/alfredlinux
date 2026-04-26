@@ -444,6 +444,9 @@
     sha256sum -c alfred-linux-7.77-ga-amd64-20260412.iso.sha256
 
   ONLINE:     https://alfredlinux.com/verify
+  Public kernel / supply-chain transparency: https://alfredlinux.com/security-kernel
+    (source: security-kernel.php in repo — deploy beside apps.php; add /security-kernel
+    to includes/nav.php on the server if not already linked.)
 
   Maintainer workflow (after building ISOs in one directory):
     scripts/release-integrity.sh hash *.iso
