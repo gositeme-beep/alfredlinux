@@ -15,7 +15,7 @@ this document wins until the header is fixed.
 **License: AGPL-3.0-or-later**
 
 Includes the entire `alfred-linux-v2/` tree:
-- `config/hooks/live/*.hook.chroot` — all 42 Kingdom build hooks
+- `config/hooks/live/*.hook.chroot` — all 46 Kingdom build hooks (matches `api/version.json` hooks)
 - `config/package-lists/`
 - `build-assets/` source materials (excluding bundled artifacts noted below)
 - All shell scripts, helper tools, and documentation in this repository
@@ -52,12 +52,13 @@ This applies to: TSV/JSON data files in `build-assets/bible/`,
 
 ## 6. Worship Album — "Jesus Christ The Light Our Universe"
 
-27 tracks by Elyon Neshama × Commander Danny William Perez.
+27 tracks by Elyon Neshama × Commander Danny William Perez (ISO menus and README
+often show **Elyon Light** — same artist; either form satisfies attribution).
 
 **License: CC-BY-NC-SA-4.0**
 
 You may share, remix, and broadcast for **non-commercial** use as long as you
-**credit Elyon Neshama × Commander Danny William Perez** and share derivatives
+**credit Elyon Neshama × Commander Danny William Perez** (or Elyon Light × Commander Danny William Perez) and share derivatives
 under the same license. Commercial use requires written permission.
 
 Files: `build-assets/audio/*.mp3`, `/listen` page on alfredlinux.com.

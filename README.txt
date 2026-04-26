@@ -217,14 +217,14 @@
   • Stellarium — planetarium and astronomy
   Hook: 0168-alfred-productivity (shared)
 
-  ── THE WORD OF GOD — AKJV SACRED LIBRARY (8 hooks) ────────────────────────
+  ── THE WORD OF GOD — AKJV SACRED LIBRARY (6 hooks + locale) ───────────────
 
   • AKJV — Authorized King Jesus Version — Perez Family Edition (same
     dataset as paths `akjv-*.tsv`): 94 books, 39,482 verses (TSV). Installed
     with the sovereign image under /usr/share/alfred/bible/ (not inside the
     kernel vmlinux).
   • 48 Bible tongues in languages.conf: English (full AKJV on disk) plus
-    Spanish, French, Hebrew, Greek (LXX/NT samples), Latin (Vulgate-style
+    Spanish (es, es-419, es-ES, Ladino lad, Chavacano cbk), French, Hebrew, Greek (LXX/NT samples), Latin (Vulgate-style
     samples), German, Portuguese, Russian, Chinese, Japanese, Arabic (MSA ar),
     Moroccan Darija (ary), Egyptian (arz), Levantine (apc), Gulf (afb), Hindi,
     Italian, Romanian, Polish, Ukrainian, Korean, Turkish, Dutch, Vietnamese,
