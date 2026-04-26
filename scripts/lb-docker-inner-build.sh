@@ -22,6 +22,12 @@ if [[ ! -f chroot/etc/debian_version ]]; then
   rm -rf chroot binary .build 2>/dev/null || true
 fi
 
+# Single source of truth: repo config/hooks/live → build/config/hooks (full 42
+# lineage + merge shards). Ensures ISO packs chess, voice-v2, kernel7, sacred
+# rest, silence, etc., not a stale subset left in build/.
+echo "[inner] sync Kingdom hooks from /work/config/hooks/live at $(date -Is)"
+bash /work/scripts/sync-hooks-to-build.sh
+
 # live-build requires the `config` stage before chroot stages (error otherwise:
 # "E: the following stage is required to be done first: config").
 echo "[inner] lb config at $(date -Is)"

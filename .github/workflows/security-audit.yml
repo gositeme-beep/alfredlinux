@@ -13,6 +13,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Kingdom hooks sync (config/hooks/live → build/config/hooks)
+        run: |
+          mkdir -p build/config/hooks
+          bash scripts/sync-hooks-to-build.sh
+          for f in config/hooks/live/*.hook.chroot; do
+            b=$(basename "$f")
+            test -f "build/config/hooks/$b" || { echo "missing after sync: $b" >&2; exit 1; }
+          done
+
       - name: Repo metadata (bible_tongues vs languages.conf)
         run: bash scripts/release-integrity.sh check-repo
 

@@ -15,6 +15,12 @@ iso-preflight.sh
   Run `lb` from `build/` (see ALFRED-LINUX-BUILD-TEST.txt). An empty `build/auto/` is normal
   unless you maintain an executable `build/auto/config` script.
 
+sync-hooks-to-build.sh
+  Copies **all** `config/hooks/live/*.hook.chroot` into `build/config/hooks/` so the
+  ISO matches the canonical tree (kernel7, chess, voice-v2, 0720/0721, etc.). Run on
+  the host before `lb config` if not using Docker inner (which runs this for you).
+    bash scripts/sync-hooks-to-build.sh
+
 release-integrity.sh
   After ISOs exist in one directory: SHA256SUMS + SHA512SUMS, then GPG-detached sign.
     scripts/release-integrity.sh hash *.iso

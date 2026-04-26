@@ -21,27 +21,27 @@ and live-build configuration used to produce that ISO:**
 
   B) **Manifest honor:** the chroot received everything the **active profile**
      commits to install — `config/package-lists/*.list.chroot`, kernel debs and
-     policy under `config/packages.chroot/` per `README-KERNEL7.txt`, and every
-     `*.hook.chroot` stage **enabled for that build** ran to completion without
-     intentional omission of a billed deliverable. (README’s “WHAT’S INCLUDED” /
-     GA notes describe the product line; the live-build tree is the mechanical
-     source of truth for what that profile installs.)
+     policy under `config/packages.chroot/` per `README-KERNEL7.txt`, and **every
+     hook file** under `config/hooks/live/*.hook.chroot` was copied into
+     `build/config/hooks/` by `scripts/sync-hooks-to-build.sh` (or the Docker
+     inner driver, which runs that script before `lb config`) so no billed Alfred
+     stage was left out because the build tree had gone stale.
 
   C) **Integrity in the user’s hands:** published hashes match the bytes on
      disk; the verification flow in `README.txt` (gpg + sha256sum -c) detects
      substitution or truncation.
 
-**Explicit boundary:** features **not** in the active GA profile (e.g. README’s
-note that the frozen v7.77 GA line may ship a **subset** of the 42-hook lineage
-while the full 42-hook profile targets a later GA) are **out of scope** for that
-ISO’s completeness — they are a **different** promised generation, not a missing
-slice of the one you downloaded.
+**Explicit boundary:** “Complete” is **this generation’s** published tree + the
+hook files that existed in `config/hooks/live/` at that commit (42 lineage +
+merge shards on disk). Third-party `.iso` files, nightly experiments, or forks
+that skip the sync step are **not** Alfred’s published GA promise.
 
 The **risk register** below is not a disclaimer of duty; it is a forecast of what
 can violate the covenant if ignored. Update it whenever a new failure mode appears.
 
 References
 ----------
+  Hook sync:        scripts/sync-hooks-to-build.sh  (full `config/hooks/live` → `build/config/hooks`)
   Inner driver:     scripts/lb-docker-inner-build.sh
   Isolinux patch:   scripts/patch-live-build-isolinux-dangling.sh
   Nap dashboard:    (local) …/law/alfred-build-control-plane/last-lb-docker.json
@@ -94,6 +94,11 @@ LOW — still painful
 12) cryptsetup / dm-* messages in logs — often chroot noise; verify only if boot/crypto path fails.
 13) Wrong git commit on host vs expected — bind-mounted /work shows whatever is checked out.
 
+14) Stale `build/config/hooks/*.hook.chroot` — ISO omits new work under
+    `config/hooks/live/` (historically caused “subset” drift vs the repo).
+    Mitigate: always run `bash scripts/sync-hooks-to-build.sh` before `lb config`
+    on the host; Docker inner runs it automatically.
+
 Quick triage table
 ------------------
   cp … dangling symlink under chroot/root/isolinux  → isolinux cp path (see HIGH #1).
@@ -101,4 +106,4 @@ Quick triage table
   JSON phase waiting forever                        → watcher / race (HIGH #4).
   Skipping … already done + weird binary error     → resume state (HIGH #3).
 
-Last review: 2026-04-26 — completeness covenant added; isolinux, nap_ok, kernel APT policy, watch flock.
+Last review: 2026-04-26 — full hook sync (sync-hooks-to-build + inner); completeness covenant; isolinux, nap_ok, kernel APT policy, watch flock.

@@ -46,10 +46,15 @@
   42 hooks — one for each generation from Abraham to Christ (Matthew 1:17).
   Kingdom count is always 42; some numbered stages split across multiple
   `*.hook.chroot` files under `config/hooks/live/` (merge shards — do not add
-  to the 42). Frozen GA ISO profiles may enable a subset (see hook numbering).
+  to the 42). **ISO packs:** before every `lb build`, run
+  `bash scripts/sync-hooks-to-build.sh` (Docker `lb-docker-inner-build.sh` does
+  this automatically) so `build/config/hooks/` receives **every** canonical hook
+  from `config/hooks/live/` — kernel7 (0050), chess (0810), voice-v2 (0900),
+  sacred rest / still voice / silence (0720/0721), and the rest — no stale
+  subset left in the build tree.
   2 package lists, 1,200+ installed packages, and 100+ curated applications.
-  Frozen v7.77 GA ISO (2026-04-12): 29 hooks shipped in the frozen profile.
-  Full 42-hook profile targets v7.77.1 GA.
+  Frozen v7.77 GA ISO (2026-04-12) shipped a lean chroot once; **current policy**
+  is full-tree hook sync for the next GA pack so the image matches the repo.
 
   ── DESKTOP ENVIRONMENT ─────────────────────────────────────────────────────
 
