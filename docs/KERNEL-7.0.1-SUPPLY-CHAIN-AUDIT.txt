@@ -1,6 +1,6 @@
 Alfred Linux — Kernel 7.0.1 supply-chain & “trojan” audit (repo scope)
 ========================================================================
-Last reviewed: 2026-04-26  
+Last reviewed: 2026-04-25  
 Public summary (website): https://alfredlinux.com/security-kernel — deploy `security-kernel.php` from repo root with `apps.php`.
 
 Scope: **This git repository only.** The upstream **linux-7.0.1** source tree is
@@ -84,9 +84,19 @@ Recommended next steps (outside this doc)
 The bigger picture: “upgrade GoForge” vs **where** kernel audit runs
 ──────────────────────────────────────────────────────────────────────────────
   **GoForge (Gitea/Forgejo-style forge)** does not, by itself, understand the Linux
-  kernel. What you “upgrade” for is usually **capacity to run CI** you define:
-  Actions / Woodpecker / Drone, **large runners** (disk + RAM), **artifact storage**,
-  and maybe **LFS** if you choose to host a kernel mirror in git form.
+  kernel. A **forge UI upgrade** (themes, navigation, issue UX) does **not** replace
+  **CI you author** that checks out or unpacks `linux-7.0.1` and runs real scanners.
+
+  What “upgrade GoForge” helps with, when you mean infrastructure, is **capacity to
+  run that CI**: Actions / Woodpecker / Drone, **large runners** (disk + RAM), **artifact
+  storage**, and maybe **LFS** if you host a kernel mirror in git form — plus a **second
+  repo** (or branch policy) so heavy jobs do not block the Alfred integration tree.
+
+  **Product ambition (Alfred / GoForge):** match or exceed the **practical** bar users
+  expect from GitHub-class SaaS — **without** renting their infra — by shipping
+  **runner scale**, **native pipelines**, **artifacts**, and **release/signing hooks**
+  that kernel and distro maintainers actually need. That bar is **proven in CI logs**,
+  not in marketing copy alone.
 
   **Separation of repos (normal industry pattern):**
     • **Alfred Linux** — OS hooks, live-build, policy (this tree). It **points at**

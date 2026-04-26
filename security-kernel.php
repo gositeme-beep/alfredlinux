@@ -89,7 +89,9 @@ footer a{color:#6366f1;text-decoration:none;}
         <h2>Bigger picture — where full kernel audit runs</h2>
         <ul>
             <li><strong>Alfred repo</strong> = integration, hooks, live-build staging, download verification.</li>
-            <li><strong>Kernel audit</strong> = separate pipeline: extracted <code>linux-7.0.1</code> on a trusted host or a <strong>second GoForge repo</strong> with CI (sparse, checkstack, distro checklist, SBOM). Upgrading GoForge helps by providing <strong>runners + artifacts</strong>, not by magic.</li>
+            <li><strong>Kernel audit</strong> = separate pipeline: extracted <code>linux-7.0.1</code> on a trusted host or a <strong>second GoForge repo</strong> whose CI <strong>checks out or unpacks</strong> Linux and runs scanners (sparse, checkstack, distro checklist, SBOM). That is <strong>workflow + runner capacity you define</strong> — not something a forge <strong>UI refresh</strong> replaces.</li>
+            <li><strong>When “upgrade GoForge” actually helps:</strong> bigger runners (disk/RAM for the full tree + ccache), first-class <strong>Actions</strong> (or equivalent pipelines), <strong>artifacts</strong> for logs/SARIF/deb hashes, registry/LFS if you mirror sources — optionally a <strong>dedicated heavy repo</strong> so Alfred PRs stay fast.</li>
+            <li><strong>Roadmap bar:</strong> Alfred’s forge is aimed at <strong>self-hosted seriousness</strong> — kernel-sized jobs, sovereign infra, and release integrity without depending on a single proprietary SaaS ceiling. Beating GitHub (and “every competitor”) is <strong>earned in shipped runner scale + pipeline ergonomics + trust tooling</strong>, not in themes alone.</li>
         </ul>
     </div>
 
