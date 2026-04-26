@@ -475,12 +475,12 @@
   DOWNLOADS
 ═══════════════════════════════════════════════════════════════════════════════
 
-  STATUS: GA release is frozen (2026-04-12) but not yet publicly launched.
-  Direct HTTP download and P2P/WebTorrent are operator-gated.
-  Check the download page for current availability:
+  STATUS: Canonical GA basename is intel-amd64-20260426; public flags live in
+  includes/ga-release-state.php on the live site. Plain /downloads/*.iso HTTP is
+  denied (covenant + bandwidth); P2P/WebTorrent and operator gates per that file.
 
   Download:   https://alfredlinux.com/download
-  Torrent:    Available at launch (btih f7c25ddc08fe2d1adab13970c3cf1b1456ca2ffc)
+  Torrent:    btih f7c25ddc08fe2d1adab13970c3cf1b1456ca2ffc (must match ga-release-state when published)
   Checksum:   https://alfredlinux.com/downloads/SHA256SUMS-7.77.txt
 
 ═══════════════════════════════════════════════════════════════════════════════

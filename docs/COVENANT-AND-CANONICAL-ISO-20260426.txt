@@ -26,6 +26,10 @@ COVENANT (https://alfredlinux.com/covenant)
   to /covenant?next=<current path>. Same session keys as covenant.php and
   downloads/iso.php.
 
+  downloads/.htaccess: **Require all denied** for static `*.iso` (no silent wget
+  to `/downloads/{basename}.iso`). Bytes: P2P on /download, or covenant-sealed
+  `downloads/iso.php?t=…` (token shown on /download when session is sealed).
+
 BIBLE
   https://alfredlinux.com/bible  →  bible-read.php (see .htaccess).
   Reader file header: Authorized King Jesus Version (Perez Family Edition).
