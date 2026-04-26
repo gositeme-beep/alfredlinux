@@ -1,6 +1,6 @@
 Alfred Linux / GoForge — infrastructure upgrade runbook (beat SaaS on merit)
 =============================================================================
-Last updated: 2026-04-26  
+Last updated: 2026-04-27  
 Audience: operators hosting **GoForge** (Gitea / Forgejo–class) for Alfred Linux
 and related repos. This is **not** a theme pack: it is **runners + pipelines +
 artifacts** so CI can do real work (including optional **kernel-tree** jobs).
@@ -59,8 +59,11 @@ artifacts** so CI can do real work (including optional **kernel-tree** jobs).
   • **GoForge / Gitea Actions:** `.gitea/workflows/security-audit.yml` — same job
     graph; enable Actions on the server and ensure `act_runner` picks up jobs.
 
-  If your forge only reads one path, symlink or duplicate the YAML until you
-  standardize on a single forge flavor.
+  • **Forgejo-only path:** `.forgejo/workflows/security-audit.yml` — **duplicate**
+    of the same workflow; some installs only dispatch from one tree — keep both
+    files identical when you change steps.
+
+  See also: `.gitea/workflows/README.txt`
 
 ──────────────────────────────────────────────────────────────────────────────
 4) Artifacts, caches, and release linkage
@@ -112,3 +115,47 @@ artifacts** so CI can do real work (including optional **kernel-tree** jobs).
   • docs/KERNEL-7.0.1-SUPPLY-CHAIN-AUDIT.txt
   • docs/KERNEL-7.0.1-SECURITY-MANIFEST.txt
   • scripts/SECURITY-WAVES.txt (Wave 2 CI pointers)
+
+──────────────────────────────────────────────────────────────────────────────
+9) Server config sketch — Actions + runner (verify against your forge version)
+──────────────────────────────────────────────────────────────────────────────
+  **Always read upstream Forgejo/Gitea docs for your exact release.** Keys and
+  defaults move between minors. The sketch below is a **starting checklist**.
+
+  **A) Enable Actions** (forge app.ini or equivalent; restart forge after edit):
+
+    [actions]
+    ENABLED = true
+
+  Optional (when you outgrow local disk for logs/artifacts): set STORAGE_TYPE and
+  MinIO (or S3-compatible) keys per upstream documentation — do not guess bucket ACLs.
+
+  **B) Register act_runner** (on the runner host — not on the forge DB server):
+
+    • In the forge UI: Site administration → Actions → Runners (path varies),
+      create a runner and copy the **registration token** (short-lived).
+
+    • Example (adjust binary path and URL):
+
+        ./act_runner register --no-interactive \
+          --instance https://alfredlinux.com/forge/ \
+          --token RUNNER_REGISTRATION_TOKEN_FROM_UI
+
+        ./act_runner daemon
+
+    • Ensure the runner image can run **ubuntu-latest** jobs (or edit YAML labels).
+
+  **C) Labels:** Alfred lite workflow uses runs-on: ubuntu-latest. Your runner must
+  advertise that label **or** edit .gitea/workflows/security-audit.yml once.
+
+──────────────────────────────────────────────────────────────────────────────
+10) Appendix — kernel-heavy job shape (separate repo; template only)
+──────────────────────────────────────────────────────────────────────────────
+  Do **not** enable as default push CI in the Alfred repo unless you have a
+  kernel-heavy runner pool. Prefer a **dedicated mirror repo** plus workflow_dispatch
+  or schedule when ready.
+
+  Sketch: job runs-on kernel-heavy; steps run scripts/kernel-download-7.0.1.sh with
+  KERNEL_WORK under the job temp dir; tar xf linux-7.0.1.tar.xz; apply patch-7.0.1.xz;
+  then extend with sparse, checkstack, checkpatch, or your distro checklist; upload
+  logs/SARIF as workflow artifacts with retention limits.

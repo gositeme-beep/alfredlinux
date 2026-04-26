@@ -508,7 +508,7 @@
 
   GoForge **infrastructure** (runners, Actions, artifacts, kernel-heavy sizing —
   not “UI skin” upgrades): docs/GOFORGE-INFRASTRUCTURE-UPGRADE.txt
-    Native Actions workflow mirror: .gitea/workflows/security-audit.yml
+    Native Actions: .gitea/workflows/security-audit.yml and .forgejo/workflows/security-audit.yml
     (GitHub mirror: .github/workflows/security-audit.yml)
 
   Private witness (birth / family / Israel story) stays OUT of AGPL clones:

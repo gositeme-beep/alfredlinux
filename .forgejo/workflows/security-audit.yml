@@ -1,0 +1,41 @@
+# Forgejo Actions — keep in sync with .gitea/workflows/security-audit.yml
+# Some installs resolve only .forgejo/workflows; duplicate avoids silent "no CI".
+# See: docs/GOFORGE-INFRASTRUCTURE-UPGRADE.txt
+name: security-audit
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  workflow_dispatch:
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Canonical → build (hooks + lists + packages.chroot + build-assets)
+        run: |
+          mkdir -p build/config/hooks build/config/package-lists build/config/packages.chroot \
+            build/config/includes.chroot/build-assets
+          bash scripts/sync-canonical-to-build.sh
+          for f in config/hooks/live/*.hook.chroot; do
+            b=$(basename "$f")
+            test -f "build/config/hooks/$b" || { echo "missing hook after sync: $b" >&2; exit 1; }
+          done
+          for f in config/package-lists/*.list.chroot; do
+            b=$(basename "$f")
+            test -f "build/config/package-lists/$b" || { echo "missing package list after sync: $b" >&2; exit 1; }
+          done
+          cmp -s config/package-lists/alfred.list.chroot build/config/package-lists/alfred.list.chroot
+
+      - name: Repo metadata (bible_tongues vs languages.conf)
+        run: bash scripts/release-integrity.sh check-repo
+
+      - name: Install shellcheck
+        run: sudo apt-get update -qq && sudo apt-get install -y --no-install-recommends shellcheck
+
+      - name: Run scripts/security-audit.sh
+        run: bash scripts/security-audit.sh
