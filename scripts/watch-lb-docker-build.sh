@@ -6,8 +6,14 @@
 #   bash scripts/watch-lb-docker-build.sh --status-json /path/to/last-lb-docker.json
 #
 # Reads container name from lb-docker.containername in repo root (written by lb-docker-build.sh detach).
+#
+# Before sleep: uses systemd-inhibit (when installed) so the host does not suspend during docker wait.
+#   ALFRED_NO_INHIBIT_SLEEP=1  — skip inhibit.  ALFRED_NAP_HEARTBEAT_SEC=120 — heartbeat interval.
+# With --status-json: writes phase=waiting immediately, then .lb-docker-watch.heartbeat timestamps.
 set -euo pipefail
 REPO="$(cd "$(dirname "$0")/.." && pwd)"
+# shellcheck disable=SC1091
+source "$(cd "$(dirname "$0")" && pwd)/lb-nap-helpers.sh"
 NAME_FILE="$REPO/lb-docker.containername"
 LOG="$REPO/lb-docker-build.log"
 WEBHOOK=""
@@ -29,12 +35,24 @@ NAME="$(tr -d '\n' <"$NAME_FILE")"
 [[ -n "$NAME" ]] || { echo "Empty container name in $NAME_FILE" >&2; exit 1; }
 
 EXIT="unknown"
+HB_PID=""
+cleanup_watch_heartbeat() { alfred_stop_heartbeat "$HB_PID"; }
+trap cleanup_watch_heartbeat EXIT
+
 if docker inspect "$NAME" &>/dev/null; then
+  if [[ -n "$STATUS_JSON" ]]; then
+    alfred_status_json_waiting "$STATUS_JSON" "$NAME"
+    HB_PID="$(alfred_start_heartbeat "$REPO/.lb-docker-watch.heartbeat")"
+  fi
   echo "Waiting for Docker container: $NAME (docker wait)…"
+  [[ -z "${ALFRED_NO_INHIBIT_SLEEP:-}" ]] && command -v systemd-inhibit &>/dev/null \
+    && echo "(systemd-inhibit: blocking sleep until container exits — set ALFRED_NO_INHIBIT_SLEEP=1 to skip)"
   set +e
-  EXIT="$(docker wait "$NAME" 2>/dev/null | tr -d '\n')"
+  EXIT="$(alfred_maybe_inhibit_exec docker wait "$NAME" 2>/dev/null | tr -d '\n')"
   [[ -n "$EXIT" ]] || EXIT="unknown"
   set -e
+  alfred_stop_heartbeat "$HB_PID"
+  HB_PID=""
 else
   echo "Container $NAME not found (already exited and removed?). Summarizing from disk…"
 fi
@@ -62,6 +80,7 @@ with open(iso_list) as f:
     iso_paths = [ln.strip() for ln in f if ln.strip()]
 nap_ok = exit_s == "0" and len(iso_paths) > 0
 data = {
+    "phase": "done",
     "ts": time.time(),
     "container": name,
     "docker_exit": exit_s,
