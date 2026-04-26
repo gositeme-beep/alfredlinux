@@ -158,6 +158,12 @@ show_help() {
     echo "  prophecies               57 Messianic prophecies"
     echo "  children [number]        Eden's 33 Bible stories"
     echo "  john 3:16                Quick reference"
+    echo "  tongues [args…]          Other languages (same as alfred-bible-lang)"
+    echo -e "                           ${DIM}Examples: alfred-bible tongues list${NC}"
+    echo -e "                           ${DIM}          alfred-bible tongues ro Ioan 3${NC}"
+    echo -e "\n  ${CYAN}ISO / public:${NC} Open **Bible in Many Languages** in the menu, or run"
+    echo -e "  ${BOLD}alfred-bible-lang list${NC} then ${BOLD}alfred-bible-lang <code>${NC} (e.g. ${BOLD}es${NC}, ${BOLD}es-419${NC}, ${BOLD}lad${NC}, ${BOLD}ro${NC})."
+    echo -e "  Full AKJV English stays in this command; seeds work offline on the live ISO."
     echo -e "\n  ${DIM}'The word of our God will stand forever.' — Isaiah 40:8${NC}\n"
 }
 
@@ -169,6 +175,18 @@ case "${1:-help}" in
     books|list) list_books;;
     prophecies|prophecy) show_prophecies;;
     children|kids|eden|stories) shift; show_children "$@";;
+    tongues|tongue|langs|lang)
+        shift
+        if command -v alfred-bible-lang &>/dev/null; then
+            if [ "$#" -eq 0 ]; then
+                exec alfred-bible-lang list
+            fi
+            exec alfred-bible-lang "$@"
+        fi
+        echo -e "${YELLOW}alfred-bible-lang is not installed yet (run after image build).${NC}" >&2
+        echo "On the ISO: open **Bible in Many Languages** from the menu, or install hook 0292." >&2
+        exit 1
+        ;;
     help|--help|-h) show_help;;
     *) parse_quick "$@" || show_help;;
 esac
@@ -292,7 +310,7 @@ cat > /usr/share/applications/alfred-bible.desktop << 'EOF'
 [Desktop Entry]
 Name=AKJV Bible
 Comment=94 Books, 39,482 Verses — Perez Family Edition
-Exec=x-terminal-emulator -e bash -c 'alfred-bible daily; echo "Type alfred-bible help for commands"; exec bash'
+Exec=x-terminal-emulator -e bash -c 'alfred-bible daily; echo; echo "Other languages: alfred-bible tongues list   (or menu: Bible in Many Languages)"; echo "Type alfred-bible help for commands"; exec bash'
 Icon=accessories-dictionary
 Terminal=false
 Type=Application
