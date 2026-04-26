@@ -35,7 +35,8 @@ HIGH — likely or already seen
 4) docker --rm + watch / JSON
    Symptom:  last-lb-docker.json stuck waiting; docker_exit unknown; duplicate watchers.
    Mitigate: One watch per run; re-run watch if container already gone; supervise-lb-docker-nap.sh
-             for single-shot flow.
+             for single-shot flow. nap_ok=true when .iso exists and docker_exit is 0 or unknown
+             (unknown is common with --rm + docker wait); confirm with lb-docker-build.log inner exit.
 
 5) Trixie chroot + Bookworm live-build host
    Symptom:  Packaging or bootloader path surprises at binary_*.
