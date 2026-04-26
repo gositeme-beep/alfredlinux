@@ -20,6 +20,9 @@ $forgeDocsRaw = 'https://alfredlinux.com/forge/commander/alfredlinux.com/raw/bra
 <meta property="og:type" content="website">
 <link rel="canonical" href="https://alfredlinux.com/security-kernel">
 <link rel="icon" href="/favicon.ico">
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"TechArticle","headline":"Linux 7.0.1 — Security & Supply Chain — Alfred Linux","description":"Kernel tarball verification, ISO trust boundaries, GoForge CI, and AGPL technical manifests.","url":"https://alfredlinux.com/security-kernel","isPartOf":{"@type":"WebSite","name":"Alfred Linux","url":"https://alfredlinux.com"},"publisher":{"@type":"Organization","name":"GoSiteMe Inc.","url":"https://gositeme.com"}}
+</script>
 <link rel="stylesheet" href="/assets/css/nav.css">
 <style>
 :root {
