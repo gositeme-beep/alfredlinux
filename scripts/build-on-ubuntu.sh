@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: AGPL-3.0-or-later
 # Copy lives next to repo: same as /home/gositeme/law/alfred-build-on-ubuntu.sh
 #   export BUILD_HOST=203.0.113.50
 #   export ALFRED_SRC=$(cd "$(dirname "$0")/.." && pwd)

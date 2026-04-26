@@ -1,4 +1,5 @@
 #!/bin/bash
+# SPDX-License-Identifier: AGPL-3.0-or-later
 # Executed *inside* Debian container; /work is bind-mounted from the host.
 set -euo pipefail
 export DEBIAN_FRONTEND=noninteractive

@@ -1,4 +1,5 @@
 #!/bin/bash
+# SPDX-License-Identifier: AGPL-3.0-or-later
 # release-integrity.sh — checksum + GPG for Alfred Linux release artifacts
 #
 # Why: No vendor can be stopped from *creating* a modified .iso on their own

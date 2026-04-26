@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: AGPL-3.0-or-later
 # Copy linux-image-7.0.1*.deb (+ headers, libc-dev) from KERNEL_WORK into repo config/packages.chroot/
 set -euo pipefail
 REPO="$(cd "$(dirname "$0")/.." && pwd)"

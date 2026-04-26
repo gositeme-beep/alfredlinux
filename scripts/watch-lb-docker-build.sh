@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: AGPL-3.0-or-later
 # Wait for detached `lb-docker-build.sh` container to finish; summarize + optional webhook/status JSON.
 #
 #   bash scripts/watch-lb-docker-build.sh

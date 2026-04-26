@@ -1,4 +1,5 @@
 #!/bin/bash
+# SPDX-License-Identifier: AGPL-3.0-or-later
 # Run inside privileged Debian container; /work = bind-mounted Alfred repo.
 set -euo pipefail
 export DEBIAN_FRONTEND=noninteractive

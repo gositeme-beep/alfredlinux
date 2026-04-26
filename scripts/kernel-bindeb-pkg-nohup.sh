@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: AGPL-3.0-or-later
 # fakeroot make bindeb-pkg in background for linux-7.0.1.
 # KERNEL_WORK default: <repo>/../kernel-7.0.1-work  (put linux-7.0.1.tar.xz there; use kernel-download-7.0.1.sh)
 # Log: $KERNEL_WORK/bindeb-pkg.log

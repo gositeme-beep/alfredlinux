@@ -2,7 +2,7 @@
 
 **Project:** Alfred Linux 7.77 "Kingdom of God Edition"
 **Maintainer:** Commander Danny William Perez / GoSiteMe Inc.
-**Last reviewed:** 2026-04-24
+**Last reviewed:** 2026-04-25
 
 This document is the single source of truth for what is open vs closed across
 the Alfred Linux ecosystem. If a file's header conflicts with this document,
@@ -21,7 +21,7 @@ for that code unless an individual file header says otherwise.
 **License: AGPL-3.0-or-later**
 
 Includes the entire `alfred-linux-v2/` tree:
-- `config/hooks/live/*.hook.chroot` — all 46 Kingdom build hooks (matches `api/version.json` hooks)
+- `config/hooks/live/*.hook.chroot` — all 46 Kingdom build hooks (matches `api/version.json` hooks); each file carries `# SPDX-License-Identifier: AGPL-3.0-or-later` immediately after the shebang for machine-readable licensing
 - `config/package-lists/`
 - `build-assets/` source materials (excluding bundled artifacts noted below)
 - All shell scripts, helper tools, and documentation in this repository
@@ -138,4 +138,5 @@ implying official endorsement: no).
 ## Changelog
 
 - 2026-04-26 — Bridge paragraph: how `LICENSE` (KCL) relates to Section 1 AGPL for published source.
+- 2026-04-25 — SPDX `AGPL-3.0-or-later` line on all live hooks and `scripts/*.sh` (plus `scripts/shlib/*.sh`); security-audit warns if a hook omits it.
 - 2026-04-24 — Initial unified LICENSING.md (was scattered across pages).

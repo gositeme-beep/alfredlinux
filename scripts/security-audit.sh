@@ -46,6 +46,14 @@ if [ -f api/version.json ] && [ -f config/hooks/live/0292-alfred-bible-tongues.h
   fi
 fi
 
+# --- WARN: SPDX on Kingdom hooks (LICENSING.md §1; REUSE-friendly) ---
+for f in "${HOOK_GLOB[@]}"; do
+  [ -f "$f" ] || continue
+  if ! head -n 12 "$f" | grep -q '^# SPDX-License-Identifier: AGPL-3.0-or-later'; then
+    warn "hook missing SPDX AGPL-3.0-or-later near top: $f"
+  fi
+done
+
 # --- CRITICAL: known SSH / auth footguns in live hooks ---
 while IFS= read -r hit; do
   [ -z "$hit" ] && continue

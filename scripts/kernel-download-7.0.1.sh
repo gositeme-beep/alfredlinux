@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: AGPL-3.0-or-later
 # Download linux-7.0.1 tarball + patch into KERNEL_WORK (default: sibling dir kernel-7.0.1-work). Does NOT compile.
 set -euo pipefail
 REPO="$(cd "$(dirname "$0")/.." && pwd)"

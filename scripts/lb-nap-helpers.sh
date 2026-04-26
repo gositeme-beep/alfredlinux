@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: AGPL-3.0-or-later
 # Sourced by watch-lb-docker-build.sh and supervise-lb-docker-nap.sh — do not run standalone.
 # Sleep inhibit: blocks suspend/idle while `docker wait` runs (unless ALFRED_NO_INHIBIT_SLEEP=1).
 

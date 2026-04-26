@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: AGPL-3.0-or-later
 # Run ON THE UBUNTU BUILDER as root after: sudo su -
 set -euo pipefail
 export DEBIAN_FRONTEND=noninteractive

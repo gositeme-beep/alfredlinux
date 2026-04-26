@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: AGPL-3.0-or-later
 # Run full `lb build` as root inside Docker (no host sudo). Requires docker + --privileged.
 #
 #   bash scripts/lb-docker-build.sh           # foreground (hours)

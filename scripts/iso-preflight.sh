@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: AGPL-3.0-or-later
 # Run before lb build. Exit 1 if ISO hook 0050 would fail (missing linux-image-7.0.1).
 set -euo pipefail
 ROOT="${ALFRED_SRC:-$(cd "$(dirname "$0")/.." && pwd)}"

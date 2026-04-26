@@ -1,4 +1,5 @@
 #!/bin/bash
+# SPDX-License-Identifier: AGPL-3.0-or-later
 # Patch live-build's binary_syslinux: add GNU cp --remove-destination for copies into
 # chroot/root/${_BOOTLOADER}/ (isolinux path). Prevents:
 #   cp: not writing through dangling symlink 'chroot/root/isolinux/…'

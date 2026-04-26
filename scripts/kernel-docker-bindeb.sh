@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: AGPL-3.0-or-later
 # Same as /home/gositeme/law/alfred-kernel-docker-bindeb.sh — Docker Bookworm, no host sudo.
 # KERNEL_WORK default: <repo>/../kernel-7.0.1-work
 set -euo pipefail

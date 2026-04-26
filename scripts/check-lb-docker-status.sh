@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: AGPL-3.0-or-later
 # Quick triage: active lb-docker container, dashboard JSON, log hints, ISO paths.
 # Usage: bash scripts/check-lb-docker-status.sh [STATUS_JSON]
 set -euo pipefail
