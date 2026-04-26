@@ -10,7 +10,7 @@
 # Arabic (MSA + Darija / Egyptian / Levantine / Gulf vernacular seeds), Hindi,
 # Italian, Romanian, Polish, Ukrainian, Korean, Turkish, Dutch,
 # Vietnamese, Tagalog, Filipino, Urdu, Swahili, Amharic, Yoruba, Igbo, Hausa,
-# Zulu, Xhosa, Afrikaans, Somali, Twi, Jamaican Patwa, …); full texts may be added under
+# Zulu, Xhosa, Afrikaans, Somali, Twi, Jamaican Patwa, Haitian Creole, …); full texts may be added under
 # /usr/share/alfred/bible/*.tsv later.
 #
 # BUILD: v7.77 Kingdom of God Edition
@@ -75,6 +75,7 @@ af|Afrikaans|af-bible.tsv|Afrikaans (public-domain samples)
 so|Soomaali|so-bible.tsv|Somali (public-domain samples)
 tw|Twi|tw-bible.tsv|Twi / Akan (public-domain samples)
 jam|Jamaican Patwa|jam-bible.tsv|Jamaica — Jamaican Creole (public-domain style samples)
+ht|Kreyòl ayisyen|ht-bible.tsv|Haitian Creole (public-domain style samples)
 CONF
 
 # ═══════════════════════════════════════════════════
@@ -764,6 +765,24 @@ Philippians	4	13	Mi kyan du evriting chuu Krais wea gi mi strench.
 Revelation	22	21	Di griis fi wi Laad Jesas Krais be wid aal a unu. A-mien.
 SEED
 
+echo "[TONGUES-04ag] Haitian Creole seed (ISO 639-1 ht)..."
+cat > "$BIBLE_DIR/ht-bible-seed.tsv" << 'SEED'
+Book	Chapter	Verse	Text
+Jenèz	1	1	Nan konmansman, Bondye te kreye syèl la ak tè a.
+Jenèz	1	2	Tè a te san fòm epi vide; fennwa te sou fon labèn nan; epi Lespri Bondye a t ap vole sou dlo a.
+Jenèz	1	3	Bondye di: Se pou gen limyè. Epi gen limyè.
+Som	23	1	Se yon chante David. Seyè a se gadyen mwen; anyen p ap manke m.
+Som	23	2	Li fè m kouche nan savann vèt; li mennen m bò dlo ki poze.
+Som	23	3	Li restore mwen; li mennen m nan chemen jistis la, pou non li.
+Som	23	4	Menm si m mache nan mitan fonmò kote gen lonbra lanmò, m p ap pè anyen ki mal; paske ou la avèk mwen; baton ou ak bagèt ou konsole m.
+Som	91	1	Moun ki rete nan kachette Pi Wo a, li pral repoze nan lonbraz Tout-Puissan an.
+Jan	3	16	Paske Bondye renmen mond lan telman, li bay sèl Pitit li a, pou tout moun ki kwè nan li pa pèdi lavi yo, men gen lavi ki pa gen fen.
+Jan	14	6	Jezi reponn li: Mwen se chemen an, verite a ak lavi a. Pesonn p ap vin jwenn Papa a si se pa atravè m.
+Roman	8	28	Konnen byen ke Bondye fè tout bagay mache ansanm pou byen moun ki renmen li yo, moun li te rele pou plan li te genyen an.
+Filip	4	13	Mwen kapab fè tout bagay atravè moun ki bay m fòs la.
+Revelasyon	22	21	Gras Senyè nou Jezi Kri a ve ak nou tout. Amèn.
+SEED
+
 # ═══════════════════════════════════════════════════
 # 5. BIBLE TONGUES CLI WRAPPER
 # ═══════════════════════════════════════════════════
@@ -878,6 +897,7 @@ case "$LANGUAGE" in
         echo "  Example: alfred-bible-lang ur یوحنا 3"
         echo "  Example: alfred-bible-lang fil \"Mga Taga-Filipos\" 4"
         echo "  Example: alfred-bible-lang jam John 3"
+        echo "  Example: alfred-bible-lang ht Jan 3"
         echo "  Example: alfred-bible-lang ary یوحنا 3   — John 3 in Moroccan Darija (seed)"
         echo "  Example: alfred-bible-lang arz یوحنا 3  — John 3 in Egyptian Arabic (seed)"
         ;;
@@ -899,6 +919,7 @@ case "$LANGUAGE" in
         echo "  alfred-bible-lang ur یوحنا 3       — John 3 in Urdu (seed)"
         echo "  alfred-bible-lang fil \"Mga Taga-Filipos\" 4 — Philippians 4 in Filipino (seed)"
         echo "  alfred-bible-lang jam John 3       — John 3 in Jamaican Patwa (seed)"
+        echo "  alfred-bible-lang ht Jan 3         — John 3 in Haitian Creole (seed)"
         echo "  alfred-bible-lang ary یوحنا 3      — John 3 in Moroccan Darija (seed)"
         echo "  alfred-bible-lang arz یوحنا 3     — John 3 in Egyptian Arabic (seed)"
         echo ""
@@ -922,19 +943,19 @@ mkdir -p /usr/share/applications
 cat > /usr/share/applications/alfred-bible-tongues.desktop << 'DESKBT'
 [Desktop Entry]
 Name=Bible in Many Languages
-Comment=40 tongues offline (seed verses) — Acts 2:4; no Internet required
+Comment=41 tongues offline (seed verses) — Acts 2:4; no Internet required
 Exec=x-terminal-emulator -e bash -c 'echo "══ Bible tongues (offline seeds) ══"; echo "List codes, then try a random verse or a book/chapter."; echo ""; alfred-bible-lang list; echo ""; echo "Try:  alfred-bible-lang es"; echo "      alfred-bible-lang ro Ioan 3"; echo "      alfred-bible tongues list"; echo ""; exec bash'
 Icon=accessories-dictionary
 Terminal=false
 Type=Application
 Categories=Education;Reference;
-Keywords=bible;scripture;languages;multilingual;tongues;yiddish;romanian;spanish;i18n;
+Keywords=bible;scripture;languages;multilingual;tongues;creole;haitian;kreyol;yiddish;romanian;spanish;i18n;
 DESKBT
 
 echo "╔═══════════════════════════════════════════════════════════╗"
 echo "║  [0292] Bible Tongues — COMPLETE                         ║"
-echo "║  ✓ English AKJV (full) + 39 seed tongues — list for codes ║"
-echo "║    (+ yi Yiddish; ary arz apc afb Arabic; fil ur jam; Africa) Acts 2:4 ║"
+echo "║  ✓ English AKJV (full) + 40 seed tongues — list for codes ║"
+echo "║    (+ ht Haitian Creole; yi Yiddish; ary arz apc afb; fil ur jam; Africa) Acts 2:4 ║"
 echo "║  ✓ alfred-bible-lang — run: alfred-bible-lang list       ║"
 echo "║  They spoke with other tongues. — Acts 2:4               ║"
 echo "╚═══════════════════════════════════════════════════════════╝"
