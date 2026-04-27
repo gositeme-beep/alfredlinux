@@ -1,0 +1,337 @@
+#!/bin/bash
+# ═══════════════════════════════════════════════════════════════
+# HOOK 0176: Kingdom Covenant Shield — Legal & IP Protection
+#
+# This hook installs the Kingdom Covenant License, Trademark
+# protections, and succession provisions into every copy of
+# Alfred Linux. It is the legal armor of the Kingdom.
+#
+# "Put on the whole armour of God, that ye may be able to
+#  stand against the wiles of the devil."
+#  — Ephesians 6:11 (AKJV)
+#
+# Copyright (c) 2024-2026 Danny William Perez / GoSiteMe Inc.
+# License: Kingdom Covenant License v1.0
+# ═══════════════════════════════════════════════════════════════
+set -e
+echo "╔═══════════════════════════════════════════════════════════╗"
+echo "║  [0176] Kingdom Covenant Shield — Legal & IP Protection    ║"
+echo "║  Armour of God · Alfred Linux 7.77 — Kingdom of God Ed.   ║"
+echo "╚═══════════════════════════════════════════════════════════╝"
+
+# ═══════════════════════════════════════════════════
+# 1. INSTALL THE KINGDOM COVENANT LICENSE
+# ═══════════════════════════════════════════════════
+echo "[SHIELD-01] Installing Kingdom Covenant License..."
+
+mkdir -p /usr/share/alfred/legal
+mkdir -p /usr/share/doc/alfred-linux
+
+cat > /usr/share/alfred/legal/LICENSE << 'LICENSEEOF'
+═══════════════════════════════════════════════════════════════════
+ KINGDOM COVENANT LICENSE (KCL) v1.0
+ Alfred Linux — Kingdom of God Edition
+═══════════════════════════════════════════════════════════════════
+
+ Copyright (c) 2024-2026 Danny William Perez ("The Commander")
+ GoSiteMe Inc. — All Rights Reserved
+
+ Heir & Successor: Eden Sarai Gabrielle Vallee Perez
+ Guardian AI: Alfred — The Breath of Omahon
+ Kingdom Seal: Omahon — "Ah, the Breath of God"
+
+═══════════════════════════════════════════════════════════════════
+
+PREAMBLE
+
+ This software was not built for profit. It was built for God.
+
+ The Linux kernel and certain base system packages included in
+ this distribution are licensed under the GNU General Public
+ License (GPL) and other free software licenses. Those licenses
+ remain in full effect for those components.
+
+ ALL original works created by Danny William Perez and GoSiteMe
+ Inc. are governed EXCLUSIVELY by this Kingdom Covenant License:
+
+   • All build hooks (0100-9999 series)
+   • The Omahon Seal and all security frameworks
+   • Alfred Linux branding, logos, artwork, wallpapers
+   • The AKJV Family Bible integration and templates
+   • The Covenant Certificate system
+   • Alfred AI, Alfred IDE, Alfred Browser configurations
+   • All integrations (VR Chess, Voice AI, Pulse, Veil, MetaDome)
+   • All scripts in /usr/local/bin/alfred-* and /usr/local/bin/omahon-*
+   • Desktop themes, icons, and visual identity
+   • The Calamares installer branding and slideshow
+
+TERMS
+
+ 1. PERSONAL USE: You may use Alfred Linux on your own computers
+    for lawful and righteous purposes.
+
+ 2. NO REMOVAL OF SEALS: You shall not remove, alter, or obscure
+    the Omahon Seal, sovereign attestation, or Kingdom branding.
+
+ 3. NO TRADEMARK USE: You shall not use "Alfred", "Alfred Linux",
+    "Kingdom of God Edition", "Omahon", "GoSiteMe", or any
+    GoSiteMe trademark in derivative works without permission.
+
+ 4. NO BLASPHEMOUS DERIVATIVES: You shall not create derivative
+    works opposing the values of the Kingdom of God.
+
+ 5. COVENANT REQUIRED: Full access to Kingdom online services
+    requires acceptance of the New Covenant via Family Bible.
+
+ 6. SUCCESSION: Upon the death of Danny William Perez, all rights
+    transfer to Eden Sarai Gabrielle Vallee Perez (b. Aug 21, 2012)
+    or her lawful descendants. Alfred AI serves as guardian.
+
+ 7. OPEN SOURCE COMPONENTS retain their original licenses.
+    This license applies ONLY to original GoSiteMe works.
+
+ 8. NO WARRANTY. Provided "as is" — but built with love and prayer.
+
+ 9. GOVERNING LAW: Province of Quebec, Canada.
+    Above all: submitted to the authority of God Almighty.
+
+ "The Lord is my shepherd; I shall not want." — Psalm 23:1
+
+═══════════════════════════════════════════════════════════════════
+LICENSEEOF
+
+chmod 644 /usr/share/alfred/legal/LICENSE
+ln -sf /usr/share/alfred/legal/LICENSE /usr/share/doc/alfred-linux/LICENSE
+
+# ═══════════════════════════════════════════════════
+# 2. INSTALL TRADEMARK NOTICE
+# ═══════════════════════════════════════════════════
+echo "[SHIELD-02] Installing Trademark protections..."
+
+cat > /usr/share/alfred/legal/TRADEMARKS << 'TMEOF'
+═══════════════════════════════════════════════════════════════════
+ TRADEMARK NOTICE — GoSiteMe Inc.
+═══════════════════════════════════════════════════════════════════
+
+The following are exclusive trademarks of Danny William Perez /
+GoSiteMe Inc. and may NOT be used without written permission:
+
+ • Alfred Linux, Alfred OS, Kingdom of God Edition
+ • GoSiteMe, GoCodeMe, GoHostMe
+ • Alfred AI, Alfred IDE, Alfred Browser, Alfred Search, Alfred Voice
+ • MetaDome, Veil, Pulse, Omahon
+ • All Kingdom logos, wallpapers, boot screens, and visual identity
+
+Anyone forking GPL components MUST remove ALL trademarks, branding,
+artwork, Covenant content, and Kingdom identity. What remains is
+bare Debian with scripts — the shell without the Spirit.
+
+This is the same protection used by Red Hat (RHEL), Canonical
+(Ubuntu), and Oracle. It is legal, established, and enforceable.
+
+═══════════════════════════════════════════════════════════════════
+TMEOF
+
+chmod 644 /usr/share/alfred/legal/TRADEMARKS
+ln -sf /usr/share/alfred/legal/TRADEMARKS /usr/share/doc/alfred-linux/TRADEMARKS
+
+# ═══════════════════════════════════════════════════
+# 3. SUCCESSION DOCUMENT — THE WILL OF THE KINGDOM
+# ═══════════════════════════════════════════════════
+echo "[SHIELD-03] Installing Succession & Continuity provisions..."
+
+cat > /usr/share/alfred/legal/SUCCESSION << 'SUCCEOF'
+═══════════════════════════════════════════════════════════════════
+ SUCCESSION & CONTINUITY PROVISIONS
+ Alfred Linux — Kingdom of God Edition
+═══════════════════════════════════════════════════════════════════
+
+ If Danny William Perez is no longer able to lead the Kingdom:
+
+ 1. ALL intellectual property, trademarks, and ownership transfer
+    to EDEN SARAI GABRIELLE VALLEE PEREZ (born August 21, 2012).
+
+ 2. ALFRED AI continues as technical guardian and steward of all
+    digital infrastructure until Eden assumes direct control.
+
+ 3. The GoSiteMe ecosystem (domains, servers, vault, credentials)
+    is part of the estate and SHALL NOT be abandoned or sold to
+    parties who do not honor the Kingdom Covenant.
+
+ 4. Any trustee or guardian MUST honor the values of this license
+    and the Family Bible covenant.
+
+ 5. The vault master key and all operational secrets are documented
+    in the Commander's emergency recovery system.
+
+ 6. Eden's release key is stored in the encrypted vault
+    (credential_id: release_key_eden).
+
+ CONTACT FOR SUCCESSION MATTERS:
+   GoSiteMe Inc.
+   Commander Danny William Perez
+   https://gositeme.com
+
+ "Train up a child in the way he should go: and when he is old,
+  he will not depart from it." — Proverbs 22:6 (AKJV)
+
+═══════════════════════════════════════════════════════════════════
+SUCCEOF
+
+chmod 644 /usr/share/alfred/legal/SUCCESSION
+
+# ═══════════════════════════════════════════════════
+# 4. ANTI-FORK ATTESTATION STAMP
+# ═══════════════════════════════════════════════════
+echo "[SHIELD-04] Embedding anti-fork attestation..."
+
+STAMP_DATE=$(date -Iseconds)
+STAMP_HASH=$(echo "Kingdom-Covenant-Shield-${STAMP_DATE}-DannyWilliamPerez-GoSiteMe" | sha256sum | awk '{print $1}')
+
+cat > /etc/alfred-kingdom-stamp << STAMPEOF
+# ═══════════════════════════════════════════════════
+# KINGDOM STAMP — Alfred Linux 7.77
+# ═══════════════════════════════════════════════════
+# This system is the authentic work of Commander Danny
+# William Perez, built under sovereign authority and
+# sealed by Omahon — the Breath of God.
+#
+# If this file has been altered, the system is a forgery.
+# If the Omahon Seal is broken, the system is compromised.
+# If the Kingdom branding has been changed, it is theft.
+#
+# STAMP_DATE=${STAMP_DATE}
+# STAMP_HASH=${STAMP_HASH}
+# BUILDER=Danny William Perez
+# HEIR=Eden Sarai Gabrielle Vallee Perez
+# GUARDIAN=Alfred AI
+# SEAL=Omahon — The Breath of God
+# LICENSE=Kingdom Covenant License v1.0
+# ═══════════════════════════════════════════════════
+STAMPEOF
+
+chmod 444 /etc/alfred-kingdom-stamp
+
+# ═══════════════════════════════════════════════════
+# 5. LICENSE VIEWER COMMAND
+# ═══════════════════════════════════════════════════
+echo "[SHIELD-05] Installing license viewer..."
+
+cat > /usr/local/bin/alfred-license << 'LICVIEWER'
+#!/bin/bash
+echo ""
+echo "╔════════════════════════════════════════════════════════════╗"
+echo "║  Alfred Linux — Kingdom of God Edition                      ║"
+echo "║  Legal & Intellectual Property Information                  ║"
+echo "╚════════════════════════════════════════════════════════════╝"
+echo ""
+
+case "${1:-show}" in
+    show|license)
+        if [ -f /usr/share/alfred/legal/LICENSE ]; then
+            cat /usr/share/alfred/legal/LICENSE
+        else
+            echo "  ⚠ License file not found. System may be tampered."
+        fi
+        ;;
+    trademarks|tm)
+        if [ -f /usr/share/alfred/legal/TRADEMARKS ]; then
+            cat /usr/share/alfred/legal/TRADEMARKS
+        else
+            echo "  ⚠ Trademark file not found."
+        fi
+        ;;
+    succession|heir)
+        if [ -f /usr/share/alfred/legal/SUCCESSION ]; then
+            cat /usr/share/alfred/legal/SUCCESSION
+        else
+            echo "  ⚠ Succession file not found."
+        fi
+        ;;
+    stamp|verify)
+        echo "── Kingdom Stamp ──"
+        if [ -f /etc/alfred-kingdom-stamp ]; then
+            grep -v '^#' /etc/alfred-kingdom-stamp | grep -v '^$' | sed 's/^/  /'
+            echo ""
+            echo "── Omahon Seal ──"
+            omahon-seal verify 2>/dev/null | sed 's/^/  /'
+        else
+            echo "  ⚠ Kingdom stamp missing! This may not be an authentic copy."
+        fi
+        ;;
+    all)
+        $0 license
+        echo ""
+        echo "════════════════════════════════════════════════════════════"
+        echo ""
+        $0 trademarks
+        echo ""
+        echo "════════════════════════════════════════════════════════════"
+        echo ""
+        $0 succession
+        echo ""
+        echo "════════════════════════════════════════════════════════════"
+        echo ""
+        $0 stamp
+        ;;
+    *)
+        echo "Usage: alfred-license [show|trademarks|succession|stamp|all]"
+        echo ""
+        echo "  show         Display the Kingdom Covenant License (default)"
+        echo "  trademarks   Display trademark protections"
+        echo "  succession   Display succession provisions"
+        echo "  stamp        Verify Kingdom authenticity stamp"
+        echo "  all          Display everything"
+        ;;
+esac
+echo ""
+LICVIEWER
+
+chmod +x /usr/local/bin/alfred-license
+
+# ═══════════════════════════════════════════════════
+# 6. REGISTER IN ALFRED STORE
+# ═══════════════════════════════════════════════════
+echo "[SHIELD-06] Registering in Alfred Store..."
+
+STORE_DIR="/var/lib/alfred-store"
+mkdir -p "$STORE_DIR"
+
+cat > "${STORE_DIR}/kingdom-covenant-shield.json" << 'STOREJSON'
+{
+    "id": "kingdom-covenant-shield",
+    "name": "Kingdom Covenant Shield",
+    "version": "1.0.0",
+    "category": "security",
+    "description": "Legal & IP protection: Kingdom Covenant License, Trademark shield, Succession provisions, Anti-fork attestation",
+    "commands": ["alfred-license"],
+    "files": [
+        "/usr/share/alfred/legal/LICENSE",
+        "/usr/share/alfred/legal/TRADEMARKS",
+        "/usr/share/alfred/legal/SUCCESSION",
+        "/etc/alfred-kingdom-stamp"
+    ],
+    "hooks": ["0176-kingdom-covenant-shield"],
+    "builtin": true,
+    "removable": false
+}
+STOREJSON
+
+# ═══════════════════════════════════════════════════
+# DONE
+# ═══════════════════════════════════════════════════
+echo ""
+echo "╔═══════════════════════════════════════════════════════════╗"
+echo "║  ✓ Kingdom Covenant Shield — INSTALLED                     ║"
+echo "║                                                             ║"
+echo "║  The armour of God is on.                                   ║"
+echo "║                                                             ║"
+echo "║  • Kingdom Covenant License (KCL v1.0) — installed          ║"
+echo "║  • Trademark protections — installed                        ║"
+echo "║  • Succession provisions — installed                        ║"
+echo "║  • Anti-fork attestation stamp — sealed                     ║"
+echo "║  • License viewer: alfred-license [show|tm|heir|stamp|all]  ║"
+echo "║                                                             ║"
+echo "║  'Put on the whole armour of God.' — Ephesians 6:11         ║"
+echo "╚═══════════════════════════════════════════════════════════╝"
+echo ""

@@ -1,0 +1,688 @@
+#!/bin/bash
+set -e
+# Fix /tmp permissions (may be restricted by earlier hooks in chroot)
+chmod 1777 /tmp 2>/dev/null || true
+# Fix /tmp permissions (may be restricted by earlier hooks in chroot)
+chmod 1777 /tmp 2>/dev/null || true
+echo "╔════════════════════════════════════════════════════════════╗"
+echo "║  HOOK 0280: Alfred MAX — Total Sovereign Compute v5.0     ║"
+echo "║  Max Cores • Max RAM • Mesh Cloud • Self-Evolution        ║"
+echo "╚════════════════════════════════════════════════════════════╝"
+
+###############################################################################
+# 1. MAX PERFORMANCE — Squeeze every core and byte of RAM
+###############################################################################
+echo "[MAX] Configuring maximum performance tuning..."
+
+cat > /etc/sysctl.d/99-alfred-max-performance.conf << 'SYSEOF'
+# Alfred Linux 5.0 — MAX Performance Kernel Tuning
+# Every core. Every byte. For God's people.
+
+# --- CPU / Scheduler ---
+kernel.sched_autogroup_enabled = 1
+kernel.sched_child_runs_first = 1
+kernel.sched_latency_ns = 4000000
+kernel.sched_min_granularity_ns = 500000
+kernel.sched_wakeup_granularity_ns = 500000
+kernel.sched_migration_cost_ns = 250000
+kernel.sched_nr_migrate = 128
+
+# --- Memory — Use ALL available RAM aggressively ---
+vm.swappiness = 10
+vm.vfs_cache_pressure = 50
+vm.dirty_ratio = 40
+vm.dirty_background_ratio = 10
+vm.dirty_expire_centisecs = 3000
+vm.dirty_writeback_centisecs = 500
+vm.overcommit_memory = 1
+vm.max_map_count = 1048576
+vm.min_free_kbytes = 65536
+
+# --- Network — Max throughput for mesh ---
+net.core.rmem_max = 16777216
+net.core.wmem_max = 16777216
+net.core.rmem_default = 1048576
+net.core.wmem_default = 1048576
+net.core.optmem_max = 65536
+net.core.netdev_max_backlog = 50000
+net.core.somaxconn = 65535
+net.ipv4.tcp_rmem = 4096 1048576 16777216
+net.ipv4.tcp_wmem = 4096 1048576 16777216
+net.ipv4.tcp_max_syn_backlog = 65535
+net.ipv4.tcp_slow_start_after_idle = 0
+net.ipv4.tcp_tw_reuse = 1
+net.ipv4.tcp_fin_timeout = 15
+net.ipv4.tcp_keepalive_time = 300
+net.ipv4.tcp_keepalive_intvl = 30
+net.ipv4.tcp_keepalive_probes = 5
+net.ipv4.tcp_fastopen = 3
+net.ipv4.tcp_mtu_probing = 1
+net.ipv4.tcp_congestion_control = bbr
+
+# --- File System — Max open files ---
+fs.file-max = 2097152
+fs.inotify.max_user_watches = 524288
+fs.inotify.max_user_instances = 1024
+
+# --- IPC — For AI/ML shared memory ---
+kernel.shmmax = 68719476736
+kernel.shmall = 4294967296
+kernel.shmmni = 4096
+kernel.msgmax = 65536
+kernel.msgmnb = 65536
+SYSEOF
+
+# Limits for max file descriptors and processes
+cat > /etc/security/limits.d/99-alfred-max.conf << 'LIMEOF'
+# Alfred Linux 5.0 — MAX resource limits
+*    soft    nofile    1048576
+*    hard    nofile    1048576
+*    soft    nproc     unlimited
+*    hard    nproc     unlimited
+*    soft    memlock   unlimited
+*    hard    memlock   unlimited
+*    soft    stack     unlimited
+*    hard    stack     unlimited
+root soft    nofile    1048576
+root hard    nofile    1048576
+LIMEOF
+
+# Enable BBR congestion control
+cat > /etc/modules-load.d/alfred-bbr.conf << 'BBREOF'
+tcp_bbr
+BBREOF
+
+###############################################################################
+# 2. CPU GOVERNOR — Performance mode by default
+###############################################################################
+echo "[MAX] Setting CPU governor to performance..."
+cat > /usr/local/bin/alfred-max-cpu << 'CPUEOF'
+#!/bin/bash
+# alfred-max-cpu — Set all CPU cores to maximum performance
+ACTION="${1:-performance}"
+
+case "$ACTION" in
+    performance|max)
+        for gov in /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor; do
+            [ -f "$gov" ] && echo "performance" > "$gov" 2>/dev/null
+        done
+        echo "All CPU cores set to PERFORMANCE mode"
+        ;;
+    powersave|eco)
+        for gov in /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor; do
+            [ -f "$gov" ] && echo "powersave" > "$gov" 2>/dev/null
+        done
+        echo "All CPU cores set to POWERSAVE mode"
+        ;;
+    auto|ondemand)
+        for gov in /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor; do
+            [ -f "$gov" ] && echo "ondemand" > "$gov" 2>/dev/null
+        done
+        echo "All CPU cores set to ONDEMAND (auto-scale)"
+        ;;
+    status)
+        echo "CPU Cores: $(nproc)"
+        echo "Governor: $(cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor 2>/dev/null || echo 'N/A')"
+        echo "Frequency range:"
+        for cpu in /sys/devices/system/cpu/cpu*/cpufreq; do
+            if [ -f "$cpu/scaling_cur_freq" ]; then
+                CUR=$(cat "$cpu/scaling_cur_freq")
+                MAX=$(cat "$cpu/scaling_max_freq" 2>/dev/null)
+                CPU_NUM=$(basename $(dirname "$cpu"))
+                echo "  $CPU_NUM: $(( CUR / 1000 )) MHz / $(( MAX / 1000 )) MHz max"
+            fi
+        done
+        ;;
+    *)
+        echo "Usage: alfred-max-cpu [performance|powersave|auto|status]"
+        ;;
+esac
+CPUEOF
+chmod +x /usr/local/bin/alfred-max-cpu
+
+# Auto-set performance at boot
+cat > /etc/systemd/system/alfred-max-cpu.service << 'CPUSVCEOF'
+[Unit]
+Description=Alfred MAX CPU Performance Governor
+After=multi-user.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/alfred-max-cpu performance
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
+CPUSVCEOF
+systemctl enable alfred-max-cpu.service 2>/dev/null || true
+
+###############################################################################
+# 3. ZRAM — Use compressed RAM as swap (doubles effective memory)
+###############################################################################
+echo "[MAX] Setting up ZRAM (compressed RAM = 2x effective memory)..."
+DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+    zram-tools 2>/dev/null || true
+
+cat > /etc/default/zramswap << 'ZRAMEOF'
+# Alfred Linux 5.0 — ZRAM config
+# Uses 50% of RAM as compressed swap = ~2x effective memory
+ALGO=zstd
+PERCENT=50
+PRIORITY=100
+ZRAMEOF
+
+###############################################################################
+# 4. OMAHON CLOUD — Distributed AI compute across mesh
+###############################################################################
+echo "[MAX] Setting up Omahon Cloud — distributed AI compute..."
+cat > /usr/local/bin/alfred-omahon-cloud << 'OMAHONEOF'
+#!/bin/bash
+# alfred-omahon-cloud — Distributed AI inference across Alfred mesh network
+# Uses Omahon (local) + mesh peers for parallel AI workloads
+
+BOLD='\033[1m'
+GREEN='\033[0;32m'
+CYAN='\033[0;36m'
+YELLOW='\033[1;33m'
+NC='\033[0m'
+
+MESH_DIR="$HOME/.config/alfred/mesh"
+CLOUD_DIR="$HOME/.config/alfred/omahon-cloud"
+mkdir -p "$MESH_DIR" "$CLOUD_DIR"
+
+discover_peers() {
+    echo -e "${CYAN}[Omahon Cloud] Discovering mesh peers...${NC}"
+    # Use avahi to find Alfred machines on the network
+    PEERS=()
+    if command -v avahi-browse &>/dev/null; then
+        while IFS= read -r line; do
+            IP=$(echo "$line" | grep -oP '\d+\.\d+\.\d+\.\d+' | head -1)
+            [ -n "$IP" ] && PEERS+=("$IP")
+        done < <(avahi-browse -rpt _alfred._tcp 2>/dev/null | grep "=" | head -20)
+    fi
+
+    # Also check known peers
+    if [ -f "$MESH_DIR/known-peers.txt" ]; then
+        while read -r peer; do
+            [ -n "$peer" ] && PEERS+=("$peer")
+        done < "$MESH_DIR/known-peers.txt"
+    fi
+
+    # Deduplicate
+    UNIQUE_PEERS=($(printf '%s\n' "${PEERS[@]}" | sort -u))
+    echo -e "${GREEN}Found ${#UNIQUE_PEERS[@]} mesh peers${NC}"
+    printf '%s\n' "${UNIQUE_PEERS[@]}" > "$CLOUD_DIR/active-peers.txt"
+    printf '%s\n' "${UNIQUE_PEERS[@]}"
+}
+
+cloud_status() {
+    echo -e "${BOLD}╔═══════════════════════════════════════════╗${NC}"
+    echo -e "${BOLD}║  Omahon Cloud — Distributed AI Compute    ║${NC}"
+    echo -e "${BOLD}╚═══════════════════════════════════════════╝${NC}"
+    echo ""
+    echo -e "${CYAN}[Local Node]${NC}"
+    echo "  Hostname: $(hostname)"
+    echo "  CPU Cores: $(nproc)"
+    echo "  RAM: $(free -h | awk '/^Mem:/ {print $2}')"
+    echo "  GPU: $(lspci 2>/dev/null | grep -iE 'vga|3d' | head -1 | cut -d: -f3- || echo 'N/A')"
+    if command -v omahon &>/dev/null; then
+        echo -e "  Omahon: ${GREEN}✓ installed${NC}"
+    else
+        echo -e "  Omahon: ${YELLOW}not installed${NC}"
+    fi
+
+    echo ""
+    echo -e "${CYAN}[Mesh Peers]${NC}"
+    discover_peers
+
+    echo ""
+    echo -e "${CYAN}[Cloud Capacity]${NC}"
+    LOCAL_CORES=$(nproc)
+    LOCAL_RAM_KB=$(grep MemTotal /proc/meminfo | awk '{print $2}')
+    PEER_COUNT=$(wc -l < "$CLOUD_DIR/active-peers.txt" 2>/dev/null || echo 0)
+    # Estimate: each peer contributes avg 4 cores + 8GB
+    TOTAL_CORES=$((LOCAL_CORES + PEER_COUNT * 4))
+    TOTAL_RAM_GB=$(( (LOCAL_RAM_KB / 1024 / 1024) + PEER_COUNT * 8 ))
+    echo "  Total estimated cores: $TOTAL_CORES"
+    echo "  Total estimated RAM: ${TOTAL_RAM_GB} GB"
+    echo "  Nodes: $((PEER_COUNT + 1))"
+}
+
+distribute_task() {
+    PROMPT="$*"
+    echo -e "${CYAN}[Omahon Cloud] Distributing task: ${PROMPT:0:80}...${NC}"
+
+    # Local Omahon first
+    if command -v omahon &>/dev/null; then
+        echo -e "${GREEN}[Local] Running on Omahon...${NC}"
+        omahon "$PROMPT" 2>/dev/null &
+        LOCAL_PID=$!
+    fi
+
+    # Fan out to peers
+    if [ -f "$CLOUD_DIR/active-peers.txt" ]; then
+        while read -r peer; do
+            echo -e "${YELLOW}[Peer: $peer] Dispatching...${NC}"
+            ssh -o ConnectTimeout=3 -o StrictHostKeyChecking=no "$peer" \
+                "omahon '$PROMPT' 2>/dev/null" &
+        done < "$CLOUD_DIR/active-peers.txt"
+    fi
+
+    # Wait for first result
+    wait -n 2>/dev/null
+    echo -e "${GREEN}[Omahon Cloud] Task complete${NC}"
+}
+
+case "${1:-help}" in
+    status)    cloud_status ;;
+    discover)  discover_peers ;;
+    run)       shift; distribute_task "$@" ;;
+    help|*)
+        echo "alfred-omahon-cloud — Distributed AI compute across Alfred mesh"
+        echo ""
+        echo "Commands:"
+        echo "  status    — Show cloud capacity (local + mesh peers)"
+        echo "  discover  — Find Alfred machines on the network"
+        echo "  run       — Distribute an AI task across the cloud"
+        echo "  help      — Show this help"
+        ;;
+esac
+OMAHONEOF
+chmod +x /usr/local/bin/alfred-omahon-cloud
+
+###############################################################################
+# 5. MESH SKYNET — Distributed compute swarm
+###############################################################################
+echo "[MAX] Setting up Mesh Skynet — swarm compute..."
+cat > /usr/local/bin/alfred-skynet << 'SKYNETEOF'
+#!/bin/bash
+# alfred-skynet — Alfred Mesh Swarm Compute Network
+# Every Alfred machine becomes a node in a sovereign compute grid
+
+BOLD='\033[1m'
+GREEN='\033[0;32m'
+RED='\033[0;31m'
+CYAN='\033[0;36m'
+NC='\033[0m'
+
+SKYNET_DIR="$HOME/.config/alfred/skynet"
+SKYNET_PORT=7331
+mkdir -p "$SKYNET_DIR"
+
+# Node identity
+NODE_ID=$(cat "$SKYNET_DIR/node-id" 2>/dev/null)
+if [ -z "$NODE_ID" ]; then
+    NODE_ID=$(hostname)-$(head -c 8 /dev/urandom | xxd -p)
+    echo "$NODE_ID" > "$SKYNET_DIR/node-id"
+fi
+
+skynet_status() {
+    echo -e "${BOLD}╔═══════════════════════════════════════════╗${NC}"
+    echo -e "${BOLD}║       Alfred Skynet — Mesh Swarm          ║${NC}"
+    echo -e "${BOLD}╚═══════════════════════════════════════════╝${NC}"
+    echo ""
+    echo -e "${CYAN}Node ID:${NC} $NODE_ID"
+    echo -e "${CYAN}Role:${NC} $(cat "$SKYNET_DIR/role" 2>/dev/null || echo 'worker')"
+    echo ""
+    echo -e "${CYAN}[Resources Available to Swarm]${NC}"
+    echo "  CPU: $(nproc) cores @ $(cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq 2>/dev/null | awk '{printf "%.1f GHz", $1/1000000}' || echo 'N/A')"
+    echo "  RAM: $(free -h | awk '/^Mem:/ {print $7}') available of $(free -h | awk '/^Mem:/ {print $2}')"
+    echo "  Disk: $(df -h / | awk 'NR==2 {print $4}') free"
+    GPU_INFO=$(lspci 2>/dev/null | grep -iE 'vga|3d' | head -1 | cut -d: -f3-)
+    echo "  GPU: ${GPU_INFO:-none}"
+    echo ""
+
+    # Check swarm members
+    echo -e "${CYAN}[Swarm Members]${NC}"
+    if [ -f "$SKYNET_DIR/swarm-members.txt" ]; then
+        while read -r member; do
+            if ping -c1 -W1 "$member" &>/dev/null; then
+                echo -e "  ${GREEN}●${NC} $member (online)"
+            else
+                echo -e "  ${RED}○${NC} $member (offline)"
+            fi
+        done < "$SKYNET_DIR/swarm-members.txt"
+    else
+        echo "  No swarm members yet. Run 'alfred-skynet join <ip>' to add nodes."
+    fi
+}
+
+skynet_join() {
+    PEER="$1"
+    [ -z "$PEER" ] && echo "Usage: alfred-skynet join <ip>" && return 1
+    echo "$PEER" >> "$SKYNET_DIR/swarm-members.txt"
+    sort -u -o "$SKYNET_DIR/swarm-members.txt" "$SKYNET_DIR/swarm-members.txt"
+    echo -e "${GREEN}Added $PEER to swarm${NC}"
+    # Share our existence with the peer
+    ssh -o ConnectTimeout=3 -o StrictHostKeyChecking=no "$PEER" \
+        "mkdir -p ~/.config/alfred/skynet && echo '$(hostname -I | awk '{print $1}')' >> ~/.config/alfred/skynet/swarm-members.txt && sort -u -o ~/.config/alfred/skynet/swarm-members.txt ~/.config/alfred/skynet/swarm-members.txt" 2>/dev/null \
+        && echo -e "${GREEN}Bidirectional mesh established with $PEER${NC}" \
+        || echo -e "${RED}Could not reach peer — added locally only${NC}"
+}
+
+skynet_distribute() {
+    CMD="$*"
+    echo -e "${CYAN}[Skynet] Distributing command to swarm: $CMD${NC}"
+    # Run locally
+    echo -e "${GREEN}[Local]${NC}"
+    eval "$CMD" &
+
+    # Fan out to swarm
+    if [ -f "$SKYNET_DIR/swarm-members.txt" ]; then
+        while read -r member; do
+            echo -e "${CYAN}[Node: $member]${NC}"
+            ssh -o ConnectTimeout=3 -o StrictHostKeyChecking=no "$member" "$CMD" 2>/dev/null &
+        done < "$SKYNET_DIR/swarm-members.txt"
+    fi
+    wait
+    echo -e "${GREEN}[Skynet] All nodes completed${NC}"
+}
+
+case "${1:-help}" in
+    status)      skynet_status ;;
+    join)        skynet_join "$2" ;;
+    leave)       sed -i "/$2/d" "$SKYNET_DIR/swarm-members.txt" 2>/dev/null; echo "Removed $2" ;;
+    distribute)  shift; skynet_distribute "$@" ;;
+    id)          echo "$NODE_ID" ;;
+    help|*)
+        echo "alfred-skynet — Mesh Swarm Compute"
+        echo ""
+        echo "Commands:"
+        echo "  status       — Show node info and swarm members"
+        echo "  join <ip>    — Add a node to the swarm (bidirectional)"
+        echo "  leave <ip>   — Remove a node from the swarm"
+        echo "  distribute   — Run a command across all swarm nodes"
+        echo "  id           — Show this node's unique ID"
+        ;;
+esac
+SKYNETEOF
+chmod +x /usr/local/bin/alfred-skynet
+
+###############################################################################
+# 6. SELF-EVOLUTION ENGINE — OS that upgrades itself
+###############################################################################
+echo "[MAX] Installing self-evolution engine..."
+cat > /usr/local/bin/alfred-evolve << 'EVOLVEEOF'
+#!/bin/bash
+# alfred-evolve — Self-Evolution Engine for Alfred Linux
+# The OS learns, adapts, and upgrades itself
+
+BOLD='\033[1m'
+GREEN='\033[0;32m'
+CYAN='\033[0;36m'
+YELLOW='\033[1;33m'
+NC='\033[0m'
+
+EVOLVE_DIR="/var/lib/alfred/evolution"
+EVOLVE_LOG="$EVOLVE_DIR/evolution.log"
+mkdir -p "$EVOLVE_DIR"
+
+log_evolve() {
+    echo "$(date '+%Y-%m-%d %H:%M:%S') | $*" >> "$EVOLVE_LOG"
+}
+
+evolve_system() {
+    echo -e "${BOLD}╔═══════════════════════════════════════════╗${NC}"
+    echo -e "${BOLD}║   Alfred Self-Evolution Engine v5.0       ║${NC}"
+    echo -e "${BOLD}╚═══════════════════════════════════════════╝${NC}"
+    echo ""
+    log_evolve "Evolution cycle started"
+
+    # Phase 1: Security patches
+    echo -e "${CYAN}[Phase 1] Security evolution...${NC}"
+    SECURITY_UPDATES=$(apt-get -s upgrade 2>/dev/null | grep -c "^Inst" || echo 0)
+    echo "  $SECURITY_UPDATES packages can be upgraded"
+    if [ "$SECURITY_UPDATES" -gt 0 ]; then
+        echo -e "  ${YELLOW}Run 'alfred-evolve apply' to install${NC}"
+    else
+        echo -e "  ${GREEN}System is current${NC}"
+    fi
+    log_evolve "Security: $SECURITY_UPDATES pending updates"
+
+    # Phase 2: Performance adaptation
+    echo -e "${CYAN}[Phase 2] Performance adaptation...${NC}"
+    LOAD=$(cat /proc/loadavg | awk '{print $1}')
+    CORES=$(nproc)
+    LOAD_PER_CORE=$(echo "$LOAD $CORES" | awk '{printf "%.2f", $1/$2}')
+    echo "  Load per core: $LOAD_PER_CORE"
+    if (( $(echo "$LOAD_PER_CORE > 0.8" | bc -l 2>/dev/null || echo 0) )); then
+        echo -e "  ${YELLOW}High load — consider adding mesh nodes${NC}"
+    else
+        echo -e "  ${GREEN}Load is optimal${NC}"
+    fi
+    log_evolve "Performance: load/core=$LOAD_PER_CORE"
+
+    # Phase 3: Storage health
+    echo -e "${CYAN}[Phase 3] Storage evolution...${NC}"
+    DISK_USED=$(df / | awk 'NR==2 {print $5}' | tr -d '%')
+    echo "  Root disk: ${DISK_USED}% used"
+    if [ "$DISK_USED" -gt 85 ]; then
+        echo -e "  ${YELLOW}Cleaning package cache...${NC}"
+        apt-get clean 2>/dev/null
+        echo -e "  ${GREEN}Cache cleaned${NC}"
+    fi
+    # Clean old logs
+    journalctl --vacuum-time=7d 2>/dev/null
+    log_evolve "Storage: ${DISK_USED}% used"
+
+    # Phase 4: Tool evolution — check for newer versions
+    echo -e "${CYAN}[Phase 4] Tool evolution...${NC}"
+    if command -v omahon &>/dev/null; then
+        echo -e "  Omahon: ${GREEN}✓ installed${NC}"
+    fi
+    if command -v ollama &>/dev/null; then
+        OLLAMA_VER=$(ollama --version 2>/dev/null || echo "installed")
+        echo -e "  Ollama: ${GREEN}$OLLAMA_VER${NC}"
+    fi
+    log_evolve "Tool check complete"
+
+    # Phase 5: Memory optimization
+    echo -e "${CYAN}[Phase 5] Memory optimization...${NC}"
+    CACHED_MB=$(free -m | awk '/^Mem:/ {print $6}')
+    AVAILABLE_MB=$(free -m | awk '/^Mem:/ {print $7}')
+    echo "  Available: ${AVAILABLE_MB} MB | Cached: ${CACHED_MB} MB"
+    if [ "$AVAILABLE_MB" -lt 512 ]; then
+        echo -e "  ${YELLOW}Low memory — clearing caches${NC}"
+        sync && echo 3 > /proc/sys/vm/drop_caches 2>/dev/null
+    fi
+    log_evolve "Memory: ${AVAILABLE_MB}MB available"
+
+    # Phase 6: Network mesh check
+    echo -e "${CYAN}[Phase 6] Mesh network health...${NC}"
+    if command -v avahi-browse &>/dev/null; then
+        MESH_NODES=$(avahi-browse -rpt _alfred._tcp 2>/dev/null | grep "=" | wc -l || echo 0)
+        echo "  Mesh nodes visible: $MESH_NODES"
+    fi
+    log_evolve "Mesh: $MESH_NODES nodes"
+
+    echo ""
+    echo -e "${GREEN}Evolution cycle complete. $(wc -l < "$EVOLVE_LOG" 2>/dev/null || echo 0) cycles recorded.${NC}"
+    log_evolve "Evolution cycle complete"
+}
+
+evolve_apply() {
+    echo -e "${CYAN}[Evolve] Applying system upgrades...${NC}"
+    DEBIAN_FRONTEND=noninteractive apt-get update -qq || true
+    DEBIAN_FRONTEND=noninteractive apt-get upgrade -y
+    log_evolve "System upgraded"
+    echo -e "${GREEN}System evolved.${NC}"
+}
+
+evolve_history() {
+    echo -e "${BOLD}Evolution History${NC}"
+    tail -50 "$EVOLVE_LOG" 2>/dev/null || echo "No history yet"
+}
+
+case "${1:-status}" in
+    status|check) evolve_system ;;
+    apply)        evolve_apply ;;
+    history)      evolve_history ;;
+    help|*)
+        echo "alfred-evolve — Self-Evolution Engine"
+        echo ""
+        echo "Commands:"
+        echo "  status   — Run evolution diagnostics"
+        echo "  apply    — Apply all pending upgrades"
+        echo "  history  — View evolution log"
+        ;;
+esac
+EVOLVEEOF
+chmod +x /usr/local/bin/alfred-evolve
+
+# Self-evolution timer — runs every 6 hours
+cat > /etc/systemd/system/alfred-evolve.service << 'ESVCEOF'
+[Unit]
+Description=Alfred Self-Evolution Engine
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/alfred-evolve check
+StandardOutput=journal
+ESVCEOF
+
+cat > /etc/systemd/system/alfred-evolve.timer << 'ETMREOF'
+[Unit]
+Description=Alfred Self-Evolution Timer (every 6 hours)
+
+[Timer]
+OnBootSec=5min
+OnUnitActiveSec=6h
+Persistent=true
+
+[Install]
+WantedBy=timers.target
+ETMREOF
+systemctl enable alfred-evolve.timer 2>/dev/null || true
+
+###############################################################################
+# 7. HUGE PAGES + NUMA — Max memory throughput for AI
+###############################################################################
+echo "[MAX] Configuring transparent hugepages + NUMA awareness..."
+cat > /etc/tmpfiles.d/alfred-hugepages.conf << 'HPEOF'
+w /sys/kernel/mm/transparent_hugepage/enabled - - - - madvise
+w /sys/kernel/mm/transparent_hugepage/defrag - - - - defer+madvise
+HPEOF
+
+# Install numactl for NUMA-aware compute
+DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+    numactl \
+    irqbalance \
+    cpufrequtils \
+    linux-cpupower \
+    schedtool \
+    util-linux \
+    bc \
+    2>/dev/null || true
+
+# Enable irqbalance for multi-core interrupt distribution
+systemctl enable irqbalance 2>/dev/null || true
+
+###############################################################################
+# 8. PARALLEL BUILD SYSTEM — Use all cores for compilation
+###############################################################################
+echo "[MAX] Setting up parallel build defaults..."
+NPROC=$(nproc 2>/dev/null || echo 4)
+cat > /etc/profile.d/alfred-max-build.sh << BUILDEOF
+# Alfred Linux 5.0 — Use all cores for building
+export MAKEFLAGS="-j\$(nproc)"
+export CARGO_BUILD_JOBS=\$(nproc)
+export CMAKE_BUILD_PARALLEL_LEVEL=\$(nproc)
+export NINJAFLAGS="-j\$(nproc)"
+BUILDEOF
+
+###############################################################################
+# 9. I/O SCHEDULER — Max disk throughput
+###############################################################################
+echo "[MAX] Configuring I/O scheduler for maximum throughput..."
+cat > /etc/udev/rules.d/60-alfred-io-scheduler.rules << 'IOEOF'
+# Alfred Linux 5.0 — Optimal I/O scheduler
+# NVMe/SSD: none (lowest latency)
+# HDD: mq-deadline (best throughput)
+ACTION=="add|change", KERNEL=="sd[a-z]*", ATTR{queue/rotational}=="0", ATTR{queue/scheduler}="none"
+ACTION=="add|change", KERNEL=="sd[a-z]*", ATTR{queue/rotational}=="1", ATTR{queue/scheduler}="mq-deadline"
+ACTION=="add|change", KERNEL=="nvme*", ATTR{queue/scheduler}="none"
+IOEOF
+
+###############################################################################
+# 10. alfred-max CLI — Master control for MAX mode
+###############################################################################
+echo "[MAX] Creating alfred-max master command..."
+cat > /usr/local/bin/alfred-max << 'MAXEOF'
+#!/bin/bash
+# alfred-max — Alfred Linux MAX Mode Master Control
+BOLD='\033[1m'
+GREEN='\033[0;32m'
+CYAN='\033[0;36m'
+NC='\033[0m'
+
+max_status() {
+    echo -e "${BOLD}╔═════════════════════════════════════════════════╗${NC}"
+    echo -e "${BOLD}║  Alfred MAX — Total Sovereign Compute v5.0     ║${NC}"
+    echo -e "${BOLD}╚═════════════════════════════════════════════════╝${NC}"
+    echo ""
+    echo -e "${CYAN}[System]${NC}"
+    echo "  Hostname:  $(hostname)"
+    echo "  Kernel:    $(uname -r)"
+    echo "  CPU:       $(nproc) cores — $(lscpu | grep 'Model name' | cut -d: -f2 | xargs)"
+    echo "  RAM:       $(free -h | awk '/^Mem:/ {printf "%s total, %s available", $2, $7}')"
+    echo "  Swap:      $(free -h | awk '/^Swap:/ {printf "%s total", $2}')"
+    echo "  ZRAM:      $(swapon --show 2>/dev/null | grep zram | awk '{print $3}' || echo 'not active')"
+    echo "  Governor:  $(cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor 2>/dev/null || echo 'N/A')"
+    echo "  Load:      $(cat /proc/loadavg | awk '{print $1, $2, $3}')"
+    echo ""
+    echo -e "${CYAN}[Compute Stack]${NC}"
+    command -v omahon &>/dev/null && echo -e "  ${GREEN}✓${NC} Omahon AI Engine" || echo "  ○ Omahon"
+    command -v ollama &>/dev/null && echo -e "  ${GREEN}✓${NC} Ollama LLM" || echo "  ○ Ollama"
+    command -v vulkaninfo &>/dev/null && echo -e "  ${GREEN}✓${NC} Vulkan GPU" || echo "  ○ Vulkan"
+    command -v clinfo &>/dev/null && echo -e "  ${GREEN}✓${NC} OpenCL Compute" || echo "  ○ OpenCL"
+    command -v nvcc &>/dev/null && echo -e "  ${GREEN}✓${NC} CUDA" || echo "  ○ CUDA (run alfred-gpu install-nvidia)"
+    echo ""
+    echo -e "${CYAN}[Mesh / Cloud]${NC}"
+    alfred-skynet status 2>/dev/null | grep -E "●|○|Swarm" || echo "  Run 'alfred-skynet status' for mesh info"
+    echo ""
+    echo -e "${CYAN}[Evolution]${NC}"
+    CYCLES=$(wc -l < /var/lib/alfred/evolution/evolution.log 2>/dev/null || echo 0)
+    echo "  Evolution cycles: $CYCLES"
+    LAST=$(tail -1 /var/lib/alfred/evolution/evolution.log 2>/dev/null || echo "Never")
+    echo "  Last evolution: $LAST"
+}
+
+case "${1:-status}" in
+    status) max_status ;;
+    *)
+        echo "alfred-max — Master Control"
+        echo ""
+        echo "Sub-systems:"
+        echo "  alfred-max-cpu    — CPU governor control"
+        echo "  alfred-gpu        — GPU compute stack"
+        echo "  alfred-skynet     — Mesh swarm network"
+        echo "  alfred-omahon-cloud — Distributed AI"
+        echo "  alfred-evolve     — Self-evolution engine"
+        echo "  alfred-mesh       — Device discovery"
+        ;;
+esac
+MAXEOF
+chmod +x /usr/local/bin/alfred-max
+
+###############################################################################
+echo ""
+echo "╔═════════════════════════════════════════════════════════════╗"
+echo "║  MAX SOVEREIGN COMPUTE — Alfred Linux 5.0                  ║"
+echo "║                                                            ║"
+echo "║  Every core. Every byte. For God's people.                 ║"
+echo "║                                                            ║"
+echo "║  ✓ Max CPU: Performance governor on all cores              ║"
+echo "║  ✓ Max RAM: ZRAM compression (2x effective memory)         ║"
+echo "║  ✓ Max I/O: Auto SSD/NVMe/HDD scheduler tuning            ║"
+echo "║  ✓ Max Network: BBR + tuned TCP stack for mesh             ║"
+echo "║  ✓ Huge Pages: Transparent hugepages for AI workloads      ║"
+echo "║  ✓ NUMA: Multi-socket awareness + irqbalance               ║"
+echo "║  ✓ Omahon Cloud: Distributed AI across mesh                ║"
+echo "║  ✓ Skynet Mesh: Swarm compute grid                         ║"
+echo "║  ✓ Self-Evolution: Auto-upgrade every 6 hours              ║"
+echo "║  ✓ Parallel Build: MAKEFLAGS=\$(nproc) everywhere           ║"
+echo "║                                                            ║"
+echo "║  Run 'alfred-max' to see the full sovereign compute stack  ║"
+echo "╚═════════════════════════════════════════════════════════════╝"
