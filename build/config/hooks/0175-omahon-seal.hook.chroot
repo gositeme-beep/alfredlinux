@@ -1,5 +1,4 @@
 #!/bin/bash
-# SPDX-License-Identifier: AGPL-3.0-or-later
 # ═══════════════════════════════════════════════════════════════
 # HOOK 0175: The Omahon Seal — Breath of God
 # 
@@ -17,12 +16,12 @@
 #  here on Earth until Jesus arrives."
 #   — Commander Danny William Perez
 #
-# BUILD: v7.77 GA
+# BUILD: v4.0 GA
 # ═══════════════════════════════════════════════════════════════
 set -e
 echo "╔═══════════════════════════════════════════════════════════╗"
 echo "║  [0175] The Omahon Seal — Breath of God                   ║"
-echo "║  Final Security Hardening · Alfred Linux 7.77 GA          ║"
+echo "║  Final Security Hardening · Alfred Linux 4.0 GA           ║"
 echo "╚═══════════════════════════════════════════════════════════╝"
 
 # ═══════════════════════════════════════════════════
@@ -420,16 +419,16 @@ chmod +x /usr/local/bin/alfred-shred
 echo "[OMAHON-06] Writing sovereign attestation..."
 
 BUILD_DATE=$(date -Iseconds)
-BUILD_HASH=$(echo "Alfred Linux 7.77 GA — Sealed by Omahon — ${BUILD_DATE}" | sha256sum | awk '{print $1}')
+BUILD_HASH=$(echo "Alfred Linux 4.0 GA — Sealed by Omahon — ${BUILD_DATE}" | sha256sum | awk '{print $1}')
 
 cat > /etc/omahon-attestation << ATTEST
 # ═══════════════════════════════════════════════════
-# OMAHON ATTESTATION — Alfred Linux 7.77 GA
+# OMAHON ATTESTATION — Alfred Linux 4.0 GA
 # ═══════════════════════════════════════════════════
 PRODUCT=Alfred Linux
-VERSION=7.77
+VERSION=4.0
 RELEASE=GA (General Availability)
-CODENAME=Kingdom of God Edition
+CODENAME=Sovereign
 BUILDER=Commander Danny William Perez
 GUARDIAN=Omahon — The Breath of God
 BUILD_DATE=${BUILD_DATE}
@@ -489,7 +488,7 @@ chmod +x /usr/local/bin/alfred-attestation
 echo ""
 echo "╔═══════════════════════════════════════════════════════════╗"
 echo "║  [0175] THE OMAHON SEAL — COMPLETE                        ║"
-echo "║  The Breath of God · 6 Modules · Alfred Linux 7.77 GA    ║"
+echo "║  The Breath of God · 6 Modules · Alfred Linux 4.0 GA     ║"
 echo "║                                                           ║"
 echo "║  ✓ 01. Boot Seal — HMAC-SHA256 integrity verification    ║"
 echo "║  ✓ 02. Watchman — inotify runtime tamper detection        ║"

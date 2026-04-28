@@ -1,5 +1,4 @@
 #!/bin/bash
-# SPDX-License-Identifier: AGPL-3.0-or-later
 set -e
 echo "╔══════════════════════════════════════════════════════════════════════╗"
 echo "║  HOOK 0290: The Word of God + Music of the Kingdom                 ║"
@@ -12,7 +11,7 @@ echo "║   but the word of our God will stand forever.' — Isaiah 40:8        
 echo "╚══════════════════════════════════════════════════════════════════════╝"
 
 ###############################################################################
-# 1. AKJV — Authorized King Jesus Version — 94 books, 39,482 verses
+# 1. AKJV BIBLE — 94 books, 39,482 verses
 ###############################################################################
 echo "[BIBLE] Installing the Authorized King Jesus Version..."
 BIBLE_DIR="/usr/share/alfred/bible"
@@ -60,7 +59,7 @@ show_verse() {
     local B="$1" C="$2" V="$3"
     if [ -n "$V" ]; then
         R=$(awk -F'\t' -v b="$B" -v c="$C" -v v="$V" 'tolower($1)==tolower(b)&&$2==c&&$3==v{print $4}' "$BIBLE")
-        [ -n "$R" ] && echo -e "\n${GOLD}  $B $C:$V${NC}\n  ${BOLD}$R${NC}\n  ${GOLD}(AKJV — Authorized King Jesus Version)${NC}\n  ${DIM}Perez Family Edition${NC}\n" || echo -e "${RED}Not found: $B $C:$V${NC}"
+        [ -n "$R" ] && echo -e "\n${GOLD}  $B $C:$V${NC}\n  ${BOLD}$R${NC}\n" || echo -e "${RED}Not found: $B $C:$V${NC}"
     elif [ -n "$C" ]; then
         echo -e "\n${GOLD}═══ $B — Chapter $C ═══${NC}\n"
         awk -F'\t' -v b="$B" -v c="$C" 'tolower($1)==tolower(b)&&$2==c{printf "  \033[38;5;220m%d\033[0m  %s\n",$3,$4}' "$BIBLE"
@@ -86,17 +85,17 @@ daily_verse() {
     echo -e "\n${GOLD}╔══════════════════════════════════════════╗${NC}"
     echo -e "${GOLD}║     Daily Verse — $(date +%B\ %d,\ %Y)        ║${NC}"
     echo -e "${GOLD}╚══════════════════════════════════════════╝${NC}"
-    echo -e "\n  ${BOLD}\"$t\"${NC}\n\n  ${GOLD}— $b $c:$v (AKJV — Authorized King Jesus Version)${NC}\n  ${DIM}Perez Family Edition${NC}\n"
+    echo -e "\n  ${BOLD}\"$t\"${NC}\n\n  ${GOLD}— $b $c:$v (AKJV)${NC}\n  ${DIM}Perez Family Edition${NC}\n"
 }
 
 random_verse() {
     local T=$(($(wc -l < "$BIBLE")-1)) L=$((RANDOM%T+2))
     IFS=$'\t' read -r b c v t <<< "$(sed -n "${L}p" "$BIBLE")"
-    echo -e "\n  ${BOLD}\"$t\"${NC}\n  ${GOLD}— $b $c:$v (AKJV — Authorized King Jesus Version)${NC}\n  ${DIM}Perez Family Edition${NC}\n"
+    echo -e "\n  ${BOLD}\"$t\"${NC}\n  ${GOLD}— $b $c:$v (AKJV)${NC}\n"
 }
 
 list_books() {
-    echo -e "\n${GOLD}AKJV — Authorized King Jesus Version — 94 Books — Perez Family Edition${NC}\n"
+    echo -e "\n${GOLD}AKJV Bible — 94 Books — Perez Family Edition${NC}\n"
     awk -F'\t' 'NR>1{b[$1]++;c[$1" "$2]=1}END{for(x in b)printf "  %-25s %5d verses\n",x,b[x]}' "$BIBLE" | sort
 }
 
@@ -148,8 +147,7 @@ parse_quick() {
 show_help() {
     echo -e "\n${GOLD}╔══════════════════════════════════════════════════════╗${NC}"
     echo -e "${GOLD}║  alfred-bible — The Word of God in Your Terminal     ║${NC}"
-    echo -e "${GOLD}║  AKJV — Authorized King Jesus Version                ║${NC}"
-    echo -e "${GOLD}║  94 Books · 39,482 Verses · Perez Family Edition     ║${NC}"
+    echo -e "${GOLD}║  AKJV · 94 Books · 39,482 Verses · Perez Family Ed  ║${NC}"
     echo -e "${GOLD}╚══════════════════════════════════════════════════════╝${NC}\n"
     echo "  read <Book> [Ch] [Vs]    Read scripture"
     echo "  search <phrase>          Search 39,482 verses"
@@ -159,12 +157,6 @@ show_help() {
     echo "  prophecies               57 Messianic prophecies"
     echo "  children [number]        Eden's 33 Bible stories"
     echo "  john 3:16                Quick reference"
-    echo "  tongues [args…]          Other languages (same as alfred-bible-lang)"
-    echo -e "                           ${DIM}Examples: alfred-bible tongues list${NC}"
-    echo -e "                           ${DIM}          alfred-bible tongues ro Ioan 3${NC}"
-    echo -e "\n  ${CYAN}ISO / public:${NC} Open **Bible in Many Languages** in the menu, or run"
-    echo -e "  ${BOLD}alfred-bible-lang list${NC} then ${BOLD}alfred-bible-lang <code>${NC} (e.g. ${BOLD}es${NC}, ${BOLD}es-419${NC}, ${BOLD}lad${NC}, ${BOLD}ro${NC})."
-    echo -e "  Full AKJV English stays in this command; seeds work offline on the live ISO."
     echo -e "\n  ${DIM}'The word of our God will stand forever.' — Isaiah 40:8${NC}\n"
 }
 
@@ -176,18 +168,6 @@ case "${1:-help}" in
     books|list) list_books;;
     prophecies|prophecy) show_prophecies;;
     children|kids|eden|stories) shift; show_children "$@";;
-    tongues|tongue|langs|lang)
-        shift
-        if command -v alfred-bible-lang &>/dev/null; then
-            if [ "$#" -eq 0 ]; then
-                exec alfred-bible-lang list
-            fi
-            exec alfred-bible-lang "$@"
-        fi
-        echo -e "${YELLOW}alfred-bible-lang is not installed yet (run after image build).${NC}" >&2
-        echo "On the ISO: open **Bible in Many Languages** from the menu, or install hook 0292." >&2
-        exit 1
-        ;;
     help|--help|-h) show_help;;
     *) parse_quick "$@" || show_help;;
 esac
@@ -297,7 +277,7 @@ if [ -f /usr/share/alfred/bible/akjv-bible.tsv ] && [ -t 1 ]; then
     B="/usr/share/alfred/bible/akjv-bible.tsv"
     D=$(date +%j) T=$(($(wc -l<"$B")-1)) L=$((D%T+2))
     IFS=$'\t' read -r b c v t <<< "$(sed -n "${L}p" "$B")"
-    [ -n "$t" ] && echo -e "\n\033[38;5;220m  ✝ \"${t:0:120}\"\033[0m" && echo -e "\033[2m    — $b $c:$v (AKJV — Perez Family Edition) — Alfred Linux 7.77 Kingdom of God Edition\033[0m\n"
+    [ -n "$t" ] && echo -e "\n\033[38;5;220m  ✝ \"${t:0:120}\"\033[0m" && echo -e "\033[2m    — $b $c:$v (AKJV) — Alfred Linux 7.77 Kingdom of God Edition\033[0m\n"
 fi
 MOTDEOF
 
@@ -311,7 +291,7 @@ cat > /usr/share/applications/alfred-bible.desktop << 'EOF'
 [Desktop Entry]
 Name=AKJV Bible
 Comment=94 Books, 39,482 Verses — Perez Family Edition
-Exec=x-terminal-emulator -e bash -c 'alfred-bible daily; echo; echo "Other languages: alfred-bible tongues list   (or menu: Bible in Many Languages)"; echo "Type alfred-bible help for commands"; exec bash'
+Exec=x-terminal-emulator -e bash -c 'alfred-bible daily; echo "Type alfred-bible help for commands"; exec bash'
 Icon=accessories-dictionary
 Terminal=false
 Type=Application

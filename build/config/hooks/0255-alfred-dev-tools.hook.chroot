@@ -1,5 +1,4 @@
 #!/bin/bash
-# SPDX-License-Identifier: AGPL-3.0-or-later
 # ═══════════════════════════════════════════════════════════════
 # 0255-alfred-dev-tools.hook.chroot — "The Arsenal"
 # ═══════════════════════════════════════════════════════════════
@@ -63,15 +62,7 @@ if [ -f /opt/alfred/build-assets/rustup-init ]; then
 elif [ -f /build-assets/rustup-init ]; then
     /build-assets/rustup-init -y
 else
-    # Two-step rustup (no curl|sh pipe): download, sanity-check header, then execute file.
-    _rustup_tmp=$(mktemp) || exit 1
-    trap 'rm -f "$_rustup_tmp"' EXIT
-    curl --proto '=https' --tlsv1.2 -fsSLo "$_rustup_tmp" https://sh.rustup.rs
-    [ -s "$_rustup_tmp" ] || { echo "rustup-init download empty"; exit 1; }
-    head -n 3 "$_rustup_tmp" | grep -qE '^#!/' || { echo "rustup-init script header missing"; exit 1; }
-    sh "$_rustup_tmp" -s -- -y
-    rm -f "$_rustup_tmp"
-    trap - EXIT
+    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
 fi
 source "$HOME/.cargo/env"
 echo "Rust $(rustc --version) installed!"

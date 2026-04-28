@@ -1,10 +1,9 @@
 #!/bin/bash
-# SPDX-License-Identifier: AGPL-3.0-or-later
 # 0297 — Supporting squashfs payload toward ~7.77 GiB (binary), Omahon / real install only.
 # PRIMARY gap-close is Kingdom video + 4K/8K via build-assets + 0285 §7 — this hook adds
-# Noto typography + LibreOffice help/l10n + ffmpeg (tongues on screen + docs).
-# linux-headers-amd64 omitted: use linux-headers-* debs from Alfred linux-7.0.1 set in packages.chroot/.
-# See docs/ISO-777-GiB-PLAN.txt — after GA rebuild, run scripts/check-iso-777gib.sh on the ISO.
+# Noto typography + LibreOffice help/l10n + ffmpeg + headers (tongues on screen + docs).
+# See docs/ISO-777-GiB-PLAN.txt — after GA rebuild, run check-iso-777gib.sh (alfred-linux-v2: scripts/;
+#   alfredlinux.com law/site mirror: build/scripts/).
 set -euo pipefail
 
 export DEBIAN_FRONTEND=noninteractive
@@ -32,6 +31,7 @@ mapfile -t PKGS < <(filter_pkgs \
     fonts-noto-extra \
     poppler-data \
     ffmpeg \
+    linux-headers-amd64 \
     libreoffice-help-en-us \
     libreoffice-help-en-gb \
     libreoffice-help-fr \
@@ -130,8 +130,8 @@ This install adds:
   • ffmpeg (CLI + libs for Kingdom media / offline transcoding)
   • LibreOffice extended help + l10n for many languages
 
-Rebuild GA, then verify size band:
-  bash scripts/check-iso-777gib.sh iso-output/alfred-linux-7.77-ga-amd64-YYYYMMDD.iso
+Rebuild GA, then verify size band (same script as site build/scripts/):
+  bash scripts/check-iso-777gib.sh iso-output/alfred-linux-7.77-ga-intel-amd64-YYYYMMDD.iso
 
 Only when that exits 0 should /download claim ~7.77 GiB binary as shipped truth.
 DOC

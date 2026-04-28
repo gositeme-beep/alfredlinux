@@ -1,5 +1,4 @@
 #!/bin/bash
-# SPDX-License-Identifier: AGPL-3.0-or-later
 # ═══════════════════════════════════════════════════════════════
 # 0250-alfred-ai.hook.chroot — "Omahon: The Breath of God"
 # ═══════════════════════════════════════════════════════════════
@@ -12,13 +11,6 @@
 #  and man became a living soul." — Genesis 2:7
 #
 # Omahon = the breath. Alfred Linux = the living soul.
-#
-# Primary path: latest Omahon + Ollama on 127.0.0.1 (GPU when present — hook 0275).
-# Default runtime needs no API keys. We still ship optional Python SDKs
-# (anthropic, openai, groq, together) as BACKUP for operators who wire Omahon or
-# scripts to cloud only when local inference is unavailable — never required.
-# Offline-capable when weights/binaries are pre-staged in build-assets.
-# One with the Lord — His breath first; silicon serves the household.
 # ═══════════════════════════════════════════════════════════════
 set -e
 
@@ -30,7 +22,7 @@ echo "════════════════════════�
 # Every other OS requires cloud AI. Alfred thinks locally.
 echo "[AI] Installing Ollama (local LLM inference)..."
 # MILITARY: Pre-staged binary preferred (air-gap safe), network fallback for dev builds
-OLLAMA_VERSION="0.21.2"
+OLLAMA_VERSION="0.6.2"
 if [ -f /build-assets/ollama ]; then
     echo "[AI] Using pre-staged Ollama binary (air-gap safe)"
     install -m 755 /build-assets/ollama /usr/local/bin/ollama
@@ -91,18 +83,9 @@ default = "ollama"
 base_url = "http://localhost:11434"
 model = "phi3:mini"
 
-# Optional cloud BACKUP — keys live in ~/.config/alfred/ai-providers.env (see
-# /usr/share/alfred/ai-providers.env.example). Uncomment when your Omahon build
-# exposes matching provider blocks. Verify current IDs at:
-#   https://docs.anthropic.com/en/docs/about-claude/models
-# Anthropic (Messages API — not OpenAI-compatible): ANTHROPIC_API_KEY
-# [providers.anthropic]
-# model = "claude-sonnet-4-6"   # balanced; or claude-opus-4-7 (strongest), claude-haiku-4-5-20251001 (fast)
-# Deprecated mid-2026: claude-sonnet-4-20250514, claude-opus-4-20250514 — migrate to Sonnet 4.6 / Opus 4.7
-# [providers.openai]          # base_url = "https://api.openai.com/v1"     OPENAI_API_KEY
-# [providers.together]      # base_url = "https://api.together.xyz/v1"   TOGETHER_API_KEY
-# [providers.groq]          # base_url = "https://api.groq.com/openai/v1" GROQ_API_KEY
-# [providers.xai_grok]      # base_url = "https://api.x.ai/v1"           XAI_API_KEY
+[providers.anthropic]
+# Set your API key: export ANTHROPIC_API_KEY=sk-ant-...
+# model = "claude-sonnet-4-20250514"
 
 [memory]
 enabled = true
@@ -125,42 +108,17 @@ cat > /usr/local/bin/alfred-ai << 'ALFRED_AI'
 # ═══════════════════════════════════════════════
 # alfred-ai — The sovereign intelligence gateway
 # ═══════════════════════════════════════════════
-# Routes: 1) Omahon  2) Ollama  3) optional Claude CLI if ANTHROPIC_API_KEY
-# Optional keys (OpenAI, Together, Groq, xAI, Anthropic): ~/.config/alfred/ai-providers.env
-# Claude API model examples: claude-opus-4-7, claude-sonnet-4-6, claude-haiku-4-5-20251001
-# Run: alfred-ai keys   (shows template; copy, chmod 600, uncomment exports you need)
+# Routes to the best available AI:
+#   1. Omahon (local agent harness — always preferred)
+#   2. Claude Code (if API key set)
+#   3. Ollama direct (if running)
+#   4. Helpful error with setup instructions
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 CYAN='\033[0;36m'
 GOLD='\033[0;33m'
 NC='\033[0m'
-
-SECRETS="${HOME}/.config/alfred/ai-providers.env"
-if [[ -f "$SECRETS" ]]; then
-    set -a
-    # shellcheck disable=SC1090
-    source "$SECRETS"
-    set +a
-fi
-
-if [[ "${1:-}" == "keys" || "${1:-}" == "--keys" ]]; then
-    echo -e "${GOLD}═══ Optional cloud API keys (backup / enrichment) ═══${NC}"
-    echo ""
-    echo "  Primary path stays Omahon + Ollama on this machine."
-    echo "  Copy the template, restrict permissions, then uncomment only the providers you trust."
-    echo "  Anthropic: set ANTHROPIC_API_KEY — use model IDs in ~/.config/omahon/config.toml (see comments: Opus 4.7, Sonnet 4.6, Haiku 4.5)."
-    echo ""
-    echo "    mkdir -p ~/.config/alfred"
-    echo "    cp /usr/share/alfred/ai-providers.env.example ~/.config/alfred/ai-providers.env"
-    echo "    chmod 600 ~/.config/alfred/ai-providers.env"
-    echo "    \$EDITOR ~/.config/alfred/ai-providers.env"
-    echo ""
-    echo -e "${CYAN}── Template (${GOLD}/usr/share/alfred/ai-providers.env.example${CYAN}) ──${NC}"
-    cat /usr/share/alfred/ai-providers.env.example 2>/dev/null || echo "(template missing)"
-    echo ""
-    exit 0
-fi
 
 # Start ollama if not running
 if command -v ollama &>/dev/null && ! pgrep -x ollama &>/dev/null; then
@@ -173,15 +131,7 @@ if [ "$1" = "--status" ] || [ "$1" = "status" ]; then
     echo -e "${GOLD}═══ Alfred AI Status ═══${NC}"
     echo -n "Omahon:     " && (command -v omahon &>/dev/null && echo -e "${GREEN}INSTALLED${NC}" || echo -e "${RED}NOT FOUND${NC}")
     echo -n "Ollama:     " && (pgrep -x ollama &>/dev/null && echo -e "${GREEN}RUNNING${NC}" || echo -e "${RED}STOPPED${NC}")
-    echo -e "${CYAN}Primary:${NC}   Omahon + Ollama (local, no keys required)"
-    echo -e "${CYAN}Backup:${NC}    Claude CLI + ANTHROPIC_API_KEY (Claude model IDs in Omahon config.toml comments)"
-    echo -n "Secrets file: " && { [[ -f "${HOME}/.config/alfred/ai-providers.env" ]] && echo -e "${GREEN}~/.config/alfred/ai-providers.env${NC}" || echo -e "${CYAN}none — run: alfred-ai keys${NC}"; }
-    echo -n "ANTHROPIC:  " && ([ -n "${ANTHROPIC_API_KEY:-}" ] && echo -e "${GREEN}set${NC}" || echo -e "${CYAN}unset${NC}")
-    echo -n "OPENAI:     " && ([ -n "${OPENAI_API_KEY:-}" ] && echo -e "${GREEN}set${NC}" || echo -e "${CYAN}unset${NC}")
-    echo -n "TOGETHER:   " && ([ -n "${TOGETHER_API_KEY:-}" ] && echo -e "${GREEN}set${NC}" || echo -e "${CYAN}unset${NC}")
-    echo -n "GROQ:       " && ([ -n "${GROQ_API_KEY:-}" ] && echo -e "${GREEN}set${NC}" || echo -e "${CYAN}unset${NC}")
-    echo -n "XAI (Grok): " && ([ -n "${XAI_API_KEY:-}" ] && echo -e "${GREEN}set${NC}" || echo -e "${CYAN}unset${NC}")
-    echo -n "pip SDKs:   " && (python3 -c "import anthropic, openai, groq, together" 2>/dev/null && echo -e "${GREEN}anthropic+openai+groq+together${NC}" || echo -e "${CYAN}partial/missing${NC}")
+    echo -n "Claude:     " && ([ -n "$ANTHROPIC_API_KEY" ] && echo -e "${GREEN}API KEY SET${NC}" || echo -e "${RED}NO API KEY${NC}")
     echo ""
     echo -n "Models:     " && (ollama list 2>/dev/null | tail -n +2 | wc -l || echo "0") && echo " installed"
     echo -e "${GOLD}════════════════════════${NC}"
@@ -196,6 +146,8 @@ fi
 
 if command -v omahon &>/dev/null; then
     exec omahon "$@"
+elif command -v claude &>/dev/null && [ -n "$ANTHROPIC_API_KEY" ]; then
+    exec claude "$@"
 elif command -v ollama &>/dev/null; then
     echo -e "${CYAN}Omahon not installed. Using Ollama directly.${NC}"
     echo -e "${CYAN}For the full agent experience: sudo apt install omahon${NC}"
@@ -204,85 +156,37 @@ elif command -v ollama &>/dev/null; then
     else
         exec ollama run phi3:mini
     fi
-elif command -v claude &>/dev/null && [ -n "${ANTHROPIC_API_KEY:-}" ]; then
-    echo -e "${CYAN}Using optional Claude backup (cloud).${NC}"
-    exec claude "$@"
 else
-    echo -e "${RED}No local AI tools available (Omahon + Ollama).${NC}"
+    echo -e "${RED}No AI tools available.${NC}"
     echo ""
-    echo "Sovereign setup:"
-    echo "  • Pre-stage /build-assets/omahon and ollama in the live-build tree, or"
-    echo "  • Run alfred-ai pull once when you have connectivity to fetch phi3:mini, or"
-    echo "  • Copy Ollama model blobs into /usr/share/ollama/models from removable media."
-    echo ""
-    echo "Optional backup: anthropic / openai / groq / together pip modules on disk."
-    echo "Cloud keys (OpenAI, Together, Groq, xAI Grok, Anthropic):  alfred-ai keys"
+    echo "Install options:"
+    echo "  1. Pull a model:  alfred-ai pull"
+    echo "  2. Set Claude key: export ANTHROPIC_API_KEY=sk-ant-..."
     echo ""
     exit 1
 fi
 ALFRED_AI
 chmod +x /usr/local/bin/alfred-ai
 
-# ── 4. Optional cloud BACKUP libraries (pip) — primary remains Omahon+Ollama
-echo "[AI] Installing optional backup AI SDKs (anthropic, openai, groq, together)..."
+# ── 4. Python AI Libraries ──
+echo "[AI] Installing Python AI libraries..."
 pip3 install --break-system-packages --no-cache-dir \
     anthropic \
     openai \
-    groq \
-    together \
     2>/dev/null || true
-
-echo "[AI] Installing API key template for optional cloud providers..."
-install -d -m 0755 /usr/share/alfred /etc/skel/.config/alfred
-cat > /usr/share/alfred/ai-providers.env.example << 'AIENVEX'
-# Alfred Linux — optional cloud API keys (enrichment / backup paths only).
-# Primary intelligence: Omahon + Ollama on this machine (no keys required).
-#
-# Stewardship: treat keys like household keys — needful for honest work,
-# never the master of the home (Matthew 6:24; Proverbs 3:5–6). Do not commit
-# secrets to git; never paste keys into untrusted chat.
-#
-# 1) mkdir -p ~/.config/alfred
-# 2) cp this file to ~/.config/alfred/ai-providers.env
-# 3) chmod 600 ~/.config/alfred/ai-providers.env
-# 4) Uncomment only the exports you use. alfred-ai loads that file automatically.
-
-# --- Anthropic (Claude Messages API) — alfred-ai → Claude CLI when Omahon+Ollama absent ---
-#export ANTHROPIC_API_KEY=
-# Pick model in Omahon ~/.config/omahon/config.toml (skel ships commented examples).
-# Current API examples (verify on docs.anthropic.com — strings change per release):
-#   claude-opus-4-7              Claude Opus 4.7
-#   claude-sonnet-4-6            Claude Sonnet 4.6
-#   claude-haiku-4-5-20251001    Claude Haiku 4.5 (dated snapshot)
-# Aliases track latest snapshots; pin a dated model ID when you need stable behavior.
-
-# --- OpenAI (ChatGPT / API) ---
-#export OPENAI_API_KEY=
-
-# --- Together.ai (OpenAI-compatible: https://api.together.xyz/v1 ) ---
-#export TOGETHER_API_KEY=
-
-# --- GroqCloud (fast inference; OpenAI-compatible: https://api.groq.com/openai/v1 ) ---
-#export GROQ_API_KEY=
-
-# --- xAI Grok (see https://docs.x.ai for current env names; often XAI_API_KEY) ---
-#export XAI_API_KEY=
-AIENVEX
-install -m 0644 /usr/share/alfred/ai-providers.env.example /etc/skel/.config/alfred/ai-providers.env.example
 
 # ── 5. Desktop Integration ──
 echo "[AI] Creating desktop entries..."
 cat > /usr/share/applications/alfred-ai.desktop << 'DESK'
 [Desktop Entry]
-Name=Talk To Your Omputer
-GenericName=Sovereign AI Agent
-Comment=Talk to your computer — Omahon + Ollama; local first, no cloud keys required :)
+Name=Alfred AI
+Comment=Sovereign AI Agent — talk to your computer
 Exec=xfce4-terminal -e "alfred-ai"
 Icon=applications-science
 Terminal=false
 Type=Application
 Categories=Development;Science;AI;
-Keywords=ai;agent;llm;omahon;ollama;omputer;talk;local;sovereign;offline;
+Keywords=ai;agent;llm;omahon;claude;ollama;
 DESK
 
 cat > /usr/share/applications/ollama.desktop << 'DESK2'
@@ -302,7 +206,7 @@ cat > /etc/skel/.config/autostart/alfred-ai-hint.desktop << 'HINT'
 [Desktop Entry]
 Type=Application
 Name=Alfred AI Setup
-Exec=bash -c 'if [ ! -f ~/.alfred-ai-setup-done ]; then notify-send "Talk To Your Omputer" "alfred-ai → Omahon + Ollama on your machine. No cloud keys to start. Optional keys: alfred-ai keys" -i applications-science; touch ~/.alfred-ai-setup-done; fi'
+Exec=bash -c 'if [ ! -f ~/.alfred-ai-setup-done ]; then notify-send "Alfred AI" "Type alfred-ai in terminal to meet your AI agent. Run alfred-ai pull to download a local model." -i applications-science; touch ~/.alfred-ai-setup-done; fi'
 Hidden=false
 NoDisplay=true
 X-GNOME-Autostart-enabled=true
