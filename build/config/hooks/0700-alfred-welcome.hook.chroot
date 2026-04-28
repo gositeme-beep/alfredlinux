@@ -1,0 +1,162 @@
+#!/bin/bash
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# ═══════════════════════════════════════════════════════════════
+# HOOK 0700: Alfred Linux 7.77 — Kingdom Welcome Experience
+#
+# "The LORD bless thee, and keep thee:
+#  The LORD make his face shine upon thee, and be gracious unto thee:
+#  The LORD lift up his countenance upon thee, and give thee peace."
+#                                              — Numbers 6:24-26
+#
+# "The Spirit of the Lord is upon me, because he hath anointed me to preach
+#  the gospel to the poor." — Luke 4:18 (AKJV)  |  "Where the Spirit of the
+#  Lord is, there is liberty." — 2 Corinthians 3:17
+# ═══════════════════════════════════════════════════════════════
+
+set -e
+chmod 1777 /tmp 2>/dev/null || true
+
+echo "╔═══════════════════════════════════════════════════════════╗"
+echo "║  [0700] Kingdom Welcome Experience                        ║"
+echo "╚═══════════════════════════════════════════════════════════╝"
+
+apt-get update -qq 2>/dev/null || true
+apt-get install -y --no-install-recommends zenity xdg-utils 2>/dev/null || true
+
+install -d -m 0755 /usr/local/bin /var/lib/alfred
+
+# ═══════════════════════════════════════════════════
+# 1. REPLACE DEBIAN MOTD WITH KINGDOM BANNER
+# ═══════════════════════════════════════════════════
+echo "[WELCOME-01] Installing Kingdom MOTD..."
+cat > /etc/motd << 'MOTD'
+
+  ╔══════════════════════════════════════════════════════════╗
+  ║                                                          ║
+  ║   ✝  Alfred Linux 7.77 — Kingdom of God Edition          ║
+  ║                                                          ║
+  ║   "The LORD is my shepherd; I shall not want."           ║
+  ║                                  — Psalm 23:1            ║
+  ║                                                          ║
+  ║   "The Spirit of the Lord is upon me…" — Luke 4:18       ║
+  ║   "Where the Spirit of the Lord is, there is liberty."   ║
+  ║                                  — 2 Corinthians 3:17    ║
+  ║                                                          ║
+  ║   SOLI DEO GLORIA                                        ║
+  ╚══════════════════════════════════════════════════════════╝
+
+  Type 'alfred-bible' for the Word of God (English AKJV, full text).
+  Type 'alfred-bible-lang list' or 'alfred-bible tongues list' for 48 tongues (offline seeds).
+  Type 'alfred-worship' for the sacred music player.
+  Type 'alfred-mesh status' for your sovereign network.
+  Type 'alfred-quantum status' for post-quantum encryption.
+
+MOTD
+
+# ═══════════════════════════════════════════════════
+# 2. FIRST-BOOT WELCOME — IN THE NAME OF THE LORD
+# ═══════════════════════════════════════════════════
+echo "[WELCOME-02] Installing first-boot welcome..."
+cat > /usr/local/bin/alfred-first-boot.sh << 'EOF'
+#!/bin/bash
+set -e
+chmod 1777 /tmp 2>/dev/null || true
+
+STAMP_FILE="/var/lib/alfred/welcome.done"
+
+if [[ -f "$STAMP_FILE" ]]; then
+  exit 0
+fi
+
+_raw="${LC_ALL:-}"
+[[ -z "$_raw" ]] && _raw="${LC_MESSAGES:-}"
+[[ -z "$_raw" ]] && _raw="${LANG:-en_US.UTF-8}"
+_raw="${_raw%.UTF-8}"
+_raw="${_raw%.utf8}"
+_raw="${_raw#C.}"
+[[ -z "$_raw" || "$_raw" == C || "$_raw" == POSIX ]] && _raw="en_US"
+lang="${_raw%%_*}"
+lang="${lang,,}"
+
+if command -v zenity >/dev/null 2>&1 && [[ -n "${DISPLAY:-}" ]]; then
+  case "$lang" in
+    es)
+      ZTITLE="✝ Bienvenido — Edición Reino de Dios"
+      INTRO=$'Bienvenido a Alfred Linux 7.77\nEdición Reino de Dios'
+      REST=$'♪  27 pistas de adoración — abre Kingdom Worship\n📖  39,482 versículos (AKJV y más) — escribe alfred-bible\n📜  Otros idiomas (semillas sin red): alfred-bible-lang list  o  alfred-bible tongues list\n🔐  Cifrado post-cuántico Kyber-1024 activo\n🌐  Red en malla soberana lista\n\nConstruido con amor por Commander Danny William Perez\ny su hija Eden, para la gloria de Dios.\n\nSOLI DEO GLORIA'
+      ;;
+    fr)
+      ZTITLE="✝ Bienvenue — Édition Royaume de Dieu"
+      INTRO=$'Bienvenue dans Alfred Linux 7.77\nÉdition Royaume de Dieu'
+      REST=$'♪  27 morceaux de louange — ouvrez Kingdom Worship\n📖  39,482 versets (AKJV, etc.) — tapez alfred-bible\n📜  Autres langues (extraits hors-ligne) : alfred-bible-lang list  ou  alfred-bible tongues list\n🔐  Chiffrement post-quantique Kyber-1024 actif\n🌐  Réseau maillé souverain prêt\n\nConstruit avec amour par Commander Danny William Perez\net sa fille Eden, pour la gloire de Dieu.\n\nSOLI DEO GLORIA'
+      ;;
+    de)
+      ZTITLE="✝ Willkommen — Königreich-Gott-Ausgabe"
+      INTRO=$'Willkommen bei Alfred Linux 7.77\nKönigreich-Gott-Ausgabe'
+      REST=$'♪  27 Lobpreis-Titel — Kingdom Worship öffnen\n📖  39,482 Bibelverse (u.a. AKJV) — alfred-bible eingeben\n📜  Weitere Sprachen (offline): alfred-bible-lang list  oder  alfred-bible tongues list\n🔐  Post-Quanten-Kryptografie Kyber-1024 aktiv\n🌐  Souveränes Mesh-Netz bereit\n\nMit Liebe gebaut von Commander Danny William Perez\nund seiner Tochter Eden, zur Ehre Gottes.\n\nSOLI DEO GLORIA'
+      ;;
+    pt)
+      ZTITLE="✝ Bem-vindo — Edição Reino de Deus"
+      INTRO=$'Bem-vindo ao Alfred Linux 7.77\nEdição Reino de Deus'
+      REST=$'♪  27 faixas de adoração — abra o Kingdom Worship\n📖  39,482 versículos (AKJV e mais) — digite alfred-bible\n📜  Outros idiomas (sementes offline): alfred-bible-lang list  ou  alfred-bible tongues list\n🔐  Criptografia pós-quântica Kyber-1024 ativa\n🌐  Rede mesh soberana pronta\n\nConstruído com amor por Commander Danny William Perez\ne sua filha Eden, para a glória de Deus.\n\nSOLI DEO GLORIA'
+      ;;
+    he|iw)
+      ZTITLE="✝ ברוכים הבאים — מהדורת ממלכת האלוהים"
+      INTRO=$'ברוכים הבאים לאלפרד לינוקס 7.77\nמהדורת ממלכת האלוהים'
+      REST=$'♪  27 רצועות שירה — פתחו את Kingdom Worship\n📖  39,482 פסוקים (AKJV + עברית WLC ועוד) — הקלידו alfred-bible\n📜  שפות נוספות (ללא רשת): alfred-bible-lang list  או  alfred-bible tongues list\n🔐  הצפנה פוסט־קוונטית Kyber-1024 פעילה\n🌐  רשת Mesh ריבונית מוכנה\n\nנבנה באהבה על ידי Commander Danny William Perez\nובתו Eden, לכבוד האלוהים.\n\nSOLI DEO GLORIA'
+      ;;
+    *)
+      ZTITLE="✝ Welcome — Kingdom of God Edition"
+      INTRO=$'Welcome to Alfred Linux 7.77\nKingdom of God Edition'
+      REST=$'♪  27 worship tracks are ready — open Kingdom Worship\n📖  39,482 Bible verses (AKJV) — type alfred-bible\n📜  Other languages (offline seeds): alfred-bible-lang list  or  alfred-bible tongues list\n     Menu: Bible in Many Languages\n🔐  Kyber-1024 post-quantum encryption active\n🌐  Sovereign mesh network ready\n\nBuilt with love by Commander Danny William Perez\nand his daughter Eden, for the glory of God.\n\nSOLI DEO GLORIA'
+      ;;
+  esac
+
+  SCRIPTURE=$(cat <<'SFX'
+✝  'The LORD bless thee, and keep thee:
+    The LORD make his face shine upon thee,
+    and be gracious unto thee.'
+                                    — Numbers 6:24-25
+
+✝  The Spirit of the Lord
+    'The Spirit of the Lord is upon me, because he hath anointed me to preach the gospel to the poor.'
+                                    — Luke 4:18
+    'Where the Spirit of the Lord is, there is liberty.'
+                                    — 2 Corinthians 3:17
+SFX
+)
+
+  ZBODY=$(printf '%s\n\n%s\n\n%s' "$INTRO" "$SCRIPTURE" "$REST")
+  zenity --info --title="$ZTITLE" --width=580 --text "$ZBODY" || true
+fi
+
+# Play a gentle notification sound if possible
+if command -v paplay &>/dev/null && [ -f /usr/share/sounds/freedesktop/stereo/complete.oga ]; then
+    paplay /usr/share/sounds/freedesktop/stereo/complete.oga 2>/dev/null &
+fi
+
+touch "$STAMP_FILE"
+exit 0
+EOF
+
+chmod 0755 /usr/local/bin/alfred-first-boot.sh
+
+cat > /etc/xdg/autostart/alfred-first-boot.desktop << 'EOF'
+[Desktop Entry]
+Type=Application
+Name=Alfred First Boot
+Comment=Kingdom of God Edition — first-boot blessing
+Exec=/usr/local/bin/alfred-first-boot.sh
+Terminal=false
+X-GNOME-Autostart-enabled=true
+OnlyShowIn=XFCE;GNOME;KDE;LXQt;
+EOF
+
+chmod 0644 /etc/xdg/autostart/alfred-first-boot.desktop
+
+echo "╔═══════════════════════════════════════════════════════════╗"
+echo "║  [0700] Kingdom Welcome — COMPLETE                        ║"
+echo "║  ✓ Kingdom MOTD replaces Debian default                   ║"
+echo "║  ✓ First-boot blessing — Numbers 6, Spirit of the Lord   ║"
+echo "║  ✓ Tool reminders (Bible, Worship, Mesh, Quantum)         ║"
+echo "╚═══════════════════════════════════════════════════════════╝"

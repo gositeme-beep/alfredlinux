@@ -1,0 +1,24 @@
+#!/bin/bash
+echo "[Alfred] Creating generic kernel copies in /boot/ (late-stage)..."
+cd /boot
+
+# Always overwrite with latest versioned kernel
+KERNEL=$(ls -1 vmlinuz-* 2>/dev/null | sort -V | tail -1)
+if [[ -n "$KERNEL" ]]; then
+    rm -f vmlinuz
+    cp "$KERNEL" vmlinuz
+    echo "[Alfred] /boot/vmlinuz copied from $KERNEL"
+else
+    echo "[Alfred] WARNING: No vmlinuz-* found in /boot!"
+fi
+
+INITRD=$(ls -1 initrd.img-* 2>/dev/null | sort -V | tail -1)
+if [[ -n "$INITRD" ]]; then
+    rm -f initrd.img
+    cp "$INITRD" initrd.img
+    echo "[Alfred] /boot/initrd.img copied from $INITRD"
+else
+    echo "[Alfred] WARNING: No initrd.img-* found in /boot!"
+fi
+
+ls -lh /boot/vmlinuz /boot/initrd.img 2>/dev/null

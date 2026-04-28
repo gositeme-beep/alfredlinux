@@ -1,0 +1,137 @@
+#!/bin/bash
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# ═══════════════════════════════════════════════════════════════
+# Alfred Linux 7.77 — Meilisearch Local Search Engine
+#
+# Installs Meilisearch for offline local search.
+# BUILD: v7.77 (Search)
+# ═══════════════════════════════════════════════════════════════
+
+set -e
+
+echo "[Alfred Linux 7.77] Installing Meilisearch..."
+
+# ── 1. Download Meilisearch binary ──
+MEILI_VER="v1.13.3"
+# MILITARY: Pre-staged binary preferred (air-gap safe), direct download fallback
+if [ -f /build-assets/meilisearch ]; then
+    echo "[Alfred] Using pre-staged Meilisearch binary (air-gap safe)"
+    install -m 755 /build-assets/meilisearch /usr/local/bin/meilisearch
+else
+    MEILI_URL="https://github.com/meilisearch/meilisearch/releases/download/${MEILI_VER}/meilisearch-linux-amd64"
+    wget -q "$MEILI_URL" -O /usr/local/bin/meilisearch || {
+        echo "[WARN] Meilisearch download failed — will need manual install"
+        echo "meilisearch_failed=$(date -Is)" > /var/lib/alfred/build-flags/meilisearch-failed
+    }
+fi
+chmod +x /usr/local/bin/meilisearch 2>/dev/null || true
+
+# ── 2. Create meilisearch user ──
+useradd -r -s /bin/false -d /var/lib/meilisearch meilisearch 2>/dev/null || true
+mkdir -p /var/lib/meilisearch
+chown meilisearch:meilisearch /var/lib/meilisearch
+
+# ── 3. Systemd service ──
+cat > /etc/systemd/system/meilisearch.service << 'SVC'
+[Unit]
+Description=Meilisearch Local Search Engine
+Documentation=https://docs.meilisearch.com
+After=network.target
+
+[Service]
+ExecStart=/usr/local/bin/meilisearch --db-path /var/lib/meilisearch --http-addr 127.0.0.1:7700 --no-analytics
+User=meilisearch
+Group=meilisearch
+Restart=always
+RestartSec=5
+LimitNOFILE=65536
+
+[Install]
+WantedBy=multi-user.target
+SVC
+systemctl enable meilisearch 2>/dev/null || true
+
+# ── 4. Alfred Search CLI ──
+cat > /usr/local/bin/alfred-search << 'SEARCH'
+#!/bin/bash
+# Alfred Search — local search powered by Meilisearch
+# Usage: alfred-search "query"
+
+QUERY="${*:-}"
+if [[ -z "$QUERY" ]]; then
+    echo "Usage: alfred-search <query>"
+    echo "Search local documentation and files."
+    exit 1
+fi
+
+# Check if Meilisearch is running
+if ! curl -s http://localhost:7700/health | grep -q available; then
+    echo "Meilisearch is not running. Start with: sudo systemctl start meilisearch"
+    exit 1
+fi
+
+# Search
+RESULT=$(curl -s "http://localhost:7700/multi-search" \
+    -H "Content-Type: application/json" \
+    -d "{\"queries\": [{\"indexUid\": \"docs\", \"q\": \"$QUERY\", \"limit\": 5}]}" 2>/dev/null)
+
+if echo "$RESULT" | python3 -c "
+import sys, json
+data = json.load(sys.stdin)
+results = data.get('results', [{}])[0].get('hits', [])
+if not results:
+    print('No results found.')
+else:
+    for r in results:
+        title = r.get('title', r.get('path', 'Untitled'))
+        snippet = r.get('content', '')[:200]
+        print(f'  → {title}')
+        print(f'    {snippet}')
+        print()
+" 2>/dev/null; then
+    :
+else
+    echo "Search returned no parseable results."
+fi
+SEARCH
+chmod +x /usr/local/bin/alfred-search
+
+# ── 5. First-boot indexer script ──
+cat > /usr/local/bin/alfred-index-docs << 'INDEX'
+#!/bin/bash
+# Index local documentation into Meilisearch
+echo "Indexing local documentation..."
+
+# Wait for Meilisearch
+for i in {1..30}; do
+    curl -s http://localhost:7700/health | grep -q available && break
+    sleep 1
+done
+
+# Index man pages
+DOCS='[]'
+ID=0
+for f in /usr/share/doc/*/README* /usr/share/doc/*/changelog*; do
+    [[ -f "$f" ]] || continue
+    CONTENT=$(head -c 5000 "$f" 2>/dev/null | tr -d '\0' | python3 -c "import sys,json; print(json.dumps(sys.stdin.read()))" 2>/dev/null)
+    [[ -z "$CONTENT" ]] && continue
+    DOCS=$(echo "$DOCS" | python3 -c "
+import sys, json
+docs = json.load(sys.stdin)
+docs.append({'id': $ID, 'path': '$f', 'title': '$(basename "$(dirname "$f")")', 'content': $CONTENT})
+print(json.dumps(docs))
+" 2>/dev/null)
+    ((ID++))
+    [[ $ID -ge 500 ]] && break
+done
+
+# Push to Meilisearch
+echo "$DOCS" | curl -s -X POST "http://localhost:7700/indexes/docs/documents" \
+    -H "Content-Type: application/json" \
+    -d @- > /dev/null 2>&1
+
+echo "Indexed $ID documents."
+INDEX
+chmod +x /usr/local/bin/alfred-index-docs
+
+echo "[Alfred Linux 7.77] Meilisearch installed and configured."

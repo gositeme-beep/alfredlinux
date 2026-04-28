@@ -1,0 +1,55 @@
+#!/bin/bash
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Alfred Linux v7.77 — Voice v2 Hook
+# Voice is optional — do not abort entire ISO build on failure
+set +e
+# Fix /tmp permissions (may be restricted by earlier hooks in chroot)
+chmod 1777 /tmp 2>/dev/null || true
+# Fix /tmp permissions (may be restricted by earlier hooks in chroot)
+chmod 1777 /tmp 2>/dev/null || true
+
+echo "[Alfred Voice v2] Installing realtime audio stack..."
+
+apt-get update -qq 2>/dev/null || true
+apt-get install -y --no-install-recommends \
+  pipewire pipewire-audio wireplumber \
+  alsa-utils sox pulseaudio-utils jq \
+  2>/dev/null || true
+
+install -d -m 0755 /usr/local/bin
+
+cat > /usr/local/bin/alfred-voice-doctor << 'EOF'
+#!/bin/bash
+set -e
+# Fix /tmp permissions (may be restricted by earlier hooks in chroot)
+chmod 1777 /tmp 2>/dev/null || true
+# Fix /tmp permissions (may be restricted by earlier hooks in chroot)
+chmod 1777 /tmp 2>/dev/null || true
+
+echo "=== Alfred Voice Doctor ==="
+echo "Date: $(date -Iseconds)"
+echo "User: $(id -un)"
+echo ""
+
+echo "-- Audio devices --"
+aplay -l 2>/dev/null || true
+arecord -l 2>/dev/null || true
+
+echo ""
+echo "-- PipeWire status --"
+systemctl --user status pipewire --no-pager 2>/dev/null | sed -n '1,12p' || true
+systemctl --user status wireplumber --no-pager 2>/dev/null | sed -n '1,12p' || true
+
+echo ""
+echo "-- Mic quick test --"
+if command -v arecord >/dev/null 2>&1; then
+  timeout 3 arecord -f cd -d 2 /tmp/alfred-mic-test.wav >/dev/null 2>&1 || true
+  [[ -f /tmp/alfred-mic-test.wav ]] && echo "Mic test file created: /tmp/alfred-mic-test.wav"
+fi
+
+echo "=== Voice Doctor complete ==="
+EOF
+
+chmod 0755 /usr/local/bin/alfred-voice-doctor
+
+echo "[Alfred Voice v2] COMPLETE"

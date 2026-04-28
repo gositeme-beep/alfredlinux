@@ -1,5 +1,4 @@
 #!/bin/bash
-# SPDX-License-Identifier: AGPL-3.0-or-later
 # ═══════════════════════════════════════════════════════════════
 # HOOK 0160: Alfred Linux — Comprehensive Security Hardening
 # 
@@ -7,7 +6,7 @@
 # than stock Ubuntu/Debian out of the box.
 #
 # 21 security modules — CIS Benchmark Level 2 compliant
-# BUILD: v7.77+
+# BUILD: v4.0+ (RC8+)
 # ═══════════════════════════════════════════════════════════════
 set -e
 echo "╔═══════════════════════════════════════════════════════════╗"
@@ -86,9 +85,7 @@ SYSCTL
 # ═══════════════════════════════════════════════════
 echo "[SEC-02] Configuring kernel boot security parameters..."
 if [ -f /etc/default/grub ]; then
-    # lockdown=integrity (not confidentiality): confidentiality breaks or complicates
-    # some OEM laptops, live ISO + installer paths, and drivers under Dell-style QA.
-    SECURITY_PARAMS="apparmor=1 security=apparmor lockdown=integrity init_on_alloc=1 init_on_free=1 page_alloc.shuffle=1 slab_nomerge vsyscall=none"
+    SECURITY_PARAMS="apparmor=1 security=apparmor lockdown=confidentiality init_on_alloc=1 init_on_free=1 page_alloc.shuffle=1 slab_nomerge vsyscall=none"
     CURRENT=$(grep '^GRUB_CMDLINE_LINUX_DEFAULT=' /etc/default/grub | sed 's/^GRUB_CMDLINE_LINUX_DEFAULT="//;s/"$//')
     for param in apparmor security lockdown init_on_alloc init_on_free page_alloc.shuffle slab_nomerge vsyscall; do
         CURRENT=$(echo "$CURRENT" | sed "s/${param}=[^ ]*//g;s/  / /g;s/^ //;s/ $//")
@@ -164,7 +161,7 @@ Unattended-Upgrade::Allowed-Origins {
 };
 Unattended-Upgrade::AutoFixInterruptedDpkg "true";
 Unattended-Upgrade::MinimalSteps "true";
-Unattended-Upgrade::Remove-Unused-Kernel-Packages "false";
+Unattended-Upgrade::Remove-Unused-Kernel-Packages "true";
 Unattended-Upgrade::Remove-Unused-Dependencies "true";
 Unattended-Upgrade::Automatic-Reboot "false";
 Unattended-Upgrade::SyslogEnable "true";

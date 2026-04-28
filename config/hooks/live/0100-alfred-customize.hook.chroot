@@ -1,16 +1,15 @@
 #!/bin/bash
-# SPDX-License-Identifier: AGPL-3.0-or-later
 # ═══════════════════════════════════════════════════════════════
-# Alfred Linux v7.77 — Post-Build Customization Hook
+# Alfred Linux v4.0 — Post-Build Customization Hook
 #
 # This runs inside the chroot during ISO build.
 # Applies branding, security hardening, and default configs.
-# BUILD: v7.77 GA
+# BUILD: v4.0 GA
 # ═══════════════════════════════════════════════════════════════
 
 set -e
 
-echo "[Alfred Linux 7.77] Applying customizations..."
+echo "[Alfred Linux 4.0] Applying customizations..."
 
 # ── 1. Disable telemetry services ──
 TELEMETRY_SERVICES=(
@@ -34,8 +33,7 @@ ufw --force enable
 # ── 3. SSH hardening ──
 cat > /etc/ssh/sshd_config.d/alfred-hardening.conf << 'SSHD'
 PermitRootLogin no
-# Key-only SSH (matches 0270 sovereign audit + alfred-heal repair).
-PasswordAuthentication no
+PasswordAuthentication yes
 PubkeyAuthentication yes
 X11Forwarding no
 AllowAgentForwarding no
@@ -101,15 +99,14 @@ alias ll='ls -lah --color=auto'
 alias la='ls -A --color=auto'
 alias update='sudo apt update && sudo apt upgrade -y'
 alias ports='ss -tulpn'
-# Local default route — no third-party “what is my IP” beacon (sovereignty / privacy).
-alias myip='ip -4 route get 1.1.1.1 2>/dev/null | awk "{for(i=1;i<=NF;i++) if($i==\"src\") {print $(i+1); exit}}"'
+alias myip='curl -s ifconfig.me'
 alias cls='clear'
 
 # Welcome message
 if [[ -z "$ALFRED_WELCOMED" ]]; then
     echo -e "\e[36m"
     echo "  ╔═══════════════════════════════════════╗"
-    echo "  ║   Alfred Linux 7.77 — Sovereign       ║"
+    echo "  ║   Alfred Linux 4.0 — Sovereign        ║"
     echo "  ║   No telemetry. No tracking. Yours.   ║"
     echo "  ╚═══════════════════════════════════════╝"
     echo -e "\e[0m"
@@ -427,7 +424,7 @@ fi
 mkdir -p /boot/grub/themes/alfred
 cat > /boot/grub/themes/alfred/theme.txt << 'GRUBTHEME'
 desktop-color: "#0a0a14"
-title-text: "Alfred Linux 7.77"
+title-text: "Alfred Linux 4.0"
 title-color: "#00D4FF"
 title-font: "DejaVu Sans Bold 24"
 message-color: "#8a8a9a"
@@ -483,13 +480,13 @@ autologin-user-timeout=0
 autologin-session=xfce
 AUTOLOGIN
 
-# ── 12. System branding — v7.77 ──
+# ── 12. System branding — v4.0 ──
 cat > /etc/os-release << 'OSREL'
-PRETTY_NAME="Alfred Linux 7.77 — Kingdom of God Edition"
+PRETTY_NAME="Alfred Linux 4.0"
 NAME="Alfred Linux"
-VERSION_ID="7.77"
-VERSION="7.77 (Kingdom of God Edition)"
-VERSION_CODENAME=kingdom
+VERSION_ID="4.0"
+VERSION="4.0 (Sovereign)"
+VERSION_CODENAME=sovereign
 ID=alfred-linux
 ID_LIKE=debian
 HOME_URL="https://alfredlinux.com"
@@ -499,17 +496,17 @@ OSREL
 
 cat > /etc/issue << 'ISSUE'
 
-  Alfred Linux 7.77 (Kingdom of God Edition)
+  Alfred Linux 4.0 (Sovereign)
   The Sovereign Operating System
   \n \l
 
 ISSUE
 
 cat > /etc/issue.net << 'ISSUENET'
-Alfred Linux 7.77 (Kingdom of God Edition)
+Alfred Linux 4.0 (Sovereign)
 ISSUENET
 
-echo "Alfred Linux 7.77" > /etc/debian_chroot
+echo "Alfred Linux 4.0" > /etc/debian_chroot
 
 # ── 13. XFCE Panel branding ──
 mkdir -p /etc/skel/.config/xfce4/panel
@@ -587,4 +584,4 @@ esac
 MESHSCRIPT
 chmod +x /usr/local/bin/alfred-mesh-setup
 
-echo "[Alfred Linux 7.77] Branding and customizations applied successfully."
+echo "[Alfred Linux 4.0] Branding and customizations applied successfully."

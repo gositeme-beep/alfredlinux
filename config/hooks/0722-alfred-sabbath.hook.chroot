@@ -1,0 +1,739 @@
+#!/bin/bash
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# ═══════════════════════════════════════════════════════════════════════════════
+# HOOK 0722: Sabbath Calendar — Biblical Feasts & Sacred Time
+#
+# "Remember the sabbath day, to keep it holy." — Exodus 20:8
+#
+# alfred-sabbath CLI — Tracks Biblical feasts, Friday sunset prep,
+# Sabbath mode (only Bible + worship work), Saturday night restoration,
+# Torah portions, and the full Biblical calendar.
+#
+# BUILD: v7.77 Kingdom of God Edition
+# ═══════════════════════════════════════════════════════════════════════════════
+
+set -e
+chmod 1777 /tmp 2>/dev/null || true
+
+echo "╔═══════════════════════════════════════════════════════════╗"
+echo "║  [0722] Sabbath Calendar — Biblical Feasts & Sacred Time ║"
+echo "║  'Remember the sabbath day' — Exodus 20:8               ║"
+echo "╚═══════════════════════════════════════════════════════════╝"
+
+mkdir -p /usr/share/alfred/sabbath
+
+# ═══════════════════════════════════════════════════
+# 1. BIBLICAL FEAST CALENDAR DATA
+# ═══════════════════════════════════════════════════
+echo "[SABBATH-01] Creating Biblical feast calendar..."
+
+cat > /usr/share/alfred/sabbath/feasts.conf << 'FEASTS'
+# Biblical Feasts — Based on Hebrew calendar
+# Format: month_hebrew|day_start|duration_days|name|scripture|description
+# Nisan = March/April, Tishrei = September/October
+Nisan|14|1|Passover (Pesach)|Exodus 12:14|Remember the Lord's deliverance from Egypt
+Nisan|15|7|Unleavened Bread|Leviticus 23:6|Seven days of eating unleavened bread
+Nisan|16|1|Firstfruits|Leviticus 23:10|The first of the harvest belongs to God
+Sivan|6|2|Pentecost (Shavuot)|Leviticus 23:15-16|Fifty days after Firstfruits — the giving of Torah
+Tishrei|1|2|Feast of Trumpets (Rosh Hashanah)|Leviticus 23:24|A day of blowing trumpets — wake up!
+Tishrei|10|1|Day of Atonement (Yom Kippur)|Leviticus 23:27|The most holy day — afflict your souls
+Tishrei|15|7|Feast of Tabernacles (Sukkot)|Leviticus 23:34|Dwell in booths — remember the wilderness
+Tishrei|22|1|Shemini Atzeret / Simchat Torah|Leviticus 23:36|The eighth day — rejoicing in Torah
+Kislev|25|8|Hanukkah (Dedication)|John 10:22|Jesus walked in Solomon's porch — the temple rededicated
+Adar|14|1|Purim|Esther 9:21|Remember Esther's deliverance — for such a time as this
+FEASTS
+
+# ═══════════════════════════════════════════════════
+# 2. COMPLETE TORAH PORTIONS — All 54 Parashot
+# ═══════════════════════════════════════════════════
+echo "[SABBATH-02] Creating complete Torah portion index (54 parashot)..."
+
+cat > /usr/share/alfred/sabbath/torah-portions.conf << 'TORAH'
+# Weekly Torah Portions (Parashat HaShavua) — Complete Cycle of 54
+# Format: week|name|torah_reading|haftarah|description
+# GENESIS (Bereishit)
+1|Bereishit|Genesis 1:1-6:8|Isaiah 42:5-43:10|In the beginning — Creation
+2|Noach|Genesis 6:9-11:32|Isaiah 54:1-55:5|Noah — The flood and the rainbow covenant
+3|Lech Lecha|Genesis 12:1-17:27|Isaiah 40:27-41:16|Go forth — Abraham's call
+4|Vayera|Genesis 18:1-22:24|2 Kings 4:1-37|And He appeared — Three visitors, binding of Isaac
+5|Chayei Sarah|Genesis 23:1-25:18|1 Kings 1:1-31|Life of Sarah — Death and legacy
+6|Toldot|Genesis 25:19-28:9|Malachi 1:1-2:7|Generations — Jacob and Esau
+7|Vayetzei|Genesis 28:10-32:3|Hosea 12:13-14:10|And he went out — Jacob's ladder
+8|Vayishlach|Genesis 32:4-36:43|Obadiah 1:1-21|And he sent — Wrestling with God
+9|Vayeshev|Genesis 37:1-40:23|Amos 2:6-3:8|And he dwelt — Joseph's dreams
+10|Miketz|Genesis 41:1-44:17|1 Kings 3:15-4:1|At the end — Joseph interprets Pharaoh's dreams
+11|Vayigash|Genesis 44:18-47:27|Ezekiel 37:15-28|And he drew near — Judah pleads, Joseph revealed
+12|Vayechi|Genesis 47:28-50:26|1 Kings 2:1-12|And he lived — Jacob blesses his sons
+# EXODUS (Shemot)
+13|Shemot|Exodus 1:1-6:1|Isaiah 27:6-28:13|Names — Israel enslaved, Moses called
+14|Va'eira|Exodus 6:2-9:35|Ezekiel 28:25-29:21|And I appeared — The first seven plagues
+15|Bo|Exodus 10:1-13:16|Jeremiah 46:13-28|Come — Final plagues, Passover instituted
+16|Beshalach|Exodus 13:17-17:16|Judges 4:4-5:31|When he sent — Crossing the Red Sea
+17|Yitro|Exodus 18:1-20:23|Isaiah 6:1-7:6|Jethro — The Ten Commandments given
+18|Mishpatim|Exodus 21:1-24:18|Jeremiah 34:8-22|Judgments — Civil laws of the covenant
+19|Terumah|Exodus 25:1-27:19|1 Kings 5:12-6:13|Offering — The Tabernacle design
+20|Tetzaveh|Exodus 27:20-30:10|Ezekiel 43:10-27|Command — The priestly garments
+21|Ki Tisa|Exodus 30:11-34:35|1 Kings 18:1-39|When you take — The golden calf, Moses' glory
+22|Vayakhel|Exodus 35:1-38:20|1 Kings 7:40-50|And he assembled — Building the Tabernacle
+23|Pekudei|Exodus 38:21-40:38|1 Kings 7:51-8:21|Accounts — Tabernacle completed, glory fills
+# LEVITICUS (Vayikra)
+24|Vayikra|Leviticus 1:1-5:26|Isaiah 43:21-44:23|And He called — The offerings
+25|Tzav|Leviticus 6:1-8:36|Jeremiah 7:21-8:3|Command — Priestly duties
+26|Shemini|Leviticus 9:1-11:47|2 Samuel 6:1-7:17|Eighth — Nadab and Abihu, clean and unclean
+27|Tazria|Leviticus 12:1-13:59|2 Kings 4:42-5:19|She conceives — Laws of purity
+28|Metzora|Leviticus 14:1-15:33|2 Kings 7:3-20|Leper — Purification rituals
+29|Acharei Mot|Leviticus 16:1-18:30|Ezekiel 22:1-19|After the death — Yom Kippur, the blood
+30|Kedoshim|Leviticus 19:1-20:27|Amos 9:7-15|Holy ones — Be holy for I am holy
+31|Emor|Leviticus 21:1-24:23|Ezekiel 44:15-31|Say — The appointed feasts of the LORD
+32|Behar|Leviticus 25:1-26:2|Jeremiah 32:6-27|On the mountain — Sabbatical and Jubilee years
+33|Bechukotai|Leviticus 26:3-27:34|Jeremiah 16:19-17:14|In my statutes — Blessings and curses
+# NUMBERS (Bamidbar)
+34|Bamidbar|Numbers 1:1-4:20|Hosea 2:1-22|In the wilderness — The census
+35|Naso|Numbers 4:21-7:89|Judges 13:2-25|Elevate — Nazarite vow, priestly blessing
+36|Behaalotecha|Numbers 8:1-12:16|Zechariah 2:14-4:7|When you raise — The silver trumpets
+37|Shelach|Numbers 13:1-15:41|Joshua 2:1-24|Send — The twelve spies, the bad report
+38|Korach|Numbers 16:1-18:32|1 Samuel 11:14-12:22|Korah — The rebellion, the earth opens
+39|Chukat|Numbers 19:1-22:1|Judges 11:1-33|Statute — The red heifer, Moses strikes the rock
+40|Balak|Numbers 22:2-25:9|Micah 5:6-6:8|Balak — Balaam's donkey speaks, the star prophecy
+41|Pinchas|Numbers 25:10-30:1|1 Kings 18:46-19:21|Phinehas — Zeal for God, the daughters of Zelophehad
+42|Matot|Numbers 30:2-32:42|Jeremiah 1:1-2:3|Tribes — Vows, the war against Midian
+43|Masei|Numbers 33:1-36:13|Jeremiah 2:4-28|Journeys — Stations of Israel, cities of refuge
+# DEUTERONOMY (Devarim)
+44|Devarim|Deuteronomy 1:1-3:22|Isaiah 1:1-27|Words — Moses recounts the journey
+45|Va'etchanan|Deuteronomy 3:23-7:11|Isaiah 40:1-26|And I pleaded — Shema Yisrael, the great command
+46|Eikev|Deuteronomy 7:12-11:25|Isaiah 49:14-51:3|Because — Blessings for obedience
+47|Re'eh|Deuteronomy 11:26-16:17|Isaiah 54:11-55:5|See — Blessing and curse set before you
+48|Shoftim|Deuteronomy 16:18-21:9|Isaiah 51:12-52:12|Judges — Justice, the prophet like Moses
+49|Ki Teitzei|Deuteronomy 21:10-25:19|Isaiah 54:1-10|When you go out — Laws of warfare and society
+50|Ki Tavo|Deuteronomy 26:1-29:8|Isaiah 60:1-22|When you come in — Firstfruits, blessings and curses
+51|Nitzavim|Deuteronomy 29:9-30:20|Isaiah 61:10-63:9|Standing — Choose life
+52|Vayelech|Deuteronomy 31:1-30|Hosea 14:2-10|And he went — Moses' final day
+53|Haazinu|Deuteronomy 32:1-52|2 Samuel 22:1-51|Give ear — The Song of Moses
+54|V'Zot HaBracha|Deuteronomy 33:1-34:12|Joshua 1:1-18|This is the blessing — Moses blesses the tribes, dieJoseph revealed
+12|Vayechi|Genesis 47:28-50:26|1 Kings 2:1-12|And he lived — Jacob blesses his sons
+# EXODUS (Shemot)
+13|Shemot|Exodus 1:1-6:1|Isaiah 27:6-28:13|Names — Israel enslaved, Moses called
+14|Va'eira|Exodus 6:2-9:35|Ezekiel 28:25-29:21|And I appeared — The first seven plagues
+15|Bo|Exodus 10:1-13:16|Jeremiah 46:13-28|Come — Final plagues, Passover instituted
+16|Beshalach|Exodus 13:17-17:16|Judges 4:4-5:31|When he sent — Crossing the Red Sea
+17|Yitro|Exodus 18:1-20:23|Isaiah 6:1-7:6|Jethro — The Ten Commandments given
+18|Mishpatim|Exodus 21:1-24:18|Jeremiah 34:8-22|Judgments — Civil laws of the covenant
+19|Terumah|Exodus 25:1-27:19|1 Kings 5:12-6:13|Offering — The Tabernacle design
+20|Tetzaveh|Exodus 27:20-30:10|Ezekiel 43:10-27|Command — The priestly garments
+21|Ki Tisa|Exodus 30:11-34:35|1 Kings 18:1-39|When you take — The golden calf, Moses' glory
+22|Vayakhel|Exodus 35:1-38:20|1 Kings 7:40-50|And he assembled — Building the Tabernacle
+23|Pekudei|Exodus 38:21-40:38|1 Kings 7:51-8:21|Accounts — Tabernacle completed, glory fills
+# LEVITICUS (Vayikra)
+24|Vayikra|Leviticus 1:1-5:26|Isaiah 43:21-44:23|And He called — The offerings
+25|Tzav|Leviticus 6:1-8:36|Jeremiah 7:21-8:3|Command — Priestly duties
+26|Shemini|Leviticus 9:1-11:47|2 Samuel 6:1-7:17|Eighth — Nadab and Abihu, clean and unclean
+27|Tazria|Leviticus 12:1-13:59|2 Kings 4:42-5:19|She conceives — Laws of purity
+28|Metzora|Leviticus 14:1-15:33|2 Kings 7:3-20|Leper — Purification rituals
+29|Acharei Mot|Leviticus 16:1-18:30|Ezekiel 22:1-19|After the death — Yom Kippur, the blood
+30|Kedoshim|Leviticus 19:1-20:27|Amos 9:7-15|Holy ones — Be holy for I am holy
+31|Emor|Leviticus 21:1-24:23|Ezekiel 44:15-31|Say — The appointed feasts of the LORD
+32|Behar|Leviticus 25:1-26:2|Jeremiah 32:6-27|On the mountain — Sabbatical and Jubilee years
+33|Bechukotai|Leviticus 26:3-27:34|Jeremiah 16:19-17:14|In my statutes — Blessings and curses
+# NUMBERS (Bamidbar)
+34|Bamidbar|Numbers 1:1-4:20|Hosea 2:1-22|In the wilderness — The census
+35|Naso|Numbers 4:21-7:89|Judges 13:2-25|Elevate — Nazarite vow, priestly blessing
+36|Behaalotecha|Numbers 8:1-12:16|Zechariah 2:14-4:7|When you raise — The silver trumpets
+37|Shelach|Numbers 13:1-15:41|Joshua 2:1-24|Send — The twelve spies, the bad report
+38|Korach|Numbers 16:1-18:32|1 Samuel 11:14-12:22|Korah — The rebellion, the earth opens
+39|Chukat|Numbers 19:1-22:1|Judges 11:1-33|Statute — The red heifer, Moses strikes the rock
+40|Balak|Numbers 22:2-25:9|Micah 5:6-6:8|Balak — Balaam's donkey speaks, the star prophecy
+41|Pinchas|Numbers 25:10-30:1|1 Kings 18:46-19:21|Phinehas — Zeal for God, the daughters of Zelophehad
+42|Matot|Numbers 30:2-32:42|Jeremiah 1:1-2:3|Tribes — Vows, the war against Midian
+43|Masei|Numbers 33:1-36:13|Jeremiah 2:4-28|Journeys — Stations of Israel, cities of refuge
+# DEUTERONOMY (Devarim)
+44|Devarim|Deuteronomy 1:1-3:22|Isaiah 1:1-27|Words — Moses recounts the journey
+45|Va'etchanan|Deuteronomy 3:23-7:11|Isaiah 40:1-26|And I pleaded — Shema Yisrael, the great command
+46|Eikev|Deuteronomy 7:12-11:25|Isaiah 49:14-51:3|Because — Blessings for obedience
+47|Re'eh|Deuteronomy 11:26-16:17|Isaiah 54:11-55:5|See — Blessing and curse set before you
+48|Shoftim|Deuteronomy 16:18-21:9|Isaiah 51:12-52:12|Judges — Justice, the prophet like Moses
+49|Ki Teitzei|Deuteronomy 21:10-25:19|Isaiah 54:1-10|When you go out — Laws of warfare and society
+50|Ki Tavo|Deuteronomy 26:1-29:8|Isaiah 60:1-22|When you come in — Firstfruits, blessings and curses
+51|Nitzavim|Deuteronomy 29:9-30:20|Isaiah 61:10-63:9|Standing — Choose life
+52|Vayelech|Deuteronomy 31:1-30|Hosea 14:2-10|And he went — Moses' final day
+53|Haazinu|Deuteronomy 32:1-52|2 Samuel 22:1-51|Give ear — The Song of Moses
+54|V'Zot HaBracha|Deuteronomy 33:1-34:12|Joshua 1:1-18|This is the blessing — Moses blesses the tribes, dies
+TORAH
+
+# ═══════════════════════════════════════════════════
+# 3. HEBREW CALENDAR ENGINE (Python — proper computation)
+# ═══════════════════════════════════════════════════
+echo "[SABBATH-03] Installing Hebrew Calendar Engine..."
+
+cat > /usr/share/alfred/sabbath/hebrew-calendar.py << 'HEBREWCAL'
+#!/usr/bin/env python3
+"""
+Alfred Hebrew Calendar Engine — God's Time, Computed Faithfully.
+
+"And God said, Let there be lights in the firmament of the heaven
+ to divide the day from the night; and let them be for signs,
+ and for seasons, and for days, and years." — Genesis 1:14
+
+This implements the fixed Hebrew calendar (Hillel II, 359 CE) which
+Israel has used since the Sanhedrin set it. It computes:
+- Hebrew date from Gregorian date
+- Sunset times by latitude/longitude
+- Feast day detection
+- Torah portion for the week
+- New Moon (Rosh Chodesh) tracking
+- Day begins at sunset (erev), not midnight
+
+No internet needed. Runs fully offline.
+"""
+
+import sys, math, json
+from datetime import datetime, date, timedelta
+
+# ───── Hebrew Month Data ─────
+HEBREW_MONTHS = [
+    ("Nisan", 30), ("Iyyar", 29), ("Sivan", 30), ("Tammuz", 29),
+    ("Av", 30), ("Elul", 29), ("Tishrei", 30), ("Cheshvan", 29),
+    ("Kislev", 30), ("Tevet", 29), ("Shevat", 30), ("Adar", 29)
+]
+HEBREW_MONTHS_LEAP = [
+    ("Nisan", 30), ("Iyyar", 29), ("Sivan", 30), ("Tammuz", 29),
+    ("Av", 30), ("Elul", 29), ("Tishrei", 30), ("Cheshvan", 29),
+    ("Kislev", 30), ("Tevet", 29), ("Shevat", 30), ("Adar I", 30), ("Adar II", 29)
+]
+
+# Hebrew days of week
+HEBREW_DAYS = ["Yom Rishon", "Yom Sheni", "Yom Shlishi", "Yom Revi'i",
+               "Yom Chamishi", "Yom Shishi", "Yom Shabbat"]
+
+def is_hebrew_leap(year):
+    """Hebrew leap year: years 3,6,8,11,14,17,19 of 19-year Metonic cycle."""
+    return (7 * year + 1) % 19 < 7
+
+def hebrew_year_days(year):
+    """Total days in a Hebrew year."""
+    return hebrew_delay(year + 1) - hebrew_delay(year)
+
+def hebrew_delay(year):
+    """Days from epoch (molad of Tishrei year 1) to Tishrei 1 of given year.
+    Uses the four postponement rules (dehiyot)."""
+    months_elapsed = (235 * ((year - 1) // 19) +
+                      12 * ((year - 1) % 19) +
+                      (7 * ((year - 1) % 19) + 1) // 19)
+    parts_elapsed = 204 + 793 * (months_elapsed % 1080)
+    hours_elapsed = (5 + 12 * months_elapsed +
+                     793 * (months_elapsed // 1080) +
+                     parts_elapsed // 1080)
+    parts = (parts_elapsed % 1080) + 1080 * (hours_elapsed % 24)
+    day = 1 + 29 * months_elapsed + hours_elapsed // 24
+
+    # Dehiyot (postponement rules)
+    if (parts >= 19440 or
+        (2 == day % 7 and parts >= 9924 and not is_hebrew_leap(year)) or
+        (1 == day % 7 and parts >= 16789 and is_hebrew_leap(year - 1))):
+        day += 1
+    if day % 7 in (0, 3, 5):
+        day += 1
+    return day
+
+def hebrew_month_days(year, month_idx):
+    """Days in a specific Hebrew month (0-indexed from Tishrei)."""
+    year_length = hebrew_year_days(year)
+    leap = is_hebrew_leap(year)
+    # Standard month lengths from Tishrei
+    month_lengths = [30]  # Tishrei always 30
+    # Cheshvan: 29 normally, 30 in "complete" years
+    if year_length in (355, 385):
+        month_lengths.append(30)
+    else:
+        month_lengths.append(29)
+    # Kislev: 30 normally, 29 in "deficient" years
+    if year_length in (353, 383):
+        month_lengths.append(29)
+    else:
+        month_lengths.append(30)
+    month_lengths.extend([29, 30, 29])  # Tevet, Shevat, Adar/Adar I
+    if leap:
+        month_lengths.extend([30, 29])  # Adar I 30, Adar II 29
+    else:
+        pass  # Adar already added as 29
+    month_lengths.extend([30, 29, 30, 29, 30, 29])  # Nisan through Elul
+    if month_idx < len(month_lengths):
+        return month_lengths[month_idx]
+    return 30
+
+HEBREW_EPOCH = 347995  # Julian day of Hebrew epoch
+
+def gregorian_to_jd(year, month, day):
+    """Convert Gregorian date to Julian Day Number."""
+    if month <= 2:
+        year -= 1
+        month += 12
+    A = year // 100
+    B = 2 - A + A // 4
+    return int(365.25 * (year + 4716)) + int(30.6001 * (month + 1)) + day + B - 1524.5
+
+def gregorian_to_hebrew(gyear, gmonth, gday):
+    """Convert Gregorian date to Hebrew date."""
+    jd = gregorian_to_jd(gyear, gmonth, gday)
+    # Approximate Hebrew year
+    hyear = gyear + 3761
+    # Adjust — Hebrew new year (Tishrei) falls in Sept/Oct
+    jd_tishrei = hebrew_delay(hyear) + HEBREW_EPOCH
+    if jd < jd_tishrei:
+        hyear -= 1
+        jd_tishrei = hebrew_delay(hyear) + HEBREW_EPOCH
+    # Next year's Tishrei for validation
+    jd_next = hebrew_delay(hyear + 1) + HEBREW_EPOCH
+    if jd >= jd_next:
+        hyear += 1
+        jd_tishrei = jd_next
+
+    day_of_year = int(jd - jd_tishrei)
+    leap = is_hebrew_leap(hyear)
+    year_len = hebrew_year_days(hyear)
+
+    # Walk through months from Tishrei
+    month_names_tishrei = ["Tishrei", "Cheshvan", "Kislev", "Tevet", "Shevat"]
+    if leap:
+        month_names_tishrei.extend(["Adar I", "Adar II"])
+    else:
+        month_names_tishrei.append("Adar")
+    month_names_tishrei.extend(["Nisan", "Iyyar", "Sivan", "Tammuz", "Av", "Elul"])
+
+    remaining = day_of_year
+    for i, mname in enumerate(month_names_tishrei):
+        mdays = hebrew_month_days(hyear, i)
+        if remaining < mdays:
+            return hyear, mname, remaining + 1
+        remaining -= mdays
+    return hyear, month_names_tishrei[-1], 1
+
+def sunset_time(lat, lon, dt):
+    """Calculate sunset time for given coordinates and date.
+    Returns (hour, minute) in local solar time.
+    Uses simplified astronomical calculation — no internet needed."""
+    day_of_year = dt.timetuple().tm_yday
+    # Solar declination
+    B = math.radians((360.0 / 365.0) * (day_of_year - 81))
+    decl = math.radians(23.45) * math.sin(B)
+    # Hour angle at sunset
+    lat_rad = math.radians(lat)
+    cos_ha = -math.tan(lat_rad) * math.tan(decl)
+    cos_ha = max(-1, min(1, cos_ha))  # Clamp for polar regions
+    ha = math.degrees(math.acos(cos_ha))
+    # Solar noon offset (approximate equation of time)
+    eot = 9.87 * math.sin(2 * B) - 7.53 * math.cos(B) - 1.5 * math.sin(B)
+    solar_noon = 12.0 - lon / 15.0 + eot / 60.0
+    # Sunset
+    sunset_decimal = solar_noon + ha / 15.0
+    # Adjust to local timezone offset (rough: lon/15)
+    tz_offset = round(lon / 15.0)
+    sunset_local = sunset_decimal + tz_offset
+    hours = int(sunset_local) % 24
+    minutes = int((sunset_local - int(sunset_local)) * 60)
+    return hours, minutes
+
+def detect_feast(hmonth, hday):
+    """Detect if today is a Biblical feast day."""
+    feasts = {
+        ("Nisan", 14): ("Passover (Pesach)", "Exodus 12:14", "The Lord's Passover — remember the blood of the Lamb"),
+        ("Nisan", 15): ("Unleavened Bread begins", "Leviticus 23:6", "Seven days of eating unleavened bread"),
+        ("Nisan", 16): ("Firstfruits", "Leviticus 23:10", "The first of the harvest belongs to God"),
+        ("Nisan", 21): ("Unleavened Bread ends", "Leviticus 23:8", "Holy convocation — the seventh day"),
+        ("Sivan", 6): ("Pentecost (Shavuot)", "Leviticus 23:15-16", "The giving of Torah and the Holy Spirit"),
+        ("Tishrei", 1): ("Feast of Trumpets (Yom Teruah)", "Leviticus 23:24", "A day of blowing trumpets — awake!"),
+        ("Tishrei", 2): ("Feast of Trumpets Day 2", "Leviticus 23:24", "The long day — the day no man knows"),
+        ("Tishrei", 10): ("Day of Atonement (Yom Kippur)", "Leviticus 23:27", "Afflict your souls — the most holy day"),
+        ("Tishrei", 15): ("Tabernacles begins (Sukkot)", "Leviticus 23:34", "Dwell in booths — God tabernacles with man"),
+        ("Tishrei", 22): ("Shemini Atzeret", "Leviticus 23:36", "The eighth day assembly — rejoicing in Torah"),
+        ("Kislev", 25): ("Hanukkah begins", "John 10:22", "The dedication — Jesus walked in Solomon's porch"),
+        ("Adar", 14): ("Purim", "Esther 9:21", "For such a time as this — Esther's deliverance"),
+    }
+    # Check exact date
+    feast = feasts.get((hmonth, hday))
+    if feast:
+        return feast
+    # Check multi-day ranges
+    if hmonth == "Nisan" and 15 <= hday <= 21:
+        return ("Chol HaMoed Pesach", "Leviticus 23:6-8", "Intermediate days of Unleavened Bread")
+    if hmonth == "Tishrei" and 15 <= hday <= 21:
+        return ("Chol HaMoed Sukkot", "Leviticus 23:34-36", "Intermediate days of Tabernacles")
+    if hmonth == "Kislev" and 25 <= hday <= 30:
+        return ("Hanukkah", "John 10:22-23", f"Hanukkah Day {hday - 24}")
+    if hmonth == "Tevet" and 1 <= hday <= 2:
+        return ("Hanukkah", "John 10:22-23", f"Hanukkah Day {hday + 5}")
+    return None
+
+def next_feast(hmonth, hday, hyear):
+    """Find the next upcoming feast."""
+    feast_dates = [
+        ("Nisan", 14, "Passover"), ("Nisan", 16, "Firstfruits"),
+        ("Sivan", 6, "Shavuot"), ("Tishrei", 1, "Yom Teruah"),
+        ("Tishrei", 10, "Yom Kippur"), ("Tishrei", 15, "Sukkot"),
+        ("Kislev", 25, "Hanukkah"), ("Adar", 14, "Purim"),
+    ]
+    month_order = ["Tishrei", "Cheshvan", "Kislev", "Tevet", "Shevat",
+                   "Adar", "Adar I", "Adar II", "Nisan", "Iyyar",
+                   "Sivan", "Tammuz", "Av", "Elul"]
+    cur_idx = month_order.index(hmonth) if hmonth in month_order else 0
+    best = None
+    for fm, fd, fn in feast_dates:
+        fi = month_order.index(fm) if fm in month_order else 0
+        if fi > cur_idx or (fi == cur_idx and fd > hday):
+            if best is None or fi < best[0] or (fi == best[0] and fd < best[1]):
+                best = (fi, fd, fn, fm)
+    if best:
+        return f"{best[3]} {best[1]} — {best[2]}"
+    return f"Nisan 14 — Passover (next year)"
+
+def get_torah_portion(gyear, gmonth, gday):
+    """Get this week's Torah portion based on the Shabbat cycle.
+    Simchat Torah resets the cycle on Tishrei 23."""
+    import os
+    conf = "/usr/share/alfred/sabbath/torah-portions.conf"
+    if not os.path.exists(conf):
+        return None
+    portions = []
+    with open(conf) as f:
+        for line in f:
+            line = line.strip()
+            if not line or line.startswith('#'):
+                continue
+            parts = line.split('|')
+            if len(parts) >= 5:
+                portions.append(parts)
+    if not portions:
+        return None
+    # Calculate week since Simchat Torah (Tishrei 23 of current Hebrew year)
+    # Approximate: use Gregorian week offset from October
+    d = date(gyear, gmonth, gday)
+    # Find last October (approximate Simchat Torah)
+    if gmonth >= 10:
+        simchat = date(gyear, 10, 10)
+    else:
+        simchat = date(gyear - 1, 10, 10)
+    weeks_since = (d - simchat).days // 7
+    idx = weeks_since % len(portions)
+    return portions[idx]
+
+def main():
+    now = datetime.now()
+    today = now.date()
+    gyear, gmonth, gday = today.year, today.month, today.day
+    hyear, hmonth, hday = gregorian_to_hebrew(gyear, gmonth, gday)
+
+    # Day of week (0=Monday in Python, but Hebrew week starts Sunday)
+    dow_py = today.weekday()  # 0=Mon ... 6=Sun
+    hebrew_dow = (dow_py + 1) % 7  # 0=Sun ... 6=Sat
+    hebrew_day_name = HEBREW_DAYS[hebrew_dow]
+
+    # Default latitude: Ottawa, Canada (45.42N, 75.70W)
+    # User can override via ~/.config/alfred/location.conf
+    lat, lon, city = 45.42, -75.70, "Ottawa"
+    import os
+    loc_file = os.path.expanduser("~/.config/alfred/location.conf")
+    if os.path.exists(loc_file):
+        with open(loc_file) as f:
+            for line in f:
+                if line.startswith("lat="):
+                    lat = float(line.split("=")[1].strip())
+                elif line.startswith("lon="):
+                    lon = float(line.split("=")[1].strip())
+                elif line.startswith("city="):
+                    city = line.split("=")[1].strip()
+
+    sh, sm = sunset_time(lat, lon, today)
+    sunset_str = f"{sh:02d}:{sm:02d}"
+    after_sunset = now.hour > sh or (now.hour == sh and now.minute >= sm)
+
+    # If after sunset, advance Hebrew date by 1 day (day begins at sunset)
+    if after_sunset:
+        tomorrow = today + timedelta(days=1)
+        hyear, hmonth, hday = gregorian_to_hebrew(tomorrow.year, tomorrow.month, tomorrow.day)
+        hebrew_dow = (hebrew_dow + 1) % 7
+        hebrew_day_name = HEBREW_DAYS[hebrew_dow]
+
+    feast = detect_feast(hmonth, hday)
+    nxt = next_feast(hmonth, hday, hyear)
+    portion = get_torah_portion(gyear, gmonth, gday)
+
+    cmd = sys.argv[1] if len(sys.argv) > 1 else "status"
+
+    if cmd == "json":
+        data = {
+            "hebrew_date": f"{hday} {hmonth} {hyear}",
+            "hebrew_day": hebrew_day_name,
+            "gregorian": today.isoformat(),
+            "sunset": sunset_str,
+            "after_sunset": after_sunset,
+            "is_shabbat": hebrew_dow == 6,
+            "is_feast": feast is not None,
+            "feast": {"name": feast[0], "ref": feast[1], "desc": feast[2]} if feast else None,
+            "next_feast": nxt,
+            "city": city,
+            "torah_portion": portion[1] if portion else None,
+        }
+        print(json.dumps(data, indent=2))
+    elif cmd == "oneliner":
+        parts = [f"{hday} {hmonth} {hyear}"]
+        parts.append(f"({hebrew_day_name})")
+        if feast:
+            parts.append(f"— {feast[0]}")
+        parts.append(f"| Sunset: {sunset_str}")
+        print(" ".join(parts))
+    else:
+        # Full display
+        is_shabbat = hebrew_dow == 6
+        print(f"  Hebrew Date:  {hday} {hmonth} {hyear}")
+        print(f"  Day:          {hebrew_day_name}" + (" — SHABBAT" if is_shabbat else ""))
+        print(f"  Gregorian:    {today.strftime('%A, %B %d, %Y')}")
+        print(f"  Sunset:       {sunset_str} ({city})" + (" ← day has turned" if after_sunset else ""))
+        if feast:
+            print(f"  TODAY:        {feast[0]} — {feast[1]}")
+            print(f"                {feast[2]}")
+        print(f"  Next Feast:   {nxt}")
+        if portion:
+            print(f"  Torah:        Parashat {portion[1]} — {portion[4]}")
+            print(f"                {portion[2]} | Haftarah: {portion[3]}")
+
+if __name__ == "__main__":
+    main()
+HEBREWCAL
+
+chmod +x /usr/share/alfred/sabbath/hebrew-calendar.py
+
+cat > /usr/local/bin/alfred-sabbath << 'SABBATH'
+#!/bin/bash
+# ═══════════════════════════════════════════════════════════════
+# alfred-sabbath — Biblical Calendar & Sabbath Mode
+#
+# "Remember the sabbath day, to keep it holy. Six days shalt thou
+#  labour, and do all thy work: But the seventh day is the sabbath
+#  of the LORD thy God." — Exodus 20:8-10
+# ═══════════════════════════════════════════════════════════════
+
+GOLD='\033[38;5;220m'; GREEN='\033[0;32m'; CYAN='\033[0;36m'
+RED='\033[0;31m'; BOLD='\033[1m'; DIM='\033[2m'; NC='\033[0m'
+
+SABBATH_DIR="/usr/share/alfred/sabbath"
+SABBATH_STATE="$HOME/.config/alfred/sabbath-mode"
+SABBATH_LOG="$HOME/.alfred/sabbath-log"
+
+get_day_of_week() {
+    date +%u  # 1=Monday, 5=Friday, 6=Saturday, 7=Sunday
+}
+
+get_sunset_approx() {
+    # Approximate sunset time by month (for notification purposes)
+    MONTH=$(date +%m)
+    case $MONTH in
+        01|02|11|12) echo "17:00" ;;
+        03|04|09|10) echo "18:30" ;;
+        05|06|07|08) echo "20:00" ;;
+    esac
+}
+
+case "${1:-status}" in
+    status)
+        echo -e "${GOLD}═══ Sabbath & Biblical Calendar ═══${NC}"
+        echo ""
+
+        # Use Hebrew Calendar Engine for full status
+        if [ -x /usr/share/alfred/sabbath/hebrew-calendar.py ]; then
+            python3 /usr/share/alfred/sabbath/hebrew-calendar.py status
+        else
+            # Fallback if Python engine not available
+            DOW=$(get_day_of_week)
+            SUNSET=$(get_sunset_approx)
+            case $DOW in
+                5) echo -e "  Today: ${GOLD}FRIDAY${NC} — Sabbath preparation day"
+                   echo -e "  Sunset (approx): ${CYAN}$SUNSET${NC} — Sabbath begins" ;;
+                6) echo -e "  Today: ${GOLD}SHABBAT${NC} — The day of rest" ;;
+                7) echo -e "  Today: ${CYAN}Sunday${NC} — The Lord rose. Begin with worship." ;;
+                *) DAYS_TO_SABBATH=$((5 - DOW))
+                   [ "$DAYS_TO_SABBATH" -le 0 ] && DAYS_TO_SABBATH=$((DAYS_TO_SABBATH + 7))
+                   echo -e "  Days until Sabbath: ${CYAN}$DAYS_TO_SABBATH${NC}" ;;
+            esac
+        fi
+        echo ""
+
+        # Sabbath mode status
+        if [ -f "$SABBATH_STATE" ]; then
+            echo -e "  Sabbath mode: ${GREEN}ACTIVE${NC} — only Bible & worship available"
+        else
+            echo -e "  Sabbath mode: ${CYAN}inactive${NC}"
+        fi
+        echo ""
+
+        # Quick commands
+        echo "  alfred-sabbath enter    — Enter Sabbath mode"
+        echo "  alfred-sabbath exit     — Exit Sabbath mode"
+        echo "  alfred-sabbath feasts   — Show Biblical feasts"
+        echo "  alfred-sabbath torah    — This week's Torah portion"
+        echo "  alfred-sabbath prep     — Friday preparation checklist"
+        echo "  alfred-sabbath json     — Machine-readable Hebrew date (JSON)"
+        echo ""
+        ;;
+
+    enter)
+        mkdir -p "$(dirname "$SABBATH_STATE")"
+        echo "$(date -Is)" > "$SABBATH_STATE"
+
+        echo -e "${GOLD}"
+        echo "  ╔═══════════════════════════════════════════════════╗"
+        echo "  ║                                                   ║"
+        echo "  ║          ✝  SHABBAT SHALOM  ✝                    ║"
+        echo "  ║                                                   ║"
+        echo "  ║  \"Come unto me, all ye that labour and are        ║"
+        echo "  ║   heavy laden, and I will give you rest.\"         ║"
+        echo "  ║                           — Matthew 11:28         ║"
+        echo "  ║                                                   ║"
+        echo "  ║  Sabbath mode is now ACTIVE.                      ║"
+        echo "  ║  Only Bible and worship commands are available.    ║"
+        echo "  ║  Your work can wait. God cannot.                  ║"
+        echo "  ║                                                   ║"
+        echo "  ╚═══════════════════════════════════════════════════╝"
+        echo -e "${NC}"
+
+        # Log entry
+        mkdir -p "$SABBATH_LOG"
+        echo "ENTER $(date -Is)" >> "$SABBATH_LOG/sabbath-history.log"
+        ;;
+
+    exit)
+        rm -f "$SABBATH_STATE"
+        echo -e "${GOLD}Sabbath mode ended.${NC}"
+        echo ""
+        echo "  Havdalah — separation of the holy from the ordinary."
+        echo "  May the coming week be blessed."
+        echo ""
+        echo -e "  ${DIM}\"The LORD bless thee, and keep thee.\" — Numbers 6:24${NC}"
+
+        mkdir -p "$SABBATH_LOG"
+        echo "EXIT $(date -Is)" >> "$SABBATH_LOG/sabbath-history.log"
+        ;;
+
+    feasts)
+        echo -e "${GOLD}═══ Biblical Feasts — The Appointed Times of the LORD ═══${NC}"
+        echo -e "${DIM}\"These are the feasts of the LORD, even holy convocations.\" — Lev 23:2${NC}"
+        echo ""
+        while IFS='|' read -r month day dur name scripture desc; do
+            [[ "$month" =~ ^# ]] && continue
+            echo -e "  ${GOLD}$name${NC}"
+            echo -e "    $month $day ($dur day(s)) — ${CYAN}$scripture${NC}"
+            echo -e "    ${DIM}$desc${NC}"
+            echo ""
+        done < "$SABBATH_DIR/feasts.conf"
+        ;;
+
+    torah)
+        echo -e "${GOLD}═══ This Week's Torah Portion ═══${NC}"
+        echo ""
+
+        # Use Hebrew Calendar Engine for proper Torah portion tracking
+        if [ -x /usr/share/alfred/sabbath/hebrew-calendar.py ]; then
+            PORTION_JSON=$(python3 /usr/share/alfred/sabbath/hebrew-calendar.py json 2>/dev/null)
+            PORTION_NAME=$(echo "$PORTION_JSON" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('torah_portion',''))" 2>/dev/null)
+            if [ -n "$PORTION_NAME" ] && [ "$PORTION_NAME" != "None" ]; then
+                LINE=$(grep "|${PORTION_NAME}|" "$SABBATH_DIR/torah-portions.conf" 2>/dev/null | head -1)
+                if [ -n "$LINE" ]; then
+                    IFS='|' read -r week name torah haftarah desc <<< "$LINE"
+                    echo -e "  ${BOLD}Parashat $name${NC} — $desc"
+                    echo -e "  Torah: ${CYAN}$torah${NC}"
+                    echo -e "  Haftarah: ${CYAN}$haftarah${NC}"
+                    echo ""
+                    echo -e "  ${DIM}Read with: alfred-bible read $(echo "$torah" | cut -d' ' -f1) $(echo "$torah" | grep -oP '\d+' | head -1)${NC}"
+                else
+                    echo "  This week: Parashat $PORTION_NAME"
+                fi
+            else
+                echo "  Torah portion calculation unavailable."
+            fi
+        else
+            # Fallback: cycle through all 54 portions by week number
+            WEEK_NUM=$(date +%U)
+            PORTION_IDX=$(( (WEEK_NUM % 54) + 1 ))
+            LINE=$(grep "^${PORTION_IDX}|" "$SABBATH_DIR/torah-portions.conf" 2>/dev/null)
+            if [ -n "$LINE" ]; then
+                IFS='|' read -r week name torah haftarah desc <<< "$LINE"
+                echo -e "  ${BOLD}Parashat $name${NC} — $desc"
+                echo -e "  Torah: ${CYAN}$torah${NC}"
+                echo -e "  Haftarah: ${CYAN}$haftarah${NC}"
+            else
+                echo "  Torah portion data not available for this week."
+            fi
+        fi
+        echo ""
+        ;;
+
+    prep)
+        echo -e "${GOLD}═══ Friday Preparation — Getting Ready for Sabbath ═══${NC}"
+        echo ""
+        echo "  Before sunset on Friday:"
+        echo ""
+        echo -e "  ${CYAN}□${NC} Finish your work for the week"
+        echo -e "  ${CYAN}□${NC} Save and close all projects"
+        echo -e "  ${CYAN}□${NC} Prepare Scripture for Sabbath reading"
+        echo -e "  ${CYAN}□${NC} Set worship music ready"
+        echo -e "  ${CYAN}□${NC} Clean your workspace (physical and digital)"
+        echo -e "  ${CYAN}□${NC} Light candles (physical, not digital)"
+        echo -e "  ${CYAN}□${NC} Enter Sabbath mode: ${BOLD}alfred-sabbath enter${NC}"
+        echo ""
+        echo -e "  ${DIM}\"And on the seventh day God ended his work which he had made;${NC}"
+        echo -e "  ${DIM} and he rested on the seventh day.\" — Genesis 2:2${NC}"
+        echo ""
+        ;;
+
+    json)
+        # Machine-readable Hebrew date for other tools
+        if [ -x /usr/share/alfred/sabbath/hebrew-calendar.py ]; then
+            python3 /usr/share/alfred/sabbath/hebrew-calendar.py json
+        else
+            echo '{"error": "Hebrew calendar engine not installed"}'
+        fi
+        ;;
+
+    help|*)
+        echo -e "${GOLD}═══ alfred-sabbath — The Lord's Calendar ═══${NC}"
+        echo ""
+        echo "  alfred-sabbath status   — Show Sabbath status (Hebrew date primary)"
+        echo "  alfred-sabbath enter    — Enter Sabbath mode"
+        echo "  alfred-sabbath exit     — Exit Sabbath mode (Havdalah)"
+        echo "  alfred-sabbath feasts   — Biblical feasts calendar"
+        echo "  alfred-sabbath torah    — This week's Torah portion (all 54)"
+        echo "  alfred-sabbath prep     — Friday preparation checklist"
+        echo "  alfred-sabbath json     — Machine-readable Hebrew date (JSON)"
+        echo ""
+        echo "  \"Remember the sabbath day, to keep it holy.\""
+        echo "                                 — Exodus 20:8"
+        ;;
+esac
+SABBATH
+chmod +x /usr/local/bin/alfred-sabbath
+
+# ═══════════════════════════════════════════════════
+# 4. DESKTOP LAUNCHER
+# ═══════════════════════════════════════════════════
+cat > /usr/share/applications/alfred-sabbath.desktop << 'DESKTOP'
+[Desktop Entry]
+Type=Application
+Name=Sabbath Calendar
+GenericName=Biblical Calendar
+Comment=Biblical feasts, Sabbath mode, and Torah portions
+Exec=xfce4-terminal -e "alfred-sabbath"
+Icon=x-office-calendar
+Terminal=false
+Categories=Alfred;
+Keywords=sabbath;shabbat;calendar;feasts;torah;bible;
+DESKTOP
+
+echo "╔═══════════════════════════════════════════════════════════╗"
+echo "║  [0722] Sabbath Calendar — COMPLETE                      ║"
+echo "║  ✓ Hebrew Calendar Engine (Python — offline)              ║"
+echo "║  ✓ All 54 Torah portions (complete annual cycle)          ║"
+echo "║  ✓ 12 Biblical feasts with detection engine              ║"
+echo "║  ✓ Sunset calculator by latitude/longitude               ║"
+echo "║  ✓ Hebrew date PRIMARY, Gregorian secondary              ║"
+echo "║  ✓ Sabbath mode (enter/exit) + JSON API                  ║"
+echo "║  ✓ Day begins at sunset — as God ordained                ║"
+echo "║  Remember the sabbath day. — Exodus 20:8                 ║"
+echo "╚═══════════════════════════════════════════════════════════╝"

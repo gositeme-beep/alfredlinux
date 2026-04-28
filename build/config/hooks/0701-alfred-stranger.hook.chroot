@@ -1,0 +1,150 @@
+#!/bin/bash
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# ═══════════════════════════════════════════════════════════════════════════════
+# HOOK 0701: The Stranger — Hospitality for All Who Enter
+#
+# "I was a stranger, and ye took me in." — Matthew 25:35
+#
+# Updates the first-boot experience to gently welcome those who may not
+# share our faith. God is NOT hidden. But the door is open to everyone.
+# The Kingdom doesn't chase people away — it leaves the door open.
+#
+# BUILD: v7.77 Kingdom of God Edition
+# ═══════════════════════════════════════════════════════════════════════════════
+
+set -e
+chmod 1777 /tmp 2>/dev/null || true
+
+echo "╔═══════════════════════════════════════════════════════════╗"
+echo "║  [0701] The Stranger — Hospitality for All               ║"
+echo "║  'I was a stranger, and ye took me in.' — Matt 25:35     ║"
+echo "╚═══════════════════════════════════════════════════════════╝"
+
+# ═══════════════════════════════════════════════════
+# 1. WELCOME NOTE FOR ALL USERS
+# ═══════════════════════════════════════════════════
+echo "[STRANGER-01] Creating universal welcome..."
+
+mkdir -p /etc/skel/Desktop
+cat > /etc/skel/Desktop/Welcome.txt << 'WELCOME'
+═══════════════════════════════════════════════════════════════
+  Welcome to Alfred Linux 7.77 — Kingdom of God Edition
+═══════════════════════════════════════════════════════════════
+
+  This operating system was built in faith,
+  but it was built for everyone.
+
+  The Bible, the music, and the tools are here if you
+  want them. If you don't, they'll wait quietly.
+  Nothing is forced. Everything is offered.
+
+  You are welcome here.
+
+  ── What's Inside ──
+
+  📖  39,482 Bible verses (type: alfred-bible)
+  ♪   27 worship tracks (type: alfred-worship)
+  🔐  Post-quantum encryption (Kyber-1024)
+  🌐  Sovereign mesh network
+  🛡️  Military-grade security hardening
+
+  ── Your Privacy ──
+
+  This OS collects NOTHING. No telemetry. No tracking.
+  No data is sent anywhere. Your computer is yours.
+  Your files are yours. Your thoughts are yours.
+
+  ── Who Built This ──
+
+  Commander Danny William Perez and his daughter Eden,
+  with love, for the glory of God and the service of all.
+
+  alfredlinux.com
+═══════════════════════════════════════════════════════════════
+WELCOME
+
+# ═══════════════════════════════════════════════════
+# 2. FIRST-BOOT GENTLE PATH
+# ═══════════════════════════════════════════════════
+echo "[STRANGER-02] Installing gentle first-boot choice..."
+
+cat > /usr/local/bin/alfred-welcome-choice.sh << 'CHOICE'
+#!/bin/bash
+# Runs AFTER the main first-boot blessing (0700)
+# Offers the user a gentle choice about spiritual content
+
+STAMP="/var/lib/alfred/welcome-choice.done"
+[ -f "$STAMP" ] && exit 0
+
+# Only run in GUI
+[ -z "${DISPLAY:-}" ] && exit 0
+command -v zenity &>/dev/null || exit 0
+
+RESULT=$(zenity --list \
+    --title="✝ Alfred Linux — Your Experience" \
+    --text="How would you like your Alfred experience?\n\nGod is always welcome here. But so are you, exactly as you are." \
+    --radiolist \
+    --column="Select" --column="Experience" --column="Description" \
+    TRUE  "Kingdom"    "Full Kingdom experience — daily verses, worship reminders, Sabbath awareness" \
+    FALSE "Gentle"     "Spiritual content available but no automatic reminders or popups" \
+    FALSE "Sovereign"  "Clean experience — all tools available but no spiritual notifications" \
+    --width=560 --height=350 2>/dev/null) || RESULT="Kingdom"
+
+mkdir -p /etc/alfred
+case "$RESULT" in
+    "Kingdom")
+        echo "kingdom" > /etc/alfred/experience
+        ;;
+    "Gentle")
+        echo "gentle" > /etc/alfred/experience
+        # Disable autostart reminders but keep everything installed
+        rm -f ~/.config/autostart/kingdom-worship-reminder.desktop 2>/dev/null
+        ;;
+    "Sovereign")
+        echo "sovereign" > /etc/alfred/experience
+        # Disable autostart reminders and daily verse
+        rm -f ~/.config/autostart/kingdom-worship-reminder.desktop 2>/dev/null
+        # Create flag that profile.d script checks
+        touch ~/.alfred-no-verse
+        ;;
+esac
+
+touch "$STAMP"
+CHOICE
+chmod +x /usr/local/bin/alfred-welcome-choice.sh
+
+cat > /etc/xdg/autostart/alfred-welcome-choice.desktop << 'AUTOSTART'
+[Desktop Entry]
+Type=Application
+Name=Alfred Welcome Choice
+Comment=Choose your Kingdom experience level
+Exec=/usr/local/bin/alfred-welcome-choice.sh
+Terminal=false
+X-GNOME-Autostart-enabled=true
+OnlyShowIn=XFCE;GNOME;KDE;LXQt;
+AUTOSTART
+
+# ═══════════════════════════════════════════════════
+# 3. MAKE DAILY VERSE RESPECT THE CHOICE
+# ═══════════════════════════════════════════════════
+echo "[STRANGER-03] Patching daily verse for experience level..."
+
+cat > /etc/profile.d/alfred-experience-gate.sh << 'GATE'
+# Alfred Linux — respect the user's experience choice
+# If they chose "sovereign" and created ~/.alfred-no-verse,
+# the daily verse script in alfred-daily-verse.sh will check this.
+# This file just exports the experience level for other scripts.
+if [ -f /etc/alfred/experience ]; then
+    export ALFRED_EXPERIENCE=$(cat /etc/alfred/experience 2>/dev/null)
+else
+    export ALFRED_EXPERIENCE="kingdom"
+fi
+GATE
+
+echo "╔═══════════════════════════════════════════════════════════╗"
+echo "║  [0701] The Stranger — COMPLETE                          ║"
+echo "║  ✓ Universal welcome note on Desktop                     ║"
+echo "║  ✓ First-boot experience chooser (Kingdom/Gentle/Sov)   ║"
+echo "║  ✓ Daily verse respects user choice                      ║"
+echo "║  The door is open. The stranger is welcome.              ║"
+echo "╚═══════════════════════════════════════════════════════════╝"

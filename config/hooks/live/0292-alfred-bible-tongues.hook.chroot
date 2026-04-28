@@ -1,19 +1,12 @@
 #!/bin/bash
-# SPDX-License-Identifier: AGPL-3.0-or-later
 # ═══════════════════════════════════════════════════════════════════════════════
 # HOOK 0292: Bible Tongues — The Word in Every Language
 #
 # "And they were all filled with the Holy Ghost, and began to speak
 #  with other tongues, as the Spirit gave them utterance." — Acts 2:4
 #
-# Multilingual Bible: English (AKJV) plus seed tongues offline (Spanish es + es-419 + es-ES,
-# Ladino, Chavacano; French, Hebrew, Yiddish, Greek, Latin, German, Portuguese, Russian, Chinese, Japanese,
-# Arabic (MSA + Darija / Egyptian / Levantine / Gulf vernacular seeds), Hindi,
-# Italian, Romanian, Polish, Ukrainian, Korean, Turkish, Dutch,
-# Vietnamese, Tagalog, Filipino, Urdu, Swahili, Amharic, Yoruba, Igbo, Hausa,
-# Zulu, Xhosa, Afrikaans, Somali, Twi, Jamaican Patwa, Haitian Creole, Indonesian,
-# Persian (Farsi), Burmese, …); full texts may be added under
-# /usr/share/alfred/bible/*.tsv later.
+# Multilingual Bible support: English (AKJV), Spanish (Reina-Valera),
+# French (Louis Segond), and Hebrew. alfred-bible --lang support.
 #
 # BUILD: v7.77 Kingdom of God Edition
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -37,54 +30,10 @@ echo "[TONGUES-01] Creating language index..."
 cat > "$BIBLE_DIR/languages.conf" << 'CONF'
 # Alfred Bible — Supported Languages
 # Format: code|name|file|source
-en|English|akjv-bible.tsv|Authorized King Jesus Version — Perez Family Edition (AKJV)
-es|Español|rvr-bible.tsv|Reina-Valera Revisada 1960 (Spanish — general / liturgical)
-es-419|Español (419 — América Latina)|es-419-bible.tsv|Latin-American Spanish (public-domain style samples)
-es-ES|Español (España)|es-ES-bible.tsv|Peninsular Spanish (public-domain style samples; vosotros where marked)
-lad|Ladino / Djudeo-espanyol|lad-bible.tsv|Ladino / Judeo-Spanish (Latin-letter samples)
-cbk|Chabacano|cbk-bible.tsv|Chavacano — Spanish-lexifier creole, Zamboanga-style (public-domain style samples)
+en|English|akjv-bible.tsv|Authorized King James Version
+es|Español|rvr-bible.tsv|Reina-Valera Revisada 1960
 fr|Français|lsg-bible.tsv|Louis Segond 1910
 he|עברית|hebrew-bible.tsv|Westminster Leningrad Codex (OT)
-yi|ייִדיש|yi-bible.tsv|Yiddish — Hebrew-letter samples (public-domain style)
-gr|Ἑλληνικά|greek-bible.tsv|LXX / Greek NT (public-domain samples)
-la|Latina|latin-bible.tsv|Latin Vulgate-style (public-domain samples)
-de|Deutsch|de-bible.tsv|Luther 1912 (public-domain samples)
-pt|Português|pt-bible.tsv|Portuguese (public-domain samples)
-ru|Русский|ru-bible.tsv|Russian Synodal-style (public-domain samples)
-zh|中文|zh-bible.tsv|Chinese Union–style (public-domain samples)
-ja|日本語|ja-bible.tsv|Japanese (public-domain samples)
-ar|العربية|ar-bible.tsv|Arabic (MSA — Van Dyke–style public-domain samples)
-ary|الدارجة المغربية|ary-bible.tsv|Moroccan Arabic Darija (colloquial samples; book names MSA)
-arz|مصري|arz-bible.tsv|Egyptian Arabic عامية (colloquial samples; book names MSA)
-apc|عربي شامي|apc-bible.tsv|Levantine Arabic (colloquial samples; book names MSA)
-afb|عربي خليجي|afb-bible.tsv|Gulf Arabic vernacular (colloquial samples; book names MSA)
-hi|हिन्दी|hi-bible.tsv|Hindi (public-domain samples)
-it|Italiano|it-bible.tsv|Italian Diodati-style (public-domain samples)
-ro|Română|ro-bible.tsv|Romanian (traditional evangelical samples)
-pl|Polski|pl-bible.tsv|Polish (public-domain samples)
-uk|Українська|uk-bible.tsv|Ukrainian (public-domain samples)
-ko|한국어|ko-bible.tsv|Korean (public-domain samples)
-tr|Türkçe|tr-bible.tsv|Turkish (public-domain samples)
-nl|Nederlands|nl-bible.tsv|Dutch Statenvertaling-style (public-domain samples)
-vi|Tiếng Việt|vi-bible.tsv|Vietnamese (public-domain samples)
-tl|Tagalog|tl-bible.tsv|Tagalog (public-domain samples)
-fil|Filipino|fil-bible.tsv|Filipino Philippines (public-domain samples; same seed set as Tagalog)
-ur|اردو|ur-bible.tsv|Urdu (public-domain samples)
-sw|Kiswahili|sw-bible.tsv|Swahili (public-domain samples)
-am|አማርኛ|am-bible.tsv|Amharic (public-domain samples)
-yo|Yorùbá|yo-bible.tsv|Yoruba (public-domain samples)
-ig|Igbo|ig-bible.tsv|Igbo (public-domain samples)
-ha|Hausa|ha-bible.tsv|Hausa (public-domain samples)
-zu|isiZulu|zu-bible.tsv|Zulu (public-domain samples)
-xh|isiXhosa|xh-bible.tsv|Xhosa (public-domain samples)
-af|Afrikaans|af-bible.tsv|Afrikaans (public-domain samples)
-so|Soomaali|so-bible.tsv|Somali (public-domain samples)
-tw|Twi|tw-bible.tsv|Twi / Akan (public-domain samples)
-jam|Jamaican Patwa|jam-bible.tsv|Jamaica — Jamaican Creole (public-domain style samples)
-ht|Kreyòl ayisyen|ht-bible.tsv|Haitian Creole (public-domain style samples)
-id|Bahasa Indonesia|id-bible.tsv|Indonesian (public-domain style samples)
-fa|فارسی|fa-bible.tsv|Persian / Farsi (public-domain style samples)
-my|မြန်မာ|my-bible.tsv|Burmese / Myanmar (public-domain style samples)
 CONF
 
 # ═══════════════════════════════════════════════════
@@ -111,78 +60,6 @@ Juan	14	6	Jesús le dijo: Yo soy el camino, y la verdad, y la vida; nadie viene 
 Romanos	8	28	Y sabemos que a los que aman a Dios, todas las cosas les ayudan a bien, esto es, a los que conforme a su propósito son llamados.
 Filipenses	4	13	Todo lo puedo en Cristo que me fortalece.
 Apocalipsis	22	21	La gracia de nuestro Señor Jesucristo sea con todos vosotros. Amén.
-SEED
-
-echo "[TONGUES-02b] Spanish — Latin America (BCP es-419 style) seed..."
-cat > "$BIBLE_DIR/es-419-bible-seed.tsv" << 'SEED'
-Book	Chapter	Verse	Text
-Génesis	1	1	En el principio creó Dios los cielos y la tierra.
-Génesis	1	2	La tierra estaba sin forma y vacía; tinieblas cubrían la faz del abismo, y el Espíritu de Dios se movía sobre la faz de las aguas.
-Génesis	1	3	Y dijo Dios: Haya luz; y fue la luz.
-Salmos	23	1	Salmo de David: El Señor es mi pastor; nada me faltará.
-Salmos	23	2	En lugares de pastos delicados me hará descansar; junto a aguas de reposo me pastoreará.
-Salmos	23	3	Confortará mi alma; me guiará por sendas de justicia por amor de su nombre.
-Salmos	23	4	Aunque ande en valle de sombra de muerte, no temeré mal alguno, porque tú estarás conmigo; tu vara y tu cayado me infundirán aliento.
-Salmos	91	1	El que habita al abrigo del Altísimo morará bajo la sombra del Omnipotente.
-Juan	3	16	Porque de tal manera amó Dios al mundo, que dio a su Hijo unigénito, para que todo aquel que en él cree, no se pierda, sino que tenga vida eterna.
-Juan	14	6	Jesús le dijo: Yo soy el camino, y la verdad, y la vida; nadie viene al Padre, sino por mí.
-Romanos	8	28	Y sabemos que para los que aman a Dios, todas las cosas cooperan para bien, a los que conforme a su propósito son llamados.
-Filipenses	4	13	Todo lo puedo en Cristo que me fortalece.
-Apocalipsis	22	21	La gracia del Señor Jesús sea con todos ustedes. Amén.
-SEED
-
-echo "[TONGUES-02c] Spanish — España (Península) seed..."
-cat > "$BIBLE_DIR/es-ES-bible-seed.tsv" << 'SEED'
-Book	Chapter	Verse	Text
-Génesis	1	1	En el principio creó Dios los cielos y la tierra.
-Génesis	1	2	La tierra estaba informe y vacía, y la tiniebla estaba sobre la faz del abismo; y el Espíritu de Dios se movía sobre la faz de las aguas.
-Génesis	1	3	Y dijo Dios: Sea la luz; y hubo luz.
-Salmos	23	1	Cántico de David: Jehová es mi pastor; nada me faltará.
-Salmos	23	2	En lugares de delicados pastos me hará descansar; junto a aguas de reposo me pastoreará.
-Salmos	23	3	Confortará mi alma; me guiará por sendas de justicia por amor de su nombre.
-Salmos	23	4	Aunque ande en valle de sombra de muerte, no temeré mal alguno, porque tú estarás conmigo; tu vara y tu cayado me infundirán aliento.
-Salmos	91	1	El que habita al abrigo del Altísimo morará bajo la sombra del Omnipotente.
-Juan	3	16	Porque tanto amó Dios al mundo, que dio a su Hijo unigénito, para que todo el que cree en él no se pierda, sino que tenga vida eterna.
-Juan	14	6	Jesús le dijo: Yo soy el camino, y la verdad, y la vida; nadie viene al Padre, sino por mí.
-Romanos	8	28	Y sabemos que a los que aman a Dios, todas las cosas les ayudan a bien, a los que conforme a su propósito son llamados.
-Filipenses	4	13	Todo lo puedo en el que me fortalece.
-Apocalipsis	22	21	La gracia de nuestro Señor Jesucristo sea con todos vosotros. Amén.
-SEED
-
-echo "[TONGUES-02d] Ladino (Djudeo-espanyol) seed..."
-cat > "$BIBLE_DIR/lad-bible-seed.tsv" << 'SEED'
-Book	Chapter	Verse	Text
-Génesis	1	1	En el prinzipio krió el Dio el syelo i la tierra.
-Génesis	1	2	La tierra era vazía i sin forma, i tinieblas sobre la faz del abismo; i el espíritu de Dio se movía sobre las aguas.
-Génesis	1	3	I dixo el Dio: Sea la luz; i fue la luz.
-Salmos	23	1	Salmo de David: El Dio es mi pastór; dinguna koza me faltará.
-Salmos	23	2	Me faze repozar en verdes pastos; me guía a aguas quiétas.
-Salmos	23	3	Refreska mi alma; me guía por sendas de djustisia por su nombre.
-Salmos	23	4	Aunke ande en valle de ombre de muerte, no temeré mal, porque tu estás conmigo; tu vara i tu gayato me konsuelan.
-Salmos	91	1	El ke mora al abrigo del Altísimo repozará a la sombra del Todopoderoso.
-Juan	3	16	Porke tanto amó el Dio al mundo, ke dio a su hijo uniko, para ke todo el ke kree en él no se pierda, ma tenga vida eterna.
-Juan	14	6	Le dixo Jeshúa: Yo so el kamino, la verdad i la vida; ninguno viene al Padre si no por mi.
-Romanos	8	28	Sabemos ke para los ke aman al Dio, todas las kozas ayudan a bien, a los ke son yamados konforme a su proposito.
-Filipenses	4	13	Todo lo puedo en Kristo, el ke me da fuerza.
-Apocalipsis	22	21	La grasia de nuestro Señor Jeshúa Kristo sea con todos vosotros. Amén.
-SEED
-
-echo "[TONGUES-02e] Chabacano (cbk) seed..."
-cat > "$BIBLE_DIR/cbk-bible-seed.tsv" << 'SEED'
-Book	Chapter	Verse	Text
-Génesis	1	1	Na principio Dios ha creá el cielo y el tierra.
-Génesis	1	2	El tierra ta vacío y sin forma; tinieblas ta encima del abismo, y el Espíritu de Dios ta mové encima del agua.
-Génesis	1	3	Dios hablá: «Hacé luz», y ta salé luz.
-Salmos	23	1	Salmo de David: El Señor es mi pastor; nada yo ta falta conmigo.
-Salmos	23	2	Él ta hacé conmigo descansá en pasto verde; llevá conmigo cerca del agua quieta.
-Salmos	23	3	Ta restaurá mi alma; ta guía conmigo por el camino del justo por su nombre.
-Salmos	23	4	Aunque yo ta andá en el valle de sombra de muerte, no ta tené miedo del mal, porque tu ta conmigo; tu báculo y tu cayado ta consolá conmigo.
-Salmos	91	1	El que ta habitá en el escondite del Altísimo, ta descansá bajo la sombra del Todopoderoso.
-Juan	3	16	Porque Dios ta amá con el mundo mucho, que ta dá su Hijo único, para que todo el que cree con Él no ta perecé, sino que ta tené vida eterna.
-Juan	14	6	Jesús hablá con él: «Yo soy el camino, el verdad, y el vida; nadie ta vení con el Padre si no por mí.»
-Romanos	8	28	Sabemos que para con los que aman con Dios, todas las cosas ta juntá para bien, con los que ta llamá según su propósito.
-Filipenses	4	13	Todo cosa yo puede con Cristo, el que ta dá conmigo fuerza.
-Apocalipsis	22	21	El gracia de nuestro Señor Jesucristo sea con todos ustedes. Amén.
 SEED
 
 # ═══════════════════════════════════════════════════
@@ -224,701 +101,6 @@ Book	Chapter	Verse	Text
 SEED
 
 # ═══════════════════════════════════════════════════
-# 4a. YIDDISH (yi) — Hebrew-letter samples
-# ═══════════════════════════════════════════════════
-echo "[TONGUES-04a] Yiddish seed..."
-cat > "$BIBLE_DIR/yi-bible-seed.tsv" << 'SEED'
-Book	Chapter	Verse	Text
-בראשית	1	1	אין אָנהײַב באַשאַף גאָט די הימל און די ערד׃
-בראשית	1	2	און די ערד איז געווען טוהו און װוהואָ; און פֿינסטערניש איז געווען אויף פּני תהום; און רוח האָט געשװומען איבער די װאַסערן׃
-בראשית	1	3	און גאָט האָט געזאָגט: זאָל זײַן ליכט! און עס איז געווען ליכט׃
-תהלים	23	1	מזמור לדוד: דער הער איז מײַן שעפֿער; איך װעל נישט מײַנגלען׃
-תהלים	23	2	ער לײַגט מיך אין גרינע וועזן; ער פֿירט מיך צו שטילע װאַסערן׃
-תהלים	23	3	ער באַנייט מײַן נשמה; ער פֿירט מיך אויף סטעגן פון גערעכטיקײַט, צוליב זײַן נאָמען׃
-תהלים	23	4	און אפילו ווען איך גיי אין טאָל פון טויטשאַטן, וועל איך נישט פֿירכטן קין רע; ווײַל דו ביסט בײַ מיר; דײַן שטעקן און דײַן שטאָק טרייסטן מיך׃
-יוחנן	3	16	ווײַל גאָט האָט די וועלט אַזוי ליב געהאַט, אַז ער האָט זיין אײַנציקן זון געגעבן, אַז יעדער וועלכער גלייבט אין אים זאָל נישט פֿערלירן, נאָר האָבן אייביק לעבן׃
-יוחנן	14	6	יעזוס האָט אים געזאָגט: איך בין דער װעג און די אמת און דעם לעבן; קיינער קומט נישט צום טאַטן אָן נאָר דורך מיך׃
-רומים	8	28	מיר װייסן, אַז אלץ איז גוט פֿאַר די וועלכע ליב האָבן גאָט, די וועלכע זײַנען גערופן לויט זײַן פלאַן׃
-פיליפּער	4	13	איך קען אלץ דורך דעם וועלכער מאַכט מיך שטאַרק׃
-חזון	22	21	די גנאָדע פון אונזער האערן יעזוס כריסטוס זאָל זײַן מיט אלעמען׃ אמן׃
-SEED
-
-# ═══════════════════════════════════════════════════
-# 4b–4k. GREEK, LATIN, AND OTHER MAJOR TONGUES (seed corpora)
-# ═══════════════════════════════════════════════════
-echo "[TONGUES-04b] Greek (LXX/NT) seed..."
-cat > "$BIBLE_DIR/greek-bible-seed.tsv" << 'SEED'
-Book	Chapter	Verse	Text
-Γένεσις	1	1	Ἐν ἀρχῇ ἐποίησεν ὁ θεὸς τὸν οὐρανὸν καὶ τὴν γῆν.
-Γένεσις	1	2	ἡ δὲ γῆ ἦν ἀόρατος καὶ ἀκατασκεύαστος, καὶ σκότος ἐπάνω τῆς ἀβύσσου, καὶ πνεῦμα θεοῦ ἐπεφέρετο ἐπάνω τοῦ ὕδατος.
-Γένεσις	1	3	καὶ εἶπεν ὁ θεός· γενηθήτω φῶς· καὶ ἐγένετο φῶς.
-Ψαλμοί	23	1	Ψαλμὸς τῷ Δαυίδ· κύριος ποιμαίνει με, καὶ οὐδέν με ὑστερήσει.
-Ψαλμοί	23	2	ἐν τόπῳ χλόης ἐκεῖ με ἐγέννησεν, ἐπὶ ὕδατος ἀναπαύσεως ἐξέθρεψέν με.
-Ιωάννης	3	16	οὕτως γὰρ ἠγάπησεν ὁ θεὸς τὸν κόσμον, ὥστε τὸν υἱὸν αὐτοῦ τὸν μονογενῆ ἔδωκεν, ἵνα πᾶς ὁ πιστεύων εἰς αὐτὸν μὴ ἀπόληται ἀλλ' ἔχῃ ζωὴν αἰώνιον.
-Ιωάννης	14	6	λέγει αὐτῷ ὁ Ἰησοῦς· ἐγώ εἰμι ἡ ὁδὸς καὶ ἡ ἀλήθεια καὶ ἡ ζωή· οὐδεὶς ἔρχεται πρὸς τὸν πατέρα εἰ μὴ δι' ἐμοῦ.
-Πρὸς Ῥωμαίους	8	28	Οἴδαμεν δὲ ὅτι τοῖς ἀγαπῶσι τὸν θεὸν πάντα συνεργεῖ εἰς ἀγαθόν, τοῖς κατὰ πρόθεσιν κλητοῖς οὖσιν.
-Πρὸς Φιλιππησίους	4	13	πάντα ἰσχύω ἐν τῷ ἐνδυναμοῦντί με.
-Ἀποκάλυψις Ἰωάννου	22	21	ἡ χάρις τοῦ κυρίου Ἰησοῦ Χριστοῦ μετὰ πάντων.
-SEED
-
-echo "[TONGUES-04c] Latin (Vulgate-style) seed..."
-cat > "$BIBLE_DIR/latin-bible-seed.tsv" << 'SEED'
-Book	Chapter	Verse	Text
-Genesis	1	1	In principio creavit Deus cælum et terram.
-Genesis	1	2	Terra autem erat inanis et vacua, et tenebræ super faciem abyssi: et spiritus Dei ferebatur super aquas.
-Genesis	1	3	Dixitque Deus: Fiat lux. Et facta est lux.
-Psalmi	23	1	Dominus regit me, et nihil mihi deerit.
-Psalmi	23	2	In pascuis virentibus me collocavit, super aquam refectionis educavit me.
-Ioannes	3	16	Sic enim dilexit Deus mundum, ut Filium suum unigenitum daret, ut omnis qui credit in eum non pereat, sed habeat vitam æternam.
-Ioannes	14	6	Dicit ei Jesus: Ego sum via, et veritas, et vita; nemo venit ad Patrem, nisi per me.
-Romanos	8	28	Scimus autem quoniam diligentibus Deum omnia cooperantur in bonum, iis qui secundum propositum vocati sunt sancti.
-Philippenses	4	13	Omnia possum in eo qui me confortat.
-Apocalypsis	22	21	Gratia Domini nostri Jesu Christi cum omnibus vobis. Amen.
-SEED
-
-echo "[TONGUES-04d] German (Luther-style) seed..."
-cat > "$BIBLE_DIR/de-bible-seed.tsv" << 'SEED'
-Book	Chapter	Verse	Text
-1 Mose	1	1	Am Anfang schuf Gott Himmel und Erde.
-1 Mose	1	2	Und die Erde war wüst und leer, und Finsternis war auf der Tiefe; und der Geist Gottes schwebete auf dem Wasser.
-1 Mose	1	3	Und Gott sprach: Es werde Licht! Und es ward Licht.
-Psalm	23	1	Ein Psalm Davids. Der HERR ist mein Hirt; mir wird nichts mangeln.
-Psalm	23	2	Er weidet mich auf grüner Aue und führet mich zum frischen Wasser.
-Johannes	3	16	Also hat Gott die Welt geliebt, daß er seinen eingeborenen Sohn gab, damit alle, die an ihn glauben, nicht verloren werden, sondern das ewige Leben haben.
-Johannes	14	6	Jesus spricht zu ihm: Ich bin der Weg und die Wahrheit und das Leben; niemand kommt zum Vater denn durch mich.
-Römer	8	28	Wir wissen aber, daß denen, die Gott lieben, alle Dinge zum Besten dienen, denen, die nach dem Ratschluß berufen sind.
-Philipper	4	13	Ich vermag alles durch den, der mich mächtig macht, Christus.
-Offenbarung	22	21	Die Gnade unsers HERRN Jesu Christi sei mit euch allen! Amen.
-SEED
-
-echo "[TONGUES-04e] Portuguese seed..."
-cat > "$BIBLE_DIR/pt-bible-seed.tsv" << 'SEED'
-Book	Chapter	Verse	Text
-Gênesis	1	1	No princípio criou Deus os céus e a terra.
-Gênesis	1	2	E a terra era sem forma e vazia; e havia trevas sobre a face do abismo; e o Espírito de Deus se movia sobre a face das águas.
-Gênesis	1	3	E disse Deus: Haja luz; e houve luz.
-Salmos	23	1	O Senhor é o meu pastor; nada me faltará.
-Salmos	23	2	Deitar-me faz em verdes pastos, guia-me mansamente a águas tranquilas.
-João	3	16	Porque Deus amou o mundo de tal maneira que deu o seu Filho unigênito, para que todo aquele que nele crê não pereça, mas tenha a vida eterna.
-João	14	6	Disse-lhe Jesus: Eu sou o caminho, e a verdade e a vida; ninguém vem ao Pai senão por mim.
-Romanos	8	28	E sabemos que todas as coisas contribuem juntamente para o bem daqueles que amam a Deus.
-Filipenses	4	13	Tudo posso naquele que me fortalece.
-Apocalipse	22	21	A graça de nosso Senhor Jesus Cristo seja com todos vós. Amém.
-SEED
-
-echo "[TONGUES-04f] Russian seed..."
-cat > "$BIBLE_DIR/ru-bible-seed.tsv" << 'SEED'
-Book	Chapter	Verse	Text
-Бытие	1	1	В начале сотворил Бог небо и землю.
-Бытие	1	2	Земля же была безвидна и пуста, и тьма над бездною, и Дух Божий носился над водою.
-Бытие	1	3	И сказал Бог: да будет свет. И стал свет.
-Псалом	23	1	Господь — Пастырь мой; я ни в чем не буду нуждаться.
-Псалом	23	2	Покоит меня на злачных пажитях и водит меня к водам тихим.
-Иоанн	3	16	Ибо так возлюбил Бог мир, что отдал Сына Своего Единородного, дабы всякий верующий в Него, не погиб, но имел жизнь вечную.
-Иоанн	14	6	Иисус сказал ему: Я есмь путь и истина и жизнь; никто не приходит к Отцу, как только через Меня.
-Римлянам	8	28	А мы знаем, что любящим Бога все содействует ко благу.
-Филиппийцам	4	13	Все могу в укрепляющем меня Иисусе Христе.
-Откровение	22	21	Благодать Господа нашего Иисуса Христа со всеми вами. Аминь.
-SEED
-
-echo "[TONGUES-04g] Chinese seed..."
-cat > "$BIBLE_DIR/zh-bible-seed.tsv" << 'SEED'
-Book	Chapter	Verse	Text
-创世记	1	1	起初神创造天地。
-创世记	1	2	地是空虚混沌，渊面黑暗；神的灵运行在水面上。
-创世记	1	3	神说，要有光，就有了光。
-诗篇	23	1	耶和华是我的牧者，我必不至缺乏。
-诗篇	23	2	他使我躺卧在青草地上，领我在可安歇的水边。
-约翰福音	3	16	神爱世人，甚至将他的独生子赐给他们，叫一切信他的，不致灭亡，反得永生。
-约翰福音	14	6	耶稣说，我就是道路、真理、生命；若不藉着我，没有人能到父那里去。
-罗马书	8	28	我们晓得万事都互相效力，叫爱神的人得益处。
-腓立比书	4	13	我靠着那加给我力量的，凡事都能做。
-启示录	22	21	愿主耶稣的恩惠常与众圣徒同在。阿们。
-SEED
-
-echo "[TONGUES-04h] Japanese seed..."
-cat > "$BIBLE_DIR/ja-bible-seed.tsv" << 'SEED'
-Book	Chapter	Verse	Text
-創世記	1	1	はじめに神は天と地を創られた。
-創世記	1	2	地は混沌としており、闇が淵の面にあった。神の霊が水の面を動いていた。
-創世記	1	3	神は言われた。「光あれ。」すると光があった。
-詩篇	23	1	ダビデの歌。主はわが牧者。わたしは、乏しいことがない。
-詩篇	23	2	主は、わたしを緑の牧場に伏させ、いこいの水のほとりに伴われる。
-ヨハネによる福音書	3	16	神はそのひとり子をお与えになったほどに世を愛された。それは、彼を信じる者がひとりも滅びることなく、永遠の命を得るためである。
-ヨハネによる福音書	14	6	イエスは言われた。「わたしは道であり、真理であり、命である。だれも、父のもとに来るのは、わたしを通ってしかない。」
-ローマ人への手紙	8	28	また、わたしたちは知っている。神に愛される者には、万事が共に益となることを。
-フィリピ人への手紙	4	13	わたしには、わたしを強くしてくださる方によって、万事ができる。
-ヨハネの黙示録	22	21	どうか、主イエスの恵みが、聖徒たち一同とともにあるように。アーメン。
-SEED
-
-echo "[TONGUES-04i] Arabic seed..."
-cat > "$BIBLE_DIR/ar-bible-seed.tsv" << 'SEED'
-Book	Chapter	Verse	Text
-التكوين	1	1	في البدء خلق الله السموات والأرض.
-التكوين	1	2	وكانت الأرض خربة وخالية، وعلى وجه الغمر ظلمة، وروح الله يرف على وجه المياه.
-التكوين	1	3	وقال الله: ليكن نور. فكان نور.
-مزمور	23	1	مزمور لداود: الرب راعيّ فلا يعوزني شيء.
-مزمور	23	2	في مراعٍ خضر يربضني، إلى مياه الراحة يهديني.
-يوحنا	3	16	لأنه هكذا أحب الله العالم حتى بذل ابنه الوحيد، لكي لا يهلك كل من يؤمن به، بل تكون له الحياة الأبدية.
-يوحنا	14	6	قال له يسوع: أنا هو الطريق والحق والحياة. لا أحد يأتي إلى الآب إلا بي.
-رومية	8	28	ونعلم أن كل الأشياء تعمل معاً للخير للذين يحبون الله.
-فيلبي	4	13	كل أقدر عليه في المقويني.
-رؤيا	22	21	نعمة ربنا يسوع المسيح مع جميعكم. آمين.
-SEED
-
-echo "[TONGUES-04i2] Moroccan Arabic (Darija, ISO 639-3 ary) seed..."
-cat > "$BIBLE_DIR/ary-bible-seed.tsv" << 'SEED'
-Book	Chapter	Verse	Text
-التكوين	1	1	ف البداية، الله خلق السما والأرض.
-التكوين	1	2	الأرض كان خاوية وفاضية، والظلام كان على وجه الغمر، وروح الله كانت تتحرك فوق الماء.
-التكوين	1	3	قال الله: يكون النور. فكان النور.
-مزمور	23	1	مزمور لداود: الرب راعيّ ما نقصني والو.
-مزمور	23	2	كيرقدني ف مراع خضر، كيقربني ل جنب الما الساكت.
-مزمور	23	3	كيرد الروح ديالي، كيدلني ف طرق العدل من أجل سمويتو.
-مزمور	23	4	ولا مشيت ف وادي ظل الموت، ما نخافش الشر، حيت أنت معايا؛ عصاك وعكازك هما يسكنوني.
-مزمور	91	1	اللي كايسكن ف الخبيئة ديال العلي، كايبقى تحت ظل القدير.
-يوحنا	3	16	حيت الله حبّ الدنيا بزاف، عطى ولدو الوحيد، باش كل من يؤمن بيه ما يهلكش، يكون عندو الحياة د الأبد.
-يوحنا	14	6	قالو يسوع: أنا هو الطريق والحق والحياة؛ ما كاين حد كيجي عند الآب إلا بياّ.
-رومية	8	28	كنعلمو بلي كلشي كيخدم مع بعضو للخير ديال اللي كيحبو الله.
-فيلبي	4	13	كلشي نقدر عليه باللي كيقويني.
-رؤيا	22	21	نعمة ربنا يسوع المسيح معكم كاملين. آمين.
-SEED
-
-echo "[TONGUES-04i3] Egyptian Arabic (عامية, ISO 639-3 arz) seed..."
-cat > "$BIBLE_DIR/arz-bible-seed.tsv" << 'SEED'
-Book	Chapter	Verse	Text
-التكوين	1	1	في الأول خالق الله السماوات والأرض.
-التكوين	1	2	والأرض كانت فاضية وفاضية، والظلمة على وجه الغمر، وروح الله كان بيتحرك على الوش الماية.
-التكوين	1	3	وقال الله: يكون نور. فكان نور.
-مزمور	23	1	مزمور لداود: الرب راعيّ، فمش هينقصني حاجة.
-مزمور	23	2	بيحطني في مراعٍ خضرا، بيقودني جنب مية الراحة.
-مزمور	23	3	بيرد نفسي، بيقودني في سبل البرّ لأجل اسمه.
-مزمور	23	4	ولو مشيت في وادي ظل الموت، مش هخاف شر، لأنك أنت معايا؛ عصاك وعكّازك هما يعزّوني.
-مزمور	91	1	اللي ساكن في مستور العلي، هيستريح في ظل القدير.
-يوحنا	3	16	لأن الله حبّ العالم كده، إنه اداه ابنه الوحيد، عشان كل اللي يؤمن بيه ما يهلكش، لكن يكون له حياة أبدية.
-يوحنا	14	6	قال له يسوع: أنا هو الطريق والحق والحياة؛ ما فيش حد يجي للآب إلا بيّ.
-رومية	8	28	وعارفين إن كل حاجة بتشتغل مع بعض للخير لعشان اللي بيحبوا الله.
-فيلبي	4	13	أنا أقدر كل حاجة باللي بيقوّيني.
-رؤيا	22	21	نعمة ربنا يسوع المسيح تكون معاكم كلكم. آمين.
-SEED
-
-echo "[TONGUES-04i4] Levantine Arabic (شامي, ISO 639-3 apc) seed..."
-cat > "$BIBLE_DIR/apc-bible-seed.tsv" << 'SEED'
-Book	Chapter	Verse	Text
-التكوين	1	1	بالمبدأ خلق الله السماوات والأرض.
-التكوين	1	2	والأرض كانت فاضية وفاضية، وظلمة على تْسْر الهاوية، وروح الله كانت تتحرك فوق المي.
-التكوين	1	3	وقال الله: يصير نور. فصار نور.
-مزمور	23	1	مزمور لداود: الرب راعيّ، ما بينقصني شي.
-مزمور	23	2	بيخليني أرتاح بمراع خضرا، بيقودني جنب مي الراحة.
-مزمور	23	3	بيرد نفسي، بيقودني على سبل البرّ لأجل اسمو.
-مزمور	23	4	ولو مشيت بوادي ظل الموت، ما بخاف من الشر، لأنك أنت معي؛ عصاك وعكّازك هني يعزّوني.
-مزمور	91	1	اللي ساكن بمخبأ العلي، بيرتاح بظل القدير.
-يوحنا	3	16	لأن الله هيك أحبّ العالم، إنه بعث ابنو الوحيد، مشان كل يلي بيؤمن فيه ما يهلك، يكون عندو حياة أبدية.
-يوحنا	14	6	قال له يسوع: أنا هو الطريق والحق والحياة؛ ما في حدا بيجي للآب إلا مني.
-رومية	8	28	ونحن عارفين إنو كل شي عم يشتغل سوا للخير لعشان يلي بيحبوا الله.
-فيلبي	4	13	أنا بقدر كل شي باللي بيقوّيني.
-رؤيا	22	21	نعمة ربنا يسوع المسيح تكون معكم كلكم. آمين.
-SEED
-
-echo "[TONGUES-04i5] Gulf Arabic vernacular (ISO 639-3 afb) seed..."
-cat > "$BIBLE_DIR/afb-bible-seed.tsv" << 'SEED'
-Book	Chapter	Verse	Text
-التكوين	1	1	في البداية خلق الله السماوات والأرض.
-التكوين	1	2	والأرض كانت خالية وفاضية، والظلام على وجه الغمر، وروح الله يتحرك على وجه المياه.
-التكوين	1	3	وقال الله: تكون نور. فصار نور.
-مزمور	23	1	مزمور لداود: الرب راعي ما ينقصني شي.
-مزمور	23	2	يربضني في مراعٍ خضر، ويقودني إلى مياه الراحة.
-مزمور	23	3	يرد نفسي، يقودني في سبل البر لأجل اسمه.
-مزمور	23	4	ولو مشيت في وادي ظل الموت، ما أخاف شر لأنك أنت معي؛ عصاك وعكازك يعزوني.
-مزمور	91	1	الساكن في مستور العلي يرتاح في ظل القدير.
-يوحنا	3	16	لأن الله أحب العالم إلى هذا الحدّ إنه أعطى ابنه الوحيد، لكي لا يهلك كل من يؤمن به، بل تكون له الحياة الأبدية.
-يوحنا	14	6	قال له يسوع: أنا هو الطريق والحق والحياة؛ ما أحد يجي إلى الآب إلا بي.
-رومية	8	28	ونعلم أن كل الأشياء تعمل معاً للخير للذين يحبون الله.
-فيلبي	4	13	أنا أقدر كل شيء باللي يقواني.
-رؤيا	22	21	نعمة ربنا يسوع المسيح معكم كلكم. آمين.
-SEED
-
-echo "[TONGUES-04j] Hindi seed..."
-cat > "$BIBLE_DIR/hi-bible-seed.tsv" << 'SEED'
-Book	Chapter	Verse	Text
-उत्पत्ति	1	1	आदि में परमेश्वर ने आकाश और पृथ्वी की सृष्टि की।
-उत्पत्ति	1	2	और पृथ्वी बेडौल और सुनसान थी; और घोर अन्धकार गहिरे जल के ऊपर था, और परमेश्वर का आत्मा जल के ऊपर मण्डल कर रहा था।
-उत्पत्ति	1	3	और परमेश्वर ने कहा, उजियाला हो जाए; और उजियाला हो गया।
-भजन संहिता	23	1	प्रभु मेरा चरवाहा है; मुझे कुछ घटी न होगी।
-भजन संहिता	23	2	वह मुझे हरे हरे चरागाहों में बैठाता है। मुझे शान्त जल के पास ले जाता है।
-यूहन्ना	3	16	क्योंकि परमेश्वर ने जगत से ऐसा प्रेम किया कि उसने अपना एकलौता पुत्र दिया, ताकि जो कोई उस पर विश्वास करे वह नाश न हो, परन्तु अनन्त जीवन पाए।
-यूहन्ना	14	6	यीशु ने उस से कहा, मैं मार्ग और सच्चाई और जीवन हूँ; कोई पिता के पास नहीं आता, परन्तु मेरे द्वारा।
-रोमियों	8	28	और हम जानते हैं कि जो लोग परमेश्वर से प्रेम रखते हैं, उनके लिये सब बातें भले के लिये मिलकर काम करती हैं।
-फिलिप्पियों	4	13	मैं सब कुछ उसके द्वारा कर सकता हूँ जो मुझे बल देता है।
-प्रकाशितवाक्य	22	21	प्रभु यीशु का अनुग्रह पवित्र लोगों के साथ हो। आमीन।
-SEED
-
-echo "[TONGUES-04k] Italian seed..."
-cat > "$BIBLE_DIR/it-bible-seed.tsv" << 'SEED'
-Book	Chapter	Verse	Text
-Genesi	1	1	Nel principio Iddio creò il cielo e la terra.
-Genesi	1	2	E la terra era informe e vuota, e le tenebre coprivano la faccia dell'abisso, e lo Spirito di Dio aleggiava sulla superficie delle acque.
-Genesi	1	3	E Iddio disse: Sia la luce. E la luce fu.
-Salmi	23	1	Salmo di Davide. L'Eterno è il mio pastore; io non mancherò di nulla.
-Salmi	23	2	Egli mi fa riposare in verde pascolo, mi conduce lungo le acque chete.
-Giovanni	3	16	Perciocché Iddio ha tanto amato il mondo, che ha dato il suo unigenito Figliuolo, affinché chiunque crede in lui non perisca, ma abbia vita eterna.
-Giovanni	14	6	Gli disse Gesù: Io sono la via, la verità, e la vita; niuno viene al Padre, se non per mezzo di me.
-Romani	8	28	Or noi sappiamo che tutte le cose cooperano a bene di quelli che amano Dio.
-Filippesi	4	13	Ogni cosa posso in colui che mi fortifica.
-Apocalisse	22	21	La grazia del Signore nostro Gesù Cristo sia con tutti voi. Amen.
-SEED
-
-echo "[TONGUES-04l] Romanian seed..."
-cat > "$BIBLE_DIR/ro-bible-seed.tsv" << 'SEED'
-Book	Chapter	Verse	Text
-Geneza	1	1	La început Dumnezeu a creat cerurile și pământul.
-Geneza	1	2	Pământul era pustiu și gol; întuneric era deasupra adâncului, și Duhul lui Dumnezeu plutea pe deasupra apelor.
-Geneza	1	3	Și Dumnezeu a zis: „Să fie lumină!” Și a fost lumină.
-Psalmii	23	1	Domnul este păstorul meu: nu voi duce lipsă de nimic.
-Psalmii	23	2	El mă paște în pășuni verzi, mă duce la apele de odihnă.
-Psalmii	23	3	Îmi înviorează sufletul; mă povățește pe cărările neprihănirii, din pricina Numelui Său.
-Psalmii	23	4	Chiar dacă ar fi să umblu prin valea umbrei morții, nu mă tem de niciun rău, căci Tu ești cu mine; toiagul și nuiaua Ta mă mângâie.
-Psalmii	91	1	Cel ce locuiește la adăpostul Celui Preaînalt și se odihnește la umbra Celui Atotputernic.
-Ioan	3	16	Fiindcă atât a iubit Dumnezeu lumea, că a dat pe singurul Lui Fiu, pentru ca oricine crede în El să nu piară, ci să aibă viața veșnică.
-Ioan	14	6	Iisus i-a zis: „Eu sunt Calea, Adevărul și Viața. Nimeni nu vine la Tatăl decât prin Mine.”
-Romani	8	28	Și știm că totul lucrează împreună spre binele celor ce iubesc pe Dumnezeu.
-Filipeni	4	13	Totul pot în Hristos, care mă întărește.
-Apocalipsa	22	21	Harul Domnului nostru Isus Hristos fie cu voi cu toți! Amin.
-SEED
-
-echo "[TONGUES-04m] Polish seed..."
-cat > "$BIBLE_DIR/pl-bible-seed.tsv" << 'SEED'
-Book	Chapter	Verse	Text
-Rodzaju	1	1	Na początku Bóg stworzył niebo i ziemię.
-Rodzaju	1	2	A ziemia była bezładem i pustkowiem i ciemność była nad powierzchnią bezmiaru, a Duch Boży unosił się nad wodami.
-Rodzaju	1	3	I rzekł Bóg: Niechaj się stanie światłość. I stała się światłość.
-Psalmów	23	1	Psalm Dawidowy. Pan jest moim pasterzem, nie braknie mi niczego.
-Psalmów	23	2	Po zielonych pastwiskach pasie mnie, Prowadzi mnie nad wody spokojne.
-Psalmów	23	3	Posila duszę moją, wiedzie mnie ścieżkami sprawiedliwości przez wzgląd na imię swoje.
-Psalmów	23	4	Chociażbym chodził ciemną doliną, zła się nie ulęknę, boś Ty ze mną; laska twoja i kij twój, one mnie pocieszają.
-Psalmów	91	1	Kto mieszka w ukryciu Najwyższego, ten w cieniu Wszechmocnego będzie przebywał.
-Jana	3	16	Tak bowiem Bóg umiłował świat, że Syna swego jednorodzonego dał, aby każdy, kto weń wierzy, nie zginął, ale miał żywot wieczny.
-Jana	14	6	Rzekł mu Jezus: Jam jest drogą i prawdą, i żywotem; nikt nie przychodzi do Ojca, tylko przez mnie.
-Rzymian	8	28	A wiemy, że tym, którzy miłują Boga, wszystkie rzeczy współdziałają ku dobremu.
-Filipian	4	13	Wszystko mogę w tym, który mnie umacnia.
-Objawienia	22	21	Łaska Pana naszego Jezusa Chrystusa z wami wszystkimi. Amen.
-SEED
-
-echo "[TONGUES-04n] Ukrainian seed..."
-cat > "$BIBLE_DIR/uk-bible-seed.tsv" << 'SEED'
-Book	Chapter	Verse	Text
-Буття	1	1	На початку Бог створив небо та землю.
-Буття	1	2	А земля була пуста і порожня, і темрява була над безоднею, і Дух Божий носився над водами.
-Буття	1	3	І сказав Бог: Нехай буде світло. І стало світло.
-Псалми	23	1	Псалом Давидів. Господь — Пастир мій; я ні в чому не буду нуждатися.
-Псалми	23	2	Він покоїть мене на зелених пажитях, веде мене до тихих вод.
-Псалми	23	3	Він підбадьорює душу мою, веде мене стежками правди ради Ймення Свого.
-Псалми	23	4	Хоч би я йшов долиною смертної тіні, не злякаюся зла, бо Ти зі мною; Твій жезл і Твій посох — вони мене втішають.
-Псалми	91	1	Хто живе в сховку Всевишнього, той перебуває в тіні Всемогутнього.
-Івана	3	16	Бо так полюбив Бог світ, що дав Сина Свого Однородженого, щоб кожен, хто вірує в Нього, не загинув, але мав життя вічне.
-Івана	14	6	Ісус йому каже: Я — дорога, і правда, і життя; ніхто не приходить до Отця, як тільки через Мене.
-До римлян	8	28	А знаємо, що тим, які люблять Бога, усе співдіє на добре.
-До филипян	4	13	Усе можу в Тім, Хто мене підкріпляє.
-Об’явлення	22	21	Благодать Господа нашого Ісуса Христа зо всіма вами. Амінь.
-SEED
-
-echo "[TONGUES-04o] Korean seed..."
-cat > "$BIBLE_DIR/ko-bible-seed.tsv" << 'SEED'
-Book	Chapter	Verse	Text
-창세기	1	1	태초에 하나님이 천지를 창조하시니라
-창세기	1	2	땅이 혼돈하고 공허하며 흑암이 깊음 위에 있고 하나님의 영은 수면에 운행하시니라
-창세기	1	3	하나님이 이르시되 빛이 있으라 하시니 빛이 있으니라
-시편	23	1	여호와는 나의 목자시니 내게 부족함이 없으리로다
-시편	23	2	그가 나를 푸른 초장에 누이시며 쉴 만한 물 가으로 인도하시는도다
-시편	23	3	내 영혼을 소생시키시고 자기 이름을 위하여 의의 길로 인도하시는도다
-시편	23	4	내가 사망의 음침한 골짜기로 다닐지라도 해를 두려워하지 않을 것은 주께서 나와 함께 하심이라 주의 지팡이와 막대기가 나를 안위하시리이다
-시편	91	1	지존하신 이의 은밀한 곳에 거하는 자는 전능하신 이의 그늘 아래 거하리로다
-요한복음	3	16	하나님이 세상을 이처럼 사랑하사 독생자를 주셨으니 이는 저를 믿는 자마다 멸망하지 않고 영생을 얻게 하려 하심이니라
-요한복음	14	6	예수께서 가라사대 내가 곧 길이요 진리요 생명이니 나로 말미암지 않고는 아버지께로 올 자가 없느니라
-로마서	8	28	우리가 알거니와 하나님을 사랑하는 자 곧 그의 뜻대로 부르심을 입은 자들에게는 모든 것이 합력하여 선이 되느니라
-빌립보서	4	13	내게 능력 주시는 자 안에서 내가 모든 것을 할 수 있느니라
-요한계시록	22	21	주 예수의 은혜가 모든 성도와 함께할지어다 아멘
-SEED
-
-echo "[TONGUES-04p] Turkish seed..."
-cat > "$BIBLE_DIR/tr-bible-seed.tsv" << 'SEED'
-Book	Chapter	Verse	Text
-Yaratılış	1	1	Başlangıçta Tanrı gökleri ve yeri yarattı.
-Yaratılış	1	2	Yer boştu, yapaynaklıktı; karanlık enginin üstündeydi. Tanrı'nın Ruhu suların üstünde geziniyordu.
-Yaratılış	1	3	Tanrı, «Işık olsun» dedi ve ışık oldu.
-Mezmurlar	23	1	Davut'un Mezmuru. Rab benim çobanımdır; eksikliğim olmaz.
-Mezmurlar	23	2	Beni yeşil otlaklara yatırır, huzurlu suların yanına götürür.
-Mezmurlar	23	3	Canımı yeniler, doğruluğun yollarında yürütür adının hatırı için.
-Mezmurlar	23	4	Ölüm gölgesinin vadisinden geçsem bile, sana kötülük gelmez; çünkü sen benimlesin; değneğin ve çoban çubuğun beni avutuyor.
-Mezmurlar	91	1	Yüceler Yücesi'nin sığınak yerinde oturan, Her Güçlü'nün gölgesinde barınır.
-Yuhanna	3	16	Çünkü Tanrı dünyayı o kadar sevdi ki, biricik Oğlu'nu verdi; böylece ona her iman eden yok olmasın, ama sonsuz yaşama kavuşsun.
-Yuhanna	14	6	İsa ona şöyle dedi: Ben yolun, gerçeğin ve yaşamın benim. Baba'ya gelmek için benden başka kimse yoktur.
-Romalılar	8	28	Biliyoruz ki, Tanrı'yı sevenlere her şey iyilik için işbirliği eder.
-Filipililer	4	13	Her şeyi bende güçlendiren aracılığıyla yapabilirim.
-Vahiy	22	21	Rab İsa Mesih'in lütfu hepinizle olsun. Amin.
-SEED
-
-echo "[TONGUES-04q] Dutch seed..."
-cat > "$BIBLE_DIR/nl-bible-seed.tsv" << 'SEED'
-Book	Chapter	Verse	Text
-Genesis	1	1	In den beginne schiep God den hemel en de aarde.
-Genesis	1	2	En de aarde was woest en ledig, en duisternis was op den afgrond; en de Geest Gods zweefde over de wateren.
-Genesis	1	3	En God zeide: Da zij licht. En het werd licht.
-Psalmen	23	1	Een psalm van David. De HEERE is mijn Herder; het zal mij aan niets ontbreken.
-Psalmen	23	2	Hij doet mij nederliggen in grazige weiden; Hij voert mij zachtjes aan zeer stille wateren.
-Psalmen	23	3	Hij verkwikt mijn ziel; Hij leidt mij om der gerechtigheid wil in het spoor, om Zijns Naams wil.
-Psalmen	23	4	Al ging ik ook in het dal der schaduw des doods, ik zou geen kwaad vrezen, want Gij zijt met mij; Uw stok en Uw staf, die vertroosten mij.
-Psalmen	91	1	Wie in de schuilplaats des Allerhoogsten zit, zal verkeeren in de schaduw des Almachtigen.
-Johannes	3	16	Want alzo heeft God de wereld liefgehad, dat Hij den Zoon, den eniggeborenen, gegeven heeft, opdat een iegelijk die in Hem gelooft, niet verloren zou gaan, maar het eeuwige leven hebbe.
-Johannes	14	6	Jezus zeide tot hem: Ik ben de Weg en de Waarheid en het Leven; niemand komt tot den Vader dan door Mij.
-Romeinen	8	28	En wij weten, dat dengenen, die God liefhebben, alle dingen medewerken ten goede.
-Filippenzen	4	13	Ik vermag alle dingen door Dengene, Die mij kracht geeft.
-Openbaring	22	21	De genade van onzen Heere Jezus Christus zij met u allen! Amen.
-SEED
-
-echo "[TONGUES-04r] Vietnamese seed..."
-cat > "$BIBLE_DIR/vi-bible-seed.tsv" << 'SEED'
-Book	Chapter	Verse	Text
-Sáng-thế-ký	1	1	Lúc ban đầu, Đức Chúa Trời dựng nên trời đất.
-Sáng-thế-ký	1	2	Đất vẫn còn trống rỗng; sự mờ tối bao phủ vực sâu, và Thần của Đức Chúa Trời bay đặt trên mặt nước.
-Sáng-thế-ký	1	3	Đức Chúa Trời phán: Phải có sáng! Liền có sáng.
-Thi-thiên	23	1	Thơ của Đa-vít, cậy Đức Giê-hô-va làm tôi chúa tôi, tôi sẽ chẳng thiếu thốn gì.
-Thi-thiên	23	2	Ngài khiến tôi nằm nghỉ nơi đồng cỏ xanh tươi, dẫn tôi tới nước yên ổn.
-Thi-thiên	23	3	Ngài bổ lại linh hồn tôi, dẫn tôi trong các lối công bình, vì cớ danh Ngài.
-Thi-thiên	23	4	Dầu khi tôi đi trong nơi tối tăm của thần chết, cũng chẳng sợ tai họa nào; vì Chúa ở cùng tôi; cây gậy và cây roi Chúa an ủi tôi.
-Thi-thiên	91	1	Kẻ nào ngồi nơi kín mật của Đấng Chí Cao, sẽ ở dưới bóng của Đấng Toàn Năng.
-Giăng	3	16	Vì Đức Chúa Trời yêu thương thế gian, đến nỗi đã ban Con một của Ngài, hầu cho hễ ai tin Con ấy không bị hư mất mà được sự sống đời đời.
-Giăng	14	6	Đức Chúa Jêsus phán rằng: Ta là đường, là sự thật, và là sự sống; chẳng bởi ta thì không ai đến được cùng Cha.
-Rô-ma	8	28	Vả, chúng ta biết rằng mọi sự hiệp lại làm ích cho những kẻ yêu mến Đức Chúa Trời.
-Phi-líp	4	13	Ta làm mọi sự nhờ Đấng ban thêm sức cho ta.
-Khải-huyền	22	21	Ân điển của Chúa chúng ta là Đức Chúa Jêsus Christ ở cùng anh em hết thảy! A-men.
-SEED
-
-echo "[TONGUES-04s] Tagalog seed..."
-cat > "$BIBLE_DIR/tl-bible-seed.tsv" << 'SEED'
-Book	Chapter	Verse	Text
-Genesis	1	1	Nang pasimula ay nilikha ng Dios ang langit at ang lupa.
-Genesis	1	2	At ang lupa ay walang anyo at walang laman; at ang kadiliman ay sumasa ibabaw ng kalaliman; at ang Espiritu ng Dios ay sumasa ibabaw ng tubig.
-Genesis	1	3	At sinabi ng Dios: Magkaroon ng liwanag; at nagkaroon ng liwanag.
-Awit	23	1	Ang Panginoon ay aking pastor; hindi ako mangangailangan.
-Awit	23	2	Sa sariwang pastulan ay pinapahiga niya ako; sa mga tubig na pahingahan ay pinapatnubayan niya ako.
-Awit	23	3	Iniibigan niya ang aking kaluluwa; pinapatnubayan niya ako sa mga landas ng katuwiran alang-alang sa kaniyang pangalan.
-Awit	23	4	Oo, kung ako'y maglakad man sa libis ng lilim ng kamatayan, wala akong katatakutang kasamaan; sapagka't ikaw ay sumasa akin: ang iyong tungkod at ang iyong pamalo, ay nagsisialiw sa akin.
-Awit	91	1	Ang nananahan sa lihim na dako ng Kataastaasan ay magpapahinga sa lilim ng Makapangyarihan sa lahat.
-Juan	3	16	Sapagka't gayon na lamang ang pag-ibig ng Dios sa sanglibutan, na ibinigay niya ang kaniyang bugtong na Anak, upang ang sinomang sa kaniya'y sumampalataya ay huwag mapahamak, kundi magkaroon ng buhay na walang hanggan.
-Juan	14	6	Sinabi sa kaniya ni Jesus, Ako ang daan, at ang katotohanan, at ang buhay: sinoman ay hindi makakaparoon sa Ama, kundi sa pamamagitan ko.
-Roma	8	28	At nalalaman natin na sa mga umiibig sa Dios ang lahat ng mga bagay ay nagsasamang gumagawa para sa mabuti.
-Filipos	4	13	Lahat ng mga bagay ay aking magagawa sa pamamagitan niyaong nagpapalakas sa akin.
-Apocalipsis	22	21	Ang biyaya ng ating Panginoong Jesucristo ay sumainyo nang lahat. Siya nawa.
-SEED
-
-echo "[TONGUES-04t] Swahili seed..."
-cat > "$BIBLE_DIR/sw-bible-seed.tsv" << 'SEED'
-Book	Chapter	Verse	Text
-Mwanzo	1	1	Hapo mwanzo Mungu aliziumba mbingu na dunia.
-Mwanzo	1	2	Nayo dunia ilikuwa utupu, tena tupu; na giza lilikuwa juu ya uso wa vilindi vya maji; Roho wa Mungu alikuwa ametanda juu ya uso wa maji.
-Mwanzo	1	3	Mungu akasema, Iwe nuru; ikawa nuru.
-Zaburi	23	1	Bwana ndiye mchungaji wangu, sitapungukiwa kitu.
-Zaburi	23	2	Huniweka katika malisho ya majani mabichi; Huniongoza kando ya maji ya utulivu.
-Zaburi	23	3	Huiburudisha roho yangu; Huniongoza katika njia za haki kwa ajili ya jina lake.
-Zaburi	23	4	Hata nikitembea katika bonde la kivuli cha mauti, sitaogopa mabaya; maana wewe u pamoja nami; Fimbo yako na mkono wako, ndivyo vinavyonifariji.
-Zaburi	91	1	Huyu akaaye katika sitiri ya Aliye Juu Sana, Atakaa kivuli cha Shaddai.
-Yohana	3	16	Kwa maana jinsi hivi Mungu aliupenda ulimwengu, hata akamtoa Mwana wake wa pekee, ili kila mtu amwaminiye asipotee, bali awe na uzima wa milele.
-Yohana	14	6	Yesu akamwambia, Mimi ndiyo njia, na kweli, na uzima; mtu haji kwa Baba ila kwa njia ya mimi.
-Warumi	8	28	Tena twajua ya kwamba wale wampendao Mungu mambo yote yanafanya kazi pamoja kwa ajili ya mema.
-Wafilipi	4	13	Naweza mambo yote katika yeye anenipa nguvu.
-Ufunuo	22	21	Neema ya Bwana wetu Yesu Kristo iwe pamoja nanyi nyote. Amina.
-SEED
-
-echo "[TONGUES-04u] Amharic seed..."
-cat > "$BIBLE_DIR/am-bible-seed.tsv" << 'SEED'
-Book	Chapter	Verse	Text
-ፍጥረት	1	1	በመጀመሪያ እግዚአብሔር ሰማይንና ምድርን ፈጠረ።
-ፍጥረት	1	2	ምድርም ባዶ ነበረች፤ የማይኖርባትም ነበረች፤ ጨላማውም በጥልቁ ላይ ነበር፤ የእግዚአብሔርም መንፈስ በውሃዎች ላይ ይንቀሳቀስ ነበር።
-ፍጥረት	1	3	እግዚአብሔርም። ብርሃን ይሁን አለ። ብርሃንም ሆነ።
-መዝሙር ዳዊት	23	1	እግዚአብሔር እረኛዬ ነው፥ ምንም ከጎደለኝ አይሆንም።
-መዝሙር ዳዊት	23	2	በለመለመ መስክ ውስጥ ያሳርፈኛል፤ ወደ ውሃዎች ረጋ ባለቦታ ይመራኛል።
-መዝሙር ዳዊት	23	3	ነፍሴን ይመልሳል፤ ስለ ስሙ በጽድቅ መንገድ ይመራኛል።
-መዝሙር ዳዊት	23	4	የሞት ጥላ በሆነ ሸለቆ ውስጥ ብወጣ እንኳን ክፉን አልፈራም፤ አንተ ከእኔ ጋር ነህና፤ በትርህና ማዕድህ እነርሱ ያጸናኛሉ።
-መዝሙር ዳዊት	91	1	ልዑል በሆነው በልዑሉ ድንኳን ውስጥ የሚኖር በሁሉንም ለሚችል በእርሱ ጥላ በታች ያርፋል።
-ዮሐንስ	3	16	እግዚአብሔር ዓለምን እንዲህ ወዶታልና፥ ወንድ ልጁን ብቻውን እንዲሰጥ አደረገ፥ በእርሱ የሚያምን ሁሉ እንዳይጠፋ ዘላለማዊ ሕይወት እንዲኖረው ነው።
-ዮሐንስ	14	6	ኢየሱስ። እኔ መንገድና እውነትና ሕይወት ነኝ አለው። ወደ አብ ከማንም በእኔ ብቻ ካልሆነ አይመጣም።
-ሮሜ	8	28	ወደ እግዚአብሔር ለሚወዱ ሁሉ እንደ አሳቡ ለተጠሩት ሁሉ ነገር ሁሉ በጎ እንዲሆን እናውቃለን።
-ፊልጵስዮስ	4	13	በሚገፋፈኝ በሁሉ በእርሱ እችላለሁ።
-ራእይ ዮሐንስ	22	21	የጌታችን የኢየሱስ ክርስቶስ ጸጋ ከሁላችሁ ጋር ይሁን። አሜን።
-SEED
-
-echo "[TONGUES-04v] Yoruba seed..."
-cat > "$BIBLE_DIR/yo-bible-seed.tsv" << 'SEED'
-Book	Chapter	Verse	Text
-Genesi	1	1	Ni ibere Olorun da orun ati aiye.
-Genesi	1	2	Aiye si wa asan ati ofo; okunkun si wa lori oju omi. Emi Olorun si ma fi ipa re lori omi.
-Genesi	1	3	Olorun si wipe, Je ki imole wa: imole si wa.
-Orin Dafidi	23	1	Oluwa ni oluso agutan mi, emi ki yio funfun kan ni.
-Orin Dafidi	23	2	O fi mi sinu oko koriko: o mu mi si ibi omi ti o simi.
-Orin Dafidi	23	3	O fi emi mi pada: o si mu mi li ona ododo fun oruko re.
-Orin Dafidi	23	4	Bi emi tile rin ninu afonifoji ikú, emi ki yio beru ibi: nitori iwo wa pelu mi: pa ati opa re ni o fi itunu fun mi.
-Orin Dafidi	91	1	Eniti o ngun ni abo Olorun julọ yio si simi labe abo Olodumare.
-Johannu	3	16	Nitori wipe Olorun fe aiye toto, ti o fi Omo re tikarar eni kan fun un, ki enikeni to ba gbagbo bo, kio peribalaye ayeraye ni imole.
-Johannu	14	6	Jesu si wipe fun un, Emi ni ona, ati otito, ati iye: enikeni ko si ti o ba fi wa si Baba, bikose emi.
-Romu	8	28	A mo si pe awon ti nfe Olorun, ohun gbogbo si nba ara mu si ire fun won.
-Filipi	4	13	Ohun gbogbo ni mo le se nipasẹ olugbala mi.
-Ifihan	22	21	Ore-ọfẹ Jesu Kristi Oluwa wa kio wa pẹlu gbogbo nyin. Amin.
-SEED
-
-echo "[TONGUES-04w] Igbo seed..."
-cat > "$BIBLE_DIR/ig-bible-seed.tsv" << 'SEED'
-Book	Chapter	Verse	Text
-Jenesisị	1	1	Nꞌmmalite Chineke kere eluigwe na ala.
-Jenesisị	1	2	Ala bụghị ihe ma ọ bụ ihe efu; ọchịchịrị dị nꞌelu ọdụmiri. Mmụọ Chineke na-efe elu mmiri.
-Jenesisị	1	3	Chineke kwuru okwu sị, Ọ bụrụ na ọ bụ ọkụ. Ọkụ bụrụ.
-Abụọma	23	1	Ọ bụrụ na Onyenwe anyị bụ onye na-azụ m, agaghị m enwe ihe ọ bụla na-adịghị m mma.
-Abụọma	23	2	Ọ na-eme ka m dina nꞌọhịa ọhịa; ọ na-eduga m nꞌebe mmiri jụụ ọjụụ.
-Abụọma	23	3	Ọ na-edozi mkpụrụ obi m; ọ na-eduga m nꞌụzọ ezi omume nꞌihi aha ya.
-Abụọma	23	4	Ọ bụrụ na agafe m nꞌọgbọ nke ọnwụ, agaghị m atụ egwu ihe ọjọọ: nꞌihi na ị nọnyeere m; mkpara gị na ọgba agha gị ka ha na-eme ka m nwee obi ike.
-Abụọma	91	1	Onye bi nꞌebe nzuzo Onyenwe elu kpọrọ nkụ, ga-ezuru ala nꞌokpuru onye ike nile.
-Jọn	3	16	Nꞌihi na Chineke hụrụ ụwa nꞌanya nke ukwuu, o nyere ha Ọkpara ya amam ama, ka onye ọ bụla kwere nꞌya ghara ịfụ, kama ọ nwee ndụ ebighị ebi.
-Jọn	14	6	Jisọs zara ya sị ya, Abụ m ụzọ, na eziokwu, na ndụ: onye ọ bụla abịaghị na Nna ma ọ bụghị site nꞌamụ.
-Rom	8	28	Anyị maara na ihe niile na-arụkọ ọrụ ọnụ maka nma nꞌebe ndị hụrụ Chineke nꞌanya.
-Filip	4	13	Ihe niile m nwere ike ime site nꞌOnye na-enye m ike.
-Ọpụkpụ ọchịchị	22	21	Amara Onyenwe anyị Jisọs Kraịst nọnyeere unu niile. Amen.
-SEED
-
-echo "[TONGUES-04x] Hausa seed..."
-cat > "$BIBLE_DIR/ha-bible-seed.tsv" << 'SEED'
-Book	Chapter	Verse	Text
-Farawa	1	1	A farko Allah ya halicci sammai da ƙasa.
-Farawa	1	2	Ƙasa kuwa tana banza da tana fanko; duhu kuma yana bisa gefen zurfi; kuma ruhin Allah yana tashi bisa ruwa.
-Farawa	1	3	Allah kuma ya ce, Hasali da haske. Haske kuwa ya wanzu.
-Zabura	23	1	Ubangiji makiyayina ne, ba zan yi rashin komai ba.
-Zabura	23	2	Yana sa in kwana a cikin shanu masu kore rabi; yana kai ni kusa da ruwa masu nutsuwa.
-Zabura	23	3	Yana mayar da raina; yana shiryar da ni a hanyoyin adalci saboda sunansa.
-Zabura	23	4	Ko da in wuce ta kwurin inuwar mutuwa, ba zan ji tsoron mummukan abu ba; gama kai kana tare da ni; sandarka da bulalarka suna ta ƙarfafa ni.
-Zabura	91	1	Duk wanda yake zaune a wurin boye na Mai Girma zai yi hutu a karkashin inuwar Mai Iko Duka.
-Yohanna	3	16	Gama Allah ya ƙauna duniya haka, har ya ba da ɗansa ɗaya da ɗaya, don duk wanda ya gaskata da shi kada ya hallaka, amma ya sami rai madawwami.
-Yohanna	14	6	Yesu ya ce masa, Ni ne hanya, da gaskiya, da rai: babu wanda yake zuwa wurin Uba face ta wurina.
-Romawa	8	28	Kuma mun sani cewa dukan abubuwa suna aiki tare don alheri ga waɗanda suke ƙaunar Allah.
-Filipawa	4	13	Dukan abubuwa ina iya yin su ta wurin wanda yake ƙarfafa ni.
-Bayyanawa	22	21	Alherin Ubangijinmu Yesu Kristi ya kasance tare da ku duka. Amin.
-SEED
-
-echo "[TONGUES-04y] Zulu seed..."
-cat > "$BIBLE_DIR/zu-bible-seed.tsv" << 'SEED'
-Book	Chapter	Verse	Text
-Genesisi	1	1	Ekuqaleni uNkulunkulu wadala izulu nomhlaba.
-Genesisi	1	2	Umhlaba wawuyize futhi awunakho lutho; ubumnyama busenkabeni yenkanyezi; uMoya kaNkulunkulu uheha phezu kwamanzi.
-Genesisi	1	3	UNKulunkulu wathi: Makube khona ukukhanya. Kwaba khona ukukhanya.
-IHlabelelo	23	1	INKosi ingumalusi wami, angiyukuphuthelwa lutho.
-IHlabelelo	23	2	Ingibekise esivandeni sezulu; ingiholela ngasemanzini athokozisayo.
-IHlabelelo	23	3	Ingiyaphilisa umphefumulo wami; ingihola ezindleleni zobulungiswa ngenxa yegama layo.
-IHlabelelo	23	4	Noma ngingahamba esigodini sobubini sokufa, ngeke ngesabe okubi, ngoba unami; intonga yakho nodondolo lwakho kungiduduza.
-IHlabelelo	91	1	Ohlala esithenjini soPhezukonke uyakuhlala ethunzini likaSomandla.
-uJohane	3	16	Ngokuba uNkulunkulu walithanda izulu nomhlaba kangaka, waze wanika iNdodana yakhe ezelwe eyodwa, ukuze bonke abakholwa yiyo bangabhubhi, kodwa babe nokuphila okuphakade.
-uJohane	14	6	UJesu wathi kuye, Mina yindlela, iqiniso, nokuphila; akakho ozayo kuYise, kungekho kimi.
-KwabaseRoma	8	28	Siyazi ukuthi konke kusebenzisana kube kulungile kwabathanda uNkulunkulu.
-KwabaseFilipi	4	13	Konke ngiyakwazi ngaye ongiphezinamandla.
-IsAmbulo	22	21	Umusa weNkosi yethu uJesu Kristu malube nani nonke. Amen.
-SEED
-
-echo "[TONGUES-04z] Xhosa seed..."
-cat > "$BIBLE_DIR/xh-bible-seed.tsv" << 'SEED'
-Book	Chapter	Verse	Text
-IGenesis	1	1	Ekuqaleni uThixo wadala izulu nomhlaba.
-IGenesis	1	2	Wawusenkqantosini umhlaba, wawungenanto; ubumnyama babusentantini; uMoya kaThixo uthe wathi jaji phezu kwamanzi.
-IGenesis	1	3	Wathi uThixo, Makubekho ukukhanya. Kwabakho ukukhanya.
-INgoma	23	1	UYehova ngumalusi wam, andiyi kuphuthelwa nto.
-INgoma	23	2	Wondibeka embalasweni yengca; wondisa emanzini athozamisayo.
-INgoma	23	3	Woyibuyisa umphefumlo wam; wondihambisa ezindleleni zobulungisa ngenxa yegama lakhe.
-INgoma	23	4	Nokuba ndihamba esihlanjeni sobumnyama obufana nokufa, andiyi koyika ububi, ngokuba unam; intonga yakho, intonga yakho nodondolo lwakho zindiduduza.
-INgoma	91	1	Ohlala esithenjini soPhezukonke uhlala ethunzini likaSomandla.
-uYohane	3	16	Kuba uThixo walithanda ngokungako ihlabathi, waze wanika uNyana wakhe owodwa, ukuze bonke abakholwa yena bangatshabalali, kodwa babe nobomi obungunaphakade.
-uYohane	14	6	Wathi uYesu kuye, Mna ndiyindlela, neyenene, nobomi; akukho namnye uyeza kuYihlo, kungekho mna.
-KumaRoma	8	28	Siyazi ukuba konke kusebenzisana kube kulungile kwabathanda uThixo.
-KuFilipi	4	13	Zonke ndinako ukwenza ngaye undinika amandla.
-IsAmbalo	22	21	Umusa weNkosi yethu uYesu Krestu malube nani nonke. Amen.
-SEED
-
-echo "[TONGUES-04aa] Afrikaans seed..."
-cat > "$BIBLE_DIR/af-bible-seed.tsv" << 'SEED'
-Book	Chapter	Verse	Text
-Genesis	1	1	In die begin het God die hemel en die aarde geskape.
-Genesis	1	2	Die aarde was woes en leeg, en duisternis was op die diepte; en die Gees van God het oor die waters gesweef.
-Genesis	1	3	En God het gesê: Laat daar lig wees! En daar was lig.
-Psalms	23	1	Die Here is my Herder; ek kom niks kort nie.
-Psalms	23	2	Hy laat my neerlê in groen weivelde; na stille waters lei Hy my heen.
-Psalms	23	3	Hy verkwik my siel; Hy lei my in die spore van geregtigheid om sy Naam ontwil.
-Psalms	23	4	Selfs al gaan ek deur die dal van die skaduwee van die dood, sal ek geen kwaad vrees nie, want U is met my; u stok en u staf, dit vertroos my.
-Psalms	91	1	Hy wat in die skuilplek van die Allerhoogste woon, sal verkeer in die skaduwee van die Almagtige.
-Johannes	3	16	Want so lief het God die wêreld gehad, dat Hy sy eniggebore Seun gegee het, sodat elkeen wat in Hom glo, nie verlore mag gaan nie, maar die ewige lewe kan hê.
-Johannes	14	6	Jesus sê vir hom: Ek is die weg en die waarheid en die lewe; niemand kom na die Vader behalwe deur My nie.
-Romeine	8	28	En ons weet dat vir die wat God liefhet, alle dinge saamwerk ten goede.
-Filippense	4	13	Ek kan alle dinge doen deur Hom wat my krag gee.
-Openbaring	22	21	Die genade van onse Here Jesus Christus sy met julle almal! Amen.
-SEED
-
-echo "[TONGUES-04ab] Somali seed..."
-cat > "$BIBLE_DIR/so-bible-seed.tsv" << 'SEED'
-Book	Chapter	Verse	Text
-Bilowgii	1	1	Bilowgii Ilaahay samada iyo dhulka abuuray.
-Bilowgii	1	2	Dhulku wuu madhan yahay oo cidla ah, mugdi ayaa korka moolka ah, ruuxa Ilaahayna wuxuu ku dul socday biyaha.
-Bilowgii	1	3	Ilaahayna wuxuu yidhi, Iftiin ha jiro. Iftiin ayaa jiray.
-Sabuurrada	23	1	Rabbigu waa adhijirkaygii, wax walbana waan hayn doonaa.
-Sabuurrada	23	2	Wuxuu igu fadhiisiyaa cawska cagaaran; wuxuu i hoggaamiyaa biyaha xasilloon.
-Sabuurrada	23	3	Wuxuu naftayda dib ugu celiyaa; wuxuu igu hoggaamiyaa waddooyinka xaqnimada magiciisa awgood.
-Sabuurrada	23	4	Xataa haddaan ku dhex socdo dooxada hooska dhimashada, shar ma baqi doono; waayo, adigu waad ila joogtaa; ushaada iyo ulahaaguna way i qalbi qaboojinayaan.
-Sabuurrada	91	1	Kii ku degan meesha qarsoon ee Sareeya, wuxuu degayaa hooska kan wax walba xoogga leh.
-Yooxanaa	3	16	Waayo, Ilaahay wuxuu adduunka sidaa u jeclaaday inuu wiilkiisa keli ahaantiis siiyey, si mid kasta oo isaga rumaysta uusan lumin, laakiinse uu haysto nolosha weligeed ah.
-Yooxanaa	14	6	Ciise ayaa isaga ku yidhi, Anigu waa jidka, runta, iyo nolosha; ninna uma imanayo Aabbaha haddaan anigu ahayn.
-Rooma	8	28	Waxaan ognahay in wax walba ay wada shaqeeyaan si wanaagsan kuwa Ilaahay jecel yihiin.
-Filibi	4	13	Wax walba waan awoodaa isaga igu xoojinaya.
-Muujinta	22	21	Nimco Rabbigeenna Ciise Masiix ha idinla jirto dhammaantiin. Aamiin.
-SEED
-
-echo "[TONGUES-04ac] Twi seed..."
-cat > "$BIBLE_DIR/tw-bible-seed.tsv" << 'SEED'
-Book	Chapter	Verse	Text
-Bereisoh	1	1	Bereisoh no Onyankopɔn bɔɔ ɔsoro ne asase.
-Bereisoh	1	2	Na asase no na ɛteɛ ne hunu; sum sum maa ɛkata twenten; na Honhom Onyankopɔn kyerɛɛ ne ho wɔ nsu no so.
-Bereisoh	1	3	Na Onyankopɔn kae se, Hene mmra: na hene bae.
-Dwom	23	1	Awurade ne me hwɛfo; me de, me renhia hwee.
-Dwom	23	2	Ɔma me da asase a ɛyɛ kɔkɔɔ so; ɔde me si nsu a ɛhome no ho.
-Dwom	23	3	Ɔde me kra san kɔ; ɔde me fa trenee akwan so wɔ ne din nti.
-Dwom	23	4	Sɛ me mpo fa owu sum kabii mu a, me rennsuro bɔne biara; efisɛ wo ne me wɔ hɔ; wo poma ne wo rod no na ɛma me ahotɔ.
-Dwom	91	1	Ɔno a ɔte Ɔsorosoroni no hintabea mu no, ɔbɛtena Otumfo no animsuma no ase.
-Yohane	3	16	Efonyam nyia Onyankopɔn dɔ wiase yi, maa ɔde ne Ba korɔ no mae, na obiara a onyi ne din no ankora bɔ anan bewu na mmerehya asetra a.
-Yohane	14	6	Yohane mu no Yesu kae se, Me ne ɔkwan no, ne nokware no, ne nkwa no; obiara mfa nnto Agya no nkyɛn gye me so.
-Roma	8	28	Na yɛnim sɛ ma wɔn a wɔdɔ Onyankopɔn no, nneɛma nyinaa ne papa na ɛbɔ mu.
-Filipi	4	13	Mepɛ ne nyinaa wɔ nea ɔhyɛ me ma me tumi mu.
-Yohane Adiyisɛm	22	21	Yɛn Awurade Yesu Kristo adom nka mo nyinaa nka. Amen.
-SEED
-
-echo "[TONGUES-04ad] Filipino seed (Philippines — same key verses as Tagalog)..."
-cat > "$BIBLE_DIR/fil-bible-seed.tsv" << 'SEED'
-Book	Chapter	Verse	Text
-Genesis	1	1	Nang pasimula ay nilikha ng Diyos ang langit at ang lupa.
-Genesis	1	2	At ang lupa ay walang anyo at walang laman; at ang kadiliman ay sumasa ibabaw ng kalaliman; at ang Espiritu ng Diyos ay sumasa ibabaw ng tubig.
-Genesis	1	3	At sinabi ng Diyos: Magkaroon ng liwanag; at nagkaroon ng liwanag.
-Awit	23	1	Ang Panginoon ay aking pastor; hindi ako mangangailangan.
-Awit	23	2	Sa sariwang pastulan ay pinapahiga niya ako; sa mga tubig na pahingahan ay pinapatnubayan niya ako.
-Awit	23	3	Iniibigan niya ang aking kaluluwa; pinapatnubayan niya ako sa mga landas ng katuwiran alang-alang sa kaniyang pangalan.
-Awit	23	4	Oo, kung ako'y maglakad man sa libis ng lilim ng kamatayan, wala akong katatakutang kasamaan; sapagka't ikaw ay sumasa akin: ang iyong tungkod at ang iyong pamalo, ay nagsisialiw sa akin.
-Awit	91	1	Ang nananahan sa lihim na dako ng Kataastaasan ay magpapahinga sa lilim ng Makapangyarihan sa lahat.
-Juan	3	16	Sapagka't gayon na lamang ang pag-ibig ng Diyos sa sanglibutan, na ibinigay niya ang kaniyang bugtong na Anak, upang ang sinomang sa kaniya'y sumampalataya ay huwag mapahamak, kundi magkaroon ng buhay na walang hanggan.
-Juan	14	6	Sinabi sa kaniya ni Jesus, Ako ang daan, at ang katotohanan, at ang buhay: sinoman ay hindi makakaparoon sa Ama, kundi sa pamamagitan ko.
-Mga Taga-Roma	8	28	At nalalaman natin na sa mga umiibig sa Diyos ang lahat ng mga bagay ay nagsasamang gumagawa para sa mabuti.
-Mga Taga-Filipos	4	13	Lahat ng mga bagay ay aking magagawa sa pamamagitan niyaong nagpapalakas sa akin.
-Apocalipsis	22	21	Ang biyaya ng ating Panginoong Jesucristo ay sumainyo nang lahat. Siya nawa.
-SEED
-
-echo "[TONGUES-04ae] Urdu seed..."
-cat > "$BIBLE_DIR/ur-bible-seed.tsv" << 'SEED'
-Book	Chapter	Verse	Text
-پیدائش	1	1	شروع میں خدا نے آسمان اور زمین کو پیدا کیا۔
-پیدائش	1	2	زمین بے سروپ اور خالی تھی۔ تاریکی گہرے پانی پر تھی۔ اور خدا کی روح پانی کے اوپر حرکت کر رہی تھی۔
-پیدائش	1	3	خدا نے کہا کہ روشنی ہو۔ روشنی ہوگئی۔
-زبور	23	1	خداوند میرا چرواہا ہے۔ مجھے کمی نہ ہوگی۔
-زبور	23	2	وہ مجھے ہرے بھرے چراگاہوں میں لیٹاتا ہے۔ وہ مجھے آرام کے پانیوں کے پاس لے جاتا ہے۔
-زبور	23	3	وہ میری جان کو بحال کرتا ہے۔ وہ مجھے اپنی ناموس کی راہوں پر چلاتا ہے۔
-زبور	23	4	اگرچہ میں موت کے سایہ کی وادی میں سے ہوں گا تو بھی میں کسی شر سے نہیں ڈرونگا کیونکہ تو میرے ساتھ ہے۔ تیرا لاٹھی اور تیرا ڈنڈا مجھے تسلّی دیتے ہیں۔
-زبور	91	1	جو شخص خدا تعالیٰ کی پناہ گاہ میں رہتا ہے وہ ہر قادر کی چھاؤں میں ٹھہرے گا۔
-یوحنا	3	16	کیونکہ خدا نے جہان سے اَیسی محبت کی کہ اُس نے اپنا اِکلَوتا بیٹا بخشا تاکہ جو کوئی اُس پر ایمان لائے ہلاک نہ ہو بلکہ ہمیشہ کی زندگی پائے۔
-یوحنا	14	6	یسوع نے اُس سے کہا، میں راستہ اور سچّائی اور زندگی ہوں۔ کوئی شخص باپ کے پاس نہیں آ سکتا مگر میرے وسیلے سے۔
-رومیوں	8	28	اور ہم جانتے ہیں کہ خدا سے محبت رکھنے والوں کے لیے سب چیزیں مل کر بھلائی کے لیے کام کرتی ہیں۔
-فلپیوں	4	13	میں اُس کی قوت کے وسیلے سے جو مجھے مضبوط کرتا ہے سب کچھ کر سکتا ہوں۔
-مکاشفہ	22	21	ہمارے خداوند یسوع مسیح کا فضل تم سب پر ہو۔ آمین۔
-SEED
-
-echo "[TONGUES-04af] Jamaican Patwa seed (Jamaica — ISO 639-3 jam)..."
-cat > "$BIBLE_DIR/jam-bible-seed.tsv" << 'SEED'
-Book	Chapter	Verse	Text
-Genesis	1	1	Inna di biginin Gad mek di iem an di ort.
-Genesis	1	2	Di ort did emti an no av no shiep; dankies did uova di dip; an di Spirit a Gad did muuv uova di waata.
-Genesis	1	3	An Gad se, “Mek liet kom.” An liet kom.
-Psalms	23	1	Di Laad a mi shipaad; mi naa du widout notn.
-Psalms	23	2	Im mek mi lii dong pan griis pastyaa; im liid mi bai kwaiet waata.
-Psalms	23	3	Im bring bak mi suul; im liid mi ina paat a raitnis fi im niem sakes.
-Psalms	23	4	Iven if mi waak chuu di shiedou a det, mi no ba fi nuo evl, bikaaz yu de wid mi; yu rod an yu staf dem komfaat mi.
-Psalms	91	1	Wu eva siddung unda di shado a di Mais Ai, im a go riest unda di wing a di Wan we av aal paa.
-John	3	16	Bikaaz Gad lov di worl so muoch, im gi im wan an ongl Son, so dat evribadi we biliv pahn im no go ded bot av laif we no go don.
-John	14	6	Jiizas se to im, “A mi a di wie, an di chuu, an di laif; no wan no kyan kom to di Fada if a no chuu mi.”
-Romans	8	28	An wi nuo se evriting a wok toutgidha fi gud fi dem we lov Gad.
-Philippians	4	13	Mi kyan du evriting chuu Krais wea gi mi strench.
-Revelation	22	21	Di griis fi wi Laad Jesas Krais be wid aal a unu. A-mien.
-SEED
-
-echo "[TONGUES-04ag] Haitian Creole seed (ISO 639-1 ht)..."
-cat > "$BIBLE_DIR/ht-bible-seed.tsv" << 'SEED'
-Book	Chapter	Verse	Text
-Jenèz	1	1	Nan konmansman, Bondye te kreye syèl la ak tè a.
-Jenèz	1	2	Tè a te san fòm epi vide; fennwa te sou fon labèn nan; epi Lespri Bondye a t ap vole sou dlo a.
-Jenèz	1	3	Bondye di: Se pou gen limyè. Epi gen limyè.
-Som	23	1	Se yon chante David. Seyè a se gadyen mwen; anyen p ap manke m.
-Som	23	2	Li fè m kouche nan savann vèt; li mennen m bò dlo ki poze.
-Som	23	3	Li restore mwen; li mennen m nan chemen jistis la, pou non li.
-Som	23	4	Menm si m mache nan mitan fonmò kote gen lonbra lanmò, m p ap pè anyen ki mal; paske ou la avèk mwen; baton ou ak bagèt ou konsole m.
-Som	91	1	Moun ki rete nan kachette Pi Wo a, li pral repoze nan lonbraz Tout-Puissan an.
-Jan	3	16	Paske Bondye renmen mond lan telman, li bay sèl Pitit li a, pou tout moun ki kwè nan li pa pèdi lavi yo, men gen lavi ki pa gen fen.
-Jan	14	6	Jezi reponn li: Mwen se chemen an, verite a ak lavi a. Pesonn p ap vin jwenn Papa a si se pa atravè m.
-Roman	8	28	Konnen byen ke Bondye fè tout bagay mache ansanm pou byen moun ki renmen li yo, moun li te rele pou plan li te genyen an.
-Filip	4	13	Mwen kapab fè tout bagay atravè moun ki bay m fòs la.
-Revelasyon	22	21	Gras Senyè nou Jezi Kri a ve ak nou tout. Amèn.
-SEED
-
-echo "[TONGUES-04ah] Indonesian (id) seed..."
-cat > "$BIBLE_DIR/id-bible-seed.tsv" << 'SEED'
-Book	Chapter	Verse	Text
-Kejadian	1	1	Pada mulanya Allah menciptakan langit dan bumi.
-Kejadian	1	2	Bumi itu belum berbentuk dan kosong; gelap gulita menutupi samudera raya, dan Roh Allah melayang-layang di atas permukaan air.
-Kejadian	1	3	Berfirman Allah: Jadilah terang. Lalu terang itu jadi.
-Mazmur	23	1	Nyanyian Daud: TUHAN adalah gembalaku, takkan kurang aku suatu apapun.
-Mazmur	23	2	Ia membaringkan aku di padang yang berumput hijau; Ia membimbing aku ke air yang tenang.
-Mazmur	23	3	Ia menyegarkan jiwaku; Ia menuntun aku ke jalan yang benar oleh karena nama-Nya.
-Mazmur	23	4	Sekalipun aku berjalan dalam lembah kelam, aku tidak akan takut bahaya, sebab Engkau bersertaku; tongkat-Mu dan gada-Mu, itulah yang menenangkan aku.
-Mazmur	91	1	Orang yang diam dalam naungan Yang Mahatinggi dan bermalam dalam bayangan Yang Mahakuasa.
-Yohanes	3	16	Karena begitu besar kasih Allah akan dunia ini, sehingga Ia telah mengaruniakan Anak-Nya yang Tunggal, supaya setiap orang yang percaya kepada-Nya tidak binasa, melainkan beroleh hidup yang kekal.
-Yohanes	14	6	Kata Yesus kepadanya: Akulah jalan dan kebenaran dan hidup; tidak ada seorang pun yang datang kepada Bapa, melainkan melalui Aku.
-Roma	8	28	Dan kita tahu, bahwa Allah turut bekerja dalam segala sesuatu untuk mendatangkan kebaikan bagi mereka yang mengasihi Dia.
-Filipi	4	13	Segala perkara dapat kutanggungkan di dalam Dia yang memberi kekuatan kepadaku.
-Wahyu	22	21	Kasih karunia Tuhan kita Yesus Kristus menyertai kamu sekalian! Amin.
-SEED
-
-echo "[TONGUES-04ai] Persian / Farsi (fa) seed..."
-cat > "$BIBLE_DIR/fa-bible-seed.tsv" << 'SEED'
-Book	Chapter	Verse	Text
-پیدایش	1	1	در آغاز، خدا آسمانها و زمین را آفرید.
-پیدایش	1	2	و زمین بی‌شکل و تهی بود و تاریکی بر روی لجه بود؛ و روح خدا بر روی آبها حرکت می‌کرد.
-پیدایش	1	3	و خدا فرمود: نور باشد؛ پس نور شد.
-مزامیر	23	1	مزمور داود: خداوند شبان من است؛ چیزی کم نخواهم داشت.
-مزامیر	23	2	مرا در چراگاههای سبز می‌خواباند و مرا کنار آبهای آرام رهبری می‌کند.
-مزامیر	23	3	جانم را تازه می‌سازد؛ مرا به راههای عدالت هدایت می‌کند، برای نام خودش.
-مزامیر	23	4	گرچه در میان دره سایهٔ مرگ راه بروم، از بدی نخواهم ترسید، زیرا تو با منی؛ عصا و چوب‌دستت مرا تسلّی می‌دهد.
-مزامیر	91	1	آنکه در پناه حضرت اعلی ساکن است، در سایهٔ قادر مطلق آرام می‌گیرد.
-یوحنا	3	16	زیرا خدا جهان را اینقدر محبت نمود که پسر یگانهٔ خود را داد تا هر که به او ایمان آورد هلاک نگردد، بلکه حیات ابدی یابد.
-یوحنا	14	6	عیسی گفت: من راه و راستی و حیات هستم؛ هیچ‌کس جز به وسیلهٔ من به پدر نمی‌آید.
-رومیان	8	28	و می‌دانیم که خدا برای کسانی که او را دوست دارند، همهٔ چیزها را برای خیر با هم همکاری می‌دهد.
-فیلیپیان	4	13	همهٔ چیز را در آن که مرا تقویت می‌کند توانا هستم.
-مکاشفه	22	21	فیض خداوند ما عیسی مسیح با همهٔ شما باد! آمین.
-SEED
-
-echo "[TONGUES-04aj] Burmese / Myanmar (my) seed..."
-cat > "$BIBLE_DIR/my-bible-seed.tsv" << 'SEED'
-Book	Chapter	Verse	Text
-ကမ္ဘာဦးကျမ်း	1	1	အစက ဘုရားသခင်သည် ကောင်းကင်နှင့်မြေကြီးကို ဖန်ဆင်းတော်မူ၏။
-ကမ္ဘာဦးကျမ်း	1	2	မြေကြီးသည် ပုံသဏ္ဌာန်မရှိဘဲ ဗလာဖြစ်လေသည်။ အမှောင်သည် ရေပြင်ပေါ်တွင် အုပ်ဆိုင်းလျက် ရှိခဲ့သည်။ ဘုရားသခင်၏ဝိညာဉ်သည် ရေပြင်ထက် လှုပ်ရှားလေသည်။
-ကမ္ဘာဦးကျမ်း	1	3	ဘုရားသခင်က မိန့်တော်မူလျှင် အလင်းဖြစ်စေတော်မူ၏။ အလင်းဖြစ်လာသည်။
-ဆာလမ်	23	1	ဒါဝိဒ်၏သီချင်း။ ထာဝရမြတ်သည် ကျွန်ုပ်ကို နေရာချထားသော မင်းဖြစ်တော်မူ၏၊ ကျွန်ုပ်မှာ မလိုအပ်ပါ။
-ဆာလမ်	23	2	မြက်ခင်းစိမ်းလန်း၍ ကျွန်ုပ်ကို အိပ်စေတော်မူ၏။ အေးဆေးတည်ငြိမ်သော ရေအိုင်ဆီသို့ ဦးဆောင်တော်မူ၏။
-ဆာလမ်	23	3	ကျွန်ုပ်၏ဝိညာဉ်ကို ပြန်လည်စေတော်မူ၏။ သူ၏နာမတော်ကြောင့် ဖြောင့်မတ်သောလမ်းများသို့ ဦးဆောင်တော်မူ၏။
-ဆာလမ်	23	4	သေခြင်းတောင်ကြားမှောင်ထုကို လျှောက်လာသော်လည်း ကျွန်ုပ်သည် မကောင်းမှုကို မကြောက်ရှာပါ၊ သင်သည် ကျွန်ုပ်နှင့်အတူရှိသောကြောင့် ဖြစ်သည်။ သင်၏တုတ်နှင့်ချိန်သည် ကျွန်ုပ်ကိုသိမ့်ကြသည်။
-ဆာလမ်	91	1	အမြင့်ဆုံးသူ၏အရိပ်အောက်တွင် နေထိုင်သောသူသည် ကြွားကြားသူ၏အရိပ်အောက်တွင် စံမြန်းလိမ့်မည်။
-ယောဟာန်	3	16	ဘာကြောင့်ဆိုသော ဘုရားသခင်သည် လောကကိုချစ်မြတ်သောကြောင့်၊ သူ၏တစ်ဦးတည်းသောသားကို ပေးတော်မူသည်နှင့်တကွ၊ ယုံကြည်သောသူတိုင်းသည် ပျက်မသွားဘဲ ထာဝရချမ်းသာကို ရစေခြင်းငှါ ဖြစ်သည်။
-ယောဟာန်	14	6	ယေရှုက ဖြေဆိုလေသည်။ ငါသည်လမ်း၊ သစ္စာနှင့် အသက်ဖြစ်၏၊ အဖအားထားသော်လက်မှ တစ်ပါးပါးသို့ မလာရကြပါ။
-ရောမ	8	28	မျက်မှောက်အားဖြင့် သူသည် ဘုရားကို ချစ်ကြသည်တို့အတွက် အားလုံးကောင်းစွာဖြစ်သည်ဟု ကျွန်ုပ်တို့သိကြ၏။
-ဖိလိပ္ပီ	4	13	ငါ၏အင်ကို ပြုတော်မူသည့်သူနှင့်အတူ ငါသည် အရာခပ်သိမ်းကို နိုင်၏။
-ဝိဝေဓခြင်း	22	21	ကျေးဇူးတော်မူသော သခင်ယေရှုခရစ္တလ်သည် သင်တို့အားလုံးနှင့်အတူရှိပါစေသော။ အာမီန။
-SEED
-
-# ═══════════════════════════════════════════════════
 # 5. BIBLE TONGUES CLI WRAPPER
 # ═══════════════════════════════════════════════════
 echo "[TONGUES-05] Installing Bible tongues extension..."
@@ -936,68 +118,6 @@ BIBLE_DIR="/usr/share/alfred/bible"
 GOLD='\033[38;5;220m'; CYAN='\033[0;36m'; NC='\033[0m'; BOLD='\033[1m'
 
 LANGUAGE="${1:-list}"
-
-# Any code listed in languages.conf (add new tongues there + seed TSV only).
-do_lookup() {
-        CODE="$1"
-        BOOK="${2:-}"
-        CHAPTER="${3:-}"
-
-        LINE=$(grep "^${CODE}|" "$BIBLE_DIR/languages.conf" 2>/dev/null)
-        if [ -z "$LINE" ]; then
-            echo "Language '$CODE' not found. Run: alfred-bible-lang list"
-            exit 1
-        fi
-
-        FILE=$(echo "$LINE" | cut -d'|' -f3)
-        NAME=$(echo "$LINE" | cut -d'|' -f2)
-        SOURCE=$(echo "$LINE" | cut -d'|' -f4)
-
-        BIBLE_FILE="$BIBLE_DIR/$FILE"
-        SEED_FILE="$BIBLE_DIR/${FILE%.tsv}-seed.tsv"
-
-        if [ -f "$BIBLE_FILE" ]; then
-            ACTIVE_FILE="$BIBLE_FILE"
-        elif [ -f "$SEED_FILE" ]; then
-            ACTIVE_FILE="$SEED_FILE"
-            echo -e "${GOLD}(Using seed Bible — key verses only. Full: alfred-bible download $CODE)${NC}"
-            echo ""
-        else
-            echo "No Bible data for $NAME."
-            exit 1
-        fi
-
-        if [ -z "$BOOK" ]; then
-            TOTAL=$(tail -n +2 "$ACTIVE_FILE" | wc -l)
-            TOTAL=$((TOTAL + 0))
-            if [ "$TOTAL" -lt 1 ]; then
-                echo "No verses in Bible data for $NAME."
-                exit 1
-            fi
-            LINE_NUM=$((RANDOM % TOTAL + 2))
-            IFS=$'\t' read -r b c v text <<< "$(sed -n "${LINE_NUM}p" "$ACTIVE_FILE")"
-            echo -e "${GOLD}✝ $b $c:$v${NC} ($NAME — $SOURCE)"
-            echo "$text"
-        elif [ -z "$CHAPTER" ]; then
-            echo -e "${GOLD}✝ $BOOK${NC} ($NAME)"
-            echo ""
-            while IFS=$'\t' read -r b c v text; do
-                [[ "$b" == "Book" ]] && continue
-                if [[ "$b" == "$BOOK" ]]; then
-                    echo -e "  ${CYAN}$c:$v${NC} $text"
-                fi
-            done < "$ACTIVE_FILE"
-        else
-            echo -e "${GOLD}✝ $BOOK $CHAPTER${NC} ($NAME)"
-            echo ""
-            while IFS=$'\t' read -r b c v text; do
-                [[ "$b" == "Book" ]] && continue
-                if [[ "$b" == "$BOOK" && "$c" == "$CHAPTER" ]]; then
-                    echo -e "  ${CYAN}$v${NC} $text"
-                fi
-            done < "$ACTIVE_FILE"
-        fi
-}
 
 case "$LANGUAGE" in
     list)
@@ -1020,91 +140,92 @@ case "$LANGUAGE" in
         echo ""
         echo "  Usage: alfred-bible-lang <code> [book] [chapter]"
         echo "  Example: alfred-bible-lang es Salmos 23"
-        echo "  Example: alfred-bible-lang es-419 Juan 3"
-        echo "  Example: alfred-bible-lang es-ES Juan 3"
-        echo "  Example: alfred-bible-lang lad Juan 3"
-        echo "  Example: alfred-bible-lang cbk Juan 3"
         echo "  Example: alfred-bible-lang fr Jean 3"
-        echo "  Example: alfred-bible-lang ro Ioan 3"
-        echo "  Example: alfred-bible-lang uk Івана 3"
         echo "  Example: alfred-bible-lang he"
-        echo "  Example: alfred-bible-lang yi יוחנן 3"
-        echo "  Example: alfred-bible-lang gr Ιωάννης 3"
-        echo "  Example: alfred-bible-lang la Ioannes 3"
-        echo "  Example: alfred-bible-lang zu Genesisi 1"
-        echo "  Example: alfred-bible-lang am ዮሐንስ 3"
-        echo "  Example: alfred-bible-lang ur یوحنا 3"
-        echo "  Example: alfred-bible-lang fil \"Mga Taga-Filipos\" 4"
-        echo "  Example: alfred-bible-lang jam John 3"
-        echo "  Example: alfred-bible-lang ht Jan 3"
-        echo "  Example: alfred-bible-lang id Yohanes 3"
-        echo "  Example: alfred-bible-lang fa یوحنا 3"
-        echo "  Example: alfred-bible-lang my ယောဟာန် 3"
-        echo "  Example: alfred-bible-lang ary یوحنا 3   — John 3 in Moroccan Darija (seed)"
-        echo "  Example: alfred-bible-lang arz یوحنا 3  — John 3 in Egyptian Arabic (seed)"
         ;;
 
-    help|--help|-h)
+    en|es|fr|he)
+        CODE="$LANGUAGE"
+        BOOK="${2:-}"
+        CHAPTER="${3:-}"
+
+        # Find the right file
+        LINE=$(grep "^${CODE}|" "$BIBLE_DIR/languages.conf" 2>/dev/null)
+        if [ -z "$LINE" ]; then
+            echo "Language '$CODE' not found. Run: alfred-bible-lang list"
+            exit 1
+        fi
+
+        FILE=$(echo "$LINE" | cut -d'|' -f3)
+        NAME=$(echo "$LINE" | cut -d'|' -f2)
+        SOURCE=$(echo "$LINE" | cut -d'|' -f4)
+
+        BIBLE_FILE="$BIBLE_DIR/$FILE"
+        SEED_FILE="$BIBLE_DIR/${FILE%.tsv}-seed.tsv"
+
+        # Use full Bible if available, otherwise seed
+        if [ -f "$BIBLE_FILE" ]; then
+            ACTIVE_FILE="$BIBLE_FILE"
+        elif [ -f "$SEED_FILE" ]; then
+            ACTIVE_FILE="$SEED_FILE"
+            echo -e "${GOLD}(Using seed Bible — key verses only. Full: alfred-bible download $CODE)${NC}"
+            echo ""
+        else
+            echo "No Bible data for $NAME."
+            exit 1
+        fi
+
+        if [ -z "$BOOK" ]; then
+            # Show random verse
+            TOTAL=$(tail -n +2 "$ACTIVE_FILE" | wc -l)
+            LINE_NUM=$((RANDOM % TOTAL + 2))
+            IFS=$'\t' read -r b c v text <<< "$(sed -n "${LINE_NUM}p" "$ACTIVE_FILE")"
+            echo -e "${GOLD}✝ $b $c:$v${NC} ($NAME — $SOURCE)"
+            echo "$text"
+        elif [ -z "$CHAPTER" ]; then
+            # Show all chapters of book
+            echo -e "${GOLD}✝ $BOOK${NC} ($NAME)"
+            echo ""
+            while IFS=$'\t' read -r b c v text; do
+                [[ "$b" == "Book" ]] && continue
+                if [[ "$b" == "$BOOK" ]]; then
+                    echo -e "  ${CYAN}$c:$v${NC} $text"
+                fi
+            done < "$ACTIVE_FILE"
+        else
+            # Show specific chapter
+            echo -e "${GOLD}✝ $BOOK $CHAPTER${NC} ($NAME)"
+            echo ""
+            while IFS=$'\t' read -r b c v text; do
+                [[ "$b" == "Book" ]] && continue
+                if [[ "$b" == "$BOOK" && "$c" == "$CHAPTER" ]]; then
+                    echo -e "  ${CYAN}$v${NC} $text"
+                fi
+            done < "$ACTIVE_FILE"
+        fi
+        ;;
+
+    help|*)
         echo -e "${GOLD}═══ alfred-bible-lang — The Word in Every Tongue ═══${NC}"
         echo ""
         echo "  alfred-bible-lang list           — Show available languages"
-        echo "  alfred-bible-lang es              — Random verse in Spanish (RVR-style)"
-        echo "  alfred-bible-lang es-419 Juan 3   — John 3 in Latin-American Spanish (seed)"
-        echo "  alfred-bible-lang es-ES Juan 3    — John 3 in Peninsular Spanish (seed)"
-        echo "  alfred-bible-lang lad Juan 3      — John 3 in Ladino (seed)"
-        echo "  alfred-bible-lang cbk Juan 3      — John 3 in Chavacano (seed)"
+        echo "  alfred-bible-lang es              — Random verse in Spanish"
         echo "  alfred-bible-lang fr Jean 3       — John 3 in French"
-        echo "  alfred-bible-lang ro Ioan 3       — John 3 in Romanian (seed)"
         echo "  alfred-bible-lang he              — Random Hebrew verse"
-        echo "  alfred-bible-lang gr              — Random Greek verse (LXX/NT seed)"
-        echo "  alfred-bible-lang la Ioannes 3    — John 3 in Latin (seed)"
-        echo "  alfred-bible-lang de Johannes 3   — John 3 in German (seed)"
-        echo "  alfred-bible-lang zh 约翰福音 3     — John 3 in Chinese (seed)"
-        echo "  alfred-bible-lang zu Genesisi 1    — Genesis 1 in Zulu (seed)"
-        echo "  alfred-bible-lang am ዮሐንስ 3       — John 3 in Amharic (seed)"
-        echo "  alfred-bible-lang ur یوحنا 3       — John 3 in Urdu (seed)"
-        echo "  alfred-bible-lang fil \"Mga Taga-Filipos\" 4 — Philippians 4 in Filipino (seed)"
-        echo "  alfred-bible-lang jam John 3       — John 3 in Jamaican Patwa (seed)"
-        echo "  alfred-bible-lang ht Jan 3         — John 3 in Haitian Creole (seed)"
-        echo "  alfred-bible-lang id Yohanes 3     — John 3 in Indonesian (seed)"
-        echo "  alfred-bible-lang fa یوحنا 3       — John 3 in Persian (seed)"
-        echo "  alfred-bible-lang my ယောဟာန် 3     — John 3 in Burmese (seed)"
-        echo "  alfred-bible-lang ary یوحنا 3      — John 3 in Moroccan Darija (seed)"
-        echo "  alfred-bible-lang arz یوحنا 3     — John 3 in Egyptian Arabic (seed)"
         echo ""
         echo "  \"They began to speak with other tongues,"
         echo "   as the Spirit gave them utterance.\" — Acts 2:4"
-        ;;
-
-    *)
-        if ! grep -q "^${LANGUAGE}|" "$BIBLE_DIR/languages.conf" 2>/dev/null; then
-            echo "Language '${LANGUAGE}' not found. Run: alfred-bible-lang list" >&2
-            exit 1
-        fi
-        do_lookup "$LANGUAGE" "${2:-}" "${3:-}"
         ;;
 esac
 LANG
 chmod +x /usr/local/bin/alfred-bible-lang
 
-echo "[TONGUES-06] Desktop entry — public discovery on the ISO..."
-mkdir -p /usr/share/applications
-cat > /usr/share/applications/alfred-bible-tongues.desktop << 'DESKBT'
-[Desktop Entry]
-Name=Bible in Many Languages
-Comment=48 tongues offline (seed verses) — Acts 2:4; no Internet required
-Exec=x-terminal-emulator -e bash -c 'echo "══ Bible tongues (offline seeds) ══"; echo "List codes, then try a random verse or a book/chapter."; echo ""; alfred-bible-lang list; echo ""; echo "Try:  alfred-bible-lang es"; echo "      alfred-bible-lang ro Ioan 3"; echo "      alfred-bible tongues list"; echo ""; exec bash'
-Icon=accessories-dictionary
-Terminal=false
-Type=Application
-Categories=Education;Reference;
-Keywords=bible;scripture;languages;multilingual;tongues;spanish;ladino;chavacano;indonesian;persian;farsi;burmese;creole;haitian;kreyol;yiddish;romanian;i18n;
-DESKBT
-
 echo "╔═══════════════════════════════════════════════════════════╗"
 echo "║  [0292] Bible Tongues — COMPLETE                         ║"
-echo "║  ✓ English AKJV (full) + 47 seed tongues — list for codes ║"
-echo "║    (+ es-419 es-ES lad cbk; id fa my; ht yi; ary arz apc afb; fil ur jam) Acts 2:4 ║"
-echo "║  ✓ alfred-bible-lang — run: alfred-bible-lang list       ║"
+echo "║  ✓ English (AKJV) — 39,482 verses                       ║"
+echo "║  ✓ Spanish (Reina-Valera) — seed installed               ║"
+echo "║  ✓ French (Louis Segond) — seed installed                ║"
+echo "║  ✓ Hebrew (Westminster Codex) — seed installed           ║"
+echo "║  ✓ alfred-bible-lang CLI — multilingual reader           ║"
 echo "║  They spoke with other tongues. — Acts 2:4               ║"
 echo "╚═══════════════════════════════════════════════════════════╝"

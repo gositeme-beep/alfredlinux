@@ -1,0 +1,51 @@
+#!/bin/sh
+# /etc/update-motd.d/50-kingdom-bread
+#
+# Daily Bread + Sabbath state on every shell login.
+# Pulls from alfredlinux.com — graceful no-op if offline.
+#
+# "Man shall not live by bread alone, but by every word that proceedeth out of
+#  the mouth of God." — Matthew 4:4 (AKJV)
+
+set -eu
+URL_BREAD='https://alfredlinux.com/daily-bread.php?format=text'
+URL_STATUS='https://alfredlinux.com/kingdom-status.php'
+TIMEOUT=3
+
+GOLD='\033[33m'
+DIM='\033[2m'
+RST='\033[0m'
+
+# Colour off when not a tty
+if [ ! -t 1 ]; then GOLD=''; DIM=''; RST=''; fi
+
+printf '\n'
+printf '%b\n' "${GOLD}═══════════════════════════════════════════════════════════════${RST}"
+printf '%b\n' "${GOLD}                  ✠  ALFRED LINUX  ✠${RST}"
+printf '%b\n' "${GOLD}            Kingdom of God Edition  v7.77${RST}"
+printf '%b\n' "${GOLD}═══════════════════════════════════════════════════════════════${RST}"
+
+# Sabbath state (best-effort; fall through silently)
+SABBATH_LINE=""
+if command -v curl >/dev/null 2>&1; then
+    STATUS_JSON="$(curl -fsSL --max-time "$TIMEOUT" "$URL_STATUS" 2>/dev/null || true)"
+    if [ -n "$STATUS_JSON" ]; then
+        case "$STATUS_JSON" in
+            *'"active":true'*) SABBATH_LINE="${GOLD}  ✦  Sabbath is active — rest in the LORD.${RST}" ;;
+            *'"erev":true'*)   SABBATH_LINE="${GOLD}  ✦  Erev Shabbat — the seventh day approaches.${RST}" ;;
+        esac
+    fi
+fi
+[ -n "$SABBATH_LINE" ] && printf '%b\n' "$SABBATH_LINE"
+
+# Daily Bread
+if command -v curl >/dev/null 2>&1; then
+    BREAD="$(curl -fsSL --max-time "$TIMEOUT" "$URL_BREAD" 2>/dev/null || true)"
+    if [ -n "$BREAD" ]; then
+        printf '\n%b\n' "${DIM}  Daily Bread (AKJV)${RST}"
+        printf '%s\n' "$BREAD" | sed 's/^/  /'
+    fi
+fi
+
+printf '\n%b\n' "${DIM}  covenant.php · sovereign.php · daily-bread.php · verify.php${RST}"
+printf '%b\n\n' "${DIM}  Soli Deo Gloria${RST}"

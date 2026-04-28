@@ -1,0 +1,276 @@
+#!/bin/bash
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# ═══════════════════════════════════════════════════════════════════════════════
+# HOOK 0702: Accessibility — The Blind Shall See, The Deaf Shall Hear
+#
+# "The blind receive their sight, and the lame walk, the lepers are
+#  cleansed, and the deaf hear, the dead are raised up, and the poor
+#  have the gospel preached to them." — Matthew 11:5
+#
+# Installs Orca screen reader, high-contrast themes, large-text mode,
+# text-to-speech Bible reading, and accessibility-first keyboard nav.
+#
+# BUILD: v7.77 Kingdom of God Edition
+# ═══════════════════════════════════════════════════════════════════════════════
+
+set -e
+chmod 1777 /tmp 2>/dev/null || true
+
+echo "╔═══════════════════════════════════════════════════════════╗"
+echo "║  [0702] Accessibility — The Blind Shall See              ║"
+echo "║  'The blind receive their sight' — Matthew 11:5          ║"
+echo "╚═══════════════════════════════════════════════════════════╝"
+
+export DEBIAN_FRONTEND=noninteractive
+
+# ═══════════════════════════════════════════════════
+# 1. CORE ACCESSIBILITY PACKAGES
+# ═══════════════════════════════════════════════════
+echo "[A11Y-01] Installing accessibility tools..."
+apt-get install -y --no-install-recommends \
+    orca \
+    at-spi2-core \
+    espeak-ng \
+    speech-dispatcher \
+    speech-dispatcher-espeak-ng \
+    brltty \
+    onboard \
+    xcursor-themes \
+    xdotool \
+    xdg-utils \
+    2>/dev/null || true
+
+# ═══════════════════════════════════════════════════
+# 2. HIGH CONTRAST THEME
+# ═══════════════════════════════════════════════════
+echo "[A11Y-02] Installing high-contrast theme..."
+apt-get install -y --no-install-recommends \
+    high-contrast-icon-theme \
+    gnome-accessibility-themes \
+    2>/dev/null || true
+
+# ═══════════════════════════════════════════════════
+# 3. TEXT-TO-SPEECH BIBLE READER
+# ═══════════════════════════════════════════════════
+echo "[A11Y-03] Installing Bible text-to-speech reader..."
+
+cat > /usr/local/bin/alfred-bible-speak << 'SPEAK'
+#!/bin/bash
+# ═══════════════════════════════════════════════════════════════
+# alfred-bible-speak — Hear the Word of God read aloud
+# Uses espeak-ng for offline text-to-speech
+#
+# "So then faith cometh by hearing, and hearing
+#  by the word of God." — Romans 10:17
+# ═══════════════════════════════════════════════════════════════
+
+BIBLE="/usr/share/alfred/bible/akjv-bible.tsv"
+GOLD='\033[38;5;220m'; CYAN='\033[0;36m'; NC='\033[0m'; BOLD='\033[1m'
+
+if [ ! -f "$BIBLE" ]; then
+    echo "Bible not found at $BIBLE"
+    exit 1
+fi
+
+if ! command -v espeak-ng &>/dev/null; then
+    echo "espeak-ng not installed. Install with: sudo apt install espeak-ng"
+    exit 1
+fi
+
+SPEED="${ALFRED_BIBLE_SPEED:-140}"  # Words per minute (slower = more meditative)
+VOICE="${ALFRED_BIBLE_VOICE:-en}"
+
+case "${1:-help}" in
+    read)
+        BOOK="$2"
+        CHAPTER="$3"
+        VERSE_START="${4:-}"
+        VERSE_END="${5:-}"
+
+        if [ -z "$BOOK" ] || [ -z "$CHAPTER" ]; then
+            echo "Usage: alfred-bible-speak read <book> <chapter> [verse] [end-verse]"
+            echo "Example: alfred-bible-speak read Genesis 1"
+            echo "Example: alfred-bible-speak read Psalm 23 1 6"
+            exit 1
+        fi
+
+        echo -e "${GOLD}✝ Reading: $BOOK $CHAPTER${NC}"
+        echo ""
+
+        # Extract verses
+        while IFS=$'\t' read -r b c v text; do
+            if [[ "$b" == "$BOOK" && "$c" == "$CHAPTER" ]]; then
+                if [ -n "$VERSE_START" ] && [ "$v" -lt "$VERSE_START" ]; then continue; fi
+                if [ -n "$VERSE_END" ] && [ "$v" -gt "$VERSE_END" ]; then continue; fi
+                echo -e "${CYAN}$b $c:$v${NC} $text"
+                espeak-ng -v "$VOICE" -s "$SPEED" "$b chapter $c verse $v. $text" 2>/dev/null
+            fi
+        done < "$BIBLE"
+        echo ""
+        echo -e "${GOLD}Amen.${NC}"
+        ;;
+
+    random)
+        TOTAL=$(wc -l < "$BIBLE")
+        LINE=$((RANDOM % (TOTAL - 1) + 2))
+        IFS=$'\t' read -r b c v text <<< "$(sed -n "${LINE}p" "$BIBLE")"
+        echo -e "${GOLD}✝ $b $c:$v${NC}"
+        echo "$text"
+        echo ""
+        espeak-ng -v "$VOICE" -s "$SPEED" "$b chapter $c verse $v. $text" 2>/dev/null
+        ;;
+
+    psalm)
+        PSALM="${2:-23}"
+        echo -e "${GOLD}✝ Psalm $PSALM${NC}"
+        echo ""
+        while IFS=$'\t' read -r b c v text; do
+            if [[ "$b" == "Psalms" && "$c" == "$PSALM" ]]; then
+                echo -e "${CYAN}$c:$v${NC} $text"
+                espeak-ng -v "$VOICE" -s "$SPEED" "Verse $v. $text" 2>/dev/null
+            fi
+        done < "$BIBLE"
+        echo ""
+        echo -e "${GOLD}Amen.${NC}"
+        ;;
+
+    help|*)
+        echo -e "${GOLD}═══ alfred-bible-speak — Hear the Word ═══${NC}"
+        echo ""
+        echo "  alfred-bible-speak read Genesis 1       — Read a chapter aloud"
+        echo "  alfred-bible-speak read Psalm 23 1 6    — Read specific verses"
+        echo "  alfred-bible-speak random               — Hear a random verse"
+        echo "  alfred-bible-speak psalm 91             — Read a Psalm"
+        echo ""
+        echo "  Environment variables:"
+        echo "    ALFRED_BIBLE_SPEED=140  — Speech speed (lower = slower)"
+        echo "    ALFRED_BIBLE_VOICE=en   — Voice language (en, es, fr, he)"
+        echo ""
+        echo "  \"So then faith cometh by hearing, and hearing"
+        echo "   by the word of God.\" — Romans 10:17"
+        ;;
+esac
+SPEAK
+chmod +x /usr/local/bin/alfred-bible-speak
+
+# ═══════════════════════════════════════════════════
+# 4. ACCESSIBILITY LAUNCHER
+# ═══════════════════════════════════════════════════
+echo "[A11Y-04] Creating accessibility launcher..."
+
+cat > /usr/share/applications/alfred-accessibility.desktop << 'DESKTOP'
+[Desktop Entry]
+Type=Application
+Name=Accessibility Settings
+GenericName=Accessibility
+Comment=Screen reader, large text, high contrast, on-screen keyboard
+Exec=xfce4-terminal -e "alfred-a11y"
+Icon=preferences-desktop-accessibility
+Terminal=false
+Categories=Settings;Accessibility;
+Keywords=blind;deaf;accessibility;screen reader;large text;contrast;
+DESKTOP
+
+# ═══════════════════════════════════════════════════
+# 5. ACCESSIBILITY CLI — alfred-a11y
+# ═══════════════════════════════════════════════════
+echo "[A11Y-05] Installing alfred-a11y CLI..."
+
+cat > /usr/local/bin/alfred-a11y << 'A11Y'
+#!/bin/bash
+# ═══════════════════════════════════════════════════════════════
+# alfred-a11y — Accessibility tools for Alfred Linux
+# "The blind receive their sight." — Matthew 11:5
+# ═══════════════════════════════════════════════════════════════
+
+GOLD='\033[38;5;220m'; GREEN='\033[0;32m'; CYAN='\033[0;36m'
+RED='\033[0;31m'; BOLD='\033[1m'; NC='\033[0m'
+
+cmd_status() {
+    echo -e "${GOLD}═══ Alfred Accessibility Status ═══${NC}"
+    echo ""
+    echo -n "  Screen reader (Orca): "
+    if pgrep -x orca &>/dev/null; then
+        echo -e "${GREEN}RUNNING${NC}"
+    elif command -v orca &>/dev/null; then
+        echo -e "installed, not running (start: ${CYAN}alfred-a11y reader on${NC})"
+    else
+        echo -e "${RED}NOT INSTALLED${NC}"
+    fi
+    echo -n "  Text-to-speech: "
+    command -v espeak-ng &>/dev/null && echo -e "${GREEN}AVAILABLE${NC}" || echo -e "${RED}NOT AVAILABLE${NC}"
+    echo -n "  On-screen keyboard: "
+    command -v onboard &>/dev/null && echo -e "${GREEN}AVAILABLE${NC}" || echo -e "${RED}NOT AVAILABLE${NC}"
+    echo -n "  Bible voice reader: "
+    command -v alfred-bible-speak &>/dev/null && echo -e "${GREEN}AVAILABLE${NC}" || echo -e "${RED}NOT AVAILABLE${NC}"
+    echo ""
+    echo -e "  ${BOLD}Quick commands:${NC}"
+    echo "    alfred-a11y reader on       — Start screen reader"
+    echo "    alfred-a11y reader off      — Stop screen reader"
+    echo "    alfred-a11y largetext       — Enable large text mode"
+    echo "    alfred-a11y contrast        — Switch to high contrast"
+    echo "    alfred-a11y keyboard        — Open on-screen keyboard"
+    echo "    alfred-a11y bible           — Hear the Bible read aloud"
+    echo ""
+}
+
+case "${1:-status}" in
+    status) cmd_status ;;
+    reader)
+        case "${2:-on}" in
+            on)  orca &>/dev/null & echo -e "${GREEN}Screen reader started${NC}" ;;
+            off) pkill orca 2>/dev/null; echo "Screen reader stopped" ;;
+        esac ;;
+    largetext)
+        if command -v xfconf-query &>/dev/null; then
+            xfconf-query -c xsettings -p /Gtk/FontName -s "Sans 16" 2>/dev/null
+            xfconf-query -c xfwm4 -p /general/title_font -s "Sans Bold 14" 2>/dev/null
+            echo -e "${GREEN}Large text mode enabled (16pt).${NC}"
+            echo "Log out and back in for full effect."
+        else
+            echo "XFCE settings not available."
+        fi ;;
+    contrast)
+        if command -v xfconf-query &>/dev/null; then
+            xfconf-query -c xsettings -p /Net/ThemeName -s "HighContrast" 2>/dev/null
+            xfconf-query -c xsettings -p /Net/IconThemeName -s "HighContrast" 2>/dev/null
+            echo -e "${GREEN}High contrast theme enabled.${NC}"
+        else
+            echo "XFCE settings not available."
+        fi ;;
+    keyboard)
+        if command -v onboard &>/dev/null; then
+            onboard &>/dev/null &
+            echo -e "${GREEN}On-screen keyboard opened${NC}"
+        else
+            echo "On-screen keyboard not installed."
+        fi ;;
+    bible)
+        shift
+        alfred-bible-speak "${@:-random}"
+        ;;
+    help|*)
+        echo -e "${GOLD}═══ alfred-a11y — Accessibility Tools ═══${NC}"
+        echo ""
+        echo "  alfred-a11y status        — Show accessibility status"
+        echo "  alfred-a11y reader on/off — Screen reader (Orca)"
+        echo "  alfred-a11y largetext     — Enable large fonts (16pt)"
+        echo "  alfred-a11y contrast      — High contrast theme"
+        echo "  alfred-a11y keyboard      — On-screen keyboard"
+        echo "  alfred-a11y bible         — Hear the Bible read aloud"
+        echo ""
+        ;;
+esac
+A11Y
+chmod +x /usr/local/bin/alfred-a11y
+
+echo "╔═══════════════════════════════════════════════════════════╗"
+echo "║  [0702] Accessibility — COMPLETE                         ║"
+echo "║  ✓ Orca screen reader installed                          ║"
+echo "║  ✓ espeak-ng text-to-speech                              ║"
+echo "║  ✓ High contrast + large text modes                      ║"
+echo "║  ✓ On-screen keyboard (Onboard)                          ║"
+echo "║  ✓ alfred-bible-speak — hear the Word                    ║"
+echo "║  ✓ alfred-a11y CLI — one-command accessibility           ║"
+echo "║  The blind shall see. The deaf shall hear.               ║"
+echo "╚═══════════════════════════════════════════════════════════╝"

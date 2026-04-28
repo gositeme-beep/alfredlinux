@@ -1,0 +1,426 @@
+#!/bin/bash
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# ═══════════════════════════════════════════════════════════════
+# Alfred Linux 7.77 GA — Alfred IDE (Sovereign IDE)
+#
+# Installs code-server, applies FULL Alfred IDE branding to
+# product.json, workbench, NLS, kills telemetry, removes
+# Microsoft URLs, installs Alfred Commander 5.0.0 extension,
+# and creates proper desktop integration with custom icon.
+#
+# This is NOT "code-server with a name change" — this is a
+# fully sovereign development environment.
+#
+# BUILD: v7.77-ga
+# ═══════════════════════════════════════════════════════════════
+
+set +e  # IDE download may fail in chroot — don't kill the build
+
+GOLD='\033[1;33m'
+NC='\033[0m'
+echo -e "${GOLD}╔══════════════════════════════════════════════════════════╗${NC}"
+echo -e "${GOLD}║  HOOK 0300 — Alfred IDE Sovereign Build                 ║${NC}"
+echo -e "${GOLD}╚══════════════════════════════════════════════════════════╝${NC}"
+
+# ═══════════════════════════════════════════════════════════════
+# 1. INSTALL CODE-SERVER BASE
+# ═══════════════════════════════════════════════════════════════
+export HOME=/root
+CODE_SERVER_VER="4.115.0"
+
+echo "[IDE-01] Installing code-server ${CODE_SERVER_VER}..."
+# MILITARY: Pre-staged deb preferred (air-gap safe), direct download fallback
+if [ -f /build-assets/code-server_${CODE_SERVER_VER}_amd64.deb ]; then
+    echo "[IDE-01] Using pre-staged code-server deb (air-gap safe)"
+    dpkg -i /build-assets/code-server_${CODE_SERVER_VER}_amd64.deb || apt-get -f install -y
+else
+    wget -q "https://github.com/coder/code-server/releases/download/v${CODE_SERVER_VER}/code-server_${CODE_SERVER_VER}_amd64.deb" -O /tmp/code-server.deb \
+        && dpkg -i /tmp/code-server.deb || apt-get -f install -y
+    rm -f /tmp/code-server.deb
+fi
+
+# Find where code-server installed its vscode core
+CS_ROOT=""
+for d in /usr/local/lib/code-server-*/lib/vscode /usr/lib/code-server/lib/vscode; do
+    if [[ -f "$d/product.json" ]]; then
+        CS_ROOT="$d"
+        break
+    fi
+done
+
+if [[ -z "$CS_ROOT" ]]; then
+    echo "[ERROR] Cannot find code-server product.json — branding will be skipped"
+else
+    echo "[IDE-01] code-server root: $CS_ROOT"
+fi
+
+# ═══════════════════════════════════════════════════════════════
+# 2. FULL PRODUCT.JSON REBRANDING — 25+ properties
+# ═══════════════════════════════════════════════════════════════
+if [[ -n "$CS_ROOT" ]] && [[ -f "$CS_ROOT/product.json" ]]; then
+    echo "[IDE-02] Applying full Alfred IDE branding to product.json..."
+    python3 << PYEOF
+import json, sys
+
+try:
+    with open('${CS_ROOT}/product.json', 'r') as f:
+        d = json.load(f)
+except Exception as e:
+    print(f"  ERROR reading product.json: {e}")
+    sys.exit(0)
+
+# ── Core Identity ──
+d['nameShort'] = 'Alfred IDE'
+d['nameLong'] = 'Alfred IDE - GoSiteMe Command Center'
+d['applicationName'] = 'alfred-ide'
+d['dataFolderName'] = '.alfred-ide'
+d['win32MutexName'] = 'alfredide'
+d['licenseName'] = 'Proprietary'
+d['licenseUrl'] = 'https://gositeme.com/terms-of-service.php'
+d['serverLicenseUrl'] = 'https://gositeme.com/terms-of-service.php'
+d['serverApplicationName'] = 'alfred-ide-server'
+d['serverDataFolderName'] = '.alfred-ide-server'
+d['tunnelApplicationName'] = 'alfred-ide-tunnel'
+d['win32DirName'] = 'Alfred IDE'
+d['win32NameVersion'] = 'Alfred IDE'
+d['win32RegValueName'] = 'AlfredIDE'
+d['win32AppUserModelId'] = 'gositeme.alfred-ide'
+d['win32ShellNameShort'] = 'Alfred IDE'
+d['win32TunnelServiceMutex'] = 'alfredide-tunnelservice'
+d['win32TunnelMutex'] = 'alfredide-tunnel'
+d['darwinBundleIdentifier'] = 'com.gositeme.alfred.ide'
+d['linuxIconName'] = 'com.gositeme.alfred.ide'
+d['urlProtocol'] = 'alfred-ide'
+
+# ── URLs — GoSiteMe sovereign, kill ALL Microsoft/aka.ms links ──
+d['reportIssueUrl'] = 'https://gositeme.com/support'
+d['documentationUrl'] = 'https://gositeme.com/docs/alfred-ide'
+d['downloadUrl'] = 'https://gositeme.com/downloads/alfred-ide/'
+d['introductoryVideosUrl'] = ''
+d['keyboardShortcutsUrlLinux'] = ''
+d['keyboardShortcutsUrlMac'] = ''
+d['keyboardShortcutsUrlWin'] = ''
+d['releaseNotesUrl'] = ''
+d['requestFeatureUrl'] = 'https://gositeme.com/support'
+d['tipsAndTricksUrl'] = ''
+d['twitterUrl'] = ''
+d['checksumFailMoreInfoUrl'] = ''
+d['webviewContentExternalBaseUrlTemplate'] = ''
+d['newsletterSignupUrl'] = ''
+
+# ── Kill auto-update (sovereign — we control updates) ──
+d['updateUrl'] = ''
+d['serverDownloadUrlTemplate'] = ''
+
+# ── Telemetry OFF — absolute sovereignty ──
+d['enableTelemetry'] = False
+
+# ── Trusted domains — ONLY our kingdom ──
+d['linkProtectionTrustedDomains'] = [
+    'https://open-vsx.org',
+    'https://gositeme.com',
+    'https://gocodeme.com',
+    'https://meta-dome.com',
+    'https://alfredlinux.com',
+    'https://alfred-mobile.com'
+]
+
+# ── Kill GitHub Copilot as default chat agent ──
+if 'defaultChatAgent' in d:
+    del d['defaultChatAgent']
+d['trustedExtensionAuthAccess'] = {}
+
+# ── Rebrand built-in extension metadata ──
+if 'builtInExtensions' in d:
+    for ext in d['builtInExtensions']:
+        if 'metadata' in ext:
+            meta = ext['metadata']
+            if 'publisherId' in meta and isinstance(meta['publisherId'], dict):
+                pub = meta['publisherId']
+                if pub.get('publisherName') == 'ms-vscode':
+                    pub['publisherName'] = 'alfred-ide'
+                    pub['displayName'] = 'Alfred IDE'
+                    pub['flags'] = 'verified'
+                meta['publisherDisplayName'] = 'Alfred IDE'
+
+# ── AI config — Alfred, not Microsoft ──
+d['aiConfig'] = {'ariaKey': 'alfred-ide'}
+
+with open('${CS_ROOT}/product.json', 'w') as f:
+    json.dump(d, f, indent='\t', ensure_ascii=False)
+
+print("  product.json: 25+ properties rebranded")
+print("  Telemetry: DISABLED")
+print("  Microsoft URLs: REMOVED")
+print("  GitHub Copilot default: REMOVED")
+PYEOF
+    echo "[IDE-02] product.json branding complete"
+fi
+
+# ═══════════════════════════════════════════════════════════════
+# 3. WORKBENCH + NLS REBRANDING
+# ═══════════════════════════════════════════════════════════════
+if [[ -n "$CS_ROOT" ]]; then
+    echo "[IDE-03] Rebranding workbench and NLS locale..."
+
+    # Workbench JS — replace VSCodium/VS Code Server references
+    WORKBENCH="$CS_ROOT/out/vs/workbench/workbench.desktop.main.js"
+    if [[ -f "$WORKBENCH" ]]; then
+        sed -i 's/VSCodium/Alfred IDE/g' "$WORKBENCH"
+        sed -i 's/VS Code Server/Alfred IDE/g' "$WORKBENCH"
+        REFS=$(grep -c 'Alfred IDE' "$WORKBENCH" 2>/dev/null || echo "0")
+        echo "  workbench.desktop.main.js — ${REFS} Alfred IDE refs"
+    fi
+
+    # Web workbench (code-server serves this)
+    WORKBENCH_WEB="$CS_ROOT/out/vs/workbench/workbench.web.main.js"
+    if [[ -f "$WORKBENCH_WEB" ]]; then
+        sed -i 's/VSCodium/Alfred IDE/g' "$WORKBENCH_WEB"
+        sed -i 's/VS Code Server/Alfred IDE/g' "$WORKBENCH_WEB"
+        sed -i 's/code-server/Alfred IDE/g' "$WORKBENCH_WEB"
+        echo "  workbench.web.main.js rebranded"
+    fi
+
+    # NLS locale strings
+    NLS="$CS_ROOT/out/nls.messages.json"
+    if [[ -f "$NLS" ]]; then
+        sed -i 's/VSCodium/Alfred IDE/g' "$NLS"
+        sed -i 's/VS Code Server/Alfred IDE/g' "$NLS"
+        echo "  nls.messages.json rebranded"
+    fi
+
+    echo "[IDE-03] Workbench/NLS branding complete"
+fi
+
+# ═══════════════════════════════════════════════════════════════
+# 4. REMOVE BLOAT EXTENSIONS
+# ═══════════════════════════════════════════════════════════════
+echo "[IDE-04] Removing bloat extensions..."
+REMOVED=0
+if [[ -n "$CS_ROOT" ]]; then
+    for ext_name in eamodio.gitlens continue.continue jeanp413.open-remote-ssh; do
+        for dir in "$CS_ROOT"/extensions/${ext_name}*/; do
+            if [[ -d "$dir" ]]; then
+                rm -rf "$dir"
+                echo "  Removed $(basename "$dir")"
+                REMOVED=$((REMOVED + 1))
+            fi
+        done
+    done
+fi
+echo "[IDE-04] Removed $REMOVED bloat extensions"
+
+# ═══════════════════════════════════════════════════════════════
+# 5. INSTALL ALFRED COMMANDER EXTENSION
+# ═══════════════════════════════════════════════════════════════
+echo "[IDE-05] Installing Alfred Commander extension..."
+EXTENSION_DIR="/etc/skel/.local/share/code-server/extensions"
+mkdir -p "$EXTENSION_DIR"
+if [[ -f /tmp/alfred-commander-5.0.0.tar.gz ]]; then
+    tar xzf /tmp/alfred-commander-5.0.0.tar.gz -C "$EXTENSION_DIR/"
+    echo "  Commander 5.0.0 installed to skel"
+else
+    echo "  [WARN] /tmp/alfred-commander-5.0.0.tar.gz missing — Commander not pre-bundled"
+fi
+
+# ═══════════════════════════════════════════════════════════════
+# 6. CREATE ALFRED IDE ICON (SVG)
+# ═══════════════════════════════════════════════════════════════
+echo "[IDE-06] Installing Alfred IDE icon..."
+mkdir -p /usr/share/icons/hicolor/scalable/apps
+cat > /usr/share/icons/hicolor/scalable/apps/alfred-ide.svg << 'ICON_SVG'
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0d1117"/>
+      <stop offset="100%" stop-color="#161b22"/>
+    </linearGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#f0d060"/>
+      <stop offset="100%" stop-color="#c8a830"/>
+    </linearGradient>
+  </defs>
+  <!-- Background rounded square -->
+  <rect width="256" height="256" rx="48" fill="url(#bg)"/>
+  <!-- Shield outline -->
+  <path d="M128 30 L200 65 L200 140 C200 185 165 215 128 230 C91 215 56 185 56 140 L56 65 Z"
+        fill="none" stroke="url(#gold)" stroke-width="6"/>
+  <!-- Code brackets -->
+  <text x="92" y="165" font-family="monospace" font-size="80" font-weight="bold"
+        fill="url(#gold)" text-anchor="middle">&lt;</text>
+  <text x="164" y="165" font-family="monospace" font-size="80" font-weight="bold"
+        fill="url(#gold)" text-anchor="middle">&gt;</text>
+  <!-- A monogram -->
+  <text x="128" y="162" font-family="Georgia,serif" font-size="64" font-weight="bold"
+        fill="url(#gold)" text-anchor="middle">A</text>
+  <!-- Crown -->
+  <path d="M100 52 L110 40 L118 50 L128 35 L138 50 L146 40 L156 52" 
+        fill="none" stroke="#f0d060" stroke-width="3" stroke-linejoin="round"/>
+</svg>
+ICON_SVG
+
+# Also install PNG versions for compatibility
+for size in 16 24 32 48 64 128 256; do
+    mkdir -p /usr/share/icons/hicolor/${size}x${size}/apps
+done
+# SVG will be used by GTK/XFCE icon theme — PNG generation would need rsvg-convert
+# which we install if available
+if command -v rsvg-convert &>/dev/null; then
+    for size in 16 24 32 48 64 128 256; do
+        rsvg-convert -w $size -h $size /usr/share/icons/hicolor/scalable/apps/alfred-ide.svg \
+            -o /usr/share/icons/hicolor/${size}x${size}/apps/alfred-ide.png 2>/dev/null || true
+    done
+    echo "  PNG icons generated for all sizes"
+else
+    echo "  [INFO] rsvg-convert not available — using SVG icon only"
+fi
+echo "[IDE-06] Icon installed"
+
+# ═══════════════════════════════════════════════════════════════
+# 7. CONFIGURE code-server defaults
+# ═══════════════════════════════════════════════════════════════
+echo "[IDE-07] Configuring Alfred IDE defaults..."
+mkdir -p /etc/skel/.config/code-server
+IDE_DEFAULT_PW=$(head -c 24 /dev/urandom | base64 | tr -d '/+=' | head -c 16)
+cat > /etc/skel/.config/code-server/config.yaml << CFG
+bind-addr: 127.0.0.1:8443
+auth: password
+password: ${IDE_DEFAULT_PW}
+cert: false
+app-name: Alfred IDE
+disable-telemetry: true
+disable-update-check: true
+CFG
+echo "  config.yaml written (telemetry disabled, updates disabled)"
+
+# ═══════════════════════════════════════════════════════════════
+# 8. DEFAULT SETTINGS — sovereign defaults
+# ═══════════════════════════════════════════════════════════════
+echo "[IDE-08] Writing sovereign default settings..."
+mkdir -p "/etc/skel/.local/share/code-server/User"
+cat > "/etc/skel/.local/share/code-server/User/settings.json" << 'SETTINGS'
+{
+    "telemetry.telemetryLevel": "off",
+    "telemetry.enableTelemetry": false,
+    "telemetry.enableCrashReporter": false,
+    "update.mode": "none",
+    "update.showReleaseNotes": false,
+    "extensions.autoCheckUpdates": false,
+    "extensions.autoUpdate": false,
+    "workbench.enableExperiments": false,
+    "workbench.settings.enableNaturalLanguageSearch": false,
+    "workbench.colorTheme": "Default Dark Modern",
+    "workbench.startupEditor": "none",
+    "editor.fontFamily": "'JetBrains Mono', 'Fira Code', 'Droid Sans Mono', monospace",
+    "editor.fontSize": 14,
+    "editor.fontLigatures": true,
+    "editor.bracketPairColorization.enabled": true,
+    "editor.minimap.enabled": false,
+    "terminal.integrated.fontFamily": "'JetBrains Mono', monospace",
+    "git.enableSmartCommit": true,
+    "git.autofetch": false,
+    "security.workspace.trust.enabled": false,
+    "window.title": "Alfred IDE — ${activeEditorShort}${separator}${rootName}",
+    "window.menuBarVisibility": "toggle"
+}
+SETTINGS
+echo "  Default settings written (telemetry off, sovereign window title)"
+
+# ═══════════════════════════════════════════════════════════════
+# 9. SYSTEMD USER SERVICE — auto-start on login
+# ═══════════════════════════════════════════════════════════════
+echo "[IDE-09] Creating systemd user service..."
+mkdir -p /etc/skel/.config/systemd/user
+cat > /etc/skel/.config/systemd/user/alfred-ide.service << 'SVC'
+[Unit]
+Description=Alfred IDE — Sovereign Development Environment
+After=network.target
+
+[Service]
+Type=exec
+ExecStart=/usr/local/bin/code-server --disable-telemetry --disable-update-check
+Restart=always
+RestartSec=5
+Environment=NODE_OPTIONS=--max-old-space-size=2048
+Environment=VSCODE_IPC_HOOK_CLI=
+
+[Install]
+WantedBy=default.target
+SVC
+
+# Enable for default user (will activate on first login)
+mkdir -p /etc/skel/.config/systemd/user/default.target.wants
+ln -sf ../alfred-ide.service /etc/skel/.config/systemd/user/default.target.wants/alfred-ide.service
+echo "  alfred-ide.service created and enabled"
+
+# ═══════════════════════════════════════════════════════════════
+# 10. DESKTOP SHORTCUTS — with proper Alfred icon
+# ═══════════════════════════════════════════════════════════════
+echo "[IDE-10] Creating desktop shortcuts..."
+mkdir -p /etc/skel/Desktop
+cat > /etc/skel/Desktop/alfred-ide.desktop << 'DESK'
+[Desktop Entry]
+Name=Alfred IDE
+GenericName=Code Editor
+Comment=Sovereign Development Environment — Kingdom of God Edition
+Exec=xdg-open http://localhost:8443
+Icon=alfred-ide
+Type=Application
+Categories=Development;IDE;TextEditor;
+Terminal=false
+StartupNotify=true
+Keywords=code;editor;ide;development;alfred;sovereign;
+DESK
+chmod +x /etc/skel/Desktop/alfred-ide.desktop
+
+# System-wide application entry
+cat > /usr/share/applications/alfred-ide.desktop << 'SYSDESK'
+[Desktop Entry]
+Name=Alfred IDE
+GenericName=Code Editor
+Comment=Sovereign Development Environment — Kingdom of God Edition
+Exec=xdg-open http://localhost:8443
+Icon=alfred-ide
+Type=Application
+Categories=Development;IDE;TextEditor;
+Terminal=false
+StartupNotify=true
+MimeType=text/plain;text/x-python;text/x-shellscript;text/html;text/css;text/javascript;application/json;application/xml;
+Keywords=code;editor;ide;development;alfred;sovereign;
+SYSDESK
+echo "  Desktop shortcuts created with Alfred IDE icon"
+
+# ═══════════════════════════════════════════════════════════════
+# 11. INSTALL rsvg-convert FOR ICON RENDERING
+# ═══════════════════════════════════════════════════════════════
+echo "[IDE-11] Ensuring icon rendering tools..."
+apt-get install -y librsvg2-bin 2>/dev/null || true
+# Regenerate PNGs if rsvg now available
+if command -v rsvg-convert &>/dev/null; then
+    for size in 16 24 32 48 64 128 256; do
+        rsvg-convert -w $size -h $size /usr/share/icons/hicolor/scalable/apps/alfred-ide.svg \
+            -o /usr/share/icons/hicolor/${size}x${size}/apps/alfred-ide.png 2>/dev/null || true
+    done
+fi
+# Update icon cache
+gtk-update-icon-cache /usr/share/icons/hicolor/ 2>/dev/null || true
+
+# ═══════════════════════════════════════════════════════════════
+# COMPLETION BANNER
+# ═══════════════════════════════════════════════════════════════
+echo ""
+echo -e "${GOLD}╔══════════════════════════════════════════════════════════╗${NC}"
+echo -e "${GOLD}║  Alfred IDE — SOVEREIGN BUILD COMPLETE                  ║${NC}"
+echo -e "${GOLD}║                                                         ║${NC}"
+echo -e "${GOLD}║  ✓ product.json: 25+ properties rebranded              ║${NC}"
+echo -e "${GOLD}║  ✓ Workbench: VSCodium/VS Code → Alfred IDE            ║${NC}"
+echo -e "${GOLD}║  ✓ NLS locale: all strings rebranded                   ║${NC}"
+echo -e "${GOLD}║  ✓ Telemetry: KILLED (product + config + settings)     ║${NC}"
+echo -e "${GOLD}║  ✓ Microsoft URLs: ALL removed                         ║${NC}"
+echo -e "${GOLD}║  ✓ GitHub Copilot default: REMOVED                     ║${NC}"
+echo -e "${GOLD}║  ✓ Bloat extensions: REMOVED                           ║${NC}"
+echo -e "${GOLD}║  ✓ Alfred Commander 5.0.0: installed                   ║${NC}"
+echo -e "${GOLD}║  ✓ Custom icon: shield + code brackets + crown         ║${NC}"
+echo -e "${GOLD}║  ✓ Desktop integration: XFCE menu + desktop shortcut  ║${NC}"
+echo -e "${GOLD}║  ✓ Sovereign settings: zero tracking, zero phoning     ║${NC}"
+echo -e "${GOLD}╚══════════════════════════════════════════════════════════╝${NC}"

@@ -1,0 +1,553 @@
+#!/bin/bash
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# ═══════════════════════════════════════════════════════════════
+# HOOK 0167: Alfred Mesh Cloud — Sovereign Peer Network
+# 
+# Every Alfred Linux machine is a node in the Kingdom mesh.
+# Encrypted peer-to-peer connectivity, file sync, LAN discovery.
+#
+# Components:
+# - WireGuard (already installed) — encrypted tunnels
+# - Syncthing — cross-device file synchronization
+# - Avahi/mDNS — local peer auto-discovery
+# - alfred-mesh CLI — join/leave/status/peers/discover
+#
+# BUILD: v7.77+ Kingdom Edition
+# ═══════════════════════════════════════════════════════════════
+set -e
+# Fix /tmp permissions (may be restricted by earlier hooks in chroot)
+chmod 1777 /tmp 2>/dev/null || true
+echo "╔═══════════════════════════════════════════════════════════╗"
+echo "║  [0167] Alfred Mesh Cloud — Sovereign Peer Network       ║"
+echo "╚═══════════════════════════════════════════════════════════╝"
+export DEBIAN_FRONTEND=noninteractive
+
+# ═══════════════════════════════════════════════════
+# 1. INSTALL MESH DEPENDENCIES
+# ═══════════════════════════════════════════════════
+echo "[MESH-01] Installing mesh cloud dependencies..."
+apt-get install -y --no-install-recommends \
+    avahi-daemon avahi-utils libnss-mdns \
+    qrencode \
+    resolvconf 2>/dev/null || true
+
+# ═══════════════════════════════════════════════════
+# 2. SYNCTHING — Encrypted File Sync
+# ═══════════════════════════════════════════════════
+echo "[MESH-02] Installing Syncthing (encrypted file sync)..."
+
+# Add Syncthing official repository
+mkdir -p /etc/apt/keyrings
+curl -fsSL https://syncthing.net/release-key.gpg -o /etc/apt/keyrings/syncthing-archive-keyring.gpg 2>/dev/null || true
+
+if [ -f /etc/apt/keyrings/syncthing-archive-keyring.gpg ]; then
+    echo "deb [signed-by=/etc/apt/keyrings/syncthing-archive-keyring.gpg] https://apt.syncthing.net/ syncthing stable" \
+        > /etc/apt/sources.list.d/syncthing.list
+    apt-get update -o Dir::Etc::sourcelist="sources.list.d/syncthing.list" \
+        -o Dir::Etc::sourceparts="-" -o APT::Get::List-Cleanup="0" 2>/dev/null || true
+    apt-get install -y --no-install-recommends syncthing 2>/dev/null || true
+fi
+
+# Syncthing autostart for user (systemd user service)
+mkdir -p /etc/skel/.config/systemd/user/default.target.wants
+cat > /etc/skel/.config/systemd/user/syncthing.service << 'SYNCUNIT'
+[Unit]
+Description=Alfred Mesh — Syncthing File Synchronization
+Documentation=https://docs.syncthing.net
+After=network.target
+
+[Service]
+ExecStart=/usr/bin/syncthing serve --no-browser --no-restart --logflags=0
+Restart=on-failure
+RestartSec=10
+SuccessExitStatus=3 4
+RestartForceExitStatus=3 4
+
+[Install]
+WantedBy=default.target
+SYNCUNIT
+
+# Symlink for autostart
+ln -sf ../syncthing.service /etc/skel/.config/systemd/user/default.target.wants/syncthing.service 2>/dev/null || true
+
+# Default Syncthing config — share ~/Sync folder
+mkdir -p /etc/skel/Sync
+cat > /etc/skel/Sync/.stfolder << 'EOF'
+Alfred Mesh — Synced Folder
+This folder is synchronized across your Alfred devices.
+EOF
+
+# ═══════════════════════════════════════════════════
+# 3. AVAHI/mDNS — Local Peer Discovery
+# ═══════════════════════════════════════════════════
+echo "[MESH-03] Configuring Avahi for Alfred mesh peer discovery..."
+
+cat > /etc/avahi/services/alfred-mesh.service << 'AVAHI'
+<?xml version="1.0" standalone='no'?>
+<!DOCTYPE service-group SYSTEM "avahi-service.dtd">
+<service-group>
+  <name replace-wildcards="yes">Alfred Mesh Node — %h</name>
+  <service>
+    <type>_alfred-mesh._tcp</type>
+    <port>22000</port>
+    <txt-record>version=7.77</txt-record>
+    <txt-record>os=alfred-linux</txt-record>
+  </service>
+</service-group>
+AVAHI
+
+# ═══════════════════════════════════════════════════
+# 4. WIREGUARD MESH CONFIG TEMPLATE
+# ═══════════════════════════════════════════════════
+echo "[MESH-04] Creating WireGuard mesh config template..."
+mkdir -p /etc/alfred/mesh
+
+cat > /etc/alfred/mesh/README.md << 'README'
+# Alfred Mesh Cloud
+
+Your Alfred Linux machine is a node in the sovereign mesh network.
+
+## Quick Start
+  alfred-mesh status      — Show mesh connection status
+  alfred-mesh discover    — Find Alfred nodes on your network
+  alfred-mesh join <key>  — Join a mesh network with a peer key
+  alfred-mesh peers       — List connected peers
+  alfred-mesh sync        — Open Syncthing dashboard
+  alfred-mesh qr          — Generate QR code for mobile pairing
+
+## Kingdom connect API
+Optional: `export ALFRED_KINGDOM_MESH_REGISTER=1` before `alfred-mesh connect-kingdom`
+if you explicitly want the HTTPS registration POST; default is off (no surprise telemetry).
+
+## Architecture
+- WireGuard: Encrypted point-to-point tunnels (kernel-level speed)
+- Syncthing: Decentralized file synchronization (no cloud needed)
+- Avahi/mDNS: Automatic local network peer discovery
+- All traffic encrypted — zero trust, full sovereignty
+
+## Files
+- /etc/wireguard/wg-mesh.conf  — WireGuard mesh interface config
+- /etc/alfred/mesh/peers/      — Known peer configurations
+- ~/Sync/                      — Syncthing shared folder
+README
+
+mkdir -p /etc/alfred/mesh/peers
+
+cat > /etc/alfred/mesh/wg-mesh.conf.template << 'WGTEMPLATE'
+# Alfred Mesh — WireGuard Configuration
+# Generated by alfred-mesh join
+[Interface]
+PrivateKey = ALFRED_MESH_PRIVATE_KEY
+Address = ALFRED_MESH_ADDRESS/24
+ListenPort = 51821
+DNS = 1.1.1.1, 9.9.9.9
+
+# Peers are added automatically by alfred-mesh join
+WGTEMPLATE
+
+# ═══════════════════════════════════════════════════
+# 5. ALFRED-MESH CLI TOOL
+# ═══════════════════════════════════════════════════
+echo "[MESH-05] Creating alfred-mesh CLI tool..."
+
+cat > /usr/local/bin/alfred-mesh << 'MESHCLI'
+#!/bin/bash
+# ═══════════════════════════════════════════════════
+# alfred-mesh — Alfred Mesh Cloud CLI
+# Manage your sovereign peer-to-peer network
+# ═══════════════════════════════════════════════════
+VERSION="1.0.0"
+MESH_DIR="/etc/alfred/mesh"
+WG_INTERFACE="wg-mesh"
+RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[0;33m'
+CYAN='\033[0;36m'; BOLD='\033[1m'; NC='\033[0m'
+
+banner() {
+    echo -e "${CYAN}╔═══════════════════════════════════════════════════════╗${NC}"
+    echo -e "${CYAN}║${NC}  ${BOLD}Alfred Mesh Cloud${NC} v${VERSION}                          ${CYAN}║${NC}"
+    echo -e "${CYAN}╚═══════════════════════════════════════════════════════╝${NC}"
+}
+
+cmd_status() {
+    banner
+    echo ""
+    echo -e "${BOLD}WireGuard Mesh:${NC}"
+    if ip link show "$WG_INTERFACE" &>/dev/null; then
+        echo -e "  Interface: ${GREEN}UP${NC}"
+        wg show "$WG_INTERFACE" 2>/dev/null | grep -E "peer|endpoint|latest|transfer" | while read line; do
+            echo "  $line"
+        done
+    else
+        echo -e "  Interface: ${YELLOW}NOT CONFIGURED${NC}"
+        echo "  Run: alfred-mesh init"
+    fi
+    echo ""
+    echo -e "${BOLD}Syncthing:${NC}"
+    if systemctl --user is-active syncthing &>/dev/null 2>&1; then
+        echo -e "  Status: ${GREEN}RUNNING${NC}"
+        echo "  Dashboard: http://127.0.0.1:8384"
+        FOLDERS=$(syncthing cli config folders list 2>/dev/null | wc -l)
+        echo "  Shared folders: $FOLDERS"
+    else
+        echo -e "  Status: ${YELLOW}STOPPED${NC}"
+        echo "  Start: systemctl --user start syncthing"
+    fi
+    echo ""
+    echo -e "${BOLD}Local Discovery (Avahi):${NC}"
+    if systemctl is-active avahi-daemon &>/dev/null; then
+        echo -e "  Status: ${GREEN}ACTIVE${NC}"
+        PEERS=$(avahi-browse -r _alfred-mesh._tcp -t -p 2>/dev/null | grep "^=" | wc -l)
+        echo "  Alfred nodes found on LAN: $PEERS"
+    else
+        echo -e "  Status: ${YELLOW}INACTIVE${NC}"
+    fi
+}
+
+cmd_discover() {
+    banner
+    echo ""
+    echo -e "${BOLD}Scanning for Alfred nodes on local network...${NC}"
+    echo ""
+    avahi-browse -r _alfred-mesh._tcp -t 2>/dev/null | grep -E "hostname|address|txt" | while read line; do
+        echo "  $line"
+    done
+    PEERS=$(avahi-browse -r _alfred-mesh._tcp -t -p 2>/dev/null | grep "^=" | wc -l)
+    echo ""
+    if [ "$PEERS" -gt 0 ]; then
+        echo -e "${GREEN}Found $PEERS Alfred node(s) on your network${NC}"
+    else
+        echo -e "${YELLOW}No other Alfred nodes found on this network${NC}"
+        echo "  Other Alfred Linux machines will appear automatically"
+    fi
+}
+
+cmd_init() {
+    banner
+    echo ""
+    if [ -f /etc/wireguard/$WG_INTERFACE.conf ]; then
+        echo -e "${YELLOW}Mesh already initialized${NC}"
+        echo "  Use: alfred-mesh status"
+        return
+    fi
+    echo -e "${BOLD}Initializing Alfred Mesh node...${NC}"
+    # Generate WireGuard keys
+    PRIVKEY=$(wg genkey)
+    PUBKEY=$(echo "$PRIVKEY" | wg pubkey)
+    # Generate mesh IP (random from 10.77.0.0/16 — the Alfred mesh range)
+    OCTET3=$((RANDOM % 254 + 1))
+    OCTET4=$((RANDOM % 254 + 1))
+    MESH_IP="10.77.${OCTET3}.${OCTET4}"
+    
+    cat > /etc/wireguard/$WG_INTERFACE.conf << WGCONF
+[Interface]
+PrivateKey = ${PRIVKEY}
+Address = ${MESH_IP}/16
+ListenPort = 51821
+WGCONF
+    chmod 600 /etc/wireguard/$WG_INTERFACE.conf
+    
+    echo -e "  ${GREEN}Node initialized!${NC}"
+    echo "  Mesh IP: $MESH_IP"
+    echo "  Public Key: $PUBKEY"
+    echo ""
+    echo "  Share this with peers: alfred-mesh qr"
+    echo "  Join a peer: alfred-mesh join <peer-pubkey> <peer-endpoint>"
+}
+
+cmd_join() {
+    if [ -z "$1" ] || [ -z "$2" ]; then
+        echo "Usage: alfred-mesh join <peer-public-key> <peer-endpoint:port>"
+        echo "Example: alfred-mesh join abc123...xyz= 192.168.1.50:51821"
+        return 1
+    fi
+    if [ ! -f /etc/wireguard/$WG_INTERFACE.conf ]; then
+        echo "Run 'alfred-mesh init' first"
+        return 1
+    fi
+    PEER_KEY="$1"
+    PEER_ENDPOINT="$2"
+    echo ""
+    echo -e "${BOLD}Adding peer to mesh...${NC}"
+    cat >> /etc/wireguard/$WG_INTERFACE.conf << PEER
+
+[Peer]
+PublicKey = ${PEER_KEY}
+Endpoint = ${PEER_ENDPOINT}
+AllowedIPs = 10.77.0.0/16
+PersistentKeepalive = 25
+PEER
+    wg-quick down "$WG_INTERFACE" 2>/dev/null || true
+    wg-quick up "$WG_INTERFACE"
+    echo -e "  ${GREEN}Peer connected!${NC}"
+}
+
+cmd_peers() {
+    banner
+    echo ""
+    echo -e "${BOLD}Connected Mesh Peers:${NC}"
+    echo ""
+    if ip link show "$WG_INTERFACE" &>/dev/null; then
+        wg show "$WG_INTERFACE" 2>/dev/null
+    else
+        echo "  No mesh interface active. Run: alfred-mesh init"
+    fi
+}
+
+cmd_sync() {
+    echo "Opening Syncthing dashboard..."
+    xdg-open "http://127.0.0.1:8384" 2>/dev/null || echo "Visit: http://127.0.0.1:8384"
+}
+
+cmd_qr() {
+    if [ ! -f /etc/wireguard/$WG_INTERFACE.conf ]; then
+        echo "Run 'alfred-mesh init' first"
+        return 1
+    fi
+    PUBKEY=$(wg show "$WG_INTERFACE" public-key 2>/dev/null)
+    IP=$(hostname -I | awk '{print $1}')
+    echo ""
+    echo "Share this with other Alfred nodes:"
+    echo "  Public Key: $PUBKEY"
+    echo "  Endpoint: ${IP}:51821"
+    echo ""
+    if command -v qrencode &>/dev/null; then
+        echo "alfred-mesh join ${PUBKEY} ${IP}:51821" | qrencode -t ANSIUTF8
+    fi
+}
+
+cmd_help() {
+    banner
+    echo ""
+    echo "Usage: alfred-mesh <command>"
+    echo ""
+    echo "Commands:"
+    echo "  status           — Show mesh network status"
+    echo "  init             — Initialize this node (generate keys)"
+    echo "  discover         — Find Alfred nodes on local network"
+    echo "  join             — Connect to a peer (pubkey + endpoint)"
+    echo "  peers            — List connected mesh peers"
+    echo "  sync             — Open Syncthing file sync dashboard"
+    echo "  qr               — Generate QR code for pairing"
+    echo "  connect-kingdom  — Connect to the Kingdom of God network (optional API: ALFRED_KINGDOM_MESH_REGISTER=1)"
+    echo "  call             — Call a peer or call home to Kingdom"
+    echo "  help             — Show this help"
+    echo ""
+    echo "Alfred Mesh Cloud — Your machines, your network, your sovereignty."
+    echo ""
+    echo "\"For where two or three are gathered in My name,"
+    echo " there am I among them.\" — Matthew 18:20"
+}
+
+cmd_connect_kingdom() {
+    banner
+    echo ""
+    echo -e "${BOLD}Connecting to the Kingdom of God Network...${NC}"
+    echo ""
+    
+    # Kingdom server details
+    KINGDOM_HOST="kingdom.gositeme.com"
+    KINGDOM_IP="15.235.50.60"
+    KINGDOM_WG_PORT="51821"
+    KINGDOM_WG_PUBKEY=""  # Populated during deployment
+    
+    # Check if mesh is initialized
+    if [ ! -f /etc/wireguard/$WG_INTERFACE.conf ]; then
+        echo -e "${YELLOW}Mesh not initialized. Setting up first...${NC}"
+        cmd_init
+    fi
+    
+    # Check internet connectivity
+    if ! ping -c 1 -W 3 "$KINGDOM_IP" &>/dev/null; then
+        echo -e "${RED}Cannot reach Kingdom server ($KINGDOM_IP).${NC}"
+        echo "  Check your internet connection."
+        return 1
+    fi
+    echo -e "  ${GREEN}Kingdom server reachable${NC}"
+    
+    # Register with Kingdom
+    echo ""
+    echo -e "${BOLD}[1/3] Registering with Kingdom mesh...${NC}"
+    MY_PUBKEY=$(wg show "$WG_INTERFACE" public-key 2>/dev/null || {
+        # Extract from config if interface not up
+        grep PrivateKey /etc/wireguard/$WG_INTERFACE.conf | awk '{print $3}' | wg pubkey
+    })
+    MY_IP=$(grep Address /etc/wireguard/$WG_INTERFACE.conf | awk -F'=' '{print $2}' | tr -d ' ' | cut -d'/' -f1)
+    HOSTNAME=$(hostname)
+    
+    # Kingdom registration API — OFF by default (no surprise POST of host identity).
+    RESPONSE=""
+    if [ "${ALFRED_KINGDOM_MESH_REGISTER:-0}" != "1" ]; then
+        echo -e "${CYAN}  Registration API skipped (default).${NC}"
+        echo "  Sovereignty: set ALFRED_KINGDOM_MESH_REGISTER=1 only if you intend to register this node."
+    elif ! [[ "$MY_PUBKEY" =~ ^[A-Za-z0-9+/]+=*$ ]] || [ "${#MY_PUBKEY}" -lt 40 ] || [ "${#MY_PUBKEY}" -gt 50 ]; then
+        echo -e "${YELLOW}  Skipping registration: invalid WireGuard public key format.${NC}"
+    else
+        HM=$(printf '%s' "$HOSTNAME" | tr -cd 'A-Za-z0-9._-' | cut -c1-64)
+        RESPONSE=$(curl -fsS --proto '=https' --tlsv1.2 --max-time 10 \
+            "https://gositeme.com/api/mesh-register.php" \
+            -X POST \
+            --data-urlencode "pubkey=$MY_PUBKEY" \
+            --data-urlencode "mesh_ip=$MY_IP" \
+            --data-urlencode "hostname=${HM:-host}" \
+            --data-urlencode "version=$VERSION" 2>/dev/null) || RESPONSE=""
+    fi
+    
+    if echo "$RESPONSE" | grep -q '"success"'; then
+        KINGDOM_PUBKEY=$(echo "$RESPONSE" | grep -o '"kingdom_pubkey":"[^"]*"' | cut -d'"' -f4)
+        KINGDOM_ENDPOINT=$(echo "$RESPONSE" | grep -o '"kingdom_endpoint":"[^"]*"' | cut -d'"' -f4)
+        echo -e "  ${GREEN}Registered with Kingdom!${NC}"
+    else
+        if [ "${ALFRED_KINGDOM_MESH_REGISTER:-0}" = "1" ]; then
+            echo -e "${YELLOW}  Kingdom API not available — using direct connection${NC}"
+        fi
+        KINGDOM_PUBKEY="$KINGDOM_WG_PUBKEY"
+        KINGDOM_ENDPOINT="${KINGDOM_IP}:${KINGDOM_WG_PORT}"
+    fi
+    
+    # Add Kingdom as WireGuard peer
+    echo -e "${BOLD}[2/3] Adding Kingdom server as mesh peer...${NC}"
+    if [ -n "$KINGDOM_PUBKEY" ] && [ "$KINGDOM_PUBKEY" != "" ]; then
+        # Check if already added
+        if grep -q "$KINGDOM_PUBKEY" /etc/wireguard/$WG_INTERFACE.conf 2>/dev/null; then
+            echo -e "  ${GREEN}Kingdom peer already configured${NC}"
+        else
+            cat >> /etc/wireguard/$WG_INTERFACE.conf << KPEER
+
+# Kingdom of God — Central Mesh Server
+[Peer]
+PublicKey = ${KINGDOM_PUBKEY}
+Endpoint = ${KINGDOM_ENDPOINT}
+AllowedIPs = 10.77.0.1/32
+PersistentKeepalive = 25
+KPEER
+            echo -e "  ${GREEN}Kingdom peer added${NC}"
+        fi
+    else
+        echo -e "${YELLOW}  No Kingdom public key available — request from Commander${NC}"
+        echo "  When you have it, run: alfred-mesh join <kingdom-pubkey> ${KINGDOM_IP}:${KINGDOM_WG_PORT}"
+    fi
+    
+    # Configure Syncthing for Kingdom shared folder
+    echo -e "${BOLD}[3/3] Configuring Kingdom file sync...${NC}"
+    mkdir -p "$HOME/Kingdom"
+    cat > "$HOME/Kingdom/.stfolder" << 'EOF'
+Kingdom of God — Shared Files
+This folder syncs with the Kingdom network.
+Shared resources, updates, and community files appear here.
+EOF
+    echo -e "  ${GREEN}Kingdom folder ready: ~/Kingdom/${NC}"
+    
+    # Restart mesh
+    wg-quick down "$WG_INTERFACE" 2>/dev/null || true
+    wg-quick up "$WG_INTERFACE" 2>/dev/null && \
+        echo -e "  ${GREEN}Mesh interface restarted${NC}" || \
+        echo -e "${YELLOW}  Could not start mesh (run: sudo wg-quick up $WG_INTERFACE)${NC}"
+    
+    echo ""
+    echo -e "${GREEN}╔════════════════════════════════════════════════════╗${NC}"
+    echo -e "${GREEN}║  KINGDOM CONNECTION ESTABLISHED                   ║${NC}"
+    echo -e "${GREEN}║                                                    ║${NC}"
+    echo -e "${GREEN}║  • WireGuard tunnel to Kingdom server             ║${NC}"
+    echo -e "${GREEN}║  • Syncthing folder: ~/Kingdom/                   ║${NC}"
+    echo -e "${GREEN}║  • Encrypted peer-to-peer — no middlemen          ║${NC}"
+    echo -e "${GREEN}║                                                    ║${NC}"
+    echo -e "${GREEN}║  \"Where two or three are gathered in My name,     ║${NC}"
+    echo -e "${GREEN}║   there am I among them.\" — Matthew 18:20        ║${NC}"
+    echo -e "${GREEN}╚════════════════════════════════════════════════════╝${NC}"
+}
+
+cmd_call() {
+    banner
+    echo ""
+    if ! command -v wg &>/dev/null; then
+        echo -e "${RED}WireGuard not available. Install first.${NC}"
+        return 1
+    fi
+    if ! ip link show "$WG_INTERFACE" &>/dev/null; then
+        echo -e "${YELLOW}Mesh not active. Run: alfred-mesh init && sudo wg-quick up $WG_INTERFACE${NC}"
+        return 1
+    fi
+    
+    TARGET="$1"
+    if [ -z "$TARGET" ]; then
+        echo -e "${BOLD}Call a Kingdom peer:${NC}"
+        echo ""
+        echo "  alfred-mesh call <mesh-ip>      — Direct encrypted call"  
+        echo "  alfred-mesh call kingdom        — Call home to Kingdom server"
+        echo "  alfred-mesh call discover       — Find and call nearby peers"
+        echo ""
+        echo "All calls are end-to-end encrypted via WireGuard tunnel."
+        return
+    fi
+    
+    case "$TARGET" in
+        kingdom|home)
+            echo -e "${CYAN}Calling home to Kingdom server...${NC}"
+            ping -c 3 10.77.0.1 && echo -e "${GREEN}Kingdom server responding!${NC}" || \
+                echo -e "${RED}Kingdom server unreachable via mesh.${NC}"
+            ;;
+        discover)
+            echo -e "${CYAN}Finding peers to call...${NC}"
+            cmd_discover
+            ;;
+        *)
+            echo -e "${CYAN}Calling $TARGET via encrypted mesh...${NC}"
+            ping -c 3 "$TARGET" && echo -e "${GREEN}Peer $TARGET is alive!${NC}" || \
+                echo -e "${RED}Peer $TARGET did not respond.${NC}"
+            ;;
+    esac
+}
+
+case "${1:-help}" in
+    status)           cmd_status ;;
+    init)             cmd_init ;;
+    discover)         cmd_discover ;;
+    join)             cmd_join "$2" "$3" ;;
+    peers)            cmd_peers ;;
+    sync)             cmd_sync ;;
+    qr)               cmd_qr ;;
+    connect-kingdom)  cmd_connect_kingdom ;;
+    call)             cmd_call "$2" ;;
+    help|*)           cmd_help ;;
+esac
+MESHCLI
+chmod +x /usr/local/bin/alfred-mesh
+
+# ═══════════════════════════════════════════════════
+# 6. DESKTOP INTEGRATION
+# ═══════════════════════════════════════════════════
+echo "[MESH-06] Creating desktop integration..."
+
+mkdir -p /usr/share/applications
+cat > /usr/share/applications/alfred-mesh.desktop << 'DESKTOP'
+[Desktop Entry]
+Name=Alfred Mesh Cloud
+Comment=Manage your sovereign peer-to-peer mesh network
+Exec=xfce4-terminal -e "alfred-mesh status"
+Icon=network-workgroup
+Terminal=false
+Type=Application
+Categories=Network;System;
+Keywords=mesh;vpn;wireguard;sync;p2p;
+DESKTOP
+
+cat > /usr/share/applications/alfred-syncthing.desktop << 'DESKTOP'
+[Desktop Entry]
+Name=Alfred File Sync
+Comment=Syncthing — Sync files across your Alfred devices
+Exec=xdg-open http://127.0.0.1:8384
+Icon=folder-sync
+Terminal=false
+Type=Application
+Categories=Network;FileTransfer;
+Keywords=sync;files;cloud;
+DESKTOP
+
+echo "╔═══════════════════════════════════════════════════════════╗"
+echo "║  [0167] Alfred Mesh Cloud — INSTALLED                    ║"
+echo "║  • WireGuard mesh tunnels (encrypted, kernel-speed)      ║"
+echo "║  • Syncthing file sync (no cloud needed)                 ║"
+echo "║  • Avahi peer discovery (automatic LAN finding)          ║"
+echo "║  • alfred-mesh CLI tool                                  ║"
+echo "║  Run: alfred-mesh status                                 ║"
+echo "╚═══════════════════════════════════════════════════════════╝"

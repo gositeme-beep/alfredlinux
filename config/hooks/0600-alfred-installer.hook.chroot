@@ -1,0 +1,393 @@
+#!/bin/bash
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# ═══════════════════════════════════════════════════════════════
+# Alfred Linux v2.0-b6 — Calamares Graphical Installer
+#
+# Installs and brands Calamares for disk installation.
+# BUILD: v2.0-b6 (Installer)
+# ═══════════════════════════════════════════════════════════════
+
+set -e
+
+echo "[Alfred Linux v2.0-b6] Installing Calamares installer..."
+
+# ── 1. Install Calamares and dependencies ──
+apt-get install -y calamares calamares-settings-debian 2>/dev/null || {
+    echo "[WARN] Calamares not in repos, trying manual install..."
+    # Calamares may need additional repos on Bookworm
+    apt-get install -y \
+        calamares \
+        qml-module-qtquick2 \
+        qml-module-qtquick-controls \
+        qml-module-qtquick-controls2 \
+        qml-module-qtquick-layouts \
+        qml-module-qtquick-window2 2>/dev/null || true
+}
+
+# ── 2. Alfred branding for Calamares ──
+BRAND_DIR="/etc/calamares/branding/alfred"
+mkdir -p "$BRAND_DIR"
+
+cat > "$BRAND_DIR/branding.desc" << 'BRAND'
+---
+componentName: alfred
+
+strings:
+    productName:         "Alfred Linux — Kingdom of God Edition"
+    shortProductName:    "Alfred"
+    version:             7.77
+    shortVersion:        7.77
+    versionedName:       "Alfred Linux 7.77 — Kingdom of God Edition"
+    shortVersionedName:  "Alfred 7.77"
+    bootloaderEntryName: "Alfred Linux 7.77"
+    productUrl:          https://alfredlinux.com
+    supportUrl:          https://gositeme.com/support.php
+    knownIssuesUrl:      https://alfredlinux.com/issues
+    releaseNotesUrl:     https://alfredlinux.com/release-notes
+
+images:
+    productLogo:         "alfred-logo.png"
+    productIcon:         "alfred-icon.png"
+    productWelcome:      "alfred-welcome.png"
+
+slideshow:               "show.qml"
+
+style:
+    sidebarBackground:   "#0a0a14"
+    sidebarText:         "#e8e8f0"
+    sidebarTextSelect:   "#00D4FF"
+    sidebarTextHighlight: "#00D4FF"
+BRAND
+
+# Generate branding images with ImageMagick
+if command -v convert &>/dev/null; then
+    # Product logo (128x128)
+    convert -size 128x128 xc:'#00D4FF' \
+        -fill '#0a0a14' -font 'DejaVu-Sans-Bold' -pointsize 80 \
+        -gravity center -annotate +0+0 'A' \
+        "$BRAND_DIR/alfred-logo.png" 2>/dev/null || true
+
+    # Product icon (48x48)
+    convert -size 48x48 xc:'#00D4FF' \
+        -fill '#0a0a14' -font 'DejaVu-Sans-Bold' -pointsize 32 \
+        -gravity center -annotate +0+0 'A' \
+        "$BRAND_DIR/alfred-icon.png" 2>/dev/null || true
+
+    # Welcome banner (800x300)
+    convert -size 800x300 \
+        -define gradient:angle=135 \
+        gradient:'#0a0a14-#1a1a2e' \
+        -fill '#FFD700' -font 'DejaVu-Sans-Bold' -pointsize 42 \
+        -gravity center -annotate +0-50 '✝ Alfred Linux 7.77' \
+        -fill '#00D4FF' -font 'DejaVu-Sans-Bold' -pointsize 22 \
+        -annotate +0+10 'Kingdom of God Edition' \
+        -fill '#8a8a9a' -font 'DejaVu-Sans' -pointsize 16 \
+        -annotate +0+50 'SOLI DEO GLORIA' \
+        "$BRAND_DIR/alfred-welcome.png" 2>/dev/null || true
+fi
+
+# QML slideshow
+cat > "$BRAND_DIR/show.qml" << 'QML'
+import QtQuick 2.0;
+import calamares.slideshow 1.0;
+
+Presentation {
+    id: presentation
+
+    Slide {
+        Rectangle {
+            anchors.fill: parent
+            color: "#0a0a14"
+            Column {
+                anchors.centerIn: parent
+                spacing: 24
+                Text {
+                    text: "✝"
+                    color: "#FFD700"
+                    font.pixelSize: 64
+                    anchors.horizontalCenter: parent.horizontalCenter
+                }
+                Text {
+                    text: "Alfred Linux 7.77"
+                    color: "#00D4FF"
+                    font.pixelSize: 36
+                    font.bold: true
+                    anchors.horizontalCenter: parent.horizontalCenter
+                }
+                Text {
+                    text: "Kingdom of God Edition"
+                    color: "#FFD700"
+                    font.pixelSize: 22
+                    font.bold: true
+                    anchors.horizontalCenter: parent.horizontalCenter
+                }
+                Text {
+                    text: "'In the beginning God created\nthe heaven and the earth.'\n— Genesis 1:1"
+                    color: "#e8e8f0"
+                    font.pixelSize: 16
+                    font.italic: true
+                    horizontalAlignment: Text.AlignHCenter
+                    anchors.horizontalCenter: parent.horizontalCenter
+                }
+            }
+        }
+    }
+
+    Slide {
+        Rectangle {
+            anchors.fill: parent
+            color: "#0a0a14"
+            Column {
+                anchors.centerIn: parent
+                spacing: 20
+                Text {
+                    text: "📖  The Word of God"
+                    color: "#FFD700"
+                    font.pixelSize: 28
+                    font.bold: true
+                    anchors.horizontalCenter: parent.horizontalCenter
+                }
+                Text {
+                    text: "39,482 verses of the\nAuthorized King Jesus Version\n\nA verse greets you at every terminal login.\nFamily Bible generator for your household.\nChildren's stories from Scripture.\n\n'Thy word is a lamp unto my feet,\nand a light unto my path.' — Psalm 119:105"
+                    color: "#e8e8f0"
+                    font.pixelSize: 15
+                    horizontalAlignment: Text.AlignHCenter
+                    anchors.horizontalCenter: parent.horizontalCenter
+                }
+            }
+        }
+    }
+
+    Slide {
+        Rectangle {
+            anchors.fill: parent
+            color: "#0a0a14"
+            Column {
+                anchors.centerIn: parent
+                spacing: 20
+                Text {
+                    text: "♪  Kingdom Worship"
+                    color: "#FFD700"
+                    font.pixelSize: 28
+                    font.bold: true
+                    anchors.horizontalCenter: parent.horizontalCenter
+                }
+                Text {
+                    text: "27 sacred tracks with synchronized lyrics\n\nJesus Christ The Light Our Universe\nby Elyon Light + Commander Danny William Perez\n\nOpen the music player — the album is already loaded.\n\n'Sing to the LORD a new song;\nsing to the LORD, all the earth.' — Psalm 96:1"
+                    color: "#e8e8f0"
+                    font.pixelSize: 15
+                    horizontalAlignment: Text.AlignHCenter
+                    anchors.horizontalCenter: parent.horizontalCenter
+                }
+            }
+        }
+    }
+
+    Slide {
+        Rectangle {
+            anchors.fill: parent
+            color: "#0a0a14"
+            Column {
+                anchors.centerIn: parent
+                spacing: 20
+                Text {
+                    text: "🔐  Quantum-Safe Fortress"
+                    color: "#00D4FF"
+                    font.pixelSize: 28
+                    font.bold: true
+                    anchors.horizontalCenter: parent.horizontalCenter
+                }
+                Text {
+                    text: "Kyber-1024 post-quantum encryption\nFull-disk encryption (LUKS2 + Kyber KEM)\nAlfred Browser — zero tracking\nAlfred IDE — sovereign development\nMesh network — connect the Kingdom\n\n'The horse is prepared against the day of battle,\nbut safety is of the LORD.' — Proverbs 21:31"
+                    color: "#e8e8f0"
+                    font.pixelSize: 15
+                    horizontalAlignment: Text.AlignHCenter
+                    anchors.horizontalCenter: parent.horizontalCenter
+                }
+            }
+        }
+    }
+
+    Slide {
+        Rectangle {
+            anchors.fill: parent
+            color: "#0a0a14"
+            Column {
+                anchors.centerIn: parent
+                spacing: 24
+                Text {
+                    text: "✝"
+                    color: "#FFD700"
+                    font.pixelSize: 48
+                    anchors.horizontalCenter: parent.horizontalCenter
+                }
+                Text {
+                    text: "SOLI DEO GLORIA"
+                    color: "#FFD700"
+                    font.pixelSize: 24
+                    font.bold: true
+                    anchors.horizontalCenter: parent.horizontalCenter
+                }
+                Text {
+                    text: "Built with love by Commander Danny William Perez\nand his daughter Eden Sarai, for the glory of God.\n\nAlfred Linux is sovereign computing —\nyour machine, your data, your freedom.\nAll honor to the Most High."
+                    color: "#e8e8f0"
+                    font.pixelSize: 15
+                    horizontalAlignment: Text.AlignHCenter
+                    anchors.horizontalCenter: parent.horizontalCenter
+                }
+                Text {
+                    text: "alfredlinux.com"
+                    color: "#00D4FF"
+                    font.pixelSize: 14
+                    anchors.horizontalCenter: parent.horizontalCenter
+                }
+            }
+        }
+    }
+}
+QML
+
+# ── 3. Calamares settings ──
+mkdir -p /etc/calamares
+cat > /etc/calamares/settings.conf << 'SETTINGS'
+modules-search: [ local, /usr/lib/calamares/modules ]
+
+sequence:
+  - show:
+    - welcome
+    - locale
+    - keyboard
+    - partition
+    - users
+    - summary
+  - exec:
+    - partition
+    - mount
+    - unpackfs
+    - machineid
+    - fstab
+    - locale
+    - keyboard
+    - localecfg
+    - luksbootkeyfile
+    - users
+    - displaymanager
+    - networkcfg
+    - hwclock
+    - services-systemd
+    - bootloader
+    - umount
+  - show:
+    - finished
+
+branding: alfred
+SETTINGS
+
+# ── 4. Application menu entry (always visible in System menu) ──
+cat > /usr/share/applications/alfred-install.desktop << 'APPDESK'
+[Desktop Entry]
+Name=Install Alfred Linux
+GenericName=System Installer
+Comment=Install Alfred Linux to your hard drive
+Exec=pkexec calamares
+Icon=calamares
+Type=Application
+Categories=System;
+Terminal=false
+StartupNotify=true
+Keywords=install;installer;calamares;disk;
+APPDESK
+
+# ── 5. Desktop shortcut for installer ──
+mkdir -p /etc/skel/Desktop
+cat > /etc/skel/Desktop/install-alfred-linux.desktop << 'DESK'
+[Desktop Entry]
+Name=Install Alfred Linux
+Comment=Install Alfred Linux to your hard drive
+Exec=pkexec calamares
+Icon=calamares
+Type=Application
+Categories=System;
+Terminal=false
+StartupNotify=true
+DESK
+chmod +x /etc/skel/Desktop/install-alfred-linux.desktop
+
+# Mark desktop file as trusted for XFCE (prevents "untrusted launcher" dialog)
+# XFCE uses a checksum stored in gio metadata to trust desktop files
+# We create a script that runs once at login to trust all skel desktop files
+cat > /etc/skel/.config/autostart/trust-desktop-files.desktop << 'TRUST_AUTO'
+[Desktop Entry]
+Type=Application
+Name=Trust Desktop Launchers
+Exec=/usr/local/bin/alfred-trust-desktop
+Hidden=false
+NoDisplay=true
+X-GNOME-Autostart-enabled=true
+TRUST_AUTO
+mkdir -p /etc/skel/.config/autostart
+
+cat > /usr/local/bin/alfred-trust-desktop << 'TRUSTSCRIPT'
+#!/bin/bash
+# Trust all .desktop files on the Desktop for XFCE
+# This runs once at first login, then disables itself
+DESKTOP_DIR="$HOME/Desktop"
+if [[ -d "$DESKTOP_DIR" ]]; then
+    for f in "$DESKTOP_DIR"/*.desktop; do
+        [[ -f "$f" ]] || continue
+        # XFCE trusts launchers by matching a hash of the file
+        HASH=$(sha256sum "$f" | cut -d' ' -f1)
+        gio set "$f" "metadata::xfce-exe-checksum" "$HASH" 2>/dev/null || true
+    done
+fi
+# Disable self after first run
+rm -f "$HOME/.config/autostart/trust-desktop-files.desktop" 2>/dev/null
+TRUSTSCRIPT
+chmod +x /usr/local/bin/alfred-trust-desktop
+
+# ── 6. "Install or Try" dialog on live boot ──
+cat > /usr/local/bin/alfred-live-welcome << 'LIVEWELCOME'
+#!/bin/bash
+# Show install prompt on live boot (only if not installed)
+if [[ -f /run/live/medium/.disk/info ]] || [[ -d /run/live ]]; then
+    # We're in a live session
+    zenity --question \
+        --title="Welcome to Alfred Linux" \
+        --text="Welcome to Alfred Linux!\n\nWould you like to install Alfred Linux to your hard drive, or continue trying it live?" \
+        --ok-label="Install to Disk" \
+        --cancel-label="Try Live" \
+        --width=400 --height=180 \
+        --window-icon=calamares 2>/dev/null
+    if [[ $? -eq 0 ]]; then
+        pkexec calamares &
+    fi
+fi
+LIVEWELCOME
+chmod +x /usr/local/bin/alfred-live-welcome
+
+# Autostart the welcome dialog in live sessions
+cat > /etc/skel/.config/autostart/alfred-live-welcome.desktop << 'LIVEWELC_AUTO'
+[Desktop Entry]
+Type=Application
+Name=Alfred Linux Welcome
+Comment=Install or Try Alfred Linux
+Exec=/usr/local/bin/alfred-live-welcome
+Hidden=false
+NoDisplay=true
+X-GNOME-Autostart-enabled=true
+LIVEWELC_AUTO
+
+# ── 7. Ensure zenity is available for the dialog ──
+apt-get install -y --no-install-recommends zenity 2>/dev/null || true
+
+echo "[Alfred Linux v7.77] Calamares installer branded, configured, and install prompt enabled."
+
+# ── 8. Fix Debian-branded desktop files left by calamares-settings-debian ──
+if [[ -f /usr/share/applications/install-debian.desktop ]]; then
+    sed -i 's/Name=Install Debian/Name=Install Alfred Linux/' /usr/share/applications/install-debian.desktop
+    sed -i 's/Comment=Calamares.*$/Comment=Install Alfred Linux to your hard drive/' /usr/share/applications/install-debian.desktop
+fi
+if [[ -f /usr/share/applications/calamares.desktop ]]; then
+    sed -i 's/Name=Install Debian/Name=Install Alfred Linux/' /usr/share/applications/calamares.desktop
+    sed -i 's/Name=Install System/Name=Install Alfred Linux/' /usr/share/applications/calamares.desktop
+fi

@@ -1,9 +1,7 @@
 #!/bin/bash
-# SPDX-License-Identifier: AGPL-3.0-or-later
 # 0297 — Supporting squashfs payload toward ~7.77 GiB (binary), Omahon / real install only.
 # PRIMARY gap-close is Kingdom video + 4K/8K via build-assets + 0285 §7 — this hook adds
-# Noto typography + LibreOffice help/l10n + ffmpeg (tongues on screen + docs).
-# linux-headers-amd64 omitted: use linux-headers-* debs from Alfred linux-7.0.1 set in packages.chroot/.
+# Noto typography + LibreOffice help/l10n + ffmpeg + headers (tongues on screen + docs).
 # See docs/ISO-777-GiB-PLAN.txt — after GA rebuild, run check-iso-777gib.sh (alfred-linux-v2: scripts/;
 #   alfredlinux.com law/site mirror: build/scripts/).
 set -euo pipefail
@@ -33,6 +31,7 @@ mapfile -t PKGS < <(filter_pkgs \
     fonts-noto-extra \
     poppler-data \
     ffmpeg \
+    linux-headers-amd64 \
     libreoffice-help-en-us \
     libreoffice-help-en-gb \
     libreoffice-help-fr \
