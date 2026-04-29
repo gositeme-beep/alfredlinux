@@ -1,5 +1,11 @@
 #!/bin/bash
-set -e
+# 0285 — DO NOT use `set -e` at the top.
+# This hook touches **external network resources** (IPFS upstream, OpenTimestamps,
+# optional Bitcoin/Tor) plus optional /build-assets/* media. ANY of those can be
+# transient or absent without invalidating the rest of the Kingdom of Truth on
+# disk. We use targeted `|| true` and validate-then-act blocks instead.
+set -u
+set -o pipefail
 echo "╔════════════════════════════════════════════════════════════════╗"
 echo "║  HOOK 0285: Alfred Eternal Storage — Data Beyond Destruction  ║"
 echo "║  IPFS · Blockchain · Frequency Encoding · Redundancy Mesh    ║"
@@ -14,18 +20,19 @@ IPFS_VERSION="0.33.2"
 IPFS_ARCH="amd64"
 IPFS_TAR="kubo_v${IPFS_VERSION}_linux-${IPFS_ARCH}.tar.gz"
 
-wget -q "https://dist.ipfs.tech/kubo/v${IPFS_VERSION}/${IPFS_TAR}" -O "/tmp/${IPFS_TAR}" 2>/dev/null || true
-if [ -f "/tmp/${IPFS_TAR}" ]; then
-    cd /tmp && tar xzf "${IPFS_TAR}" 2>/dev/null
-    if [ -f /tmp/kubo/ipfs ]; then
-        cp /tmp/kubo/ipfs /usr/local/bin/ipfs
-        chmod +x /usr/local/bin/ipfs
-        echo "[ETERNAL] IPFS installed: $(ipfs --version 2>/dev/null || echo 'binary ready')"
-    fi
-    rm -rf /tmp/kubo /tmp/${IPFS_TAR}
-else
-    echo "[ETERNAL] IPFS download deferred — will install on first boot with internet"
-fi
+# All external download steps are non-fatal — IPFS is optional in-ISO; deferring
+# to first-boot is fine. Any failure here used to abort the whole build.
+{
+    wget -q "https://dist.ipfs.tech/kubo/v${IPFS_VERSION}/${IPFS_TAR}" \
+        -O "/tmp/${IPFS_TAR}" 2>/dev/null \
+        && [ -s "/tmp/${IPFS_TAR}" ] \
+        && (cd /tmp && tar xzf "${IPFS_TAR}" 2>/dev/null) \
+        && [ -x /tmp/kubo/ipfs ] \
+        && install -m 0755 /tmp/kubo/ipfs /usr/local/bin/ipfs \
+        && echo "[ETERNAL] IPFS installed: $(/usr/local/bin/ipfs --version 2>/dev/null || echo 'binary ready')"
+    rm -rf /tmp/kubo "/tmp/${IPFS_TAR}" 2>/dev/null
+} || echo "[ETERNAL] IPFS download deferred — will install on first boot with internet"
+true
 
 # IPFS systemd service (runs as user)
 cat > /etc/systemd/user/alfred-ipfs.service << 'IPFSSVC'
