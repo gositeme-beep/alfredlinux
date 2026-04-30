@@ -7,7 +7,7 @@
 # (full shellcheck of scripts/ops/shlib/build-assets; slower — use in dedicated CI or manual runs).
 #
 # Optional: ALFRED_REPO_HEALTH_JSON=1 prints one JSON line to stdout on success; on failure prints
-# one JSON line with status=error, exit_code, and phase (child stdout to stderr so jq works).
+# one JSON line with status=error, exit_code, phase, and message (child stdout to stderr so jq works).
 #
 # Usage (repo root):
 #   bash scripts/alfred-repo-health.sh
@@ -16,11 +16,25 @@
 set -euo pipefail
 ROOT="${ALFRED_LINUX_REPO:-$(cd "$(dirname "$0")/.." && pwd)}"
 
+repo_health_fail_default_message() {
+  case "${REPO_HEALTH_PHASE:-unknown}" in
+    cd_root) printf '%s' "cannot cd to repository root (check ALFRED_LINUX_REPO or install layout)" ;;
+    init) printf '%s' "failed before first gate" ;;
+    release-integrity) printf '%s' "release-integrity gate failed" ;;
+    security-audit) printf '%s' "security-audit gate failed" ;;
+    audit-law-wrappers) printf '%s' "audit-law-wrappers gate failed" ;;
+    *) printf '%s' "repo health failed" ;;
+  esac
+}
+
 repo_health_emit_fail_json() {
   local ec=${1:-1}
+  local msg=${2:-}
   [[ "${ALFRED_REPO_HEALTH_JSON:-0}" == 1 ]] || return 0
+  [[ -n "$msg" ]] || msg=$(repo_health_fail_default_message)
   REPO_HEALTH_FAIL_EC="$ec" \
     REPO_HEALTH_FAIL_PHASE="${REPO_HEALTH_PHASE:-unknown}" \
+    REPO_HEALTH_FAIL_MSG="$msg" \
     REPO_HEALTH_JSON_ROOT="$ROOT" \
     python3 - <<'PY'
 import json, os
@@ -31,6 +45,7 @@ print(
             "status": "error",
             "exit_code": int(os.environ.get("REPO_HEALTH_FAIL_EC", "1")),
             "phase": os.environ.get("REPO_HEALTH_FAIL_PHASE", "unknown"),
+            "message": os.environ.get("REPO_HEALTH_FAIL_MSG", ""),
             "root": os.environ.get("REPO_HEALTH_JSON_ROOT", ""),
         },
         separators=(",", ":"),
@@ -65,7 +80,7 @@ export REPO_HEALTH_PHASE=cd_root
 cd "$ROOT" || {
   _ec=$?
   trap - EXIT
-  repo_health_emit_fail_json "$_ec"
+  repo_health_emit_fail_json "$_ec" "cannot cd to repository root"
   exit "$_ec"
 }
 export REPO_HEALTH_PHASE=init

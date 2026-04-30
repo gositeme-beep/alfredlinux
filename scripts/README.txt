@@ -33,7 +33,7 @@ alfred-repo-health.sh
   (same as **`ALFRED_SHELLCHECK_ALL=1`**; slower — for manual or dedicated CI). Logs **START/END** lines
   with elapsed seconds per phase (release-integrity, security-audit, audit-law-wrappers).
   Optional: **`ALFRED_REPO_HEALTH_JSON=1`** prints one **JSON** line on **stdout** — **`"status":"ok"`** with
-  timings on success; **`"status":"error"`** with **`exit_code`** and **`phase`** on failure (child stdout to
+  timings on success; **`"status":"error"`** with **`exit_code`**, **`phase`**, and **`message`** on failure (child stdout to
   **stderr** so **`jq`** works); human timestamps stay on stderr via **`log()`**.
   Optional: `ALFRED_LINUX_REPO=/path/to/checkout` when invoked from elsewhere.
     bash scripts/alfred-repo-health.sh

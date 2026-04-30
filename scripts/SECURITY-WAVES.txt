@@ -49,7 +49,7 @@ How to run the audit locally
   bash scripts/audit-law-wrappers.sh   # when /home/gositeme/law (or LAW_ROOT) exists
   bash scripts/run-deep-security-checks.sh   # integrity + full shellcheck + law audit (slower)
   ALFRED_REPO_HEALTH_JSON=1 bash scripts/alfred-repo-health.sh 2>/dev/null | jq .   # one-line JSON summary
-    (status **ok** or **error** with exit_code/phase; use **set -o pipefail** before piping if you need the
+    (status **ok** or **error** with exit_code, phase, message; use **set -o pipefail** before piping if you need the
     script’s exit code, not jq’s.)
 
 CI (GoForge — https://alfredlinux.com/forge/)
@@ -57,7 +57,9 @@ CI (GoForge — https://alfredlinux.com/forge/)
     (release-integrity, security-audit.sh, audit-law-wrappers.sh; law scan skips if LAW_ROOT missing).
     **workflow_dispatch** optional input **law_root** sets `LAW_ROOT` for the law audit step;
     **shellcheck_all**=`1` sets `ALFRED_SHELLCHECK_ALL=1` on the security-audit step (same globs as
-    **`ALFRED_SHELLCHECK_ALL`** locally — see `scripts/README.txt`). On a dev host, one-shot
+    **`ALFRED_SHELLCHECK_ALL`** locally — see `scripts/README.txt`). Optional **repo_health_json**=`1`
+    runs **`alfred-repo-health.sh`** in JSON mode with **`set -o pipefail`** and a Python assert on **`status: ok`**
+    (re-runs the three gates — use for wrapper validation, not every push). On a dev host, one-shot
     **integrity + full shellcheck + law**: **`bash scripts/run-deep-security-checks.sh`**.
   .forgejo/workflows/security-audit.yml — generated (`bash scripts/sync-forgejo-actions-yaml.sh`).
   .github/workflows/security-audit.yml — optional mirror only; keep aligned with .gitea if used.

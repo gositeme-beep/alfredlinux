@@ -20,6 +20,10 @@ on:
         description: Set to 1 for ALFRED_SHELLCHECK_ALL=1 (full shellcheck sweep)
         required: false
         default: '0'
+      repo_health_json:
+        description: Set to 1 to run alfred-repo-health.sh in JSON mode (validates wrapper; re-runs gates)
+        required: false
+        default: '0'
 
 jobs:
   audit:
@@ -62,3 +66,12 @@ jobs:
         env:
           LAW_ROOT: ${{ inputs.law_root }}
         run: bash scripts/audit-law-wrappers.sh
+
+      - name: Alfred repo-health JSON (optional workflow_dispatch)
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.repo_health_json == '1' }}
+        env:
+          ALFRED_REPO_HEALTH_JSON: '1'
+          ALFRED_REPO_HEALTH_SHELLCHECK_ALL: ${{ inputs.shellcheck_all }}
+        run: |
+          set -euo pipefail
+          bash scripts/alfred-repo-health.sh 2>/dev/null | python3 -c 'import json,sys; d=json.load(sys.stdin); assert d.get("status")=="ok", d; print("repo-health JSON ok", d.get("seconds"))'
