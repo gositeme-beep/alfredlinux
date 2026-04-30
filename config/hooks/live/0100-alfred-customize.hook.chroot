@@ -13,7 +13,7 @@
 # When live-build sets ALFRED_ALLOW_HOOK_NETWORK_DOWNLOADS=1 or
 # ALFRED_ALLOW_VOICE_PIP_NETWORK=1 or ALFRED_ALLOW_MYIP_LOOKUP=1 or
 # ALFRED_ALLOW_VOICE_WEB_SEARCH=1 or ALFRED_ALLOW_RUSTUP_NETWORK=1 or
-# ALFRED_ALLOW_HANDSHAKE_DNS=1 in the chroot environment,
+# ALFRED_ALLOW_HANDSHAKE_DNS=1 or ALFRED_ALLOW_SSH_PASSWORD_AUTH=1 in the chroot environment,
 # matching /etc/profile.d snippets are written so installed systems inherit the same policy.
 # ═══════════════════════════════════════════════════════════════
 
@@ -41,9 +41,19 @@ ufw allow ssh
 ufw --force enable
 
 # ── 3. SSH hardening (keys-first; matches 0270 sovereign checks) ──
-cat > /etc/ssh/sshd_config.d/alfred-hardening.conf << 'SSHD'
-PermitRootLogin no
-PasswordAuthentication no
+# Default: PasswordAuthentication no — WAN brute-force surface stays small. Local console
+# and display-manager login are not sshd; they still use passwords where configured.
+# Headless bootstrap / recovery before SSH keys: set ALFRED_ALLOW_SSH_PASSWORD_AUTH=1 for this build.
+if [[ "${ALFRED_ALLOW_SSH_PASSWORD_AUTH:-}" == 1 ]]; then
+  ALFRED_SSH_PASSWORD_VALUE=yes
+  echo "[0100] SSH: password-over-SSH enabled (ALFRED_ALLOW_SSH_PASSWORD_AUTH=1 — review before release)"
+else
+  ALFRED_SSH_PASSWORD_VALUE=no
+fi
+{
+  printf '%s\n' 'PermitRootLogin no'
+  printf 'PasswordAuthentication %s\n' "$ALFRED_SSH_PASSWORD_VALUE"
+  cat <<'SSHD'
 PubkeyAuthentication yes
 X11Forwarding no
 AllowAgentForwarding no
@@ -52,6 +62,14 @@ PermitEmptyPasswords no
 MaxAuthTries 3
 LoginGraceTime 30
 SSHD
+} > /etc/ssh/sshd_config.d/alfred-hardening.conf
+
+install -d -m0755 /etc/alfred
+if [[ "${ALFRED_ALLOW_SSH_PASSWORD_AUTH:-}" == 1 ]]; then
+  printf '%s\n' "ALFRED_ALLOW_SSH_PASSWORD_AUTH=1 at ISO build ($(date -u +%Y-%m-%dT%H:%MZ))." > /etc/alfred/ALLOW_SSH_PASSWORD_AUTH
+else
+  rm -f /etc/alfred/ALLOW_SSH_PASSWORD_AUTH
+fi
 
 # ── 4. XFCE4 terminal defaults ──
 mkdir -p /etc/skel/.config/xfce4/terminal

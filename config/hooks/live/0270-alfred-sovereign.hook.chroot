@@ -256,7 +256,9 @@ if aa-status --enabled &>/dev/null; then pass; else fail; fi
 b "SSH root disabled"
 if grep -rq 'PermitRootLogin no' /etc/ssh/ 2>/dev/null; then pass; else fail; fi
 b "SSH password disabled"
-if grep -rq 'PasswordAuthentication no' /etc/ssh/ 2>/dev/null; then pass; else fail; fi
+if grep -rq 'PasswordAuthentication no' /etc/ssh/ 2>/dev/null; then pass
+elif [[ -f /etc/alfred/ALLOW_SSH_PASSWORD_AUTH ]]; then pass
+else fail; fi
 b "SYN cookies"
 _v=$(cat /proc/sys/net/ipv4/tcp_syncookies 2>/dev/null)
 if [ "$_v" = '1' ]; then pass; else fail; fi
