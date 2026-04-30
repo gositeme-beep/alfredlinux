@@ -12,7 +12,7 @@
 #
 # When live-build sets ALFRED_ALLOW_HOOK_NETWORK_DOWNLOADS=1 or
 # ALFRED_ALLOW_VOICE_PIP_NETWORK=1 or ALFRED_ALLOW_MYIP_LOOKUP=1 or
-# ALFRED_ALLOW_VOICE_WEB_SEARCH=1 in the chroot environment,
+# ALFRED_ALLOW_VOICE_WEB_SEARCH=1 or ALFRED_ALLOW_RUSTUP_NETWORK=1 in the chroot environment,
 # matching /etc/profile.d snippets are written so installed systems inherit the same policy.
 # ═══════════════════════════════════════════════════════════════
 
@@ -628,6 +628,13 @@ if [[ "${ALFRED_ALLOW_VOICE_WEB_SEARCH:-}" == "1" ]]; then
 export ALFRED_ALLOW_VOICE_WEB_SEARCH=1
 PROFVWS
     chmod 644 /etc/profile.d/alfred-voice-web-search.sh
+fi
+if [[ "${ALFRED_ALLOW_RUSTUP_NETWORK:-}" == "1" ]]; then
+    cat > /etc/profile.d/alfred-rustup-network.sh << 'PROFRU'
+# Written at ISO build time when ALFRED_ALLOW_RUSTUP_NETWORK=1.
+export ALFRED_ALLOW_RUSTUP_NETWORK=1
+PROFRU
+    chmod 644 /etc/profile.d/alfred-rustup-network.sh
 fi
 
 echo "[Alfred Linux 4.0] Branding and customizations applied successfully."
