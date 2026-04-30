@@ -115,7 +115,8 @@ alfred_lb_verify_inner_success() {
 }
 
 alfred_lb_notify_success() {
-  local msg="Alfred live-build supervise SUCCESS at $(date -Is) repo=$REPO"
+  local msg
+  msg="Alfred live-build supervise SUCCESS at $(date -Is) repo=$REPO"
   echo "[notify-success] $msg"
   if [[ -n "${ALFRED_LB_SUCCESS_SCRIPT:-}" ]]; then
     if [[ -x "${ALFRED_LB_SUCCESS_SCRIPT}" ]]; then

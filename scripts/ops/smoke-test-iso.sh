@@ -13,7 +13,7 @@ if [[ ! -f "$ISO" ]]; then echo "FAIL: $ISO missing"; exit 2; fi
 ls -lh "$ISO"
 MTIME=$(stat -c %Y "$ISO")
 SIZE=$(stat -c %s "$ISO")
-echo "size: $(numfmt --to=iec $SIZE), mtime: $(date -d @$MTIME)"
+echo "size: $(numfmt --to=iec "$SIZE"), mtime: $(date -d @"$MTIME")"
 if (( MTIME < THRESHOLD )); then echo "FAIL: ISO is older than 2026-04-27 23:30 — stale"; exit 3; fi
 
 echo
@@ -23,8 +23,12 @@ sudo file "$ISO" | head -3
 echo
 echo "=== C. Mount ISO + check squashfs ==="
 MNT=$(mktemp -d)
+smoke_cleanup_mount_only() {
+  sudo umount "$MNT" 2>/dev/null || true
+  rmdir "$MNT" 2>/dev/null || true
+}
 sudo mount -o loop,ro "$ISO" "$MNT"
-trap "sudo umount '$MNT' 2>/dev/null; rmdir '$MNT'" EXIT
+trap smoke_cleanup_mount_only EXIT
 
 ls -la "$MNT/" | head -20
 SQ="$MNT/live/filesystem.squashfs"
@@ -37,8 +41,13 @@ sudo unsquashfs -s "$SQ" 2>&1 | head -20
 echo
 echo "=== D. Squashfs Alfred content audit ==="
 SMNT=$(mktemp -d)
-sudo unsquashfs -d "$SMNT/sq" -ll "$SQ" 2>/dev/null > /tmp/sq-listing.txt || true
-trap "sudo umount '$MNT' 2>/dev/null; sudo rm -rf '$SMNT'; rmdir '$MNT' 2>/dev/null" EXIT
+smoke_cleanup_all() {
+  sudo umount "$MNT" 2>/dev/null || true
+  sudo rm -rf "$SMNT" 2>/dev/null || true
+  rmdir "$MNT" 2>/dev/null || true
+}
+sudo unsquashfs -d "$SMNT/sq" -ll "$SQ" 2>/dev/null | tee /tmp/sq-listing.txt >/dev/null || true
+trap smoke_cleanup_all EXIT
 echo "Total entries: $(wc -l < /tmp/sq-listing.txt)"
 for path in "etc/alfred" "usr/share/backgrounds" "opt/alfred-ide-extensions" "usr/share/plymouth/themes" "etc/skel/.config/alfred" "usr/lib/alfred"; do
   COUNT=$(grep -cE "^\S+\s+\S+\s+\S+\s+\S+\s+\S+\s+\S+\s+/?$path" /tmp/sq-listing.txt || echo 0)

@@ -12,6 +12,8 @@ Wave 1 (landed)
 
 Wave 2 (this release)
   • scripts/security-audit.sh — static CI sweep (hooks + optional shellcheck).
+    Optional **ALFRED_SHELLCHECK_ALL=1** uses shellcheck **--severity=warning** on scripts/ops/shlib +
+    build-assets shells (style/info do not count as WARN; real warnings still do).
   • Same CRITICAL/WARN patterns on scripts/*.sh, scripts/ops/*.sh, scripts/shlib/*.sh, and
     build-assets/**/*.sh (excludes security-audit.sh itself to avoid self-match on audit strings).
   • install-rust: two-step rustup (curl -o file → verify shebang → sh file).

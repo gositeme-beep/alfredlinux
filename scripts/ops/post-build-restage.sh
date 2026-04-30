@@ -25,7 +25,7 @@ ls -lh "$NEW_ISO"
 NEW_MTIME=$(stat -c %Y "$NEW_ISO")
 THRESHOLD=$(date -d '2026-04-29 19:00:00' +%s)
 if (( NEW_MTIME < THRESHOLD )); then
-  echo "FAIL: ISO mtime ($(date -d @$NEW_MTIME)) is older than 2026-04-27 22:00 — likely stale Apr 26 build"
+  echo "FAIL: ISO mtime ($(date -d @"$NEW_MTIME")) is older than 2026-04-27 22:00 — likely stale Apr 26 build"
   exit 3
 fi
 
@@ -200,7 +200,7 @@ sudo grep -E '^\$gaFrozenIsoHookCount|^\$gaPlannedHookCount' "$GASTATE" | head -
 
 echo
 echo "=== summary ==="
-echo "ISO:       $CANON ($(numfmt --to=iec $NEW_SIZE))"
+echo "ISO:       $CANON ($(numfmt --to=iec "$NEW_SIZE"))"
 echo "sha512:    $NEW_SHA512"
 echo "blake3:    ${NEW_BLAKE3:-(MISSING — install b3sum)}"
 echo "sha256:    $NEW_SHA  (legacy)"

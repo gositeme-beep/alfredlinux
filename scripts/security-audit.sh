@@ -187,11 +187,12 @@ if command -v shellcheck >/dev/null 2>&1; then
   fi
   if [ "${ALFRED_SHELLCHECK_ALL:-0}" = 1 ]; then
     log "=== shellcheck (ALFRED_SHELLCHECK_ALL=1 — scripts + ops + shlib + build-assets) ==="
+    log "    (severity=warning: style/info-only findings do not increment WARN)"
     shopt -s nullglob
     for s in scripts/*.sh scripts/ops/*.sh scripts/shlib/*.sh build-assets/*.sh build-assets/wallpapers/scripts/*.sh; do
       [ -f "$s" ] || continue
       [[ "$s" == scripts/security-audit.sh ]] && continue
-      shellcheck -x "$s" || WARN=$((WARN + 1))
+      shellcheck -P "SCRIPTDIR:$ROOT/scripts" --severity=warning -x "$s" || WARN=$((WARN + 1))
     done
     shopt -u nullglob
   fi

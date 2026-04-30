@@ -185,10 +185,10 @@ run_one_attempt() {
   fi
   local mtime; mtime=$(stat -c %Y "$ISO")
   if (( mtime < THRESHOLD )); then
-    log "ISO is stale (mtime $(date -d @$mtime))"
+    log "ISO is stale (mtime $(date -d @"$mtime"))"
     return 5
   fi
-  log "ISO fresh: $(ls -lh $ISO | awk '{print $5, $9}')"
+  log "ISO fresh: $(ls -lh "$ISO" | awk '{print $5, $9}')"
 
   # --- Smoke test ---
   state "SMOKE-TESTING (attempt #$ATTEMPT)"

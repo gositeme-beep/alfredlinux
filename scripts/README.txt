@@ -4,7 +4,8 @@ Alfred Linux — helper scripts (ISO / builder)
 security-audit.sh
   Static sweep of config/hooks/live/*.hook.chroot, scripts/*.sh, scripts/ops/*.sh,
   scripts/shlib/*.sh, and build-assets/**/*.sh (SSH footguns, curl|sh, eval, http://, SPDX on build-assets).
-  Optional: ALFRED_SHELLCHECK_ALL=1 to shellcheck those same script globs (plus security-audit.sh itself first).
+  Optional: ALFRED_SHELLCHECK_ALL=1 to shellcheck those same script globs (plus security-audit.sh itself first);
+    uses **--severity=warning** so style/info hints do not increment WARN (errors/warnings still do).
     bash scripts/security-audit.sh
   Wave checklist: scripts/SECURITY-WAVES.txt
   GoForge Actions (canonical): .gitea/workflows/security-audit.yml — https://alfredlinux.com/forge/

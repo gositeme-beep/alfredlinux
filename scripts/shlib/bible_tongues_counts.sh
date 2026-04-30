@@ -6,6 +6,8 @@
 # Kingdom hook lineage (Matthew 1:17): public `hooks` in api/version.json must
 # stay 42 — extra .hook.chroot files on disk are merge shards, not lineage.
 
+# Read by release-integrity.sh / security-audit.sh after sourcing this file.
+# shellcheck disable=SC2034
 ALFRED_KINGDOM_HOOKS_EXPECTED=42
 
 bible_tongues_conf_rows() {
