@@ -10,7 +10,13 @@ These files are not installed automatically. Copy or symlink into
   systemctl --user daemon-reload
   systemctl --user enable --now alfred-linux-repo-health.timer
 
-The timer runs `scripts/alfred-repo-health.sh` (release-integrity check-repo +
-security-audit). View logs:
+The timer runs `scripts/alfred-repo-health.sh` (release-integrity **check-repo**,
+`security-audit.sh`, and **`audit-law-wrappers.sh`** when `LAW_ROOT` exists). View logs:
 
   journalctl --user -u alfred-linux-repo-health.service -n 50
+
+Optional drop-in for a **full shellcheck** sweep (slow — e.g. weekly instead of every timer):
+
+  systemctl --user edit alfred-linux-repo-health.service
+  # [Service]
+  # Environment=ALFRED_REPO_HEALTH_SHELLCHECK_ALL=1

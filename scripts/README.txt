@@ -29,6 +29,8 @@ sbom-dpkg-rootfs.sh
 alfred-repo-health.sh
   Runs `release-integrity.sh check-repo`, `security-audit.sh`, and **`audit-law-wrappers.sh`**
   (law-wrapper grep pass when `/home/gositeme/law` exists; otherwise skipped).
+  Optional: **`ALFRED_REPO_HEALTH_SHELLCHECK_ALL=1`** enables full shellcheck inside `security-audit.sh`
+  (same as **`ALFRED_SHELLCHECK_ALL=1`**; slower — for manual or dedicated CI).
   Optional: `ALFRED_LINUX_REPO=/path/to/checkout` when invoked from elsewhere.
     bash scripts/alfred-repo-health.sh
   Systemd user units (edit WorkingDirectory if your clone path differs):

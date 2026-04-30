@@ -1,0 +1,33 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# STUB — AppArmor profile for /usr/local/bin/alfred-mesh (Kingdom ISO, hook 0167).
+# Installed by ISO hooks; this repo copy is for review / diff / aa-mergeprof workflows.
+#
+# Mode: complain — logs policy gaps without blocking. Replace complain with enforce only
+# after aa-genprof / aa-logprof on a real system (see docs/APPARMOR-ALFRED-MESH.txt).
+#
+# Install on a dev box (Debian/Ubuntu with apparmor):
+#   sudo install -m 644 usr.local.bin.alfred-mesh /etc/apparmor.d/
+#   sudo apparmor_parser -r /etc/apparmor.d/usr.local.bin.alfred-mesh
+#
+abi <abi/3.0>,
+
+include <tunables/global>
+
+/usr/local/bin/alfred-mesh flags=(attach_disconnected,complain) {
+  include <abstractions/base>
+  include <abstractions/bash>
+  include <abstractions/consoles>
+  include <abstractions/nameservice>
+
+  # WireGuard / config (tighten after genprof)
+  /etc/wireguard/** rw,
+  /dev/net/tun rw,
+  capability net_admin,
+
+  # Typical mesh helper paths (adjust per aa-genprof)
+  /usr/bin/wg rix,
+  /usr/bin/wg-quick rix,
+  /usr/bin/curl rix,
+  /usr/bin/ping rix,
+  /usr/bin/ip rix,
+}
