@@ -1,4 +1,7 @@
-# Wave 2 — static hook sweep + optional shellcheck on helper scripts.
+# Optional CI mirror only — canonical workflow lives in .gitea/workflows/security-audit.yml
+# Production GoForge: https://alfredlinux.com/forge/  (Actions: .gitea/ or .forgejo/ paths on disk)
+# Keep this file in sync with .gitea/workflows/security-audit.yml if you push a GitHub mirror.
+# See: docs/GOFORGE-INFRASTRUCTURE-UPGRADE.txt
 name: security-audit
 
 on:
@@ -6,6 +9,7 @@ on:
     branches: [main, master]
   pull_request:
     branches: [main, master]
+  workflow_dispatch:
 
 jobs:
   audit:

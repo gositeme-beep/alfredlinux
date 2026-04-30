@@ -6,8 +6,9 @@ security-audit.sh
   Optional: ALFRED_SHELLCHECK_ALL=1 to shellcheck every scripts/*.sh.
     bash scripts/security-audit.sh
   Wave checklist: scripts/SECURITY-WAVES.txt
-  CI: .github/workflows/security-audit.yml; GoForge: .gitea/workflows/security-audit.yml
-  After editing the GoForge canonical workflow: bash scripts/sync-forgejo-actions-yaml.sh
+  GoForge Actions (canonical): .gitea/workflows/security-audit.yml — https://alfredlinux.com/forge/
+  Mirror on disk: .forgejo/workflows/security-audit.yml (run bash scripts/sync-forgejo-actions-yaml.sh after edits)
+  Optional GitHub mirror: .github/workflows/security-audit.yml (keep aligned with .gitea if used)
 
 alfred-repo-health.sh
   Runs `release-integrity.sh check-repo` then `security-audit.sh` (exit non-zero if either fails).
@@ -85,6 +86,8 @@ lb-docker-build.sh + lb-docker-inner-build.sh
     bash scripts/lb-docker-build.sh detach
   Log: `lb-docker-build.log` (repo root). Name: `lb-docker.containername`.
   Requires Docker; can take many hours; `--privileged` is intentional for mounts/chroot.
+  Default `ALFRED_LB_DOCKER_FLOCK_BLOCKING=1` queues overlapping starts on `build/.alfred-lb-docker-build.lock`
+  (Reseal / ABCP / Forge hooks must not run two ISO builds on the same bind mount). Use `=0` for fail-fast.
 
 watch-lb-docker-build.sh
   After `detach`, **wait until the container exits**, print summary + ISO paths + log tail.
