@@ -74,5 +74,5 @@ CI (GoForge — https://alfredlinux.com/forge/)
     **veil/*.php** pages (Dell Watch/Mailer/Operations Hub, Memory Commander, Nexus/Black Vault/Genesis,
     Pantheon, admins, call archive, integrity report, etc.); on **fleet-tracker**, **reports**, **agenda**,
     **command-center** only when **$isOwner** (33). Dell Watch **?action=feed** JSON also no-store.
-    **reunion.php** may load headers after **site-header** (no-op if headers already sent). **wallet**,
-    **index**, **departments**, **pro-discussions** unchanged (not commander-only).
+    **reunion.php**: **auth-gate** + client 33 check + classified headers **before** **site-header** (correct
+    **$page_title** / meta). **wallet**, **index**, **departments**, **pro-discussions** unchanged (not commander-only).
