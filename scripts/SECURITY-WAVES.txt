@@ -20,6 +20,10 @@ Wave 2 (this release)
   • SECURITY-WAVES.txt + GoForge Actions (.gitea/ + generated .forgejo/).
 
 Wave 3 (prepare next — backlog)
+  • **Hook sweep (2026-04-30):** 42 `config/hooks/live/*.hook.chroot` — `security-audit.sh` clean (CRITICAL/WARN 0);
+    supplemental grep: no `eval` statements (0260 excluded by policy); no `curl|sh`; `http://` only
+    loopback / localhost / Debian mirror allowlist / Meilisearch health in 0500; **0100** `myip()` uses
+    third-party lookup only when **ALFRED_ALLOW_MYIP_LOOKUP=1** (else local IP message).
   • SPDX: AGPL-3.0-or-later line after shebang on all `config/hooks/live/*.hook.chroot`
     (landed); `scripts/ops/*.sh` + `scripts/shlib/bible_tongues_counts.sh` aligned; extend to any
     remaining `scripts/*.sh` without SPDX + SBOM export still open.
