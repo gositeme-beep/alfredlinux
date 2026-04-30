@@ -39,7 +39,7 @@ alfred-build-root-cleanup.sh (sudo, no passwords in files)
   Optional NOPASSWD: copy `scripts/sudoers.d/alfred-build-root-cleanup.template` to
   `/etc/sudoers.d/` (edit `__YOUR_USER__` + `__REPO__`), `visudo -cf` it, then:
     sudo ./scripts/alfred-build-root-cleanup.sh
-  Prefer Docker cleanups when possible; this is for hosts where Docker cannot fix ownership.
+  Repo path must be under `/home/`, `/srv/`, or `/workspaces/` (devcontainers). Prefer Docker cleanups when possible; this is for hosts where Docker cannot fix ownership.
 
 sync-hooks-to-build.sh
   Hooks only: `config/hooks/live/*.hook.chroot` → `build/config/hooks/`.

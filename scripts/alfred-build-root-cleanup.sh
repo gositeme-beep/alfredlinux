@@ -27,8 +27,8 @@ if [[ ! -f "$REPO/scripts/sync-hooks-to-build.sh" ]] || [[ ! -d "$REPO/config/ho
 fi
 
 # Narrow path allowlist — extend only if you clone elsewhere intentionally.
-if [[ ! "$REPO" =~ ^/(home|srv)/ ]]; then
-  echo "error: refuse: REPO must be under /home or /srv (got $REPO)" >&2
+if [[ ! "$REPO" =~ ^/(home|srv|workspaces)/ ]]; then
+  echo "error: refuse: REPO must be under /home, /srv, or /workspaces (got $REPO)" >&2
   exit 1
 fi
 
