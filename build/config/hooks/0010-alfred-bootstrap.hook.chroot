@@ -29,10 +29,20 @@ getent hosts deb.debian.org && echo "[DNS-FIX] DNS working" || echo "[DNS-FIX] W
 set +e
 echo "[DPKG-FIX] Configuring non-interactive dpkg..."
 
-# Force dpkg to keep existing config files when packages update them
+# Force dpkg non-interactive defaults (confnew avoids ucf stops on e.g. calamares-settings-debian).
 cat > /etc/dpkg/dpkg.cfg.d/force-confold << 'EOF'
 force-confold
 force-confdef
+force-confnew
+EOF
+
+mkdir -p /etc/apt/apt.conf.d
+cat > /etc/apt/apt.conf.d/99alfred-apt-noninteractive.conf <<'EOF'
+Dpkg::Options {
+   "--force-confdef";
+   "--force-confnew";
+};
+APT::Get::Assume-Yes "true";
 EOF
 
 # Set non-interactive frontend for apt/dpkg
