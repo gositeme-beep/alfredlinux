@@ -32,6 +32,15 @@ iso-preflight.sh
   Run `lb` from `build/` (see ALFRED-LINUX-BUILD-TEST.txt). An empty `build/auto/` is normal
   unless you maintain an executable `build/auto/config` script.
 
+alfred-build-root-cleanup.sh (sudo, no passwords in files)
+  One-shot fix for root-owned Docker/lb fallout: removes `build/config/hooks/live/`, refreshes
+  `build/config/package-lists/alfred*.list.chroot` from `config/package-lists/` with ownership
+  matching the repo tree. **Must run as root**; script refuses unknown trees / bad paths.
+  Optional NOPASSWD: copy `scripts/sudoers.d/alfred-build-root-cleanup.template` to
+  `/etc/sudoers.d/` (edit `__YOUR_USER__` + `__REPO__`), `visudo -cf` it, then:
+    sudo ./scripts/alfred-build-root-cleanup.sh
+  Prefer Docker cleanups when possible; this is for hosts where Docker cannot fix ownership.
+
 sync-hooks-to-build.sh
   Hooks only: `config/hooks/live/*.hook.chroot` → `build/config/hooks/`.
   Drops flat `*.hook.chroot` not in live/; clears nested `hooks/live/` when permitted.

@@ -1,0 +1,11 @@
+# Template — install on the BUILD HOST only (never commit a filled copy with wildcards).
+# 1) Replace __YOUR_USER__ with your login (e.g. gositeme).
+# 2) Replace __REPO__ with the realpath of alfredlinux-com-source-live (must match the script path below).
+# 3) sudo install -m0440 -o root -g root this file as /etc/sudoers.d/alfred-build-root-cleanup
+# 4) sudo visudo -cf /etc/sudoers.d/alfred-build-root-cleanup
+#
+# Grants ONE passwordless command: the allowlisted cleanup script (removes nested hooks/live,
+# refreshes two package lists from config with correct ownership). The script itself enforces
+# repo checks; still keep this path as tight as possible.
+
+__YOUR_USER__ ALL=(root) NOPASSWD: __REPO__/scripts/alfred-build-root-cleanup.sh
