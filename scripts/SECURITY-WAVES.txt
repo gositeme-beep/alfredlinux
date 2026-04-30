@@ -74,7 +74,8 @@ CI (GoForge — https://alfredlinux.com/forge/)
     **Permissions-Policy** with camera/microphone/display-capture/encrypted-media/WebAuthn **(self)** only, X-Frame-Options DENY,
     same-origin referrer) on all **client_id 33**-gated **veil/*.php** pages (Dell Watch/Mailer/Operations Hub, Memory Commander,
     Nexus/Black Vault/Genesis, Pantheon, admins, call archive, integrity report, etc.); on **fleet-tracker**, **reports**,
-    **agenda**, **command-center** only when **$isOwner** (33). Dell Watch **?action=feed** JSON also no-store.
+    **agenda**, **command-center** only when **$isOwner** (33). Dell Watch **?action=feed** JSON: **no-store** cache,
+    **Pragma/Expires**, **nosniff**, **X-Robots-Tag**, **Referrer-Policy: same-origin**.
     After headers run, **GOSITEME_CLASSIFIED_HEADERS_APPLIED** is set; **includes/site-header.inc.php** skips its default
     **Cache-Control / Pragma / X-Content-Type-Options / Referrer-Policy** block when that constant is defined (e.g. **reunion.php**)
     so **same-origin** referrer and stricter cache lines are not overwritten.
@@ -88,4 +89,6 @@ CI (GoForge — https://alfredlinux.com/forge/)
     file reaches **GOSITEME_SESSION_BACKUP_MAX_BYTES** (default **52428800**, max **512MiB**): rename to **{path}.prior.{UTC}**;
     keep **GOSITEME_SESSION_BACKUP_KEEP** newest rotated files (default **8**, max **64**), delete older; **flock** on
     **{path}.lock** around rotate+append. Off by default.
+    **api/auth.php**: explicit **Cache-Control/Pragma/Expires** no-store on JSON auth responses. **includes/api-security.php**:
+    CSRF failure audit lines → **law/var/csrf-fail.log** (not **/tmp**), **LOCK_EX** append.
     **wallet**, **index**, **departments**, **pro-discussions** unchanged (not commander-only).
