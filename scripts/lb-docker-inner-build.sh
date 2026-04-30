@@ -69,6 +69,10 @@ fi
 # build-assets into includes (see scripts/sync-canonical-to-build.sh).
 echo "[inner] sync canonical Alfred inputs → build/config at $(date -Is)"
 export ALFRED_FULL_BUILD_ASSETS=1
+# Alfred ISO default: SSH password auth on (families / bootstrap); host may set
+# ALFRED_ALLOW_SSH_PASSWORD_AUTH=0 before docker for keys-only sshd (hook 0100).
+export ALFRED_ALLOW_SSH_PASSWORD_AUTH="${ALFRED_ALLOW_SSH_PASSWORD_AUTH:-1}"
+echo "[inner] ALFRED_ALLOW_SSH_PASSWORD_AUTH=${ALFRED_ALLOW_SSH_PASSWORD_AUTH}"
 bash /work/scripts/sync-canonical-to-build.sh
 
 # lb clean runs dpkg inside the existing chroot; a half-deleted or corrupted chroot

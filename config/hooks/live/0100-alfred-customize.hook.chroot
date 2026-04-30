@@ -41,9 +41,10 @@ ufw allow ssh
 ufw --force enable
 
 # ── 3. SSH hardening (keys-first; matches 0270 sovereign checks) ──
-# Default: PasswordAuthentication no — WAN brute-force surface stays small. Local console
-# and display-manager login are not sshd; they still use passwords where configured.
-# Headless bootstrap / recovery before SSH keys: set ALFRED_ALLOW_SSH_PASSWORD_AUTH=1 for this build.
+# Default: PasswordAuthentication no — unless ALFRED_ALLOW_SSH_PASSWORD_AUTH=1 (Alfred Docker
+# ISO sets this by default in lb-docker-inner-build.sh; export ALFRED_ALLOW_SSH_PASSWORD_AUTH=0
+# on the host before `lb-docker-build.sh` for keys-only). Local console / DM login are not sshd.
+# Headless bootstrap / recovery before SSH keys: keep 1 for password-over-SSH.
 if [[ "${ALFRED_ALLOW_SSH_PASSWORD_AUTH:-}" == 1 ]]; then
   ALFRED_SSH_PASSWORD_VALUE=yes
   echo "[0100] SSH: password-over-SSH enabled (ALFRED_ALLOW_SSH_PASSWORD_AUTH=1 — review before release)"
@@ -661,6 +662,13 @@ if [[ "${ALFRED_ALLOW_HANDSHAKE_DNS:-}" == "1" ]]; then
 export ALFRED_ALLOW_HANDSHAKE_DNS=1
 PROFH
     chmod 644 /etc/profile.d/alfred-handshake-dns.sh
+fi
+if [[ "${ALFRED_ALLOW_SSH_PASSWORD_AUTH:-}" == "1" ]]; then
+    cat > /etc/profile.d/alfred-ssh-password-auth.sh << 'PROFSSH'
+# Written at ISO build time when ALFRED_ALLOW_SSH_PASSWORD_AUTH=1.
+export ALFRED_ALLOW_SSH_PASSWORD_AUTH=1
+PROFSSH
+    chmod 644 /etc/profile.d/alfred-ssh-password-auth.sh
 fi
 
 echo "[Alfred Linux 4.0] Branding and customizations applied successfully."

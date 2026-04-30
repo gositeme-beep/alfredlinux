@@ -13,6 +13,8 @@
 set -euo pipefail
 REPO="$(cd "$(dirname "$0")/.." && pwd)"
 export ALFRED_LB_DOCKER_FLOCK_BLOCKING="${ALFRED_LB_DOCKER_FLOCK_BLOCKING:-1}"
+# Default 1: ISO allows SSH password auth (0100). Set ALFRED_ALLOW_SSH_PASSWORD_AUTH=0 for keys-only.
+export ALFRED_ALLOW_SSH_PASSWORD_AUTH="${ALFRED_ALLOW_SSH_PASSWORD_AUTH:-1}"
 IMAGE="${DOCKER_LB_IMAGE:-debian:bookworm}"
 INNER="$REPO/scripts/lb-docker-inner-build.sh"
 NAME="${ALFRED_LB_DOCKER_NAME:-alfred-lb-build-$(date +%s)}"
@@ -27,6 +29,7 @@ run=( docker run --init --rm --privileged --network=host
   -e "DEBIAN_FRONTEND=noninteractive"
   -e "BUILD_UID=$(id -u)" -e "BUILD_GID=$(id -g)"
   -e "ALFRED_LB_DOCKER_FLOCK_BLOCKING=${ALFRED_LB_DOCKER_FLOCK_BLOCKING}"
+  -e "ALFRED_ALLOW_SSH_PASSWORD_AUTH=${ALFRED_ALLOW_SSH_PASSWORD_AUTH}"
   -v "$REPO:/work"
   -w /work
   "$IMAGE" bash /work/scripts/lb-docker-inner-build.sh )
@@ -36,6 +39,7 @@ if [[ "${1:-}" == "detach" ]]; then
     -e "DEBIAN_FRONTEND=noninteractive" \
     -e "BUILD_UID=$(id -u)" -e "BUILD_GID=$(id -g)" \
     -e "ALFRED_LB_DOCKER_FLOCK_BLOCKING=${ALFRED_LB_DOCKER_FLOCK_BLOCKING}" \
+    -e "ALFRED_ALLOW_SSH_PASSWORD_AUTH=${ALFRED_ALLOW_SSH_PASSWORD_AUTH}" \
     -v "$REPO:/work" \
     -w /work \
     "$IMAGE" bash /work/scripts/lb-docker-inner-build.sh
