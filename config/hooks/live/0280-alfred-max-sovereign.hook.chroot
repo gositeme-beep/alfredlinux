@@ -1,6 +1,9 @@
 #!/bin/bash
 # SPDX-License-Identifier: AGPL-3.0-or-later
 set -e
+export DEBIAN_FRONTEND=noninteractive
+export UCF_FORCE_CONFFNEW=1
+export APT_LISTCHANGES_FRONTEND=none
 # Fix /tmp permissions (may be restricted by earlier hooks in chroot)
 chmod 1777 /tmp 2>/dev/null || true
 # Fix /tmp permissions (may be restricted by earlier hooks in chroot)
@@ -162,6 +165,8 @@ systemctl enable alfred-max-cpu.service 2>/dev/null || true
 ###############################################################################
 echo "[MAX] Setting up ZRAM (compressed RAM = 2x effective memory)..."
 DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+    -o Dpkg::Options::=--force-confdef \
+    -o Dpkg::Options::=--force-confnew \
     zram-tools 2>/dev/null || true
 
 cat > /etc/default/zramswap << 'ZRAMEOF'
@@ -568,6 +573,8 @@ HPEOF
 
 # Install numactl for NUMA-aware compute
 DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+    -o Dpkg::Options::=--force-confdef \
+    -o Dpkg::Options::=--force-confnew \
     numactl \
     irqbalance \
     cpufrequtils \

@@ -1,6 +1,9 @@
 #!/bin/bash
 # Fix Debian Trixie security repo — live-build v3 generates the wrong URL format
 # It creates "trixie/updates" but Trixie uses "trixie-security"
+export DEBIAN_FRONTEND=noninteractive
+export UCF_FORCE_CONFFNEW=1
+export APT_LISTCHANGES_FRONTEND=none
 apt-get install -y --no-install-recommends gnupg 2>/dev/null || true
 
 # Remove any broken security sources that use the old format
@@ -29,9 +32,10 @@ getent hosts deb.debian.org && echo "[DNS-FIX] DNS working" || echo "[DNS-FIX] W
 set +e
 echo "[DPKG-FIX] Configuring non-interactive dpkg..."
 
-# Force dpkg non-interactive defaults (confnew avoids ucf stops on e.g. calamares-settings-debian).
-cat > /etc/dpkg/dpkg.cfg.d/force-confold << 'EOF'
-force-confold
+# Force dpkg non-interactive defaults. Do NOT set force-confold: it prefers keeping local
+# conffiles and still triggers ucf prompts when e.g. 0170 wrote luksopenswaphookcfg.conf before
+# calamares-settings-debian installs the packaged version.
+cat > /etc/dpkg/dpkg.cfg.d/zz-alfred-dpkg-noninteractive << 'EOF'
 force-confdef
 force-confnew
 EOF
@@ -45,9 +49,12 @@ Dpkg::Options {
 APT::Get::Assume-Yes "true";
 EOF
 
-# Set non-interactive frontend for apt/dpkg
+# Set non-interactive frontend for apt/dpkg / ucf (hooks run without inheriting this env)
 export DEBIAN_FRONTEND=noninteractive
-echo 'DEBIAN_FRONTEND=noninteractive' >> /etc/environment
+export UCF_FORCE_CONFFNEW=1
+export APT_LISTCHANGES_FRONTEND=none
+grep -q '^DEBIAN_FRONTEND=' /etc/environment 2>/dev/null || echo 'DEBIAN_FRONTEND=noninteractive' >> /etc/environment
+grep -q '^UCF_FORCE_CONFFNEW=' /etc/environment 2>/dev/null || echo 'UCF_FORCE_CONFFNEW=1' >> /etc/environment
 
 # Fix any half-configured packages now
 DEBIAN_FRONTEND=noninteractive dpkg --configure -a 2>/dev/null || true

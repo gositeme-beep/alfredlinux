@@ -10,6 +10,9 @@
 # BUILD: v4.0+ (RC8+)
 # ═══════════════════════════════════════════════════════════════
 set -e
+export DEBIAN_FRONTEND=noninteractive
+export UCF_FORCE_CONFFNEW=1
+export APT_LISTCHANGES_FRONTEND=none
 echo "╔═══════════════════════════════════════════════════════════╗"
 echo "║  [0170] Full-Disk Encryption (LUKS) Support               ║"
 echo "╚═══════════════════════════════════════════════════════════╝"
