@@ -8,6 +8,9 @@ wallpapers → /usr/share/alfred-linux/kingdom-media/documents/
 
 What belongs here (examples)
 -----------------------------
+• **LAVOCAT-CANONICAL-DOMAINS.txt** — justice ministry: canonical **lavocat.ca** vs
+  **lavocat.quebec** (301 forward); also installed to **/usr/share/alfred/legal/** by
+  hook **0176** §5b (and shown via **`alfred-license lavocat`**).
 • PDF or HTML exports of Official Acts from The People's Journal (e.g. Act N° 006 —
   Public Release of the Authorized King Jesus Version — Perez Family Edition), with
   canonical web reference: https://lavocat.ca/journal?read=9&lang=en

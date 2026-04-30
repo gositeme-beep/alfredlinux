@@ -264,6 +264,13 @@ case "${1:-show}" in
             echo "  ⚠ Succession file not found."
         fi
         ;;
+    lavocat|justice)
+        if [ -f /usr/share/alfred/legal/LAVOCAT-CANONICAL-DOMAINS.txt ]; then
+            cat /usr/share/alfred/legal/LAVOCAT-CANONICAL-DOMAINS.txt
+        else
+            echo "  ⚠ Lavocat canonical reference not found."
+        fi
+        ;;
     stamp|verify)
         echo "── Kingdom Stamp ──"
         if [ -f /etc/alfred-kingdom-stamp ]; then
@@ -288,14 +295,19 @@ case "${1:-show}" in
         echo ""
         echo "════════════════════════════════════════════════════════════"
         echo ""
+        $0 lavocat
+        echo ""
+        echo "════════════════════════════════════════════════════════════"
+        echo ""
         $0 stamp
         ;;
     *)
-        echo "Usage: alfred-license [show|trademarks|succession|stamp|all]"
+        echo "Usage: alfred-license [show|trademarks|succession|lavocat|stamp|all]"
         echo ""
         echo "  show         Display the Kingdom Covenant License (default)"
         echo "  trademarks   Display trademark protections"
         echo "  succession   Display succession provisions"
+        echo "  lavocat      Justice ministry — canonical Lavocat.ca / .quebec forwarding"
         echo "  stamp        Verify Kingdom authenticity stamp"
         echo "  all          Display everything"
         ;;
@@ -304,6 +316,28 @@ echo ""
 LICVIEWER
 
 chmod +x /usr/local/bin/alfred-license
+
+# ═══════════════════════════════════════════════════
+# 5b. JUSTICE MINISTRY — LAVOCAT CANONICAL DOMAINS (public record / Four Corners)
+# ═══════════════════════════════════════════════════
+echo "[SHIELD-05b] Installing Lavocat canonical-domain reference (justice ministry)..."
+
+if [ -f /build-assets/kingdom-documents/LAVOCAT-CANONICAL-DOMAINS.txt ]; then
+    install -m 644 /build-assets/kingdom-documents/LAVOCAT-CANONICAL-DOMAINS.txt \
+        /usr/share/alfred/legal/LAVOCAT-CANONICAL-DOMAINS.txt
+else
+    cat > /usr/share/alfred/legal/LAVOCAT-CANONICAL-DOMAINS.txt << 'LAVOEOF'
+Kingdom — Justice ministry: Lavocat canonical domains (Four Corners / public record)
+======================================================================================
+Canonical site (HTTPS): https://lavocat.ca/
+
+Quebec: lavocat.quebec (and www.) → HTTP 301 to https://lavocat.ca/ same path.
+Use lavocat.ca for bookmarks and ISO references; keep TLS valid on .quebec.
+
+(Fallback text — full copy lives in repo build-assets/kingdom-documents/
+ LAVOCAT-CANONICAL-DOMAINS.txt when the ISO includes build-assets.)
+LAVOEOF
+fi
 
 # ═══════════════════════════════════════════════════
 # 6. REGISTER IN ALFRED STORE
@@ -319,12 +353,13 @@ cat > "${STORE_DIR}/kingdom-covenant-shield.json" << 'STOREJSON'
     "name": "Kingdom Covenant Shield",
     "version": "1.0.0",
     "category": "security",
-    "description": "Legal & IP protection: Kingdom Covenant License, Trademark shield, Succession provisions, Anti-fork attestation",
+    "description": "Legal & IP protection: Kingdom Covenant License, Trademark shield, Succession provisions, Lavocat justice-ministry canonical domains, Anti-fork attestation",
     "commands": ["alfred-license"],
     "files": [
         "/usr/share/alfred/legal/LICENSE",
         "/usr/share/alfred/legal/TRADEMARKS",
         "/usr/share/alfred/legal/SUCCESSION",
+        "/usr/share/alfred/legal/LAVOCAT-CANONICAL-DOMAINS.txt",
         "/etc/alfred-kingdom-stamp"
     ],
     "hooks": ["0176-kingdom-covenant-shield"],
@@ -346,7 +381,7 @@ echo "║  • Kingdom Covenant License (KCL v1.0) — installed          ║"
 echo "║  • Trademark protections — installed                        ║"
 echo "║  • Succession provisions — installed                        ║"
 echo "║  • Anti-fork attestation stamp — sealed                     ║"
-echo "║  • License viewer: alfred-license [show|tm|heir|stamp|all]  ║"
+echo "║  • License viewer: alfred-license [show|tm|heir|lavocat|stamp|all] ║"
 echo "║                                                             ║"
 echo "║  'Put on the whole armour of God.' — Ephesians 6:11         ║"
 echo "╚═══════════════════════════════════════════════════════════╝"

@@ -1,0 +1,29 @@
+Kingdom — Justice ministry: Lavocat canonical domains (Four Corners / public record)
+======================================================================================
+Alfred Linux ships this note on disk so operators and Alfred users know which
+hostname is authoritative for the Kingdom justice / case / journal stack.
+
+Canonical site (HTTPS)
+----------------------
+  https://lavocat.ca/
+
+Quebec domain (forwarding only)
+-------------------------------
+  lavocat.quebec (and www.) issues HTTP 301 Moved Permanently to the same path
+  on https://lavocat.ca/ — treat it as a regional / language forwarder, not
+  a second application. Bookmarks, ISO docs, and integrations should prefer
+  lavocat.ca so links survive TLS and redirect policy changes.
+
+TLS
+---
+  Browsers hit lavocat.quebec before the redirect; that vhost still needs a
+  valid certificate so users never see a certificate error on the first hop.
+
+Related on disk (when Kingdom media / documents are installed)
+--------------------------------------------------------------
+  Hook 0285 copies build-assets/kingdom-documents/ under
+  /usr/share/alfred-linux/kingdom-media/documents/ when present — this file may
+  appear there too.
+
+See also: commander decrees workflow (GoSiteMe) → lavocat.ca/journal for
+published acts when that pipeline is enabled.
