@@ -53,7 +53,9 @@ CI (GoForge — https://alfredlinux.com/forge/)
   .gitea/workflows/security-audit.yml — canonical Actions workflow + act_runner
     (release-integrity, security-audit.sh, audit-law-wrappers.sh; law scan skips if LAW_ROOT missing).
     **workflow_dispatch** optional input **law_root** sets `LAW_ROOT` for the law audit step;
-    **shellcheck_all**=`1` sets `ALFRED_SHELLCHECK_ALL=1` on the security-audit step.
+    **shellcheck_all**=`1` sets `ALFRED_SHELLCHECK_ALL=1` on the security-audit step (same globs as
+    **`ALFRED_SHELLCHECK_ALL`** locally — see `scripts/README.txt`). On a dev host, one-shot
+    **integrity + full shellcheck + law**: **`bash scripts/run-deep-security-checks.sh`**.
   .forgejo/workflows/security-audit.yml — generated (`bash scripts/sync-forgejo-actions-yaml.sh`).
   .github/workflows/security-audit.yml — optional mirror only; keep aligned with .gitea if used.
   Operator sizing + enablement: docs/GOFORGE-INFRASTRUCTURE-UPGRADE.txt

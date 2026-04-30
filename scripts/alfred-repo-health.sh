@@ -17,12 +17,22 @@ cd "$ROOT"
 ts() { date -Iseconds 2>/dev/null || date; }
 log() { printf '[%s] %s\n' "$(ts)" "$*"; }
 
+# Log elapsed seconds for each gate (systemd journal / CI timing).
+phase() {
+  local name=$1
+  shift
+  log "alfred-repo-health: START $name"
+  local t0=$SECONDS
+  "$@"
+  log "alfred-repo-health: END $name ($((SECONDS - t0))s)"
+}
+
 log "alfred-repo-health: ROOT=$ROOT"
-bash "$ROOT/scripts/release-integrity.sh" check-repo
+phase release-integrity bash "$ROOT/scripts/release-integrity.sh" check-repo
 if [[ "${ALFRED_REPO_HEALTH_SHELLCHECK_ALL:-0}" == 1 ]]; then
   export ALFRED_SHELLCHECK_ALL=1
   log "alfred-repo-health: ALFRED_SHELLCHECK_ALL=1 (ALFRED_REPO_HEALTH_SHELLCHECK_ALL)"
 fi
-bash "$ROOT/scripts/security-audit.sh"
-bash "$ROOT/scripts/audit-law-wrappers.sh"
+phase security-audit bash "$ROOT/scripts/security-audit.sh"
+phase audit-law-wrappers bash "$ROOT/scripts/audit-law-wrappers.sh"
 log "alfred-repo-health: all checks passed"
