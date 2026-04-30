@@ -13,6 +13,7 @@
 #
 # Optional: ALFRED_ALLOW_HOOK_NETWORK_DOWNLOADS=1 allows GitHub code-server deb if build-assets missing.
 # product.json branding: path in ALFRED_CS_PRODUCT_JSON; Python heredoc is quoted.
+# skel code-server config.yaml: random password via env + Python (quoted heredoc).
 #
 # BUILD: v7.77-ga
 # ═══════════════════════════════════════════════════════════════
@@ -291,15 +292,25 @@ echo "[IDE-06] Icon installed"
 echo "[IDE-07] Configuring Alfred IDE defaults..."
 mkdir -p /etc/skel/.config/code-server
 IDE_DEFAULT_PW=$(head -c 24 /dev/urandom | base64 | tr -d '/+=' | head -c 16)
-cat > /etc/skel/.config/code-server/config.yaml << CFG
-bind-addr: 127.0.0.1:8443
-auth: password
-password: ${IDE_DEFAULT_PW}
-cert: false
-app-name: Alfred IDE
-disable-telemetry: true
-disable-update-check: true
-CFG
+export IDE_DEFAULT_PW
+python3 << 'PYCFG' >/etc/skel/.config/code-server/config.yaml
+import json
+import os
+
+pw = os.environ["IDE_DEFAULT_PW"]
+# json.dumps yields a YAML-safe double-quoted scalar (handles :, quotes, etc.)
+lines = [
+    "bind-addr: 127.0.0.1:8443",
+    "auth: password",
+    f"password: {json.dumps(pw)}",
+    "cert: false",
+    "app-name: Alfred IDE",
+    "disable-telemetry: true",
+    "disable-update-check: true",
+]
+print("\n".join(lines))
+PYCFG
+unset IDE_DEFAULT_PW
 echo "  config.yaml written (telemetry disabled, updates disabled)"
 
 # ═══════════════════════════════════════════════════════════════
