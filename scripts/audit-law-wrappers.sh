@@ -9,6 +9,8 @@
 #   - $LAW_ROOT/kernel-*-work/*.sh per matching work dir (bind/docker helpers; not kernel tarballs)
 #   - $LAW_ROOT/alfredlinux-com-source-live/scripts/*.sh when a law-side clone exists (skips
 #     security-audit.sh — that file embeds audit strings and would false-positive here)
+#   - Same tree: scripts/ops/*.sh, scripts/shlib/*.sh, build-assets/*.sh,
+#     build-assets/wallpapers/scripts/*.sh (when those dirs exist)
 #
 # Usage (from Alfred repo root, or any cwd):
 #   bash scripts/audit-law-wrappers.sh
@@ -90,9 +92,34 @@ for kdir in "$LAW_ROOT"/kernel-*-work/; do
     count=$((count + 1))
   done
 done
-if [[ -d "$LAW_ROOT/alfredlinux-com-source-live/scripts" ]]; then
-  for f in "$LAW_ROOT/alfredlinux-com-source-live/scripts"/*.sh; do
+LAW_REPO="$LAW_ROOT/alfredlinux-com-source-live"
+if [[ -d "$LAW_REPO/scripts" ]]; then
+  for f in "$LAW_REPO/scripts"/*.sh; do
     [[ "$(basename "$f")" == security-audit.sh ]] && continue
+    scan_file "$f"
+    count=$((count + 1))
+  done
+fi
+if [[ -d "$LAW_REPO/scripts/ops" ]]; then
+  for f in "$LAW_REPO/scripts/ops"/*.sh; do
+    scan_file "$f"
+    count=$((count + 1))
+  done
+fi
+if [[ -d "$LAW_REPO/scripts/shlib" ]]; then
+  for f in "$LAW_REPO/scripts/shlib"/*.sh; do
+    scan_file "$f"
+    count=$((count + 1))
+  done
+fi
+if [[ -d "$LAW_REPO/build-assets" ]]; then
+  for f in "$LAW_REPO/build-assets"/*.sh; do
+    scan_file "$f"
+    count=$((count + 1))
+  done
+fi
+if [[ -d "$LAW_REPO/build-assets/wallpapers/scripts" ]]; then
+  for f in "$LAW_REPO/build-assets/wallpapers/scripts"/*.sh; do
     scan_file "$f"
     count=$((count + 1))
   done

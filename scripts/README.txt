@@ -13,8 +13,9 @@ security-audit.sh
 
 audit-law-wrappers.sh
   Same grep rules on **runtime** shells under `LAW_ROOT` (default `/home/gositeme/law`): top-level `*.sh`,
-  `alfred-build-control-plane/*.sh`, `wallpapers/scripts/*.sh`, `kernel-*-work/*.sh`, and
-  `alfredlinux-com-source-live/scripts/*.sh` when present (`security-audit.sh` skipped there — audit strings).
+  `alfred-build-control-plane/*.sh`, `wallpapers/scripts/*.sh`, `kernel-*-work/*.sh`, and under a law-side
+  **`alfredlinux-com-source-live/`** checkout: `scripts/*.sh` (skip `security-audit.sh`), `scripts/ops/*.sh`,
+  `scripts/shlib/*.sh`, `build-assets/*.sh`, `build-assets/wallpapers/scripts/*.sh` when present.
   Exits 0 if `LAW_ROOT` is missing (e.g. CI). No SPDX gate on law paths.
     bash scripts/audit-law-wrappers.sh
 

@@ -27,8 +27,9 @@ Wave 3 (prepare next — backlog)
   • SBOM: SPDX or CycloneDX export for ISO packages + hook-generated debs.
   • curl|bash audit: **scripts/** + **build-assets/**/*.sh** in `security-audit.sh`; **law**
     runtime copies: **`scripts/audit-law-wrappers.sh`** (top-level `*.sh`, control-plane, wallpapers,
-    `kernel-*-work/`, and **`alfredlinux-com-source-live/scripts/*.sh`** when present — skips
-    `security-audit.sh` there; default `/home/gositeme/law`).
+    `kernel-*-work/`, and law-side **`alfredlinux-com-source-live/`** `scripts/` + `scripts/ops/` +
+    `scripts/shlib/` + `build-assets/` shells — skips `security-audit.sh` in `scripts/`; default
+    `/home/gositeme/law`).
     Deeper trees under law (kernel tarballs, etc.) are still out of scope.
   • ~~README “8 hooks” vs six IDs~~ (fixed); ~~Elyon naming drift~~ (LICENSING note); ~~0160 .bak~~ (removed from tree).
   • mesh-register: optional TLS public-key pinning file for gositeme.com.
