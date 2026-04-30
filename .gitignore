@@ -95,3 +95,6 @@ build-assets/kernel-7.0.1-debs/*
 # Source config tree (NOT a generated artifact) — must be tracked
 !build/config/
 !build/config/**
+
+# Nested hooks/live under build/ is wrong layout (lb/Docker symlinks); ignore noise.
+build/config/hooks/live/
