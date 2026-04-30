@@ -6,8 +6,8 @@
 # Optional: ALFRED_REPO_HEALTH_SHELLCHECK_ALL=1 runs security-audit with ALFRED_SHELLCHECK_ALL=1
 # (full shellcheck of scripts/ops/shlib/build-assets; slower — use in dedicated CI or manual runs).
 #
-# Optional: ALFRED_REPO_HEALTH_JSON=1 prints one JSON line to stdout (machine-readable summary;
-# human logs stay on stderr via log(); child scripts stdout is redirected to stderr so jq works).
+# Optional: ALFRED_REPO_HEALTH_JSON=1 prints one JSON line to stdout on success; on failure prints
+# one JSON line with status=error, exit_code, and phase (child stdout to stderr so jq works).
 #
 # Usage (repo root):
 #   bash scripts/alfred-repo-health.sh
@@ -15,7 +15,31 @@
 #   ALFRED_LINUX_REPO=/path/to/alfredlinux-com-source-live bash scripts/alfred-repo-health.sh
 set -euo pipefail
 ROOT="${ALFRED_LINUX_REPO:-$(cd "$(dirname "$0")/.." && pwd)}"
-cd "$ROOT"
+
+repo_health_emit_fail_json() {
+  local ec=${1:-1}
+  [[ "${ALFRED_REPO_HEALTH_JSON:-0}" == 1 ]] || return 0
+  REPO_HEALTH_FAIL_EC="$ec" \
+    REPO_HEALTH_FAIL_PHASE="${REPO_HEALTH_PHASE:-unknown}" \
+    REPO_HEALTH_JSON_ROOT="$ROOT" \
+    python3 - <<'PY'
+import json, os
+print(
+    json.dumps(
+        {
+            "event": "alfred_repo_health",
+            "status": "error",
+            "exit_code": int(os.environ.get("REPO_HEALTH_FAIL_EC", "1")),
+            "phase": os.environ.get("REPO_HEALTH_FAIL_PHASE", "unknown"),
+            "root": os.environ.get("REPO_HEALTH_JSON_ROOT", ""),
+        },
+        separators=(",", ":"),
+    )
+)
+PY
+}
+
+trap 'ec=$?; if [[ $ec -ne 0 ]]; then repo_health_emit_fail_json "$ec"; fi' EXIT
 
 ts() { date -Iseconds 2>/dev/null || date; }
 log() { printf '[%s] %s\n' "$(ts)" "$*" >&2; }
@@ -25,6 +49,7 @@ run_phase() {
   local label=$1
   local -n sec_ref=$2
   shift 2
+  export REPO_HEALTH_PHASE="$label"
   log "alfred-repo-health: START $label"
   local t0=$SECONDS
   if [[ "${ALFRED_REPO_HEALTH_JSON:-0}" == 1 ]]; then
@@ -36,6 +61,14 @@ run_phase() {
   log "alfred-repo-health: END $label (${sec_ref}s)"
 }
 
+export REPO_HEALTH_PHASE=cd_root
+cd "$ROOT" || {
+  _ec=$?
+  trap - EXIT
+  repo_health_emit_fail_json "$_ec"
+  exit "$_ec"
+}
+export REPO_HEALTH_PHASE=init
 log "alfred-repo-health: ROOT=$ROOT"
 ri_sec=0
 run_phase release-integrity ri_sec bash "$ROOT/scripts/release-integrity.sh" check-repo

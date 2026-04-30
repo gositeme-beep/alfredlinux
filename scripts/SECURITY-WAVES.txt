@@ -49,6 +49,8 @@ How to run the audit locally
   bash scripts/audit-law-wrappers.sh   # when /home/gositeme/law (or LAW_ROOT) exists
   bash scripts/run-deep-security-checks.sh   # integrity + full shellcheck + law audit (slower)
   ALFRED_REPO_HEALTH_JSON=1 bash scripts/alfred-repo-health.sh 2>/dev/null | jq .   # one-line JSON summary
+    (status **ok** or **error** with exit_code/phase; use **set -o pipefail** before piping if you need the
+    script’s exit code, not jq’s.)
 
 CI (GoForge — https://alfredlinux.com/forge/)
   .gitea/workflows/security-audit.yml — canonical Actions workflow + act_runner

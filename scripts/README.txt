@@ -32,8 +32,9 @@ alfred-repo-health.sh
   Optional: **`ALFRED_REPO_HEALTH_SHELLCHECK_ALL=1`** enables full shellcheck inside `security-audit.sh`
   (same as **`ALFRED_SHELLCHECK_ALL=1`**; slower — for manual or dedicated CI). Logs **START/END** lines
   with elapsed seconds per phase (release-integrity, security-audit, audit-law-wrappers).
-  Optional: **`ALFRED_REPO_HEALTH_JSON=1`** prints one **JSON** object on **stdout** (child scripts’
-  stdout is redirected to **stderr** so **`jq`** works); human timestamps stay on stderr via **`log()`**.
+  Optional: **`ALFRED_REPO_HEALTH_JSON=1`** prints one **JSON** line on **stdout** — **`"status":"ok"`** with
+  timings on success; **`"status":"error"`** with **`exit_code`** and **`phase`** on failure (child stdout to
+  **stderr** so **`jq`** works); human timestamps stay on stderr via **`log()`**.
   Optional: `ALFRED_LINUX_REPO=/path/to/checkout` when invoked from elsewhere.
     bash scripts/alfred-repo-health.sh
   Systemd user units (edit WorkingDirectory if your clone path differs):
