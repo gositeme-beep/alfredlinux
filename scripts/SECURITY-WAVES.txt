@@ -93,9 +93,12 @@ CI (GoForge — https://alfredlinux.com/forge/)
     **X-CSRF-Token**, **Authorization**, **X-Request-Id**, **X-Trace-Id** (aligns with **api-security** CORS). **includes/api-security.php**:
     CSRF failure audit → **law/var/csrf-fail.log** (**LOCK_EX**, UTF-8-safe JSON); IP-watch → **law/var/rate-spam-watch.log**.
     File rate-limit fallback data → **/home/gositeme/law/var/api-rate-limits/** (override **GOSITEME_RATE_LIMIT_DATA_DIR**); dir **0700**,
-    per-file **chmod 0600**. **X-Request-Id** response header (echo-safe inbound **X-Request-Id** / **X-Trace-Id** or random); **429** and **403 CSRF**
-    JSON bodies include **request_id**. **api/auth.php** OAuth CSRF state files → **law/var/oauth-state/** (override
+    per-file **chmod 0600**; Redis keys prefixed **GOSITEME_REDIS_RL_PREFIX** (default **gositeme:rl:**, validated; trailing **:** added if missing).
+    **X-Request-Id** response header (echo-safe inbound **X-Request-Id** / **X-Trace-Id** or random); **429** and **403 CSRF**
+    JSON bodies include **request_id**; **csrf-fail.log** lines include **request_id**. **api/auth.php** OAuth CSRF state files → **law/var/oauth-state/** (override
     **GOSITEME_OAUTH_STATE_DIR**); state filename hex capped **128** chars; **oauth_state_save** no-op if state too short.
     **includes/api-response.inc.php**: **apiSuccess** / **apiError** echo **request_id** when set; UTF-8-safe **json_encode** flags;
-    **apiError** sends **Cache-Control** no-store. **veil/dell-watch.php**: unknown **?action=** → **400** (only **feed** + default page).
+    **apiError** sends **Cache-Control** no-store; **api_read_json_body_limited** / **apiGetBody** cap JSON body (**GOSITEME_API_MAX_JSON_BYTES**,
+    default **2MiB**, max **16MiB**) via bounded **fread**; **413 PAYLOAD_TOO_LARGE** if exceeded. **veil/dell-watch.php**: unknown **?action=** → **400**
+    (only **feed** + default page).
     **wallet**, **index**, **departments**, **pro-discussions** unchanged (not commander-only).
