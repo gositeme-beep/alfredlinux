@@ -87,17 +87,35 @@ alfred_lb_recovery() {
 
 alfred_lb_check_auth
 
+# watch-lb-docker-build exits 0 if any old .iso exists (iso_count>0) even when this run never
+# finished. Require proof this attempt completed: marker in lb-docker-build.log plus inner success line.
+alfred_lb_verify_inner_success() {
+  local log="$REPO/lb-docker-build.log" sid="$1"
+  [[ -f "$log" ]] || return 1
+  awk -v s="=== SUPERVISE_ATTEMPT_BEGIN $sid" '
+    index($0, s) { p = 1 }
+    p && /\[inner\] lb build finished/ && /exit=0/ { ok = 1 }
+    END { exit(ok ? 0 : 1) }
+  ' "$log"
+}
+
 attempt=1
 while (( attempt <= MAX )); do
   echo "=== supervise-lb-build-repair-loop attempt ${attempt}/${MAX} $(date -Is) ==="
+  SID="$(openssl rand -hex 8)"
+  printf '\n=== SUPERVISE_ATTEMPT_BEGIN %s attempt=%s ===\n' "$SID" "$attempt" >>"$REPO/lb-docker-build.log"
   bash "$REPO/scripts/lb-docker-build.sh" detach
   set +e
   bash "$REPO/scripts/watch-lb-docker-build.sh" "${WATCH_ARGS[@]}"
   rc=$?
   set -e
-  if [[ "$rc" -eq 0 ]]; then
+  if [[ "$rc" -eq 0 ]] && alfred_lb_verify_inner_success "$SID"; then
     echo "=== supervise-lb-build-repair-loop SUCCESS $(date -Is) ==="
     exit 0
+  fi
+  if [[ "$rc" -eq 0 ]]; then
+    echo "=== supervise-lb-build-repair-loop FALSE_SUCCESS (stale ISO or incomplete log) $(date -Is) — retrying ===" >&2
+    rc=1
   fi
   echo "=== supervise-lb-build-repair-loop FAIL rc=$rc $(date -Is) ==="
   if (( attempt < MAX )); then
