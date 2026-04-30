@@ -25,7 +25,8 @@ safe-operator-once.sh
 
 iso-preflight.sh
   Run before `lb build`. Fails if linux-image-7.0.1*.deb missing from
-  config/packages.chroot/ (hook 0050). Usage:
+  config/packages.chroot/ (hook 0050). When `docker` is in PATH, warns if multiple
+  `alfred-lb-build-*` containers run (same bind-mount race). Usage:
     bash scripts/iso-preflight.sh
   Run `lb` from `build/` (see ALFRED-LINUX-BUILD-TEST.txt). An empty `build/auto/` is normal
   unless you maintain an executable `build/auto/config` script.
