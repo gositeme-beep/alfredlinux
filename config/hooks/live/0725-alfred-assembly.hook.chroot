@@ -39,6 +39,8 @@ cat > /usr/share/alfred/assembly/protocol.conf << 'PROTO'
 # 5. Scripture reference is included so all read the same passage
 #
 # File format: assembly-invite-{timestamp}.json
+# Written at runtime via Python json.dumps (quoted heredoc in CLI) so paths
+# and hostnames cannot break JSON structure.
 # {
 #   "type": "worship-assembly",
 #   "host": "hostname",
@@ -113,18 +115,28 @@ case "${1:-help}" in
 
         # Write assembly invite to Kingdom folder
         INVITE_FILE="$ASSEMBLY_DIR/assembly-invite-$(date +%s).json"
-        cat > "$INVITE_FILE" << INVITE_EOF
-{
+        export INVITE_HOST="$HOSTNAME"
+        export INVITE_TRACK="$TRACK_NAME"
+        export INVITE_TRACK_PATH="$TRACK"
+        export INVITE_SCRIPTURE="$SCRIPTURE_REF"
+        export INVITE_SCRIPTURE_TEXT="$SCRIPTURE_TEXT"
+        export INVITE_STARTED="$TIMESTAMP"
+        python3 << 'PYINV' >"$INVITE_FILE"
+import json
+import os
+
+data = {
     "type": "worship-assembly",
-    "host": "$HOSTNAME",
-    "track": "$TRACK_NAME",
-    "track_path": "$TRACK",
-    "scripture": "$SCRIPTURE_REF",
-    "scripture_text": "$SCRIPTURE_TEXT",
-    "started": "$TIMESTAMP",
-    "message": "Come, let us worship together."
+    "host": os.environ["INVITE_HOST"],
+    "track": os.environ["INVITE_TRACK"],
+    "track_path": os.environ["INVITE_TRACK_PATH"],
+    "scripture": os.environ["INVITE_SCRIPTURE"],
+    "scripture_text": os.environ["INVITE_SCRIPTURE_TEXT"],
+    "started": os.environ["INVITE_STARTED"],
+    "message": "Come, let us worship together.",
 }
-INVITE_EOF
+print(json.dumps(data, indent=2, ensure_ascii=False))
+PYINV
 
         echo -e "${GOLD}"
         echo "  ╔═══════════════════════════════════════════════════╗"

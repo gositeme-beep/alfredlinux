@@ -17,6 +17,8 @@
 # Optional: ALFRED_ALLOW_HOOK_NETWORK_DOWNLOADS=1 allows Syncthing release-key
 # fetch when /build-assets/syncthing-archive-keyring.gpg is absent, and Kingdom
 # mesh-register API from alfred-mesh connect-kingdom (runtime).
+# Runtime WireGuard snippets: written via Python (env + quoted heredoc), not
+# unquoted shell heredocs — avoids injection via peer endpoint / API fields.
 # ═══════════════════════════════════════════════════════════════
 set -e
 # Fix /tmp permissions (may be restricted by earlier hooks in chroot)
@@ -243,14 +245,39 @@ cmd_init() {
     OCTET3=$((RANDOM % 254 + 1))
     OCTET4=$((RANDOM % 254 + 1))
     MESH_IP="10.77.${OCTET3}.${OCTET4}"
-    
-    cat > /etc/wireguard/$WG_INTERFACE.conf << WGCONF
-[Interface]
-PrivateKey = ${PRIVKEY}
-Address = ${MESH_IP}/16
-ListenPort = 51821
-WGCONF
-    chmod 600 /etc/wireguard/$WG_INTERFACE.conf
+
+    export WG_CONF_OUT="/etc/wireguard/${WG_INTERFACE}.conf"
+    export WG_PRIVKEY="$PRIVKEY"
+    export WG_ADDR_IP="$MESH_IP"
+    if ! python3 << 'PYWGINIT'
+import base64
+import os
+
+path = os.environ["WG_CONF_OUT"]
+priv = os.environ["WG_PRIVKEY"].strip()
+addr = os.environ["WG_ADDR_IP"].strip()
+try:
+    if len(base64.b64decode(priv, validate=True)) != 32:
+        raise SystemExit(1)
+except Exception:
+    raise SystemExit(1)
+parts = addr.split(".")
+if len(parts) != 4 or parts[0] != "10" or parts[1] != "77":
+    raise SystemExit(1)
+for p in parts:
+    if not p.isdigit() or not 0 <= int(p) <= 255:
+        raise SystemExit(1)
+with open(path, "w", encoding="ascii") as f:
+    f.write("[Interface]\n")
+    f.write(f"PrivateKey = {priv}\n")
+    f.write(f"Address = {addr}/16\n")
+    f.write("ListenPort = 51821\n")
+PYWGINIT
+    then
+        echo -e "${RED}Failed to write WireGuard config.${NC}"
+        return 1
+    fi
+    chmod 600 "/etc/wireguard/${WG_INTERFACE}.conf"
     
     echo -e "  ${GREEN}Node initialized!${NC}"
     echo "  Mesh IP: $MESH_IP"
@@ -274,14 +301,48 @@ cmd_join() {
     PEER_ENDPOINT="$2"
     echo ""
     echo -e "${BOLD}Adding peer to mesh...${NC}"
-    cat >> /etc/wireguard/$WG_INTERFACE.conf << PEER
+    export WG_CONF_OUT="/etc/wireguard/${WG_INTERFACE}.conf"
+    export PEER_KEY
+    export PEER_ENDPOINT
+    if ! python3 << 'PYJOINVAL'
+import base64
+import os
+import sys
 
-[Peer]
-PublicKey = ${PEER_KEY}
-Endpoint = ${PEER_ENDPOINT}
-AllowedIPs = 10.77.0.0/16
-PersistentKeepalive = 25
-PEER
+k = os.environ.get("PEER_KEY", "").strip()
+e = os.environ.get("PEER_ENDPOINT", "").strip()
+try:
+    if len(base64.b64decode(k, validate=True)) != 32:
+        raise ValueError
+except Exception:
+    sys.exit(1)
+if "\n" in e or "\r" in e or len(e) < 3 or len(e) > 512 or ":" not in e:
+    sys.exit(1)
+if any(ord(c) < 32 or ord(c) > 126 for c in e):
+    sys.exit(1)
+sys.exit(0)
+PYJOINVAL
+    then
+        echo -e "${RED}Invalid peer public key or endpoint (must be host:port or IP:port, ASCII only).${NC}"
+        return 1
+    fi
+    if ! python3 << 'PYJOINAPP'
+import os
+
+path = os.environ["WG_CONF_OUT"]
+k = os.environ["PEER_KEY"].strip()
+e = os.environ["PEER_ENDPOINT"].strip()
+with open(path, "a", encoding="ascii") as f:
+    f.write("\n[Peer]\n")
+    f.write(f"PublicKey = {k}\n")
+    f.write(f"Endpoint = {e}\n")
+    f.write("AllowedIPs = 10.77.0.0/16\n")
+    f.write("PersistentKeepalive = 25\n")
+PYJOINAPP
+    then
+        echo -e "${RED}Failed to append peer to WireGuard config.${NC}"
+        return 1
+    fi
     wg-quick down "$WG_INTERFACE" 2>/dev/null || true
     wg-quick up "$WG_INTERFACE"
     echo -e "  ${GREEN}Peer connected!${NC}"
@@ -410,16 +471,49 @@ cmd_connect_kingdom() {
         if grep -q "$KINGDOM_PUBKEY" /etc/wireguard/$WG_INTERFACE.conf 2>/dev/null; then
             echo -e "  ${GREEN}Kingdom peer already configured${NC}"
         else
-            cat >> /etc/wireguard/$WG_INTERFACE.conf << KPEER
+            export WG_CONF_OUT="/etc/wireguard/${WG_INTERFACE}.conf"
+            export KINGDOM_PK="$KINGDOM_PUBKEY"
+            export KINGDOM_EP="$KINGDOM_ENDPOINT"
+            if python3 << 'PYKPEERCHK'
+import base64
+import os
+import sys
 
-# Kingdom of God — Central Mesh Server
-[Peer]
-PublicKey = ${KINGDOM_PUBKEY}
-Endpoint = ${KINGDOM_ENDPOINT}
-AllowedIPs = 10.77.0.1/32
-PersistentKeepalive = 25
-KPEER
-            echo -e "  ${GREEN}Kingdom peer added${NC}"
+k = os.environ.get("KINGDOM_PK", "").strip()
+e = os.environ.get("KINGDOM_EP", "").strip()
+try:
+    if len(base64.b64decode(k, validate=True)) != 32:
+        raise ValueError
+except Exception:
+    sys.exit(1)
+if "\n" in e or "\r" in e or len(e) < 3 or len(e) > 512 or ":" not in e:
+    sys.exit(1)
+if any(ord(c) < 32 or ord(c) > 126 for c in e):
+    sys.exit(1)
+sys.exit(0)
+PYKPEERCHK
+            then
+                if python3 << 'PYKPEERAPP'
+import os
+
+path = os.environ["WG_CONF_OUT"]
+k = os.environ["KINGDOM_PK"].strip()
+e = os.environ["KINGDOM_EP"].strip()
+with open(path, "a", encoding="ascii") as f:
+    f.write("\n# Kingdom of God — Central Mesh Server\n[Peer]\n")
+    f.write(f"PublicKey = {k}\n")
+    f.write(f"Endpoint = {e}\n")
+    f.write("AllowedIPs = 10.77.0.1/32\n")
+    f.write("PersistentKeepalive = 25\n")
+PYKPEERAPP
+                then
+                    echo -e "  ${GREEN}Kingdom peer added${NC}"
+                else
+                    echo -e "${YELLOW}  Could not append Kingdom peer to config${NC}"
+                fi
+            else
+                echo -e "${YELLOW}  Kingdom peer keys/endpoints invalid — skipping append${NC}"
+            fi
         fi
     else
         echo -e "${YELLOW}  No Kingdom public key available — request from Commander${NC}"
