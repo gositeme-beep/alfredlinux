@@ -10,6 +10,9 @@
 #           Kyber-1024 SSH key exchange, quantum-safe tools
 #
 # BUILD: v4.1+ (Kingdom Edition)
+#
+# Optional: ALFRED_ALLOW_HOOK_NETWORK_DOWNLOADS=1 allows git clone from GitHub when
+# /build-assets liboqs/oqs-provider tarballs are absent.
 # ═══════════════════════════════════════════════════════════════
 echo "╔═══════════════════════════════════════════════════════════╗"
 echo "║  [0166] Post-Quantum Encryption — Kyber-1024              ║"
@@ -44,7 +47,11 @@ if [ -f /build-assets/liboqs-0.10.1.tar.gz ]; then
     mv liboqs-0.10.1 liboqs 2>/dev/null || true
     LIBOQS_READY=1
 else
-    git clone --depth 1 --branch 0.10.1 https://github.com/open-quantum-safe/liboqs.git 2>/dev/null && LIBOQS_READY=1
+    if [[ "${ALFRED_ALLOW_HOOK_NETWORK_DOWNLOADS:-}" == "1" ]]; then
+        git clone --depth 1 --branch 0.10.1 https://github.com/open-quantum-safe/liboqs.git 2>/dev/null && LIBOQS_READY=1
+    else
+        echo "[PQ-02] WARN: skipping liboqs git clone (stage /build-assets/liboqs-0.10.1.tar.gz or set ALFRED_ALLOW_HOOK_NETWORK_DOWNLOADS=1)." >&2
+    fi
 fi
 
 if [ "$LIBOQS_READY" = "1" ]; then
@@ -95,10 +102,15 @@ if [ -f /build-assets/oqs-provider-0.6.1.tar.gz ]; then
     tar xzf /build-assets/oqs-provider-0.6.1.tar.gz
     mv oqs-provider-0.6.1 oqs-provider 2>/dev/null || true
 elif [ "$LIBOQS_READY" = "1" ]; then
-    git clone --depth 1 --branch 0.6.1 https://github.com/open-quantum-safe/oqs-provider.git 2>/dev/null || {
-        echo "[PQ-03] Could not clone oqs-provider — skipping"
+    if [[ "${ALFRED_ALLOW_HOOK_NETWORK_DOWNLOADS:-}" == "1" ]]; then
+        git clone --depth 1 --branch 0.6.1 https://github.com/open-quantum-safe/oqs-provider.git 2>/dev/null || {
+            echo "[PQ-03] Could not clone oqs-provider — skipping"
+            OQS_PROVIDER_SKIP=1
+        }
+    else
+        echo "[PQ-03] WARN: skipping oqs-provider git clone (stage /build-assets/oqs-provider-0.6.1.tar.gz or set ALFRED_ALLOW_HOOK_NETWORK_DOWNLOADS=1)." >&2
         OQS_PROVIDER_SKIP=1
-    }
+    fi
 else
     echo "[PQ-03] Skipping oqs-provider (liboqs not available)"
     OQS_PROVIDER_SKIP=1

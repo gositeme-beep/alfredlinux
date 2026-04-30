@@ -6,6 +6,10 @@
 # Installs Kokoro TTS for offline voice synthesis.
 # Alfred speaks on first boot.
 # BUILD: v2.0-b4 (Voice)
+#
+# First-boot Kokoro uses PyPI + PyTorch CDN unless disabled: default sealed behavior
+# skips those downloads unless ALFRED_ALLOW_HOOK_NETWORK_DOWNLOADS=1 or
+# ALFRED_ALLOW_VOICE_PIP_NETWORK=1. Remove /opt/alfred-voice/.pip-network-refused to retry.
 # ═══════════════════════════════════════════════════════════════
 
 set +e  # Voice is optional — don't kill the build if TTS install fails
@@ -37,9 +41,25 @@ cat > /usr/local/bin/alfred-voice-setup << 'VOICESETUP'
 # Until this completes, espeak-ng is used as fallback.
 
 MARKER="/opt/alfred-voice/.installed"
+REFUSED="/opt/alfred-voice/.pip-network-refused"
 LOG="/var/log/alfred-voice-setup.log"
 
 if [[ -f "$MARKER" ]]; then
+    exit 0
+fi
+
+# Prior sealed skip — allow retry when user opts in
+if [[ -f "$REFUSED" ]] && [[ "${ALFRED_ALLOW_HOOK_NETWORK_DOWNLOADS:-}" == "1" || "${ALFRED_ALLOW_VOICE_PIP_NETWORK:-}" == "1" ]]; then
+    rm -f "$REFUSED"
+fi
+if [[ -f "$REFUSED" ]]; then
+    exit 0
+fi
+
+if [[ "${ALFRED_ALLOW_HOOK_NETWORK_DOWNLOADS:-}" != "1" ]] && [[ "${ALFRED_ALLOW_VOICE_PIP_NETWORK:-}" != "1" ]]; then
+    mkdir -p /opt/alfred-voice
+    echo "[Alfred Voice Setup] Skipping Kokoro PyPI/PyTorch downloads (set ALFRED_ALLOW_HOOK_NETWORK_DOWNLOADS=1 or ALFRED_ALLOW_VOICE_PIP_NETWORK=1; rm $REFUSED to retry)." | tee "$LOG"
+    touch "$REFUSED"
     exit 0
 fi
 

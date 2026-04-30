@@ -9,6 +9,9 @@ echo "╔═══════════════════════�
 echo "║  HOOK 0275: Alfred GPU — Sovereign Compute Stack  ║"
 echo "╚═══════════════════════════════════════════════════╝"
 
+# Optional: stage /build-assets/rocm.gpg in the ISO so alfred-gpu-rocm-setup avoids
+# AMD key fetch; else runtime fetch requires ALFRED_ALLOW_HOOK_NETWORK_DOWNLOADS=1.
+
 ###############################################################################
 # 1. Enable non-free repos for NVIDIA drivers
 ###############################################################################
@@ -75,6 +78,10 @@ DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
 echo "[GPU] Preparing NVIDIA CUDA toolkit repo..."
 # Add NVIDIA CUDA repo key + source (packages installed on-demand at first boot)
 mkdir -p /etc/apt/keyrings
+if [ -f /build-assets/rocm.gpg ]; then
+    install -m 644 /build-assets/rocm.gpg /etc/apt/keyrings/rocm.gpg
+    echo "[GPU] Installed pre-staged ROCm APT key (optional air-gap ROCm setup)."
+fi
 cat > /usr/local/bin/alfred-gpu-nvidia-setup << 'NVIDIAEOF'
 #!/bin/bash
 # Alfred GPU — NVIDIA CUDA On-Demand Installer
@@ -122,8 +129,19 @@ chmod 1777 /tmp 2>/dev/null || true
 
 echo "[Alfred GPU] Detected AMD GPU — installing ROCm compute stack..."
 
-# ROCm from AMD's official repo
-wget -qO - https://repo.radeon.com/rocm/rocm.gpg.key | gpg --dearmor -o /etc/apt/keyrings/rocm.gpg 2>/dev/null
+mkdir -p /etc/apt/keyrings
+if [ -f /etc/apt/keyrings/rocm.gpg ] && [ -s /etc/apt/keyrings/rocm.gpg ]; then
+    :
+elif [[ "${ALFRED_ALLOW_HOOK_NETWORK_DOWNLOADS:-}" == "1" ]]; then
+    wget -qO - https://repo.radeon.com/rocm/rocm.gpg.key | gpg --dearmor -o /etc/apt/keyrings/rocm.gpg 2>/dev/null
+else
+    echo "[Alfred GPU] WARN: ROCm APT key missing (stage rocm.gpg at ISO build under /build-assets/ or set ALFRED_ALLOW_HOOK_NETWORK_DOWNLOADS=1)." >&2
+    exit 0
+fi
+if [ ! -s /etc/apt/keyrings/rocm.gpg ]; then
+    echo "[Alfred GPU] ROCm GPG key empty — aborting ROCm setup." >&2
+    exit 0
+fi
 ROCM_VERSION="6.4"
 echo "deb [arch=amd64 signed-by=/etc/apt/keyrings/rocm.gpg] https://repo.radeon.com/rocm/apt/${ROCM_VERSION} noble main" \
     > /etc/apt/sources.list.d/rocm.list
