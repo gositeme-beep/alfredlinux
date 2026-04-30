@@ -6,6 +6,8 @@
 #   bash scripts/lb-docker-build.sh detach   # background; logs: docker logs -f NAME
 #
 # Log on host bind mount: lb-docker-build.log (repo root).
+# Do not start a second container on the same repo until the first exits: inner script
+# uses flock on build/.alfred-lb-docker-build.lock; concurrent runs used to corrupt chroot mid-apt.
 set -euo pipefail
 REPO="$(cd "$(dirname "$0")/.." && pwd)"
 IMAGE="${DOCKER_LB_IMAGE:-debian:bookworm}"

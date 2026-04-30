@@ -18,6 +18,22 @@ alfred_lazy_umount_chroot() {
 }
 trap 'alfred_lazy_umount_chroot' EXIT
 
+# Two containers on the same bind-mounted repo shred the shared chroot: one runs
+# `rm -rf chroot` + lb clean while the other's `lb build` still has apt/dpkg inside
+# the chroot → "dpkg-deb: No such file or directory", "/var/lib/dpkg/status: No such file".
+mkdir -p /work/build
+exec 9>/work/build/.alfred-lb-docker-build.lock
+if [[ "${ALFRED_LB_DOCKER_FLOCK_BLOCKING:-}" == 1 ]]; then
+  echo "[inner] waiting for exclusive build lock /work/build/.alfred-lb-docker-build.lock ..."
+  flock 9
+else
+  flock -n 9 || {
+    echo "[inner] ERROR: exclusive build lock is busy — another process holds /work/build/.alfred-lb-docker-build.lock" >&2
+    echo "[inner] Only one live-build per repo bind mount. Stop the other container, or set ALFRED_LB_DOCKER_FLOCK_BLOCKING=1 to wait." >&2
+    exit 1
+  }
+fi
+
 apt-get update -y
 apt-get install -y --no-install-recommends \
   live-build debootstrap cdebootstrap ca-certificates cpio wget gnupg \
