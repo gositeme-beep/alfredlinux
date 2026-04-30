@@ -34,8 +34,12 @@ Wave 3 (prepare next — backlog)
     `/home/gositeme/law`).
     Deeper trees under law (kernel tarballs, etc.) are still out of scope.
   • ~~README “8 hooks” vs six IDs~~ (fixed); ~~Elyon naming drift~~ (LICENSING note); ~~0160 .bak~~ (removed from tree).
-  • mesh-register: optional TLS public-key pinning file for gositeme.com.
-  • alfred-skynet distribute: optional command allowlist config file.
+  • mesh-register: optional TLS public-key pinning — **`ALFRED_MESH_REGISTER_PINNEDPUBKEY`**
+    env or **`/etc/alfred/mesh-register.pinnedpubkey`** (single line for `curl --pinnedpubkey`, 0167 hook).
+  • alfred-skynet distribute: optional **`~/.config/alfred/skynet/distribute-allowlist`** (non-empty file
+    lists allowed `argv[0]` as full path or basename, one per line; 0280 hook).
+  • AppArmor: **`docs/APPARMOR-ALFRED-MESH.txt`** — aa-genprof cycle for `/usr/local/bin/alfred-mesh`.
+  • SBOM: **`docs/SBOM-EXPORT.txt`** — Syft/Trivy/dpkg-query pointers (export still operator-run).
 
 How to run the audit locally
   bash scripts/security-audit.sh
@@ -44,7 +48,8 @@ How to run the audit locally
 CI (GoForge — https://alfredlinux.com/forge/)
   .gitea/workflows/security-audit.yml — canonical Actions workflow + act_runner
     (release-integrity, security-audit.sh, audit-law-wrappers.sh; law scan skips if LAW_ROOT missing).
-    **workflow_dispatch** optional input **law_root** sets `LAW_ROOT` for the law audit step.
+    **workflow_dispatch** optional input **law_root** sets `LAW_ROOT` for the law audit step;
+    **shellcheck_all**=`1` sets `ALFRED_SHELLCHECK_ALL=1` on the security-audit step.
   .forgejo/workflows/security-audit.yml — generated (`bash scripts/sync-forgejo-actions-yaml.sh`).
   .github/workflows/security-audit.yml — optional mirror only; keep aligned with .gitea if used.
   Operator sizing + enablement: docs/GOFORGE-INFRASTRUCTURE-UPGRADE.txt

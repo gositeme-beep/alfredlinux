@@ -1,0 +1,23 @@
+AppArmor for alfred-mesh (Wave 3 — operator playbook)
+=====================================================
+
+Goal: confine `/usr/local/bin/alfred-mesh` (WireGuard, `wg-quick`, optional curl to
+fixed endpoints) without breaking Kingdom ISO installs.
+
+Suggested flow (on a reference Alfred machine with mesh exercised):
+
+  1. Install `apparmor-utils` (provides `aa-genprof`, `aa-logprof`).
+  2. Put the mesh helper in **complain** mode first:
+       sudo aa-genprof /usr/local/bin/alfred-mesh
+     Run normal mesh commands (`status`, `connect-kingdom`, etc.) while the profiler
+     records denials.
+  3. Review `/var/log/syslog` (or `journalctl`) for `apparmor="DENIED"` lines; merge
+     into a profile under `/etc/apparmor.d/` (naming e.g. `usr.local.bin.alfred-mesh`).
+  4. Switch to **enforce** only after a full ISO boot test still passes:
+       sudo aa-enforce /usr/local/bin/alfred-mesh
+
+Ship a repo-local **template** only after it matches your real paths: WireGuard conf
+under `/etc/wireguard/`, optional `curl` to `https://gositeme.com/...` when
+`ALFRED_ALLOW_HOOK_NETWORK_DOWNLOADS=1`, and any Avahi/D-Bus calls your edition uses.
+
+See also: `scripts/SECURITY-WAVES.txt` (Wave 3 AppArmor bullet).

@@ -1,0 +1,20 @@
+SBOM export for Alfred ISO (Wave 3 — operator playbook)
+=======================================================
+
+Goal: a machine-readable inventory of packages on the **installed** system or inside
+a **chroot/squashfs** export for supply-chain review (SPDX JSON or CycloneDX JSON).
+
+Common tools (pick one; not bundled in the ISO repo):
+
+  • **Syft** (Anchore) — `syft packages dir:/path/to/chroot -o spdx-json > sbom.spdx.json`
+  • **Trivy** — `trivy fs --format cyclonedx --output sbom.cdx.json /path/to/rootfs`
+  • **dpkg-query** (minimal) — inside chroot:
+      dpkg-query -W -f '${Package}\t${Version}\t${Architecture}\n' > packages.tsv
+
+For hook-built `.deb` artifacts, run the same scanner against a staging directory that
+contains only those debs, or merge into the rootfs SBOM after `lb build`.
+
+CI note: generating SBOMs is **not** wired into `.gitea/workflows/security-audit.yml` yet
+(to keep runner images small). Add a dedicated workflow when you pin a scanner version.
+
+See: `scripts/SECURITY-WAVES.txt` (Wave 3 SBOM bullet).

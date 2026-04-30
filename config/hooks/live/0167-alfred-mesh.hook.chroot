@@ -442,9 +442,18 @@ cmd_connect_kingdom() {
     HOSTNAME=$(hostname)
     
     # Call Kingdom registration API (opt-in — same knob as hook-time downloads)
+    # Optional TLS public-key pin (curl --pinnedpubkey): set ALFRED_MESH_REGISTER_PINNEDPUBKEY
+    # or place the same single-line value in /etc/alfred/mesh-register.pinnedpubkey (see SECURITY-WAVES.txt).
     RESPONSE=""
     if [[ "${ALFRED_ALLOW_HOOK_NETWORK_DOWNLOADS:-}" == "1" ]]; then
-        RESPONSE=$(curl -s -m 10 "https://gositeme.com/api/mesh-register.php" \
+        MESH_PIN_ARGS=()
+        if [[ -n "${ALFRED_MESH_REGISTER_PINNEDPUBKEY:-}" ]]; then
+            MESH_PIN_ARGS=(--pinnedpubkey "${ALFRED_MESH_REGISTER_PINNEDPUBKEY}")
+        elif [[ -f /etc/alfred/mesh-register.pinnedpubkey ]]; then
+            _mesh_pp=$(tr -d '[:space:]' </etc/alfred/mesh-register.pinnedpubkey 2>/dev/null || true)
+            [[ -n "${_mesh_pp:-}" ]] && MESH_PIN_ARGS=(--pinnedpubkey "$_mesh_pp")
+        fi
+        RESPONSE=$(curl -s -m 10 "${MESH_PIN_ARGS[@]}" "https://gositeme.com/api/mesh-register.php" \
             -X POST \
             -d "pubkey=$MY_PUBKEY" \
             -d "mesh_ip=$MY_IP" \

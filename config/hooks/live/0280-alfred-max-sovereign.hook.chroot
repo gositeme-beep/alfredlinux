@@ -376,6 +376,15 @@ skynet_distribute() {
         echo "Example: alfred-skynet distribute -- ls -la /tmp" >&2
         return 1
     fi
+    if [[ -f "$SKYNET_DIR/distribute-allowlist" && -s "$SKYNET_DIR/distribute-allowlist" ]]; then
+        _sk_cmd=$1
+        _sk_base=$(basename -- "$_sk_cmd")
+        if ! grep -qxF -- "$_sk_cmd" "$SKYNET_DIR/distribute-allowlist" 2>/dev/null \
+            && ! grep -qxF -- "$_sk_base" "$SKYNET_DIR/distribute-allowlist" 2>/dev/null; then
+            echo "Skynet: $_sk_cmd not allowed — add basename or full path to $SKYNET_DIR/distribute-allowlist (one per line)." >&2
+            return 1
+        fi
+    fi
     echo -e "${CYAN}[Skynet] Distributing argv to swarm:${NC} $*"
     echo -e "${GREEN}[Local]${NC}"
     # Never use bash -c on a joined string (command injection). Exec argv locally.
@@ -419,6 +428,7 @@ case "${1:-help}" in
         echo "  join <ip>    — Add a node to the swarm (bidirectional)"
         echo "  leave <ip>   — Remove a node from the swarm"
         echo "  distribute -- <cmd> [args] — Run argv on all swarm nodes (no shell string)"
+        echo "    Optional: ~/.config/alfred/skynet/distribute-allowlist (non-empty) restricts argv[0]"
         echo "  id           — Show this node's unique ID"
         ;;
 esac

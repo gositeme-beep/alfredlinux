@@ -12,6 +12,10 @@
 #   - Same tree: scripts/ops/*.sh, scripts/shlib/*.sh, build-assets/*.sh,
 #     build-assets/wallpapers/scripts/*.sh (when those dirs exist)
 #
+# Explicitly **out of scope** (do not expect coverage): kernel source trees / tarballs;
+# arbitrary deep recursion under LAW_ROOT; paths with spaces or odd layout; anything not
+# matching the globs above (extend this script if a new stable wrapper dir appears).
+#
 # Usage (from Alfred repo root, or any cwd):
 #   bash scripts/audit-law-wrappers.sh
 #   LAW_ROOT=/srv/law bash path/to/audit-law-wrappers.sh

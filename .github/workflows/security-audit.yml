@@ -15,6 +15,10 @@ on:
         description: Optional LAW_ROOT for audit-law-wrappers.sh (blank uses default path)
         required: false
         default: ''
+      shellcheck_all:
+        description: Set to 1 for ALFRED_SHELLCHECK_ALL=1 (full shellcheck sweep)
+        required: false
+        default: '0'
 
 jobs:
   audit:
@@ -49,6 +53,8 @@ jobs:
         run: sudo apt-get update -qq && sudo apt-get install -y --no-install-recommends shellcheck
 
       - name: Run scripts/security-audit.sh
+        env:
+          ALFRED_SHELLCHECK_ALL: ${{ inputs.shellcheck_all }}
         run: bash scripts/security-audit.sh
 
       - name: Run scripts/audit-law-wrappers.sh (optional LAW_ROOT)

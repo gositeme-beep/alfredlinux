@@ -11,6 +11,7 @@ security-audit.sh
   GoForge Actions (canonical): .gitea/workflows/security-audit.yml — https://alfredlinux.com/forge/
   Mirror on disk: .forgejo/workflows/security-audit.yml (run bash scripts/sync-forgejo-actions-yaml.sh after edits)
   Optional GitHub mirror: .github/workflows/security-audit.yml (keep aligned with .gitea if used)
+  Manual **workflow_dispatch** inputs: **law_root** (law audit), **shellcheck_all**=`1` for full shellcheck.
 
 audit-law-wrappers.sh
   Same grep rules on **runtime** shells under `LAW_ROOT` (default `/home/gositeme/law`): top-level `*.sh`,
