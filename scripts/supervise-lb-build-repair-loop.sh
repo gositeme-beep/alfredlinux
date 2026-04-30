@@ -14,14 +14,22 @@
 #   ALFRED_LB_RETRY_COOLDOWN_SEC default 45
 #   ALFRED_LB_GIT_PULL=1         git pull origin main before each retry (after first failure)
 #   ALFRED_LB_CLEAN_CHROOT=1      rm -rf build/chroot before retry (slow; last resort)
+#   ALFRED_LB_LOOP_FOREVER       default 1 — after inner cycle exhausts MAX attempts, sleep
+#                                ALFRED_LB_EXHAUST_COOLDOWN_SEC (default 900) and start a **new**
+#                                full supervise cycle so nohup/systemd never sits idle after GAVE UP.
+#                                Set to 0 for one-shot behaviour (exit 1 after exhaustion).
+#   ALFRED_LB_EXHAUST_COOLDOWN_SEC  default 900 — pause between outer cycles when LOOP_FOREVER=1
 #   NAP_WEBHOOK / pass-through:  same extra args as watch-lb-docker-build.sh (--webhook URL)
 #
-# Exit: 0 on success, 1 after exhausting retries, 2 on auth failure.
+# Exit: 0 on success; 2 on auth failure; with LOOP_FOREVER=0 only: 1 after exhausting retries.
 set -euo pipefail
 REPO="$(cd "$(dirname "$0")/.." && pwd)"
 AUTH_FILE="$REPO/.lb-supervisor-auth"
 MAX="${ALFRED_LB_MAX_RETRIES:-5}"
 COOLDOWN="${ALFRED_LB_RETRY_COOLDOWN_SEC:-45}"
+EXHAUST_SLEEP="${ALFRED_LB_EXHAUST_COOLDOWN_SEC:-900}"
+# Default on: overnight / nohup must not stop forever after one "GAVE UP" (set ALFRED_LB_LOOP_FOREVER=0 to opt out).
+LOOP_FOREVER="${ALFRED_LB_LOOP_FOREVER:-1}"
 WATCH_ARGS=()
 
 while [[ $# -gt 0 ]]; do
@@ -100,31 +108,48 @@ alfred_lb_verify_inner_success() {
   ' "$log"
 }
 
-attempt=1
-while (( attempt <= MAX )); do
-  echo "=== supervise-lb-build-repair-loop attempt ${attempt}/${MAX} $(date -Is) ==="
-  SID="$(openssl rand -hex 8)"
-  printf '\n=== SUPERVISE_ATTEMPT_BEGIN %s attempt=%s ===\n' "$SID" "$attempt" >>"$REPO/lb-docker-build.log"
-  bash "$REPO/scripts/lb-docker-build.sh" detach
-  set +e
-  bash "$REPO/scripts/watch-lb-docker-build.sh" "${WATCH_ARGS[@]}"
-  rc=$?
-  set -e
-  if [[ "$rc" -eq 0 ]] && alfred_lb_verify_inner_success "$SID"; then
-    echo "=== supervise-lb-build-repair-loop SUCCESS $(date -Is) ==="
+alfred_lb_one_inner_cycle() {
+  local attempt sid rc
+  attempt=1
+  while (( attempt <= MAX )); do
+    echo "=== supervise-lb-build-repair-loop attempt ${attempt}/${MAX} $(date -Is) ==="
+    SID="$(openssl rand -hex 8)"
+    printf '\n=== SUPERVISE_ATTEMPT_BEGIN %s attempt=%s ===\n' "$SID" "$attempt" >>"$REPO/lb-docker-build.log"
+    bash "$REPO/scripts/lb-docker-build.sh" detach
+    set +e
+    bash "$REPO/scripts/watch-lb-docker-build.sh" "${WATCH_ARGS[@]}"
+    rc=$?
+    set -e
+    if [[ "$rc" -eq 0 ]] && alfred_lb_verify_inner_success "$SID"; then
+      echo "=== supervise-lb-build-repair-loop SUCCESS $(date -Is) ==="
+      return 0
+    fi
+    if [[ "$rc" -eq 0 ]]; then
+      echo "=== supervise-lb-build-repair-loop FALSE_SUCCESS (stale ISO or incomplete log) $(date -Is) — retrying ===" >&2
+      rc=1
+    fi
+    echo "=== supervise-lb-build-repair-loop FAIL rc=$rc $(date -Is) ==="
+    if (( attempt < MAX )); then
+      alfred_lb_recovery
+      sleep "$COOLDOWN"
+    fi
+    (( attempt++ )) || true
+  done
+
+  echo "=== supervise-lb-build-repair-loop GAVE UP after $MAX attempts $(date -Is) ==="
+  return 1
+}
+
+if [[ "$LOOP_FOREVER" == "0" ]]; then
+  alfred_lb_one_inner_cycle
+  exit $?
+fi
+
+while true; do
+  if alfred_lb_one_inner_cycle; then
     exit 0
   fi
-  if [[ "$rc" -eq 0 ]]; then
-    echo "=== supervise-lb-build-repair-loop FALSE_SUCCESS (stale ISO or incomplete log) $(date -Is) — retrying ===" >&2
-    rc=1
-  fi
-  echo "=== supervise-lb-build-repair-loop FAIL rc=$rc $(date -Is) ==="
-  if (( attempt < MAX )); then
-    alfred_lb_recovery
-    sleep "$COOLDOWN"
-  fi
-  (( attempt++ )) || true
+  echo "=== supervise-lb-build-repair-loop outer: exhausted ${MAX} attempts; recovery then ${EXHAUST_SLEEP}s before new cycle (ALFRED_LB_LOOP_FOREVER=1) $(date -Is) ===" >&2
+  alfred_lb_recovery || true
+  sleep "$EXHAUST_SLEEP"
 done
-
-echo "=== supervise-lb-build-repair-loop GAVE UP after $MAX attempts $(date -Is) ==="
-exit 1
