@@ -55,6 +55,13 @@ echo "[inner] sync canonical Alfred inputs → build/config at $(date -Is)"
 export ALFRED_FULL_BUILD_ASSETS=1
 bash /work/scripts/sync-canonical-to-build.sh
 
+# lb clean runs dpkg inside the existing chroot; a half-deleted or corrupted chroot
+# (common after interrupted Docker runs) throws dpkg "No such file or directory" and logs
+# "E: An unexpected failure occurred" even though we use `|| true` — Dell Watch keys off that E: line.
+echo "[inner] reset chroot/binary/.build + lazy-umount before lb clean at $(date -Is)"
+alfred_lazy_umount_chroot || true
+rm -rf chroot binary .build 2>/dev/null || true
+
 # live-build state machine: clean MUST happen before config + build.
 # Order matters: `lb clean` (FULL) wipes ALL stage markers including config.
 # If we ran `lb config` first then `lb clean`, the config marker dies and
