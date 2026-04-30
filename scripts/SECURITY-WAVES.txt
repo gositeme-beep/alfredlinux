@@ -3,9 +3,10 @@ Alfred Linux — security hardening waves (living checklist)
 
 Wave 1 (landed)
   • 0280 mesh SSH: StrictHostKeyChecking=accept-new; skynet uses bash -c (no eval).
-  • 0100 SSH hardening drop-in: PasswordAuthentication remains yes by product policy;
-    security-audit.sh reports it as WARN (not CRITICAL) for maintainer review.
-  • 0270 alfred-security-audit: no eval.
+  • 0100 SSH: Kingdom-hardened defaults — Docker ISO passes ALFRED_ALLOW_SSH_PASSWORD_AUTH=0
+    (keys-only sshd); set =1 on the host before lb-docker-build only for bootstrap/recovery images.
+    sshd drop-in also disables KbdInteractive/GSSAPI/Kerberos and UseDNS where supported.
+  • 0270 alfred-security-audit: no eval; PASS if keys-only or /etc/alfred/ALLOW_SSH_PASSWORD_AUTH marker.
   • 0167 Kingdom mesh POST: ALFRED_KINGDOM_MESH_REGISTER=1 opt-in; TLS + urlencode.
   • 0166 PQ SSH self-test: StrictHostKeyChecking=accept-new (localhost).
 
