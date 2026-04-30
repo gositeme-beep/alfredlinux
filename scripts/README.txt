@@ -13,7 +13,7 @@ security-audit.sh
   Optional GitHub mirror: .github/workflows/security-audit.yml (keep aligned with .gitea if used)
   Manual **workflow_dispatch** inputs: **law_root** (law audit), **shellcheck_all**=`1` for full shellcheck,
   **repo_health_json**=`1` (optional JSON gate; see scripts/SECURITY-WAVES.txt).
-  Ecosystem roadmap (cross-repo): **docs/MEGA-PLAN-L1-L9.txt** — content release manifest spec: **docs/MANIFEST-v1.txt** — advisory bookmarks: **docs/UPSTREAM-SECURITY-SIGNALS.txt**.
+  Ecosystem roadmap (cross-repo): **docs/MEGA-PLAN-L1-L9.txt** — content release manifest spec: **docs/MANIFEST-v1.txt** — advisory bookmarks: **docs/UPSTREAM-SECURITY-SIGNALS.txt** — GoSiteMe mega-plan PHP copies: **contrib/gositeme-web/** — unsigned JSON skeleton: **`bash scripts/emit-manifest-stub.sh`** (see **docs/MANIFEST-v1.txt**).
 
 audit-law-wrappers.sh
   Same grep rules on **runtime** shells under `LAW_ROOT` (default `/home/gositeme/law`): top-level `*.sh`,

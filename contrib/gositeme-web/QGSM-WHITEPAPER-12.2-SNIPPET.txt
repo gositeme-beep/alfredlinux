@@ -1,0 +1,25 @@
+Apply to qgsm-whitepaper.php on each GoSiteMe mirror:
+
+1) In the Table of Contents <ol>, after the ecosystem line, add:
+
+        <li><a href="#content-addressing">Content Addressing &amp; IPFS</a></li>
+
+2) In §12 Ecosystem, after the closing </table> of "12.1 Required Development Roles"
+   (before the closing </div> of #ecosystem), insert:
+
+    <h3 id="content-addressing">12.2 Content addressing, IPFS, and on-chain attestation</h3>
+    <p><strong>IPFS is not part of the QGSM consensus layer.</strong> It is a
+    content-addressed distribution network (CIDs). QGSM (and interim signed
+    manifests) provide <em>attestation</em>: which root CID corresponds to an
+    official Alfred Linux build, a verified site bundle, or a governance
+    artifact. Typical pattern: binaries and large payloads live on IPFS or
+    HTTPS mirrors; the ledger or signed <strong>MANIFEST-v1</strong> documents
+    (see Alfred Linux docs/MANIFEST-v1.txt) carry hashes, CIDs, and signatures.
+    End-user OS updates may remain HTTPS-first; decentralized fetch is an
+    optional resilience path.</p>
+    <p>Optional future modules include treasury-backed pinning SLAs and on-chain
+    registry entries for release roots. Bridge and VM security properties apply
+    independently; IPFS availability does not imply ledger finality.</p>
+
+3) In §1 Abstract, extend the last paragraph to mention content-addressed
+   distribution if desired (optional wording already on gositeme.com live).

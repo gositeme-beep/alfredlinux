@@ -1,0 +1,11 @@
+# Path: adjust to this domain’s private/ directory on disk.
+/home/gositeme/domains/gositeme.com/private/mega-plan-access.log {
+    weekly
+    rotate 52
+    compress
+    delaycompress
+    missingok
+    notifempty
+    create 0600 gositeme gositeme
+    copytruncate
+}
