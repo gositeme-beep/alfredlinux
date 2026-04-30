@@ -40,11 +40,11 @@ ufw default allow outgoing
 ufw allow ssh
 ufw --force enable
 
-# ── 3. SSH hardening (keys-first; matches 0270 sovereign checks) ──
-# Default: PasswordAuthentication no — unless ALFRED_ALLOW_SSH_PASSWORD_AUTH=1 (Alfred Docker
-# ISO sets this by default in lb-docker-inner-build.sh; export ALFRED_ALLOW_SSH_PASSWORD_AUTH=0
-# on the host before `lb-docker-build.sh` for keys-only). Local console / DM login are not sshd.
-# Headless bootstrap / recovery before SSH keys: keep 1 for password-over-SSH.
+# ── 3. SSH hardening (Kingdom baseline; matches 0270 sovereign checks) ──
+# Default: PasswordAuthentication no — Kingdom-hardened ISO (keys-only sshd). Set
+# ALFRED_ALLOW_SSH_PASSWORD_AUTH=1 for a bootstrap/recovery image (e.g. export before lb-docker-build.sh).
+# Alfred Docker builds pass ALFRED_ALLOW_SSH_PASSWORD_AUTH from the host (default 0 in lb-docker-inner-build).
+# Local console / DM login are not sshd.
 if [[ "${ALFRED_ALLOW_SSH_PASSWORD_AUTH:-}" == 1 ]]; then
   ALFRED_SSH_PASSWORD_VALUE=yes
   echo "[0100] SSH: password-over-SSH enabled (ALFRED_ALLOW_SSH_PASSWORD_AUTH=1 — review before release)"
@@ -56,6 +56,10 @@ fi
   printf 'PasswordAuthentication %s\n' "$ALFRED_SSH_PASSWORD_VALUE"
   cat <<'SSHD'
 PubkeyAuthentication yes
+KbdInteractiveAuthentication no
+GSSAPIAuthentication no
+KerberosAuthentication no
+UseDNS no
 X11Forwarding no
 AllowAgentForwarding no
 GatewayPorts no

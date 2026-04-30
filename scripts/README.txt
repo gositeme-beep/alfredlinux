@@ -117,9 +117,9 @@ lb-docker-build.sh + lb-docker-inner-build.sh
   Requires Docker; can take many hours; `--privileged` is intentional for mounts/chroot.
   Default `ALFRED_LB_DOCKER_FLOCK_BLOCKING=1` queues overlapping starts on `build/.alfred-lb-docker-build.lock`
   (Reseal / ABCP / Forge hooks must not run two ISO builds on the same bind mount). Use `=0` for fail-fast.
-  Default `ALFRED_ALLOW_SSH_PASSWORD_AUTH=1` is passed into the container (`lb-docker-inner-build.sh`) so
-  hook **`0100`** enables SSH password login on the ISO; set **`ALFRED_ALLOW_SSH_PASSWORD_AUTH=0`** on the
-  host before `lb-docker-build.sh` for keys-only sshd.
+  Default `ALFRED_ALLOW_SSH_PASSWORD_AUTH=0` is passed into the container (`lb-docker-inner-build.sh`) so
+  hook **`0100`** uses **keys-only sshd** (no password SSH). Set **`ALFRED_ALLOW_SSH_PASSWORD_AUTH=1`** on the
+  host before `lb-docker-build.sh` only when you intentionally ship password-over-SSH (bootstrap / recovery).
 
 watch-lb-docker-build.sh
   After `detach`, **wait until the container exits**, print summary + ISO paths + log tail.

@@ -69,9 +69,10 @@ fi
 # build-assets into includes (see scripts/sync-canonical-to-build.sh).
 echo "[inner] sync canonical Alfred inputs → build/config at $(date -Is)"
 export ALFRED_FULL_BUILD_ASSETS=1
-# Alfred ISO default: SSH password auth on (families / bootstrap); host may set
-# ALFRED_ALLOW_SSH_PASSWORD_AUTH=0 before docker for keys-only sshd (hook 0100).
-export ALFRED_ALLOW_SSH_PASSWORD_AUTH="${ALFRED_ALLOW_SSH_PASSWORD_AUTH:-1}"
+# Alfred ISO default: keys-only SSH (PasswordAuthentication no). For family/bootstrap
+# images that need password-over-SSH, set ALFRED_ALLOW_SSH_PASSWORD_AUTH=1 on the host
+# before lb-docker-build.sh (see scripts/README.txt).
+export ALFRED_ALLOW_SSH_PASSWORD_AUTH="${ALFRED_ALLOW_SSH_PASSWORD_AUTH:-0}"
 echo "[inner] ALFRED_ALLOW_SSH_PASSWORD_AUTH=${ALFRED_ALLOW_SSH_PASSWORD_AUTH}"
 bash /work/scripts/sync-canonical-to-build.sh
 
