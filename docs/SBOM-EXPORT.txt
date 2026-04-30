@@ -10,6 +10,8 @@ Common tools (pick one; not bundled in the ISO repo):
   • **Trivy** — `trivy fs --format cyclonedx --output sbom.cdx.json /path/to/rootfs`
   • **dpkg-query** (minimal) — inside chroot:
       dpkg-query -W -f '${Package}\t${Version}\t${Architecture}\n' > packages.tsv
+    Or from the Alfred repo (requires sudo + chroot):
+      sudo bash scripts/sbom-dpkg-rootfs.sh /path/to/chroot packages.tsv
 
 For hook-built `.deb` artifacts, run the same scanner against a staging directory that
 contains only those debs, or merge into the rootfs SBOM after `lb build`.

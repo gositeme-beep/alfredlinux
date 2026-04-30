@@ -36,8 +36,10 @@ Wave 3 (prepare next — backlog)
   • ~~README “8 hooks” vs six IDs~~ (fixed); ~~Elyon naming drift~~ (LICENSING note); ~~0160 .bak~~ (removed from tree).
   • mesh-register: optional TLS public-key pinning — **`ALFRED_MESH_REGISTER_PINNEDPUBKEY`**
     env or **`/etc/alfred/mesh-register.pinnedpubkey`** (single line for `curl --pinnedpubkey`, 0167 hook).
+    Example / derivation notes: **`contrib/examples/mesh-register.pinnedpubkey.example`**.
   • alfred-skynet distribute: optional **`~/.config/alfred/skynet/distribute-allowlist`** (non-empty file
     lists allowed `argv[0]` as full path or basename, one per line; 0280 hook).
+    Example: **`contrib/examples/skynet-distribute-allowlist.example`**.
   • AppArmor: **`docs/APPARMOR-ALFRED-MESH.txt`** — aa-genprof cycle for `/usr/local/bin/alfred-mesh`.
   • SBOM: **`docs/SBOM-EXPORT.txt`** — Syft/Trivy/dpkg-query pointers (export still operator-run).
 

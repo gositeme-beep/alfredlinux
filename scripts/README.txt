@@ -21,6 +21,11 @@ audit-law-wrappers.sh
   Exits 0 if `LAW_ROOT` is missing (e.g. CI). No SPDX gate on law paths.
     bash scripts/audit-law-wrappers.sh
 
+sbom-dpkg-rootfs.sh
+  Host-side **`chroot`** wrapper: emits **`package<TAB>version<TAB>arch`** TSV from a Debian rootfs (input to
+  Syft/Trivy or spreadsheet review). Requires sudo. See **`docs/SBOM-EXPORT.txt`**.
+    sudo bash scripts/sbom-dpkg-rootfs.sh /path/to/chroot packages.tsv
+
 alfred-repo-health.sh
   Runs `release-integrity.sh check-repo`, `security-audit.sh`, and **`audit-law-wrappers.sh`**
   (law-wrapper grep pass when `/home/gositeme/law` exists; otherwise skipped).
