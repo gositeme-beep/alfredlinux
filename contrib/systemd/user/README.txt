@@ -6,6 +6,10 @@ These files are not installed automatically. Copy or symlink into
 `~/law/alfredlinux-com-source-live`.
 
   cp contrib/systemd/user/alfred-linux-repo-health.{service,timer} ~/.config/systemd/user/
+  # Optional: full shellcheck on each run (slow) — see service.d example:
+  #   mkdir -p ~/.config/systemd/user/alfred-linux-repo-health.service.d
+  #   cp contrib/systemd/user/alfred-linux-repo-health.service.d/10-shellcheck.conf.example \
+  #      ~/.config/systemd/user/alfred-linux-repo-health.service.d/10-shellcheck.conf
   # Edit WorkingDirectory / Environment in the .service if needed
   systemctl --user daemon-reload
   systemctl --user enable --now alfred-linux-repo-health.timer

@@ -10,6 +10,11 @@
 # See: docs/SBOM-EXPORT.txt (Syft/Trivy for SPDX/CycloneDX JSON).
 set -euo pipefail
 
+if [[ "${EUID:-$(id -u)}" -ne 0 ]]; then
+  echo "error: must run as root (chroot requires privileges): sudo $0 ..." >&2
+  exit 1
+fi
+
 ROOT=${1:-}
 OUT=${2:-/dev/stdout}
 

@@ -35,7 +35,12 @@ alfred-repo-health.sh
     bash scripts/alfred-repo-health.sh
   Systemd user units (edit WorkingDirectory if your clone path differs):
     contrib/systemd/user/alfred-linux-repo-health.{service,timer}
+    contrib/systemd/user/alfred-linux-repo-health.service.d/10-shellcheck.conf.example
     systemctl --user enable --now alfred-linux-repo-health.timer
+
+run-deep-security-checks.sh
+  Wrapper: **`ALFRED_REPO_HEALTH_SHELLCHECK_ALL=1`** then **`alfred-repo-health.sh`** (integrity + full shellcheck + law audit). For maintainer laptops / pre-release.
+    bash scripts/run-deep-security-checks.sh
 
 safe-operator-once.sh
   On the **build/web host**, run **once with sudo**: installs `shellcheck`, copies
