@@ -232,8 +232,8 @@ cleanup() {
 
 trap cleanup EXIT INT TERM
 
-# Check if already in silence
-if ls /tmp/.alfred-silence-* 2>/dev/null | head -1 | grep -q .; then
+# Check if already in silence (compgen — no ls|head pipeline)
+if compgen -G '/tmp/.alfred-silence-*' >/dev/null 2>&1; then
     echo "Already in The Silence. Be still."
     exit 0
 fi
@@ -258,8 +258,8 @@ echo "  ║                                                       ║"
 echo "  ╚═══════════════════════════════════════════════════════╝"
 echo -e "${NC}"
 
-# Save current volume
-ORIGINAL_VOLUME=$(amixer get Master 2>/dev/null | grep -o '[0-9]*%' | head -1)
+# Save current volume (first percentage token only)
+ORIGINAL_VOLUME=$(amixer get Master 2>/dev/null | grep -oE '[0-9]+%' | awk 'NR==1{print; exit}')
 
 # 1. Amber screen (warm 2700K)
 echo -e "  ${DIM}Setting amber glow...${NC}"

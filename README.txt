@@ -287,8 +287,7 @@
     notifications stop, network pauses, worship at 10%, shofar chime at end
   • Mesh Assembly — `alfred-worship assembly` → synchronized group worship
     across all mesh nodes, same track + Scripture on every machine
-  Hooks: 0720-alfred-still-voice, 0721-alfred-silence,
-         0725-alfred-assembly
+  Hooks: 0720-alfred-sacred-rest (includes alfred-silence), 0725-alfred-assembly
 
   ── ACCESSIBILITY — "THE BLIND SHALL SEE" ───────────────────────────────────
 

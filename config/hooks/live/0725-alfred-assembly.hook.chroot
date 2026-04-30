@@ -83,6 +83,18 @@ except Exception:
     pass' "$1" "$2" 2>/dev/null
 }
 
+# Newest assembly-invite-*.json by mtime (no ls -t | head — odd filenames safe).
+_asm_latest_invite() {
+    local LATEST="" _f
+    shopt -s nullglob
+    for _f in "$ASSEMBLY_DIR"/assembly-invite-*.json; do
+        [[ -f "$_f" ]] || continue
+        if [[ -z "$LATEST" ]] || [[ "$_f" -nt "$LATEST" ]]; then LATEST="$_f"; fi
+    done
+    shopt -u nullglob
+    printf '%s\n' "$LATEST"
+}
+
 case "${1:-help}" in
     start|gather)
         if [ ! -d "$KINGDOM_DIR" ]; then
@@ -193,7 +205,7 @@ PYINV
 
         LAST_SEEN=""
         while true; do
-            LATEST=$(ls -t "$ASSEMBLY_DIR"/assembly-invite-*.json 2>/dev/null | head -1)
+            LATEST="$(_asm_latest_invite)"
             if [ -n "$LATEST" ] && [ "$LATEST" != "$LAST_SEEN" ]; then
                 LAST_SEEN="$LATEST"
                 HOST=$(_asm_json_get "$LATEST" host)
@@ -238,9 +250,9 @@ PYINV
         else
             echo -e "  Kingdom mesh: ${GREEN}CONNECTED${NC}"
             if [ -d "$ASSEMBLY_DIR" ]; then
-                COUNT=$(ls "$ASSEMBLY_DIR"/assembly-invite-*.json 2>/dev/null | wc -l)
+                COUNT=$(find "$ASSEMBLY_DIR" -maxdepth 1 -name 'assembly-invite-*.json' -type f 2>/dev/null | wc -l)
                 echo -e "  Assembly invitations (total): ${CYAN}$COUNT${NC}"
-                LATEST=$(ls -t "$ASSEMBLY_DIR"/assembly-invite-*.json 2>/dev/null | head -1)
+                LATEST="$(_asm_latest_invite)"
                 if [ -n "$LATEST" ]; then
                     HOST=$(_asm_json_get "$LATEST" host)
                     STARTED=$(_asm_json_get "$LATEST" started)
