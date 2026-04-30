@@ -13,7 +13,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: .forgejo workflow matches canonical .gitea copy
+      - name: .forgejo mirror matches GoForge canonical (.gitea/workflows) copy
         run: |
           bash scripts/sync-forgejo-actions-yaml.sh
           git diff --exit-code .forgejo/workflows/security-audit.yml

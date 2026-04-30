@@ -1,4 +1,4 @@
-Alfred Linux — Gitea / Forgejo Actions workflows
+Alfred Linux — GoForge Actions workflows (canonical + Forgejo mirror paths)
 ================================================
   • security-audit.yml — lite CI (hooks sync + release-integrity + security-audit.sh).
     Duplicate: ../.forgejo/workflows/security-audit.yml (generated — run

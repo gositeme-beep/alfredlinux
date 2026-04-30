@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Keep .forgejo/workflows/security-audit.yml identical to .gitea/workflows/security-audit.yml
-# (Forgejo may dispatch only one tree). Run after editing the Gitea copy.
+# Keep .forgejo/workflows/security-audit.yml identical to GoForge canonical
+# .gitea/workflows/security-audit.yml (on-disk path the Actions engine expects).
+# Some installs dispatch only one tree — run after editing the canonical file.
 set -euo pipefail
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
 SRC="$ROOT/.gitea/workflows/security-audit.yml"
@@ -12,7 +13,7 @@ if [[ ! -f "$SRC" ]]; then
 fi
 mkdir -p "$(dirname "$DST")"
 {
-  echo '# Forgejo Actions — GENERATED from .gitea/workflows/security-audit.yml'
+  echo '# Forgejo Actions — GENERATED from GoForge canonical .gitea/workflows/security-audit.yml'
   echo '# Do not edit by hand; run: bash scripts/sync-forgejo-actions-yaml.sh'
   echo '# See: docs/GOFORGE-INFRASTRUCTURE-UPGRADE.txt'
   tail -n +4 "$SRC"

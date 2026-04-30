@@ -1,4 +1,4 @@
-# GoForge / Gitea Actions — canonical copy (same gates as .github/workflows/security-audit.yml)
+# GoForge Actions — canonical copy (same gates as .github/workflows/security-audit.yml)
 # After edits: bash scripts/sync-forgejo-actions-yaml.sh  (.forgejo/workflows duplicate)
 # Requires: Actions enabled + act_runner with ubuntu-latest (or edit runs-on below).
 # See: docs/GOFORGE-INFRASTRUCTURE-UPGRADE.txt
@@ -17,7 +17,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: .forgejo workflow matches canonical .gitea copy
+      - name: .forgejo mirror matches GoForge canonical (.gitea/workflows) copy
         run: |
           bash scripts/sync-forgejo-actions-yaml.sh
           git diff --exit-code .forgejo/workflows/security-audit.yml

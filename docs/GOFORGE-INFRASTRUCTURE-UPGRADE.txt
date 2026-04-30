@@ -1,7 +1,7 @@
 Alfred Linux / GoForge — infrastructure upgrade runbook (beat SaaS on merit)
 =============================================================================
 Last updated: 2026-04-27  
-Audience: operators hosting **GoForge** (Gitea / Forgejo–class) for Alfred Linux
+Audience: operators hosting **GoForge** (the Forge — Alfred Linux sovereign forge) for Alfred Linux
 and related repos. This is **not** a theme pack: it is **runners + pipelines +
 artifacts** so CI can do real work (including optional **kernel-tree** jobs).
 
@@ -13,7 +13,7 @@ artifacts** so CI can do real work (including optional **kernel-tree** jobs).
 
   • **Infrastructure upgrade** = capacity and ergonomics for **CI you define**:
     - **act_runner** (or Woodpecker/Drone agents) with honest **disk / RAM / CPU**
-    - **Actions** (Gitea Actions / Forgejo Actions) enabled and **version-pinned**
+    - **Actions** (GoForge Actions) enabled and **version-pinned**
     - **Artifact storage** (built-in or S3/MinIO-compatible) with retention policy
     - Optional **Git LFS** if you mirror large sources in git form
     - Optional **second repository** for kernel-heavy jobs so Alfred stays fast
@@ -24,8 +24,8 @@ artifacts** so CI can do real work (including optional **kernel-tree** jobs).
 ──────────────────────────────────────────────────────────────────────────────
 1) Forge application — minimum feature / version posture
 ──────────────────────────────────────────────────────────────────────────────
-  • Run a **supported** Forgejo or Gitea release; track **security advisories**
-    for your exact minor version.
+  • Run a **supported** GoForge release; track **security advisories**
+    for your exact minor version (upstream Forgejo compatibility notes apply where you use them).
 
   • Enable **Actions** (or your chosen CI engine) in server config only after you
     have **runner registration** and **network egress policy** decided (fork PRs,
@@ -56,8 +56,8 @@ artifacts** so CI can do real work (including optional **kernel-tree** jobs).
 ──────────────────────────────────────────────────────────────────────────────
   • **GitHub:** `.github/workflows/security-audit.yml` (push/PR to main|master).
 
-  • **GoForge / Gitea Actions:** `.gitea/workflows/security-audit.yml` — same job
-    graph; enable Actions on the server and ensure `act_runner` picks up jobs.
+  • **GoForge Actions:** `.gitea/workflows/security-audit.yml` — same job graph as GitHub;
+    the `.gitea/workflows/` path is what the Actions engine expects on disk — enable Actions on the server and ensure `act_runner` picks up jobs.
 
   • **Forgejo-only path:** `.forgejo/workflows/security-audit.yml` — **duplicate**
     of the same workflow; some installs only dispatch from one tree — keep both
@@ -68,7 +68,7 @@ artifacts** so CI can do real work (including optional **kernel-tree** jobs).
   **Keep duplicates identical:** after changing `.gitea/workflows/security-audit.yml`,
   run `bash scripts/sync-forgejo-actions-yaml.sh` so `.forgejo/workflows/` stays in sync.
   **CI enforces this:** the first job step after checkout runs that script and
-  `git diff --exit-code` on `.forgejo/workflows/security-audit.yml` (GitHub + Gitea YAML).
+  `git diff --exit-code` on `.forgejo/workflows/security-audit.yml` (GitHub + GoForge YAML).
 
 ──────────────────────────────────────────────────────────────────────────────
 4) Artifacts, caches, and release linkage
@@ -126,7 +126,7 @@ artifacts** so CI can do real work (including optional **kernel-tree** jobs).
 ──────────────────────────────────────────────────────────────────────────────
 9) Server config sketch — Actions + runner (verify against your forge version)
 ──────────────────────────────────────────────────────────────────────────────
-  **Always read upstream Forgejo/Gitea docs for your exact release.** Keys and
+  **Always read upstream Forgejo / GoForge engine docs for your exact release.** Keys and
   defaults move between minors. The sketch below is a **starting checklist**.
 
   **A) Enable Actions** (forge app.ini or equivalent; restart forge after edit):
@@ -153,7 +153,7 @@ artifacts** so CI can do real work (including optional **kernel-tree** jobs).
     • Ensure the runner image can run **ubuntu-latest** jobs (or edit YAML labels).
 
   **C) Labels:** Alfred lite workflow uses runs-on: ubuntu-latest. Your runner must
-  advertise that label **or** edit .gitea/workflows/security-audit.yml once.
+  advertise that label **or** edit the GoForge canonical `.gitea/workflows/security-audit.yml` once.
 
 ──────────────────────────────────────────────────────────────────────────────
 10) Appendix — kernel-heavy job shape (separate repo; template only)

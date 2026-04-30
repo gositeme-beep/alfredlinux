@@ -7,7 +7,7 @@ security-audit.sh
     bash scripts/security-audit.sh
   Wave checklist: scripts/SECURITY-WAVES.txt
   CI: .github/workflows/security-audit.yml; GoForge: .gitea/workflows/security-audit.yml
-  After editing the Gitea workflow: bash scripts/sync-forgejo-actions-yaml.sh
+  After editing the GoForge canonical workflow: bash scripts/sync-forgejo-actions-yaml.sh
 
 alfred-repo-health.sh
   Runs `release-integrity.sh check-repo` then `security-audit.sh` (exit non-zero if either fails).

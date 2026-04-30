@@ -1,4 +1,4 @@
-# Forgejo Actions — GENERATED from .gitea/workflows/security-audit.yml
+# Forgejo Actions — GENERATED from GoForge canonical .gitea/workflows/security-audit.yml
 # Do not edit by hand; run: bash scripts/sync-forgejo-actions-yaml.sh
 # See: docs/GOFORGE-INFRASTRUCTURE-UPGRADE.txt
 # See: docs/GOFORGE-INFRASTRUCTURE-UPGRADE.txt
@@ -17,7 +17,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: .forgejo workflow matches canonical .gitea copy
+      - name: .forgejo mirror matches GoForge canonical (.gitea/workflows) copy
         run: |
           bash scripts/sync-forgejo-actions-yaml.sh
           git diff --exit-code .forgejo/workflows/security-audit.yml
