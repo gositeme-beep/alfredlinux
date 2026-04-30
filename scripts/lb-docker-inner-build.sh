@@ -6,6 +6,18 @@ export DEBIAN_FRONTEND=noninteractive
 LOG="${LB_DOCKER_LOG:-/work/lb-docker-build.log}"
 exec > >(tee -a "$LOG") 2>&1
 
+alfred_lazy_umount_chroot() {
+  local _ch=/work/build/chroot
+  [[ -d "$_ch" ]] && command -v mountpoint >/dev/null || return 0
+  for _m in "$_ch/run/shm" "$_ch/run" "$_ch/dev/pts" "$_ch/dev" "$_ch/proc" "$_ch/sys"; do
+    if mountpoint -q "$_m" 2>/dev/null; then
+      echo "[inner] EXIT trap: umount -l $_m"
+      umount -l "$_m" 2>/dev/null || true
+    fi
+  done
+}
+trap 'alfred_lazy_umount_chroot' EXIT
+
 apt-get update -y
 apt-get install -y --no-install-recommends \
   live-build debootstrap cdebootstrap ca-certificates cpio wget gnupg \
@@ -14,6 +26,7 @@ apt-get install -y --no-install-recommends \
 # Debian trixie chroot + bookworm live-build: binary_syslinux cp into chroot/root/isolinux can fail on
 # dangling symlinks — patch adds GNU cp --remove-destination (see patch-live-build-isolinux-dangling.sh).
 bash /work/scripts/patch-live-build-isolinux-dangling.sh
+bash /work/scripts/patch-live-build-lazy-umount-chroot-fs.sh
 
 cd /work/build
 

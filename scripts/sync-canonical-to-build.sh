@@ -34,6 +34,9 @@ if [[ -d config/packages.chroot ]]; then
       install -m0644 "$f" "build/config/packages.chroot/$(basename "$f")"
     done
     echo "[sync-canonical] packages.chroot → build/config/packages.chroot (${#pkgs[@]} entries)"
+    # live-build bind-mounts this into the chroot as file:/root/packages — world-readable
+    # avoids "Permission denied" on ./Packages when apt runs without root in some lb stages.
+    chmod -R a+rX "${ROOT}/build/config/packages.chroot" 2>/dev/null || true
   else
     echo "[sync-canonical] WARN: config/packages.chroot is empty (kernel .deb may be gitignored — copy from builder)" >&2
   fi
