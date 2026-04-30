@@ -152,9 +152,13 @@ run_one_attempt() {
 
   # --- docker wait via existing watcher ---
   log "running watch-lb-docker-build.sh"
-  export ALFRED_NO_INHIBIT_SLEEP=1
-  export ALFRED_WATCH_NO_FLOCK=1
-  sudo -u gositeme bash "$WATCH" --status-json "$STATUS_JSON" || true
+  # sudo clears env by default — pass flock bypass explicitly for gositeme.
+  set +e
+  sudo -u gositeme env ALFRED_NO_INHIBIT_SLEEP=1 ALFRED_WATCH_NO_FLOCK=1 \
+    bash "$WATCH" --status-json "$STATUS_JSON"
+  local watch_rc=$?
+  set -e
+  log "watch-lb-docker-build.sh exit=$watch_rc"
 
   if write_fail_if_log_fatal "$cname"; then
     log "live-build fatal in log after watch — aborting this attempt (ISO/smoke skipped)"
@@ -220,9 +224,10 @@ while true; do
     state "DONE on attempt #$ATTEMPT — awaiting manual publish flip"
     cat "$DONE_MARKER"
     exit 0
+  else
+    # Bash: $? after `if cmd; then … fi` without else is 0 when cmd fails — capture here.
+    RC=$?
   fi
-
-  RC=$?
   log "attempt #$ATTEMPT FAILED rc=$RC"
 
   # Decide retry
