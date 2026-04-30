@@ -58,3 +58,18 @@ sudo systemctl restart alfred-night-shift
 **Canonical truth:** `bash scripts/release-integrity.sh check-repo` and **`ls config/hooks/live/*.hook.chroot | wc -l`** (expect **42**). After you confirm **`lb build` / chroot logs** show the full hook sequence, set **`$gaFrozenIsoHookCount = 42`** in `includes/ga-release-state.php` (or extend hooks to emit consistent stamps and tighten the grep — follow-up work).
 
 Until signing runs, **“GPG unsigned”** on the dashboard is expected: complete **`post-build-restage.sh`** GPG steps (or your release checklist) so `.asc` + SUMS signatures match the published ISO.
+
+## Dell Watch ↔ inner build log markers
+
+Commander **Dell Watch** (`veil/dell-watch.php` on GoSiteMe) tails **`lb-docker-build.log`** and greps stable substrings emitted by **`scripts/lb-docker-inner-build.sh`** (container `/work` = bind-mounted repo). Source of truth for wording is that script; do not rename `[inner] …` lines without updating Dell Watch.
+
+| Marker (substring) | Meaning |
+|---|---|
+| `[inner] sync canonical` | Canonical tree rsynced into `build/config`. |
+| `[inner] lb clean` | Full `lb clean` after chroot reset. |
+| `[inner] lb config` | `lb config` completed. |
+| `[inner] lb build starting` | `lb build` entered (night-shift also keys off this vs stale `E:` lines). |
+| `[inner] lb build finished` + `exit=0` | Inner live-build succeeded. |
+| `[inner] ALFRED_ALLOW_SSH_PASSWORD_AUTH=` | Logged SSH policy for that ISO build (`0` keys-only default). |
+
+Hook progress still comes from live-build’s `Executing hook config/hooks/…` lines in the same log. Dell Watch also shows the last few of those lines verbatim and a **42-segment bar** ordered like `config/hooks/live/*.hook.chroot`; the tail window size is the PHP constant **`DW_BUILD_LOG_TAIL_LINES`** in `dell-watch.php` (currently **400** lines). The first line of **`night-shift-state.txt`** is echoed in the Finish line panel when set.
