@@ -25,7 +25,7 @@ safe-operator-once.sh
 
 iso-preflight.sh
   Run before `lb build`. Fails if linux-image-7.0.1*.deb missing from
-  config/packages.chroot/ (hook 0050). Runs **`stage-kernel-debs-for-iso.sh`** first (archive under
+  config/packages.chroot/ (kernel debs + lists). Runs **`stage-kernel-debs-for-iso.sh`** first (archive under
   **`build-assets/kernel-7.0.1-debs/`**, **`ALFRED_KERNEL_DEBS_ARCHIVE`**, or **`KERNEL_WORK`**).
   When `docker` is in PATH, warns if multiple `alfred-lb-build-*` containers run. Usage:
     bash scripts/iso-preflight.sh
