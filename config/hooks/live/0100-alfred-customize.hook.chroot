@@ -6,6 +6,9 @@
 # This runs inside the chroot during ISO build.
 # Applies branding, security hardening, and default configs.
 # BUILD: v4.0 GA
+#
+# myip: public-IP lookup is opt-in (ALFRED_ALLOW_MYIP_LOOKUP=1) to avoid default
+# third-party leakage; otherwise shows local addresses from hostname -I.
 # ═══════════════════════════════════════════════════════════════
 
 set -e
@@ -100,7 +103,13 @@ alias ll='ls -lah --color=auto'
 alias la='ls -A --color=auto'
 alias update='sudo apt update && sudo apt upgrade -y'
 alias ports='ss -tulpn'
-alias myip='curl -s ifconfig.me'
+myip() {
+    if [[ "${ALFRED_ALLOW_MYIP_LOOKUP:-}" == "1" ]]; then
+        curl -sS --max-time 5 https://ifconfig.me/ 2>/dev/null || hostname -I 2>/dev/null | awk '{print $1}'
+    else
+        echo "myip: third-party lookup disabled. Local: $(hostname -I 2>/dev/null | awk '{print $1}'). export ALFRED_ALLOW_MYIP_LOOKUP=1 for public IP." >&2
+    fi
+}
 alias cls='clear'
 
 # Welcome message

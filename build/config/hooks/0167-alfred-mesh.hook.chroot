@@ -15,7 +15,8 @@
 # BUILD: v4.0+ Kingdom Edition
 #
 # Optional: ALFRED_ALLOW_HOOK_NETWORK_DOWNLOADS=1 allows Syncthing release-key
-# fetch when /build-assets/syncthing-archive-keyring.gpg is absent.
+# fetch when /build-assets/syncthing-archive-keyring.gpg is absent, and Kingdom
+# mesh-register API from alfred-mesh connect-kingdom (runtime).
 # ═══════════════════════════════════════════════════════════════
 set -e
 # Fix /tmp permissions (may be restricted by earlier hooks in chroot)
@@ -379,14 +380,19 @@ cmd_connect_kingdom() {
     MY_IP=$(grep Address /etc/wireguard/$WG_INTERFACE.conf | awk -F'=' '{print $2}' | tr -d ' ' | cut -d'/' -f1)
     HOSTNAME=$(hostname)
     
-    # Call Kingdom registration API
-    RESPONSE=$(curl -s -m 10 "https://gositeme.com/api/mesh-register.php" \
-        -X POST \
-        -d "pubkey=$MY_PUBKEY" \
-        -d "mesh_ip=$MY_IP" \
-        -d "hostname=$HOSTNAME" \
-        -d "version=$VERSION" 2>/dev/null)
-    
+    # Call Kingdom registration API (opt-in — same knob as hook-time downloads)
+    RESPONSE=""
+    if [[ "${ALFRED_ALLOW_HOOK_NETWORK_DOWNLOADS:-}" == "1" ]]; then
+        RESPONSE=$(curl -s -m 10 "https://gositeme.com/api/mesh-register.php" \
+            -X POST \
+            -d "pubkey=$MY_PUBKEY" \
+            -d "mesh_ip=$MY_IP" \
+            -d "hostname=$HOSTNAME" \
+            -d "version=$VERSION" 2>/dev/null)
+    else
+        echo -e "${YELLOW}  Skipping Kingdom API call (set ALFRED_ALLOW_HOOK_NETWORK_DOWNLOADS=1 to register).${NC}" >&2
+    fi
+
     if echo "$RESPONSE" | grep -q '"success"'; then
         KINGDOM_PUBKEY=$(echo "$RESPONSE" | grep -o '"kingdom_pubkey":"[^"]*"' | cut -d'"' -f4)
         KINGDOM_ENDPOINT=$(echo "$RESPONSE" | grep -o '"kingdom_endpoint":"[^"]*"' | cut -d'"' -f4)
