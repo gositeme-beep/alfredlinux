@@ -19,6 +19,8 @@
 #                                full supervise cycle so nohup/systemd never sits idle after GAVE UP.
 #                                Set to 0 for one-shot behaviour (exit 1 after exhaustion).
 #   ALFRED_LB_EXHAUST_COOLDOWN_SEC  default 900 — pause between outer cycles when LOOP_FOREVER=1
+#   ALFRED_LB_SUCCESS_WEBHOOK       optional URL — POST application/json {"text":"…"} (Slack incoming-style)
+#   ALFRED_LB_SUCCESS_SCRIPT       optional path — executable; invoked as SCRIPT /path/to/repo on verified SUCCESS
 #   NAP_WEBHOOK / pass-through:  same extra args as watch-lb-docker-build.sh (--webhook URL)
 #
 # Exit: 0 on success; 2 on auth failure; with LOOP_FOREVER=0 only: 1 after exhausting retries.
@@ -108,6 +110,34 @@ alfred_lb_verify_inner_success() {
   ' "$log"
 }
 
+alfred_lb_notify_success() {
+  local msg="Alfred live-build supervise SUCCESS at $(date -Is) repo=$REPO"
+  echo "[notify-success] $msg"
+  if [[ -n "${ALFRED_LB_SUCCESS_SCRIPT:-}" ]]; then
+    if [[ -x "${ALFRED_LB_SUCCESS_SCRIPT}" ]]; then
+      set +e
+      "${ALFRED_LB_SUCCESS_SCRIPT}" "$REPO"
+      local ns=$?
+      set -e
+      (( ns == 0 )) || echo "[notify-success] ALFRED_LB_SUCCESS_SCRIPT exit=$ns" >&2
+    else
+      echo "[notify-success] skip: not executable: ${ALFRED_LB_SUCCESS_SCRIPT}" >&2
+    fi
+  fi
+  if [[ -n "${ALFRED_LB_SUCCESS_WEBHOOK:-}" ]]; then
+    set +e
+    local body
+    body="$(python3 -c 'import json,sys; print(json.dumps({"text": sys.argv[1]}))' "$msg" 2>/dev/null)" || body=
+    if [[ -z "$body" ]]; then
+      echo "[notify-success] skip webhook: could not build JSON (python3?)" >&2
+    else
+      curl -fsS -m 25 -X POST -H 'Content-Type: application/json' -d "$body" "${ALFRED_LB_SUCCESS_WEBHOOK}" -o /dev/null \
+        || echo "[notify-success] webhook POST failed" >&2
+    fi
+    set -e
+  fi
+}
+
 alfred_lb_one_inner_cycle() {
   local attempt sid rc
   attempt=1
@@ -122,6 +152,7 @@ alfred_lb_one_inner_cycle() {
     set -e
     if [[ "$rc" -eq 0 ]] && alfred_lb_verify_inner_success "$SID"; then
       echo "=== supervise-lb-build-repair-loop SUCCESS $(date -Is) ==="
+      alfred_lb_notify_success
       return 0
     fi
     if [[ "$rc" -eq 0 ]]; then
