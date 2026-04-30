@@ -195,7 +195,7 @@
     Spirit of the Lord (Luke 4:18; 2 Corinthians 3:17). Text + espeak-ng
     voice follow LC_ALL / LC_MESSAGES / LANG (en, es, fr, de, it, pt, zh, ja, he);
     Kokoro is used only for English. Slower espeak pacing for clarity.
-  Hook: 0400-alfred-voice (stage 2: 0900-alfred-voice-v2)
+  Hook: 0400-alfred-voice (voice stack consolidated in this hook)
 
   ── DEVELOPMENT — "THE ARSENAL" (4 hooks) ───────────────────────────────────
 
