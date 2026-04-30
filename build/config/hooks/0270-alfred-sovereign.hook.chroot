@@ -5,6 +5,8 @@
 #
 # alfred-voice-cmd: opening DuckDuckGo for "search for …" requires
 # ALFRED_ALLOW_VOICE_WEB_SEARCH=1 or ALFRED_ALLOW_HOOK_NETWORK_DOWNLOADS=1 (query is URL-encoded).
+# alfred-dns enable-handshake: third-party resolver IPs require ALFRED_ALLOW_HANDSHAKE_DNS=1
+# or ALFRED_ALLOW_HOOK_NETWORK_DOWNLOADS=1.
 # ═══════════════════════════════════════════════════════════════
 set -e
 echo "═══════════════════════════════════════════════════════"
@@ -142,6 +144,10 @@ cat > /usr/local/bin/alfred-dns << 'DNS'
 #!/bin/bash
 case "$1" in
     enable-handshake|enable-hns)
+        if [[ "${ALFRED_ALLOW_HOOK_NETWORK_DOWNLOADS:-}" != "1" && "${ALFRED_ALLOW_HANDSHAKE_DNS:-}" != "1" ]]; then
+            echo "alfred-dns: Handshake resolver change disabled (set ALFRED_ALLOW_HANDSHAKE_DNS=1 or ALFRED_ALLOW_HOOK_NETWORK_DOWNLOADS=1)." >&2
+            exit 1
+        fi
         mkdir -p /etc/systemd/resolved.conf.d
         cat > /etc/systemd/resolved.conf.d/handshake.conf << 'H'
 [Resolve]
@@ -172,10 +178,19 @@ CYAN='\033[0;36m'; GOLD='\033[0;33m'; GREEN='\033[0;32m'; NC='\033[0m'
 ID_FILE="$HOME/.config/alfred/identity.json"
 if [ "$1" = "setup" ]; then
     mkdir -p "$HOME/.config/alfred"
-    read -p "Your name: " NAME; read -p "Your role: " ROLE
-    cat > "$ID_FILE" << ID
-{"name":"$NAME","role":"$ROLE","created":"$(date -Iseconds)","os":"Alfred Linux","sovereignty":true}
-ID
+    read -r -p "Your name: " NAME; read -r -p "Your role: " ROLE
+    ALFRED_ID_NAME="$NAME" ALFRED_ID_ROLE="$ROLE" python3 << 'PYID' > "$ID_FILE"
+import json, os, datetime
+now = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+obj = {
+    "name": os.environ.get("ALFRED_ID_NAME", ""),
+    "role": os.environ.get("ALFRED_ID_ROLE", ""),
+    "created": now,
+    "os": "Alfred Linux",
+    "sovereignty": True,
+}
+print(json.dumps(obj, ensure_ascii=False))
+PYID
     echo -e "${GREEN}Identity saved.${NC}"; exit 0
 fi
 if [ -f "$ID_FILE" ]; then

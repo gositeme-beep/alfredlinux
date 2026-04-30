@@ -555,6 +555,10 @@ XFWM
 
 setup_zram() {
     local size_mb=$1
+    if ! [[ "$size_mb" =~ ^[0-9]+$ ]] || [ "$size_mb" -eq 0 ] || [ "$size_mb" -gt 131072 ]; then
+        echo "[ZRAM] Invalid size_mb=$size_mb (use 1-131072)" >&2
+        return 1
+    fi
     # ZRAM gives old machines virtual RAM via compression
     if command -v zramctl &>/dev/null; then
         echo "[ZRAM] Configuring ${size_mb}MB compressed swap"
