@@ -30,6 +30,12 @@ if [[ -f "$REPO/.lb-docker-watch.lock" ]]; then
   command -v fuser &>/dev/null && fuser "$REPO/.lb-docker-watch.lock" 2>/dev/null || true
 fi
 
+echo "--- build lock (exclusive live-build; lb-docker-inner-build flock) ---"
+if [[ -f "$REPO/build/.alfred-lb-docker-build.lock" ]]; then
+  ls -la "$REPO/build/.alfred-lb-docker-build.lock" 2>/dev/null || true
+  command -v fuser &>/dev/null && fuser "$REPO/build/.alfred-lb-docker-build.lock" 2>/dev/null || true
+fi
+
 if [[ -f "$STATUS_JSON" ]]; then
   echo "--- $STATUS_JSON ---"
   cat "$STATUS_JSON"
