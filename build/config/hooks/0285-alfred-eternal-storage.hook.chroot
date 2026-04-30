@@ -5,6 +5,8 @@
 # optional Bitcoin/Tor) plus optional /build-assets/* media. ANY of those can be
 # transient or absent without invalidating the rest of the Kingdom of Truth on
 # disk. We use targeted `|| true` and validate-then-act blocks instead.
+# alfred-eternal: encrypted backup uses openssl -pass file: (not pass: on argv);
+# manifest JSON is written via python json.dumps.
 set -u
 set -o pipefail
 echo "╔════════════════════════════════════════════════════════════════╗"
@@ -91,30 +93,37 @@ anchor_file() {
     echo -e "  SHA-256: ${GREEN}$HASH${NC}"
     echo -e "  Time:    $TIMESTAMP"
 
-    # Save anchor receipt
-    RECEIPT="$ANCHOR_DIR/${BASENAME}.${HASH:0:16}.anchor"
-    cat > "$RECEIPT" << RECEIPTEOF
-{
-    "version": "alfred-anchor-v1",
-    "file": "$BASENAME",
-    "path": "$(realpath "$FILE")",
-    "sha256": "$HASH",
-    "timestamp": "$TIMESTAMP",
-    "hostname": "$(hostname)",
-    "node_id": "$(cat ~/.config/alfred/skynet/node-id 2>/dev/null || hostname)"
-}
-RECEIPTEOF
-
-    # Pin to IPFS if available
+    IPFS_HASH=""
     if command -v ipfs &>/dev/null && ipfs swarm peers &>/dev/null 2>&1; then
         IPFS_HASH=$(ipfs add -q "$FILE" 2>/dev/null)
         if [ -n "$IPFS_HASH" ]; then
             echo -e "  IPFS:    ${GREEN}$IPFS_HASH${NC}"
-            echo "    \"ipfs_cid\": \"$IPFS_HASH\"" >> "$RECEIPT.tmp"
-            # Pin it so it persists
             ipfs pin add "$IPFS_HASH" 2>/dev/null
         fi
     fi
+
+    # Save anchor receipt (JSON via python — safe quoting for all fields)
+    RECEIPT="$ANCHOR_DIR/${BASENAME}.${HASH:0:16}.anchor"
+    RP=$(realpath "$FILE")
+    NID=$(cat "$HOME/.config/alfred/skynet/node-id" 2>/dev/null || hostname)
+    export AE_REC="$RECEIPT" AE_BN="$BASENAME" AE_PATH="$RP" AE_HASH="$HASH" AE_TS="$TIMESTAMP" AE_NID="$NID" AE_IPFS="${IPFS_HASH:-}"
+    python3 << 'PYREC'
+import json, os, socket
+from pathlib import Path
+
+obj = {
+    "version": "alfred-anchor-v1",
+    "file": os.environ["AE_BN"],
+    "path": os.environ["AE_PATH"],
+    "sha256": os.environ["AE_HASH"],
+    "timestamp": os.environ["AE_TS"],
+    "hostname": socket.gethostname(),
+    "node_id": os.environ["AE_NID"],
+}
+if os.environ.get("AE_IPFS"):
+    obj["ipfs_cid"] = os.environ["AE_IPFS"]
+Path(os.environ["AE_REC"]).write_text(json.dumps(obj, indent=2) + "\n", encoding="utf-8", errors="replace")
+PYREC
 
     # OpenTimestamps if available
     if command -v ots &>/dev/null; then
@@ -428,33 +437,46 @@ eternal_store() {
     mkdir -p "$BACKUP_DIR"
     BACKUP_FILE="$BACKUP_DIR/${BASENAME}.${HASH:0:8}.enc"
     KEY=$(head -c 32 /dev/urandom | xxd -p)
-    openssl enc -aes-256-gcm -in "$FILE" -out "$BACKUP_FILE" -pass "pass:$KEY" 2>/dev/null
+    KEYF=$(mktemp) || return 1
+    printf '%s\n' "$KEY" > "$KEYF"
+    chmod 600 "$KEYF"
+    openssl enc -aes-256-gcm -in "$FILE" -out "$BACKUP_FILE" -pass "file:$KEYF" 2>/dev/null
+    rm -f "$KEYF"
     if [ -f "$BACKUP_FILE" ]; then
         echo -e "  ${GREEN}✓ Encrypted backup: $BACKUP_FILE${NC}"
         # Store key in anchor receipt
         echo "  Key stored in anchor receipt"
     fi
 
-    # Save eternal manifest
+    # Save eternal manifest (JSON via python — safe if BASENAME/paths contain quotes)
     MANIFEST="$ETERNAL_DIR/${BASENAME}.manifest.json"
-    cat > "$MANIFEST" << MANIFESTEOF
-{
+    AE_CREATED=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+    export AE_MANIFEST="$MANIFEST" AE_BASENAME="$BASENAME" AE_HASH="$HASH" AE_FILE_SIZE="$FILE_SIZE" \
+        AE_IPFS_CID="${IPFS_CID:-pending}" AE_REPLICAS="${REPLICAS:-0}" AE_BACKUP="$BACKUP_FILE" AE_CREATED="$AE_CREATED" AE_HOME="$HOME"
+    python3 << 'PYMAN'
+import json, os, socket
+from pathlib import Path
+
+home = os.environ["AE_HOME"]
+base = os.environ["AE_BASENAME"]
+obj = {
     "version": "alfred-eternal-v1",
-    "created": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
-    "file": "$BASENAME",
-    "sha256": "$HASH",
-    "size": $FILE_SIZE,
+    "created": os.environ["AE_CREATED"],
+    "file": base,
+    "sha256": os.environ["AE_HASH"],
+    "size": int(os.environ["AE_FILE_SIZE"]),
     "layers": {
-        "ipfs": "${IPFS_CID:-pending}",
+        "ipfs": os.environ["AE_IPFS_CID"],
         "blockchain": "anchored",
-        "frequency": "$HOME/.config/alfred/frequency/${BASENAME}.wav",
-        "mesh_replicas": "${REPLICAS:-0}",
-        "encrypted_backup": "$BACKUP_FILE"
+        "frequency": f"{home}/.config/alfred/frequency/{base}.wav",
+        "mesh_replicas": os.environ["AE_REPLICAS"],
+        "encrypted_backup": os.environ["AE_BACKUP"],
     },
-    "node": "$(hostname)",
-    "alfred_version": "7.77"
+    "node": socket.gethostname(),
+    "alfred_version": "7.77",
 }
-MANIFESTEOF
+Path(os.environ["AE_MANIFEST"]).write_text(json.dumps(obj, indent=4) + "\n", encoding="utf-8", errors="replace")
+PYMAN
 
     echo ""
     echo -e "${BOLD}${GREEN}═══════════════════════════════════════════════════${NC}"

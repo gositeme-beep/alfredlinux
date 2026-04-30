@@ -17,7 +17,8 @@
 # BUILD: v4.0+ Kingdom Edition
 #
 # alfred-family-bible uses python string replace (not sed) for user-supplied text
-# and a path slug so family names cannot inject path segments.
+# and a path slug so family names cannot inject path segments; README is generated
+# via python (no unquoted heredoc expansion).
 # ═══════════════════════════════════════════════════════════════
 set -e
 echo "╔═══════════════════════════════════════════════════════════╗"
@@ -351,10 +352,18 @@ PYFB3
     sha256sum *.html *.pdf 2>/dev/null > INTEGRITY-SEAL.sha256
     MANIFEST_HASH=$(sha256sum INTEGRITY-SEAL.sha256 | cut -d' ' -f1)
     
-    cat > "$OUTPUT_DIR/README.md" << READMEEOF
-# The ${FAMILY_NAME} Family Bible
+    export FB_README="$OUTPUT_DIR/README.md" FB_FM="$FAMILY_NAME" FB_DATE="$DATE" FB_MH="$MANIFEST_HASH" FB_SLUG="$FAMILY_SLUG"
+    python3 << 'PYREADME'
+import os
+from pathlib import Path
 
-Generated on ${DATE} by Alfred Linux — Family Bible Generator
+name = os.environ["FB_FM"]
+date = os.environ["FB_DATE"]
+mh = os.environ["FB_MH"]
+slug = os.environ["FB_SLUG"]
+body = f"""# The {name} Family Bible
+
+Generated on {date} by Alfred Linux — Family Bible Generator
 
 ## Contents
 - **01-cover** — Personalized Bible cover
@@ -368,8 +377,8 @@ Generated on ${DATE} by Alfred Linux — Family Bible Generator
 4. The AKJV Bible text is at: /usr/share/alfred/bible/
 
 ## Integrity Seal
-Manifest Hash: ${MANIFEST_HASH}
-Verify with: cd ~/Documents/Family-Bible-${FAMILY_NAME} && sha256sum -c INTEGRITY-SEAL.sha256
+Manifest Hash: {mh}
+Verify with: cd ~/Documents/Family-Bible-{slug} && sha256sum -c INTEGRITY-SEAL.sha256
 
 ## About the AKJV
 The Authorized King Jesus Version includes 94 books (including the
@@ -378,7 +387,9 @@ of Scripture as preserved through history.
 
 ---
 ⚜️ Sealed by the Alfred Kingdom — Kingdom of God Edition
-READMEEOF
+"""
+Path(os.environ["FB_README"]).write_text(body, encoding="utf-8", errors="replace")
+PYREADME
 
     echo ""
     echo -e "${GREEN}═══════════════════════════════════════════════════════${NC}"
