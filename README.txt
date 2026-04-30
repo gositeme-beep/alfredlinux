@@ -234,20 +234,16 @@
     dataset as paths `akjv-*.tsv`): 94 books, 39,482 verses (TSV). Installed
     with the sovereign image under /usr/share/alfred/bible/ (not inside the
     kernel vmlinux).
-  • 48 Bible tongues in languages.conf: English (full AKJV on disk) plus
-    Spanish (es, es-419, es-ES, Ladino lad, Chavacano cbk), French, Hebrew, Greek (LXX/NT samples), Latin (Vulgate-style
-    samples), German, Portuguese, Russian, Chinese, Japanese, Arabic (MSA ar),
-    Moroccan Darija (ary), Egyptian (arz), Levantine (apc), Gulf (afb), Hindi,
-    Italian, Romanian, Polish, Ukrainian, Korean, Turkish, Dutch, Vietnamese,
-    Tagalog, Filipino, Urdu, Swahili, Amharic, Yoruba, Igbo, Hausa, Zulu, Xhosa,
-    Afrikaans, Somali, Twi, Jamaican Patwa (jam) — key verses under
-    /usr/share/alfred/bible/*-seed.tsv
-    (offline). Read with: alfred-bible-lang list  then  alfred-bible-lang <code>
-  • On the live ISO / for the public: open the menu entry **Bible in Many
-    Languages** (Education), or run `alfred-bible-lang list` in any terminal,
-    then `alfred-bible-lang <code>` for a random seed verse (e.g. `es`, `ro`,
-    `uk`, `yi`, `ht`, `id`, `fa`, `my`, `es-419`, `es-ES`, `lad`, `cbk`). Same discovery via `alfred-bible tongues list` (wraps the same tool).
-    English full text remains `alfred-bible read …` / AKJV Bible launcher.
+  • Bible tongues (<strong>hook 0292</strong>): the embedded <code>languages.conf</code>
+    in <code>0292-alfred-bible-tongues.hook.chroot</code> currently ships
+    <strong>four</strong> seeded rows (English AKJV pointer, Spanish, French,
+    Hebrew). The <code>bible_tongues</code> field in <code>api/version.json</code>
+    must match that row count (<code>scripts/release-integrity.sh check-repo</code>).
+    Add languages by extending the hook heredoc, then bump the JSON field —
+    roadmap lists may describe future breadth; shipped truth is counted in the hook.
+  • On the live ISO: <strong>Bible in Many Languages</strong> (Education) or
+    <code>alfred-bible-lang list</code> / <code>alfred-bible-lang &lt;code&gt;</code>
+    for seeded verses. Full AKJV text: <code>alfred-bible read …</code>.
   • Children's Bible — 33 illustrated stories
   • alfred-bible CLI (AKJV) plus `alfred-bible tongues …` → alfred-bible-lang
   • Family Bible Generator — personalized covenant certificates,
