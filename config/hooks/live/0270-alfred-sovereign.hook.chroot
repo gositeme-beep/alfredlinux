@@ -7,6 +7,7 @@
 # ALFRED_ALLOW_VOICE_WEB_SEARCH=1 or ALFRED_ALLOW_HOOK_NETWORK_DOWNLOADS=1 (query is URL-encoded).
 # alfred-dns enable-handshake: third-party resolver IPs require ALFRED_ALLOW_HANDSHAKE_DNS=1
 # or ALFRED_ALLOW_HOOK_NETWORK_DOWNLOADS=1.
+# alfred-security-audit: checks are inline shell (no bash -c on string bundles).
 # ═══════════════════════════════════════════════════════════════
 set -e
 echo "═══════════════════════════════════════════════════════"
@@ -244,21 +245,38 @@ cat > /usr/local/bin/alfred-security-audit << 'AUDIT'
 #!/bin/bash
 SCORE=0; TOTAL=0
 RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[0;33m'; CYAN='\033[0;36m'; NC='\033[0m'
-chk() { ((TOTAL++)); echo -n "  [$TOTAL] $1... "
-    if bash -c "$2" &>/dev/null; then echo -e "${GREEN}PASS${NC}"; ((SCORE++)); else echo -e "${RED}FAIL${NC}"; fi; }
+pass() { echo -e "${GREEN}PASS${NC}"; SCORE=$((SCORE + 1)); }
+fail() { echo -e "${RED}FAIL${NC}"; }
+b() { TOTAL=$((TOTAL + 1)); echo -n "  [$TOTAL] $1... "; }
 echo -e "${CYAN}═══ Alfred Linux Security Audit ═══${NC}"
-chk "Firewall active" "nft list ruleset 2>/dev/null | grep -q 'chain input'"
-chk "AppArmor enforcing" "aa-status --enabled 2>/dev/null"
-chk "SSH root disabled" "grep -rq 'PermitRootLogin no' /etc/ssh/ 2>/dev/null"
-chk "SSH password disabled" "grep -rq 'PasswordAuthentication no' /etc/ssh/ 2>/dev/null"
-chk "SYN cookies" "[ \$(cat /proc/sys/net/ipv4/tcp_syncookies 2>/dev/null) = '1' ]"
-chk "ASLR enabled" "[ \$(cat /proc/sys/kernel/randomize_va_space 2>/dev/null) -ge 2 ]"
-chk "No world-writable /etc" "[ \$(find /etc -type f -perm -0002 2>/dev/null | wc -l) -eq 0 ]"
-chk "Auto-updates" "systemctl is-enabled unattended-upgrades 2>/dev/null"
-chk "AIDE installed" "command -v aide"
-chk "Fail2ban active" "systemctl is-active fail2ban 2>/dev/null"
-chk "ClamAV installed" "command -v clamscan"
-chk "rkhunter installed" "command -v rkhunter"
+b "Firewall active"
+if nft list ruleset 2>/dev/null | grep -q 'chain input'; then pass; else fail; fi
+b "AppArmor enforcing"
+if aa-status --enabled &>/dev/null; then pass; else fail; fi
+b "SSH root disabled"
+if grep -rq 'PermitRootLogin no' /etc/ssh/ 2>/dev/null; then pass; else fail; fi
+b "SSH password disabled"
+if grep -rq 'PasswordAuthentication no' /etc/ssh/ 2>/dev/null; then pass; else fail; fi
+b "SYN cookies"
+_v=$(cat /proc/sys/net/ipv4/tcp_syncookies 2>/dev/null)
+if [ "$_v" = '1' ]; then pass; else fail; fi
+b "ASLR enabled"
+_v=$(cat /proc/sys/kernel/randomize_va_space 2>/dev/null)
+if [ "${_v:-0}" -ge 2 ]; then pass; else fail; fi
+b "No world-writable /etc"
+_n=$(find /etc -type f -perm -0002 2>/dev/null | wc -l)
+_n=$((_n + 0))
+if [ "$_n" -eq 0 ]; then pass; else fail; fi
+b "Auto-updates"
+if systemctl is-enabled unattended-upgrades &>/dev/null; then pass; else fail; fi
+b "AIDE installed"
+if command -v aide &>/dev/null; then pass; else fail; fi
+b "Fail2ban active"
+if systemctl is-active fail2ban &>/dev/null; then pass; else fail; fi
+b "ClamAV installed"
+if command -v clamscan &>/dev/null; then pass; else fail; fi
+b "rkhunter installed"
+if command -v rkhunter &>/dev/null; then pass; else fail; fi
 echo ""
 PCT=$((SCORE * 100 / TOTAL))
 if [ $PCT -ge 90 ]; then G="A"; C=$GREEN; elif [ $PCT -ge 80 ]; then G="B"; C=$GREEN
