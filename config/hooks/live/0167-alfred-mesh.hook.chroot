@@ -180,7 +180,7 @@ cmd_status() {
     echo -e "${BOLD}WireGuard Mesh:${NC}"
     if ip link show "$WG_INTERFACE" &>/dev/null; then
         echo -e "  Interface: ${GREEN}UP${NC}"
-        wg show "$WG_INTERFACE" 2>/dev/null | grep -E "peer|endpoint|latest|transfer" | while read line; do
+        wg show "$WG_INTERFACE" 2>/dev/null | grep -E "peer|endpoint|latest|transfer" | while read -r line; do
             echo "  $line"
         done
     else
@@ -214,7 +214,7 @@ cmd_discover() {
     echo ""
     echo -e "${BOLD}Scanning for Alfred nodes on local network...${NC}"
     echo ""
-    avahi-browse -r _alfred-mesh._tcp -t 2>/dev/null | grep -E "hostname|address|txt" | while read line; do
+    avahi-browse -r _alfred-mesh._tcp -t 2>/dev/null | grep -E "hostname|address|txt" | while read -r line; do
         echo "  $line"
     done
     PEERS=$(avahi-browse -r _alfred-mesh._tcp -t -p 2>/dev/null | grep "^=" | wc -l)

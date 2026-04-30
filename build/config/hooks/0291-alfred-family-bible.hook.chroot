@@ -15,6 +15,9 @@
 # This hook ADDS the personalization and generation tools.
 #
 # BUILD: v4.0+ Kingdom Edition
+#
+# alfred-family-bible uses python string replace (not sed) for user-supplied text
+# and a path slug so family names cannot inject path segments.
 # ═══════════════════════════════════════════════════════════════
 set -e
 echo "╔═══════════════════════════════════════════════════════════╗"
@@ -234,6 +237,7 @@ cat > /usr/local/bin/alfred-family-bible << 'BIBCLI'
 #   - SHA-256 integrity seal
 # ═══════════════════════════════════════════════════════════════
 TEMPLATE_DIR="/usr/share/alfred/bible/templates"
+export TEMPLATE_DIR
 BIBLE_DIR="/usr/share/alfred/bible"
 CYAN='\033[0;36m'; GREEN='\033[0;32m'; YELLOW='\033[0;33m'
 BOLD='\033[1m'; NC='\033[0m'
@@ -255,7 +259,7 @@ cmd_generate() {
         FAMILY_NAME="$1"
     else
         echo -ne "${BOLD}Enter your family name: ${NC}"
-        read FAMILY_NAME
+        read -r FAMILY_NAME
     fi
     
     if [ -z "$FAMILY_NAME" ]; then
@@ -263,10 +267,13 @@ cmd_generate() {
         return 1
     fi
     
-    FAMILY_UPPER=$(echo "$FAMILY_NAME" | tr '[:lower:]' '[:upper:]')
+    # Slug for paths only — disallow / and path traversal in output directory name
+    FAMILY_SLUG="${FAMILY_NAME//\//-}"
+    FAMILY_SLUG="${FAMILY_SLUG//\\/}"
+    FAMILY_UPPER=$(printf '%s' "$FAMILY_NAME" | tr '[:lower:]' '[:upper:]')
     YEAR=$(date +%Y)
     DATE=$(date '+%B %d, %Y')
-    OUTPUT_DIR="$HOME/Documents/Family-Bible-${FAMILY_NAME}"
+    OUTPUT_DIR="$HOME/Documents/Family-Bible-${FAMILY_SLUG}"
     
     echo -e "${BOLD}Generating the ${FAMILY_NAME} Family Bible...${NC}"
     mkdir -p "$OUTPUT_DIR"
@@ -275,30 +282,55 @@ cmd_generate() {
     echo ""
     echo -e "${BOLD}Enter a dedication (or press Enter for default):${NC}"
     echo -ne "> "
-    read DEDICATION
+    read -r DEDICATION
     if [ -z "$DEDICATION" ]; then
         DEDICATION="This Bible is lovingly dedicated to the ${FAMILY_NAME} family. May the Word of God be a lamp unto your feet and a light unto your path. — Psalm 119:105"
     fi
     
     echo ""
     echo "[1/4] Generating Bible cover..."
-    sed -e "s/{{FAMILY_NAME}}/${FAMILY_UPPER}/g" \
-        -e "s/{{YEAR}}/${YEAR}/g" \
-        "$TEMPLATE_DIR/bible-cover.html" > "$OUTPUT_DIR/01-cover.html"
+    export FB_OUT="$OUTPUT_DIR" FB_FAMILY_UPPER="$FAMILY_UPPER" FB_YEAR="$YEAR"
+    python3 << 'PYFB1'
+import os
+from pathlib import Path
+out = Path(os.environ["FB_OUT"])
+tpl = Path(os.environ.get("TEMPLATE_DIR", "/usr/share/alfred/bible/templates"))
+text = (tpl / "bible-cover.html").read_text(encoding="utf-8", errors="replace")
+text = text.replace("{{FAMILY_NAME}}", os.environ["FB_FAMILY_UPPER"]).replace("{{YEAR}}", os.environ["FB_YEAR"])
+(out / "01-cover.html").write_text(text, encoding="utf-8", errors="replace")
+PYFB1
     
     echo "[2/4] Generating covenant certificate..."
     HASH_INPUT="${FAMILY_NAME}-${DATE}-${DEDICATION}"
-    HASH=$(echo -n "$HASH_INPUT" | sha256sum | cut -d' ' -f1)
-    sed -e "s/{{FAMILY_NAME}}/${FAMILY_UPPER}/g" \
-        -e "s/{{DATE}}/${DATE}/g" \
-        -e "s|{{DEDICATION}}|${DEDICATION}|g" \
-        -e "s/{{HASH}}/${HASH}/g" \
-        "$TEMPLATE_DIR/covenant-certificate.html" > "$OUTPUT_DIR/02-covenant-certificate.html"
+    HASH=$(printf '%s' "$HASH_INPUT" | sha256sum | cut -d' ' -f1)
+    export FB_OUT="$OUTPUT_DIR" FB_FAMILY_UPPER="$FAMILY_UPPER" FB_DATE="$DATE" FB_DEDICATION="$DEDICATION" FB_HASH="$HASH"
+    python3 << 'PYFB2'
+import os
+from pathlib import Path
+out = Path(os.environ["FB_OUT"])
+tpl = Path(os.environ.get("TEMPLATE_DIR", "/usr/share/alfred/bible/templates"))
+text = (tpl / "covenant-certificate.html").read_text(encoding="utf-8", errors="replace")
+text = (
+    text.replace("{{FAMILY_NAME}}", os.environ["FB_FAMILY_UPPER"])
+    .replace("{{DATE}}", os.environ["FB_DATE"])
+    .replace("{{DEDICATION}}", os.environ["FB_DEDICATION"])
+    .replace("{{HASH}}", os.environ["FB_HASH"])
+)
+(out / "02-covenant-certificate.html").write_text(text, encoding="utf-8", errors="replace")
+PYFB2
     
     echo "[3/4] Generating family tree template..."
-    sed -e "s/{{FAMILY_NAME}}/${FAMILY_UPPER}/g" \
-        -e 's/{{[A-Z_]*}}//g' \
-        "$TEMPLATE_DIR/family-tree.html" > "$OUTPUT_DIR/03-family-tree.html"
+    export FB_OUT="$OUTPUT_DIR" FB_FAMILY_UPPER="$FAMILY_UPPER"
+    python3 << 'PYFB3'
+import os, re
+from pathlib import Path
+out = Path(os.environ["FB_OUT"])
+tpl = Path(os.environ.get("TEMPLATE_DIR", "/usr/share/alfred/bible/templates"))
+text = (tpl / "family-tree.html").read_text(encoding="utf-8", errors="replace")
+text = text.replace("{{FAMILY_NAME}}", os.environ["FB_FAMILY_UPPER"])
+text = re.sub(r"\{\{[A-Z_]+\}\}", "", text)
+(out / "03-family-tree.html").write_text(text, encoding="utf-8", errors="replace")
+PYFB3
     
     echo "[4/4] Generating PDFs..."
     if command -v weasyprint &>/dev/null; then
