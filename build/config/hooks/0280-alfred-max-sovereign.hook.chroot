@@ -255,22 +255,27 @@ cloud_status() {
 }
 
 distribute_task() {
-    PROMPT="$*"
-    echo -e "${CYAN}[Omahon Cloud] Distributing task: ${PROMPT:0:80}...${NC}"
+    if [[ $# -eq 0 ]]; then
+        echo "Usage: alfred-omahon-cloud run -- <task words...>" >&2
+        return 1
+    fi
+    TASKP=$(printf '%.80s' "$*")
+    echo -e "${CYAN}[Omahon Cloud] Distributing task: ${TASKP}...${NC}"
 
-    # Local Omahon first
+    # Local Omahon first (argv, not a shell string)
     if command -v omahon &>/dev/null; then
         echo -e "${GREEN}[Local] Running on Omahon...${NC}"
-        omahon "$PROMPT" 2>/dev/null &
+        omahon "$@" 2>/dev/null &
         LOCAL_PID=$!
     fi
 
     # Fan out to peers
     if [ -f "$CLOUD_DIR/active-peers.txt" ]; then
         while read -r peer; do
+            [[ -z "${peer//[[:space:]]/}" ]] || [[ "$peer" == \#* ]] && continue
             echo -e "${YELLOW}[Peer: $peer] Dispatching...${NC}"
-            ssh -o ConnectTimeout=3 -o StrictHostKeyChecking=accept-new "$peer" \
-                "omahon '$PROMPT' 2>/dev/null" &
+            ssh -o ConnectTimeout=3 -o BatchMode=yes -o StrictHostKeyChecking=accept-new "$peer" \
+                omahon "$@" 2>/dev/null &
         done < "$CLOUD_DIR/active-peers.txt"
     fi
 
@@ -367,17 +372,22 @@ skynet_join() {
 }
 
 skynet_distribute() {
-    CMD="$*"
-    echo -e "${CYAN}[Skynet] Distributing command to swarm: $CMD${NC}"
-    # Run locally
+    if [[ $# -eq 0 ]]; then
+        echo "Usage: alfred-skynet distribute -- <command> [args...]" >&2
+        echo "Example: alfred-skynet distribute -- ls -la /tmp" >&2
+        return 1
+    fi
+    echo -e "${CYAN}[Skynet] Distributing argv to swarm:${NC} $*"
     echo -e "${GREEN}[Local]${NC}"
-    bash -c "$CMD" &
+    # Never use bash -c on a joined string (command injection). Exec argv locally.
+    "$@" &
 
-    # Fan out to swarm
     if [ -f "$SKYNET_DIR/swarm-members.txt" ]; then
         while read -r member; do
+            [[ -z "${member//[[:space:]]/}" ]] || [[ "$member" == \#* ]] && continue
             echo -e "${CYAN}[Node: $member]${NC}"
-            ssh -o ConnectTimeout=3 -o StrictHostKeyChecking=accept-new "$member" "$CMD" 2>/dev/null &
+            # Pass argv through to remote ssh without local shell interpretation.
+            ssh -o ConnectTimeout=3 -o BatchMode=yes -o StrictHostKeyChecking=accept-new "$member" "$@" 2>/dev/null &
         done < "$SKYNET_DIR/swarm-members.txt"
     fi
     wait
@@ -397,7 +407,7 @@ case "${1:-help}" in
         echo "  status       — Show node info and swarm members"
         echo "  join <ip>    — Add a node to the swarm (bidirectional)"
         echo "  leave <ip>   — Remove a node from the swarm"
-        echo "  distribute   — Run a command across all swarm nodes"
+        echo "  distribute -- <cmd> [args] — Run argv on all swarm nodes (no shell string)"
         echo "  id           — Show this node's unique ID"
         ;;
 esac

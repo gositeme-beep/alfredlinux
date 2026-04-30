@@ -70,10 +70,11 @@ if ! curl -s http://localhost:7700/health | grep -q available; then
     exit 1
 fi
 
-# Search
+# Search (JSON-encode query — never interpolate QUERY into JSON by hand)
+MS_BODY=$(QUERY="$*" python3 -c 'import json,os; print(json.dumps({"queries":[{"indexUid":"docs","q":os.environ.get("QUERY",""),"limit":5}]}))')
 RESULT=$(curl -s "http://localhost:7700/multi-search" \
     -H "Content-Type: application/json" \
-    -d "{\"queries\": [{\"indexUid\": \"docs\", \"q\": \"$QUERY\", \"limit\": 5}]}" 2>/dev/null)
+    -d "$MS_BODY" 2>/dev/null)
 
 if echo "$RESULT" | python3 -c "
 import sys, json
