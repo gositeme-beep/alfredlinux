@@ -12,13 +12,14 @@ security-audit.sh
   Optional GitHub mirror: .github/workflows/security-audit.yml (keep aligned with .gitea if used)
 
 audit-law-wrappers.sh
-  Same grep rules on **runtime** shells under `LAW_ROOT` (default `/home/gositeme/law`): top-level `*.sh`
-  plus `alfred-build-control-plane/*.sh`. Exits 0 if `LAW_ROOT` is missing (e.g. CI). No SPDX gate.
+  Same grep rules on **runtime** shells under `LAW_ROOT` (default `/home/gositeme/law`): top-level `*.sh`,
+  `alfred-build-control-plane/*.sh`, `wallpapers/scripts/*.sh`, and `kernel-*-work/*.sh` (no SPDX gate).
+  Exits 0 if `LAW_ROOT` is missing (e.g. CI).
     bash scripts/audit-law-wrappers.sh
 
 alfred-repo-health.sh
   Runs `release-integrity.sh check-repo`, `security-audit.sh`, and **`audit-law-wrappers.sh`**
-  (grep pass on `/home/gositeme/law/*.sh` when that tree exists; otherwise skipped).
+  (law-wrapper grep pass when `/home/gositeme/law` exists; otherwise skipped).
   Optional: `ALFRED_LINUX_REPO=/path/to/checkout` when invoked from elsewhere.
     bash scripts/alfred-repo-health.sh
   Systemd user units (edit WorkingDirectory if your clone path differs):

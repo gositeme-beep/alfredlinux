@@ -26,7 +26,8 @@ Wave 3 (prepare next — backlog)
     wg-quick, avahi, curl to fixed endpoints); start in complain, then enforce.
   • SBOM: SPDX or CycloneDX export for ISO packages + hook-generated debs.
   • curl|bash audit: **scripts/** + **build-assets/**/*.sh** in `security-audit.sh`; **law**
-    runtime copies: **`scripts/audit-law-wrappers.sh`** (`$LAW_ROOT/*.sh`, default `/home/gositeme/law`).
+    runtime copies: **`scripts/audit-law-wrappers.sh`** (`$LAW_ROOT` top-level `*.sh`, control-plane,
+    `wallpapers/scripts`, `kernel-*-work/` shells; default `/home/gositeme/law`).
     Deeper trees under law (kernel tarballs, etc.) are still out of scope.
   • ~~README “8 hooks” vs six IDs~~ (fixed); ~~Elyon naming drift~~ (LICENSING note); ~~0160 .bak~~ (removed from tree).
   • mesh-register: optional TLS public-key pinning file for gositeme.com.

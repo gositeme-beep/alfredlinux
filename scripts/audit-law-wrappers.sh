@@ -5,6 +5,8 @@
 # full kernel tree. Scans only:
 #   - $LAW_ROOT/*.sh
 #   - $LAW_ROOT/alfred-build-control-plane/*.sh (if that directory exists)
+#   - $LAW_ROOT/wallpapers/scripts/*.sh (if that directory exists)
+#   - $LAW_ROOT/kernel-*-work/*.sh per matching work dir (bind/docker helpers; not kernel tarballs)
 #
 # Usage (from Alfred repo root, or any cwd):
 #   bash scripts/audit-law-wrappers.sh
@@ -73,6 +75,19 @@ if [[ -d "$LAW_ROOT/alfred-build-control-plane" ]]; then
     count=$((count + 1))
   done
 fi
+if [[ -d "$LAW_ROOT/wallpapers/scripts" ]]; then
+  for f in "$LAW_ROOT/wallpapers/scripts"/*.sh; do
+    scan_file "$f"
+    count=$((count + 1))
+  done
+fi
+for kdir in "$LAW_ROOT"/kernel-*-work/; do
+  [[ -d "$kdir" ]] || continue
+  for f in "$kdir"*.sh; do
+    scan_file "$f"
+    count=$((count + 1))
+  done
+done
 
 log "=== scanned $count shell file(s) under LAW_ROOT ==="
 log "=== summary: CRITICAL=$FAIL WARN=$WARN ==="
