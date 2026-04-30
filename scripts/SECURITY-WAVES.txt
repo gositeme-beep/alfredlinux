@@ -79,6 +79,7 @@ CI (GoForge — https://alfredlinux.com/forge/)
     **Auth debug trace** (optional): **GOSITEME_AUTH_DEBUG_TRACE=1** → minimal lines in
     **/home/gositeme/law/var/auth-debug-trace.log** (never raw **$_SESSION**).
     **Session backup** (optional, operator): **GOSITEME_SESSION_BACKUP=1** appends legacy **gate-enter** lines with full
-    **sess=** JSON to **GOSITEME_SESSION_BACKUP_PATH** or default **/home/gositeme/oauth-trace.log** (use **law/var/…** if you
-    prefer that tree). Off by default so unattended hosts do not grow sensitive logs.
+    **sess=** JSON to **GOSITEME_SESSION_BACKUP_PATH** or default **/home/gositeme/oauth-trace.log**. Rotation when the active
+    file reaches **GOSITEME_SESSION_BACKUP_MAX_BYTES** (default **52428800**, max **512MiB**): rename to **{path}.prior.{UTC}**;
+    keep **GOSITEME_SESSION_BACKUP_KEEP** newest rotated files (default **8**, max **64**), delete older. Off by default.
     **wallet**, **index**, **departments**, **pro-discussions** unchanged (not commander-only).
