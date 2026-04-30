@@ -35,8 +35,9 @@ What “do our best” **does** mean (Kingdom standard of care)
      **0710** prevents silent replacement of the Alfred kernel by Debian meta
      packages (`README-KERNEL7.txt` runtime policy).
 
-  5) **Gate on the ISO:** Hook **0050** fails the chroot if `linux-image-7.0.1*`
-     is not actually installed — no “phantom” kernel story.
+  5) **Gate on the ISO:** `scripts/iso-preflight.sh` + `scripts/stage-kernel-debs-for-iso.sh`
+     fail before `lb` if `linux-image-7.0.1*` debs are missing from `config/packages.chroot/`
+     — no “phantom” kernel story.
 
   6) **Transparency:** When the world asks, we point here + `README-KERNEL7.txt`
      + hooks — not a hidden process.

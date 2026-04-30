@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Run before lb build. Exit 1 if ISO hook 0050 would fail (missing linux-image-7.0.1).
+# Run before lb build. Exit 1 if staged kernel debs are missing (linux-image-7.0.1*).
 set -euo pipefail
 ROOT="${ALFRED_SRC:-$(cd "$(dirname "$0")/.." && pwd)}"
 PC="${ROOT}/config/packages.chroot"
@@ -52,7 +52,7 @@ debs=( "$PC"/linux-image-7.0.1*.deb )
 if ((${#debs[@]})); then
   for f in "${debs[@]}"; do echo "  OK $f"; done
 else
-  echo "  FAIL: no linux-image-7.0.1*.deb — hook 0050 will abort lb build."
+  echo "  FAIL: no linux-image-7.0.1*.deb — lb/apt will fail without the Alfred kernel debs."
   echo "  See: $ROOT/config/packages.chroot/README-KERNEL7.txt"
   echo "  Fetch sources: bash scripts/kernel-download-7.0.1.sh"
   echo "  Pack debs from a builder: bash scripts/pack-kernel-debs-archive.sh"

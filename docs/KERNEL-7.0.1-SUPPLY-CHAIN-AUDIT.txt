@@ -52,8 +52,8 @@ Deep scan — **Alfred-controlled** kernel path (findings)
      • Copies whatever matches `linux-image-7.0.1*.deb` from **`KERNEL_WORK`** —
        trojan if **WORK** is poisoned. Same host-trust model as (2).
 
-  5) **Hooks**
-     • **0050** — version gate only (no fetch).
+  5) **Hooks / pre-build gates**
+     • **iso-preflight + staging** — fail before `lb` if `linux-image-7.0.1*.deb` is absent (no fetch).
      • **0160** — sysctl / audit / module policy (reduces exploitability; not
        source scanning).
      • **0166** — builds **liboqs / oqs-provider** from **staged tarballs** under
@@ -100,7 +100,7 @@ The bigger picture: “upgrade GoForge” vs **where** kernel audit runs
 
   **Separation of repos (normal industry pattern):**
     • **Alfred Linux** — OS hooks, live-build, policy (this tree). It **points at**
-      upstream tarballs and ships **policy + gates** (0050, 0160, download SHA256).
+      upstream tarballs and ships **policy + gates** (iso-preflight/staging, 0160, download SHA256).
     • **Kernel line** — millions of lines, huge `cc` graph. Most teams either:
         (a) keep **`KERNEL_WORK`** on a **private build host** and run scanners there, or
         (b) open a **second forge repo** (e.g. `linux-alfred-7.0`) that tracks a **tag

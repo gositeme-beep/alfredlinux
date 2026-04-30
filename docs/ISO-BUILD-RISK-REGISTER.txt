@@ -84,7 +84,7 @@ MEDIUM
 ------
 6) Disk / I/O — full disk or slow array → apt or squashfs failures (opaque E: lines).
 7) Network / mirrors — intermittent apt during bootstrap or binary apt.
-8) Custom kernel 7.0.1 debs + hook 0050 — name / version drift breaks install expectations.
+8) Custom kernel 7.0.1 debs + preflight/staging drift — name / version mismatch breaks install expectations.
    Mitigate: hooks 0160 + 0710 set Remove-Unused-Kernel-Packages false; 0710 also installs
              preferences.d blocking Debian linux-image-amd64 meta; publish newer 7.0.1*.deb when you bump the kernel.
 9) lb config ordering — lb build without prior lb config → “config stage required first”
