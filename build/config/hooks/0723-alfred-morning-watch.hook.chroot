@@ -9,6 +9,7 @@
 # alfred-devotion CLI — Full lectionary (OT + NT + Psalm + Proverb),
 # 365-day cycle, encrypted prayer journal, prayer timer with worship
 # track and gentle chime. The machine greets the day with Scripture.
+# Journal template file: created via Python (date/day validated), not an unquoted heredoc.
 #
 # BUILD: v7.77 Kingdom of God Edition
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -212,29 +213,50 @@ case "${1:-today}" in
         mkdir -p "$PRAYER_DIR"
         FILE="$PRAYER_DIR/journal-${TODAY}.txt"
         if [ ! -f "$FILE" ]; then
-            cat > "$FILE" << TEMPLATE
-═══════════════════════════════════════════════════════
-   Prayer Journal — $TODAY
-   Day $DAY_OF_YEAR of 365
-═══════════════════════════════════════════════════════
+            export DEV_JOURNAL_DATE="$TODAY" DEV_DAY_OF_YEAR="$DAY_OF_YEAR" DEV_OUT="$FILE"
+            if ! python3 << 'PYJOUR'
+import os
+import re
+import sys
+from pathlib import Path
 
-Thanksgivings:
-
-
-Prayers for others:
-
-
-Prayers for myself:
-
-
-What God spoke to me today:
-
-
-"Evening, and morning, and at noon, will I pray,
- and cry aloud: and he shall hear my voice." — Psalm 55:17
-
-═══════════════════════════════════════════════════════
-TEMPLATE
+d = os.environ["DEV_JOURNAL_DATE"]
+day_s = os.environ["DEV_DAY_OF_YEAR"]
+out = os.environ["DEV_OUT"]
+if not re.fullmatch(r"[0-9]{4}-[0-9]{2}-[0-9]{2}", d):
+    sys.exit(1)
+if not day_s.isdigit() or not 1 <= int(day_s) <= 366:
+    sys.exit(1)
+day = int(day_s)
+text = (
+    "═══════════════════════════════════════════════════════\n"
+    f"   Prayer Journal — {d}\n"
+    f"   Day {day} of 365\n"
+    "═══════════════════════════════════════════════════════\n"
+    "\n"
+    "Thanksgivings:\n"
+    "\n"
+    "\n"
+    "Prayers for others:\n"
+    "\n"
+    "\n"
+    "Prayers for myself:\n"
+    "\n"
+    "\n"
+    "What God spoke to me today:\n"
+    "\n"
+    "\n"
+    '"Evening, and morning, and at noon, will I pray,\n'
+    ' and cry aloud: and he shall hear my voice." — Psalm 55:17\n'
+    "\n"
+    "═══════════════════════════════════════════════════════\n"
+)
+Path(out).write_text(text, encoding="utf-8")
+PYJOUR
+            then
+                echo -e "${RED}  Could not create journal template.${NC}" >&2
+                exit 1
+            fi
         fi
         ${EDITOR:-nano} "$FILE"
         ;;

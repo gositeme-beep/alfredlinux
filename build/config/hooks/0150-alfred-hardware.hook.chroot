@@ -9,6 +9,7 @@
 # experience — AND still contributes to the mesh, VPN, and blockchain.
 #
 # "No device left behind."
+# zram-swap.service unit body: written via Python (size_mb validated), not unquoted heredoc.
 # ═══════════════════════════════════════════════════════════════════
 set -e
 
@@ -562,20 +563,35 @@ setup_zram() {
     # ZRAM gives old machines virtual RAM via compression
     if command -v zramctl &>/dev/null; then
         echo "[ZRAM] Configuring ${size_mb}MB compressed swap"
-        cat > /etc/systemd/system/zram-swap.service << ZRAMSVC
-[Unit]
-Description=Alfred ZRAM Swap
-After=local-fs.target
+        export ZRAM_SIZE_MB="$size_mb"
+        if ! python3 << 'PYZRAM'
+import os
+import sys
+from pathlib import Path
 
-[Service]
-Type=oneshot
-RemainAfterExit=yes
-ExecStart=/bin/bash -c 'modprobe zram && zramctl /dev/zram0 --size ${size_mb}M --algorithm zstd && mkswap /dev/zram0 && swapon -p 100 /dev/zram0'
-ExecStop=/bin/bash -c 'swapoff /dev/zram0 && zramctl --reset /dev/zram0'
-
-[Install]
-WantedBy=multi-user.target
-ZRAMSVC
+s = os.environ["ZRAM_SIZE_MB"]
+if not s.isdigit() or not 1 <= int(s) <= 131072:
+    sys.exit(1)
+unit = (
+    "[Unit]\n"
+    "Description=Alfred ZRAM Swap\n"
+    "After=local-fs.target\n"
+    "\n"
+    "[Service]\n"
+    "Type=oneshot\n"
+    "RemainAfterExit=yes\n"
+    f"ExecStart=/bin/bash -c 'modprobe zram && zramctl /dev/zram0 --size {s}M --algorithm zstd && mkswap /dev/zram0 && swapon -p 100 /dev/zram0'\n"
+    "ExecStop=/bin/bash -c 'swapoff /dev/zram0 && zramctl --reset /dev/zram0'\n"
+    "\n"
+    "[Install]\n"
+    "WantedBy=multi-user.target\n"
+)
+Path("/etc/systemd/system/zram-swap.service").write_text(unit, encoding="utf-8")
+PYZRAM
+        then
+            echo "[ZRAM] Failed to write zram-swap.service" >&2
+            return 1
+        fi
         systemctl enable zram-swap.service 2>/dev/null || true
     fi
 }
