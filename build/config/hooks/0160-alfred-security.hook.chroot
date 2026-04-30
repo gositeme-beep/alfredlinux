@@ -92,7 +92,32 @@ if [ -f /etc/default/grub ]; then
         CURRENT=$(echo "$CURRENT" | sed "s/${param}=[^ ]*//g;s/  / /g;s/^ //;s/ $//")
     done
     CURRENT=$(echo "$CURRENT" | sed 's/slab_nomerge//g;s/  / /g;s/^ //;s/ $//')
-    sed -i "s|^GRUB_CMDLINE_LINUX_DEFAULT=.*|GRUB_CMDLINE_LINUX_DEFAULT=\"${CURRENT} ${SECURITY_PARAMS}\"|" /etc/default/grub
+    export ALFRED_GRUB_CURRENT="$CURRENT"
+    export ALFRED_GRUB_SECURITY="$SECURITY_PARAMS"
+    python3 << 'PYGRUB'
+import os
+import re
+from pathlib import Path
+
+p = Path("/etc/default/grub")
+text = p.read_text(encoding="utf-8", errors="surrogateescape")
+cur = os.environ.get("ALFRED_GRUB_CURRENT", "").strip()
+sec = os.environ.get("ALFRED_GRUB_SECURITY", "").strip()
+inner = f"{cur} {sec}".strip().replace('"', '\\"')
+
+def repl(_m):
+    return f'GRUB_CMDLINE_LINUX_DEFAULT="{inner}"'
+
+new_text, n = re.subn(
+    r"^GRUB_CMDLINE_LINUX_DEFAULT=.*$",
+    repl,
+    text,
+    count=1,
+    flags=re.MULTILINE,
+)
+if n:
+    p.write_text(new_text, encoding="utf-8", errors="surrogateescape")
+PYGRUB
 fi
 
 # ═══════════════════════════════════════════════════

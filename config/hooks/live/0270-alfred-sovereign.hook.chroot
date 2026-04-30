@@ -115,7 +115,12 @@ case "${COMMAND,,}" in
     *"open browser"*) xdg-open about:blank &;;
     *"open terminal"*) xfce4-terminal &;;
     *"open files"*) thunar &;;
-    *"open editor"*|*"open ide"*) xdg-open http://localhost:8443 &;;
+    *"open editor"*|*"open ide"*)
+        if curl -fsS --max-time 2 http://127.0.0.1:8443/ >/dev/null 2>&1; then
+            xdg-open http://127.0.0.1:8443 &
+        else
+            echo "alfred-voice-cmd: nothing on http://127.0.0.1:8443 (start Alfred IDE / code-server first)." >&2
+        fi;;
     *"lock"*) xflock4 &;;
     *"check security"*|*"heal"*) alfred-heal;;
     *"update"*) xfce4-terminal -e "sudo apt update && sudo apt upgrade -y" &;;
