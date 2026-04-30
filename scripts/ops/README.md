@@ -9,6 +9,18 @@ Tracked copies of the three scripts the build host actually runs out of
 | `alfred-night-shift.sh` | systemd entrypoint: waits on the build container, runs smoke + restage, auto-requeues up to 2 retries via ABCP. |
 | `smoke-test-iso.sh` | Mounts a fresh ISO, validates `/etc/alfred` is in the squashfs and the ISO mtime is fresher than `THRESHOLD`. |
 | `post-build-restage.sh` | Hardlinks fresh ISO into `public_html/downloads/`, computes SHA-512 + BLAKE3 + SHA-256, regenerates `.torrent`, computes new btih, patches `$gaTorrentBtihHex` in `ga-release-state.php`, GPG-signs the ISO + every SUMS file, and bumps `$gaFrozenIsoHookCount` based on hook stamps in the squashfs. |
+| `night-shift-watchdog-email.sh` | Cron-friendly watchdog: emails `commander@gositeme.com` once per **new** `night-shift-DONE.txt` or `night-shift-FAIL.txt` mtime. First run records current mtimes without sending (no backlog burst). Requires a working local MTA (`mail(1)`); see `night-shift-watchdog.log`. |
+
+## Cron: build completion email
+
+After installing the script under `/home/gositeme/law/`:
+
+```bash
+chmod +x /home/gositeme/law/night-shift-watchdog-email.sh
+(crontab -l 2>/dev/null; echo '*/5 * * * * /home/gositeme/law/night-shift-watchdog-email.sh >/dev/null 2>&1') | crontab -
+```
+
+State file: `/home/gositeme/law/.night-shift-watchdog.state` (mode 600). Optional env: `NIGHT_SHIFT_WATCHDOG_TO`, `NIGHT_SHIFT_WATCHDOG_LOG`.
 
 ## Sync to the runtime location
 
