@@ -49,23 +49,32 @@ log()   { echo "[night $(date -Is)] $*"; }
 state() { echo "$(date -Is) $*" > "$STATE"; }
 fail()  { echo "FAIL at $(date -Is): $*. See $LOG" > "$FAIL_MARKER"; state "FAIL: $*"; log "FAIL: $*"; exit "${2:-1}"; }
 
-# If lb-docker-build.log already contains live-build's terminal E: line, write FAIL_MARKER even when
-# docker wait / watch-lb-docker-build.sh mis-reports (exits 0, wrong JSON, etc.). Uses last 200 lines
-# only to avoid matching an ancient failure still present earlier in a huge log.
+# If lb-docker-build.log already contains live-build's terminal E: line for the **current** inner run,
+# write FAIL_MARKER even when docker wait / watch mis-reports. Scope to log lines after the last
+# "[inner] lb build starting" so a previous run's E: in the same file does not block retries forever.
 write_fail_if_log_fatal() {
   local cname="$1"
-  if ! tail -200 "$SL/lb-docker-build.log" 2>/dev/null | grep -Fq 'E: An unexpected failure occurred'; then
+  local log="$SL/lb-docker-build.log"
+  local slice=""
+  [[ -f "$log" ]] || return 1
+  if grep -Fq '[inner] lb build starting' "$log" 2>/dev/null; then
+    slice=$(tac "$log" 2>/dev/null | sed '/\[inner\] lb build starting/q' | tac)
+  else
+    slice=$(tail -400 "$log" 2>/dev/null)
+  fi
+  [[ -n "$slice" ]] || return 1
+  if ! printf '%s\n' "$slice" | grep -Fq 'E: An unexpected failure occurred'; then
     return 1
   fi
   {
     echo "FAIL at $(date -Is) — live-build reported: E: An unexpected failure occurred"
     echo "attempt #$ATTEMPT container $cname"
-    echo "Detected from tail of $SL/lb-docker-build.log (docker wait / watch may have mis-reported)."
+    echo "Detected in lb-docker-build.log after last [inner] lb build starting (docker wait / watch may have mis-reported)."
     echo
     echo "=== last 60 lines of lb-docker-build.log ==="
-    tail -60 "$SL/lb-docker-build.log" 2>/dev/null
+    tail -60 "$log" 2>/dev/null
   } > "$FAIL_MARKER"
-  log "wrote $FAIL_MARKER — fatal E: line present in lb-docker-build.log tail"
+  log "wrote $FAIL_MARKER — fatal E: in current inner-run slice of lb-docker-build.log"
   return 0
 }
 
