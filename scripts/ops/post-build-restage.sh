@@ -1,4 +1,5 @@
 #!/bin/bash
+# SPDX-License-Identifier: AGPL-3.0-or-later
 # Post-build re-stage: replace canonical ISO + regen sidecar/torrent/SUMS + patch ga-release-state.php
 # Run AFTER alfred-lb-build container exits (0) and new ISO appears in iso-output/.
 set -euo pipefail

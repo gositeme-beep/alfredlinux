@@ -1,4 +1,5 @@
 #!/bin/bash
+# SPDX-License-Identifier: AGPL-3.0-or-later
 # Smoke-test the freshly-built ISO before re-staging.
 # Verifies: ISO is recent, has Alfred content in squashfs, hooks ran.
 set -euo pipefail

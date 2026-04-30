@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: AGPL-3.0-or-later
 # bible_tongues_counts.sh — repo metadata drift helpers (source from repo root).
 # Expects cwd = repository root.
 #

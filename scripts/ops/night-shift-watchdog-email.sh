@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: AGPL-3.0-or-later
 # night-shift-watchdog-email.sh — one email per NEW night-shift completion/failure.
 #
 # Compares filesystem mtimes against a small state file so restarts/Cron repeats
