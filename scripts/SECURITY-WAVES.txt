@@ -76,6 +76,8 @@ CI (GoForge — https://alfredlinux.com/forge/)
     Nexus/Black Vault/Genesis, Pantheon, admins, call archive, integrity report, etc.); on **fleet-tracker**, **reports**,
     **agenda**, **command-center** only when **$isOwner** (33). Dell Watch **?action=feed** JSON also no-store.
     **reunion.php**: **auth-gate** + client 33 check + classified headers **before** **site-header** (correct **$page_title** / meta).
-    **Auth debug trace**: **GOSITEME_AUTH_DEBUG_TRACE=1** in the PHP environment enables minimal **oauth-trace.log** lines;
-    production default is **no** logging (previously **auth-gate** could write **full `$_SESSION` JSON** — removed).
+    **Auth debug trace** (optional): **GOSITEME_AUTH_DEBUG_TRACE=1** in the PHP environment; implementation
+    **includes/auth-debug-trace.inc.php** appends minimal lines to **/home/gositeme/law/var/auth-debug-trace.log**
+    (directory **0700**, not under **public_html**). Never logs raw **$_SESSION**. Legacy **~/oauth-trace.log** is unused
+    by these code paths; delete or rotate that file on the server if it still contains old data.
     **wallet**, **index**, **departments**, **pro-discussions** unchanged (not commander-only).
