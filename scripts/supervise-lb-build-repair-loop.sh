@@ -87,8 +87,9 @@ alfred_lb_recovery() {
 
 alfred_lb_check_auth
 
-# watch-lb-docker-build exits 0 if any old .iso exists (iso_count>0) even when this run never
-# finished. Require proof this attempt completed: marker in lb-docker-build.log plus inner success line.
+# watch-lb-docker-build may exit 0 on unknown docker_exit only when the container is gone and an ISO
+# exists (--rm race). Stale ISO + failed container exit is not success. Still require proof this attempt
+# completed: marker in lb-docker-build.log plus inner success line after that marker.
 alfred_lb_verify_inner_success() {
   local log="$REPO/lb-docker-build.log" sid="$1"
   [[ -f "$log" ]] || return 1

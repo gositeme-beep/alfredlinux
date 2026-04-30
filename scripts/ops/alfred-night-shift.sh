@@ -165,6 +165,11 @@ run_one_attempt() {
     return 8
   fi
 
+  if [[ "$watch_rc" -ne 0 ]]; then
+    log "watch-lb-docker-build.sh failed (rc=$watch_rc) — skipping ISO/smoke/restage this attempt"
+    return 9
+  fi
+
   [[ -f "$STATUS_JSON" ]] || { log "watcher didn't write status JSON"; return 3; }
   log "status JSON:"; cat "$STATUS_JSON"
 

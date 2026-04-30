@@ -134,6 +134,14 @@ find "$REPO/build" "$REPO/iso-output" -maxdepth 5 -name '*.iso' -type f 2>/dev/n
 ISO_COUNT="$(wc -l <"$ISO_LIST" | tr -d ' ')"
 LOG_TAIL="$(tail -60 "$LOG" 2>/dev/null || echo '(no log)')"
 
+# Align nap_ok / JSON with final exit rules (do not claim nap_ok when we will exit 1 on stale ISO + unknown).
+nap_ok_num=0
+if [[ "$EXIT" == "0" ]]; then
+  nap_ok_num=1
+elif [[ "$EXIT" == "unknown" ]] && [[ "$ISO_COUNT" != "0" ]] && ! docker inspect "$NAME" &>/dev/null; then
+  nap_ok_num=1
+fi
+
 {
   echo "=== watch-lb-docker-build $(date -Is) ==="
   echo "container: $NAME"
@@ -145,13 +153,12 @@ LOG_TAIL="$(tail -60 "$LOG" 2>/dev/null || echo '(no log)')"
 }
 
 if [[ -n "$STATUS_JSON" ]]; then
-  python3 - "$STATUS_JSON" "$NAME" "$EXIT" "$ISO_LIST" <<'PY'
+  python3 - "$STATUS_JSON" "$NAME" "$EXIT" "$ISO_LIST" "$nap_ok_num" <<'PY'
 import json, sys, time
-path, name, exit_s, iso_list = sys.argv[1:5]
+path, name, exit_s, iso_list, nap_s = sys.argv[1:6]
 with open(iso_list) as f:
     iso_paths = [ln.strip() for ln in f if ln.strip()]
-# docker wait often returns empty after --rm (unknown) even when lb build succeeded and wrote .iso
-nap_ok = len(iso_paths) > 0 and exit_s in ("0", "unknown")
+nap_ok = nap_s == "1"
 data = {
     "phase": "done",
     "ts": time.time(),
@@ -168,7 +175,7 @@ PY
 fi
 
 if [[ -n "$WEBHOOK" ]]; then
-  BODY=$(python3 -c "import json,time; n=int(${ISO_COUNT}); ex='${EXIT}'; print(json.dumps({'ts':time.time(),'container':'${NAME}','docker_exit':ex,'iso_count':n,'nap_ok':(n>0 and ex in ('0','unknown'))}))")
+  BODY=$(python3 -c "import json,time; n=int(${ISO_COUNT}); ex='${EXIT}'; ok=int(${nap_ok_num}); print(json.dumps({'ts':time.time(),'container':'${NAME}','docker_exit':ex,'iso_count':n,'nap_ok': bool(ok)}))")
   curl -sS -X POST -H 'Content-Type: application/json' -d "$BODY" "$WEBHOOK" -o /dev/null -w 'webhook_http:%{http_code}\n' || echo "webhook: curl failed"
 fi
 
