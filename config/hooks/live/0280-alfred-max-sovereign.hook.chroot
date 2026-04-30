@@ -397,7 +397,19 @@ skynet_distribute() {
 case "${1:-help}" in
     status)      skynet_status ;;
     join)        skynet_join "$2" ;;
-    leave)       sed -i "/$2/d" "$SKYNET_DIR/swarm-members.txt" 2>/dev/null; echo "Removed $2" ;;
+    leave)
+        _peer="${2:-}"
+        if [[ -z "$_peer" ]]; then echo "Usage: alfred-skynet leave <ip>" >&2; exit 1; fi
+        if [[ -f "$SKYNET_DIR/swarm-members.txt" ]]; then
+            _tmp=$(mktemp) || exit 1
+            if grep -Fvx "$_peer" "$SKYNET_DIR/swarm-members.txt" >"$_tmp" 2>/dev/null; then
+                mv -f "$_tmp" "$SKYNET_DIR/swarm-members.txt"
+            else
+                rm -f "$_tmp"
+            fi
+        fi
+        echo "Removed $_peer"
+        ;;
     distribute)  shift; skynet_distribute "$@" ;;
     id)          echo "$NODE_ID" ;;
     help|*)

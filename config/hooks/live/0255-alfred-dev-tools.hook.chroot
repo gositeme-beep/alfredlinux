@@ -63,6 +63,12 @@ if [ -f /opt/alfred/build-assets/rustup-init ]; then
 elif [ -f /build-assets/rustup-init ]; then
     /build-assets/rustup-init -y
 else
+    # Sealed / GA: no curl|sh rustup unless explicitly opted in at install time.
+    if [[ "${ALFRED_ALLOW_RUSTUP_NETWORK:-}" != "1" ]]; then
+        echo "install-rust: add rustup-init to build-assets (or /opt/alfred/build-assets/)." >&2
+        echo "install-rust: network rustup disabled (set ALFRED_ALLOW_RUSTUP_NETWORK=1 to override — not recommended for sealed ISOs)." >&2
+        exit 1
+    fi
     _ru=$(mktemp) || exit 1
     curl --proto '=https' --tlsv1.2 -sSf -o "$_ru" https://sh.rustup.rs
     sh "$_ru" -s -- -y
