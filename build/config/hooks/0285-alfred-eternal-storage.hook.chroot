@@ -13,6 +13,9 @@ echo "║  IPFS · Blockchain · Frequency Encoding · Redundancy Mesh    ║"
 echo "║  Alfred Linux 7.77 — Built for God's People                   ║"
 echo "╚════════════════════════════════════════════════════════════════╝"
 
+# Optional: ALFRED_ALLOW_HOOK_NETWORK_DOWNLOADS=1 allows dist.ipfs.tech kubo fetch
+# when no staged tarball/binary is present.
+
 ###############################################################################
 # 1. IPFS — InterPlanetary File System (Data lives forever across nodes)
 ###############################################################################
@@ -23,6 +26,7 @@ IPFS_TAR="kubo_v${IPFS_VERSION}_linux-${IPFS_ARCH}.tar.gz"
 
 # All external download steps are non-fatal — IPFS is optional in-ISO; deferring
 # to first-boot is fine. Any failure here used to abort the whole build.
+if [[ "${ALFRED_ALLOW_HOOK_NETWORK_DOWNLOADS:-}" == "1" ]]; then
 {
     wget -q "https://dist.ipfs.tech/kubo/v${IPFS_VERSION}/${IPFS_TAR}" \
         -O "/tmp/${IPFS_TAR}" 2>/dev/null \
@@ -33,6 +37,9 @@ IPFS_TAR="kubo_v${IPFS_VERSION}_linux-${IPFS_ARCH}.tar.gz"
         && echo "[ETERNAL] IPFS installed: $(/usr/local/bin/ipfs --version 2>/dev/null || echo 'binary ready')"
     rm -rf /tmp/kubo "/tmp/${IPFS_TAR}" 2>/dev/null
 } || echo "[ETERNAL] IPFS download deferred — will install on first boot with internet"
+else
+    echo "[ETERNAL] WARN: skipping IPFS kubo download (set ALFRED_ALLOW_HOOK_NETWORK_DOWNLOADS=1 or stage kubo)." >&2
+fi
 true
 
 # IPFS systemd service (runs as user)

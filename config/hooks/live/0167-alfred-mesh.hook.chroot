@@ -13,6 +13,9 @@
 # - alfred-mesh CLI — join/leave/status/peers/discover
 #
 # BUILD: v4.0+ Kingdom Edition
+#
+# Optional: ALFRED_ALLOW_HOOK_NETWORK_DOWNLOADS=1 allows Syncthing release-key
+# fetch when /build-assets/syncthing-archive-keyring.gpg is absent.
 # ═══════════════════════════════════════════════════════════════
 set -e
 # Fix /tmp permissions (may be restricted by earlier hooks in chroot)
@@ -38,9 +41,15 @@ echo "[MESH-02] Installing Syncthing (encrypted file sync)..."
 
 # Add Syncthing official repository
 mkdir -p /etc/apt/keyrings
-curl -fsSL https://syncthing.net/release-key.gpg -o /etc/apt/keyrings/syncthing-archive-keyring.gpg 2>/dev/null || true
+if [ -f /build-assets/syncthing-archive-keyring.gpg ]; then
+    cp /build-assets/syncthing-archive-keyring.gpg /etc/apt/keyrings/syncthing-archive-keyring.gpg
+elif [[ "${ALFRED_ALLOW_HOOK_NETWORK_DOWNLOADS:-}" == "1" ]]; then
+    curl -fsSL https://syncthing.net/release-key.gpg -o /etc/apt/keyrings/syncthing-archive-keyring.gpg 2>/dev/null || true
+else
+    echo "[MESH-02] WARN: skipping Syncthing key fetch (stage /build-assets/syncthing-archive-keyring.gpg or set ALFRED_ALLOW_HOOK_NETWORK_DOWNLOADS=1)." >&2
+fi
 
-if [ -f /etc/apt/keyrings/syncthing-archive-keyring.gpg ]; then
+if [ -f /etc/apt/keyrings/syncthing-archive-keyring.gpg ] && [ -s /etc/apt/keyrings/syncthing-archive-keyring.gpg ]; then
     echo "deb [signed-by=/etc/apt/keyrings/syncthing-archive-keyring.gpg] https://apt.syncthing.net/ syncthing stable" \
         > /etc/apt/sources.list.d/syncthing.list
     apt-get update -o Dir::Etc::sourcelist="sources.list.d/syncthing.list" \

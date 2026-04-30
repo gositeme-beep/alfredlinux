@@ -9,6 +9,9 @@
 # "Every king needs a chess board." — Commander Danny William Perez
 #
 # BUILD: v7.77 Kingdom of God Edition
+#
+# Optional: ALFRED_ALLOW_HOOK_NETWORK_DOWNLOADS=1 allows Flathub remote-add and
+# chess asset curl fetches from gositeme/CDN during chroot; default is skip.
 # ═══════════════════════════════════════════════════════════════════════════════
 
 set -e
@@ -58,7 +61,11 @@ EOF
 
 # Preconfigure Flathub for desktop package discovery.
 if command -v flatpak >/dev/null 2>&1; then
-  flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo >/dev/null 2>&1 || true
+  if [[ "${ALFRED_ALLOW_HOOK_NETWORK_DOWNLOADS:-}" == "1" ]]; then
+    flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo >/dev/null 2>&1 || true
+  else
+    echo "[STORE] WARN: skipping Flathub remote-add (set ALFRED_ALLOW_HOOK_NETWORK_DOWNLOADS=1)." >&2
+  fi
 fi
 
 echo "[STORE] ✓ Alfred Store configured"
@@ -83,6 +90,11 @@ mkdir -p "$CHESS_DIR/masters/css"
 mkdir -p "$CHESS_DIR/masters/assets/audio"
 mkdir -p "$CHESS_DIR/masters/assets/textures"
 mkdir -p "$CHESS_DIR/arena"
+
+# ═══════════════════════════════════════════════════
+# B3–B5. DOWNLOAD CHESS ASSETS (optional network)
+# ═══════════════════════════════════════════════════
+if [[ "${ALFRED_ALLOW_HOOK_NETWORK_DOWNLOADS:-}" == "1" ]]; then
 
 # ═══════════════════════════════════════════════════
 # B3. DOWNLOAD VR CHESS MASTERS (3D WebXR Experience)
@@ -168,6 +180,10 @@ if [ -f "$CHESS_DIR/arena/index.html" ]; then
     sed -i 's|https://code.jquery.com/jquery[^"]*"|js/jquery.min.js"|g' "$CHESS_DIR/arena/index.html" 2>/dev/null || true
     curl -fsSL "https://code.jquery.com/jquery-3.7.1.min.js" \
         -o "$CHESS_DIR/arena/js/jquery.min.js" 2>/dev/null || true
+fi
+
+else
+    echo "[CHESS-03] WARN: skipping chess asset downloads (set ALFRED_ALLOW_HOOK_NETWORK_DOWNLOADS=1 or pre-stage under /build-assets)." >&2
 fi
 
 # ═══════════════════════════════════════════════════

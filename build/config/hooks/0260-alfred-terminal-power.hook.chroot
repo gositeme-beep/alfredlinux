@@ -9,6 +9,9 @@
 #
 # You open a terminal on Alfred and feel like a god.
 # You open a terminal on Ubuntu and feel like it's 1995.
+#
+# Optional: ALFRED_ALLOW_HOOK_NETWORK_DOWNLOADS=1 allows GitHub fetches when
+# apt has no package and /build-assets has no staged binary.
 # ═══════════════════════════════════════════════════════════════
 set -e
 
@@ -42,31 +45,37 @@ echo "[TERM] Installing eza..."
 apt-get install -y --no-install-recommends eza 2>/dev/null || {
     echo "[TERM] eza not in repos, fetching from GitHub..."
     EZA_VERSION="0.20.14"
-    if [ "$ARCH" = "amd64" ]; then
+    if [ "$ARCH" = "amd64" ] && [[ "${ALFRED_ALLOW_HOOK_NETWORK_DOWNLOADS:-}" == "1" ]]; then
         wget -qO /tmp/eza.tar.gz "https://github.com/eza-community/eza/releases/download/v${EZA_VERSION}/eza_x86_64-unknown-linux-gnu.tar.gz" \
             && tar xzf /tmp/eza.tar.gz -C /usr/local/bin/ \
             && rm -f /tmp/eza.tar.gz || true
+    elif [ "$ARCH" = "amd64" ]; then
+        echo "[TERM] WARN: skipping eza GitHub fetch (set ALFRED_ALLOW_HOOK_NETWORK_DOWNLOADS=1)." >&2
     fi
 }
 
 # ── 4. lazygit (TUI git client) ──
 echo "[TERM] Installing lazygit..."
 LAZYGIT_VERSION="0.44.1"
-if [ "$ARCH" = "amd64" ]; then
+if [ "$ARCH" = "amd64" ] && [[ "${ALFRED_ALLOW_HOOK_NETWORK_DOWNLOADS:-}" == "1" ]]; then
     wget -qO /tmp/lazygit.tar.gz \
         "https://github.com/jesseduffield/lazygit/releases/download/v${LAZYGIT_VERSION}/lazygit_${LAZYGIT_VERSION}_Linux_x86_64.tar.gz" \
         && tar xzf /tmp/lazygit.tar.gz -C /usr/local/bin/ lazygit \
         && rm -f /tmp/lazygit.tar.gz || true
+elif [ "$ARCH" = "amd64" ]; then
+    echo "[TERM] WARN: skipping lazygit GitHub fetch (set ALFRED_ALLOW_HOOK_NETWORK_DOWNLOADS=1)." >&2
 fi
 
 # ── 5. duf (better df) ──
 echo "[TERM] Installing duf..."
 apt-get install -y --no-install-recommends duf 2>/dev/null || {
-    if [ "$ARCH" = "amd64" ]; then
+    if [ "$ARCH" = "amd64" ] && [[ "${ALFRED_ALLOW_HOOK_NETWORK_DOWNLOADS:-}" == "1" ]]; then
         DUF_VERSION="0.8.1"
         wget -qO /tmp/duf.deb \
             "https://github.com/muesli/duf/releases/download/v${DUF_VERSION}/duf_${DUF_VERSION}_linux_amd64.deb" \
             && dpkg -i /tmp/duf.deb && rm -f /tmp/duf.deb || true
+    elif [ "$ARCH" = "amd64" ]; then
+        echo "[TERM] WARN: skipping duf GitHub fetch (set ALFRED_ALLOW_HOOK_NETWORK_DOWNLOADS=1)." >&2
     fi
 }
 
@@ -77,13 +86,15 @@ apt-get install -y --no-install-recommends zoxide 2>/dev/null || {
     if [ -f /build-assets/zoxide ]; then
         echo "[TERM] Using pre-staged zoxide (air-gap safe)"
         install -m 755 /build-assets/zoxide /usr/local/bin/zoxide
-    elif [ "$ARCH" = "amd64" ]; then
+    elif [ "$ARCH" = "amd64" ] && [[ "${ALFRED_ALLOW_HOOK_NETWORK_DOWNLOADS:-}" == "1" ]]; then
         ZOXIDE_VERSION="0.9.6"
         wget -qO /tmp/zoxide.tar.gz \
             "https://github.com/ajeetdsouza/zoxide/releases/download/v${ZOXIDE_VERSION}/zoxide-${ZOXIDE_VERSION}-x86_64-unknown-linux-musl.tar.gz" \
             && tar xzf /tmp/zoxide.tar.gz -C /usr/local/bin/ zoxide \
             && chmod +x /usr/local/bin/zoxide \
             && rm -f /tmp/zoxide.tar.gz || true
+    elif [ "$ARCH" = "amd64" ]; then
+        echo "[TERM] WARN: skipping zoxide GitHub fetch (set ALFRED_ALLOW_HOOK_NETWORK_DOWNLOADS=1 or stage /build-assets/zoxide)." >&2
     fi
 }
 
@@ -93,13 +104,15 @@ echo "[TERM] Installing Starship prompt..."
 if [ -f /build-assets/starship ]; then
     echo "[TERM] Using pre-staged Starship (air-gap safe)"
     install -m 755 /build-assets/starship /usr/local/bin/starship
-elif [ "$ARCH" = "amd64" ]; then
+elif [ "$ARCH" = "amd64" ] && [[ "${ALFRED_ALLOW_HOOK_NETWORK_DOWNLOADS:-}" == "1" ]]; then
     STARSHIP_VERSION="1.22.1"
     wget -qO /tmp/starship.tar.gz \
         "https://github.com/starship/starship/releases/download/v${STARSHIP_VERSION}/starship-x86_64-unknown-linux-musl.tar.gz" \
         && tar xzf /tmp/starship.tar.gz -C /usr/local/bin/ starship \
         && chmod +x /usr/local/bin/starship \
         && rm -f /tmp/starship.tar.gz || true
+elif [ "$ARCH" = "amd64" ]; then
+    echo "[TERM] WARN: skipping starship GitHub fetch (set ALFRED_ALLOW_HOOK_NETWORK_DOWNLOADS=1 or stage /build-assets/starship)." >&2
 fi
 
 # Create Alfred Starship config

@@ -7,7 +7,7 @@
 # Ubuntu ships with Python. Fedora ships with Python + Ruby.
 # Alfred ships with EVERYTHING.
 #
-# Optional: ALFRED_ALLOW_HOOK_NETWORK_DOWNLOADS=1 — other hooks (0500, 0250, 0300) use this
+# Optional: ALFRED_ALLOW_HOOK_NETWORK_DOWNLOADS=1 — other hooks (0500, 0250, 0300, 0260, …) use this
 # to allow release-binary downloads when build-assets are missing. install-rust accepts it too.
 # ═══════════════════════════════════════════════════════════════
 set -e
@@ -31,13 +31,17 @@ else
     mkdir -p -m 755 /etc/apt/keyrings
     if [ -f /build-assets/nodesource-repo-gpg.key ]; then
         cp /build-assets/nodesource-repo-gpg.key /etc/apt/keyrings/nodesource.gpg
-    else
+    elif [[ "${ALFRED_ALLOW_HOOK_NETWORK_DOWNLOADS:-}" == "1" ]]; then
         wget -qO /etc/apt/keyrings/nodesource.gpg https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key 2>/dev/null || true
+    else
+        echo "[DEV] WARN: NodeSource GPG not staged; skipping NodeSource repo (set ALFRED_ALLOW_HOOK_NETWORK_DOWNLOADS=1)." >&2
     fi
-    echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_20.x nodistro main" \
-        > /etc/apt/sources.list.d/nodesource.list
-    apt-get update -qq 2>/dev/null || true
-    apt-get install -y --no-install-recommends nodejs || true
+    if [ -f /etc/apt/keyrings/nodesource.gpg ] && [ -s /etc/apt/keyrings/nodesource.gpg ]; then
+        echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_20.x nodistro main" \
+            > /etc/apt/sources.list.d/nodesource.list
+        apt-get update -qq 2>/dev/null || true
+        apt-get install -y --no-install-recommends nodejs || true
+    fi
 fi
 echo "[DEV] Node.js $(node --version 2>/dev/null || echo 'FAILED') / npm $(npm --version 2>/dev/null || echo 'FAILED')"
 
