@@ -26,8 +26,9 @@ Wave 3 (prepare next — backlog)
     wg-quick, avahi, curl to fixed endpoints); start in complain, then enforce.
   • SBOM: SPDX or CycloneDX export for ISO packages + hook-generated debs.
   • curl|bash audit: **scripts/** + **build-assets/**/*.sh** in `security-audit.sh`; **law**
-    runtime copies: **`scripts/audit-law-wrappers.sh`** (`$LAW_ROOT` top-level `*.sh`, control-plane,
-    `wallpapers/scripts`, `kernel-*-work/` shells; default `/home/gositeme/law`).
+    runtime copies: **`scripts/audit-law-wrappers.sh`** (top-level `*.sh`, control-plane, wallpapers,
+    `kernel-*-work/`, and **`alfredlinux-com-source-live/scripts/*.sh`** when present — skips
+    `security-audit.sh` there; default `/home/gositeme/law`).
     Deeper trees under law (kernel tarballs, etc.) are still out of scope.
   • ~~README “8 hooks” vs six IDs~~ (fixed); ~~Elyon naming drift~~ (LICENSING note); ~~0160 .bak~~ (removed from tree).
   • mesh-register: optional TLS public-key pinning file for gositeme.com.
@@ -40,6 +41,7 @@ How to run the audit locally
 CI (GoForge — https://alfredlinux.com/forge/)
   .gitea/workflows/security-audit.yml — canonical Actions workflow + act_runner
     (release-integrity, security-audit.sh, audit-law-wrappers.sh; law scan skips if LAW_ROOT missing).
+    **workflow_dispatch** optional input **law_root** sets `LAW_ROOT` for the law audit step.
   .forgejo/workflows/security-audit.yml — generated (`bash scripts/sync-forgejo-actions-yaml.sh`).
   .github/workflows/security-audit.yml — optional mirror only; keep aligned with .gitea if used.
   Operator sizing + enablement: docs/GOFORGE-INFRASTRUCTURE-UPGRADE.txt

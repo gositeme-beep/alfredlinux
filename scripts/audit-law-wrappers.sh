@@ -7,6 +7,8 @@
 #   - $LAW_ROOT/alfred-build-control-plane/*.sh (if that directory exists)
 #   - $LAW_ROOT/wallpapers/scripts/*.sh (if that directory exists)
 #   - $LAW_ROOT/kernel-*-work/*.sh per matching work dir (bind/docker helpers; not kernel tarballs)
+#   - $LAW_ROOT/alfredlinux-com-source-live/scripts/*.sh when a law-side clone exists (skips
+#     security-audit.sh — that file embeds audit strings and would false-positive here)
 #
 # Usage (from Alfred repo root, or any cwd):
 #   bash scripts/audit-law-wrappers.sh
@@ -88,6 +90,13 @@ for kdir in "$LAW_ROOT"/kernel-*-work/; do
     count=$((count + 1))
   done
 done
+if [[ -d "$LAW_ROOT/alfredlinux-com-source-live/scripts" ]]; then
+  for f in "$LAW_ROOT/alfredlinux-com-source-live/scripts"/*.sh; do
+    [[ "$(basename "$f")" == security-audit.sh ]] && continue
+    scan_file "$f"
+    count=$((count + 1))
+  done
+fi
 
 log "=== scanned $count shell file(s) under LAW_ROOT ==="
 log "=== summary: CRITICAL=$FAIL WARN=$WARN ==="

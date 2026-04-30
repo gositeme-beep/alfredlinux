@@ -11,6 +11,11 @@ on:
   pull_request:
     branches: [main, master]
   workflow_dispatch:
+    inputs:
+      law_root:
+        description: Optional LAW_ROOT for audit-law-wrappers.sh (blank uses default path)
+        required: false
+        default: ''
 
 jobs:
   audit:
@@ -48,4 +53,6 @@ jobs:
         run: bash scripts/security-audit.sh
 
       - name: Run scripts/audit-law-wrappers.sh (optional LAW_ROOT)
+        env:
+          LAW_ROOT: ${{ inputs.law_root }}
         run: bash scripts/audit-law-wrappers.sh
