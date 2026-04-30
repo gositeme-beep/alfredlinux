@@ -13,7 +13,10 @@
 #   ALFRED_DOCKER_WAIT_MAX_SEC=<seconds> — wrap `docker wait` in `timeout` (GNU coreutils); on timeout
 #   exit is treated as unknown so night-shift / JSON can fall back to log-based checks.
 # With --status-json: writes phase=waiting immediately, then .lb-docker-watch.heartbeat timestamps.
-# One writer at a time: flock on .lb-docker-watch.lock (ALFRED_WATCH_NO_FLOCK=1 to bypass).
+# One writer at a time for --status-json: flock on .lb-docker-watch.lock.
+#   ALFRED_WATCH_NO_FLOCK=1           — skip lock entirely.
+#   ALFRED_WATCH_LOCK_WAIT_SEC=<n>   — wait for lock (default 600). Use 0 for old non-blocking (-n) behaviour.
+#   ALFRED_WATCH_LOCK_STRICT=1       — exit 3 if wait expires instead of proceeding with a warning.
 set -euo pipefail
 REPO="$(cd "$(dirname "$0")/.." && pwd)"
 # shellcheck disable=SC1091
@@ -31,7 +34,6 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-# Same env as supervise-lb-docker-nap.sh so one export works for watch-after-detach.
 [[ -z "$WEBHOOK" && -n "${NAP_WEBHOOK:-}" ]] && WEBHOOK="$NAP_WEBHOOK"
 
 [[ -f "$NAME_FILE" ]] || { echo "Missing $NAME_FILE — run lb-docker-build.sh detach first." >&2; exit 1; }
@@ -40,9 +42,20 @@ NAME="$(tr -d '\n' <"$NAME_FILE")"
 
 if [[ -n "$STATUS_JSON" && -z "${ALFRED_WATCH_NO_FLOCK:-}" ]]; then
   exec 201>>"$REPO/.lb-docker-watch.lock"
-  if ! flock -n 201; then
-    echo "Another watch-lb-docker-build.sh holds $REPO/.lb-docker-watch.lock — exiting. Use ALFRED_WATCH_NO_FLOCK=1 to bypass." >&2
-    exit 3
+  wait_sec="${ALFRED_WATCH_LOCK_WAIT_SEC:-600}"
+  if [[ "$wait_sec" =~ ^[0-9]+$ ]] && (( wait_sec == 0 )); then
+    if ! flock -n 201; then
+      echo "Another watch-lb-docker-build.sh holds $REPO/.lb-docker-watch.lock — exiting. Use ALFRED_WATCH_NO_FLOCK=1 to bypass." >&2
+      exit 3
+    fi
+  else
+    if ! flock -w "$wait_sec" 201; then
+      echo "watch-lb-docker-build: flock wait (${wait_sec}s) expired on $REPO/.lb-docker-watch.lock" >&2
+      if [[ "${ALFRED_WATCH_LOCK_STRICT:-}" == 1 ]]; then
+        exit 3
+      fi
+      echo "watch-lb-docker-build: continuing without exclusive lock (ALFRED_WATCH_LOCK_STRICT=1 to require lock)" >&2
+    fi
   fi
 fi
 
