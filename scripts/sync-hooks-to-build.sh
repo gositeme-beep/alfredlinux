@@ -30,4 +30,7 @@ for f in "${hooks[@]}"; do
   install -m0755 "$f" "$DST/$(basename "$f")"
 done
 
+# Stale nested copy (not used by lb profile; confuses greps) — remove if present.
+rm -rf "${DST}/live"
+
 echo "[sync-hooks-to-build] installed ${#hooks[@]} hooks from $SRC -> $DST"

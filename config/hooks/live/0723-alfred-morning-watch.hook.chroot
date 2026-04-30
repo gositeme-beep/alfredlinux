@@ -169,7 +169,10 @@ case "${1:-today}" in
         # Play worship quietly if available
         MUSIC_DIR="/usr/share/alfred/music"
         if [ -d "$MUSIC_DIR" ] && command -v mpg123 &>/dev/null; then
-            TRACK=$(find "$MUSIC_DIR" -name "*.mp3" 2>/dev/null | shuf -n 1)
+            TRACK=""
+            _tracks=()
+            while IFS= read -r -d '' f; do _tracks+=("$f"); done < <(find "$MUSIC_DIR" -type f -name '*.mp3' -print0 2>/dev/null)
+            if ((${#_tracks[@]} > 0)); then TRACK="${_tracks[RANDOM % ${#_tracks[@]}]}"; fi
             if [ -n "$TRACK" ]; then
                 amixer set Master 8% 2>/dev/null
                 (mpg123 -q "$TRACK" 2>/dev/null &)

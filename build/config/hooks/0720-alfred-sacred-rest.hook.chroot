@@ -275,12 +275,20 @@ fi
 # 3. Quiet worship (10% volume)
 echo -e "  ${DIM}Playing worship softly...${NC}"
 amixer set Master 10% 2>/dev/null
-if [ -d "$MUSIC_DIR" ] && command -v aplay &>/dev/null; then
-    # Find a random worship track
-    TRACK=$(find "$MUSIC_DIR" -name "*.mp3" -o -name "*.wav" 2>/dev/null | shuf -n 1)
-    if [ -n "$TRACK" ] && command -v mpg123 &>/dev/null; then
-        (mpg123 -q --loop -1 "$TRACK" 2>/dev/null &)
-        echo "$!" > /tmp/.alfred-silence-worship-pid
+if [ -d "$MUSIC_DIR" ] && { command -v mpg123 &>/dev/null || command -v aplay &>/dev/null; }; then
+    # Random worship track (find -print0 + array — no newline/path quirks from shuf)
+    TRACK=""
+    _aud=()
+    while IFS= read -r -d '' f; do _aud+=("$f"); done < <(find "$MUSIC_DIR" -type f \( -name '*.mp3' -o -name '*.wav' \) -print0 2>/dev/null)
+    if ((${#_aud[@]} > 0)); then TRACK="${_aud[RANDOM % ${#_aud[@]}]}"; fi
+    if [ -n "$TRACK" ]; then
+        if [[ "$TRACK" == *.mp3 ]] && command -v mpg123 &>/dev/null; then
+            (mpg123 -q --loop -1 "$TRACK" 2>/dev/null &)
+            echo "$!" > /tmp/.alfred-silence-worship-pid
+        elif [[ "$TRACK" == *.wav ]] && command -v aplay &>/dev/null; then
+            (while :; do aplay -q "$TRACK" 2>/dev/null || sleep 1; done &)
+            echo "$!" > /tmp/.alfred-silence-worship-pid
+        fi
     fi
 fi
 

@@ -97,7 +97,10 @@ case "${1:-help}" in
         if [ -n "$2" ]; then
             TRACK="$2"
         else
-            TRACK=$(find "$MUSIC_DIR" -name "*.mp3" 2>/dev/null | shuf -n 1)
+            TRACK=""
+            _tracks=()
+            while IFS= read -r -d '' f; do _tracks+=("$f"); done < <(find "$MUSIC_DIR" -type f -name '*.mp3' -print0 2>/dev/null)
+            if ((${#_tracks[@]} > 0)); then TRACK="${_tracks[RANDOM % ${#_tracks[@]}]}"; fi
         fi
 
         if [ -z "$TRACK" ]; then
