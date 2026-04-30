@@ -12,6 +12,8 @@
 #
 # Optional: ALFRED_ALLOW_HOOK_NETWORK_DOWNLOADS=1 allows GitHub fetches when
 # apt has no package and /build-assets has no staged binary; also gates pip tldr.
+# zoxide/starship: init scripts baked at hook time to /etc/profile.d/80-alfred-*.sh;
+# login shells source those files (no eval of command substitution).
 # ═══════════════════════════════════════════════════════════════
 set -e
 
@@ -115,6 +117,31 @@ elif [ "$ARCH" = "amd64" ]; then
     echo "[TERM] WARN: skipping starship GitHub fetch (set ALFRED_ALLOW_HOOK_NETWORK_DOWNLOADS=1 or stage /build-assets/starship)." >&2
 fi
 
+# ── 7b. Bake zoxide & Starship bash hooks (login sources — no eval) ──
+echo "[TERM] Baking zoxide/starship profile snippets..."
+_zo_tmp=$(mktemp)
+if command -v zoxide &>/dev/null; then
+    if zoxide init bash >"$_zo_tmp" 2>/dev/null && [ -s "$_zo_tmp" ]; then
+        install -m 644 "$_zo_tmp" /etc/profile.d/80-alfred-zoxide.sh
+    else
+        rm -f /etc/profile.d/80-alfred-zoxide.sh 2>/dev/null || true
+    fi
+else
+    rm -f /etc/profile.d/80-alfred-zoxide.sh 2>/dev/null || true
+fi
+rm -f "$_zo_tmp"
+_st_tmp=$(mktemp)
+if command -v starship &>/dev/null; then
+    if starship init bash >"$_st_tmp" 2>/dev/null && [ -s "$_st_tmp" ]; then
+        install -m 644 "$_st_tmp" /etc/profile.d/80-alfred-starship.sh
+    else
+        rm -f /etc/profile.d/80-alfred-starship.sh 2>/dev/null || true
+    fi
+else
+    rm -f /etc/profile.d/80-alfred-starship.sh 2>/dev/null || true
+fi
+rm -f "$_st_tmp"
+
 # Create Alfred Starship config
 mkdir -p /etc/skel/.config
 cat > /etc/skel/.config/starship.toml << 'STARSHIP'
@@ -187,14 +214,16 @@ alias vim='nvim 2>/dev/null || command vim'
 alias lg='lazygit 2>/dev/null'
 alias df='duf 2>/dev/null || command df -h'
 
-# Zoxide (smart cd — learns your habits)
-if command -v zoxide &>/dev/null; then
-    eval "$(zoxide init bash)"
+# Zoxide (smart cd — learns your habits) — baked at ISO build; see 80-alfred-zoxide.sh
+if [ -r /etc/profile.d/80-alfred-zoxide.sh ]; then
+    # shellcheck source=/dev/null
+    . /etc/profile.d/80-alfred-zoxide.sh
 fi
 
-# Starship prompt
-if command -v starship &>/dev/null; then
-    eval "$(starship init bash)"
+# Starship prompt — baked at ISO build; see 80-alfred-starship.sh
+if [ -r /etc/profile.d/80-alfred-starship.sh ]; then
+    # shellcheck source=/dev/null
+    . /etc/profile.d/80-alfred-starship.sh
 fi
 
 # fzf keybindings (Ctrl+R for history, Ctrl+T for files)
