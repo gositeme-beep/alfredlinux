@@ -43,6 +43,9 @@ if [[ -f "$_lock" ]]; then
   fi
 fi
 
+echo "--- staging kernel debs (archive or KERNEL_WORK) ---"
+bash "$ROOT/scripts/stage-kernel-debs-for-iso.sh"
+
 echo "--- kernel packages in $PC ---"
 shopt -s nullglob
 debs=( "$PC"/linux-image-7.0.1*.deb )
@@ -52,6 +55,8 @@ else
   echo "  FAIL: no linux-image-7.0.1*.deb — hook 0050 will abort lb build."
   echo "  See: $ROOT/config/packages.chroot/README-KERNEL7.txt"
   echo "  Fetch sources: bash scripts/kernel-download-7.0.1.sh"
+  echo "  Pack debs from a builder: bash scripts/pack-kernel-debs-archive.sh"
+  echo "  Then place linux-7.0.1-debs-for-iso.tar.gz under build-assets/kernel-7.0.1-debs/ or set ALFRED_KERNEL_DEBS_ARCHIVE"
   exit 1
 fi
 

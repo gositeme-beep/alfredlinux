@@ -23,6 +23,22 @@ Workflow
      linux-headers-*_amd64.deb
    plus `linux-libc-dev_*.deb` from the same build if apt demands it.
 
+Pack / unpack (second host, Forge runner, thin checkout)
+----------------------------------------------------------
+On a machine that already has the `.deb` files under `KERNEL_WORK` or in this directory:
+
+  bash scripts/pack-kernel-debs-archive.sh
+
+Copy the resulting **`build-assets/kernel-7.0.1-debs/linux-7.0.1-debs-for-iso.tar.gz`**
+onto the build host (that tree is gitignored except `README.txt`). Then:
+
+  bash scripts/stage-kernel-debs-for-iso.sh
+  bash scripts/iso-preflight.sh
+
+`iso-preflight.sh` runs **`stage-kernel-debs-for-iso.sh`** for you (archive →
+`config/packages.chroot/`, then `KERNEL_WORK` copy). Override archive path with
+**`ALFRED_KERNEL_DEBS_ARCHIVE`**. **`.tar.zst`** is supported if **`zstd`** is installed.
+
 Hook gate (must pass before ISO is “good”)
 ------------------------------------------
   dpkg-query -W -f '${binary:Package}\n' | grep -E '^linux-image-7\.0\.1'

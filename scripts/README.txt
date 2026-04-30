@@ -25,8 +25,9 @@ safe-operator-once.sh
 
 iso-preflight.sh
   Run before `lb build`. Fails if linux-image-7.0.1*.deb missing from
-  config/packages.chroot/ (hook 0050). When `docker` is in PATH, warns if multiple
-  `alfred-lb-build-*` containers run (same bind-mount race). Usage:
+  config/packages.chroot/ (hook 0050). Runs **`stage-kernel-debs-for-iso.sh`** first (archive under
+  **`build-assets/kernel-7.0.1-debs/`**, **`ALFRED_KERNEL_DEBS_ARCHIVE`**, or **`KERNEL_WORK`**).
+  When `docker` is in PATH, warns if multiple `alfred-lb-build-*` containers run. Usage:
     bash scripts/iso-preflight.sh
   Run `lb` from `build/` (see ALFRED-LINUX-BUILD-TEST.txt). An empty `build/auto/` is normal
   unless you maintain an executable `build/auto/config` script.
@@ -80,7 +81,18 @@ kernel-docker-bindeb.sh + kernel-docker-inner-bindeb.sh
   Then `docker logs -f <name>` (name in ../kernel-7.0.1-work/docker-bindeb.containername).
 
 copy-kernel-debs-to-chroot.sh
-  After .deb exist under KERNEL_WORK: copy into `config/packages.chroot/`, then `iso-preflight.sh`.
+  After .deb exist under KERNEL_WORK: strict copy into `config/packages.chroot/` (delegates to
+  `stage-kernel-debs-for-iso.sh --strict`). Then `iso-preflight.sh`.
+
+stage-kernel-debs-for-iso.sh
+  Idempotent: unpack **`linux-7.0.1-debs-for-iso.tar.gz`** (or `.tar.zst`) from
+  **`build-assets/kernel-7.0.1-debs/`** or **`ALFRED_KERNEL_DEBS_ARCHIVE`**, else copy from
+  **`KERNEL_WORK`**. Used by **`iso-preflight.sh`** automatically.
+
+pack-kernel-debs-archive.sh
+  On the machine that already built the kernel: create **`linux-7.0.1-debs-for-iso.tar.gz`** under
+  **`build-assets/kernel-7.0.1-debs/`** (gitignored) for another host / thin checkout. See
+  **`build-assets/kernel-7.0.1-debs/README.txt`**.
 
 lb-docker-build.sh + lb-docker-inner-build.sh
   **No host sudo:** privileged Debian container runs `lb build` with repo at `/work`.
