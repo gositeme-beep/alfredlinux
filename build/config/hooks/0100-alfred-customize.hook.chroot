@@ -9,6 +9,10 @@
 #
 # myip: public-IP lookup is opt-in (ALFRED_ALLOW_MYIP_LOOKUP=1) to avoid default
 # third-party leakage; otherwise shows local addresses from hostname -I.
+#
+# When live-build sets ALFRED_ALLOW_HOOK_NETWORK_DOWNLOADS=1 or
+# ALFRED_ALLOW_VOICE_PIP_NETWORK=1 in the chroot environment, matching
+# /etc/profile.d snippets are written so installed systems inherit the same policy.
 # ═══════════════════════════════════════════════════════════════
 
 set -e
@@ -593,5 +597,22 @@ case $choice in
 esac
 MESHSCRIPT
 chmod +x /usr/local/bin/alfred-mesh-setup
+
+# ── 15. Bake build-time network flags into login environment (dev / open ISOs) ──
+install -d -m 755 /etc/profile.d
+if [[ "${ALFRED_ALLOW_HOOK_NETWORK_DOWNLOADS:-}" == "1" ]]; then
+    cat > /etc/profile.d/alfred-hook-network-downloads.sh << 'PROFNET'
+# Written at ISO build time when ALFRED_ALLOW_HOOK_NETWORK_DOWNLOADS=1.
+export ALFRED_ALLOW_HOOK_NETWORK_DOWNLOADS=1
+PROFNET
+    chmod 644 /etc/profile.d/alfred-hook-network-downloads.sh
+fi
+if [[ "${ALFRED_ALLOW_VOICE_PIP_NETWORK:-}" == "1" ]]; then
+    cat > /etc/profile.d/alfred-voice-pip-network.sh << 'PROFV'
+# Written at ISO build time when ALFRED_ALLOW_VOICE_PIP_NETWORK=1.
+export ALFRED_ALLOW_VOICE_PIP_NETWORK=1
+PROFV
+    chmod 644 /etc/profile.d/alfred-voice-pip-network.sh
+fi
 
 echo "[Alfred Linux 4.0] Branding and customizations applied successfully."
