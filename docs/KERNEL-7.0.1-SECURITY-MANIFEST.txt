@@ -53,7 +53,7 @@ In-repo pointers (enumerable today)
   • Docker/host bindeb helpers:   `scripts/kernel-docker-*.sh`, `kernel-bindeb-pkg-nohup.sh`
   • Copy debs into chroot list:   `scripts/copy-kernel-debs-to-chroot.sh`
   • ISO preflight (debs present): `scripts/iso-preflight.sh`
-  • Chroot gate + narrative:      `config/hooks/live/0050-alfred-kernel7.hook.chroot`
+  • Chroot gate + narrative:      early hooks `0100-alfred-customize`, `0150-alfred-hardware`; `0160-alfred-security` (0050 kernel hook removed from tree — staging/preflight above)
   • Sysctl / audit / modules:     `config/hooks/live/0160-alfred-security.hook.chroot`
   • APT policy / kernel pin:      `config/hooks/live/0710-alfred-update.hook.chroot`
   • PQ / liboqs build (userspace + kernel-adjacent): `config/hooks/live/0166-alfred-quantum.hook.chroot`
