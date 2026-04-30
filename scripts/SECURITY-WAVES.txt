@@ -91,7 +91,7 @@ CI (GoForge — https://alfredlinux.com/forge/)
     **{path}.lock** around rotate+append. Off by default.
     **api/auth.php**: explicit **Cache-Control/Pragma/Expires** no-store on JSON auth responses. **includes/api-security.php**:
     CSRF failure audit → **law/var/csrf-fail.log** (**LOCK_EX**, UTF-8-safe JSON); IP-watch line → **law/var/rate-spam-watch.log**
-    (was **/tmp/spam.log**). File rate-limit bucket dir **cache/rate_limits/** created **0700**, per-file **chmod 0600**; **429** and
+    (was **/tmp/spam.log**). File rate-limit bucket **cache/rate_limits/** ensured **0700** (mkdir + **chmod**), per-file **chmod 0600**; **429** and
     **403 CSRF** JSON paths send **no-store** + explicit **Content-Type**. **veil/dell-watch.php**: unknown **?action=** → **400**
     (only **feed** allowed besides default page).
     **wallet**, **index**, **departments**, **pro-discussions** unchanged (not commander-only).
