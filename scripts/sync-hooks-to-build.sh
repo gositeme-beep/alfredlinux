@@ -12,7 +12,7 @@
 #
 # Usage (repo root):
 #   bash scripts/sync-hooks-to-build.sh
-#   ALFRED_BUILD_DIR=/path/to/build bash scripts/sync-hooks-to-build.sh
+#   ALFRED_SYNC_HOOKS_SKIP_DOCKER=1  Skip docker fallback for nested hooks/live/ (CI / no pull).
 # Docker: invoked automatically from lb-docker-inner-build.sh before lb config.
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -53,7 +53,8 @@ _nested="${DST}/live"
 if [[ -d "$_nested" ]] || [[ -L "$_nested" ]]; then
   if rm -rf "$_nested" 2>/dev/null; then
     :
-  elif command -v docker >/dev/null 2>&1     && docker run --rm -v "${DST}:/h" alpine:3.19 rm -rf /h/live >/dev/null 2>&1; then
+  elif [[ "${ALFRED_SYNC_HOOKS_SKIP_DOCKER:-}" != 1 ]] && command -v docker >/dev/null 2>&1 \
+    && docker run --rm -v "${DST}:/h" alpine:3.19 rm -rf /h/live >/dev/null 2>&1; then
     echo "[sync-hooks-to-build] removed nested live/ via docker (root-owned files on bind mount)"
   else
     echo "[sync-hooks-to-build] WARN: could not remove ${_nested} (install docker or run: sudo rm -rf ${_nested})" >&2
