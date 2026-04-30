@@ -9,6 +9,7 @@
 # alfred-devotion CLI — Full lectionary (OT + NT + Psalm + Proverb),
 # 365-day cycle, encrypted prayer journal, prayer timer with worship
 # track and gentle chime. The machine greets the day with Scripture.
+# Psalm lookup uses bash [[ =~ ]] + awk (no grep -P).
 # Journal template file: created via Python (date/day validated), not an unquoted heredoc.
 #
 # BUILD: v7.77 Kingdom of God Edition
@@ -127,10 +128,11 @@ case "${1:-today}" in
         echo ""
 
         # Show a verse from today's Psalm
-        PSALM_NUM=$(echo "$psalm" | grep -oP '\d+' | head -1)
+        PSALM_NUM=""
+        if [[ "$psalm" =~ ([0-9]+) ]]; then PSALM_NUM="${BASH_REMATCH[1]}"; fi
         BIBLE="/usr/share/alfred/bible/akjv-bible.tsv"
         if [ -f "$BIBLE" ] && [ -n "$PSALM_NUM" ]; then
-            VERSE=$(grep -P "^Psalms\t${PSALM_NUM}\t1\t" "$BIBLE" 2>/dev/null | cut -f4)
+            VERSE=$(awk -F'\t' -v n="$PSALM_NUM" '$1=="Psalms" && $2==n && $3==1 {print $4; exit}' "$BIBLE" 2>/dev/null)
             if [ -n "$VERSE" ]; then
                 echo -e "  ${GOLD}\"$VERSE\"${NC}"
                 echo -e "  ${DIM}— Psalm ${PSALM_NUM}:1${NC}"

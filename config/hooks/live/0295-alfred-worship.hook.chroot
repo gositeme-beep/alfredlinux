@@ -363,7 +363,16 @@ case "${1:-play}" in
         txt_file=$(find "$MUSIC_DIR/lyrics" -name "*${track}*.txt" 2>/dev/null | head -1)
         if [ -n "$lrc_file" ]; then
             echo ""
-            grep -oP '(?<=\])[^\[]+' "$lrc_file" | grep -v '^$'
+            python3 -c '
+import re, sys
+path = sys.argv[1]
+with open(path, encoding="utf-8", errors="replace") as f:
+    for line in f:
+        for m in re.finditer(r"\]([^\[]+)", line):
+            t = m.group(1).strip()
+            if t:
+                print(t)
+' "$lrc_file"
             echo ""
         elif [ -n "$txt_file" ]; then
             echo ""

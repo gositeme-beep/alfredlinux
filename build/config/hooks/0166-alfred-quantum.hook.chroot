@@ -130,13 +130,16 @@ if [ "${OQS_PROVIDER_SKIP:-0}" = "0" ]; then
     cmake --build . -j$(nproc) 2>/dev/null || make -j$(nproc) 2>/dev/null || true
 
     # Install provider
-    OSSL_MODULES=$(openssl version -d 2>/dev/null | grep -oP '(?<=").+(?=")' || echo "/usr/lib/x86_64-linux-gnu/ossl-modules")
+    OSSL_MODULES=$(openssl version -d 2>/dev/null | sed -n 's/^OPENSSLDIR:[[:space:]]*"\([^"]*\)".*/\1/p')
+    [ -z "$OSSL_MODULES" ] && OSSL_MODULES="/usr/lib/x86_64-linux-gnu/ossl-modules"
     mkdir -p "$OSSL_MODULES"
     cp lib/oqsprovider.so "$OSSL_MODULES/" 2>/dev/null || cp oqsprov/oqsprovider.so "$OSSL_MODULES/" 2>/dev/null || true
     echo "[PQ-03] OQS provider installed at $OSSL_MODULES"
 
     # Enable in OpenSSL config
-    OPENSSL_CONF=$(openssl version -d 2>/dev/null | grep -oP '(?<=").+(?=")' || echo "/etc/ssl")/openssl.cnf
+    _ossl_root=$(openssl version -d 2>/dev/null | sed -n 's/^OPENSSLDIR:[[:space:]]*"\([^"]*\)".*/\1/p')
+    [ -z "$_ossl_root" ] && _ossl_root="/etc/ssl"
+    OPENSSL_CONF="${_ossl_root}/openssl.cnf"
     if [ -f "$OPENSSL_CONF" ] && ! grep -q "oqsprovider" "$OPENSSL_CONF" 2>/dev/null; then
         # Add OQS provider activation
         cat >> "$OPENSSL_CONF" << 'OQSCNF'

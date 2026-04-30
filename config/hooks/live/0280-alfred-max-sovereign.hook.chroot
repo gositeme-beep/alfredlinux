@@ -201,7 +201,7 @@ discover_peers() {
     PEERS=()
     if command -v avahi-browse &>/dev/null; then
         while IFS= read -r line; do
-            IP=$(echo "$line" | grep -oP '\d+\.\d+\.\d+\.\d+' | head -1)
+            IP=$(echo "$line" | grep -oE '([0-9]{1,3}\.){3}[0-9]{1,3}' | head -1)
             [ -n "$IP" ] && PEERS+=("$IP")
         done < <(avahi-browse -rpt _alfred._tcp 2>/dev/null | grep "=" | head -20)
     fi

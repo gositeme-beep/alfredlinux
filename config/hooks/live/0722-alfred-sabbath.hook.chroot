@@ -641,7 +641,10 @@ case "${1:-status}" in
                     echo -e "  Torah: ${CYAN}$torah${NC}"
                     echo -e "  Haftarah: ${CYAN}$haftarah${NC}"
                     echo ""
-                    echo -e "  ${DIM}Read with: alfred-bible read $(echo "$torah" | cut -d' ' -f1) $(echo "$torah" | grep -oP '\d+' | head -1)${NC}"
+                    _tb=$(echo "$torah" | cut -d' ' -f1)
+                    _tc=""
+                    [[ "$torah" =~ ([0-9]+) ]] && _tc="${BASH_REMATCH[1]}"
+                    echo -e "  ${DIM}Read with: alfred-bible read ${_tb} ${_tc:-1}${NC}"
                 else
                     echo "  This week: Parashat $PORTION_NAME"
                 fi

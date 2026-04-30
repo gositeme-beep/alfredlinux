@@ -74,6 +74,15 @@ ASSEMBLY_DIR="$KINGDOM_DIR/.assembly"
 HOSTNAME=$(hostname)
 TIMESTAMP=$(date -Is)
 
+# Read invite JSON fields without grep -P (portable python3).
+_asm_json_get() {
+    python3 -c 'import json,sys
+try:
+    print(json.load(open(sys.argv[1],encoding="utf-8",errors="replace")).get(sys.argv[2],""))
+except Exception:
+    pass' "$1" "$2" 2>/dev/null
+}
+
 case "${1:-help}" in
     start|gather)
         if [ ! -d "$KINGDOM_DIR" ]; then
@@ -184,10 +193,10 @@ PYINV
             LATEST=$(ls -t "$ASSEMBLY_DIR"/assembly-invite-*.json 2>/dev/null | head -1)
             if [ -n "$LATEST" ] && [ "$LATEST" != "$LAST_SEEN" ]; then
                 LAST_SEEN="$LATEST"
-                HOST=$(grep -oP '"host"\s*:\s*"\K[^"]+' "$LATEST" 2>/dev/null)
-                TRACK=$(grep -oP '"track"\s*:\s*"\K[^"]+' "$LATEST" 2>/dev/null)
-                SCRIPTURE=$(grep -oP '"scripture"\s*:\s*"\K[^"]+' "$LATEST" 2>/dev/null)
-                MESSAGE=$(grep -oP '"message"\s*:\s*"\K[^"]+' "$LATEST" 2>/dev/null)
+                HOST=$(_asm_json_get "$LATEST" host)
+                TRACK=$(_asm_json_get "$LATEST" track)
+                SCRIPTURE=$(_asm_json_get "$LATEST" scripture)
+                MESSAGE=$(_asm_json_get "$LATEST" message)
 
                 echo -e "  ${GOLD}✝ ASSEMBLY INVITATION${NC}"
                 echo -e "  From: ${CYAN}$HOST${NC}"
@@ -203,7 +212,7 @@ PYINV
                 fi
 
                 # Auto-play if track exists locally
-                TRACK_PATH=$(grep -oP '"track_path"\s*:\s*"\K[^"]+' "$LATEST" 2>/dev/null)
+                TRACK_PATH=$(_asm_json_get "$LATEST" track_path)
                 LOCAL_TRACK="$MUSIC_DIR/$TRACK"
                 if [ -f "$LOCAL_TRACK" ] && command -v mpg123 &>/dev/null; then
                     echo -e "  ${GREEN}♪ Joining worship...${NC}"
@@ -230,8 +239,8 @@ PYINV
                 echo -e "  Assembly invitations (total): ${CYAN}$COUNT${NC}"
                 LATEST=$(ls -t "$ASSEMBLY_DIR"/assembly-invite-*.json 2>/dev/null | head -1)
                 if [ -n "$LATEST" ]; then
-                    HOST=$(grep -oP '"host"\s*:\s*"\K[^"]+' "$LATEST" 2>/dev/null)
-                    STARTED=$(grep -oP '"started"\s*:\s*"\K[^"]+' "$LATEST" 2>/dev/null)
+                    HOST=$(_asm_json_get "$LATEST" host)
+                    STARTED=$(_asm_json_get "$LATEST" started)
                     echo -e "  Last assembly: ${CYAN}$HOST${NC} at $STARTED"
                 fi
             fi
