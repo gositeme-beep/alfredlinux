@@ -75,6 +75,9 @@ CI (GoForge — https://alfredlinux.com/forge/)
     same-origin referrer) on all **client_id 33**-gated **veil/*.php** pages (Dell Watch/Mailer/Operations Hub, Memory Commander,
     Nexus/Black Vault/Genesis, Pantheon, admins, call archive, integrity report, etc.); on **fleet-tracker**, **reports**,
     **agenda**, **command-center** only when **$isOwner** (33). Dell Watch **?action=feed** JSON also no-store.
+    After headers run, **GOSITEME_CLASSIFIED_HEADERS_APPLIED** is set; **includes/site-header.inc.php** skips its default
+    **Cache-Control / Pragma / X-Content-Type-Options / Referrer-Policy** block when that constant is defined (e.g. **reunion.php**)
+    so **same-origin** referrer and stricter cache lines are not overwritten.
     **reunion.php**: **auth-gate** + client 33 check + classified headers **before** **site-header** (correct **$page_title** / meta).
     **Auth debug trace** (optional): **GOSITEME_AUTH_DEBUG_TRACE=1** → minimal lines in
     **/home/gositeme/law/var/auth-debug-trace.log** (never raw **$_SESSION**). Same **.prior.* / MAX / KEEP** rotation as
