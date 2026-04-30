@@ -40,10 +40,10 @@ ufw default allow outgoing
 ufw allow ssh
 ufw --force enable
 
-# ── 3. SSH hardening ──
+# ── 3. SSH hardening (keys-first; matches 0270 sovereign checks) ──
 cat > /etc/ssh/sshd_config.d/alfred-hardening.conf << 'SSHD'
 PermitRootLogin no
-PasswordAuthentication yes
+PasswordAuthentication no
 PubkeyAuthentication yes
 X11Forwarding no
 AllowAgentForwarding no
