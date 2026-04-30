@@ -358,9 +358,15 @@ case "${1:-play}" in
         ;;
     lyrics)
         track="${2:-01-Shema-Yisrael}"
-        # Find the lyrics file
-        lrc_file=$(find "$MUSIC_DIR" -name "*${track}*.lrc" 2>/dev/null | head -1)
-        txt_file=$(find "$MUSIC_DIR/lyrics" -name "*${track}*.txt" 2>/dev/null | head -1)
+        # Find the lyrics file (find -print0 + first match — no newline/path quirks from | head -1)
+        lrc_file=""
+        while IFS= read -r -d '' f; do lrc_file="$f"; break; done < <(
+            find "$MUSIC_DIR" -name "*${track}*.lrc" -type f -print0 2>/dev/null
+        )
+        txt_file=""
+        while IFS= read -r -d '' f; do txt_file="$f"; break; done < <(
+            find "${MUSIC_DIR}/lyrics" -name "*${track}*.txt" -type f -print0 2>/dev/null
+        )
         if [ -n "$lrc_file" ]; then
             echo ""
             python3 -c '
