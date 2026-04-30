@@ -48,6 +48,9 @@ sync-canonical-to-build.sh
     bash scripts/sync-canonical-to-build.sh
     ALFRED_FULL_BUILD_ASSETS=1 bash scripts/sync-canonical-to-build.sh   # mirror all media
   Ship-gap audit: docs/ISO-STAGING-SHIP-GAPS.txt
+  If `git status` shows only root-owned files under `build/config/package-lists/`, refresh
+  from `config/package-lists/` with Docker (same idea as sync-hooks): bind-mount both dirs,
+  `cp` the lists, then `chown` to your uid/gid inside the container (`-e U="$(id -u)"` — not `$UID`, which is readonly in bash).
 
 release-integrity.sh
   After ISOs exist in one directory: SHA256SUMS + SHA512SUMS, then GPG-detached sign.
