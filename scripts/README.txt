@@ -34,6 +34,9 @@ iso-preflight.sh
 
 sync-hooks-to-build.sh
   Hooks only: `config/hooks/live/*.hook.chroot` → `build/config/hooks/`.
+  Drops flat `*.hook.chroot` not in live/; clears nested `hooks/live/` when permitted.
+  If Docker left root-owned `build/config/hooks/live/`, you see a WARN — run
+  `sudo rm -rf build/config/hooks/live` once on the host.
     bash scripts/sync-hooks-to-build.sh
 
 sync-canonical-to-build.sh
