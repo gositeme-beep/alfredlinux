@@ -22,15 +22,11 @@
 #   ALFRED_LB_SUCCESS_WEBHOOK       optional URL — POST application/json {"text":"…"} (Slack incoming-style)
 #   ALFRED_LB_SUCCESS_SCRIPT       optional path — executable; invoked as SCRIPT /path/to/repo on verified SUCCESS
 #   NAP_WEBHOOK / pass-through:  same extra args as watch-lb-docker-build.sh (--webhook URL)
-#   ALFRED_LB_DOCKER_FLOCK_BLOCKING  supervise exports =1 by default so a retry waits on
-#                                build/.alfred-lb-docker-build.lock instead of colliding with a
-#                                still-running or slow-tearing-down container on the same repo.
+#   ALFRED_LB_DOCKER_FLOCK_BLOCKING  see lb-docker-build.sh (default 1 = queue on shared-repo lock).
 #
 # Exit: 0 on success; 2 on auth failure; with LOOP_FOREVER=0 only: 1 after exhausting retries.
 set -euo pipefail
 REPO="$(cd "$(dirname "$0")/.." && pwd)"
-# Queue on shared-repo flock (see lb-docker-inner-build.sh); override with ALFRED_LB_DOCKER_FLOCK_BLOCKING=0 for fail-fast.
-export ALFRED_LB_DOCKER_FLOCK_BLOCKING="${ALFRED_LB_DOCKER_FLOCK_BLOCKING:-1}"
 AUTH_FILE="$REPO/.lb-supervisor-auth"
 MAX="${ALFRED_LB_MAX_RETRIES:-5}"
 COOLDOWN="${ALFRED_LB_RETRY_COOLDOWN_SEC:-45}"
@@ -64,7 +60,7 @@ alfred_lb_recovery() {
   echo "[recovery] $(date -Is) analyzing + host fixes…"
   if [[ -f "$log" ]]; then
     if tail -n 120 "$log" | grep -q 'exclusive build lock is busy'; then
-      echo "[recovery] log mentions flock collision on build/.alfred-lb-docker-build.lock — only one build per repo; next detach uses blocking flock (supervise default ALFRED_LB_DOCKER_FLOCK_BLOCKING=1)"
+      echo "[recovery] log mentions flock collision on build/.alfred-lb-docker-build.lock — only one build per repo; next detach uses blocking flock (lb-docker-build.sh defaults ALFRED_LB_DOCKER_FLOCK_BLOCKING=1)"
     fi
     if tail -n 120 "$log" | grep -q 'target is busy'; then
       echo "[recovery] log mentions target is busy — lazy-umount host paths if mounted"

@@ -8,10 +8,11 @@
 # Log on host bind mount: lb-docker-build.log (repo root).
 # Do not start a second container on the same repo until the first exits: inner script
 # uses flock on build/.alfred-lb-docker-build.lock; concurrent runs used to corrupt chroot mid-apt.
-# Env passed into the container: ALFRED_LB_DOCKER_FLOCK_BLOCKING — empty = fail fast if lock busy;
-# =1 = block until lock free (supervise-lb-build-repair-loop exports 1 by default).
+# ALFRED_LB_DOCKER_FLOCK_BLOCKING: this script defaults to 1 (queue on lock — ABCP Reseal / retries line up).
+# Use ALFRED_LB_DOCKER_FLOCK_BLOCKING=0 for fail-fast if another build still holds the lock.
 set -euo pipefail
 REPO="$(cd "$(dirname "$0")/.." && pwd)"
+export ALFRED_LB_DOCKER_FLOCK_BLOCKING="${ALFRED_LB_DOCKER_FLOCK_BLOCKING:-1}"
 IMAGE="${DOCKER_LB_IMAGE:-debian:bookworm}"
 INNER="$REPO/scripts/lb-docker-inner-build.sh"
 NAME="${ALFRED_LB_DOCKER_NAME:-alfred-lb-build-$(date +%s)}"
@@ -25,7 +26,7 @@ docker pull "$IMAGE" >/dev/null
 run=( docker run --init --rm --privileged --network=host
   -e "DEBIAN_FRONTEND=noninteractive"
   -e "BUILD_UID=$(id -u)" -e "BUILD_GID=$(id -g)"
-  -e "ALFRED_LB_DOCKER_FLOCK_BLOCKING=${ALFRED_LB_DOCKER_FLOCK_BLOCKING:-}"
+  -e "ALFRED_LB_DOCKER_FLOCK_BLOCKING=${ALFRED_LB_DOCKER_FLOCK_BLOCKING}"
   -v "$REPO:/work"
   -w /work
   "$IMAGE" bash /work/scripts/lb-docker-inner-build.sh )
@@ -34,7 +35,7 @@ if [[ "${1:-}" == "detach" ]]; then
   docker run -d --init --rm --privileged --network=host --name "$NAME" \
     -e "DEBIAN_FRONTEND=noninteractive" \
     -e "BUILD_UID=$(id -u)" -e "BUILD_GID=$(id -g)" \
-    -e "ALFRED_LB_DOCKER_FLOCK_BLOCKING=${ALFRED_LB_DOCKER_FLOCK_BLOCKING:-}" \
+    -e "ALFRED_LB_DOCKER_FLOCK_BLOCKING=${ALFRED_LB_DOCKER_FLOCK_BLOCKING}" \
     -v "$REPO:/work" \
     -w /work \
     "$IMAGE" bash /work/scripts/lb-docker-inner-build.sh
