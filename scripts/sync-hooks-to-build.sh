@@ -2,12 +2,12 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copy every Kingdom hook from the single source of truth (config/hooks/live/)
 # into the live-build tree under build/config/hooks/ (flat layout for this repo's
-# lb profile). Includes e.g. 0010-alfred-bootstrap, 0050-alfred-kernel7,
-# 9999-fix-kernel-names, and the rest of the numbered hooks under live/.
+# lb profile). The exact set is every *.hook.chroot under live/ (e.g. 0100
+# through 0725 in the current tree — not necessarily low-numbered Debian lb hooks).
 #
 # After install, removes orphan flat *.hook.chroot in the destination (stale
 # copies no longer present under live/). Skips symlinks. Nested DST/live/ is
-# removed -- hooks belong only in the flat hooks directory.
+# removed when possible (often root-owned symlinks from lb in Docker; see WARN).
 #
 # Usage (repo root):
 #   bash scripts/sync-hooks-to-build.sh
@@ -47,7 +47,11 @@ for f in "$DST"/*.hook.chroot; do
   echo "Removed orphan hook: $f"
 done
 
-# Stale nested copy (not used by lb profile; confuses greps) -- remove if present.
-rm -rf "${DST}/live"
+# Stale nested live/ (not used by this profile; confuses greps). May be root-owned.
+if [[ -d "${DST}/live" ]] || [[ -L "${DST}/live" ]]; then
+  if ! rm -rf "${DST}/live" 2>/dev/null; then
+    echo "[sync-hooks-to-build] WARN: could not remove ${DST}/live (often root-owned from lb in Docker). Clean with: sudo rm -rf ${DST}/live" >&2
+  fi
+fi
 
 echo "[sync-hooks-to-build] installed ${#hooks[@]} hooks from $SRC -> $DST"
