@@ -12,6 +12,8 @@
 #   ALFRED_NO_INHIBIT_SLEEP=1  — skip inhibit.  ALFRED_NAP_HEARTBEAT_SEC=120 — heartbeat interval.
 #   ALFRED_DOCKER_WAIT_MAX_SEC=<seconds> — wrap `docker wait` in `timeout` (GNU coreutils); on timeout
 #   exit is treated as unknown so night-shift / JSON can fall back to log-based checks.
+#   ALFRED_DOCKER_WAIT_EMPTY_RETRIES=<n> — if `docker wait` returns empty while the container is still
+#   Running, retry up to n times (default 600, ~2s apart) before giving up.
 # With --status-json: writes phase=waiting immediately, then .lb-docker-watch.heartbeat timestamps.
 # One writer at a time for --status-json: flock on .lb-docker-watch.lock.
 #   ALFRED_WATCH_NO_FLOCK=1           — skip lock entirely.
@@ -21,6 +23,52 @@ set -euo pipefail
 REPO="$(cd "$(dirname "$0")/.." && pwd)"
 # shellcheck disable=SC1091
 source "$(cd "$(dirname "$0")" && pwd)/lb-nap-helpers.sh"
+
+# `docker wait` sometimes prints nothing while the container is still Running (daemon/pipe flake).
+# Retrying avoids supervise FALSE_SUCCESS: watch exited 0 on stale ISO + unknown, inner never finished.
+alfred_lb_docker_wait_until_done() {
+  local name="$1" ex="" tw_rc=0 max_empty="${ALFRED_DOCKER_WAIT_EMPTY_RETRIES:-600}" n=0 running="" ec=""
+  while true; do
+    if [[ -n "${ALFRED_DOCKER_WAIT_MAX_SEC:-}" ]] && [[ "${ALFRED_DOCKER_WAIT_MAX_SEC}" =~ ^[0-9]+$ ]] && (( ALFRED_DOCKER_WAIT_MAX_SEC > 0 )); then
+      ex="$(alfred_maybe_inhibit_exec timeout --signal=TERM --kill-after=60 "${ALFRED_DOCKER_WAIT_MAX_SEC}" \
+        docker wait "$name" 2>/dev/null | tr -d '\n')"
+      tw_rc=$?
+      if (( tw_rc == 124 )) || (( tw_rc == 137 )); then
+        echo "docker wait timed out after ${ALFRED_DOCKER_WAIT_MAX_SEC}s (timeout rc=$tw_rc) — treating docker_exit as unknown" >&2
+        ex="unknown"
+      fi
+    else
+      ex="$(alfred_maybe_inhibit_exec docker wait "$name" 2>/dev/null | tr -d '\n')"
+    fi
+    [[ -n "$ex" ]] || ex="unknown"
+    if [[ "$ex" != "unknown" ]]; then
+      printf '%s' "$ex"
+      return 0
+    fi
+
+    if ! docker inspect "$name" &>/dev/null; then
+      printf '%s' "unknown"
+      return 0
+    fi
+    running="$(docker inspect -f '{{.State.Running}}' "$name" 2>/dev/null || echo false)"
+    if [[ "$running" != "true" ]]; then
+      ec="$(docker inspect -f '{{.State.ExitCode}}' "$name" 2>/dev/null | tr -d '\n')"
+      [[ -n "$ec" ]] || ec="unknown"
+      printf '%s' "$ec"
+      return 0
+    fi
+
+    n=$((n + 1))
+    if (( n > max_empty )); then
+      echo "watch-lb-docker-build: docker wait kept returning empty while $name is still running (${n} tries) — giving up" >&2
+      printf '%s' "unknown"
+      return 0
+    fi
+    echo "watch-lb-docker-build: docker wait empty while $name running — retry ${n}/${max_empty}" >&2
+    sleep 2
+  done
+}
+
 NAME_FILE="$REPO/lb-docker.containername"
 LOG="$REPO/lb-docker-build.log"
 WEBHOOK=""
@@ -73,18 +121,7 @@ if docker inspect "$NAME" &>/dev/null; then
   [[ -z "${ALFRED_NO_INHIBIT_SLEEP:-}" ]] && command -v systemd-inhibit &>/dev/null \
     && echo "(systemd-inhibit: blocking sleep until container exits — set ALFRED_NO_INHIBIT_SLEEP=1 to skip)"
   set +e
-  if [[ -n "${ALFRED_DOCKER_WAIT_MAX_SEC:-}" ]] && [[ "${ALFRED_DOCKER_WAIT_MAX_SEC}" =~ ^[0-9]+$ ]] && (( ALFRED_DOCKER_WAIT_MAX_SEC > 0 )); then
-    EXIT="$(alfred_maybe_inhibit_exec timeout --signal=TERM --kill-after=60 "${ALFRED_DOCKER_WAIT_MAX_SEC}" \
-      docker wait "$NAME" 2>/dev/null | tr -d '\n')"
-    tw_rc=$?
-    if (( tw_rc == 124 )) || (( tw_rc == 137 )); then
-      echo "docker wait timed out after ${ALFRED_DOCKER_WAIT_MAX_SEC}s (timeout rc=$tw_rc) — treating docker_exit as unknown"
-      EXIT="unknown"
-    fi
-  else
-    EXIT="$(alfred_maybe_inhibit_exec docker wait "$NAME" 2>/dev/null | tr -d '\n')"
-  fi
-  [[ -n "$EXIT" ]] || EXIT="unknown"
+  EXIT="$(alfred_lb_docker_wait_until_done "$NAME")"
   set -e
   alfred_stop_heartbeat "$HB_PID"
   HB_PID=""
@@ -137,8 +174,12 @@ fi
 
 rm -f "$ISO_LIST"
 
-# Success: clean container exit, or we found an ISO even if `docker wait` missed (--rm race).
-if [[ "$EXIT" == "0" ]] || [[ "$ISO_COUNT" != "0" ]]; then
+# Success: clean container exit only, or unknown + ISO only when container is already gone (--rm race).
+# Do not exit 0 on stale ISO while a failed run left docker_exit non-zero (supervise would FALSE_SUCCESS).
+if [[ "$EXIT" == "0" ]]; then
+  exit 0
+fi
+if [[ "$EXIT" == "unknown" ]] && [[ "$ISO_COUNT" != "0" ]] && ! docker inspect "$NAME" &>/dev/null; then
   exit 0
 fi
 exit 1
