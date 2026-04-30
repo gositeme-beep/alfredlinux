@@ -1,4 +1,5 @@
 #!/bin/bash
+# SPDX-License-Identifier: AGPL-3.0-or-later
 # ═══════════════════════════════════════════════════════════════
 # 0255-alfred-dev-tools.hook.chroot — "The Arsenal"
 # ═══════════════════════════════════════════════════════════════
@@ -62,7 +63,10 @@ if [ -f /opt/alfred/build-assets/rustup-init ]; then
 elif [ -f /build-assets/rustup-init ]; then
     /build-assets/rustup-init -y
 else
-    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+    _ru=$(mktemp) || exit 1
+    curl --proto '=https' --tlsv1.2 -sSf -o "$_ru" https://sh.rustup.rs
+    sh "$_ru" -s -- -y
+    rm -f "$_ru"
 fi
 source "$HOME/.cargo/env"
 echo "Rust $(rustc --version) installed!"

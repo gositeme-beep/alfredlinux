@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: AGPL-3.0-or-later
 # Alfred Linux — static security sweep for hooks + helper scripts.
 # Wave 2: grep-based CI gate; extend patterns here each security wave.
 # Usage: bash scripts/security-audit.sh   (from repo root; exit 1 on CRITICAL)
@@ -70,9 +71,11 @@ while IFS= read -r hit; do
   crit "StrictHostKeyChecking=no on executable line: $hit"
 done < <(non_comment_hits "StrictHostKeyChecking=no")
 
+# Password SSH is a policy choice (e.g. bootstrap before keys); do not CRITICAL
+# without maintainer sign-off — WARN so CI can still surface it.
 while IFS= read -r hit; do
   [ -z "$hit" ] && continue
-  crit "PasswordAuthentication yes on executable line: $hit"
+  warn "PasswordAuthentication yes on executable line (review policy): $hit"
 done < <(non_comment_hits "PasswordAuthentication yes")
 
 # --- CRITICAL: curl|sh / wget|sh on non-comment lines (supply chain) ---

@@ -236,29 +236,22 @@
     kernel vmlinux).
 
   • SHIPPED TODAY — Bible tongues (hook 0292): embedded `languages.conf` in
-    `0292-alfred-bible-tongues.hook.chroot` has four data rows: en, es, fr, he
-    (offline seeds + `alfred-bible-lang`). The `bible_tongues` field in
-    `api/version.json` MUST equal that row count; `scripts/release-integrity.sh
-    check-repo` enforces it. Expanding tongues = add rows to the hook heredoc,
-    then bump `api/version.json`.
+    `0292-alfred-bible-tongues.hook.chroot` has 48 data rows (Acts 2:4 breadth):
+    en; es, fr, he with rich offline seeds; 44 additional `tongue-*` codes with
+    compact Genesis 1:1 + John 3:16 seeds; `alfred-bible-lang` lists and reads
+    any installed code. The `bible_tongues` field in `api/version.json` MUST
+    equal that row count; `scripts/release-integrity.sh check-repo` enforces it.
+    Full AKJV English TSV remains the 0290 payload when present; other rows are
+    seeds unless a full `.tsv` is added later.
 
-  • ROADMAP / TARGET BREADTH (NOT claimed as shipped rows in languages.conf):
-    We still intend many more Covenant-language seeds over time — the working
-    list for future hook rows includes, among others: Spanish variants (es-419,
-    es-ES), Ladino (lad), Chavacano (cbk), French, Hebrew (already shipped),
-    Greek (LXX / NT samples), Latin (Vulgate-style samples), German, Portuguese,
-    Russian, Chinese, Japanese, Arabic (MSA ar), Moroccan Darija (ary), Egyptian
-    (arz), Levantine (apc), Gulf (afb), Hindi, Italian, Romanian, Polish,
-    Ukrainian, Korean, Turkish, Dutch, Vietnamese, Tagalog, Filipino, Urdu,
-    Swahili, Amharic, Yoruba, Igbo, Hausa, Zulu, Xhosa, Afrikaans, Somali, Twi,
-    Jamaican Patwa (jam), Indonesian (id), Farsi (fa), Burmese (my), Yiddish
-    (yi), Haitian Creole (ht), and other fields as Acts 2:4 breadth demands.
-    None of those extra codes are honorable in `api/version.json` until the
-    matching `languages.conf` lines exist in 0292 (Kingdom-of-Truth rule).
+  • ROADMAP: further Covenant-language coverage (more dialects, fuller TSVs per
+    tongue) continues in Forge; `bible_tongues` only rises when matching
+    `languages.conf` rows ship in 0292 (Kingdom-of-Truth rule).
 
   • On the live ISO: Bible in Many Languages (Education), or terminal
-    `alfred-bible-lang list` then `alfred-bible-lang <code>` for seeded verses
-    (`es`, `fr`, `he`, etc.). Discovery also via `alfred-bible tongues list`.
+    `alfred-bible-lang list` then `alfred-bible-lang <code>` for any of the
+    48 shipped codes (rich seeds for es/fr/he; compact seeds for the rest).
+    Discovery also via `alfred-bible tongues list`.
     Full English text remains `alfred-bible read …` / AKJV Bible launcher.
   • Children's Bible — 33 illustrated stories
   • alfred-bible CLI (AKJV) plus `alfred-bible tongues …` → alfred-bible-lang

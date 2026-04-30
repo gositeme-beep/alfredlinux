@@ -1,12 +1,14 @@
 #!/bin/bash
+# SPDX-License-Identifier: AGPL-3.0-or-later
 # ═══════════════════════════════════════════════════════════════════════════════
 # HOOK 0292: Bible Tongues — The Word in Every Language
 #
 # "And they were all filled with the Holy Ghost, and began to speak
 #  with other tongues, as the Spirit gave them utterance." — Acts 2:4
 #
-# Multilingual Bible support: English (AKJV), Spanish (Reina-Valera),
-# French (Louis Segond), and Hebrew. alfred-bible --lang support.
+# Multilingual Bible support: 48 tongues in languages.conf (Acts 2:4 breadth).
+# English: full AKJV Perez Family Edition when 0290 ships the TSV; es/fr/he rich seeds;
+# 44 additional tongue-* two-verse seeds. alfred-bible-lang reads any installed code.
 #
 # BUILD: v7.77 Kingdom of God Edition
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -28,12 +30,56 @@ mkdir -p "$BIBLE_DIR"
 echo "[TONGUES-01] Creating language index..."
 
 cat > "$BIBLE_DIR/languages.conf" << 'CONF'
-# Alfred Bible — Supported Languages
+# Alfred Bible — Supported Languages (48 tongues • Acts 2:4)
 # Format: code|name|file|source
-en|English|akjv-bible.tsv|Authorized King James Version
-es|Español|rvr-bible.tsv|Reina-Valera Revisada 1960
-fr|Français|lsg-bible.tsv|Louis Segond 1910
-he|עברית|hebrew-bible.tsv|Westminster Leningrad Codex (OT)
+en|English|akjv-bible.tsv|Authorized King Jesus Version — Perez Family Edition (full TSV from 0290)
+es|Español|rvr-bible.tsv|Reina-Valera 1960 — rich seed in hook
+es-419|Español (Latinoamérica)|tongue-es-419.tsv|Reina-Valera phrasing — seed verses
+es-ES|Español (España)|tongue-es-ES.tsv|Reina-Valera phrasing — seed verses
+fr|Français|lsg-bible.tsv|Louis Segond 1910 — rich seed in hook
+he|עברית|hebrew-bible.tsv|Westminster Leningrad-style Tanakh seed
+de|Deutsch|tongue-de.tsv|Luther-style German seed verses
+pt|Português|tongue-pt.tsv|Portuguese evangelical seed verses
+ru|Русский|tongue-ru.tsv|Russian Synodal-style seed verses
+zh|中文（繁體）|tongue-zh.tsv|Traditional Chinese Protestant seed verses
+ja|日本語|tongue-ja.tsv|Japanese Protestant seed verses
+ar|العربية|tongue-ar.tsv|Arabic evangelical seed verses
+hi|हिन्दी|tongue-hi.tsv|Hindi evangelical seed verses
+it|Italiano|tongue-it.tsv|Italian evangelical seed verses
+ro|Română|tongue-ro.tsv|Romanian evangelical seed verses
+pl|Polski|tongue-pl.tsv|Polish evangelical seed verses
+uk|Українська|tongue-uk.tsv|Ukrainian evangelical seed verses
+ko|한국어|tongue-ko.tsv|Korean Protestant seed verses
+tr|Türkçe|tongue-tr.tsv|Turkish evangelical seed verses
+nl|Nederlands|tongue-nl.tsv|Dutch evangelical seed verses
+vi|Tiếng Việt|tongue-vi.tsv|Vietnamese evangelical seed verses
+tl|Tagalog|tongue-tl.tsv|Tagalog evangelical seed verses
+ur|اردو|tongue-ur.tsv|Urdu evangelical seed verses
+sw|Kiswahili|tongue-sw.tsv|Swahili evangelical seed verses
+am|አማርኛ|tongue-am.tsv|Amharic evangelical seed verses
+ig|Ígbò|tongue-ig.tsv|Igbo evangelical seed verses
+yo|Yorùbá|tongue-yo.tsv|Yoruba evangelical seed verses
+ha|Hausa|tongue-ha.tsv|Hausa evangelical seed verses
+zu|isiZulu|tongue-zu.tsv|Zulu evangelical seed verses
+xh|isiXhosa|tongue-xh.tsv|Xhosa evangelical seed verses
+af|Afrikaans|tongue-af.tsv|Afrikaans evangelical seed verses
+so|Soomaali|tongue-so.tsv|Somali evangelical seed verses
+tw|Twi|tongue-tw.tsv|Twi evangelical seed verses
+jam|Jamiekan Patois|tongue-jam.tsv|Jamaican Creole seed verses
+id|Bahasa Indonesia|tongue-id.tsv|Indonesian evangelical seed verses
+fa|فارسی|tongue-fa.tsv|Persian evangelical seed verses
+my|မြန်မာ|tongue-my.tsv|Burmese evangelical seed verses
+yi|ייִדיש|tongue-yi.tsv|Yiddish evangelical seed verses
+ht|Kreyòl ayisyen|tongue-ht.tsv|Haitian Creole seed verses
+el|Ἑλληνικά|tongue-el.tsv|Koine Greek seed verses
+la|Latina|tongue-la.tsv|Latin Vulgate-style seed verses
+lad|Ladino|tongue-lad.tsv|Ladino Judeo-Spanish seed verses
+cbk|Chavacano|tongue-cbk.tsv|Chavacano de Zamboanga seed verses
+ary|الدارجة (Maghrebi)|tongue-ary.tsv|Maghrebi Arabic — Latin seed script
+arz|مصري|tongue-arz.tsv|Egyptian Arabic seed verses
+apc|عربية شامية|tongue-apc.tsv|Levantine Arabic seed verses
+afb|عربية خليجية|tongue-afb.tsv|Gulf Arabic seed verses
+bn|বাংলা|tongue-bn.tsv|Bengali evangelical seed verses
 CONF
 
 # ═══════════════════════════════════════════════════
@@ -101,6 +147,275 @@ Book	Chapter	Verse	Text
 SEED
 
 # ═══════════════════════════════════════════════════
+# 4b. COMPACT SEEDS — tongue-* tables (Genesis 1:1 + John 3:16)
+# ═══════════════════════════════════════════════════
+echo "[TONGUES-04b] Installing compact tongue-* seed tables (44 languages)..."
+
+cat > "$BIBLE_DIR/tongue-es-419-seed.tsv" << 'SEED_es-419'
+Book	Chapter	Verse	Text
+Genesis	1	1	En el principio creó Dios los cielos y la tierra.
+John	3	16	Porque de tal manera amó Dios al mundo, que ha dado a su Hijo unigénito, para que todo aquel que en él cree, no se pierda, mas tenga vida eterna.
+SEED_es-419
+
+cat > "$BIBLE_DIR/tongue-es-ES-seed.tsv" << 'SEED_es-ES'
+Book	Chapter	Verse	Text
+Genesis	1	1	En el principio creó Dios los cielos y la tierra.
+John	3	16	Porque de tal manera amó Dios al mundo, que ha dado a su Hijo unigénito, para que todo aquel que en él cree, no se pierda, mas tenga vida eterna.
+SEED_es-ES
+
+cat > "$BIBLE_DIR/tongue-de-seed.tsv" << 'SEED_de'
+Book	Chapter	Verse	Text
+Genesis	1	1	Am Anfang schuf Gott Himmel und Erde.
+John	3	16	Also hat Gott die Welt geliebt, daß er seinen eingeborenen Sohn gab, auf daß alle, die an ihn glauben, nicht verloren werden, sondern das ewige Leben haben.
+SEED_de
+
+cat > "$BIBLE_DIR/tongue-pt-seed.tsv" << 'SEED_pt'
+Book	Chapter	Verse	Text
+Genesis	1	1	No princípio criou Deus os céus e a terra.
+John	3	16	Porque Deus amou o mundo de tal maneira que deu o seu Filho unigênito, para que todo aquele que nele crê não pereça, mas tenha a vida eterna.
+SEED_pt
+
+cat > "$BIBLE_DIR/tongue-ru-seed.tsv" << 'SEED_ru'
+Book	Chapter	Verse	Text
+Genesis	1	1	В начале сотворил Бог небо и землю.
+John	3	16	Ибо так возлюбил Бог мир, что отдал Сына Своего Единородного, дабы всякий верующий в Него не погиб, но имел жизнь вечную.
+SEED_ru
+
+cat > "$BIBLE_DIR/tongue-zh-seed.tsv" << 'SEED_zh'
+Book	Chapter	Verse	Text
+Genesis	1	1	起初　神創造天地。
+John	3	16	神愛世人，甚至將他的獨生子賜給他們，叫一切信他的，不致滅亡，反得永生。
+SEED_zh
+
+cat > "$BIBLE_DIR/tongue-ja-seed.tsv" << 'SEED_ja'
+Book	Chapter	Verse	Text
+Genesis	1	1	はじめに、神が天と地を創造された。
+John	3	16	神はそのひとり子をお与えになったほどに世を愛された。信じる者が滅びることなく永遠の命を得るためである。
+SEED_ja
+
+cat > "$BIBLE_DIR/tongue-ar-seed.tsv" << 'SEED_ar'
+Book	Chapter	Verse	Text
+Genesis	1	1	في البدء خلق الله السماوات والأرض.
+John	3	16	لأنه هكذا أحب الله العالم حتى بذل ابنه الوحيد، لكي لا يهلك كل من يؤمن به، بل تكون له حياة أبدية.
+SEED_ar
+
+cat > "$BIBLE_DIR/tongue-hi-seed.tsv" << 'SEED_hi'
+Book	Chapter	Verse	Text
+Genesis	1	1	आदि में परमेश्वर ने आकाश और पृथ्वी की सृष्टि की।
+John	3	16	क्योंकि परमेश्वर ने जगत् से इतना प्रेम रखा कि उस ने अपना एकलौता पुत्र भी दिया, ताकि जो कोई उस पर विश्वास करे वह नाश न हो, परन्तु अनन्त जीवन पाए।
+SEED_hi
+
+cat > "$BIBLE_DIR/tongue-it-seed.tsv" << 'SEED_it'
+Book	Chapter	Verse	Text
+Genesis	1	1	Nel principio Dio creò i cieli e la terra.
+John	3	16	Perciocchè Dio ha tanto amato il mondo, che ha dato il suo unigenito Figliuolo, acciocchè chiunque crede in lui non perisca, ma abbia vita eterna.
+SEED_it
+
+cat > "$BIBLE_DIR/tongue-ro-seed.tsv" << 'SEED_ro'
+Book	Chapter	Verse	Text
+Genesis	1	1	La început Dumnezeu a făcut cerul și pământul.
+John	3	16	Fiindcă Dumnezeu a iubit lumea până acolo încât a dat pe singurul Lui Fiu, ca oricine crede în El să nu piară, ci să aibă viață veșnică.
+SEED_ro
+
+cat > "$BIBLE_DIR/tongue-pl-seed.tsv" << 'SEED_pl'
+Book	Chapter	Verse	Text
+Genesis	1	1	Na początku Bóg stworzył niebo i ziemię.
+John	3	16	Albowiem tak Bóg umiłował świat, że Syna Swego Jednorodzonego dał, aby każdy, kto w Niego wierzy, nie zginął, ale miał żywot wieczny.
+SEED_pl
+
+cat > "$BIBLE_DIR/tongue-uk-seed.tsv" << 'SEED_uk'
+Book	Chapter	Verse	Text
+Genesis	1	1	На початку Бог створив небо й землю.
+John	3	16	Бо так полюбив Бог світ, що дав Сина Свого Єдинородного, щоб кожен, хто вірує в Нього, не загинув, а мав життя вічне.
+SEED_uk
+
+cat > "$BIBLE_DIR/tongue-ko-seed.tsv" << 'SEED_ko'
+Book	Chapter	Verse	Text
+Genesis	1	1	태초에 하나님이 천지를 창조하시니라.
+John	3	16	하나님이 세상을 이처럼 사랑하사 독생자를 주셨으니 이는 그를 믿는 자마다 멸망하지 않고 영생을 얻게 하려 하심이니라.
+SEED_ko
+
+cat > "$BIBLE_DIR/tongue-tr-seed.tsv" << 'SEED_tr'
+Book	Chapter	Verse	Text
+Genesis	1	1	Başlangıçta Allah gökleri ve yeri yarattı.
+John	3	16	Çünkü Tanrı dünyayı o kadar sevdi ki biricik Oğlunu verdi; böylece ona iman eden herkes yok olmasın ama sonsuz yaşamı bulsun.
+SEED_tr
+
+cat > "$BIBLE_DIR/tongue-nl-seed.tsv" << 'SEED_nl'
+Book	Chapter	Verse	Text
+Genesis	1	1	In den beginne schiep God den hemel en de aarde.
+John	3	16	Want alzo lief heeft God de wereld gehad, dat Hij Zijn enigen Zoon gegeven heeft, opdat een iegelijk die in Hem gelooft, niet verloren worde, maar het eeuwige leven hebbe.
+SEED_nl
+
+cat > "$BIBLE_DIR/tongue-vi-seed.tsv" << 'SEED_vi'
+Book	Chapter	Verse	Text
+Genesis	1	1	Ban đầu, Đức Chúa Trời dựng nên trời và đất.
+John	3	16	Vì Đức Chúa Trời yêu thương thế gian đến nỗi đã ban Con Một của Ngài, hầu cho hễ ai tin Con ấy thì không bị hư mất, nhưng được sự sống đời đời.
+SEED_vi
+
+cat > "$BIBLE_DIR/tongue-tl-seed.tsv" << 'SEED_tl'
+Book	Chapter	Verse	Text
+Genesis	1	1	Nang pasimula ay nilikha ng Dios ang langit at ang lupa.
+John	3	16	Sapagka't gayon na minamahal ng Dios ang sanglibutan, na ibinigay niya ang kaniyang bugtong na Anak, upang ang sinomang sumampalataya sa kaniya ay huwag mapahamak, kundi magkaroon ng buhay na walang hanggan.
+SEED_tl
+
+cat > "$BIBLE_DIR/tongue-ur-seed.tsv" << 'SEED_ur'
+Book	Chapter	Verse	Text
+Genesis	1	1	ابتدا میں خدا نے آسمان اور زمین کو پیدا کیا۔
+John	3	16	کیونکہ خُدا نے دُنیا سے اتنا پیار کیا کہ اُس نے اپنا واحد اُکتا بیٹا بخش دیا تاکہ جو کوئی اُس پر ایمان لائے ہلاک نہ ہو بلکہ ابدی زندگی پائے۔
+SEED_ur
+
+cat > "$BIBLE_DIR/tongue-sw-seed.tsv" << 'SEED_sw'
+Book	Chapter	Verse	Text
+Genesis	1	1	Hapo mwanzo Mungu aliziumba mbingu na dunia.
+John	3	16	Kwa maana jinsi hii Mungu aliupenda ulimwengu hata akamtoa Mwana wake wa pekee, ili kila mtu amwaminiye asipotee, bali awe na uzima wa milele.
+SEED_sw
+
+cat > "$BIBLE_DIR/tongue-am-seed.tsv" << 'SEED_am'
+Book	Chapter	Verse	Text
+Genesis	1	1	በመጀመሪያ እግዚአብሔር ሰማይንና ምድርን ፈጠረ።
+John	3	16	እግዚአብሔር ዓለምን እንዲህ ወዶዋል እስኪሰጥ ድረስ አንድ ልጁን ሰጠው፤ በእርሱ የሚያምን ሁሉ እንዳይጠፋ ነገር ግን የዘላለም ሕይወት እንዲኖረው ነው።
+SEED_am
+
+cat > "$BIBLE_DIR/tongue-ig-seed.tsv" << 'SEED_ig'
+Book	Chapter	Verse	Text
+Genesis	1	1	N'ọdụ́ Mmalite, Chineke kere elùígwú nà àlà.
+John	3	16	N'ihi na Chineke hụrụ ụwa anyị n'anya nke ukwuu ruo nke ọ bụrụ na ọ nyefere Nwa ya na ọ bụ naanị, ka onye ọ bụla kwere ekwe na ya ghara ilaa ọkụ kama ọ nweta ndụ ebighị ebi.
+SEED_ig
+
+cat > "$BIBLE_DIR/tongue-yo-seed.tsv" << 'SEED_yo'
+Book	Chapter	Verse	Text
+Genesis	1	1	Ní ìbẹ̀rẹ̀, Ọlọ́run dá ọ̀run àti ayé.
+John	3	16	Nitori Ọlọ́run fẹ́ àgbáyé tó báyìí tí ó fún un ní Ọmọ rẹ̀ ọ̀kan ṣoṣo, kí ẹnikẹ́ni tí ó gbà á gbọ́ má bàjó, kí ó sì ní ìyè àìnííopin.
+SEED_yo
+
+cat > "$BIBLE_DIR/tongue-ha-seed.tsv" << 'SEED_ha'
+Book	Chapter	Verse	Text
+Genesis	1	1	A farko Allah ya halicci samaniya da duniya.
+John	3	16	Domin Allah ya kauna duniya haka har ya ba da ɗansa iko daya, don duk wanda ya yi imani da shi kada ya halaka, amma ya sami rai madawwami.
+SEED_ha
+
+cat > "$BIBLE_DIR/tongue-zu-seed.tsv" << 'SEED_zu'
+Book	Chapter	Verse	Text
+Genesis	1	1	Ekuqaleni uNkulunkulu wadalula izulu nomhlaba.
+John	3	16	Ngokuba uNkulunkulu uyalithanda izwe kangaka kwaze kwapha iNdodana yakhe eyodwa, ukuze wonke umuntu okholwa yiyo angabhubhi kepha abe nokuphila okuphakade.
+SEED_zu
+
+cat > "$BIBLE_DIR/tongue-xh-seed.tsv" << 'SEED_xh'
+Book	Chapter	Verse	Text
+Genesis	1	1	Emandulo uThixo wadalula izulu nehlabathi.
+John	3	16	Ngenxa yokuba uThixo uyalithanda ihlabathi kangange wanika uNyana wakhe owodwa, ukuze wonke umntu ukholwa kuye angatshabalali kepha abe nobomi obungapheli.
+SEED_xh
+
+cat > "$BIBLE_DIR/tongue-af-seed.tsv" << 'SEED_af'
+Book	Chapter	Verse	Text
+Genesis	1	1	In die begin het God die hemel en die aarde geskape.
+John	3	16	Want so lief het God die wêreld gehad dat Hy sy eniggebore Seun gegee het, sodat elkeen wat in Hom glo, nie verlore mag gaan nie, maar die ewige lewe kan hê.
+SEED_af
+
+cat > "$BIBLE_DIR/tongue-so-seed.tsv" << 'SEED_so'
+Book	Chapter	Verse	Text
+Genesis	1	1	Bilowgii Ilaahay samada iyo dhulka wuu abuuray.
+John	3	16	Maxaa yeelay Ilaah jacaylkii adduunka u qaatay oo uu wiilkiisa keliya ku siiyey si qof walba oo rumaysta uusan lumin laakiinse uu helo nolosha weligeed.
+SEED_so
+
+cat > "$BIBLE_DIR/tongue-tw-seed.tsv" << 'SEED_tw'
+Book	Chapter	Verse	Text
+Genesis	1	1	Ɔhyɛase Onyankopɔn bore ɔsoro ne asase.
+John	3	16	Esiane Onyankopɔn dɔɔ asase yi yiye inti ɔmaa ne Ba korɔ no, ama obiara a ɔgye no di no nkɔ awiei na mmom onya nkwa a atwa da.
+SEED_tw
+
+cat > "$BIBLE_DIR/tongue-jam-seed.tsv" << 'SEED_jam'
+Book	Chapter	Verse	Text
+Genesis	1	1	Ina di bigining Gad mek di ievn an di earth.
+John	3	16	Bikaaz Gad lov di worl sou mat dat im gi im wan an ongl Son, so evribadi we biliiv iina im no fi perish bot av laif we no av no en.
+SEED_jam
+
+cat > "$BIBLE_DIR/tongue-id-seed.tsv" << 'SEED_id'
+Book	Chapter	Verse	Text
+Genesis	1	1	Pada mulanya Allah menciptakan langit dan bumi.
+John	3	16	Karena begitu besar kasih Allah akan dunia ini, sehingga Ia telah mengaruniakan Anak-Nya yang tunggal, supaya setiap orang yang percaya kepada-Nya tidak binasa, melainkan beroleh hidup yang kekal.
+SEED_id
+
+cat > "$BIBLE_DIR/tongue-fa-seed.tsv" << 'SEED_fa'
+Book	Chapter	Verse	Text
+Genesis	1	1	در آفرینش، خدا آسمانها و زمین را آفرید.
+John	3	16	زیرا خدا جهان را چنان دوست داشت که پسر یکتای خود را داد تا هر که به او ایمان آورد هلاک نگردد، بلکه حیات جاودان یابد.
+SEED_fa
+
+cat > "$BIBLE_DIR/tongue-my-seed.tsv" << 'SEED_my'
+Book	Chapter	Verse	Text
+Genesis	1	1	အစကျွန်တော်တို့မြေကြီးကိုဘုရားသခင်သည် ဖန်ဆင်းတော်မူ၏။
+John	3	16	မြေကြီးကိုချစ်သောကြောင့်ဘုရားသခင်သည် သားတော်တစ်ပါးတည်းကို ပေးတော်မူ၏။ ယုံကြည်သောသူသည် ပျက်စီးခြင်းမရှိဘဲ ထာဝရချစ်ခြင်းမေတ္တာကို ရရှိစေခြင်းငှါ ဖြစ်သည်။
+SEED_my
+
+cat > "$BIBLE_DIR/tongue-yi-seed.tsv" << 'SEED_yi'
+Book	Chapter	Verse	Text
+Genesis	1	1	אין אָנהייב האָט גאָט געשאַפן הימל און ערד.
+John	3	16	ווייל גאָט האָט די וועלט אזוי ליב געהאַט, האָט ער זיין איינציקן זון געגעבן, אַז יעדער וואָס גלייבט אין אים זאָל נישט פארלירן ווערן, נאָר האָבן אייביק לעבן.
+SEED_yi
+
+cat > "$BIBLE_DIR/tongue-ht-seed.tsv" << 'SEED_ht'
+Book	Chapter	Verse	Text
+Genesis	1	1	Nan konmansman Bondye kreye syèl la ak tè a.
+John	3	16	Paske Bondye renmen mond lan anpil, li bay sèl Pitit li a, pou tout moun ki kwè nan li pèdi, men gen lavi ki pap janm fini.
+SEED_ht
+
+cat > "$BIBLE_DIR/tongue-el-seed.tsv" << 'SEED_el'
+Book	Chapter	Verse	Text
+Genesis	1	1	Ἐν ἀρχῇ ἐποίησεν ὁ θεὸς τὸν οὐρανὸν καὶ τὴν γῆν.
+John	3	16	οὕτως γὰρ ἠγάπησεν ὁ θεὸς τὸν κόσμον, ὥστε τὸν υἱὸν τὸν μονογενῆ ἔδωκεν, ἵνα πᾶς ὁ πιστεύων εἰς αὐτὸν μὴ ἀπόληται ἀλλὰ ἔχῃ ζωὴν αἰώνιον.
+SEED_el
+
+cat > "$BIBLE_DIR/tongue-la-seed.tsv" << 'SEED_la'
+Book	Chapter	Verse	Text
+Genesis	1	1	In principio creavit Deus cælum et terram.
+John	3	16	Sic enim dilexit Deus mundum, ut Filium suum unigenitum daret: ut omnis qui credit in eum, non pereat, sed habeat vitam æternam.
+SEED_la
+
+cat > "$BIBLE_DIR/tongue-lad-seed.tsv" << 'SEED_lad'
+Book	Chapter	Verse	Text
+Genesis	1	1	En el printsipio el Dio kreo los syelos i la tierra.
+John	3	16	Porque el Dio amo al mundo asta ke dio su Ijo uniko, por ke todo el ke kreye en El no se pierda, ma tyenga vida eterna.
+SEED_lad
+
+cat > "$BIBLE_DIR/tongue-cbk-seed.tsv" << 'SEED_cbk'
+Book	Chapter	Verse	Text
+Genesis	1	1	Na el principio Dios ta crea el cielo y el tierra.
+John	3	16	Porque Dios ta ama con el mundo hasta dale su Hijo unico, para que todo el que cree na El no se pierde sino tiene vida eterna.
+SEED_cbk
+
+cat > "$BIBLE_DIR/tongue-ary-seed.tsv" << 'SEED_ary'
+Book	Chapter	Verse	Text
+Genesis	1	1	F lblaax Allah khllq smawat w lard.
+John	3	16	7it Allah 7bb l3alam bzzaf 3tana lwalad lwahd bash kuli mamin fih mymsh yhlk walakin 3ndu 7ayat daima.
+SEED_ary
+
+cat > "$BIBLE_DIR/tongue-arz-seed.tsv" << 'SEED_arz'
+Book	Chapter	Verse	Text
+Genesis	1	1	في الأول ربنا خلق السما والأرض.
+John	3	16	علشان ربنا بحب الدنيا كده إنه بعت ابنه الوحيد عشان أي حد يؤمن بينجاش لكن ياخد حياة أبدية.
+SEED_arz
+
+cat > "$BIBLE_DIR/tongue-apc-seed.tsv" << 'SEED_apc'
+Book	Chapter	Verse	Text
+Genesis	1	1	بِالبَدء خَلَق الله السَّماوات والأرض.
+John	3	16	لأن الله هيك أحب العالم إنه بعت ابنو الوحيد، لتَي كل مين بيؤمن فيه ما يهلك بس يكون عندو حياة أبدية.
+SEED_apc
+
+cat > "$BIBLE_DIR/tongue-afb-seed.tsv" << 'SEED_afb'
+Book	Chapter	Verse	Text
+Genesis	1	1	فِي البداية خلق الله السما والأرض.
+John	3	16	لأن الله يحب العالم ويعطي ابنه الوحيد، عشان كل اللي يؤمن ما يضيع وله حياة دائمة.
+SEED_afb
+
+cat > "$BIBLE_DIR/tongue-bn-seed.tsv" << 'SEED_bn'
+Book	Chapter	Verse	Text
+Genesis	1	1	আদিতে পরমেশ্বর স্বর্গ ও পৃথিবী সৃষ্টি করিলেন।
+John	3	16	কিয়নোঁকি ঈশ্বৰে জগতখনক ইমান ভাল পালে যে, নিজৰ একমাত্ৰ পুত্ৰক দিলে, যাতে যিকোনোৱে তেওঁত বিশ্বাস কৰে সি নাশ নহয়, কিন্তু অনন্ত জীৱন পায়।
+SEED_bn
+
+# ═══════════════════════════════════════════════════
 # 5. BIBLE TONGUES CLI WRAPPER
 # ═══════════════════════════════════════════════════
 echo "[TONGUES-05] Installing Bible tongues extension..."
@@ -144,7 +459,7 @@ case "$LANGUAGE" in
         echo "  Example: alfred-bible-lang he"
         ;;
 
-    en|es|fr|he)
+    *)
         CODE="$LANGUAGE"
         BOOK="${2:-}"
         CHAPTER="${3:-}"
@@ -205,13 +520,13 @@ case "$LANGUAGE" in
         fi
         ;;
 
-    help|*)
+    help|-h|--help)
         echo -e "${GOLD}═══ alfred-bible-lang — The Word in Every Tongue ═══${NC}"
         echo ""
-        echo "  alfred-bible-lang list           — Show available languages"
-        echo "  alfred-bible-lang es              — Random verse in Spanish"
-        echo "  alfred-bible-lang fr Jean 3       — John 3 in French"
-        echo "  alfred-bible-lang he              — Random Hebrew verse"
+        echo "  alfred-bible-lang list              — Show all 48 language codes"
+        echo "  alfred-bible-lang de                — Random verse (German seed)"
+        echo "  alfred-bible-lang es Salmos 23      — Psalm 23 in Spanish (rich seed)"
+        echo "  alfred-bible-lang fr Jean 3         — John 3 in French (rich seed)"
         echo ""
         echo "  \"They began to speak with other tongues,"
         echo "   as the Spirit gave them utterance.\" — Acts 2:4"
@@ -221,11 +536,11 @@ LANG
 chmod +x /usr/local/bin/alfred-bible-lang
 
 echo "╔═══════════════════════════════════════════════════════════╗"
-echo "║  [0292] Bible Tongues — COMPLETE                         ║"
-echo "║  ✓ English (AKJV) — 39,482 verses                       ║"
-echo "║  ✓ Spanish (Reina-Valera) — seed installed               ║"
-echo "║  ✓ French (Louis Segond) — seed installed                ║"
-echo "║  ✓ Hebrew (Westminster Codex) — seed installed           ║"
-echo "║  ✓ alfred-bible-lang CLI — multilingual reader           ║"
+echo "║  [0292] Bible Tongues — COMPLETE (48 codes)              ║"
+echo "║  ✓ languages.conf — 48 tongues (metadata + CLI)         ║"
+echo "║  ✓ en — full AKJV when akjv-bible.tsv present (0290)     ║"
+echo "║  ✓ es / fr / he — rich offline seeds                     ║"
+echo "║  ✓ 44 tongue-* — compact Genesis 1:1 + John 3:16 seeds   ║"
+echo "║  ✓ alfred-bible-lang — any code in languages.conf       ║"
 echo "║  They spoke with other tongues. — Acts 2:4               ║"
 echo "╚═══════════════════════════════════════════════════════════╝"

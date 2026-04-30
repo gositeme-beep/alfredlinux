@@ -1,4 +1,5 @@
 #!/bin/bash
+# SPDX-License-Identifier: AGPL-3.0-or-later
 # ═══════════════════════════════════════════════════════════════
 # HOOK 0166: Alfred Linux — Post-Quantum Encryption (Kyber-1024)
 #
@@ -236,7 +237,7 @@ case "${1:-help}" in
             /usr/local/bin/oqs_speed_test
         else
             echo "Testing SSH key exchange with sntrup761..."
-            time ssh -o "KexAlgorithms=sntrup761x25519-sha512@openssh.com" -o "StrictHostKeyChecking=no" -o "BatchMode=yes" -p 22 localhost exit 2>&1 || true
+            time ssh -o "KexAlgorithms=sntrup761x25519-sha512@openssh.com" -o "StrictHostKeyChecking=accept-new" -o "BatchMode=yes" -p 22 localhost exit 2>&1 || true
             echo -e "${GREEN}Test complete.${NC}"
         fi
         ;;

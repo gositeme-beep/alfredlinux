@@ -2,11 +2,12 @@ Alfred Linux — security hardening waves (living checklist)
 ===========================================================
 
 Wave 1 (landed)
-  • 0280 mesh SSH: accept-new + known_hosts; skynet no eval; safe leave/join.
-  • 0100 SSH pubkey-only; myip local (no ifconfig.me).
+  • 0280 mesh SSH: StrictHostKeyChecking=accept-new; skynet uses bash -c (no eval).
+  • 0100 SSH hardening drop-in: PasswordAuthentication remains yes by product policy;
+    security-audit.sh reports it as WARN (not CRITICAL) for maintainer review.
   • 0270 alfred-security-audit: no eval.
   • 0167 Kingdom mesh POST: ALFRED_KINGDOM_MESH_REGISTER=1 opt-in; TLS + urlencode.
-  • 0166 PQ SSH self-test: accept-new.
+  • 0166 PQ SSH self-test: StrictHostKeyChecking=accept-new (localhost).
 
 Wave 2 (this release)
   • scripts/security-audit.sh — static CI sweep (hooks + optional shellcheck).
@@ -14,7 +15,8 @@ Wave 2 (this release)
   • SECURITY-WAVES.txt + optional GitHub workflow.
 
 Wave 3 (prepare next — backlog)
-  • SPDX: AGPL line on all `config/hooks/live/*.hook.chroot` + `scripts/*.sh` (+ shlib); audit warns if a hook lacks it. SBOM export still open.
+  • SPDX: AGPL-3.0-or-later line after shebang on all `config/hooks/live/*.hook.chroot`
+    (landed); extend to any remaining `scripts/*.sh` without SPDX + SBOM export still open.
   • LICENSE vs LICENSING.md / KCL vs AGPL: README + LICENSING bridge added; full legal unify still optional.
   • AppArmor: aa-genprof cycle for /usr/local/bin/alfred-mesh (WireGuard paths,
     wg-quick, avahi, curl to fixed endpoints); start in complain, then enforce.

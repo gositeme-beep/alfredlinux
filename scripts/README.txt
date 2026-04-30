@@ -9,6 +9,14 @@ security-audit.sh
   CI: .github/workflows/security-audit.yml; GoForge: .gitea/workflows/security-audit.yml
   After editing the Gitea workflow: bash scripts/sync-forgejo-actions-yaml.sh
 
+alfred-repo-health.sh
+  Runs `release-integrity.sh check-repo` then `security-audit.sh` (exit non-zero if either fails).
+  Optional: `ALFRED_LINUX_REPO=/path/to/checkout` when invoked from elsewhere.
+    bash scripts/alfred-repo-health.sh
+  Systemd user units (edit WorkingDirectory if your clone path differs):
+    contrib/systemd/user/alfred-linux-repo-health.{service,timer}
+    systemctl --user enable --now alfred-linux-repo-health.timer
+
 iso-preflight.sh
   Run before `lb build`. Fails if linux-image-7.0.1*.deb missing from
   config/packages.chroot/ (hook 0050). Usage:

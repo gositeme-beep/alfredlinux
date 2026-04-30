@@ -1,4 +1,5 @@
 #!/bin/bash
+# SPDX-License-Identifier: AGPL-3.0-or-later
 set -e
 # Fix /tmp permissions (may be restricted by earlier hooks in chroot)
 chmod 1777 /tmp 2>/dev/null || true
@@ -263,7 +264,7 @@ distribute_task() {
     if [ -f "$CLOUD_DIR/active-peers.txt" ]; then
         while read -r peer; do
             echo -e "${YELLOW}[Peer: $peer] Dispatching...${NC}"
-            ssh -o ConnectTimeout=3 -o StrictHostKeyChecking=no "$peer" \
+            ssh -o ConnectTimeout=3 -o StrictHostKeyChecking=accept-new "$peer" \
                 "omahon '$PROMPT' 2>/dev/null" &
         done < "$CLOUD_DIR/active-peers.txt"
     fi
@@ -354,7 +355,7 @@ skynet_join() {
     sort -u -o "$SKYNET_DIR/swarm-members.txt" "$SKYNET_DIR/swarm-members.txt"
     echo -e "${GREEN}Added $PEER to swarm${NC}"
     # Share our existence with the peer
-    ssh -o ConnectTimeout=3 -o StrictHostKeyChecking=no "$PEER" \
+    ssh -o ConnectTimeout=3 -o StrictHostKeyChecking=accept-new "$PEER" \
         "mkdir -p ~/.config/alfred/skynet && echo '$(hostname -I | awk '{print $1}')' >> ~/.config/alfred/skynet/swarm-members.txt && sort -u -o ~/.config/alfred/skynet/swarm-members.txt ~/.config/alfred/skynet/swarm-members.txt" 2>/dev/null \
         && echo -e "${GREEN}Bidirectional mesh established with $PEER${NC}" \
         || echo -e "${RED}Could not reach peer — added locally only${NC}"
@@ -365,13 +366,13 @@ skynet_distribute() {
     echo -e "${CYAN}[Skynet] Distributing command to swarm: $CMD${NC}"
     # Run locally
     echo -e "${GREEN}[Local]${NC}"
-    eval "$CMD" &
+    bash -c "$CMD" &
 
     # Fan out to swarm
     if [ -f "$SKYNET_DIR/swarm-members.txt" ]; then
         while read -r member; do
             echo -e "${CYAN}[Node: $member]${NC}"
-            ssh -o ConnectTimeout=3 -o StrictHostKeyChecking=no "$member" "$CMD" 2>/dev/null &
+            ssh -o ConnectTimeout=3 -o StrictHostKeyChecking=accept-new "$member" "$CMD" 2>/dev/null &
         done < "$SKYNET_DIR/swarm-members.txt"
     fi
     wait
