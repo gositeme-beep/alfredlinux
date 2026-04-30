@@ -12,7 +12,7 @@ Wave 1 (landed)
 Wave 2 (this release)
   • scripts/security-audit.sh — static CI sweep (hooks + optional shellcheck).
   • install-rust: two-step rustup (curl -o file → verify shebang → sh file).
-  • SECURITY-WAVES.txt + optional GitHub workflow.
+  • SECURITY-WAVES.txt + GoForge Actions (.gitea/ + generated .forgejo/).
 
 Wave 3 (prepare next — backlog)
   • SPDX: AGPL-3.0-or-later line after shebang on all `config/hooks/live/*.hook.chroot`
@@ -29,8 +29,9 @@ Wave 3 (prepare next — backlog)
 How to run the audit locally
   bash scripts/security-audit.sh
 
-CI
-  .github/workflows/security-audit.yml — push/PR on GitHub (or mirror).
-  .gitea/workflows/security-audit.yml — same job on GoForge Actions + act_runner.
-  .forgejo/workflows/security-audit.yml — duplicate YAML for Forgejo installs that only scan .forgejo/.
+CI (GoForge — https://alfredlinux.com/forge/)
+  .gitea/workflows/security-audit.yml — canonical Actions workflow + act_runner.
+  .forgejo/workflows/security-audit.yml — generated (`bash scripts/sync-forgejo-actions-yaml.sh`).
+  .github/workflows/security-audit.yml — optional mirror only; keep aligned with .gitea if used.
   Operator sizing + enablement: docs/GOFORGE-INFRASTRUCTURE-UPGRADE.txt
+
