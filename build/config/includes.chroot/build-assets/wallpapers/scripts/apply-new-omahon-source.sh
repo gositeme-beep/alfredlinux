@@ -1,4 +1,5 @@
 #!/bin/bash
+# SPDX-License-Identifier: AGPL-3.0-or-later
 # Install a newly generated omahon seal master and rebuild 8K / 4K / 1080p pack.
 # Run this the same day (or just before) you run build-unified.sh ga so the ISO
 # does not pin an old seal you have rejected.
