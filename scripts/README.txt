@@ -92,6 +92,11 @@ watch-lb-docker-build.sh
   Optional: `--status-json /path/state.json` (machine-readable), `--webhook URL` (POST JSON on exit).
   With `--status-json`, a non-blocking **flock** on `.lb-docker-watch.lock` prevents two parallel
   watchers corrupting the same JSON; second instance exits 3. `ALFRED_WATCH_NO_FLOCK=1` bypasses.
+  Optional: `ALFRED_DOCKER_WAIT_MAX_SEC=43200` (for example) caps how long `docker wait` blocks; on
+  timeout the script records `docker_exit=unknown` (pair with night-shift log fatal detection).
+  If `git push` to the forge says `refs/heads/main.lock` / remote rejected, another push or GC
+  holds the repo — retry after a few seconds; on the Gitea host remove a **stale** `main.lock` only
+  if no real `git` process is using that repository.
   Law wrapper: `/home/gositeme/law/alfred-watch-lb-docker.sh`
 
 check-lb-docker-status.sh

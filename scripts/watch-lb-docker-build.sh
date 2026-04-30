@@ -10,6 +10,8 @@
 #
 # Before sleep: uses systemd-inhibit (when installed) so the host does not suspend during docker wait.
 #   ALFRED_NO_INHIBIT_SLEEP=1  — skip inhibit.  ALFRED_NAP_HEARTBEAT_SEC=120 — heartbeat interval.
+#   ALFRED_DOCKER_WAIT_MAX_SEC=<seconds> — wrap `docker wait` in `timeout` (GNU coreutils); on timeout
+#   exit is treated as unknown so night-shift / JSON can fall back to log-based checks.
 # With --status-json: writes phase=waiting immediately, then .lb-docker-watch.heartbeat timestamps.
 # One writer at a time: flock on .lb-docker-watch.lock (ALFRED_WATCH_NO_FLOCK=1 to bypass).
 set -euo pipefail
@@ -58,7 +60,17 @@ if docker inspect "$NAME" &>/dev/null; then
   [[ -z "${ALFRED_NO_INHIBIT_SLEEP:-}" ]] && command -v systemd-inhibit &>/dev/null \
     && echo "(systemd-inhibit: blocking sleep until container exits — set ALFRED_NO_INHIBIT_SLEEP=1 to skip)"
   set +e
-  EXIT="$(alfred_maybe_inhibit_exec docker wait "$NAME" 2>/dev/null | tr -d '\n')"
+  if [[ -n "${ALFRED_DOCKER_WAIT_MAX_SEC:-}" ]] && [[ "${ALFRED_DOCKER_WAIT_MAX_SEC}" =~ ^[0-9]+$ ]] && (( ALFRED_DOCKER_WAIT_MAX_SEC > 0 )); then
+    EXIT="$(alfred_maybe_inhibit_exec timeout --signal=TERM --kill-after=60 "${ALFRED_DOCKER_WAIT_MAX_SEC}" \
+      docker wait "$NAME" 2>/dev/null | tr -d '\n')"
+    tw_rc=$?
+    if (( tw_rc == 124 )) || (( tw_rc == 137 )); then
+      echo "docker wait timed out after ${ALFRED_DOCKER_WAIT_MAX_SEC}s (timeout rc=$tw_rc) — treating docker_exit as unknown"
+      EXIT="unknown"
+    fi
+  else
+    EXIT="$(alfred_maybe_inhibit_exec docker wait "$NAME" 2>/dev/null | tr -d '\n')"
+  fi
   [[ -n "$EXIT" ]] || EXIT="unknown"
   set -e
   alfred_stop_heartbeat "$HB_PID"
