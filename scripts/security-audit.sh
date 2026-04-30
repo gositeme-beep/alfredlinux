@@ -180,10 +180,10 @@ done
 # --- shellcheck: this script always; all scripts/*.sh if ALFRED_SHELLCHECK_ALL=1 ---
 if command -v shellcheck >/dev/null 2>&1; then
   log "=== shellcheck (scripts/security-audit.sh) ==="
-  shellcheck -x scripts/security-audit.sh
+  shellcheck -P SCRIPTDIR -x scripts/security-audit.sh
   if [ -f scripts/audit-law-wrappers.sh ]; then
     log "=== shellcheck (scripts/audit-law-wrappers.sh) ==="
-    shellcheck -x scripts/audit-law-wrappers.sh
+    shellcheck -P SCRIPTDIR -x scripts/audit-law-wrappers.sh
   fi
   if [ "${ALFRED_SHELLCHECK_ALL:-0}" = 1 ]; then
     log "=== shellcheck (ALFRED_SHELLCHECK_ALL=1 — scripts + ops + shlib + build-assets) ==="
