@@ -2,6 +2,10 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # 0270-alfred-sovereign.hook.chroot — "The Crown"
 # THIS IS WHAT MAKES UBUNTU OBSOLETE.
+#
+# alfred-voice-cmd: opening DuckDuckGo for "search for …" requires
+# ALFRED_ALLOW_VOICE_WEB_SEARCH=1 or ALFRED_ALLOW_HOOK_NETWORK_DOWNLOADS=1 (query is URL-encoded).
+# ═══════════════════════════════════════════════════════════════
 set -e
 echo "═══════════════════════════════════════════════════════"
 echo "  ALFRED SOVEREIGN LAYER — The Crown"
@@ -113,7 +117,17 @@ case "${COMMAND,,}" in
     *"lock"*) xflock4 &;;
     *"check security"*|*"heal"*) alfred-heal;;
     *"update"*) xfce4-terminal -e "sudo apt update && sudo apt upgrade -y" &;;
-    *"search for"*) Q="${COMMAND#*search for}"; alfred-search "$Q" 2>/dev/null || xdg-open "https://duckduckgo.com/?q=${Q}" &;;
+    *"search for"*)
+        Q="${COMMAND#*search for}"
+        Q="${Q#"${Q%%[![:space:]]*}"}"
+        if alfred-search "$Q" 2>/dev/null; then
+            :
+        elif [[ "${ALFRED_ALLOW_HOOK_NETWORK_DOWNLOADS:-}" == "1" || "${ALFRED_ALLOW_VOICE_WEB_SEARCH:-}" == "1" ]]; then
+            enc=$(printf '%s\n' "$Q" | python3 -c "import sys,urllib.parse; print(urllib.parse.quote(sys.stdin.read().strip(), safe=''))")
+            [[ -n "$enc" ]] && xdg-open "https://duckduckgo.com/?q=${enc}" &
+        else
+            echo "Voice web search disabled (set ALFRED_ALLOW_VOICE_WEB_SEARCH=1 or ALFRED_ALLOW_HOOK_NETWORK_DOWNLOADS=1)." >&2
+        fi;;
     *"what time"*) date '+%I:%M %p';;
     *) command -v alfred-ai &>/dev/null && alfred-ai "$COMMAND" || echo "Unknown: $COMMAND";;
 esac
@@ -211,7 +225,7 @@ cat > /usr/local/bin/alfred-security-audit << 'AUDIT'
 SCORE=0; TOTAL=0
 RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[0;33m'; CYAN='\033[0;36m'; NC='\033[0m'
 chk() { ((TOTAL++)); echo -n "  [$TOTAL] $1... "
-    if eval "$2" &>/dev/null; then echo -e "${GREEN}PASS${NC}"; ((SCORE++)); else echo -e "${RED}FAIL${NC}"; fi; }
+    if bash -c "$2" &>/dev/null; then echo -e "${GREEN}PASS${NC}"; ((SCORE++)); else echo -e "${RED}FAIL${NC}"; fi; }
 echo -e "${CYAN}═══ Alfred Linux Security Audit ═══${NC}"
 chk "Firewall active" "nft list ruleset 2>/dev/null | grep -q 'chain input'"
 chk "AppArmor enforcing" "aa-status --enabled 2>/dev/null"
