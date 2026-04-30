@@ -7,6 +7,7 @@
 # disk. We use targeted `|| true` and validate-then-act blocks instead.
 # alfred-eternal: encrypted backup uses openssl -pass file: (not pass: on argv);
 # manifest JSON is written via python json.dumps.
+# alfred-frequency: encode/decode pass paths via env (quoted Python heredoc).
 set -u
 set -o pipefail
 echo "╔════════════════════════════════════════════════════════════════╗"
@@ -228,11 +229,12 @@ encode_to_frequency() {
         return 1
     fi
 
-    python3 << PYEOF
-import wave, struct, hashlib, os, sys
+    export AE_FREQ_IN="$FILE" AE_FREQ_OUT="$OUTPUT"
+    python3 << 'PYEOF'
+import wave, struct, hashlib, os, sys, math
 
-input_file = "$FILE"
-output_file = "$OUTPUT"
+input_file = os.environ["AE_FREQ_IN"]
+output_file = os.environ["AE_FREQ_OUT"]
 
 # Read file bytes
 with open(input_file, 'rb') as f:
@@ -268,7 +270,6 @@ with wave.open(output_file, 'w') as wav:
         freq = base_freq + (byte_val / 255.0) * freq_range
         for i in range(n_samples_per_byte):
             t = i / sample_rate
-            import math
             sample = int(32767 * 0.8 * math.sin(2 * math.pi * freq * t))
             wav.writeframes(struct.pack('<h', sample))
 
@@ -291,11 +292,12 @@ decode_from_frequency() {
 
     echo -e "${CYAN}[Frequency] Decoding: $WAVFILE → $OUTPUT${NC}"
 
-    python3 << PYEOF
-import wave, struct, math
+    export AE_WAV_IN="$WAVFILE" AE_DEC_OUT="$OUTPUT"
+    python3 << 'PYEOF'
+import wave, struct, math, os
 
-input_file = "$WAVFILE"
-output_file = "$OUTPUT"
+input_file = os.environ["AE_WAV_IN"]
+output_file = os.environ["AE_DEC_OUT"]
 
 sample_rate = 44100
 duration_per_byte = 0.01

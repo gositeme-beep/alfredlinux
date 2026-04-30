@@ -12,6 +12,7 @@
 # fully sovereign development environment.
 #
 # Optional: ALFRED_ALLOW_HOOK_NETWORK_DOWNLOADS=1 allows GitHub code-server deb if build-assets missing.
+# product.json branding: path in ALFRED_CS_PRODUCT_JSON; Python heredoc is quoted.
 #
 # BUILD: v7.77-ga
 # ═══════════════════════════════════════════════════════════════
@@ -65,11 +66,13 @@ fi
 # ═══════════════════════════════════════════════════════════════
 if [[ -n "$CS_ROOT" ]] && [[ -f "$CS_ROOT/product.json" ]]; then
     echo "[IDE-02] Applying full Alfred IDE branding to product.json..."
-    python3 << PYEOF
-import json, sys
+    export ALFRED_CS_PRODUCT_JSON="$CS_ROOT/product.json"
+    python3 << 'PYEOF'
+import json, sys, os
 
+path = os.environ["ALFRED_CS_PRODUCT_JSON"]
 try:
-    with open('${CS_ROOT}/product.json', 'r') as f:
+    with open(path, 'r', encoding='utf-8') as f:
         d = json.load(f)
 except Exception as e:
     print(f"  ERROR reading product.json: {e}")
@@ -152,7 +155,7 @@ if 'builtInExtensions' in d:
 # ── AI config — Alfred, not Microsoft ──
 d['aiConfig'] = {'ariaKey': 'alfred-ide'}
 
-with open('${CS_ROOT}/product.json', 'w') as f:
+with open(path, 'w', encoding='utf-8') as f:
     json.dump(d, f, indent='\t', ensure_ascii=False)
 
 print("  product.json: 25+ properties rebranded")
