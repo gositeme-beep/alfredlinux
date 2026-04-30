@@ -70,9 +70,12 @@ CI (GoForge — https://alfredlinux.com/forge/)
   Operator sizing + enablement: docs/GOFORGE-INFRASTRUCTURE-UPGRADE.txt
   Ecosystem + supply-chain narrative: docs/MEGA-PLAN-L1-L9.txt, docs/MANIFEST-v1.txt, docs/UPSTREAM-SECURITY-SIGNALS.txt
   GoSiteMe Veil commander/classified UIs: shared **includes/classified-page-headers.inc.php**
-    (no-store, noindex, nosniff, X-Frame-Options DENY, same-origin referrer) on all **client_id 33**-gated
-    **veil/*.php** pages (Dell Watch/Mailer/Operations Hub, Memory Commander, Nexus/Black Vault/Genesis,
-    Pantheon, admins, call archive, integrity report, etc.); on **fleet-tracker**, **reports**, **agenda**,
-    **command-center** only when **$isOwner** (33). Dell Watch **?action=feed** JSON also no-store.
-    **reunion.php**: **auth-gate** + client 33 check + classified headers **before** **site-header** (correct
-    **$page_title** / meta). **wallet**, **index**, **departments**, **pro-discussions** unchanged (not commander-only).
+    (no-store, **Vary: Cookie**, noindex, nosniff, **X-DNS-Prefetch-Control: off**, **X-Permitted-Cross-Domain-Policies: none**,
+    **Permissions-Policy** with camera/microphone/display-capture/encrypted-media/WebAuthn **(self)** only, X-Frame-Options DENY,
+    same-origin referrer) on all **client_id 33**-gated **veil/*.php** pages (Dell Watch/Mailer/Operations Hub, Memory Commander,
+    Nexus/Black Vault/Genesis, Pantheon, admins, call archive, integrity report, etc.); on **fleet-tracker**, **reports**,
+    **agenda**, **command-center** only when **$isOwner** (33). Dell Watch **?action=feed** JSON also no-store.
+    **reunion.php**: **auth-gate** + client 33 check + classified headers **before** **site-header** (correct **$page_title** / meta).
+    **Auth debug trace**: **GOSITEME_AUTH_DEBUG_TRACE=1** in the PHP environment enables minimal **oauth-trace.log** lines;
+    production default is **no** logging (previously **auth-gate** could write **full `$_SESSION` JSON** — removed).
+    **wallet**, **index**, **departments**, **pro-discussions** unchanged (not commander-only).
