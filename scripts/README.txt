@@ -2,16 +2,23 @@ Alfred Linux — helper scripts (ISO / builder)
 ==============================================
 
 security-audit.sh
-  Static sweep of config/hooks/live/*.hook.chroot (SSH footguns, curl|sh, etc.).
-  Optional: ALFRED_SHELLCHECK_ALL=1 to shellcheck every scripts/*.sh.
+  Static sweep of config/hooks/live/*.hook.chroot, scripts/*.sh, scripts/ops/*.sh,
+  scripts/shlib/*.sh, and build-assets/**/*.sh (SSH footguns, curl|sh, eval, http://, SPDX on build-assets).
+  Optional: ALFRED_SHELLCHECK_ALL=1 to shellcheck those same script globs (plus security-audit.sh itself first).
     bash scripts/security-audit.sh
   Wave checklist: scripts/SECURITY-WAVES.txt
   GoForge Actions (canonical): .gitea/workflows/security-audit.yml — https://alfredlinux.com/forge/
   Mirror on disk: .forgejo/workflows/security-audit.yml (run bash scripts/sync-forgejo-actions-yaml.sh after edits)
   Optional GitHub mirror: .github/workflows/security-audit.yml (keep aligned with .gitea if used)
 
+audit-law-wrappers.sh
+  Same grep rules on **runtime** shells under `LAW_ROOT` (default `/home/gositeme/law`): top-level `*.sh`
+  plus `alfred-build-control-plane/*.sh`. Exits 0 if `LAW_ROOT` is missing (e.g. CI). No SPDX gate.
+    bash scripts/audit-law-wrappers.sh
+
 alfred-repo-health.sh
-  Runs `release-integrity.sh check-repo` then `security-audit.sh` (exit non-zero if either fails).
+  Runs `release-integrity.sh check-repo`, `security-audit.sh`, and **`audit-law-wrappers.sh`**
+  (grep pass on `/home/gositeme/law/*.sh` when that tree exists; otherwise skipped).
   Optional: `ALFRED_LINUX_REPO=/path/to/checkout` when invoked from elsewhere.
     bash scripts/alfred-repo-health.sh
   Systemd user units (edit WorkingDirectory if your clone path differs):

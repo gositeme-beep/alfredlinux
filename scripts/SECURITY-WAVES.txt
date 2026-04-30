@@ -12,6 +12,8 @@ Wave 1 (landed)
 
 Wave 2 (this release)
   • scripts/security-audit.sh — static CI sweep (hooks + optional shellcheck).
+  • Same CRITICAL/WARN patterns on scripts/*.sh, scripts/ops/*.sh, scripts/shlib/*.sh, and
+    build-assets/**/*.sh (excludes security-audit.sh itself to avoid self-match on audit strings).
   • install-rust: two-step rustup (curl -o file → verify shebang → sh file).
   • SECURITY-WAVES.txt + GoForge Actions (.gitea/ + generated .forgejo/).
 
@@ -23,16 +25,20 @@ Wave 3 (prepare next — backlog)
   • AppArmor: aa-genprof cycle for /usr/local/bin/alfred-mesh (WireGuard paths,
     wg-quick, avahi, curl to fixed endpoints); start in complain, then enforce.
   • SBOM: SPDX or CycloneDX export for ISO packages + hook-generated debs.
-  • curl|bash audit for build-assets / law wrappers outside config/hooks/live.
+  • curl|bash audit: **scripts/** + **build-assets/**/*.sh** in `security-audit.sh`; **law**
+    runtime copies: **`scripts/audit-law-wrappers.sh`** (`$LAW_ROOT/*.sh`, default `/home/gositeme/law`).
+    Deeper trees under law (kernel tarballs, etc.) are still out of scope.
   • ~~README “8 hooks” vs six IDs~~ (fixed); ~~Elyon naming drift~~ (LICENSING note); ~~0160 .bak~~ (removed from tree).
   • mesh-register: optional TLS public-key pinning file for gositeme.com.
   • alfred-skynet distribute: optional command allowlist config file.
 
 How to run the audit locally
   bash scripts/security-audit.sh
+  bash scripts/audit-law-wrappers.sh   # when /home/gositeme/law (or LAW_ROOT) exists
 
 CI (GoForge — https://alfredlinux.com/forge/)
-  .gitea/workflows/security-audit.yml — canonical Actions workflow + act_runner.
+  .gitea/workflows/security-audit.yml — canonical Actions workflow + act_runner
+    (release-integrity, security-audit.sh, audit-law-wrappers.sh; law scan skips if LAW_ROOT missing).
   .forgejo/workflows/security-audit.yml — generated (`bash scripts/sync-forgejo-actions-yaml.sh`).
   .github/workflows/security-audit.yml — optional mirror only; keep aligned with .gitea if used.
   Operator sizing + enablement: docs/GOFORGE-INFRASTRUCTURE-UPGRADE.txt

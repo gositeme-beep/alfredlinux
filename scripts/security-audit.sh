@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Alfred Linux — static security sweep for hooks + helper scripts.
-# Wave 2: grep-based CI gate; extend patterns here each security wave.
+# Alfred Linux — static security sweep for hooks, repo scripts, and build-assets shells.
+# Wave 2: hook CI gate; Wave 3: scripts/*.sh + ops + shlib + build-assets (same grep rules).
 # Usage: bash scripts/security-audit.sh   (from repo root; exit 1 on CRITICAL)
 
 set -euo pipefail
@@ -31,7 +31,7 @@ non_comment_hits() {
   done
 }
 
-log "=== Alfred security-audit (wave 2) ==="
+log "=== Alfred security-audit (hooks + scripts + build-assets) ==="
 
 # shellcheck source=shlib/bible_tongues_counts.sh
 . "$(dirname "$0")/shlib/bible_tongues_counts.sh"
@@ -111,15 +111,86 @@ for f in "${HOOK_GLOB[@]}"; do
   done < "$f"
 done
 
+# --- Wave 3: scripts/*.sh + scripts/ops/*.sh (not hooks) — same SSH + supply-chain rules ---
+# Skip this script: it contains the grep patterns and example strings on real code lines.
+for f in scripts/*.sh scripts/ops/*.sh scripts/shlib/*.sh; do
+  [ -f "$f" ] || continue
+  [[ "$f" == scripts/security-audit.sh ]] && continue
+  while IFS= read -r line || [ -n "$line" ]; do
+    [[ "$line" =~ ^[[:space:]]*# ]] && continue
+    if [[ "$line" == *"StrictHostKeyChecking=no"* ]]; then
+      crit "StrictHostKeyChecking=no on executable line: $f: ${line:0:140}"
+    fi
+  done < "$f"
+  while IFS= read -r line || [ -n "$line" ]; do
+    [[ "$line" =~ ^[[:space:]]*# ]] && continue
+    grep -qE 'curl[^|]*\|[[:space:]]*(ba)?sh|wget[^|]*\|[[:space:]]*(ba)?sh' <<<"$line" || continue
+    crit "curl|sh or wget|sh in $f — ${line:0:140}"
+  done < "$f"
+  while IFS= read -r line; do
+    [[ "$line" =~ ^[[:space:]]*# ]] && continue
+    [[ "$line" =~ ^[[:space:]]*eval[[:space:]] ]] || continue
+    warn "eval statement in $f: ${line:0:120}"
+  done < "$f"
+  while IFS= read -r line; do
+    [[ "$line" =~ ^[[:space:]]*# ]] && continue
+    [[ "$line" != *"http://"* ]] && continue
+    [[ "$line" == *"http://127."* || "$line" == *"http://localhost"* || "$line" == *'xmlns="http://'* ]] && continue
+    [[ "$line" == *"http://deb.debian.org"* || "$line" == *"http://security.debian.org"* ]] && continue
+    warn "http:// in $f: ${line:0:140}"
+  done < "$f"
+done
+
+# --- Wave 3b: build-assets shell (canonical media helpers; synced into ISO includes) ---
+for f in build-assets/*.sh build-assets/wallpapers/scripts/*.sh; do
+  [ -f "$f" ] || continue
+  while IFS= read -r line || [ -n "$line" ]; do
+    [[ "$line" =~ ^[[:space:]]*# ]] && continue
+    if [[ "$line" == *"StrictHostKeyChecking=no"* ]]; then
+      crit "StrictHostKeyChecking=no on executable line: $f: ${line:0:140}"
+    fi
+  done < "$f"
+  while IFS= read -r line || [ -n "$line" ]; do
+    [[ "$line" =~ ^[[:space:]]*# ]] && continue
+    grep -qE 'curl[^|]*\|[[:space:]]*(ba)?sh|wget[^|]*\|[[:space:]]*(ba)?sh' <<<"$line" || continue
+    crit "curl|sh or wget|sh in $f — ${line:0:140}"
+  done < "$f"
+  while IFS= read -r line; do
+    [[ "$line" =~ ^[[:space:]]*# ]] && continue
+    [[ "$line" =~ ^[[:space:]]*eval[[:space:]] ]] || continue
+    warn "eval statement in $f: ${line:0:120}"
+  done < "$f"
+  while IFS= read -r line; do
+    [[ "$line" =~ ^[[:space:]]*# ]] && continue
+    [[ "$line" != *"http://"* ]] && continue
+    [[ "$line" == *"http://127."* || "$line" == *"http://localhost"* || "$line" == *'xmlns="http://'* ]] && continue
+    [[ "$line" == *"http://deb.debian.org"* || "$line" == *"http://security.debian.org"* ]] && continue
+    warn "http:// in $f: ${line:0:140}"
+  done < "$f"
+done
+
+# --- WARN: SPDX on build-assets shell helpers ---
+for f in build-assets/*.sh build-assets/wallpapers/scripts/*.sh; do
+  [ -f "$f" ] || continue
+  if ! head -n 12 "$f" | grep -q '^# SPDX-License-Identifier: AGPL-3.0-or-later'; then
+    warn "build-assets script missing SPDX AGPL-3.0-or-later near top: $f"
+  fi
+done
+
 # --- shellcheck: this script always; all scripts/*.sh if ALFRED_SHELLCHECK_ALL=1 ---
 if command -v shellcheck >/dev/null 2>&1; then
   log "=== shellcheck (scripts/security-audit.sh) ==="
   shellcheck -x scripts/security-audit.sh
+  if [ -f scripts/audit-law-wrappers.sh ]; then
+    log "=== shellcheck (scripts/audit-law-wrappers.sh) ==="
+    shellcheck -x scripts/audit-law-wrappers.sh
+  fi
   if [ "${ALFRED_SHELLCHECK_ALL:-0}" = 1 ]; then
-    log "=== shellcheck (all scripts/*.sh — ALFRED_SHELLCHECK_ALL=1) ==="
+    log "=== shellcheck (ALFRED_SHELLCHECK_ALL=1 — scripts + ops + shlib + build-assets) ==="
     shopt -s nullglob
-    for s in scripts/*.sh; do
+    for s in scripts/*.sh scripts/ops/*.sh scripts/shlib/*.sh build-assets/*.sh build-assets/wallpapers/scripts/*.sh; do
       [ -f "$s" ] || continue
+      [[ "$s" == scripts/security-audit.sh ]] && continue
       shellcheck -x "$s" || WARN=$((WARN + 1))
     done
     shopt -u nullglob
