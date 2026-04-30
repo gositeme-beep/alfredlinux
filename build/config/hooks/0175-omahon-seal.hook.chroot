@@ -12,6 +12,7 @@
 #   4. Shell Secret Guard — redacts secrets from terminal output
 #   5. Secure Erase Tool — wipe files beyond recovery
 #   6. Sovereign Attestation — build signature + chain of trust
+#     (/etc/omahon-attestation via Python + env; BUILD_HASH validated as hex)
 #
 # "Let the front door only be opened in The Kingdom of God
 #  here on Earth until Jesus arrives."
@@ -421,27 +422,41 @@ echo "[OMAHON-06] Writing sovereign attestation..."
 
 BUILD_DATE=$(date -Iseconds)
 BUILD_HASH=$(echo "Alfred Linux 4.0 GA — Sealed by Omahon — ${BUILD_DATE}" | sha256sum | awk '{print $1}')
+export OMAHON_BUILD_DATE="$BUILD_DATE" OMAHON_BUILD_HASH="$BUILD_HASH"
+python3 << 'PYATTEST'
+import os
+import re
+import sys
+from pathlib import Path
 
-cat > /etc/omahon-attestation << ATTEST
-# ═══════════════════════════════════════════════════
-# OMAHON ATTESTATION — Alfred Linux 4.0 GA
-# ═══════════════════════════════════════════════════
-PRODUCT=Alfred Linux
-VERSION=4.0
-RELEASE=GA (General Availability)
-CODENAME=Sovereign
-BUILDER=Commander Danny William Perez
-GUARDIAN=Omahon — The Breath of God
-BUILD_DATE=${BUILD_DATE}
-BUILD_HASH=${BUILD_HASH}
-SECURITY_MODULES=27
-SECURITY_HOOKS=4
-SEAL_VERSION=1
-ATTESTATION=This system was built under sovereign authority
-  and sealed by Omahon. Every boot, the seal is verified.
-  Tamper detection runs continuously. Secrets never touch disk.
-  The breath of God watches over this machine.
-ATTEST
+bd = os.environ["OMAHON_BUILD_DATE"]
+bh = os.environ["OMAHON_BUILD_HASH"].strip().lower()
+if "\n" in bd or "\r" in bd or len(bd) > 128:
+    sys.exit(1)
+if len(bh) != 64 or not re.fullmatch(r"[0-9a-f]{64}", bh):
+    sys.exit(1)
+text = (
+    "# ═══════════════════════════════════════════════════\n"
+    "# OMAHON ATTESTATION — Alfred Linux 4.0 GA\n"
+    "# ═══════════════════════════════════════════════════\n"
+    "PRODUCT=Alfred Linux\n"
+    "VERSION=4.0\n"
+    "RELEASE=GA (General Availability)\n"
+    "CODENAME=Sovereign\n"
+    "BUILDER=Commander Danny William Perez\n"
+    "GUARDIAN=Omahon — The Breath of God\n"
+    f"BUILD_DATE={bd}\n"
+    f"BUILD_HASH={bh}\n"
+    "SECURITY_MODULES=27\n"
+    "SECURITY_HOOKS=4\n"
+    "SEAL_VERSION=1\n"
+    "ATTESTATION=This system was built under sovereign authority\n"
+    "  and sealed by Omahon. Every boot, the seal is verified.\n"
+    "  Tamper detection runs continuously. Secrets never touch disk.\n"
+    "  The breath of God watches over this machine.\n"
+)
+Path("/etc/omahon-attestation").write_text(text, encoding="utf-8")
+PYATTEST
 chmod 644 /etc/omahon-attestation
 
 # Attestation query tool

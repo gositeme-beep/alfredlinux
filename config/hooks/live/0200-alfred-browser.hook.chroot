@@ -6,6 +6,7 @@
 # Installs Alfred Browser when the .deb is staged; sets defaults and removes Firefox
 # only in that success path. If the .deb is missing, keeps Firefox ESR so users always
 # have a working browser (Omahon — no “sovereign” ISO with no Web).
+# Firefox fallback mimeapps: allowlisted .desktop id + Python writer (no unquoted heredoc).
 # ═══════════════════════════════════════════════════════════════
 
 set -e
@@ -133,13 +134,23 @@ else
         update-alternatives --set gnome-www-browser "$FFX_BIN" 2>/dev/null || true
 
         mkdir -p /etc/skel/.config
-        cat > /etc/skel/.config/mimeapps.list << MIMEFF
-[Default Applications]
-text/html=${FFX_DESKTOP}
-application/xhtml+xml=${FFX_DESKTOP}
-x-scheme-handler/http=${FFX_DESKTOP}
-x-scheme-handler/https=${FFX_DESKTOP}
-MIMEFF
+        export FFX_DESKTOP
+        python3 << 'PYMIME'
+import os
+from pathlib import Path
+
+d = os.environ["FFX_DESKTOP"]
+if d not in ("firefox-esr.desktop", "firefox.desktop"):
+    raise SystemExit(1)
+text = (
+    "[Default Applications]\n"
+    f"text/html={d}\n"
+    f"application/xhtml+xml={d}\n"
+    f"x-scheme-handler/http={d}\n"
+    f"x-scheme-handler/https={d}\n"
+)
+Path("/etc/skel/.config/mimeapps.list").write_text(text, encoding="utf-8")
+PYMIME
         mkdir -p /etc/skel/.config/xfce4
         echo "WebBrowser=firefox-esr" > /etc/skel/.config/xfce4/helpers.rc
         cp /etc/skel/.config/mimeapps.list /usr/share/applications/mimeapps.list 2>/dev/null || true

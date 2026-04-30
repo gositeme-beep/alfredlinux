@@ -6,8 +6,7 @@ export UCF_FORCE_CONFFNEW=1
 export APT_LISTCHANGES_FRONTEND=none
 # Fix /tmp permissions (may be restricted by earlier hooks in chroot)
 chmod 1777 /tmp 2>/dev/null || true
-# Fix /tmp permissions (may be restricted by earlier hooks in chroot)
-chmod 1777 /tmp 2>/dev/null || true
+# profile.d/alfred-max-build.sh uses a quoted heredoc so $(nproc) is evaluated at login, not during ISO build.
 echo "╔════════════════════════════════════════════════════════════╗"
 echo "║  HOOK 0280: Alfred MAX — Total Sovereign Compute v5.0     ║"
 echo "║  Max Cores • Max RAM • Mesh Cloud • Self-Evolution        ║"
@@ -613,13 +612,12 @@ systemctl enable irqbalance 2>/dev/null || true
 # 8. PARALLEL BUILD SYSTEM — Use all cores for compilation
 ###############################################################################
 echo "[MAX] Setting up parallel build defaults..."
-NPROC=$(nproc 2>/dev/null || echo 4)
-cat > /etc/profile.d/alfred-max-build.sh << BUILDEOF
+cat > /etc/profile.d/alfred-max-build.sh << 'BUILDEOF'
 # Alfred Linux 5.0 — Use all cores for building
-export MAKEFLAGS="-j\$(nproc)"
-export CARGO_BUILD_JOBS=\$(nproc)
-export CMAKE_BUILD_PARALLEL_LEVEL=\$(nproc)
-export NINJAFLAGS="-j\$(nproc)"
+export MAKEFLAGS="-j$(nproc)"
+export CARGO_BUILD_JOBS=$(nproc)
+export CMAKE_BUILD_PARALLEL_LEVEL=$(nproc)
+export NINJAFLAGS="-j$(nproc)"
 BUILDEOF
 
 ###############################################################################

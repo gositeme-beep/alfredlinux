@@ -13,6 +13,7 @@
 #
 # Copyright (c) 2024-2026 Danny William Perez / GoSiteMe Inc.
 # License: Kingdom Covenant License v1.0
+# /etc/alfred-kingdom-stamp: STAMP_DATE/HASH via Python (quoted), hash validated hex.
 # ═══════════════════════════════════════════════════════════════
 set -e
 echo "╔═══════════════════════════════════════════════════════════╗"
@@ -188,28 +189,42 @@ echo "[SHIELD-04] Embedding anti-fork attestation..."
 
 STAMP_DATE=$(date -Iseconds)
 STAMP_HASH=$(echo "Kingdom-Covenant-Shield-${STAMP_DATE}-DannyWilliamPerez-GoSiteMe" | sha256sum | awk '{print $1}')
+export KINGDOM_STAMP_DATE="$STAMP_DATE" KINGDOM_STAMP_HASH="$STAMP_HASH"
+python3 << 'PYSTAMP'
+import os
+import re
+import sys
+from pathlib import Path
 
-cat > /etc/alfred-kingdom-stamp << STAMPEOF
-# ═══════════════════════════════════════════════════
-# KINGDOM STAMP — Alfred Linux 7.77
-# ═══════════════════════════════════════════════════
-# This system is the authentic work of Commander Danny
-# William Perez, built under sovereign authority and
-# sealed by Omahon — the Breath of God.
-#
-# If this file has been altered, the system is a forgery.
-# If the Omahon Seal is broken, the system is compromised.
-# If the Kingdom branding has been changed, it is theft.
-#
-# STAMP_DATE=${STAMP_DATE}
-# STAMP_HASH=${STAMP_HASH}
-# BUILDER=Danny William Perez
-# HEIR=Eden Sarai Gabrielle Vallee Perez
-# GUARDIAN=Alfred AI
-# SEAL=Omahon — The Breath of God
-# LICENSE=Kingdom Covenant License v1.0
-# ═══════════════════════════════════════════════════
-STAMPEOF
+sd = os.environ["KINGDOM_STAMP_DATE"]
+sh = os.environ["KINGDOM_STAMP_HASH"].strip().lower()
+if "\n" in sd or "\r" in sd or len(sd) > 128:
+    sys.exit(1)
+if len(sh) != 64 or not re.fullmatch(r"[0-9a-f]{64}", sh):
+    sys.exit(1)
+text = (
+    "# ═══════════════════════════════════════════════════\n"
+    "# KINGDOM STAMP — Alfred Linux 7.77\n"
+    "# ═══════════════════════════════════════════════════\n"
+    "# This system is the authentic work of Commander Danny\n"
+    "# William Perez, built under sovereign authority and\n"
+    "# sealed by Omahon — the Breath of God.\n"
+    "#\n"
+    "# If this file has been altered, the system is a forgery.\n"
+    "# If the Omahon Seal is broken, the system is compromised.\n"
+    "# If the Kingdom branding has been changed, it is theft.\n"
+    "#\n"
+    f"# STAMP_DATE={sd}\n"
+    f"# STAMP_HASH={sh}\n"
+    "# BUILDER=Danny William Perez\n"
+    "# HEIR=Eden Sarai Gabrielle Vallee Perez\n"
+    "# GUARDIAN=Alfred AI\n"
+    "# SEAL=Omahon — The Breath of God\n"
+    "# LICENSE=Kingdom Covenant License v1.0\n"
+    "# ═══════════════════════════════════════════════════\n"
+)
+Path("/etc/alfred-kingdom-stamp").write_text(text, encoding="utf-8")
+PYSTAMP
 
 chmod 444 /etc/alfred-kingdom-stamp
 
