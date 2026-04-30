@@ -3,6 +3,8 @@
 # ═══════════════════════════════════════════════════════════════
 # Alfred Linux v2.0-b5 — Meilisearch Local Search Engine
 #
+# Optional: ALFRED_ALLOW_HOOK_NETWORK_DOWNLOADS=1 allows GitHub fetch when
+# /build-assets/meilisearch is missing (default is skip / warn for sealed builds).
 # Installs Meilisearch for offline local search.
 # BUILD: v2.0-b5 (Search)
 # ═══════════════════════════════════════════════════════════════
@@ -18,11 +20,15 @@ if [ -f /build-assets/meilisearch ]; then
     echo "[Alfred] Using pre-staged Meilisearch binary (air-gap safe)"
     install -m 755 /build-assets/meilisearch /usr/local/bin/meilisearch
 else
-    MEILI_URL="https://github.com/meilisearch/meilisearch/releases/download/${MEILI_VER}/meilisearch-linux-amd64"
-    wget -q "$MEILI_URL" -O /usr/local/bin/meilisearch || {
-        echo "[WARN] Meilisearch download failed — will need manual install"
-        echo "meilisearch_failed=$(date -Is)" > /var/lib/alfred/build-flags/meilisearch-failed
-    }
+    if [[ "${ALFRED_ALLOW_HOOK_NETWORK_DOWNLOADS:-}" != "1" ]]; then
+        echo "[0500] WARN: add /build-assets/meilisearch (network download disabled; set ALFRED_ALLOW_HOOK_NETWORK_DOWNLOADS=1 for GitHub fallback)." >&2
+    else
+        MEILI_URL="https://github.com/meilisearch/meilisearch/releases/download/${MEILI_VER}/meilisearch-linux-amd64"
+        wget -q "$MEILI_URL" -O /usr/local/bin/meilisearch || {
+            echo "[WARN] Meilisearch download failed — will need manual install"
+            echo "meilisearch_failed=$(date -Is)" > /var/lib/alfred/build-flags/meilisearch-failed
+        }
+    fi
 fi
 chmod +x /usr/local/bin/meilisearch 2>/dev/null || true
 

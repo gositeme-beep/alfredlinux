@@ -11,6 +11,8 @@
 # This is NOT "code-server with a name change" — this is a
 # fully sovereign development environment.
 #
+# Optional: ALFRED_ALLOW_HOOK_NETWORK_DOWNLOADS=1 allows GitHub code-server deb if build-assets missing.
+#
 # BUILD: v7.77-ga
 # ═══════════════════════════════════════════════════════════════
 
@@ -34,9 +36,13 @@ if [ -f /build-assets/code-server_${CODE_SERVER_VER}_amd64.deb ]; then
     echo "[IDE-01] Using pre-staged code-server deb (air-gap safe)"
     dpkg -i /build-assets/code-server_${CODE_SERVER_VER}_amd64.deb || apt-get -f install -y
 else
-    wget -q "https://github.com/coder/code-server/releases/download/v${CODE_SERVER_VER}/code-server_${CODE_SERVER_VER}_amd64.deb" -O /tmp/code-server.deb \
-        && dpkg -i /tmp/code-server.deb || apt-get -f install -y
-    rm -f /tmp/code-server.deb
+    if [[ "${ALFRED_ALLOW_HOOK_NETWORK_DOWNLOADS:-}" != "1" ]]; then
+        echo "[IDE-01] WARN: No pre-staged code-server deb; skipping GitHub download (set ALFRED_ALLOW_HOOK_NETWORK_DOWNLOADS=1 to allow)." >&2
+    else
+        wget -q "https://github.com/coder/code-server/releases/download/v${CODE_SERVER_VER}/code-server_${CODE_SERVER_VER}_amd64.deb" -O /tmp/code-server.deb \
+            && dpkg -i /tmp/code-server.deb || apt-get -f install -y
+        rm -f /tmp/code-server.deb
+    fi
 fi
 
 # Find where code-server installed its vscode core

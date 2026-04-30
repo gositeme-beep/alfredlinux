@@ -12,6 +12,8 @@
 #  and man became a living soul." — Genesis 2:7
 #
 # Omahon = the breath. Alfred Linux = the living soul.
+#
+# Optional: ALFRED_ALLOW_HOOK_NETWORK_DOWNLOADS=1 allows GitHub Ollama fetch if build-assets missing.
 # ═══════════════════════════════════════════════════════════════
 set -e
 
@@ -30,11 +32,15 @@ if [ -f /build-assets/ollama ]; then
 elif [ -f /build-assets/ollama-linux-amd64 ]; then
     install -m 755 /build-assets/ollama-linux-amd64 /usr/local/bin/ollama
 else
-    echo "[AI] No pre-staged binary — downloading Ollama ${OLLAMA_VERSION}..."
-    wget -qO /tmp/ollama "https://github.com/ollama/ollama/releases/download/v${OLLAMA_VERSION}/ollama-linux-amd64" \
-        && install -m 755 /tmp/ollama /usr/local/bin/ollama \
-        && rm -f /tmp/ollama \
-        || echo "[AI] WARNING: Ollama install failed — will need manual install"
+    if [[ "${ALFRED_ALLOW_HOOK_NETWORK_DOWNLOADS:-}" != "1" ]]; then
+        echo "[AI] WARN: No staged Ollama under build-assets; skipping GitHub download (set ALFRED_ALLOW_HOOK_NETWORK_DOWNLOADS=1 to allow)." >&2
+    else
+        echo "[AI] No pre-staged binary — downloading Ollama ${OLLAMA_VERSION}..."
+        wget -qO /tmp/ollama "https://github.com/ollama/ollama/releases/download/v${OLLAMA_VERSION}/ollama-linux-amd64" \
+            && install -m 755 /tmp/ollama /usr/local/bin/ollama \
+            && rm -f /tmp/ollama \
+            || echo "[AI] WARNING: Ollama install failed — will need manual install"
+    fi
 fi
 
 # Create ollama systemd service (starts on demand, not at boot)
