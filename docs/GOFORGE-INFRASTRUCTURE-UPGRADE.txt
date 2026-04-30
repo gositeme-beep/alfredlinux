@@ -65,6 +65,12 @@ artifacts** so CI can do real work (including optional **kernel-tree** jobs).
 
   See also: `.gitea/workflows/README.txt`
 
+  **Manual workflow_dispatch:** optional input **repo_health_json**=`1` runs
+  `alfred-repo-health.sh` in JSON mode with `set -o pipefail` and a Python
+  assert on `status: ok` (re-runs integrity + audit + law gate — for wrapper
+  validation, not every push). Inputs **law_root** and **shellcheck_all** apply
+  as documented in `scripts/SECURITY-WAVES.txt`.
+
   **Keep duplicates identical:** after changing `.gitea/workflows/security-audit.yml`,
   run `bash scripts/sync-forgejo-actions-yaml.sh` so `.forgejo/workflows/` stays in sync.
   **CI enforces this:** the first job step after checkout runs that script and
