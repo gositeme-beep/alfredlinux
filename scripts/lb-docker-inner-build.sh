@@ -28,8 +28,13 @@ echo "[inner] sync canonical Alfred inputs → build/config at $(date -Is)"
 export ALFRED_FULL_BUILD_ASSETS=1
 bash /work/scripts/sync-canonical-to-build.sh
 
-# live-build requires the `config` stage before chroot stages (error otherwise:
-# "E: the following stage is required to be done first: config").
+# live-build state machine: clean MUST happen before config + build.
+# Order matters: `lb clean` (FULL) wipes ALL stage markers including config.
+# If we ran `lb config` first then `lb clean`, the config marker dies and
+# `lb build` errors: "the following stage is required to be done first: config".
+echo "[inner] lb clean (FULL) at $(date -Is) - wipe all stage markers for fresh build"
+lb clean || true
+
 echo "[inner] lb config at $(date -Is)"
 lb config --ignore-system-defaults || lb config
 
