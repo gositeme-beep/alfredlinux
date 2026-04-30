@@ -50,3 +50,11 @@ sudo systemctl restart alfred-night-shift
   bytes but keeps the basename stable until you intentionally rename.
 - All four SUMS files (downloads/SHA256SUMS-7.77.txt + releases/7.77/SHA{256,512}SUMS + BLAKE3SUMS) end up signed.
 - `.iso.asc` exists beside the ISO so `download.php` and `dell-partner.php` can show "GPG-signed" honestly.
+
+## `$gaFrozenIsoHookCount` (Forge “Hooks Shipping”)
+
+`post-build-restage.sh` bumps **`$gaFrozenIsoHookCount`** using **`unsquashfs -ll`** and a **grep** for legacy paths (`/var/lib/alfred/hook-stamps/…`, `/etc/alfred/hooks/…`, `/var/log/alfred-hook-*`). Most current **`0100–0725`** hooks **do not create those paths**, so the proxy often returns a **small number (e.g. 2)** even when all **42** chroot hooks ran. If the proxy is **fewer than 30**, the script **does not** auto-patch the PHP var (manual review).
+
+**Canonical truth:** `bash scripts/release-integrity.sh check-repo` and **`ls config/hooks/live/*.hook.chroot | wc -l`** (expect **42**). After you confirm **`lb build` / chroot logs** show the full hook sequence, set **`$gaFrozenIsoHookCount = 42`** in `includes/ga-release-state.php` (or extend hooks to emit consistent stamps and tighten the grep — follow-up work).
+
+Until signing runs, **“GPG unsigned”** on the dashboard is expected: complete **`post-build-restage.sh`** GPG steps (or your release checklist) so `.asc` + SUMS signatures match the published ISO.
