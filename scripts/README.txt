@@ -17,6 +17,11 @@ alfred-repo-health.sh
     contrib/systemd/user/alfred-linux-repo-health.{service,timer}
     systemctl --user enable --now alfred-linux-repo-health.timer
 
+safe-operator-once.sh
+  On the **build/web host**, run **once with sudo**: installs `shellcheck`, copies
+  canonical `build-assets/forge/docs/index.html` to live Apache path (apache:apache),
+  and normalizes `public_html/forge/` permissions. See `docs/SERVER-GIT-REMOTES.txt`.
+
 iso-preflight.sh
   Run before `lb build`. Fails if linux-image-7.0.1*.deb missing from
   config/packages.chroot/ (hook 0050). Usage:

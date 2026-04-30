@@ -1,0 +1,19 @@
+Alfred Linux — Git remotes on the sovereign build host
+========================================================
+
+On **this server**, `law/alfredlinux-com-source-live` may use:
+
+  origin → http://127.0.0.1:3300/commander/alfredlinux.com.git
+
+so `git push origin main` reaches **GoForge on localhost** (no HTTPS PIN gate).
+
+Laptops and other machines should add a **separate** remote for the public URL,
+for example:
+
+  git remote add forge-public https://alfredlinux.com/forge/commander/alfredlinux.com.git
+
+(fetch/clone), or use the **SSH** clone URL from the Forge UI for `git push`.
+
+**Never** commit HTTP passwords or API tokens inside remote URLs — use the
+credential helper, `.netrc` (0600), or SSH keys. Rotate any token that was ever
+pasted into a remote URL.
