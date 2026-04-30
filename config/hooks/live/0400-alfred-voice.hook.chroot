@@ -16,10 +16,14 @@ set +e  # Voice is optional — don't kill the build if TTS install fails
 
 echo "[Alfred Linux v2.0-b4] Installing Voice subsystem..."
 
-# ── 0. Ensure DNS works inside chroot ──
+# ── 0. Ensure DNS works inside chroot (only when build allows outbound resolver tweak) ──
 if ! getent hosts deb.debian.org &>/dev/null 2>&1; then
-    rm -f /etc/resolv.conf 2>/dev/null || true
-    printf 'nameserver 9.9.9.9\nnameserver 1.1.1.1\n' > /etc/resolv.conf
+    if [[ "${ALFRED_ALLOW_HOOK_NETWORK_DOWNLOADS:-}" == "1" ]]; then
+        rm -f /etc/resolv.conf 2>/dev/null || true
+        printf 'nameserver 9.9.9.9\nnameserver 1.1.1.1\n' > /etc/resolv.conf
+    else
+        echo "[Alfred Voice] WARN: DNS check failed; not overwriting resolv.conf (set ALFRED_ALLOW_HOOK_NETWORK_DOWNLOADS=1)." >&2
+    fi
 fi
 
 # ── 1. Install audio dependencies (lightweight — stays in ISO) ──
