@@ -18,7 +18,7 @@ chmod 750 "$INNER"
 docker pull "$IMAGE" >/dev/null
 
 # Match host uid so new files on bind mount are not all root:root (optional cleanup).
-run=( docker run --rm --privileged --network=host
+run=( docker run --init --rm --privileged --network=host
   -e "DEBIAN_FRONTEND=noninteractive"
   -e "BUILD_UID=$(id -u)" -e "BUILD_GID=$(id -g)"
   -v "$REPO:/work"
@@ -26,7 +26,7 @@ run=( docker run --rm --privileged --network=host
   "$IMAGE" bash /work/scripts/lb-docker-inner-build.sh )
 
 if [[ "${1:-}" == "detach" ]]; then
-  docker run -d --rm --privileged --network=host --name "$NAME" \
+  docker run -d --init --rm --privileged --network=host --name "$NAME" \
     -e "DEBIAN_FRONTEND=noninteractive" \
     -e "BUILD_UID=$(id -u)" -e "BUILD_GID=$(id -g)" \
     -v "$REPO:/work" \

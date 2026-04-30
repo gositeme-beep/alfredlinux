@@ -16,6 +16,20 @@ apt-get install -y --no-install-recommends \
 bash /work/scripts/patch-live-build-isolinux-dangling.sh
 
 cd /work/build
+
+# Interrupted live-build often leaves proc/sys/dev mounted under chroot. The next run can then hit
+# "umount: .../chroot/sys: target is busy" during lb teardown. Lazy-detach any stale mounts early.
+echo "[inner] lazy-umount stale chroot virtual filesystems (if any) at $(date -Is)"
+_ch=/work/build/chroot
+if [[ -d "$_ch" ]] && command -v mountpoint >/dev/null; then
+  for _m in "$_ch/run/shm" "$_ch/run" "$_ch/dev/pts" "$_ch/dev" "$_ch/proc" "$_ch/sys"; do
+    if mountpoint -q "$_m" 2>/dev/null; then
+      echo "[inner] umount -l $_m"
+      umount -l "$_m" 2>/dev/null || true
+    fi
+  done
+fi
+
 # Recover from broken/partial chroot (e.g. failed Docker run left dev/proc only).
 if [[ ! -f chroot/etc/debian_version ]]; then
   echo "[inner] no complete chroot — removing chroot/binary/.build for clean run"
