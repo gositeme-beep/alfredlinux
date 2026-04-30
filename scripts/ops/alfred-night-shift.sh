@@ -3,7 +3,9 @@
 #
 # Pipeline per attempt:
 #   0. Wait for container name file (or queue a new build if none)
-#   1. docker wait via watch-lb-docker-build.sh
+#   1. docker wait via watch-lb-docker-build.sh; then if lb-docker-build.log tail
+#      contains "E: An unexpected failure occurred", write night-shift-FAIL.txt and
+#      abort this attempt (even when docker wait / JSON are wrong).
 #   2. Validate ISO is fresh + has /etc/alfred (smoke-test)
 #   3. Restage canonical filenames + GPG sign
 #
@@ -46,6 +48,26 @@ exec > >(tee -a "$LOG") 2>&1
 log()   { echo "[night $(date -Is)] $*"; }
 state() { echo "$(date -Is) $*" > "$STATE"; }
 fail()  { echo "FAIL at $(date -Is): $*. See $LOG" > "$FAIL_MARKER"; state "FAIL: $*"; log "FAIL: $*"; exit "${2:-1}"; }
+
+# If lb-docker-build.log already contains live-build's terminal E: line, write FAIL_MARKER even when
+# docker wait / watch-lb-docker-build.sh mis-reports (exits 0, wrong JSON, etc.). Uses last 200 lines
+# only to avoid matching an ancient failure still present earlier in a huge log.
+write_fail_if_log_fatal() {
+  local cname="$1"
+  if ! tail -200 "$SL/lb-docker-build.log" 2>/dev/null | grep -Fq 'E: An unexpected failure occurred'; then
+    return 1
+  fi
+  {
+    echo "FAIL at $(date -Is) — live-build reported: E: An unexpected failure occurred"
+    echo "attempt #$ATTEMPT container $cname"
+    echo "Detected from tail of $SL/lb-docker-build.log (docker wait / watch may have mis-reported)."
+    echo
+    echo "=== last 60 lines of lb-docker-build.log ==="
+    tail -60 "$SL/lb-docker-build.log" 2>/dev/null
+  } > "$FAIL_MARKER"
+  log "wrote $FAIL_MARKER — fatal E: line present in lb-docker-build.log tail"
+  return 0
+}
 
 trap 'log "received signal — exiting"; state "EXITED on signal"; exit 130' INT TERM
 
@@ -115,6 +137,8 @@ run_one_attempt() {
 
   local cname; cname=$(tr -d '\n' < "$NAME_FILE")
   log "container: $cname"
+  # Clear stale FAIL from a prior attempt so Dell Watch is not stuck on FAILED while this run proceeds.
+  rm -f "$FAIL_MARKER"
   state "WATCHING container $cname (attempt #$ATTEMPT)"
 
   # --- docker wait via existing watcher ---
@@ -122,6 +146,11 @@ run_one_attempt() {
   export ALFRED_NO_INHIBIT_SLEEP=1
   export ALFRED_WATCH_NO_FLOCK=1
   sudo -u gositeme bash "$WATCH" --status-json "$STATUS_JSON" || true
+
+  if write_fail_if_log_fatal "$cname"; then
+    log "live-build fatal in log after watch — aborting this attempt (ISO/smoke skipped)"
+    return 8
+  fi
 
   [[ -f "$STATUS_JSON" ]] || { log "watcher didn't write status JSON"; return 3; }
   log "status JSON:"; cat "$STATUS_JSON"
