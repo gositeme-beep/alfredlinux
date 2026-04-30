@@ -1,5 +1,7 @@
 #!/bin/bash
 # SPDX-License-Identifier: AGPL-3.0-or-later
+# Edition HTML: dynamic strings via Python html.escape; bible-engine script is a
+# quoted heredoc (no bash expansion on $ or `). Per-edition .desktop via Python.
 set -e
 echo "╔══════════════════════════════════════════════════════════════════════╗"
 echo "║  HOOK 0290: The Word of God + Music of the Kingdom                 ║"
@@ -466,24 +468,49 @@ footer{text-align:center;padding:2rem 0;color:var(--dim);font-size:.8rem;border-
 CSSEOF
 
 # ── Helper: Generate an edition HTML page ──
+# Dynamic title/subtitle/icon/dir via Python (html.escape); identical JS is a
+# quoted heredoc so bash never expands $ or backticks inside the engine.
 make_edition() {
     local KEY="$1" ICON="$2" TITLE="$3" SUBTITLE="$4" DESC="$5" DIR_ATTR="${6:-ltr}" CLASS="${7:-}"
-    cat > "$EDITIONS_DIR/$KEY.html" << HTMLEOF
-<!DOCTYPE html>
-<html lang="en" dir="$DIR_ATTR">
+    export ED_KEY="$KEY" ED_ICON="$ICON" ED_TITLE="$TITLE" ED_SUBTITLE="$SUBTITLE" \
+        ED_DIR="$DIR_ATTR" ED_CLASS="$CLASS"
+    {
+    python3 <<'PYH'
+import html
+import os
+import re
+import sys
+
+key = os.environ["ED_KEY"].strip()
+dattr = os.environ.get("ED_DIR", "ltr").strip()
+extra = os.environ.get("ED_CLASS", "").strip()
+icon = os.environ["ED_ICON"]
+title = os.environ["ED_TITLE"]
+subtitle = os.environ["ED_SUBTITLE"]
+he = html.escape
+if not re.fullmatch(r"[a-z0-9-]+", key):
+    sys.exit("edition key must be slug [a-z0-9-]")
+if dattr not in ("ltr", "rtl"):
+    sys.exit("dir must be ltr or rtl")
+if extra and not re.fullmatch(r"[a-z0-9-]+", extra):
+    sys.exit("body class suffix must be slug [a-z0-9-]")
+body_cls = f"edition-{key}" + (f" {extra}" if extra else "")
+print(
+    f"""<!DOCTYPE html>
+<html lang="en" dir="{dattr}">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>$TITLE — AKJV Bible — Alfred Linux</title>
+<title>{he(title)} — AKJV Bible — Alfred Linux</title>
 <link rel="stylesheet" href="editions.css">
 </head>
-<body class="edition-$KEY $CLASS">
+<body class="{body_cls}">
 <div class="app">
 <a href="hub.html" class="back-hub">← All Editions</a>
 <header>
-  <div style="font-size:2.5rem">$ICON</div>
-  <h1>$TITLE</h1>
-  <div class="sub">$SUBTITLE</div>
+  <div style="font-size:2.5rem">{he(icon)}</div>
+  <h1>{he(title)}</h1>
+  <div class="sub">{he(subtitle)}</div>
   <div class="scripture">"The grass withers, the flower fades, but the word of our God will stand forever." — Isaiah 40:8</div>
 </header>
 <input class="search-box" id="search" placeholder="Search the Word..." oninput="doSearch(this.value)">
@@ -496,7 +523,10 @@ make_edition() {
   Alfred Linux 7.77 — Kingdom of God Edition<br>
   Sealed by Commander Danny William Perez
 </footer>
-</div>
+</div>"""
+)
+PYH
+    cat <<'STATICJS'
 <script src="bible-engine.js"></script>
 <script>
 let curBook='',curCh=0;
@@ -535,14 +565,15 @@ function doSearch(q){
   const hits=BibleEngine.search(q);
   sr.style.display='block';
   sr.innerHTML=hits.length?hits.map(v=>'<div class="result"><span class="ref">'+v.book+' '+v.ch+':'+v.vs+'</span> '+
-    v.text.replace(new RegExp('('+q.replace(/[.*+?^\${}()|[\\]\\\\]/g,'\\\\$&')+')','gi'),'<mark>\$1</mark>')+'</div>').join(''):
+    v.text.replace(new RegExp('('+q.replace(/[.*+?^${}()|[\\]\\\\]/g,'\\\\$&')+')','gi'),'<mark>$1</mark>')+'</div>').join(''):
     '<div class="result" style="color:var(--muted)">No results found.</div>';
 }
 init();
 </script>
 </body>
 </html>
-HTMLEOF
+STATICJS
+    } > "$EDITIONS_DIR/$KEY.html"
 }
 
 # ── Generate all 5 edition HTML files ──
@@ -656,22 +687,35 @@ chmod +x /usr/local/bin/alfred-bible-serve
 
 for ED in heirloom children standard chabad church; do
     case "$ED" in
-        heirloom) NAME="Bible — Heirloom Edition"; ICON="👑"; COMMENT="The Family Altar — 94 books, Perez genealogy, 57 prophecies";;
-        children) NAME="Bible — Children's Edition"; ICON="🌈"; COMMENT="Eden's Generation — 33 illustrated stories for ages 5-14";;
-        standard) NAME="Bible — Standard AKJV"; ICON="📖"; COMMENT="Clean, readable — the pure Word restored";;
-        chabad)   NAME="Bible — Chabad House Edition"; ICON="🕎"; COMMENT="Hebrew-first RTL — 57 prophecies fulfilled in Yeshua";;
-        church)   NAME="Bible — Church & Synagogue"; ICON="⛪"; COMMENT="Pastoral guide, sermon index, Torah portions";;
+        heirloom) export DESK_NAME="Bible — Heirloom Edition"; export DESK_COMMENT="The Family Altar — 94 books, Perez genealogy, 57 prophecies";;
+        children) export DESK_NAME="Bible — Children's Edition"; export DESK_COMMENT="Eden's Generation — 33 illustrated stories for ages 5-14";;
+        standard) export DESK_NAME="Bible — Standard AKJV"; export DESK_COMMENT="Clean, readable — the pure Word restored";;
+        chabad)   export DESK_NAME="Bible — Chabad House Edition"; export DESK_COMMENT="Hebrew-first RTL — 57 prophecies fulfilled in Yeshua";;
+        church)   export DESK_NAME="Bible — Church & Synagogue"; export DESK_COMMENT="Pastoral guide, sermon index, Torah portions";;
     esac
-    cat > "/usr/share/applications/alfred-bible-${ED}.desktop" << DESKEOF
-[Desktop Entry]
-Name=$NAME
-Comment=$COMMENT
-Exec=alfred-bible-serve editions/${ED}.html
-Icon=accessories-dictionary
-Terminal=false
-Type=Application
-Categories=Education;Reference;
-DESKEOF
+    export DESK_ED="$ED"
+    python3 <<'PYDESK'
+import os
+from pathlib import Path
+
+ed = os.environ["DESK_ED"]
+name = os.environ["DESK_NAME"]
+comment = os.environ["DESK_COMMENT"]
+if ed not in {"heirloom", "children", "standard", "chabad", "church"}:
+    raise SystemExit(1)
+out = Path(f"/usr/share/applications/alfred-bible-{ed}.desktop")
+text = (
+    "[Desktop Entry]\n"
+    f"Name={name}\n"
+    f"Comment={comment}\n"
+    f"Exec=alfred-bible-serve editions/{ed}.html\n"
+    "Icon=accessories-dictionary\n"
+    "Terminal=false\n"
+    "Type=Application\n"
+    "Categories=Education;Reference;\n"
+)
+out.write_text(text, encoding="utf-8")
+PYDESK
 done
 
 # Hub launcher shortcut

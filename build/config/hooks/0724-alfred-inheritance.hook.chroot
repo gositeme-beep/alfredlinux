@@ -12,8 +12,8 @@
 # their parent's life work. Signed with Dilithium-5 post-quantum
 # digital signature.
 #
-# BUILD: v7.77 Kingdom of God Edition
-# ═══════════════════════════════════════════════════════════════════════════════
+# alfred-seal testament: share files and testament.txt written with Python
+# (beneficiary names + Shamir lines never pass through unquoted heredocs).
 
 set -e
 chmod 1777 /tmp 2>/dev/null || true
@@ -49,6 +49,8 @@ cat > /usr/local/bin/alfred-seal << 'SEAL'
 # Creates a digital testament using Shamir's Secret Sharing.
 # 3 of 5 shares needed to reconstruct the master key.
 # Each share can be printed as a QR code for physical safekeeping.
+# Share/testament files: Python writers + stdin for share lines (no heredoc
+# expansion on beneficiary names or Shamir material).
 # ═══════════════════════════════════════════════════════════════
 
 GOLD='\033[38;5;220m'; GREEN='\033[0;32m'; CYAN='\033[0;36m'
@@ -103,7 +105,7 @@ case "${1:-help}" in
 
         BENEFICIARIES=()
         for i in 1 2 3 4 5; do
-            read -rp "  Beneficiary $i name: " NAME
+            read -r -p "  Beneficiary $i name: " NAME
             BENEFICIARIES+=("$NAME")
         done
 
@@ -117,81 +119,113 @@ case "${1:-help}" in
             exit 1
         fi
 
+        CREATED_STAMP=$(date '+%B %d, %Y at %H:%M')
+        SEAL_BENEF_JSON=$(printf '%s\n' "${BENEFICIARIES[@]}" | python3 -c "import sys, json; print(json.dumps([ln.rstrip(chr(10)) for ln in sys.stdin]))")
+        export SEAL_CREATED="$CREATED_STAMP" SEAL_BENEF_JSON
+
         # Step 4: Save shares with beneficiary names
         i=0
         echo "$SHARES" | while IFS= read -r share; do
             i=$((i + 1))
             BNAME="${BENEFICIARIES[$((i-1))]}"
-            SHARE_FILE="$SHARES_DIR/share-${i}-${BNAME// /-}.txt"
+            SAFE=$(printf '%s' "$BNAME" | tr -cs 'A-Za-z0-9._-' '_' | sed 's/^_\+//;s/_\+$//')
+            [ -z "$SAFE" ] && SAFE="beneficiary-${i}"
+            SHARE_FILE="$SHARES_DIR/share-${i}-${SAFE}.txt"
 
-            cat > "$SHARE_FILE" << SHARE_EOF
-═══════════════════════════════════════════════════════════════
-  ✝  THE INHERITANCE — Share $i of 5
-═══════════════════════════════════════════════════════════════
+            export SEAL_SHARE_IDX="$i" SEAL_BNAME="$BNAME" SEAL_SHARE_OUT="$SHARE_FILE"
+            printf '%s' "$share" | python3 <<'PYSSH'
+import os
+import sys
+from pathlib import Path
 
-  For: $BNAME
-  Created: $(date '+%B %d, %Y at %H:%M')
-  Threshold: 3 of 5 shares required
-
-  YOUR SHARE:
-  $share
-
-  INSTRUCTIONS:
-  Keep this share safe. When the time comes, bring together
-  any 3 of the 5 shares. Run this command:
-
-    alfred-seal reconstruct
-
-  Enter 3 shares when prompted. The master key will be
-  reconstructed, unlocking everything that was sealed.
-
-  "A good man leaveth an inheritance to his children's
-   children." — Proverbs 13:22
-
-═══════════════════════════════════════════════════════════════
-SHARE_EOF
+idx = int(os.environ["SEAL_SHARE_IDX"])
+bname = os.environ["SEAL_BNAME"]
+created = os.environ["SEAL_CREATED"]
+out = Path(os.environ["SEAL_SHARE_OUT"])
+share = sys.stdin.read().rstrip("\n\r")
+lines = [
+    "═══════════════════════════════════════════════════════════════",
+    f"  ✝  THE INHERITANCE — Share {idx} of 5",
+    "═══════════════════════════════════════════════════════════════",
+    "",
+    f"  For: {bname}",
+    f"  Created: {created}",
+    "  Threshold: 3 of 5 shares required",
+    "",
+    "  YOUR SHARE:",
+    share,
+    "",
+    "  INSTRUCTIONS:",
+    "  Keep this share safe. When the time comes, bring together",
+    "  any 3 of the 5 shares. Run this command:",
+    "",
+    "    alfred-seal reconstruct",
+    "",
+    "  Enter 3 shares when prompted. The master key will be",
+    "  reconstructed, unlocking everything that was sealed.",
+    "",
+    '  "A good man leaveth an inheritance to his children\'s\n   children." — Proverbs 13:22',
+    "",
+    "═══════════════════════════════════════════════════════════════",
+]
+out.write_text("\n".join(lines) + "\n", encoding="utf-8")
+PYSSH
             chmod 600 "$SHARE_FILE"
 
             # Generate QR code if qrencode is available
             if command -v qrencode &>/dev/null; then
-                QR_FILE="$SHARES_DIR/share-${i}-${BNAME// /-}.png"
+                QR_FILE="$SHARES_DIR/share-${i}-${SAFE}.png"
                 echo "$share" | qrencode -o "$QR_FILE" -s 8 2>/dev/null
                 chmod 600 "$QR_FILE"
             fi
         done
 
         # Step 5: Write testament document
-        cat > "$TESTAMENT_DIR/testament.txt" << TESTAMENT
-═══════════════════════════════════════════════════════════════
-  ✝  LAST TESTAMENT & DIGITAL INHERITANCE
-  Created: $(date '+%B %d, %Y at %H:%M')
-═══════════════════════════════════════════════════════════════
+        export SEAL_TESTAMENT_OUT="$TESTAMENT_DIR/testament.txt"
+        python3 <<'PYTEST'
+import json
+import os
+from pathlib import Path
 
-  I have secured my digital life work using Shamir's Secret
-  Sharing with a 3-of-5 threshold. Five shares have been
-  distributed to the following trusted individuals:
-
-$(for i in "${!BENEFICIARIES[@]}"; do
-    echo "    $((i+1)). ${BENEFICIARIES[$i]}"
-done)
-
-  Any three (3) of these five individuals can come together
-  to reconstruct the master encryption key that protects:
-
-    - All encrypted files and backups
-    - The testimony and prayer journals
-    - Family Bible and generational records
-    - All work product sealed with alfred-backup
-
-  To reconstruct: Run 'alfred-seal reconstruct' and enter
-  any 3 of the 5 shares.
-
-  "The memory of the just is blessed." — Proverbs 10:7
-
-  SOLI DEO GLORIA
-
-═══════════════════════════════════════════════════════════════
-TESTAMENT
+path = Path(os.environ["SEAL_TESTAMENT_OUT"])
+created = os.environ["SEAL_CREATED"]
+benef = json.loads(os.environ["SEAL_BENEF_JSON"])
+lines = [
+    "═══════════════════════════════════════════════════════════════",
+    "  ✝  LAST TESTAMENT & DIGITAL INHERITANCE",
+    f"  Created: {created}",
+    "═══════════════════════════════════════════════════════════════",
+    "",
+    "  I have secured my digital life work using Shamir's Secret",
+    "  Sharing with a 3-of-5 threshold. Five shares have been",
+    "  distributed to the following trusted individuals:",
+    "",
+]
+for j, name in enumerate(benef, start=1):
+    lines.append(f"    {j}. {name}")
+lines.extend(
+    [
+        "",
+        "  Any three (3) of these five individuals can come together",
+        "  to reconstruct the master encryption key that protects:",
+        "",
+        "    - All encrypted files and backups",
+        "    - The testimony and prayer journals",
+        "    - Family Bible and generational records",
+        "    - All work product sealed with alfred-backup",
+        "",
+        "  To reconstruct: Run 'alfred-seal reconstruct' and enter",
+        "  any 3 of the 5 shares.",
+        "",
+        '  "The memory of the just is blessed." — Proverbs 10:7',
+        "",
+        "  SOLI DEO GLORIA",
+        "",
+        "═══════════════════════════════════════════════════════════════",
+    ]
+)
+path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+PYTEST
         chmod 600 "$TESTAMENT_DIR/testament.txt"
 
         echo ""
