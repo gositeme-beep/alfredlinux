@@ -11,7 +11,7 @@
 # You open a terminal on Ubuntu and feel like it's 1995.
 #
 # Optional: ALFRED_ALLOW_HOOK_NETWORK_DOWNLOADS=1 allows GitHub fetches when
-# apt has no package and /build-assets has no staged binary.
+# apt has no package and /build-assets has no staged binary; also gates pip tldr.
 # ═══════════════════════════════════════════════════════════════
 set -e
 
@@ -161,8 +161,10 @@ STARSHIP
 
 # ── 8. tldr (simplified man pages) ──
 echo "[TERM] Installing tldr..."
-pip3 install --break-system-packages --no-cache-dir tldr 2>/dev/null || \
-    apt-get install -y --no-install-recommends tldr 2>/dev/null || true
+if [[ "${ALFRED_ALLOW_HOOK_NETWORK_DOWNLOADS:-}" == "1" ]]; then
+    pip3 install --break-system-packages --no-cache-dir tldr 2>/dev/null || true
+fi
+apt-get install -y --no-install-recommends tldr 2>/dev/null || true
 
 # ── 9. Shell Power Aliases ──
 echo "[TERM] Setting up power aliases..."

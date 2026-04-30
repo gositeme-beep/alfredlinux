@@ -8,8 +8,8 @@
 # Alfred: Podman + Buildah + kubectl + helm + k9s. Day one.
 # Rootless containers by default. More secure than Docker.
 #
-# Optional: ALFRED_ALLOW_HOOK_NETWORK_DOWNLOADS=1 allows kubectl/k9s/Helm
-# fallbacks and Hashicorp repo bootstrap when /build-assets has no staged binaries.
+# Optional: ALFRED_ALLOW_HOOK_NETWORK_DOWNLOADS=1 allows kubectl/k9s/Helm fallbacks,
+# Hashicorp repo bootstrap when /build-assets has no staged binaries, and pip podman-compose.
 # ═══════════════════════════════════════════════════════════════
 set -e
 # Fix /tmp permissions (may be restricted by earlier hooks in chroot)
@@ -51,7 +51,11 @@ DOCKER_COMPAT
 chmod +x /usr/local/bin/docker
 
 # docker-compose → podman-compose
-pip3 install --break-system-packages --no-cache-dir podman-compose 2>/dev/null || true
+if [[ "${ALFRED_ALLOW_HOOK_NETWORK_DOWNLOADS:-}" == "1" ]]; then
+    pip3 install --break-system-packages --no-cache-dir podman-compose 2>/dev/null || true
+else
+    echo "[CLOUD] WARN: skipping podman-compose pip install (set ALFRED_ALLOW_HOOK_NETWORK_DOWNLOADS=1)." >&2
+fi
 
 # ── 2. kubectl ──
 echo "[CLOUD] Installing kubectl..."

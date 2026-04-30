@@ -14,7 +14,7 @@ echo "║  Alfred Linux 7.77 — Built for God's People                   ║"
 echo "╚════════════════════════════════════════════════════════════════╝"
 
 # Optional: ALFRED_ALLOW_HOOK_NETWORK_DOWNLOADS=1 allows dist.ipfs.tech kubo fetch
-# when no staged tarball/binary is present.
+# when no staged tarball/binary is present, and PyPI install of opentimestamps-client.
 
 ###############################################################################
 # 1. IPFS — InterPlanetary File System (Data lives forever across nodes)
@@ -525,7 +525,11 @@ chmod +x /usr/local/bin/alfred-eternal
 # 5. Install OpenTimestamps for Bitcoin blockchain anchoring
 ###############################################################################
 echo "[ETERNAL] Installing OpenTimestamps client..."
-pip3 install opentimestamps-client 2>/dev/null || true
+if [[ "${ALFRED_ALLOW_HOOK_NETWORK_DOWNLOADS:-}" == "1" ]]; then
+    pip3 install opentimestamps-client 2>/dev/null || true
+else
+    echo "[ETERNAL] WARN: skipping opentimestamps-client pip install (set ALFRED_ALLOW_HOOK_NETWORK_DOWNLOADS=1)." >&2
+fi
 
 ###############################################################################
 # 6. Desktop entry for Eternal Storage

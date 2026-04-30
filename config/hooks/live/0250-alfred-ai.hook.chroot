@@ -13,7 +13,8 @@
 #
 # Omahon = the breath. Alfred Linux = the living soul.
 #
-# Optional: ALFRED_ALLOW_HOOK_NETWORK_DOWNLOADS=1 allows GitHub Ollama fetch if build-assets missing.
+# Optional: ALFRED_ALLOW_HOOK_NETWORK_DOWNLOADS=1 allows GitHub Ollama fetch if build-assets missing,
+# and pip install of anthropic/openai SDKs.
 # ═══════════════════════════════════════════════════════════════
 set -e
 
@@ -177,10 +178,14 @@ chmod +x /usr/local/bin/alfred-ai
 
 # ── 4. Python AI Libraries ──
 echo "[AI] Installing Python AI libraries..."
-pip3 install --break-system-packages --no-cache-dir \
-    anthropic \
-    openai \
-    2>/dev/null || true
+if [[ "${ALFRED_ALLOW_HOOK_NETWORK_DOWNLOADS:-}" == "1" ]]; then
+    pip3 install --break-system-packages --no-cache-dir \
+        anthropic \
+        openai \
+        2>/dev/null || true
+else
+    echo "[AI] WARN: skipping anthropic/openai pip install (set ALFRED_ALLOW_HOOK_NETWORK_DOWNLOADS=1)." >&2
+fi
 
 # ── 5. Desktop Integration ──
 echo "[AI] Creating desktop entries..."
