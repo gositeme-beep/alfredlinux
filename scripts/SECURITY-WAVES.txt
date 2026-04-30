@@ -94,5 +94,8 @@ CI (GoForge — https://alfredlinux.com/forge/)
     CSRF failure audit → **law/var/csrf-fail.log** (**LOCK_EX**, UTF-8-safe JSON); IP-watch → **law/var/rate-spam-watch.log**.
     File rate-limit fallback data → **/home/gositeme/law/var/api-rate-limits/** (override **GOSITEME_RATE_LIMIT_DATA_DIR**); dir **0700**,
     per-file **chmod 0600**. **X-Request-Id** response header (echo-safe inbound **X-Request-Id** / **X-Trace-Id** or random); **429** and **403 CSRF**
-    JSON bodies include **request_id**. **veil/dell-watch.php**: unknown **?action=** → **400** (only **feed** + default page).
+    JSON bodies include **request_id**. **api/auth.php** OAuth CSRF state files → **law/var/oauth-state/** (override
+    **GOSITEME_OAUTH_STATE_DIR**); state filename hex capped **128** chars; **oauth_state_save** no-op if state too short.
+    **includes/api-response.inc.php**: **apiSuccess** / **apiError** echo **request_id** when set; UTF-8-safe **json_encode** flags;
+    **apiError** sends **Cache-Control** no-store. **veil/dell-watch.php**: unknown **?action=** → **400** (only **feed** + default page).
     **wallet**, **index**, **departments**, **pro-discussions** unchanged (not commander-only).
