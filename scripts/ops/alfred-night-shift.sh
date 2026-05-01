@@ -129,11 +129,31 @@ queue_new_build() {
   fi
   log "requeueing new build via ABCP"
   cd "$ABCP" || return 2
-  local note resp bid
+  local note resp bid py_rc tries max_tries sleep_sec
   note="auto_requeue_attempt$((ATTEMPT+1))_$(date +%s)"
-  resp=$(python3 ctl.py --base "$ABCP_BASE" queue-build --token "$ABCP_TOKEN" --profile iso-docker --note "$note" 2>&1) || {
-    log "ctl.py failed: $resp"; return 3
-  }
+  max_tries="${ALFRED_ABCP_QUEUE_RETRIES:-8}"
+  sleep_sec="${ALFRED_ABCP_QUEUE_RETRY_SLEEP_SEC:-4}"
+  resp=""
+  py_rc=1
+  tries=0
+  while (( tries < max_tries )); do
+    tries=$((tries + 1))
+    set +e
+    resp=$(python3 ctl.py --base "$ABCP_BASE" queue-build --token "$ABCP_TOKEN" --profile iso-docker --note "$note" 2>&1)
+    py_rc=$?
+    set -e
+    if [[ "$py_rc" -eq 0 ]]; then
+      break
+    fi
+    if echo "$resp" | grep -qiE 'Connection refused|ConnectionRefusedError|URLError|Failed to establish|timed out|Temporary failure in name resolution'; then
+      log "ABCP queue-build attempt $tries/$max_tries transient error to $ABCP_BASE (rc=$py_rc); retry in ${sleep_sec}s — ${resp:0:240}"
+      (( tries < max_tries )) || { log "ctl.py exhausted retries ($max_tries): $resp"; return 3; }
+      sleep "$sleep_sec"
+      continue
+    fi
+    log "ctl.py failed (non-retryable, rc=$py_rc): $resp"
+    return 3
+  done
   log "queue response: $resp"
   bid=$(echo "$resp" | python3 -c 'import sys,json; print(json.load(sys.stdin).get("build_id",""))' 2>/dev/null)
   [[ -n "$bid" ]] || { log "no build_id in response"; return 4; }
@@ -304,7 +324,7 @@ while true; do
 
   log "requeueing for attempt #$((ATTEMPT+1))..."
   if ! queue_new_build; then
-    fail "could not requeue build via ABCP" 11
+    fail "could not requeue build via ABCP — ensure ABCP listens on $ABCP_BASE (see ALFRED_ABCP_QUEUE_RETRIES / ALFRED_ABCP_QUEUE_RETRY_SLEEP_SEC in scripts/ops/README.md)" 11
   fi
   log "new container spawned, looping back to wait/watch"
 done

@@ -60,7 +60,7 @@ If **`night-shift-state.txt`** / **`night-shift-FAIL.txt`** are **root-owned**, 
 
 - **Rolling ISO freshness:** `ALFRED_ISO_MAX_AGE_DAYS` (default **14**) and optional `ALFRED_ISO_MIN_MTIME_EPOCH` in night-shift, smoke, and restage — ISO must be newer than the rolling window (no manual `THRESHOLD` bump each cycle).
 - `MAX_RETRIES` (in night-shift) — extra ABCP requeues beyond the in-flight build.
-- **`ALFRED_SMOKE_SCRIPT` / `ALFRED_RESTAGE_SCRIPT`** — override paths to smoke and restage (defaults: repo `scripts/ops/*.sh`).
+- **`ALFRED_ABCP_QUEUE_RETRIES`** (default **8**) / **`ALFRED_ABCP_QUEUE_RETRY_SLEEP_SEC`** (default **4**) — when `ctl.py queue-build` hits **Connection refused** / **URLError** / timeouts to **`ABCP_BASE`**, night-shift retries before giving up (covers ABCP waking slowly after smoke failure).
 - `GPG_KEY` (in post-build-restage) — release signing key. Currently `41E166075B0F95205839E41B32BCEDE8C8DD8B00`.
 - `B3SUM_BIN` fallback chain in restage: `/usr/local/bin`, `/usr/bin`, `/home/gositeme/.cargo/bin`.
 
