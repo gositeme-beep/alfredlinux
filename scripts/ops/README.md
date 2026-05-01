@@ -43,6 +43,8 @@ sudo systemctl restart alfred-night-shift
 
 `alfred-night-shift.sh` reads **`ABCP_TOKEN`** from the environment or from **`/home/gositeme/law/.alfred-abcp-token`** (mode **600**). The token is not stored in git.
 
+**ABCP must be listening** on **`http://127.0.0.1:18787`** (see `alfred-build-control-plane`). If smoke/restage fails and night-shift tries to requeue, **`ctl.py`** will get **`Connection refused`** and you will see **`could not requeue build via ABCP`** — start the ABCP service (or worker) on the build host, then clear **`night-shift-FAIL.txt`** and **`sudo systemctl restart alfred-night-shift`**.
+
 ## Stale FAIL after a new detach build
 
 If `night-shift-FAIL.txt` still says exhausted retries but **`docker ps`** shows a **new** `alfred-lb-build-*` container running:
