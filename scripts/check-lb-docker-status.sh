@@ -63,9 +63,18 @@ fi
 echo "--- ISOs under build/ iso-output/ (max depth 5) ---"
 find "$REPO/build" "$REPO/iso-output" -maxdepth 5 -name '*.iso' -type f 2>/dev/null | head -20 || true
 
-echo "--- log: inner finished? (grep) ---"
+echo "--- log: inner finished? (grep, last 25 matches in full log) ---"
 if [[ -f "$LOG" ]]; then
   grep -E '\[inner\].*lb build finished|FATAL|E: |binary_syslinux' "$LOG" 2>/dev/null | tail -25 || true
+  if grep -Fq '[inner] lb build starting' "$LOG" 2>/dev/null; then
+    slice=$(tac "$LOG" 2>/dev/null | sed '/\[inner\] lb build starting/q' | tac)
+    echo "--- log: fatal E: in current inner run only (after last \"lb build starting\") ---"
+    if printf '%s\n' "$slice" | grep -Fq 'E: An unexpected failure occurred'; then
+      printf '%s\n' "$slice" | grep -F 'E: An unexpected failure occurred' | tail -5 || true
+    else
+      echo "(none — OK for night-shift log fatal check)"
+    fi
+  fi
   echo "--- log tail ---"
   tail -12 "$LOG" 2>/dev/null || true
 else
