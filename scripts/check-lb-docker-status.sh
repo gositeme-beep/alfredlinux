@@ -67,7 +67,8 @@ echo "--- log: inner finished? (grep, last 25 matches in full log) ---"
 if [[ -f "$LOG" ]]; then
   grep -E '\[inner\].*lb build finished|FATAL|E: |binary_syslinux' "$LOG" 2>/dev/null | tail -25 || true
   if grep -Fq '[inner] lb build starting' "$LOG" 2>/dev/null; then
-    slice=$(tac "$LOG" 2>/dev/null | sed '/\[inner\] lb build starting/q' | tac)
+    slice=""
+    slice=$(tac "$LOG" 2>/dev/null | sed '/\[inner\] lb build starting/q' | tac) || true
     echo "--- log: fatal E: in current inner run only (after last \"lb build starting\") ---"
     if printf '%s\n' "$slice" | grep -Fq 'E: An unexpected failure occurred'; then
       printf '%s\n' "$slice" | grep -F 'E: An unexpected failure occurred' | tail -5 || true
