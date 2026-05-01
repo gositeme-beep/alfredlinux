@@ -10,6 +10,7 @@ Tracked copies of the three scripts the build host actually runs out of
 | `smoke-test-iso.sh` | Mounts a fresh ISO, validates `/etc/alfred` is in the squashfs and the ISO mtime is fresher than `THRESHOLD`. |
 | `post-build-restage.sh` | Hardlinks fresh ISO into `public_html/downloads/`, computes SHA-512 + BLAKE3 + SHA-256, regenerates `.torrent`, computes new btih, patches `$gaTorrentBtihHex` in `ga-release-state.php`, GPG-signs the ISO + every SUMS file, and bumps `$gaFrozenIsoHookCount` based on hook stamps in the squashfs. |
 | `night-shift-watchdog-email.sh` | Cron-friendly watchdog: emails `commander@gositeme.com` once per **new** `night-shift-DONE.txt` or `night-shift-FAIL.txt` mtime. First run records current mtimes without sending (no backlog burst). Requires a working local MTA (`mail(1)`); see `night-shift-watchdog.log`. |
+| `alfred-clear-stale-pipeline-markers.sh` | When you start a **new** `lb-docker` container but `night-shift-FAIL.txt` still exists from an old exhausted-retry run, this removes the stale FAIL (backup under **`/home/gositeme/law/night-shift-marker-backups/`** or `ALFRED_CLEAR_BACKUP_DIR`), resets `night-shift-state.txt`, and refreshes `last-lb-docker.json` via `alfred_status_json_waiting`. Requires `--yes` or `ALFRED_PIPELINE_CLEAR_FORCE=1` and a **Running** container named in `lb-docker.containername`. |
 
 ## Cron: build completion email
 
@@ -36,10 +37,28 @@ sudo install -o gositeme -g gositeme -m 755 \
 sudo systemctl restart alfred-night-shift
 ```
 
+Alternatively, keep **thin wrappers** under `/home/gositeme/law/` that `exec` the repo scripts (same pattern as `smoke-test-iso.sh`); then only `alfred-night-shift.sh` needs copying when it changes.
+
+## ABCP token (auto-requeue)
+
+`alfred-night-shift.sh` reads **`ABCP_TOKEN`** from the environment or from **`/home/gositeme/law/.alfred-abcp-token`** (mode **600**). The token is not stored in git.
+
+## Stale FAIL after a new detach build
+
+If `night-shift-FAIL.txt` still says exhausted retries but **`docker ps`** shows a **new** `alfred-lb-build-*` container running:
+
+```bash
+bash /home/gositeme/law/alfredlinux-com-source-live/scripts/ops/alfred-clear-stale-pipeline-markers.sh --yes
+sudo systemctl restart alfred-night-shift   # optional; picks up fresh state
+```
+
+If **`night-shift-state.txt`** was written by systemd as **root**, the script refreshes **`last-lb-docker.json`** anyway but may skip rewriting state until you run **`sudo chown gositeme:gositeme`** on the marker files once, or use the `sudo tee` hint printed by the script.
+
 ## Tunables
 
-- `THRESHOLD` (in night-shift + smoke + restage) — bump after each cycle to reject stale prior builds.
+- **Rolling ISO freshness:** `ALFRED_ISO_MAX_AGE_DAYS` (default **14**) and optional `ALFRED_ISO_MIN_MTIME_EPOCH` in night-shift, smoke, and restage — ISO must be newer than the rolling window (no manual `THRESHOLD` bump each cycle).
 - `MAX_RETRIES` (in night-shift) — extra ABCP requeues beyond the in-flight build.
+- **`ALFRED_SMOKE_SCRIPT` / `ALFRED_RESTAGE_SCRIPT`** — override paths to smoke and restage (defaults: repo `scripts/ops/*.sh`).
 - `GPG_KEY` (in post-build-restage) — release signing key. Currently `41E166075B0F95205839E41B32BCEDE8C8DD8B00`.
 - `B3SUM_BIN` fallback chain in restage: `/usr/local/bin`, `/usr/bin`, `/home/gositeme/.cargo/bin`.
 
@@ -72,4 +91,4 @@ Commander **Dell Watch** (`veil/dell-watch.php` on GoSiteMe) tails **`lb-docker-
 | `[inner] lb build finished` + `exit=0` | Inner live-build succeeded. |
 | `[inner] ALFRED_ALLOW_SSH_PASSWORD_AUTH=` | Logged SSH policy for that ISO build (`0` keys-only default). |
 
-Hook progress still comes from live-build’s `Executing hook config/hooks/…` lines in the same log. Dell Watch also shows the last few of those lines verbatim and a **42-segment bar** ordered like `config/hooks/live/*.hook.chroot`; the tail window size is the PHP constant **`DW_BUILD_LOG_TAIL_LINES`** in `dell-watch.php` (currently **400** lines). The first line of **`night-shift-state.txt`** is echoed in the Finish line panel when set.
+Hook progress still comes from live-build’s `Executing hook config/hooks/…` lines in the same log. Dell Watch also shows the last few of those lines verbatim and a **42-segment bar** ordered like `config/hooks/live/*.hook.chroot`; the tail window size is the PHP constant **`DW_BUILD_LOG_TAIL_LINES`** in `dell-watch.php` (currently **1200** lines). The first line of **`night-shift-state.txt`** is echoed in the Finish line panel when set.
