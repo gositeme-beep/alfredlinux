@@ -55,7 +55,12 @@ sudo unsquashfs -d "$SMNT/sq" -ll "$SQ" 2>/dev/null | tee /tmp/sq-listing.txt >/
 trap smoke_cleanup_all EXIT
 echo "Total entries: $(wc -l < /tmp/sq-listing.txt)"
 for path in "etc/alfred" "usr/share/backgrounds" "opt/alfred-ide-extensions" "usr/share/plymouth/themes" "etc/skel/.config/alfred" "usr/lib/alfred"; do
-  COUNT=$(grep -cE "^\S+\s+\S+\s+\S+\s+\S+\s+\S+\s+\S+\s+/?$path" /tmp/sq-listing.txt || echo 0)
+  # grep -c prints 0 and exits 1 when there are no matches — do not append `|| echo 0` or COUNT becomes "0\n0".
+  if c=$(grep -cE "^\S+\s+\S+\s+\S+\s+\S+\s+\S+\s+\S+\s+/?$path" /tmp/sq-listing.txt 2>/dev/null); then
+    COUNT=$c
+  else
+    COUNT=0
+  fi
   if (( COUNT > 0 )); then
     echo "  OK   $path ($COUNT entries)"
   else
@@ -73,7 +78,11 @@ grep -E "plymouth/themes/alfred" /tmp/sq-listing.txt | head -5
 
 echo
 echo "=== G. Verdict ==="
-ALFRED_OK=$(grep -cE "^\S+\s+\S+\s+\S+\s+\S+\s+\S+\s+\S+\s+/?etc/alfred" /tmp/sq-listing.txt || echo 0)
+if c=$(grep -cE "^\S+\s+\S+\s+\S+\s+\S+\s+\S+\s+\S+\s+/?etc/alfred" /tmp/sq-listing.txt 2>/dev/null); then
+  ALFRED_OK=$c
+else
+  ALFRED_OK=0
+fi
 if (( ALFRED_OK > 0 )); then
   echo "PASS: ISO contains /etc/alfred — hooks ran successfully"
   exit 0
