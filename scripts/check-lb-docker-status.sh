@@ -11,6 +11,14 @@ STATUS_JSON="${1:-${NAP_STATUS_JSON:-/home/gositeme/law/alfred-build-control-pla
 echo "=== check-lb-docker-status $(date -Is) ==="
 echo "repo: $REPO"
 
+LAW=/home/gositeme/law
+for f in "$LAW/night-shift-state.txt" "$LAW/night-shift-DONE.txt" "$LAW/night-shift-FAIL.txt"; do
+  if [[ -f "$f" ]]; then
+    echo "--- $(basename "$f") (first line) ---"
+    head -1 "$f" 2>/dev/null || true
+  fi
+done
+
 if [[ -f "$NAME_FILE" ]]; then
   NAME="$(tr -d '\n' <"$NAME_FILE")"
   echo "lb-docker.containername: $NAME"

@@ -26,8 +26,8 @@ ABCP=$LAW/alfred-build-control-plane
 WATCH=$SL/scripts/watch-lb-docker-build.sh
 NAME_FILE=$SL/lb-docker.containername
 STATUS_JSON=$ABCP/last-lb-docker.json
-SMOKE=$LAW/smoke-test-iso.sh
-RESTAGE=$LAW/post-build-restage.sh
+SMOKE="${ALFRED_SMOKE_SCRIPT:-$SL/scripts/ops/smoke-test-iso.sh}"
+RESTAGE="${ALFRED_RESTAGE_SCRIPT:-$SL/scripts/ops/post-build-restage.sh}"
 ISO=$SL/iso-output/live-image-amd64.hybrid.iso
 
 LOGDIR=$LAW/night-shift-logs
@@ -127,21 +127,26 @@ queue_new_build() {
   log "queue response: $resp"
   bid=$(echo "$resp" | python3 -c 'import sys,json; print(json.load(sys.stdin).get("build_id",""))' 2>/dev/null)
   [[ -n "$bid" ]] || { log "no build_id in response"; return 4; }
-  log "queued build #$bid — waiting for container to spawn"
+  log "queued build #$bid — waiting for NEW lb-docker.containername (worker must overwrite file)"
   state "REQUEUED build #$bid (attempt #$((ATTEMPT+1)))"
 
-  # Wait up to 5 minutes for worker to pick up + container to start + name file to update
-  rm -f "$NAME_FILE"
-  local waits=0
+  local prior=""
+  [[ -f "$NAME_FILE" ]] && prior=$(tr -d '\n\r' <"$NAME_FILE")
+  # Do not rm -f "$NAME_FILE" here — it creates a race where a manual `lb-docker-build.sh detach`
+  # sees a missing file. Wait until ABCP writes a *different* container name that exists in Docker.
+
+  local waits=0 newname=""
   while (( waits < 30 )); do
     sleep 10
     waits=$((waits+1))
     if [[ -s "$NAME_FILE" ]]; then
-      local newname
-      newname=$(tr -d '\n' < "$NAME_FILE")
-      if sudo docker inspect "$newname" &>/dev/null; then
-        log "new container: $newname"
+      newname=$(tr -d '\n\r' <"$NAME_FILE")
+      if [[ -n "$newname" && "$newname" != "$prior" ]] && sudo docker inspect "$newname" &>/dev/null; then
+        log "new container: $newname (prior was ${prior:-empty})"
         return 0
+      fi
+      if [[ -n "$newname" && "$newname" != "$prior" ]]; then
+        log "name file -> $newname but docker not ready yet (wait=$waits)"
       fi
     fi
   done

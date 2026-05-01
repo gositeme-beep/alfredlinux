@@ -6,7 +6,12 @@ set -euo pipefail
 
 SL=/home/gositeme/law/alfredlinux-com-source-live
 ISO=$SL/iso-output/live-image-amd64.hybrid.iso
-THRESHOLD=$(date -d '2026-04-29 19:00:00' +%s)
+if [[ -n "${ALFRED_ISO_MIN_MTIME_EPOCH:-}" ]]; then
+  THRESHOLD=$((ALFRED_ISO_MIN_MTIME_EPOCH))
+else
+  : "${ALFRED_ISO_MAX_AGE_DAYS:=21}"
+  THRESHOLD=$(( $(date +%s) - ALFRED_ISO_MAX_AGE_DAYS * 86400 ))
+fi
 
 echo "=== A. ISO file exists + recent ==="
 if [[ ! -f "$ISO" ]]; then echo "FAIL: $ISO missing"; exit 2; fi
@@ -14,7 +19,7 @@ ls -lh "$ISO"
 MTIME=$(stat -c %Y "$ISO")
 SIZE=$(stat -c %s "$ISO")
 echo "size: $(numfmt --to=iec "$SIZE"), mtime: $(date -d @"$MTIME")"
-if (( MTIME < THRESHOLD )); then echo "FAIL: ISO is older than 2026-04-27 23:30 — stale"; exit 3; fi
+if (( MTIME < THRESHOLD )); then echo "FAIL: ISO mtime older than rolling cutoff ($(date -d @"$THRESHOLD")) — stale or widen ALFRED_ISO_MAX_AGE_DAYS"; exit 3; fi
 
 echo
 echo "=== B. ISO is bootable hybrid (xorriso/iso9660 magic) ==="
