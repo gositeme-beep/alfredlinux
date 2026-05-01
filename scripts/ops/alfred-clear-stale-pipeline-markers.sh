@@ -42,11 +42,15 @@ fi
 
 mkdir -p "$BACKUP_DIR"
 if [[ -f "$FAIL" ]]; then
-  if cp -a "$FAIL" "$BACKUP_DIR/night-shift-FAIL.cleared-$(date +%s).txt" 2>/dev/null && rm -f "$FAIL" 2>/dev/null; then
-    echo "Removed stale $FAIL (backup under $BACKUP_DIR/)"
+  b="$BACKUP_DIR/night-shift-FAIL.cleared-$(date +%s).txt"
+  if cp -a "$FAIL" "$b" 2>/dev/null || { command -v sudo >/dev/null && sudo -n cp -a "$FAIL" "$b" 2>/dev/null; }; then
+    if rm -f "$FAIL" 2>/dev/null || { command -v sudo >/dev/null && sudo -n rm -f "$FAIL" 2>/dev/null; }; then
+      echo "Removed stale $FAIL (backup: $b)"
+    else
+      echo "WARN: backed up to $b but could not remove $FAIL — try: sudo rm -f $FAIL" >&2
+    fi
   else
-    echo "WARN: could not remove $FAIL (may be root-owned). Try: sudo rm -f $FAIL" >&2
-    cp -a "$FAIL" "$BACKUP_DIR/night-shift-FAIL.attempt-$(date +%s).txt" 2>/dev/null || true
+    echo "WARN: could not copy $FAIL for backup — try: sudo cp $FAIL $b" >&2
   fi
 else
   echo "No $FAIL — skip remove"
@@ -57,6 +61,8 @@ msg="$ts RECOVERED: container $NAME is Running — stale FAIL cleared; re-run ni
 if [[ -w "$STATE" ]] || [[ ! -e "$STATE" && -w "$(dirname "$STATE")" ]]; then
   printf '%s\n' "$msg" >"$STATE"
   echo "Wrote $STATE"
+elif command -v sudo >/dev/null && printf '%s\n' "$msg" | sudo -n tee "$STATE" >/dev/null 2>&1; then
+  echo "Wrote $STATE (sudo -n tee)"
 else
   echo "WARN: cannot write $STATE (often root-owned from systemd). Skipped state reset." >&2
   echo "  Fix: sudo tee $STATE <<<\"$msg\"   or   sudo chown gositeme:gositeme $STATE" >&2

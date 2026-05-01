@@ -20,11 +20,19 @@ for f in "$LAW/night-shift-state.txt" "$LAW/night-shift-DONE.txt" "$LAW/night-sh
 done
 
 if [[ -f "$NAME_FILE" ]]; then
-  NAME="$(tr -d '\n' <"$NAME_FILE")"
+  NAME="$(tr -d '\n\r' <"$NAME_FILE")"
   echo "lb-docker.containername: $NAME"
   if docker inspect "$NAME" &>/dev/null; then
     echo "docker: container RUNNING"
     docker ps --filter "name=^/${NAME}$" --format 'table {{.Names}}\t{{.Status}}\t{{.ID}}' 2>/dev/null || true
+    if command -v systemctl &>/dev/null; then
+      ns="$(systemctl show -p ActiveState --value alfred-night-shift 2>/dev/null || true)"
+      [[ -n "$ns" ]] || ns="unknown"
+      echo "alfred-night-shift.service: $ns"
+      if [[ "$ns" != "active" ]]; then
+        echo "HINT: after detach, smoke/restage need the waiter: sudo systemctl start alfred-night-shift"
+      fi
+    fi
   else
     echo "docker: container not found (exited / --rm removed)"
   fi

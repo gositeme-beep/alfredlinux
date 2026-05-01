@@ -85,7 +85,7 @@ done
 [[ -z "$WEBHOOK" && -n "${NAP_WEBHOOK:-}" ]] && WEBHOOK="$NAP_WEBHOOK"
 
 [[ -f "$NAME_FILE" ]] || { echo "Missing $NAME_FILE — run lb-docker-build.sh detach first." >&2; exit 1; }
-NAME="$(tr -d '\n' <"$NAME_FILE")"
+NAME="$(tr -d '\n\r' <"$NAME_FILE")"
 [[ -n "$NAME" ]] || { echo "Empty container name in $NAME_FILE" >&2; exit 1; }
 
 if [[ -n "$STATUS_JSON" && -z "${ALFRED_WATCH_NO_FLOCK:-}" ]]; then

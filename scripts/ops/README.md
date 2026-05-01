@@ -52,7 +52,7 @@ bash /home/gositeme/law/alfredlinux-com-source-live/scripts/ops/alfred-clear-sta
 sudo systemctl restart alfred-night-shift   # optional; picks up fresh state
 ```
 
-If **`night-shift-state.txt`** was written by systemd as **root**, the script refreshes **`last-lb-docker.json`** anyway but may skip rewriting state until you run **`sudo chown gositeme:gositeme`** on the marker files once, or use the `sudo tee` hint printed by the script.
+If **`night-shift-state.txt`** / **`night-shift-FAIL.txt`** are **root-owned**, the script tries **`sudo -n`** (passwordless sudo) to update/remove them; otherwise it prints a **`sudo tee` / `chown`** hint. **`last-lb-docker.json`** is refreshed regardless when the repo dir is writable.
 
 ## Tunables
 

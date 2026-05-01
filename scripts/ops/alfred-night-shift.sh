@@ -101,6 +101,9 @@ log "smoke:   $SMOKE"
 log "restage: $RESTAGE"
 log "max retries beyond in-flight: $MAX_RETRIES"
 
+# Clear stale first-line FAIL from a prior exited run (same file is often root:root).
+state "STARTING night-shift v2 at $(date -Is) — main loop (dashboards: ignore prior FAIL until this line is replaced)"
+
 check_disk() {
   local avail_gb
   avail_gb=$(df -BG --output=avail /home | tail -1 | tr -dc '0-9')
