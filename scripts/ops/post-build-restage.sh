@@ -23,9 +23,14 @@ echo "=== preflight: confirm new ISO exists + is recent ==="
 if [[ ! -f "$NEW_ISO" ]]; then echo "FAIL: $NEW_ISO missing"; exit 2; fi
 ls -lh "$NEW_ISO"
 NEW_MTIME=$(stat -c %Y "$NEW_ISO")
-THRESHOLD=$(date -d '2026-04-29 19:00:00' +%s)
+if [[ -n "${ALFRED_ISO_MIN_MTIME_EPOCH:-}" ]]; then
+  THRESHOLD=$((ALFRED_ISO_MIN_MTIME_EPOCH))
+else
+  : "${ALFRED_ISO_MAX_AGE_DAYS:=21}"
+  THRESHOLD=$(( $(date +%s) - ALFRED_ISO_MAX_AGE_DAYS * 86400 ))
+fi
 if (( NEW_MTIME < THRESHOLD )); then
-  echo "FAIL: ISO mtime ($(date -d @"$NEW_MTIME")) is older than 2026-04-27 22:00 — likely stale Apr 26 build"
+  echo "FAIL: ISO mtime ($(date -d @"$NEW_MTIME")) is older than rolling cutoff ($(date -d @"$THRESHOLD")) — stale or set ALFRED_ISO_MAX_AGE_DAYS"
   exit 3
 fi
 

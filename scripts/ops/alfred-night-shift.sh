@@ -37,10 +37,20 @@ FAIL_MARKER=$LAW/night-shift-FAIL.txt
 ATTEMPT_FILE=$LAW/night-shift-attempt.txt
 
 ABCP_BASE=http://127.0.0.1:18787
-ABCP_TOKEN=KGhXExKUmFcG3JRPhQpxNvZF5C1KyYIe7Nwi8lTOJHU
+# Never commit tokens: export ABCP_TOKEN=… or one-line file $LAW/.alfred-abcp-token (chmod 600).
+ABCP_TOKEN="${ABCP_TOKEN:-}"
+if [[ -z "$ABCP_TOKEN" && -f "$LAW/.alfred-abcp-token" ]]; then
+  ABCP_TOKEN="$(tr -d ' \n\r' <"$LAW/.alfred-abcp-token")"
+fi
 MAX_RETRIES=2          # extra builds beyond the one already running
 MIN_DISK_GB=40         # need ~30GB chroot + binary headroom
-THRESHOLD=$(date -d '2026-04-29 19:00:00' +%s)
+# ISO mtime must be >= THRESHOLD. Default: rolling window (override with ALFRED_ISO_MIN_MTIME_EPOCH=…).
+if [[ -n "${ALFRED_ISO_MIN_MTIME_EPOCH:-}" ]]; then
+  THRESHOLD=$((ALFRED_ISO_MIN_MTIME_EPOCH))
+else
+  : "${ALFRED_ISO_MAX_AGE_DAYS:=21}"
+  THRESHOLD=$(( $(date +%s) - ALFRED_ISO_MAX_AGE_DAYS * 86400 ))
+fi
 
 mkdir -p "$LOGDIR"
 LOG="$LOGDIR/night-$(date +%Y%m%d-%H%M%S).log"
@@ -103,6 +113,10 @@ check_disk() {
 }
 
 queue_new_build() {
+  if [[ -z "$ABCP_TOKEN" ]]; then
+    log "ABCP_TOKEN not set and $LAW/.alfred-abcp-token missing — cannot auto-requeue"
+    return 3
+  fi
   log "requeueing new build via ABCP"
   cd "$ABCP" || return 2
   local note resp bid
