@@ -37,7 +37,7 @@ sudo install -o gositeme -g gositeme -m 755 \
 sudo systemctl restart alfred-night-shift
 ```
 
-Alternatively, keep **thin wrappers** under `/home/gositeme/law/` that `exec` the repo scripts (same pattern as `smoke-test-iso.sh`); then only `alfred-night-shift.sh` needs copying when it changes.
+**Recommended on the build host:** keep **thin `exec` wrappers** under `/home/gositeme/law/` for **`alfred-night-shift.sh`**, **`smoke-test-iso.sh`**, and **`post-build-restage.sh`** so systemd and cron always run the repo versions (rolling ISO window, token file, requeue safety). After `lb-docker-build.sh detach`, start the waiter with **`sudo systemctl start alfred-night-shift`** (enable the unit if you want it easy to start after boot).
 
 ## ABCP token (auto-requeue)
 
