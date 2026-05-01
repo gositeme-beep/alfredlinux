@@ -29,6 +29,14 @@ source "$(cd "$(dirname "$0")" && pwd)/lb-nap-helpers.sh"
 alfred_lb_docker_wait_until_done() {
   local name="$1" ex="" tw_rc=0 max_empty="${ALFRED_DOCKER_WAIT_EMPTY_RETRIES:-600}" n=0 running="" ec=""
   while true; do
+    # If the container was removed (--rm) or never existed, `docker wait` can block indefinitely on
+    # some engines. Inspect first so night-shift does not hang at WATCHING after a finished build.
+    if ! docker inspect "$name" &>/dev/null; then
+      echo "watch-lb-docker-build: container $name not in docker (removed or unknown) — skipping docker wait" >&2
+      printf '%s' "unknown"
+      return 0
+    fi
+
     if [[ -n "${ALFRED_DOCKER_WAIT_MAX_SEC:-}" ]] && [[ "${ALFRED_DOCKER_WAIT_MAX_SEC}" =~ ^[0-9]+$ ]] && (( ALFRED_DOCKER_WAIT_MAX_SEC > 0 )); then
       ex="$(alfred_maybe_inhibit_exec timeout --signal=TERM --kill-after=60 "${ALFRED_DOCKER_WAIT_MAX_SEC}" \
         docker wait "$name" 2>/dev/null | tr -d '\n')"

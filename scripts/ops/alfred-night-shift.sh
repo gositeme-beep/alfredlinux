@@ -94,6 +94,13 @@ trap 'log "received signal — exiting"; state "EXITED on signal"; exit 130' INT
 # Track attempt across systemd restarts (if Restart= ever flipped to on-failure)
 [[ -f "$ATTEMPT_FILE" ]] || echo 0 > "$ATTEMPT_FILE"
 ATTEMPT=$(cat "$ATTEMPT_FILE")
+# If the counter drifted high (manual SIGTERM, operator edits), the next +1 would exceed the retry
+# cap before any real work — clamp so a fresh night-shift run has budget left.
+if (( ATTEMPT > MAX_RETRIES + 1 )); then
+  log "night-shift-attempt.txt was $ATTEMPT — clamping to 0 for a usable retry budget (MAX_RETRIES=$MAX_RETRIES)"
+  echo 0 > "$ATTEMPT_FILE"
+  ATTEMPT=0
+fi
 
 log "=== Alfred night shift v2 starting (attempt #$ATTEMPT) ==="
 log "watch:   $WATCH"
@@ -188,6 +195,24 @@ run_one_attempt() {
     return 8
   fi
 
+  # `docker wait` can wedge after `--rm` removes the container; watch may also be SIGTERM'd. If the
+  # container is already gone, the law hybrid is fresh, and the log slice has no fatal E:, re-run
+  # watch once — it exits 0 on unknown+disk ISO (see watch-lb-docker-build.sh).
+  if [[ "$watch_rc" -ne 0 ]]; then
+    if ! docker inspect "$cname" &>/dev/null && [[ -f "$ISO" ]]; then
+      local im; im=$(stat -c %Y "$ISO")
+      if (( im >= THRESHOLD )); then
+        log "watch rc=$watch_rc but container $cname missing and ISO fresh — re-running watch to finalize JSON + exit code"
+        set +e
+        sudo -u gositeme env ALFRED_NO_INHIBIT_SLEEP=1 ALFRED_WATCH_NO_FLOCK=1 \
+          bash "$WATCH" --status-json "$STATUS_JSON"
+        watch_rc=$?
+        set -e
+        log "watch-lb-docker-build.sh (container-gone recovery) exit=$watch_rc"
+      fi
+    fi
+  fi
+
   if [[ "$watch_rc" -ne 0 ]]; then
     log "watch-lb-docker-build.sh failed (rc=$watch_rc) — skipping ISO/smoke/restage this attempt"
     return 9
@@ -267,7 +292,7 @@ while true; do
       echo "Log: $LOG"
       echo
       echo "Diagnose: cat $LOGDIR/build-tail-attempt*.log"
-      echo "Manual requeue: cd $ABCP && python3 ctl.py --base $ABCP_BASE queue-build --token $ABCP_TOKEN --profile iso-docker --note manual_after_night_shift_failed"
+      echo "Manual requeue: read token from $LAW/.alfred-abcp-token then: cd $ABCP && python3 ctl.py --base $ABCP_BASE queue-build --token \"\$ABCP_TOKEN\" --profile iso-docker --note manual_after_night_shift_failed"
     } > "$FAIL_MARKER"
     state "FAIL: exhausted retries"
     exit $RC
