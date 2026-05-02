@@ -7,7 +7,7 @@ Tracked copies of the three scripts the build host actually runs out of
 | script | what it does |
 |---|---|
 | `alfred-night-shift.sh` | systemd entrypoint: waits on the build container, runs smoke + restage, auto-requeues up to 2 retries via ABCP. |
-| `smoke-test-iso.sh` | Mounts a fresh ISO, validates `/etc/alfred` is in the squashfs and the ISO mtime is fresher than `THRESHOLD`. |
+| `smoke-test-iso.sh` | Mounts a fresh ISO, validates `/etc/alfred` is in the squashfs and the ISO mtime is fresher than `THRESHOLD`. Listing uses **`unsquashfs -ll`** paths (`squashfs-root/etc/...`), not fixed column regexes. |
 | `post-build-restage.sh` | Hardlinks fresh ISO into `public_html/downloads/`, computes SHA-512 + BLAKE3 + SHA-256, regenerates `.torrent`, computes new btih, patches `$gaTorrentBtihHex` in `ga-release-state.php`, GPG-signs the ISO + every SUMS file, and bumps `$gaFrozenIsoHookCount` based on hook stamps in the squashfs. |
 | `night-shift-watchdog-email.sh` | Cron-friendly watchdog: emails `commander@gositeme.com` once per **new** `night-shift-DONE.txt` or `night-shift-FAIL.txt` mtime. First run records current mtimes without sending (no backlog burst). Requires a working local MTA (`mail(1)`); see `night-shift-watchdog.log`. |
 | `alfred-clear-stale-pipeline-markers.sh` | When you start a **new** `lb-docker` container but `night-shift-FAIL.txt` still exists from an old exhausted-retry run, this removes the stale FAIL (backup under **`/home/gositeme/law/night-shift-marker-backups/`** or `ALFRED_CLEAR_BACKUP_DIR`), resets `night-shift-state.txt`, and refreshes `last-lb-docker.json` via `alfred_status_json_waiting`. Requires `--yes` or `ALFRED_PIPELINE_CLEAR_FORCE=1` and a **Running** container named in `lb-docker.containername`. |

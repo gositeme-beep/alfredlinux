@@ -60,6 +60,21 @@ log()   { echo "[night $(date -Is)] $*"; }
 state() { echo "$(date -Is) $*" > "$STATE"; }
 fail()  { echo "FAIL at $(date -Is): $*. See $LOG" > "$FAIL_MARKER"; state "FAIL: $*"; log "FAIL: $*"; exit "${2:-1}"; }
 
+# Human hint for Dell Watch / operators (night-shift maps all smoke failures to rc=6).
+alfred_night_rc_hint() {
+  case "${1:-}" in
+    2) echo "no lb-docker.containername after wait window" ;;
+    3) echo "watcher did not write status JSON" ;;
+    4) echo "law hybrid ISO missing at iso-output path" ;;
+    5) echo "ISO mtime below rolling THRESHOLD — stale file on disk vs new inner build" ;;
+    6) echo "smoke-test-iso.sh failed (see === D/G === in this log; often wrong ISO bytes or unsquashfs -ll path match)" ;;
+    7) echo "post-build-restage.sh failed" ;;
+    8) echo "lb-docker-build.log has fatal E: in current inner slice" ;;
+    9) echo "watch-lb-docker-build.sh failed" ;;
+    *) echo "see log above (rc=$1)" ;;
+  esac
+}
+
 # If lb-docker-build.log already contains live-build's terminal E: line for the **current** inner run,
 # write FAIL_MARKER even when docker wait / watch mis-reports. Scope to log lines after the last
 # "[inner] lb build starting" so a previous run's E: in the same file does not block retries forever.
@@ -308,7 +323,7 @@ while true; do
     log "exhausted retry budget ($MAX_RETRIES retries beyond initial)"
     {
       echo "FAIL at $(date -Is) — exhausted $MAX_RETRIES retries"
-      echo "Last attempt rc=$RC"
+      echo "Last attempt rc=$RC ($(alfred_night_rc_hint "$RC"))"
       echo "Log: $LOG"
       echo
       echo "Diagnose: cat $LOGDIR/build-tail-attempt*.log"

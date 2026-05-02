@@ -54,13 +54,24 @@ smoke_cleanup_all() {
 sudo unsquashfs -d "$SMNT/sq" -ll "$SQ" 2>/dev/null | tee /tmp/sq-listing.txt >/dev/null || true
 trap smoke_cleanup_all EXIT
 echo "Total entries: $(wc -l < /tmp/sq-listing.txt)"
-for path in "etc/alfred" "usr/share/backgrounds" "opt/alfred-ide-extensions" "usr/share/plymouth/themes" "etc/skel/.config/alfred" "usr/lib/alfred"; do
-  # grep -c prints 0 and exits 1 when there are no matches — do not append `|| echo 0` or COUNT becomes "0\n0".
-  if c=$(grep -cE "^\S+\s+\S+\s+\S+\s+\S+\s+\S+\s+\S+\s+/?$path" /tmp/sq-listing.txt 2>/dev/null); then
-    COUNT=$c
+
+# unsquashfs -ll lines look like: "... squashfs-root/etc/alfred/..." — not six columns then "/etc".
+smoke_count_path_in_listing() {
+  local path="$1" c=0 t
+  if t=$(grep -cF "squashfs-root/$path" /tmp/sq-listing.txt 2>/dev/null); then
+    c=$t
+  elif t=$(grep -cF "/$path/" /tmp/sq-listing.txt 2>/dev/null); then
+    c=$t
+  elif t=$(grep -cF "/$path" /tmp/sq-listing.txt 2>/dev/null); then
+    c=$t
   else
-    COUNT=0
+    c=0
   fi
+  printf '%s' "$c"
+}
+
+for path in "etc/alfred" "usr/share/backgrounds" "opt/alfred-ide-extensions" "usr/share/plymouth/themes" "etc/skel/.config/alfred" "usr/lib/alfred"; do
+  COUNT=$(smoke_count_path_in_listing "$path")
   if (( COUNT > 0 )); then
     echo "  OK   $path ($COUNT entries)"
   else
@@ -78,11 +89,7 @@ grep -E "plymouth/themes/alfred" /tmp/sq-listing.txt | head -5
 
 echo
 echo "=== G. Verdict ==="
-if c=$(grep -cE "^\S+\s+\S+\s+\S+\s+\S+\s+\S+\s+\S+\s+/?etc/alfred" /tmp/sq-listing.txt 2>/dev/null); then
-  ALFRED_OK=$c
-else
-  ALFRED_OK=0
-fi
+ALFRED_OK=$(smoke_count_path_in_listing "etc/alfred")
 if (( ALFRED_OK > 0 )); then
   echo "PASS: ISO contains /etc/alfred — hooks ran successfully"
   exit 0
