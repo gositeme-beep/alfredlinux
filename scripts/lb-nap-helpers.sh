@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Sourced by watch-lb-docker-build.sh and supervise-lb-docker-nap.sh — do not run standalone.
+# Sourced by watch-lb-docker-build.sh, supervise-lb-docker-nap.sh, alfred-night-shift.sh, etc.
+# Do not run standalone.
 # Sleep inhibit: blocks suspend/idle while `docker wait` runs (unless ALFRED_NO_INHIBIT_SLEEP=1).
 
 alfred_maybe_inhibit_exec() {
@@ -20,12 +21,68 @@ alfred_maybe_inhibit_exec() {
   fi
 }
 
+# Bound `docker inspect` so a wedged daemon does not stall watch/night-shift for days.
+# ALFRED_DOCKER_INSPECT_TIMEOUT_SEC=0 disables the wrapper (bare docker inspect).
+alfred_docker_inspect_ok() {
+  local name="$1"
+  local sec="${ALFRED_DOCKER_INSPECT_TIMEOUT_SEC:-30}"
+  if ! [[ "$sec" =~ ^[0-9]+$ ]] || (( sec <= 0 )); then
+    docker inspect "$name" &>/dev/null
+    return $?
+  fi
+  if timeout "$sec" docker inspect "$name" &>/dev/null; then
+    return 0
+  fi
+  local rc=$?
+  if (( rc == 124 )) || (( rc == 137 )); then
+    echo "alfred_docker_inspect_ok: timeout (${sec}s) inspecting $name - docker daemon may be wedged" >&2
+  fi
+  return 1
+}
+
+# Same timeout as alfred_docker_inspect_ok; prints nothing on failure/timeout.
+alfred_docker_inspect_fmt() {
+  local name="$1" fmt="$2"
+  local sec="${ALFRED_DOCKER_INSPECT_TIMEOUT_SEC:-30}"
+  if ! [[ "$sec" =~ ^[0-9]+$ ]] || (( sec <= 0 )); then
+    docker inspect -f "$fmt" "$name" 2>/dev/null || true
+    return 0
+  fi
+  timeout "$sec" docker inspect -f "$fmt" "$name" 2>/dev/null || true
+}
+
+# Derive coarse build progress from the most recent hook number in the build log.
+alfred_progress_from_log() {
+  local log_file="$1"
+  python3 - "$log_file" <<'PY2'
+import re, sys
+from pathlib import Path
+p = Path(sys.argv[1])
+if not p.exists():
+    print('')
+    raise SystemExit(0)
+text = p.read_text(encoding='utf-8', errors='replace')
+matches = re.findall(r'Executing hook .*?/([0-9]{4})-[^\s/]+', text)
+if not matches:
+    print('')
+    raise SystemExit(0)
+try:
+    hook = int(matches[-1])
+except Exception:
+    print('')
+    raise SystemExit(0)
+pct = int(round((hook / 470.0) * 100.0))
+pct = max(10, min(95, pct))
+print(pct)
+PY2
+}
+
 # Snapshot while the lb container is still running (so last-lb-docker.json is not stale).
 alfred_status_json_waiting() {
-  local path=$1 name=$2
-  python3 - "$path" "$name" <<'PY'
+  local path=$1 name=$2 progress=${3:-}
+  python3 - "$path" "$name" "$progress" <<'PY'
 import json, sys, time
-path, name = sys.argv[1:3]
+path, name, progress = sys.argv[1:4]
 data = {
     "phase": "waiting_for_container",
     "ts": time.time(),
@@ -36,6 +93,11 @@ data = {
     "nap_ok": None,
     "note": "Build still running. nap_ok is authoritative when phase is done.",
 }
+if str(progress).strip():
+    try:
+        data["progress_pct"] = max(1, min(99, int(float(progress))))
+    except Exception:
+        pass
 with open(path, "w") as out:
     json.dump(data, out, indent=2)
 PY

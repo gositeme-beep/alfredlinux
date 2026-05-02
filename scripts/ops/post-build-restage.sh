@@ -10,8 +10,6 @@ DOWNLOADS=$VHOST/downloads
 RELEASES=$VHOST/releases/7.77
 GASTATE=$VHOST/includes/ga-release-state.php
 NEW_ISO=$SL/iso-output/live-image-amd64.hybrid.iso
-CANON_BASE=alfred-linux-7.77-ga-intel-amd64-20260426
-CANON=$DOWNLOADS/$CANON_BASE.iso
 SUMS=$DOWNLOADS/SHA256SUMS-7.77.txt
 SUMS512=$RELEASES/SHA512SUMS
 SUMSB3=$RELEASES/BLAKE3SUMS
@@ -21,8 +19,11 @@ TS=$(date +%Y%m%d-%H%M%S)
 
 echo "=== preflight: confirm new ISO exists + is recent ==="
 if [[ ! -f "$NEW_ISO" ]]; then echo "FAIL: $NEW_ISO missing"; exit 2; fi
-ls -lh "$NEW_ISO"
-NEW_MTIME=$(stat -c %Y "$NEW_ISO")
+ls -Lh "$NEW_ISO"
+NEW_MTIME=$(stat -Lc %Y "$NEW_ISO")
+CANON_DATE=$(date -d @"$NEW_MTIME" +%Y%m%d)
+CANON_BASE=alfred-linux-7.77-ga-intel-amd64-${CANON_DATE}
+CANON=$DOWNLOADS/$CANON_BASE.iso
 if [[ -n "${ALFRED_ISO_MIN_MTIME_EPOCH:-}" ]]; then
   THRESHOLD=$((ALFRED_ISO_MIN_MTIME_EPOCH))
 else
@@ -56,7 +57,7 @@ fi
 echo "blake3: ${NEW_BLAKE3:-(skipped — install b3sum and re-run)}"
 NEW_SHA=$(sha256sum "$NEW_ISO" | awk '{print $1}')
 echo "sha256 (legacy): $NEW_SHA"
-NEW_SIZE=$(stat -c %s "$NEW_ISO")
+NEW_SIZE=$(stat -Lc %s "$NEW_ISO")
 echo "size:   $NEW_SIZE"
 
 echo
@@ -202,6 +203,25 @@ else
     echo "hooks-ran $HOOKS_RAN < 30 — leaving \$gaFrozenIsoHookCount alone for manual review"
 fi
 sudo grep -E '^\$gaFrozenIsoHookCount|^\$gaPlannedHookCount' "$GASTATE" | head -2
+
+echo
+echo "=== write build manifest ==="
+MANIFEST_SCRIPT="$SL/scripts/ops/write-build-manifest.sh"
+if [[ -x "$MANIFEST_SCRIPT" ]]; then
+    "$MANIFEST_SCRIPT" \
+      --out "$RELEASES/build-manifest.json" \
+      --iso "$CANON" \
+      --torrent "$CANON.torrent" \
+      --sha256 "$NEW_SHA" \
+      --sha512 "$NEW_SHA512" \
+      --blake3 "$NEW_BLAKE3" \
+      --btih "$NEW_BTIH" \
+      --hooks-ran "$HOOKS_RAN" \
+      --build-log "$SL/lb-docker-build.log" \
+      --container-name "$(cat "$SL/lb-docker.containername" 2>/dev/null || true)"
+else
+    echo "WARN: $MANIFEST_SCRIPT missing or not executable"
+fi
 
 echo
 echo "=== summary ==="

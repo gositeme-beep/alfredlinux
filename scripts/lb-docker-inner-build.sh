@@ -88,15 +88,41 @@ rm -rf chroot binary .build 2>/dev/null || true
 # If we ran `lb config` first then `lb clean`, the config marker dies and
 # `lb build` errors: "the following stage is required to be done first: config".
 echo "[inner] lb clean (FULL) at $(date -Is) - wipe all stage markers for fresh build"
-lb clean || true
+lb clean --all || lb clean || true
+
+echo "[inner] remove stale ISO artifacts before fresh build at $(date -Is)"
+rm -f /work/build/*.iso /work/build/*.iso.zsync* /work/build/live-image-amd64.* 2>/dev/null || true
 
 echo "[inner] lb config at $(date -Is)"
 lb config --ignore-system-defaults || lb config
 
-echo "[inner] lb build starting at $(date -Is)"
+BUILD_STARTED_EPOCH="$(date +%s)"
+BUILD_STARTED_AT="$(date -Is)"
+echo "[inner] lb build starting at ${BUILD_STARTED_AT}"
 lb build
 RC=$?
 echo "[inner] lb build finished at $(date -Is) exit=$RC"
+ISO_PATH=/work/build/live-image-amd64.hybrid.iso
+SQUASHFS_PATH=/work/build/binary/live/filesystem.squashfs
+if [[ "$RC" -eq 0 ]]; then
+  ISO_MTIME="$(stat -c %Y "$ISO_PATH" 2>/dev/null || echo 0)"
+  SQUASHFS_MTIME="$(stat -c %Y "$SQUASHFS_PATH" 2>/dev/null || echo 0)"
+  if [[ ! -s "$ISO_PATH" ]]; then
+    echo "[inner] ERROR: lb build exited 0 but $ISO_PATH is missing or empty" >&2
+    RC=86
+  elif [[ "$ISO_MTIME" -lt "$BUILD_STARTED_EPOCH" ]]; then
+    echo "[inner] ERROR: lb build exited 0 but $ISO_PATH was not refreshed after build start ${BUILD_STARTED_AT}" >&2
+    RC=86
+  elif [[ ! -s "$SQUASHFS_PATH" ]]; then
+    echo "[inner] ERROR: lb build exited 0 but $SQUASHFS_PATH is missing or empty" >&2
+    RC=86
+  elif [[ "$SQUASHFS_MTIME" -lt "$BUILD_STARTED_EPOCH" ]]; then
+    echo "[inner] ERROR: lb build exited 0 but $SQUASHFS_PATH was not refreshed after build start ${BUILD_STARTED_AT}" >&2
+    RC=86
+  else
+    echo "[inner] fresh ISO artifact verified: $ISO_PATH"
+  fi
+fi
 UIDH="${BUILD_UID:-0}"
 GIDH="${BUILD_GID:-0}"
 if [[ "$UIDH" != 0 ]]; then

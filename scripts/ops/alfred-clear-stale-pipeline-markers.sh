@@ -20,6 +20,9 @@ STATE=$LAW/night-shift-state.txt
 BACKUP_DIR="${ALFRED_CLEAR_BACKUP_DIR:-$LAW/night-shift-marker-backups}"
 STATUS_JSON="${ALFRED_STATUS_JSON:-$LAW/alfred-build-control-plane/last-lb-docker.json}"
 
+# shellcheck disable=SC1091
+source "$SL/scripts/lb-nap-helpers.sh"
+
 if [[ "${1:-}" != "--yes" && "${ALFRED_PIPELINE_CLEAR_FORCE:-}" != "1" ]]; then
   echo "Refusing: pass --yes or set ALFRED_PIPELINE_CLEAR_FORCE=1" >&2
   echo "This removes $FAIL when the container in $NAME_FILE is Running." >&2
@@ -30,11 +33,12 @@ fi
 NAME="$(tr -d '\n\r' <"$NAME_FILE")"
 [[ -n "$NAME" ]] || { echo "Empty container name"; exit 1; }
 
-if ! docker inspect "$NAME" &>/dev/null; then
+if ! alfred_docker_inspect_ok "$NAME"; then
   echo "Container $NAME not found — not clearing markers (may be real failure)." >&2
   exit 3
 fi
-running="$(docker inspect -f '{{.State.Running}}' "$NAME" 2>/dev/null || echo false)"
+running="$(alfred_docker_inspect_fmt "$NAME" '{{.State.Running}}')"
+[[ -z "$running" ]] && running="false"
 if [[ "$running" != "true" ]]; then
   echo "Container $NAME exists but is not Running — not clearing markers." >&2
   exit 4

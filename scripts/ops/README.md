@@ -6,11 +6,55 @@ Tracked copies of the three scripts the build host actually runs out of
 
 | script | what it does |
 |---|---|
-| `alfred-night-shift.sh` | systemd entrypoint: waits on the build container, runs smoke + restage, auto-requeues up to 2 retries via ABCP. |
+| `alfred-night-shift.sh` | systemd entrypoint: waits on the build container, runs smoke + restage, auto-requeues up to 2 retries via ABCP, and writes per-attempt diagnostics (`attempt-diagnostics-a<attempt>.log`, `smoke-a<attempt>.log`, `restage-a<attempt>.log`) on failures. |
 | `smoke-test-iso.sh` | Mounts a fresh ISO, validates `/etc/alfred` is in the squashfs and the ISO mtime is fresher than `THRESHOLD`. Listing uses **`unsquashfs -ll`** paths (`squashfs-root/etc/...`), not fixed column regexes. |
 | `post-build-restage.sh` | Hardlinks fresh ISO into `public_html/downloads/`, computes SHA-512 + BLAKE3 + SHA-256, regenerates `.torrent`, computes new btih, patches `$gaTorrentBtihHex` in `ga-release-state.php`, GPG-signs the ISO + every SUMS file, and bumps `$gaFrozenIsoHookCount` based on hook stamps in the squashfs. |
 | `night-shift-watchdog-email.sh` | Cron-friendly watchdog: emails `commander@gositeme.com` once per **new** `night-shift-DONE.txt` or `night-shift-FAIL.txt` mtime. First run records current mtimes without sending (no backlog burst). Requires a working local MTA (`mail(1)`); see `night-shift-watchdog.log`. |
 | `alfred-clear-stale-pipeline-markers.sh` | When you start a **new** `lb-docker` container but `night-shift-FAIL.txt` still exists from an old exhausted-retry run, this removes the stale FAIL (backup under **`/home/gositeme/law/night-shift-marker-backups/`** or `ALFRED_CLEAR_BACKUP_DIR`), resets `night-shift-state.txt`, and refreshes `last-lb-docker.json` via `alfred_status_json_waiting`. Requires `--yes` or `ALFRED_PIPELINE_CLEAR_FORCE=1` and a **Running** container named in `lb-docker.containername`. |
+| `alfred-finalize-nap-json.sh` | When **`[inner] lb build finished … exit=0`** is in the log and at least one **`*.iso`** exists under **`build/`** or **`iso-output/`**, but **`last-lb-docker.json`** is still **`waiting_for_container` / `pending`** (Docker or **`watch-lb-docker-build.sh`** wedged), this script **writes `phase=done`** + **`nap_ok`** so **night-shift** can continue to smoke/restage. Refuses if the named container still exists in Docker (override with **`ALFRED_FINALIZE_NAP_IGNORE_RUNNING=1`** only if you know what you are doing). |
+| `recover-night-shift.sh` | One-command rescue helper: stops **`alfred-night-shift`**, kills stale watcher processes, optionally restarts Docker / removes the active build container / clears stale `build/*.iso`, finalizes `last-lb-docker.json` when inner build already succeeded, then restarts the service and prints status. |
+| `extract-inner-failure.sh` | Writes a focused incident artifact from the current inner run slice in `lb-docker-build.log`: matched fatal/error lines plus the latest context tail. Night-shift stores this as `night-shift-logs/inner-failure-a<attempt>.log` on failed attempts. |
+| `night-shift-heartbeat-guard.sh` | Guard for watcher stalls: if `alfred-night-shift` is active, heartbeat is stale, and status phase is still `waiting_for_container`, it auto-runs `recover-night-shift.sh` (with cooldown + lock) to self-heal wedged watch states. |
+| `write-ops-event.sh` | Appends structured JSONL ops events at `/home/gositeme/law/alfredlinux-com-source-live/night-shift-logs/ops-events.jsonl` and updates compact latest-event JSON at `/home/gositeme/law/alfred-build-control-plane/last-ops-event.json` for dashboards. |
+
+## One-command recovery
+
+```bash
+sudo bash /home/gositeme/law/alfredlinux-com-source-live/scripts/ops/recover-night-shift.sh --clear-build-iso
+```
+
+Useful flags:
+
+- `--restart-docker` — restart Docker before recovery
+- `--kill-container` — remove the active `alfred-lb-build-*` container
+- `--clear-build-iso` — delete stale `build/*.iso` before the next run
+- `--no-restart` — stop/finalize only, do not restart `alfred-night-shift`
+
+## Unstick `last-lb-docker.json` (Dell Watch **nap_watch_json** BAD)
+
+If **`last-lb-docker.json`** never left **`waiting_for_container`** after inner success, **`alfred-night-shift.sh`** (current `main`) will run **`alfred-finalize-nap-json.sh` automatically** after `watch-lb-docker-build.sh` when JSON is still not **`phase=done`** — **`sudo systemctl restart alfred-night-shift`** is enough once the updated script is deployed. You can still run finalize by hand:
+
+```bash
+sudo systemctl restart docker
+sleep 8
+sudo -u gositeme bash /home/gositeme/law/alfredlinux-com-source-live/scripts/ops/alfred-finalize-nap-json.sh
+sudo systemctl restart alfred-night-shift
+```
+
+## Cron: watcher heartbeat auto-recovery
+
+After installing the script under `/home/gositeme/law/`:
+
+```bash
+chmod +x /home/gositeme/law/alfredlinux-com-source-live/scripts/ops/night-shift-heartbeat-guard.sh
+(crontab -l 2>/dev/null; echo '*/5 * * * * ALFRED_WATCH_HEARTBEAT_MAX_AGE_SEC=900 ALFRED_WATCH_RECOVERY_MIN_INTERVAL_SEC=1800 /home/gositeme/law/alfredlinux-com-source-live/scripts/ops/night-shift-heartbeat-guard.sh >/dev/null 2>&1') | crontab -
+```
+
+State files: `/home/gositeme/law/.night-shift-heartbeat-guard.state`, `/home/gositeme/law/night-shift-heartbeat-guard.log`.
+
+Guard-triggered recoveries stamp `last-lb-docker.json` with `recovery_reason_code`, `recovery_actor`, `recovery_ts`, and `last_recovery` so dashboards can explain self-heal actions.
+
+Dell Watch compact feed: `/home/gositeme/law/alfred-build-control-plane/last-ops-event.json` always contains the latest orchestration event (`source`, `event`, `reason`, `container`, `phase`, `ts`).
 
 ## Cron: build completion email
 
@@ -34,6 +78,8 @@ sudo install -o gositeme -g gositeme -m 755 \
   scripts/ops/smoke-test-iso.sh       /home/gositeme/law/smoke-test-iso.sh
 sudo install -o gositeme -g gositeme -m 755 \
   scripts/ops/post-build-restage.sh   /home/gositeme/law/post-build-restage.sh
+sudo install -o gositeme -g gositeme -m 755 \
+  scripts/ops/alfred-finalize-nap-json.sh /home/gositeme/law/alfred-finalize-nap-json.sh
 sudo systemctl restart alfred-night-shift
 ```
 
@@ -43,7 +89,12 @@ sudo systemctl restart alfred-night-shift
 
 `alfred-night-shift.sh` reads **`ABCP_TOKEN`** from the environment or from **`/home/gositeme/law/.alfred-abcp-token`** (mode **600**). The token is not stored in git.
 
-**ABCP must be listening** on **`http://127.0.0.1:18787`** (see `alfred-build-control-plane`). If smoke/restage fails and night-shift tries to requeue, **`ctl.py`** will get **`Connection refused`** and you will see **`could not requeue build via ABCP`** — start the ABCP service (or worker) on the build host, then clear **`night-shift-FAIL.txt`** and **`sudo systemctl restart alfred-night-shift`**.
+**ABCP must be listening** on **`http://127.0.0.1:18787`** (see `alfred-build-control-plane`). If smoke/restage fails and night-shift tries to requeue, **`ctl.py`** will get **`Connection refused`** and you will see **`could not requeue build via ABCP`** — bring ABCP up, then clear **`night-shift-FAIL.txt`** and **`sudo systemctl restart alfred-night-shift`**:
+
+```bash
+bash /home/gositeme/law/alfred-build-control-plane/start-abcp.sh
+curl -sf http://127.0.0.1:18787/healthz && echo OK
+```
 
 ## Stale FAIL after a new detach build
 
@@ -59,8 +110,12 @@ If **`night-shift-state.txt`** / **`night-shift-FAIL.txt`** are **root-owned**, 
 ## Tunables
 
 - **Rolling ISO freshness:** `ALFRED_ISO_MAX_AGE_DAYS` (default **14**) and optional `ALFRED_ISO_MIN_MTIME_EPOCH` in night-shift, smoke, and restage — ISO must be newer than the rolling window (no manual `THRESHOLD` bump each cycle).
+- **Smoke vs inner build:** `smoke-test-iso.sh` compares **`live-image-amd64.hybrid.iso` mtime** to the last **`[inner] lb build finished … exit=0`** timestamp in **`lb-docker-build.log`** (default slack **`ALFRED_SMOKE_INNER_MTIME_SLACK_SEC=600`**). If the hybrid on disk is still an **older GA** while the log shows a **new** inner finish, smoke fails fast instead of MISS **`etc/alfred`**. Set **`ALFRED_SMOKE_SKIP_INNER_LOG_MTIME_CHECK=1`** to skip that gate (not recommended).
 - `MAX_RETRIES` (in night-shift) — extra ABCP requeues beyond the in-flight build.
 - **`ALFRED_ABCP_QUEUE_RETRIES`** (default **8**) / **`ALFRED_ABCP_QUEUE_RETRY_SLEEP_SEC`** (default **4**) — when `ctl.py queue-build` hits **Connection refused** / **URLError** / timeouts to **`ABCP_BASE`**, night-shift retries before giving up (covers ABCP waking slowly after smoke failure).
+- **`ALFRED_DOCKER_INSPECT_TIMEOUT_SEC`** (default **30**) — every `docker inspect` in **`watch-lb-docker-build.sh`** (and helpers used by night-shift / triage scripts) runs under **`timeout(1)`** so a wedged Docker daemon cannot leave **`last-lb-docker.json`** stuck at **`waiting_for_container`** while **`lb-docker-build.log`** already shows **`[inner] lb build finished … exit=0`**. Set to **0** to use bare **`docker inspect`** (legacy).
+- Night-shift now prunes stale `watch-lb-docker-build.sh` PIDs before launching a new watch pass, reducing duplicate watcher races around `last-lb-docker.json`.
+- On failed attempts, night-shift writes `night-shift-logs/inner-failure-a<attempt>.log` via `extract-inner-failure.sh` for postmortem triage.
 - `GPG_KEY` (in post-build-restage) — release signing key. Currently `41E166075B0F95205839E41B32BCEDE8C8DD8B00`.
 - `B3SUM_BIN` fallback chain in restage: `/usr/local/bin`, `/usr/bin`, `/home/gositeme/.cargo/bin`.
 
