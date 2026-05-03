@@ -83,17 +83,23 @@ if command -v convert &>/dev/null; then
         -gravity center -annotate +0+0 'A' \
         "$BRAND_DIR/alfred-icon.png" 2>/dev/null || true
 
-    # Welcome banner (800x300)
-    convert -size 800x300 \
-        -define gradient:angle=135 \
-        gradient:'#0a0a14-#1a1a2e' \
-        -fill '#FFD700' -font 'DejaVu-Sans-Bold' -pointsize 42 \
-        -gravity center -annotate +0-50 '✝ Alfred Linux 7.77' \
-        -fill '#00D4FF' -font 'DejaVu-Sans-Bold' -pointsize 22 \
-        -annotate +0+10 'Kingdom of God Edition' \
-        -fill '#8a8a9a' -font 'DejaVu-Sans' -pointsize 16 \
-        -annotate +0+50 'SOLI DEO GLORIA' \
-        "$BRAND_DIR/alfred-welcome.png" 2>/dev/null || true
+    # Welcome banner — use pre-staged branded SVG (1200x600 -> 800x400)
+    SRC_SVG="/usr/share/alfred/branding/alfred-installer-welcome.svg"
+    if [ -f "$SRC_SVG" ] && command -v rsvg-convert &>/dev/null; then
+        rsvg-convert -w 1200 -h 600 "$SRC_SVG" -o "$BRAND_DIR/alfred-welcome.png" 2>/dev/null || true
+    elif [ -f "$SRC_SVG" ] && command -v convert &>/dev/null; then
+        convert -background '#081423' -density 150 "$SRC_SVG" -resize 1200x600 "$BRAND_DIR/alfred-welcome.png" 2>/dev/null || true
+    else
+        # Fallback: basic gradient
+        convert -size 800x300 gradient:'#081423-#0d1f35' \
+            -fill '#FFD700' -font 'DejaVu-Sans-Bold' -pointsize 42 \
+            -gravity center -annotate +0-50 '✝ Alfred Linux 7.77' \
+            -fill '#00D4FF' -font 'DejaVu-Sans-Bold' -pointsize 22 \
+            -annotate +0+10 'Kingdom of God Edition' \
+            -fill '#8a8a9a' -font 'DejaVu-Sans' -pointsize 16 \
+            -annotate +0+50 'SOLI DEO GLORIA' \
+            "$BRAND_DIR/alfred-welcome.png" 2>/dev/null || true
+    fi
 fi
 
 # QML slideshow
@@ -326,6 +332,7 @@ chmod +x /etc/skel/Desktop/install-alfred-linux.desktop
 # Mark desktop file as trusted for XFCE (prevents "untrusted launcher" dialog)
 # XFCE uses a checksum stored in gio metadata to trust desktop files
 # We create a script that runs once at login to trust all skel desktop files
+mkdir -p /etc/skel/.config/autostart
 cat > /etc/skel/.config/autostart/trust-desktop-files.desktop << 'TRUST_AUTO'
 [Desktop Entry]
 Type=Application

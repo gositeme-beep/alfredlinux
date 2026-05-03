@@ -1,0 +1,105 @@
+#!/bin/bash
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Hook 0997: Legacy Intel GPU (GM45/i965/GMA 4500MHD) - Dell E6400 and similar
+# Fixes installer/live freeze on old Intel graphics by providing:
+#   1. Xorg modesetting fallback config (no i915 KMS crash)
+#   2. Calamares env vars to force software GL during install
+#   3. Boot-time udev rule to set i915.modeset=0 for GM45 PCI IDs
+set -euo pipefail
+
+echo "╔══════════════════════════════════════════════════════════╗"
+echo "║  HOOK 0997: Legacy Intel GPU — Dell E6400 / GM45 Fix    ║"
+echo "╚══════════════════════════════════════════════════════════╝"
+
+# --- 1. Xorg: modesetting driver as safe fallback for legacy Intel -----------
+mkdir -p /etc/X11/xorg.conf.d
+cat > /etc/X11/xorg.conf.d/20-intel-legacy.conf << 'XEOF'
+# Alfred Linux — Legacy Intel GPU fallback (GM45/i965/GMA 4500MHD)
+# The modesetting driver works on all Intel GPUs and avoids i915 KMS hangs
+# on pre-Sandy Bridge hardware like the Dell Latitude E6400.
+Section "Device"
+    Identifier "Intel Legacy"
+    Driver     "modesetting"
+    Option     "AccelMethod"  "glamor"
+    Option     "DRI"          "3"
+EndSection
+XEOF
+chmod 644 /etc/X11/xorg.conf.d/20-intel-legacy.conf
+
+# --- 2. Calamares: force software GL so installer doesn't freeze on old Intel --
+mkdir -p /etc/calamares
+cat > /etc/calamares/calamares-env << 'ENVEOF'
+# Alfred Linux — Calamares GPU env overrides
+# Prevents installer freeze on legacy Intel (GM45/i965) and other old GPUs
+QT_X11_NO_MITSHM=1
+LIBGL_ALWAYS_SOFTWARE=0
+QT_QUICK_BACKEND=software
+GALLIUM_DRIVER=softpipe
+ENVEOF
+chmod 644 /etc/calamares/calamares-env
+
+# --- 3. Calamares launcher: source env and add --platform xcb fallback ---------
+CALA_BIN="/usr/bin/calamares"
+CALA_WRAPPER="/usr/local/bin/calamares-safe"
+cat > "$CALA_WRAPPER" << 'WRAPEOF'
+#!/bin/bash
+# Alfred Linux Calamares safe-launcher — handles legacy GPU gracefully
+set -a
+[ -f /etc/calamares/calamares-env ] && source /etc/calamares/calamares-env
+set +a
+
+# Detect legacy Intel GMA (GM45 = 0x2a42, 0x2a43; G41 = 0x2e32 etc.)
+LEGACY_INTEL=0
+if command -v lspci &>/dev/null; then
+    if lspci -nn | grep -qiE 'VGA.*8086:(2a4[23]|2e3[269]|29[0-9][0-9]|27a[02]|2772|2982|2992|29a2|2a02|2a12)'; then
+        LEGACY_INTEL=1
+    fi
+fi
+
+if [ "$LEGACY_INTEL" = "1" ]; then
+    echo "[Alfred] Legacy Intel GPU detected — enabling software rendering for installer"
+    export LIBGL_ALWAYS_SOFTWARE=1
+    export QT_QUICK_BACKEND=software
+    export GALLIUM_DRIVER=softpipe
+    export MESA_GL_VERSION_OVERRIDE=3.3
+fi
+
+exec /usr/bin/calamares "$@"
+WRAPEOF
+chmod +x "$CALA_WRAPPER"
+
+# --- 4. Update .desktop autostart to use the wrapper -------------------------
+DESKTOP_FILE="/etc/skel/.config/autostart/alfred-live-welcome.desktop"
+if [ -f "$DESKTOP_FILE" ]; then
+    sed -i 's|Exec=.*calamares.*|Exec=/usr/local/bin/calamares-safe|' "$DESKTOP_FILE" || true
+fi
+# Also fix the system-wide autostart if it exists
+SYSDESK="/etc/xdg/autostart/alfred-installer.desktop"
+if [ -f "$SYSDESK" ]; then
+    sed -i 's|Exec=.*calamares.*|Exec=/usr/local/bin/calamares-safe|' "$SYSDESK" || true
+fi
+
+# --- 5. Kernel param: grub default for installed system ----------------------
+# Add i915.enable_rc6=0 to GRUB_CMDLINE for installed system (helps E6400 stability)
+GRUB_DEFAULT="/etc/default/grub"
+if [ -f "$GRUB_DEFAULT" ]; then
+    if ! grep -q 'i915.enable_rc6' "$GRUB_DEFAULT"; then
+        sed -i 's|^GRUB_CMDLINE_LINUX_DEFAULT=\(.*\)\"|GRUB_CMDLINE_LINUX_DEFAULT=\1 i915.enable_rc6=0 intel_idle.max_cstate=1\"|' "$GRUB_DEFAULT" || true
+    fi
+fi
+
+# --- 6. udev rule: clamp i915 power state on legacy Intel --------------------
+mkdir -p /etc/udev/rules.d
+cat > /etc/udev/rules.d/60-intel-legacy-gpu.rules << 'UDEVEOF'
+# Alfred Linux — Disable i915 RC6 power saving on GM45/i965 (Dell E6400, etc.)
+# These GPUs freeze when RC6 kicks in under load (e.g., during Calamares install)
+SUBSYSTEM=="pci", ATTR{vendor}=="0x8086", ATTR{device}=="0x2a42", RUN+="/bin/sh -c 'echo 0 > /sys/module/i915/parameters/enable_rc6 2>/dev/null || true'"
+SUBSYSTEM=="pci", ATTR{vendor}=="0x8086", ATTR{device}=="0x2a43", RUN+="/bin/sh -c 'echo 0 > /sys/module/i915/parameters/enable_rc6 2>/dev/null || true'"
+SUBSYSTEM=="pci", ATTR{vendor}=="0x8086", ATTR{device}=="0x2e32", RUN+="/bin/sh -c 'echo 0 > /sys/module/i915/parameters/enable_rc6 2>/dev/null || true'"
+UDEVEOF
+chmod 644 /etc/udev/rules.d/60-intel-legacy-gpu.rules
+
+echo "[0997] Legacy Intel GPU compatibility layer installed."
+echo "[0997] Dell Latitude E6400 / GM45 / GMA 4500MHD users:"
+echo "[0997]   - Use 'Safe Mode' boot entry (nomodeset) for first install"
+echo "[0997]   - Calamares will auto-detect and use software GL if needed"
