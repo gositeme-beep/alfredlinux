@@ -20,7 +20,7 @@ INNER="$REPO/scripts/lb-docker-inner-build.sh"
 NAME="${ALFRED_LB_DOCKER_NAME:-alfred-lb-build-$(date +%s)}"
 
 [[ -f "$INNER" ]] || { echo "Missing $INNER" >&2; exit 1; }
-chmod 750 "$INNER"
+chmod 750 "$INNER" 2>/dev/null || true
 
 docker pull "$IMAGE" >/dev/null
 

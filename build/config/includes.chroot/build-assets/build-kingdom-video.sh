@@ -1,4 +1,5 @@
 #!/bin/bash
+# SPDX-License-Identifier: AGPL-3.0-or-later
 # ═══════════════════════════════════════════════════════════════════
 # DEPRECATED / NOT FOR GA — zoompan on stills; use a real master MP4 instead.
 #

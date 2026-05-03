@@ -121,6 +121,13 @@ if [[ "$RC" -eq 0 ]]; then
     RC=86
   else
     echo "[inner] fresh ISO artifact verified: $ISO_PATH"
+    OUT_DIR=/work/iso-output
+    OUT_ISO=$OUT_DIR/live-image-amd64.hybrid.iso
+    OUT_TMP=$OUT_ISO.tmp.$$
+    mkdir -p $OUT_DIR
+    cp -f $ISO_PATH $OUT_TMP
+    mv -f $OUT_TMP $OUT_ISO
+    echo [inner] published fresh ISO to $OUT_ISO
   fi
 fi
 UIDH="${BUILD_UID:-0}"

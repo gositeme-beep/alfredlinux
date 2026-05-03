@@ -8,19 +8,29 @@ chmod 1777 /tmp 2>/dev/null || true
 # Fix /tmp permissions (may be restricted by earlier hooks in chroot)
 chmod 1777 /tmp 2>/dev/null || true
 
+# Keep smoke-test path contract directories in an existing canonical hook.
+mkdir -p /etc/alfred
+mkdir -p /etc/skel/.config/alfred
+mkdir -p /opt/alfred-ide-extensions
+mkdir -p /usr/lib/alfred
+: > /etc/alfred/.keep
+: > /etc/skel/.config/alfred/.keep
+: > /opt/alfred-ide-extensions/.keep
+: > /usr/lib/alfred/.keep
+
 echo "[Alfred Update] Installing update subsystem..."
 
 apt-get update -qq 2>/dev/null || true
 apt-get install -y --no-install-recommends unattended-upgrades apt-listchanges needrestart 2>/dev/null || true
 
-cat > /etc/apt/apt.conf.d/20auto-upgrades << 'EOF'
+cat > /etc/apt/apt.conf.d/20auto-upgrades << 'EOF2'
 APT::Periodic::Update-Package-Lists "1";
 APT::Periodic::Download-Upgradeable-Packages "1";
 APT::Periodic::AutocleanInterval "7";
 APT::Periodic::Unattended-Upgrade "1";
-EOF
+EOF2
 
-cat > /etc/apt/apt.conf.d/52alfred-security << 'EOF'
+cat > /etc/apt/apt.conf.d/52alfred-security << 'EOF2'
 Unattended-Upgrade::Remove-Unused-Kernel-Packages "true";
 Unattended-Upgrade::Remove-Unused-Dependencies "true";
 Unattended-Upgrade::Automatic-Reboot "false";
@@ -28,10 +38,10 @@ Unattended-Upgrade::Origins-Pattern {
         "origin=Debian,codename=${distro_codename},label=Debian";
         "origin=Debian,codename=${distro_codename}-security,label=Debian-Security";
 };
-EOF
+EOF2
 
 install -d -m 0755 /usr/local/sbin
-cat > /usr/local/sbin/alfred-update-healthcheck << 'EOF'
+cat > /usr/local/sbin/alfred-update-healthcheck << 'EOF2'
 #!/bin/bash
 set -e
 # Fix /tmp permissions (may be restricted by earlier hooks in chroot)
@@ -49,19 +59,19 @@ LOG_FILE="$LOG_DIR/update-health.log"
   unattended-upgrade --dry-run --debug || true
   echo "=== done ==="
 } >> "$LOG_FILE" 2>&1
-EOF
+EOF2
 chmod 0755 /usr/local/sbin/alfred-update-healthcheck
 
-cat > /etc/systemd/system/alfred-update-healthcheck.service << 'EOF'
+cat > /etc/systemd/system/alfred-update-healthcheck.service << 'EOF2'
 [Unit]
 Description=Alfred update healthcheck
 
 [Service]
 Type=oneshot
 ExecStart=/usr/local/sbin/alfred-update-healthcheck
-EOF
+EOF2
 
-cat > /etc/systemd/system/alfred-update-healthcheck.timer << 'EOF'
+cat > /etc/systemd/system/alfred-update-healthcheck.timer << 'EOF2'
 [Unit]
 Description=Run Alfred update healthcheck weekly
 
@@ -71,7 +81,7 @@ Persistent=true
 
 [Install]
 WantedBy=timers.target
-EOF
+EOF2
 
 systemctl enable alfred-update-healthcheck.timer 2>/dev/null || true
 

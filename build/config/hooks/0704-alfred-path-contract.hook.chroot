@@ -1,0 +1,15 @@
+#!/bin/bash
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set -e
+
+# Ensure smoke-test path contract directories always exist in the live rootfs.
+mkdir -p /etc/alfred
+mkdir -p /etc/skel/.config/alfred
+mkdir -p /opt/alfred-ide-extensions
+mkdir -p /usr/lib/alfred
+
+# Keep at least one file so these paths always survive into the image.
+: > /etc/alfred/.keep
+: > /etc/skel/.config/alfred/.keep
+: > /opt/alfred-ide-extensions/.keep
+: > /usr/lib/alfred/.keep

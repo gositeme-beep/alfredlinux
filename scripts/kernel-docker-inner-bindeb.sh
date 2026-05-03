@@ -15,7 +15,16 @@ apt-get install -y --no-install-recommends \
   gcc g++ make python3
 
 cd /work/linux-7.0.1
-test -f .config || make ARCH=x86_64 x86_64_defconfig
+if [[ ! -f .config ]]; then
+  make ARCH=x86_64 x86_64_defconfig
+fi
+
+if [[ -x ./scripts/config ]]; then
+  # Force FUSE support so live/safe boot does not fail on ntfs-3g paths.
+  ./scripts/config --enable FUSE_FS || true
+  ./scripts/config --module NTFS3_FS || true
+fi
+make ARCH=x86_64 olddefconfig
 
 fakeroot make -j"$NJOBS" ARCH=x86_64 bindeb-pkg LOCALVERSION= KDEB_PKGVERSION=7.0.1-1alfred
 

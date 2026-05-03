@@ -1,4 +1,5 @@
 #!/bin/bash
+# SPDX-License-Identifier: AGPL-3.0-or-later
 # Generate omahon-seal.png in build-assets/wallpapers/{8k,4k,1080p}/ for 0285 §7
 # kingdom-media copies (optional). Requires ImageMagick `convert`.
 # Source should be a LARGE raster: short edge 2048+ px (4096+ ideal). 768-class

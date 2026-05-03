@@ -30,10 +30,17 @@ cd linux-7.0.1
 
 if [[ -n "${ALFRED_KERNEL_CONFIG:-}" && -f "${ALFRED_KERNEL_CONFIG}" ]]; then
   cp -a "${ALFRED_KERNEL_CONFIG}" .config
-  make ARCH=x86_64 olddefconfig
 else
   make ARCH=x86_64 x86_64_defconfig
 fi
+
+if [[ -x ./scripts/config ]]; then
+  # Safe-mode boot requires /dev/fuse support for ntfs-3g paths.
+  ./scripts/config --enable FUSE_FS || true
+  # Keep modern in-kernel NTFS driver available as fallback.
+  ./scripts/config --module NTFS3_FS || true
+fi
+make ARCH=x86_64 olddefconfig
 
 : >"$LOG"
 echo "Starting fakeroot make bindeb-pkg (jobs=$NJOBS). Log: $LOG"
