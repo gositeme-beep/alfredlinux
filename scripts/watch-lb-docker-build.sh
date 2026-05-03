@@ -16,11 +16,13 @@
 #   multi-day hangs when the Docker daemon is wedged (last-lb-docker.json stuck at waiting_for_container).
 #   ALFRED_DOCKER_WAIT_EMPTY_RETRIES=<n> - if `docker wait` returns empty while the container is still
 #   Running, retry up to n times (default 600, ~2s apart) before giving up.
+#   ALFRED_STATUS_JSON_REFRESH_SEC=<n> - refresh waiting status JSON while docker wait blocks (default 30).
 # With --status-json: writes phase=waiting immediately, then .lb-docker-watch.heartbeat timestamps.
 # One writer at a time for --status-json: flock on .lb-docker-watch.lock.
 #   ALFRED_WATCH_NO_FLOCK=1           - skip lock entirely.
 #   ALFRED_WATCH_LOCK_WAIT_SEC=<n>   - wait for lock (default 600). Use 0 for old non-blocking (-n) behaviour.
-#   ALFRED_WATCH_LOCK_STRICT=1       - exit 3 if wait expires instead of proceeding with a warning.
+#   ALFRED_WATCH_LOCK_STRICT=1       - force exit 3 if wait expires.
+#   ALFRED_WATCH_LOCK_BEST_EFFORT=1  - allow legacy continue-without-lock behavior on wait expiry.
 set -euo pipefail
 REPO="$(cd "$(dirname "$0")/.." && pwd)"
 # shellcheck disable=SC1091
@@ -110,24 +112,43 @@ if [[ -n "$STATUS_JSON" && -z "${ALFRED_WATCH_NO_FLOCK:-}" ]]; then
   else
     if ! flock -w "$wait_sec" 201; then
       echo "watch-lb-docker-build: flock wait (${wait_sec}s) expired on $REPO/.lb-docker-watch.lock" >&2
-      if [[ "${ALFRED_WATCH_LOCK_STRICT:-}" == 1 ]]; then
+      if [[ "${ALFRED_WATCH_LOCK_BEST_EFFORT:-}" == 1 ]] && [[ "${ALFRED_WATCH_LOCK_STRICT:-}" != 1 ]]; then
+        echo "watch-lb-docker-build: continuing without exclusive lock due ALFRED_WATCH_LOCK_BEST_EFFORT=1" >&2
+      else
+        echo "watch-lb-docker-build: exiting to preserve single-writer status-json semantics" >&2
         exit 3
       fi
-      echo "watch-lb-docker-build: continuing without exclusive lock (ALFRED_WATCH_LOCK_STRICT=1 to require lock)" >&2
     fi
   fi
 fi
 
 EXIT="unknown"
 HB_PID=""
-cleanup_watch_heartbeat() { alfred_stop_heartbeat "$HB_PID"; }
-trap cleanup_watch_heartbeat EXIT
+STATUS_REFRESH_PID=""
+cleanup_watch_helpers() {
+  alfred_stop_heartbeat "$HB_PID"
+  [[ -n "$STATUS_REFRESH_PID" ]] && kill "$STATUS_REFRESH_PID" 2>/dev/null || true
+}
+trap cleanup_watch_helpers EXIT
 
 if alfred_docker_inspect_ok "$NAME"; then
   if [[ -n "$STATUS_JSON" ]]; then
     progress_pct="$(alfred_progress_from_log "$LOG" | tr -d "\n\r")"
     alfred_status_json_waiting "$STATUS_JSON" "$NAME" "$progress_pct"
     HB_PID="$(alfred_start_heartbeat "$REPO/.lb-docker-watch.heartbeat")"
+    refresh_sec="${ALFRED_STATUS_JSON_REFRESH_SEC:-30}"
+    if [[ "$refresh_sec" =~ ^[0-9]+$ ]] && (( refresh_sec > 0 )); then
+      (
+        # Never let refresher hold the watch lock FD if parent exits.
+        exec 201>&- 202>&- || true
+        while true; do
+          p="$(alfred_progress_from_log "$LOG" | tr -d "\n\r")"
+          alfred_status_json_waiting "$STATUS_JSON" "$NAME" "$p" || true
+          sleep "$refresh_sec"
+        done
+      ) &
+      STATUS_REFRESH_PID=$!
+    fi
   fi
   echo "Waiting for Docker container: $NAME (docker wait)..."
   [[ -z "${ALFRED_NO_INHIBIT_SLEEP:-}" ]] && command -v systemd-inhibit &>/dev/null \
@@ -137,21 +158,53 @@ if alfred_docker_inspect_ok "$NAME"; then
   set -e
   alfred_stop_heartbeat "$HB_PID"
   HB_PID=""
+  [[ -n "$STATUS_REFRESH_PID" ]] && kill "$STATUS_REFRESH_PID" 2>/dev/null || true
+  STATUS_REFRESH_PID=""
 else
   echo "Container $NAME not found (already exited and removed?). Summarizing from disk..."
 fi
 
 ISO_LIST="$(mktemp)"
-find "$REPO/build" "$REPO/iso-output" -maxdepth 5 -name '*.iso' -type f 2>/dev/null | head -50 >"$ISO_LIST" || true
+find "$REPO/build" "$REPO/iso-output" -maxdepth 5 -type f \( -name '*.iso' -o -name '*.iso.stale' \) 2>/dev/null | head -50 >"$ISO_LIST" || true
 ISO_COUNT="$(wc -l <"$ISO_LIST" | tr -d ' ')"
 LOG_TAIL="$(tail -60 "$LOG" 2>/dev/null || echo '(no log)')"
 progress_pct="$(alfred_progress_from_log "$LOG" | tr -d "\n\r")"
+
+# Guard against stale ISO false-success: only trust unknown+ISO when log proves a completed inner run for the latest start.
+inner_success_after_latest_start=0
+if LOG_PATH="$LOG" python3 <<'PY2' >/dev/null 2>&1
+import os, sys
+path = os.environ.get('LOG_PATH','')
+try:
+    with open(path, 'r', encoding='utf-8', errors='replace') as f:
+        lines = f.readlines()
+except Exception:
+    sys.exit(1)
+if not lines:
+    sys.exit(1)
+window = 12000
+tail = lines[-window:] if len(lines) > window else lines
+last_start = -1
+last_fin = -1
+for i, L in enumerate(tail):
+    if '[inner] lb build starting' in L:
+        last_start = i
+    if '[inner] lb build finished' in L and 'exit=0' in L:
+        last_fin = i
+if last_start < 0 or last_fin < 0:
+    sys.exit(1)
+# Require the most recent start in the window to be followed by an exit=0 finish.
+sys.exit(0 if last_fin >= last_start else 1)
+PY2
+then
+  inner_success_after_latest_start=1
+fi
 
 # Align nap_ok / JSON with final exit rules (do not claim nap_ok when we will exit 1 on stale ISO + unknown).
 nap_ok_num=0
 if [[ "$EXIT" == "0" ]]; then
   nap_ok_num=1
-elif [[ "$EXIT" == "unknown" ]] && [[ "$ISO_COUNT" != "0" ]] && ! alfred_docker_inspect_ok "$NAME"; then
+elif [[ "$EXIT" == "unknown" ]] && [[ "$ISO_COUNT" != "0" ]] && [[ "$inner_success_after_latest_start" == "1" ]] && ! alfred_docker_inspect_ok "$NAME"; then
   nap_ok_num=1
 fi
 
@@ -191,9 +244,9 @@ with open(path, "w") as out:
 print("Wrote", path, "nap_ok=", nap_ok)
 PY
 fi
-if [[ -x "$ROOT/scripts/ops/update-public-status-and-media.sh" ]]; then
+  if [[ -x /home/gositeme/law/alfredlinux-com-source-live/scripts/ops/update-public-status-and-media.sh ]]; then
   # Refresh public-facing status page to keep it in sync with the authoritative watcher JSON.
-  "$ROOT/scripts/ops/update-public-status-and-media.sh" 2>&1 | grep -E "^\[public-update|ERROR|error" || true
+    /home/gositeme/law/alfredlinux-com-source-live/scripts/ops/update-public-status-and-media.sh >/dev/null 2>&1 || true
 fi
 
 if [[ -n "$WEBHOOK" ]]; then
@@ -208,7 +261,7 @@ rm -f "$ISO_LIST"
 if [[ "$EXIT" == "0" ]]; then
   exit 0
 fi
-if [[ "$EXIT" == "unknown" ]] && [[ "$ISO_COUNT" != "0" ]] && ! alfred_docker_inspect_ok "$NAME"; then
+if [[ "$EXIT" == "unknown" ]] && [[ "$ISO_COUNT" != "0" ]] && [[ "$inner_success_after_latest_start" == "1" ]] && ! alfred_docker_inspect_ok "$NAME"; then
   exit 0
 fi
 exit 1

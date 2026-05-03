@@ -112,12 +112,17 @@ alfred_start_heartbeat() {
     return
   fi
   mkdir -p "$(dirname "$hb")" 2>/dev/null || true
-  (
+  # Run heartbeat in a separate `bash -c` process so its cmdline is distinct from
+  # watch-lb-docker-build.sh; otherwise `pgrep -f watch-lb-docker-build.sh` overcounts.
+  bash -c '
+    hb="$1"
+    sec="$2"
+    exec 201>&- 202>&- || true
     while true; do
       date -Is >"${hb}.tmp" 2>/dev/null && mv -f "${hb}.tmp" "$hb" 2>/dev/null || true
       sleep "$sec"
     done
-  ) &
+  ' _ "$hb" "$sec" &
   echo $!
 }
 
