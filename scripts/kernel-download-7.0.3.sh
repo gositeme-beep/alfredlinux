@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Download linux-7.0.1 tarball + patch into KERNEL_WORK (default: sibling dir kernel-7.0.3-work). Does NOT compile.
+# Download linux-7.0.3 tarball + patch into KERNEL_WORK (default: sibling dir kernel-7.0.3-work). Does NOT compile.
 set -euo pipefail
 REPO="$(cd "$(dirname "$0")/.." && pwd)"
 BASE="${KERNEL_WORK:-$REPO/../kernel-7.0.3-work}"
@@ -23,7 +23,7 @@ done
 
 # Supply-chain: compare tarball + patch to lines in kernel.org signed sha256sums.asc
 # (clearsigned body lines are sha256sum-compatible). Skip only for airgap/debug:
-#   ALFRED_SKIP_KERNEL_SHA256_VERIFY=1 bash scripts/kernel-download-7.0.1.sh
+#   ALFRED_SKIP_KERNEL_SHA256_VERIFY=1 bash scripts/kernel-download-7.0.3.sh
 verify_kernel_sha256() {
   if [[ "${ALFRED_SKIP_KERNEL_SHA256_VERIFY:-}" == 1 ]]; then
     echo "WARN: skipping SHA256 verify (ALFRED_SKIP_KERNEL_SHA256_VERIFY=1) — not for production ISOs" >&2
@@ -51,5 +51,5 @@ verify_kernel_sha256() {
 verify_kernel_sha256
 
 echo "=== Optional: gpg --verify sha256sums.asc (needs kernel.org signing keys in keyring) ==="
-echo "=== Next: tar xf $TAR ; cd linux-7.0.1 ; xzcat ../$PATCH | patch -p1"
+echo "=== Next: tar xf $TAR ; cd linux-7.0.3 ; xzcat ../$PATCH | patch -p1"
 echo "=== Then merge Alfred .config / patches, then bindeb-pkg (README-KERNEL7.txt) ==="

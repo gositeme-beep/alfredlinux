@@ -14,7 +14,7 @@ mkdir -p "$WORK"
 cp -a "$INNER_SRC" "$INNER_DST"
 chmod 750 "$INNER_DST"
 
-[[ -f "$WORK/linux-7.0.3.tar.xz" ]] || { echo "Run first: bash scripts/kernel-download-7.0.1.sh" >&2; exit 1; }
+[[ -f "$WORK/linux-7.0.3.tar.xz" ]] || { echo "Run first: bash scripts/kernel-download-7.0.3.sh" >&2; exit 1; }
 [[ -f "$WORK/linux-7.0.3/Makefile" ]] || tar xf "$WORK/linux-7.0.3.tar.xz" -C "$WORK"
 
 docker pull "$IMAGE" >/dev/null

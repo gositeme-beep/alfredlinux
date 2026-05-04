@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# fakeroot make bindeb-pkg in background for linux-7.0.1.
-# KERNEL_WORK default: <repo>/../kernel-7.0.3-work  (put linux-7.0.3.tar.xz there; use kernel-download-7.0.1.sh)
+# fakeroot make bindeb-pkg in background for linux-7.0.3.
+# KERNEL_WORK default: <repo>/../kernel-7.0.3-work  (put linux-7.0.3.tar.xz there; use kernel-download-7.0.3.sh)
 # Log: $KERNEL_WORK/bindeb-pkg.log
 # Optional: ALFRED_KERNEL_CONFIG=/path/.config
 set -euo pipefail
@@ -11,7 +11,7 @@ TAR="${WORK}/linux-7.0.3.tar.xz"
 LOG="${WORK}/bindeb-pkg.log"
 NJOBS="${NJOBS:-$(nproc)}"
 
-[[ -f "$TAR" ]] || { echo "Missing $TAR — run: bash scripts/kernel-download-7.0.1.sh" >&2; exit 1; }
+[[ -f "$TAR" ]] || { echo "Missing $TAR — run: bash scripts/kernel-download-7.0.3.sh" >&2; exit 1; }
 
 for p in debhelper libdw-dev; do
   dpkg -s "$p" &>/dev/null || {
@@ -21,12 +21,12 @@ for p in debhelper libdw-dev; do
 done
 
 cd "$WORK"
-if [[ ! -d linux-7.0.1 ]]; then
+if [[ ! -d linux-7.0.3 ]]; then
   echo "Extracting $TAR ..."
   tar xf "$TAR"
 fi
 
-cd linux-7.0.1
+cd linux-7.0.3
 
 if [[ -n "${ALFRED_KERNEL_CONFIG:-}" && -f "${ALFRED_KERNEL_CONFIG}" ]]; then
   cp -a "${ALFRED_KERNEL_CONFIG}" .config
