@@ -114,6 +114,7 @@ fi
 
 # 8) Smoke test (if qemu available + script present)
 SMOKE="$REPO/scripts/qemu-smoke-test.sh"
+SMOKE_RESULT="SKIPPED"
 if [[ -x "$SMOKE" ]] && command -v qemu-system-x86_64 >/dev/null; then
     log "  running qemu smoke test (90s timeout)..."
     set +e
@@ -123,8 +124,10 @@ if [[ -x "$SMOKE" ]] && command -v qemu-system-x86_64 >/dev/null; then
     set -uo pipefail
     if [[ "$SMOKE_RC" -eq 0 ]]; then
         log "  smoke test: PASS (rc=0)"
+        SMOKE_RESULT="PASS"
     else
         log "  smoke test: did not pass (rc=$SMOKE_RC) — keeping ISO published but flagging"
+        SMOKE_RESULT="FAIL"
     fi
 fi
 
@@ -139,6 +142,7 @@ if [[ -f "$VJSON" ]]; then
   "iso": "$CANON_NAME",
   "iso_sha256": "$ISO_HASH",
   "iso_size": $(stat -c%s "$DST_ISO"),
+  "smoke_test": "$SMOKE_RESULT",
   "updated": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
   "scripture": "Matthew 1:17",
   "in_the_name_of": "Yeshua, Jesus Christ of Bethlehem, King of the Universe"
@@ -147,6 +151,41 @@ EOF
     chmod 644 "$VJSON"
     log "  /api/version.json updated"
 fi
+
+# 9b) Update /api/public-status.json — flip dashboard to Published + smoke result (p33)
+PSJSON="$DST/../api/public-status.json"
+if [[ -d "$(dirname "$PSJSON")" ]]; then
+    case "$SMOKE_RESULT" in
+        PASS)    PHASE="Published"; PCT=100; NOTE="Release published. Smoke test passed." ;;
+        FAIL)    PHASE="Published (smoke flagged)"; PCT=99; NOTE="Release published. Smoke test flagged — under review." ;;
+        *)       PHASE="Published"; PCT=100; NOTE="Release published." ;;
+    esac
+    cat > "$PSJSON" <<EOF
+{
+  "release_name": "Alfred Linux 7.77",
+  "tagline": "$CANON_NAME is available for download.",
+  "progress_pct": $PCT,
+  "phase_label": "$PHASE",
+  "eta_window": "available now",
+  "public_note": "$NOTE",
+  "iso_name": "$CANON_NAME",
+  "iso_sha256": "$ISO_HASH",
+  "iso_size": $(stat -c%s "$DST_ISO"),
+  "smoke_test": "$SMOKE_RESULT",
+  "quality_gates": [
+    "Boot test",
+    "Integrity checks",
+    "Smoke verification",
+    "Release signing",
+    "Publish"
+  ],
+  "last_updated_epoch": $(date -u +%s)
+}
+EOF
+    chmod 644 "$PSJSON"
+    log "  /api/public-status.json updated (phase=$PHASE smoke=$SMOKE_RESULT)"
+fi
+
 
 # 10) Append to publish state
 echo "[$(ts)] published $CANON_NAME sha256=$ISO_HASH" >> "$STATE"
