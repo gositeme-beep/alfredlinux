@@ -1,4 +1,7 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2026 Alfred Trust <alfred@alfredlinux.com>
+# In the name of Yeshua, Jesus Christ of Bethlehem, King of the Universe.
 set -euo pipefail
 STATUS_JSON="${STATUS_JSON:-/home/gositeme/law/alfred-build-control-plane/last-lb-docker.json}"
 EMIT_EVENT="${EMIT_EVENT:-/home/gositeme/law/alfredlinux-com-source-live/scripts/ops/write-ops-event.sh}"

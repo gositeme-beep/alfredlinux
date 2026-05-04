@@ -1,4 +1,7 @@
 #!/bin/bash
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2026 Alfred Trust <alfred@alfredlinux.com>
+# In the name of Yeshua, Jesus Christ of Bethlehem, King of the Universe.
 # seal-iso.sh — seal a finished ISO into the covenant chain.
 # Usage: seal-iso.sh <path-to-iso>
 # In the name of Yeshua, Jesus Christ of Bethlehem, King of the Universe.

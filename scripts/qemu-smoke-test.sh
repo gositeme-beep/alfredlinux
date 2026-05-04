@@ -1,4 +1,7 @@
 #!/bin/bash
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2026 Alfred Trust <alfred@alfredlinux.com>
+# In the name of Yeshua, Jesus Christ of Bethlehem, King of the Universe.
 # qemu-smoke-test.sh — boot the ISO in headless QEMU, capture serial console,
 # verify "alfred" or "Linux version" appears within timeout.
 # Usage: qemu-smoke-test.sh <path-to-iso>

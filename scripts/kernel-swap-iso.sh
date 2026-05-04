@@ -1,4 +1,7 @@
 #!/bin/bash
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2026 Alfred Trust <alfred@alfredlinux.com>
+# In the name of Yeshua, Jesus Christ of Bethlehem, King of the Universe.
 # kernel-swap-iso.sh — swap kernel debs into a built ISO without full rebuild.
 # Reads config/packages.chroot/linux-image-*.deb and replaces vmlinuz/initrd in ISO.
 # (Stub: full implementation pending — emits plan only.)

@@ -1,4 +1,7 @@
 #!/bin/bash
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2026 Alfred Trust <alfred@alfredlinux.com>
+# In the name of Yeshua, Jesus Christ of Bethlehem, King of the Universe.
 # build-manifest.sh — generate BUILD-MANIFEST.json with sha256 of every input.
 # Run BEFORE seal-iso.sh. Manifest is what reproducers verify against.
 # In the name of Yeshua, Jesus Christ of Bethlehem, King of the Universe.
