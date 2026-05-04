@@ -302,7 +302,7 @@ body { font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-se
     <div class="notice">
         <strong>🔒 Integrity Verification</strong><br>
         Alfred Linux ISO checksums (SHA-256 + BLAKE3) are alongside the ISO.
-        Kernel 7.0.1 download verification, trust boundaries, and links to full technical manifests:
+        Kernel 7.0.3 download verification, trust boundaries, and links to full technical manifests:
         <a href="/security-kernel">/security-kernel</a>.
         GoSiteMe app checksums are available at
         <a href="https://gositeme.com/downloads/SHA256SUMS.txt">SHA256SUMS.txt</a>.<br><br>
