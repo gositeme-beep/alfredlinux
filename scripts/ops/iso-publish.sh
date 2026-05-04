@@ -116,10 +116,15 @@ fi
 SMOKE="$REPO/scripts/qemu-smoke-test.sh"
 if [[ -x "$SMOKE" ]] && command -v qemu-system-x86_64 >/dev/null; then
     log "  running qemu smoke test (90s timeout)..."
-    if "$SMOKE" "$DST_ISO" 2>&1 | tee -a "$LOG" | tail -3 | grep -q 'PASS\|ok'; then
-        log "  smoke test: PASS"
+    set +e
+    "$SMOKE" "$DST_ISO" 2>&1 | tee -a "$LOG" >/dev/null
+    SMOKE_RC=${PIPESTATUS[0]}
+    set -e 2>/dev/null || true
+    set -uo pipefail
+    if [[ "$SMOKE_RC" -eq 0 ]]; then
+        log "  smoke test: PASS (rc=0)"
     else
-        log "  smoke test: did not pass — keeping ISO published but flagging"
+        log "  smoke test: did not pass (rc=$SMOKE_RC) — keeping ISO published but flagging"
     fi
 fi
 
