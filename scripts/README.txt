@@ -54,9 +54,9 @@ safe-operator-once.sh
   and normalizes `public_html/forge/` permissions. See `docs/SERVER-GIT-REMOTES.txt`.
 
 iso-preflight.sh
-  Run before `lb build`. Fails if linux-image-7.0.1*.deb missing from
+  Run before `lb build`. Fails if linux-image-7.0.3*.deb missing from
   config/packages.chroot/ (kernel debs + lists). Runs **`stage-kernel-debs-for-iso.sh`** first (archive under
-  **`build-assets/kernel-7.0.1-debs/`**, **`ALFRED_KERNEL_DEBS_ARCHIVE`**, or **`KERNEL_WORK`**).
+  **`build-assets/kernel-7.0.3-debs/`**, **`ALFRED_KERNEL_DEBS_ARCHIVE`**, or **`KERNEL_WORK`**).
   When `docker` is in PATH, warns if multiple `alfred-lb-build-*` containers run. Usage:
     bash scripts/iso-preflight.sh
   Run `lb` from `build/` (see ALFRED-LINUX-BUILD-TEST.txt). An empty `build/auto/` is normal
@@ -99,13 +99,13 @@ release-integrity.sh
   Verifiers: `scripts/release-integrity.sh verify` or manual gpg + sha256sum -c.
   See README.txt "VERIFICATION — TRUST BUT VERIFY".
 
-kernel-download-7.0.1.sh
-  Downloads linux-7.0.1.tar.xz + patch-7.0.1.xz into ../kernel-7.0.1-work/ (or KERNEL_WORK=…).
+kernel-download-7.0.3.sh
+  Downloads linux-7.0.3.tar.xz + patch-7.0.3.xz into ../kernel-7.0.3-work/ (or KERNEL_WORK=…).
   Verifies SHA256 against cdn.kernel.org `sha256sums.asc` (skip only with
   `ALFRED_SKIP_KERNEL_SHA256_VERIFY=1` — not for production). Does not compile.
   Then follow config/packages.chroot/README-KERNEL7.txt.
-  Kernel security scope + maintainer “best effort”: docs/KERNEL-7.0.1-SECURITY-MANIFEST.txt
-  Supply-chain / trojan-path audit: docs/KERNEL-7.0.1-SUPPLY-CHAIN-AUDIT.txt
+  Kernel security scope + maintainer “best effort”: docs/KERNEL-7.0.3-SECURITY-MANIFEST.txt
+  Supply-chain / trojan-path audit: docs/KERNEL-7.0.3-SUPPLY-CHAIN-AUDIT.txt
 
 remote-apt-live-build.sh
   Run on Ubuntu builder as root (`sudo su -`) to apt install live-build stack.
@@ -124,21 +124,21 @@ kernel-bindeb-pkg-nohup.sh
 kernel-docker-bindeb.sh + kernel-docker-inner-bindeb.sh
   **No host sudo:** build inside `debian:bookworm` Docker. Usage:
     bash scripts/kernel-docker-bindeb.sh detach
-  Then `docker logs -f <name>` (name in ../kernel-7.0.1-work/docker-bindeb.containername).
+  Then `docker logs -f <name>` (name in ../kernel-7.0.3-work/docker-bindeb.containername).
 
 copy-kernel-debs-to-chroot.sh
   After .deb exist under KERNEL_WORK: strict copy into `config/packages.chroot/` (delegates to
   `stage-kernel-debs-for-iso.sh --strict`). Then `iso-preflight.sh`.
 
 stage-kernel-debs-for-iso.sh
-  Idempotent: unpack **`linux-7.0.1-debs-for-iso.tar.gz`** (or `.tar.zst`) from
-  **`build-assets/kernel-7.0.1-debs/`** or **`ALFRED_KERNEL_DEBS_ARCHIVE`**, else copy from
+  Idempotent: unpack **`linux-7.0.3-debs-for-iso.tar.gz`** (or `.tar.zst`) from
+  **`build-assets/kernel-7.0.3-debs/`** or **`ALFRED_KERNEL_DEBS_ARCHIVE`**, else copy from
   **`KERNEL_WORK`**. Used by **`iso-preflight.sh`** automatically.
 
 pack-kernel-debs-archive.sh
-  On the machine that already built the kernel: create **`linux-7.0.1-debs-for-iso.tar.gz`** under
-  **`build-assets/kernel-7.0.1-debs/`** (gitignored) for another host / thin checkout. See
-  **`build-assets/kernel-7.0.1-debs/README.txt`**.
+  On the machine that already built the kernel: create **`linux-7.0.3-debs-for-iso.tar.gz`** under
+  **`build-assets/kernel-7.0.3-debs/`** (gitignored) for another host / thin checkout. See
+  **`build-assets/kernel-7.0.3-debs/README.txt`**.
 
 lb-docker-build.sh + lb-docker-inner-build.sh
   **No host sudo:** privileged Debian container runs `lb build` with repo at `/work`.

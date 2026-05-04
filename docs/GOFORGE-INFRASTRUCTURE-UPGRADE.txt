@@ -9,7 +9,7 @@ artifacts** so CI can do real work (including optional **kernel-tree** jobs).
 0) What “upgrade” must mean
 ──────────────────────────────────────────────────────────────────────────────
   • **UI-only** forge upgrades do **not** replace workflows that **unpack Linux**
-    and run scanners. See docs/KERNEL-7.0.1-SUPPLY-CHAIN-AUDIT.txt (“bigger picture”).
+    and run scanners. See docs/KERNEL-7.0.3-SUPPLY-CHAIN-AUDIT.txt (“bigger picture”).
 
   • **Infrastructure upgrade** = capacity and ergonomics for **CI you define**:
     - **act_runner** (or Woodpecker/Drone agents) with honest **disk / RAM / CPU**
@@ -43,7 +43,7 @@ artifacts** so CI can do real work (including optional **kernel-tree** jobs).
     • Label e.g. `ubuntu-latest` mapped to your docker/VM runner
 
   **Kernel mirror / heavy repo** (separate repo or manual dispatch only):
-    • Full `linux-7.0.1` tree extract + ccache: plan **≥ 40–60 GiB** free disk,
+    • Full `linux-7.0.3` tree extract + ccache: plan **≥ 40–60 GiB** free disk,
       **8–16+ GiB** RAM for parallel `make` smoke jobs (team-dependent)
     • Use a **dedicated runner pool** label, e.g. `kernel-heavy`, so Alfred PRs
       never queue behind a kernel job
@@ -125,8 +125,8 @@ artifacts** so CI can do real work (including optional **kernel-tree** jobs).
 ──────────────────────────────────────────────────────────────────────────────
 8) Related Alfred docs
 ──────────────────────────────────────────────────────────────────────────────
-  • docs/KERNEL-7.0.1-SUPPLY-CHAIN-AUDIT.txt
-  • docs/KERNEL-7.0.1-SECURITY-MANIFEST.txt
+  • docs/KERNEL-7.0.3-SUPPLY-CHAIN-AUDIT.txt
+  • docs/KERNEL-7.0.3-SECURITY-MANIFEST.txt
   • scripts/SECURITY-WAVES.txt (Wave 2 CI pointers)
 
 ──────────────────────────────────────────────────────────────────────────────
@@ -168,8 +168,8 @@ artifacts** so CI can do real work (including optional **kernel-tree** jobs).
   kernel-heavy runner pool. Prefer a **dedicated mirror repo** plus workflow_dispatch
   or schedule when ready.
 
-  Sketch: job runs-on kernel-heavy; steps run scripts/kernel-download-7.0.1.sh with
-  KERNEL_WORK under the job temp dir; tar xf linux-7.0.1.tar.xz; apply patch-7.0.1.xz;
+  Sketch: job runs-on kernel-heavy; steps run scripts/kernel-download-7.0.3.sh with
+  KERNEL_WORK under the job temp dir; tar xf linux-7.0.3.tar.xz; apply patch-7.0.3.xz;
   then extend with sparse, checkstack, checkpatch, or your distro checklist; upload
   logs/SARIF as workflow artifacts with retention limits.
 

@@ -1,6 +1,6 @@
 <?php
 /**
- * Alfred Linux — Kernel 7.0.1 security & supply-chain transparency (public)
+ * Alfred Linux — Kernel 7.0.3 security & supply-chain transparency (public)
  * Deploy at site root: /security-kernel (same pattern as apps.php).
  *
  * Canonical long-form: GoForge docs/ in the Alfred Linux source repository.
@@ -12,16 +12,16 @@ $forgeDocsRaw = 'https://alfredlinux.com/forge/commander/alfredlinux.com/raw/bra
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Kernel 7.0.1 — Security & Supply Chain — Alfred Linux</title>
-<meta name="description" content="How Alfred Linux handles Linux 7.0.1: download integrity, trust boundaries, what we do not claim, and where to read the full technical manifests.">
-<meta property="og:title" content="Kernel 7.0.1 Security & Supply Chain — Alfred Linux">
+<title>Kernel 7.0.3 — Security & Supply Chain — Alfred Linux</title>
+<meta name="description" content="How Alfred Linux handles Linux 7.0.3: download integrity, trust boundaries, what we do not claim, and where to read the full technical manifests.">
+<meta property="og:title" content="Kernel 7.0.3 Security & Supply Chain — Alfred Linux">
 <meta property="og:description" content="Transparency on kernel tarball verification, ISO trust model, and GoForge source documentation.">
 <meta property="og:url" content="https://alfredlinux.com/security-kernel">
 <meta property="og:type" content="website">
 <link rel="canonical" href="https://alfredlinux.com/security-kernel">
 <link rel="icon" href="/favicon.ico">
 <script type="application/ld+json">
-{"@context":"https://schema.org","@type":"TechArticle","headline":"Linux 7.0.1 — Security & Supply Chain — Alfred Linux","description":"Kernel tarball verification, ISO trust boundaries, GoForge CI, and AGPL technical manifests.","url":"https://alfredlinux.com/security-kernel","isPartOf":{"@type":"WebSite","name":"Alfred Linux","url":"https://alfredlinux.com"},"publisher":{"@type":"Organization","name":"GoSiteMe Inc.","url":"https://gositeme.com"}}
+{"@context":"https://schema.org","@type":"TechArticle","headline":"Linux 7.0.3 — Security & Supply Chain — Alfred Linux","description":"Kernel tarball verification, ISO trust boundaries, GoForge CI, and AGPL technical manifests.","url":"https://alfredlinux.com/security-kernel","isPartOf":{"@type":"WebSite","name":"Alfred Linux","url":"https://alfredlinux.com"},"publisher":{"@type":"Organization","name":"GoSiteMe Inc.","url":"https://gositeme.com"}}
 </script>
 <link rel="stylesheet" href="/assets/css/nav.css">
 <style>
@@ -63,7 +63,7 @@ footer a{color:#6366f1;text-decoration:none;}
     <div class="card">
         <h2>What we do not claim</h2>
         <ul>
-            <li><strong>No “every CVE in 7.0.1” list</strong> inside the Alfred OS repo — that set is not finite over time, and the full kernel tree is built <strong>out of tree</strong>, not vendored in the live-build repository.</li>
+            <li><strong>No “every CVE in 7.0.3” list</strong> inside the Alfred OS repo — that set is not finite over time, and the full kernel tree is built <strong>out of tree</strong>, not vendored in the live-build repository.</li>
             <li>We do <strong>not</strong> run a full static analysis of Linus’s tree from the small Alfred integration repo alone; heavy scanning belongs on the <strong>extracted kernel tree</strong> (private builder or a dedicated kernel mirror + CI on GoForge).</li>
         </ul>
     </div>
@@ -71,7 +71,7 @@ footer a{color:#6366f1;text-decoration:none;}
     <div class="card">
         <h2>What we do ship — integrity &amp; trust boundaries</h2>
         <ul>
-            <li><strong>Download integrity:</strong> <code>scripts/kernel-download-7.0.1.sh</code> fetches <code>linux-7.0.1.tar.xz</code> and <code>patch-7.0.1.xz</code> from <strong>cdn.kernel.org</strong> over HTTPS and verifies <strong>SHA256</strong> against <strong>sha256sums.asc</strong> before you unpack (skip only with an explicit env flag — not for production ISOs).</li>
+            <li><strong>Download integrity:</strong> <code>scripts/kernel-download-7.0.3.sh</code> fetches <code>linux-7.0.3.tar.xz</code> and <code>patch-7.0.3.xz</code> from <strong>cdn.kernel.org</strong> over HTTPS and verifies <strong>SHA256</strong> against <strong>sha256sums.asc</strong> before you unpack (skip only with an explicit env flag — not for production ISOs).</li>
             <li><strong>ISO trust model:</strong> published checksums + GPG on sums; staging sync before <code>lb build</code>; hooks <strong>0050</strong> (kernel package gate), <strong>0160</strong> (sysctl / audit / modules), <strong>0710</strong> (do not replace Alfred kernel with Debian meta). See verification flow at <a href="/verify" style="color:var(--accent2);">/verify</a> and apps at <a href="/apps" style="color:var(--accent2);">/apps</a>.</li>
             <li><strong>Explicit ownership</strong> of other supply-chain edges: host <code>KERNEL_WORK</code>, Docker bind mounts, gitignored <code>.deb</code> binaries, staged tarballs (e.g. liboqs), and Kconfig defaults when no Alfred <code>.config</code> is supplied — all documented in the manifests below.</li>
         </ul>
@@ -82,8 +82,8 @@ footer a{color:#6366f1;text-decoration:none;}
         <p style="color:var(--dim);font-size:.92rem;margin-bottom:12px;">These are the same files shipped in the Alfred Linux repository; raw links follow the GoForge <code>…/raw/branch/main/docs/…</code> layout. If a link 404s after a rename, open the repo tree and browse <code>docs/</code>.</p>
         <div class="links">
             <a href="<?= htmlspecialchars($forgeDocsRaw) ?>/GOFORGE-INFRASTRUCTURE-UPGRADE.txt">GoForge infrastructure upgrade</a>
-            <a href="<?= htmlspecialchars($forgeDocsRaw) ?>/KERNEL-7.0.1-SECURITY-MANIFEST.txt">Security manifest</a>
-            <a href="<?= htmlspecialchars($forgeDocsRaw) ?>/KERNEL-7.0.1-SUPPLY-CHAIN-AUDIT.txt">Supply-chain &amp; trojan-path audit</a>
+            <a href="<?= htmlspecialchars($forgeDocsRaw) ?>/KERNEL-7.0.3-SECURITY-MANIFEST.txt">Security manifest</a>
+            <a href="<?= htmlspecialchars($forgeDocsRaw) ?>/KERNEL-7.0.3-SUPPLY-CHAIN-AUDIT.txt">Supply-chain &amp; trojan-path audit</a>
             <a href="<?= htmlspecialchars($forgeDocsRaw) ?>/ISO-STAGING-SHIP-GAPS.txt">ISO staging ship gaps</a>
             <a href="<?= htmlspecialchars($forgeDocsRaw) ?>/ISO-BUILD-RISK-REGISTER.txt">ISO completeness covenant + risk register</a>
         </div>
@@ -93,7 +93,7 @@ footer a{color:#6366f1;text-decoration:none;}
         <h2>Bigger picture — where full kernel audit runs</h2>
         <ul>
             <li><strong>Alfred repo</strong> = integration, hooks, live-build staging, download verification.</li>
-            <li><strong>Kernel audit</strong> = separate pipeline: extracted <code>linux-7.0.1</code> on a trusted host or a <strong>second GoForge repo</strong> whose CI <strong>checks out or unpacks</strong> Linux and runs scanners (sparse, checkstack, distro checklist, SBOM). That is <strong>workflow + runner capacity you define</strong> — not something a forge <strong>UI refresh</strong> replaces.</li>
+            <li><strong>Kernel audit</strong> = separate pipeline: extracted <code>linux-7.0.3</code> on a trusted host or a <strong>second GoForge repo</strong> whose CI <strong>checks out or unpacks</strong> Linux and runs scanners (sparse, checkstack, distro checklist, SBOM). That is <strong>workflow + runner capacity you define</strong> — not something a forge <strong>UI refresh</strong> replaces.</li>
             <li><strong>When “upgrade GoForge” actually helps:</strong> bigger runners (disk/RAM for the full tree + ccache), first-class <strong>Actions</strong> (or equivalent pipelines), <strong>artifacts</strong> for logs/SARIF/deb hashes, registry/LFS if you mirror sources — optionally a <strong>dedicated heavy repo</strong> so Alfred PRs stay fast.</li>
             <li><strong>Roadmap bar:</strong> Alfred’s forge is aimed at <strong>self-hosted seriousness</strong> — kernel-sized jobs, sovereign infra, and release integrity without depending on a single proprietary SaaS ceiling. Beating GitHub (and “every competitor”) is <strong>earned in shipped runner scale + pipeline ergonomics + trust tooling</strong>, not in themes alone.</li>
         </ul>
