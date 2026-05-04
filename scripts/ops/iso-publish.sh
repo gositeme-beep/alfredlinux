@@ -146,6 +146,99 @@ fi
 # 10) Append to publish state
 echo "[$(ts)] published $CANON_NAME sha256=$ISO_HASH" >> "$STATE"
 
+# 11) Self-heal includes/ga-release-state.php
+GA_STATE="/home/gositeme/domains/alfredlinux.com/public_html/includes/ga-release-state.php"
+if [[ -f "$GA_STATE" ]]; then
+    BASENAME_NOEXT="${CANON_NAME%.iso}"
+    cp -a "$GA_STATE" "$GA_STATE.bak.$(date +%s)" 2>/dev/null
+    # Update $gaIsoBasename
+    sed -i -E "s|(\\$gaIsoBasename\s*=\s*')[^']+(';)|\1${BASENAME_NOEXT}\2|" "$GA_STATE"
+    # Extract btih from the freshly-written torrent and update $gaTorrentBtihHex
+    if [[ -f "$DST_ISO.torrent" ]] && command -v python3 >/dev/null; then
+        BTIH=$(python3 - "$DST_ISO.torrent" <<'PY2'
+import sys, hashlib
+def decode(d):
+    def parse():
+        nonlocal i
+        c = d[i:i+1]
+        if c.isdigit():
+            j = d.index(b':', i); n = int(d[i:j]); i = j+1+n; return d[j+1:i]
+        if c == b'i':
+            j = d.index(b'e', i); v = int(d[i+1:j]); i = j+1; return v
+        if c == b'l':
+            i += 1; out = []
+            while d[i:i+1] != b'e': out.append(parse())
+            i += 1; return out
+        if c == b'd':
+            i += 1; out = {}
+            while d[i:i+1] != b'e':
+                k = parse(); v = parse(); out[k] = v
+            i += 1; return out
+    i = 0
+    return parse()
+data = open(sys.argv[1],'rb').read()
+# locate info dict bencoded slice
+# simple: re-encode info from parsed dict
+def encode(o):
+    if isinstance(o,int): return b'i'+str(o).encode()+b'e'
+    if isinstance(o,bytes): return str(len(o)).encode()+b':'+o
+    if isinstance(o,list): return b'l'+b''.join(encode(x) for x in o)+b'e'
+    if isinstance(o,dict):
+        keys = sorted(o.keys())
+        return b'd'+b''.join(encode(k)+encode(o[k]) for k in keys)+b'e'
+top = decode(data)
+info = top[b'info']
+print(hashlib.sha1(encode(info)).hexdigest())
+PY2
+)
+        if [[ -n "$BTIH" ]]; then
+            sed -i -E "s|(\\$gaTorrentBtihHex\s*=\s*')[0-9a-fA-F]+(';)|\1${BTIH}\2|" "$GA_STATE"
+            log "  ga-release-state.php: basename=${BASENAME_NOEXT}, btih=${BTIH}"
+        else
+            log "  ga-release-state.php: basename updated; btih extraction FAILED"
+        fi
+    fi
+fi
+
+# 12) Self-heal /releases/7.77/ sums (release.php reads from there)
+REL_DIR="/home/gositeme/domains/alfredlinux.com/public_html/releases/7.77"
+if [[ -d "$REL_DIR" ]]; then
+    # SHA256SUMS
+    echo "$ISO_HASH  $CANON_NAME" > "$REL_DIR/SHA256SUMS"
+    # SHA512SUMS
+    SHA512=$(sha512sum "$DST_ISO" | awk '{print $1}')
+    echo "$SHA512  $CANON_NAME" > "$REL_DIR/SHA512SUMS"
+    # BLAKE3SUMS
+    if command -v b3sum >/dev/null; then
+        (cd "$DST" && b3sum "$CANON_NAME") > "$REL_DIR/BLAKE3SUMS"
+    fi
+    # Re-sign each with same key
+    for F in SHA256SUMS SHA512SUMS BLAKE3SUMS; do
+        [[ -f "$REL_DIR/$F" ]] || continue
+        rm -f "$REL_DIR/$F.asc"
+        gpg --batch --yes --pinentry-mode=loopback --local-user "$KEYID" \
+            --armor --detach-sign --output "$REL_DIR/$F.asc" "$REL_DIR/$F" 2>&1 | head -1
+        chmod 644 "$REL_DIR/$F" "$REL_DIR/$F.asc" 2>/dev/null
+    done
+    # build-manifest.json
+    cat > "$REL_DIR/build-manifest.json" <<JSON
+{
+  "release": "7.77",
+  "iso": "$CANON_NAME",
+  "sha256": "$ISO_HASH",
+  "sha512": "$SHA512",
+  "size_bytes": $(stat -c%s "$DST_ISO"),
+  "published_utc": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+  "gpg_key": "$KEYID",
+  "scripture": "Matthew 1:17",
+  "in_the_name_of": "Yeshua, Jesus Christ of Bethlehem, King of the Universe"
+}
+JSON
+    chmod 644 "$REL_DIR/build-manifest.json"
+    log "  releases/7.77/: SHA256SUMS, SHA512SUMS, BLAKE3SUMS, .asc x3, build-manifest.json refreshed"
+fi
+
+
 log "PUBLISH COMPLETE: https://alfredlinux.com/downloads/$CANON_NAME"
 log "  sha256: $ISO_HASH"
 log "  SHA256SUMS-7.77.txt + .asc updated"
