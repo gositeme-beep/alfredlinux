@@ -41,7 +41,7 @@ def main():
     title = data.get("release_name", "Alfred Linux")
     phase = data.get("phase_label", "Building")
     progress = int(data.get("progress_pct", 0))
-    eta = data.get("eta_window", "TBD")
+    eta = data.get("eta_window") or data.get("phase_label", "Validation")
     updated = str(data.get("last_updated_epoch", "-"))
 
     outdir = Path(args.outdir)
