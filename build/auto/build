@@ -1,0 +1,6 @@
+#!/bin/bash
+# auto/build — invoke lb build with NO args (modern lb build accepts no opts;
+# all flags belong to lb config and are pre-applied by auto/config).
+# In the name of Yeshua, Jesus Christ of Bethlehem, King of the Universe.
+set -e
+exec lb build noauto 2>&1 | tee build.log

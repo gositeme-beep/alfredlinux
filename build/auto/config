@@ -1,0 +1,21 @@
+#!/bin/bash
+# auto/config — Alfred Linux live-build configuration (reproducibility-first)
+set -e
+lb config noauto \
+    --architectures amd64 \
+    --distribution bookworm \
+    --binary-images iso-hybrid \
+    --bootloaders grub-efi,syslinux \
+    --linux-flavours none \
+    --apt-recommends false \
+    --apt-source-archives false \
+    --memtest none \
+    --security true \
+    --updates true \
+    --backports false \
+    --debian-installer live \
+    --debian-installer-gui true \
+    --iso-application "Alfred Linux" \
+    --iso-publisher "Alfred Trust <alfred@alfredlinux.com>" \
+    --iso-volume "Alfred Linux 7.0.3" \
+    "${@}"
