@@ -25,8 +25,8 @@ B) Repo `config/` vs `build/config/` (non-hook paths)
 
 C) Still NOT automatic — maintainer / builder must supply
 ----------------------------------------------------------
-  1) **Kernel 7.0.1 `.deb` set** — listed in `.gitignore`; fresh git clones have no
-     `linux-image-7.0.1*.deb` until you copy bindeb-pkg outputs into `config/packages.chroot/`
+  1) **Kernel 7.0.3 `.deb` set** — listed in `.gitignore`; fresh git clones have no
+     `linux-image-7.0.3*.deb` until you copy bindeb-pkg outputs into `config/packages.chroot/`
      (`scripts/iso-preflight.sh`, `README-KERNEL7.txt`).
   2) **Optional binaries never committed** — hooks look for `/build-assets/meilisearch`,
      `/build-assets/code-server_*_amd64.deb`, real **ollama** (non-zero) if you replace the
