@@ -1,1 +1,17 @@
-/usr/share/live/build/hooks/live/0010-disable-kexec-tools.hook.chroot
+#!/bin/sh
+# SPDX-License-Identifier: AGPL-3.0-or-later
+
+set -e
+
+# Disable kexec-tools
+
+if [ -e /sbin/kexec ]
+then
+	echo "kexec-tools kexec-tools/load_kexec boolean false" > /root/preseed
+
+	debconf-set-selections /root/preseed
+
+	rm -f /root/preseed
+
+	dpkg-reconfigure kexec-tools
+fi
