@@ -17,23 +17,11 @@ echo "[Alfred Linux v2.0-b6] Installing Calamares installer..."
 
 # ── 1. Install Calamares and dependencies ──
 # 0170 may have written /etc/calamares/modules/luksopenswaphookcfg.conf; force non-interactive merge.
+# Install calamares — fail loudly if it doesn't work (no silent swallow).
 apt-get install -y \
     -o Dpkg::Options::=--force-confdef \
     -o Dpkg::Options::=--force-confnew \
-    calamares calamares-settings-debian 2>/dev/null || {
-    echo "[WARN] Calamares not in repos, trying manual install..."
-    # Calamares may need additional repos on Bookworm
-    apt-get install -y \
-        -o Dpkg::Options::=--force-confdef \
-        -o Dpkg::Options::=--force-confnew \
-        calamares \
-        qml-module-qtquick2 \
-        qml-module-qtquick-controls \
-        qml-module-qtquick-controls2 \
-        qml-module-qtquick-layouts \
-        qml-module-qtquick-window2 2>/dev/null || true
-}
-
+    calamares calamares-settings-debian
 # ── 2. Alfred branding for Calamares ──
 BRAND_DIR="/etc/calamares/branding/alfred"
 mkdir -p "$BRAND_DIR"
@@ -83,9 +71,24 @@ if command -v convert &>/dev/null; then
         -gravity center -annotate +0+0 'A' \
         "$BRAND_DIR/alfred-icon.png" 2>/dev/null || true
 
-    # Welcome banner — use pre-staged branded SVG (1200x600 -> 800x400)
+    # Welcome banner — prefer real artwork montage (4 images), then SVG, then text fallback.
     SRC_SVG="/usr/share/alfred/branding/alfred-installer-welcome.svg"
-    if [ -f "$SRC_SVG" ] && command -v rsvg-convert &>/dev/null; then
+    IMG1="/build-assets/wallpapers/1080p/kingdom-throne-1080p.png"
+    IMG2="/build-assets/wallpapers/1080p/new-jerusalem-1080p.png"
+    IMG3="/build-assets/wallpapers/1080p/lion-of-judah-1080p.png"
+    IMG4="/build-assets/wallpapers/1080p/eden-garden-1080p.png"
+    if command -v convert &>/dev/null && [ -f "$IMG1" ] && [ -f "$IMG2" ] && [ -f "$IMG3" ] && [ -f "$IMG4" ]; then
+        convert \
+            \( "$IMG1" -resize 600x300^ -gravity center -extent 600x300 \) \
+            \( "$IMG2" -resize 600x300^ -gravity center -extent 600x300 \) +append \
+            \( "$IMG3" -resize 600x300^ -gravity center -extent 600x300 \) \
+            \( "$IMG4" -resize 600x300^ -gravity center -extent 600x300 \) +append \
+            -append \
+            \( -size 1200x600 xc:'rgba(8,20,35,0.28)' \) -compose over -composite \
+            -fill '#FFD700' -font 'DejaVu-Sans-Bold' -pointsize 46 -gravity north -annotate +0+26 '✝ Alfred Linux 7.77' \
+            -fill '#00D4FF' -font 'DejaVu-Sans-Bold' -pointsize 24 -gravity south -annotate +0+34 'Kingdom of God Edition' \
+            "$BRAND_DIR/alfred-welcome.png" 2>/dev/null || true
+    elif [ -f "$SRC_SVG" ] && command -v rsvg-convert &>/dev/null; then
         rsvg-convert -w 1200 -h 600 "$SRC_SVG" -o "$BRAND_DIR/alfred-welcome.png" 2>/dev/null || true
     elif [ -f "$SRC_SVG" ] && command -v convert &>/dev/null; then
         convert -background '#081423' -density 150 "$SRC_SVG" -resize 1200x600 "$BRAND_DIR/alfred-welcome.png" 2>/dev/null || true

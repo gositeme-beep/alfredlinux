@@ -467,3 +467,70 @@ echo "║    ⚡ AMD ROCm:    'sudo alfred-gpu install-rocm'        ║"
 echo "║                                                          ║"
 echo "║  Run 'alfred-gpu status' to see your compute stack       ║"
 echo "╚═══════════════════════════════════════════════════════════╝"
+
+###############################################################################
+# 8. Legacy Intel GPU compatibility (merged from former 0997 overflow hook)
+###############################################################################
+echo "[GPU] Applying legacy Intel (GM45/i965) compatibility layer..."
+mkdir -p /etc/X11/xorg.conf.d
+cat > /etc/X11/xorg.conf.d/20-intel-legacy.conf << 'XEOF'
+# Alfred Linux - Legacy Intel GPU fallback (GM45/i965/GMA 4500MHD)
+Section "Device"
+    Identifier "Intel Legacy"
+    Driver     "modesetting"
+    Option     "AccelMethod"  "glamor"
+    Option     "DRI"          "3"
+EndSection
+XEOF
+chmod 644 /etc/X11/xorg.conf.d/20-intel-legacy.conf
+
+mkdir -p /etc/calamares
+cat > /etc/calamares/calamares-env << 'ENVEOF'
+QT_X11_NO_MITSHM=1
+LIBGL_ALWAYS_SOFTWARE=0
+QT_QUICK_BACKEND=software
+GALLIUM_DRIVER=softpipe
+ENVEOF
+chmod 644 /etc/calamares/calamares-env
+
+CALA_WRAPPER="/usr/local/bin/calamares-safe"
+cat > "$CALA_WRAPPER" << 'WRAPEOF'
+#!/bin/bash
+set -a
+[ -f /etc/calamares/calamares-env ] && source /etc/calamares/calamares-env
+set +a
+LEGACY_INTEL=0
+if command -v lspci &>/dev/null; then
+    if lspci -nn | grep -qiE 'VGA.*8086:(2a4[23]|2e3[269]|29[0-9][0-9]|27a[02]|2772|2982|2992|29a2|2a02|2a12)'; then
+        LEGACY_INTEL=1
+    fi
+fi
+if [ "$LEGACY_INTEL" = "1" ]; then
+    export LIBGL_ALWAYS_SOFTWARE=1
+    export QT_QUICK_BACKEND=software
+    export GALLIUM_DRIVER=softpipe
+    export MESA_GL_VERSION_OVERRIDE=3.3
+fi
+exec /usr/bin/calamares "$@"
+WRAPEOF
+chmod +x "$CALA_WRAPPER"
+
+DESKTOP_FILE="/etc/skel/.config/autostart/alfred-live-welcome.desktop"
+[ -f "$DESKTOP_FILE" ] && sed -i 's|Exec=.*calamares.*|Exec=/usr/local/bin/calamares-safe|' "$DESKTOP_FILE" || true
+SYSDESK="/etc/xdg/autostart/alfred-installer.desktop"
+[ -f "$SYSDESK" ] && sed -i 's|Exec=.*calamares.*|Exec=/usr/local/bin/calamares-safe|' "$SYSDESK" || true
+
+GRUB_DEFAULT="/etc/default/grub"
+if [ -f "$GRUB_DEFAULT" ] && ! grep -q 'i915.enable_rc6' "$GRUB_DEFAULT"; then
+    sed -i 's|^GRUB_CMDLINE_LINUX_DEFAULT=\(.*\)"|GRUB_CMDLINE_LINUX_DEFAULT=\1 i915.enable_rc6=0 intel_idle.max_cstate=1"|' "$GRUB_DEFAULT" || true
+fi
+
+mkdir -p /etc/udev/rules.d
+cat > /etc/udev/rules.d/60-intel-legacy-gpu.rules << 'UDEVEOF'
+SUBSYSTEM=="pci", ATTR{vendor}=="0x8086", ATTR{device}=="0x2a42", RUN+="/bin/sh -c 'echo 0 > /sys/module/i915/parameters/enable_rc6 2>/dev/null || true'"
+SUBSYSTEM=="pci", ATTR{vendor}=="0x8086", ATTR{device}=="0x2a43", RUN+="/bin/sh -c 'echo 0 > /sys/module/i915/parameters/enable_rc6 2>/dev/null || true'"
+SUBSYSTEM=="pci", ATTR{vendor}=="0x8086", ATTR{device}=="0x2e32", RUN+="/bin/sh -c 'echo 0 > /sys/module/i915/parameters/enable_rc6 2>/dev/null || true'"
+UDEVEOF
+chmod 644 /etc/udev/rules.d/60-intel-legacy-gpu.rules
+
+echo "[0275] Legacy Intel compatibility merged (former 0997)."

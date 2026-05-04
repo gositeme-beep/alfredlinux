@@ -740,3 +740,398 @@ echo "║  ✓ Sabbath mode (enter/exit) + JSON API                  ║"
 echo "║  ✓ Day begins at sunset — as God ordained                ║"
 echo "║  Remember the sabbath day. — Exodus 20:8                 ║"
 echo "╚═══════════════════════════════════════════════════════════╝"
+
+# ?????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????
+# === MERGED FROM HOOK 0720 (Sacred Rest) ??? kept at 42 hooks ===
+# Original: Scripture screensaver + The Silence (40-min stillness)
+# Merged here per Kingdom 42-canonical-set policy.
+# ?????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????
+
+
+# ===============================================================================
+# === MERGED FROM HOOK 0720 (Sacred Rest) === keep at 42 hooks ===
+# Original: Scripture screensaver (Still Small Voice) + The Silence (40-min stillness)
+# Merged here per Kingdom 42-canonical-set policy (44 -> 42).
+# ===============================================================================
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# HOOK 0720: Sacred Rest — Scripture Screensaver + The Silence
+#
+# Part A — The Still Small Voice (Scripture Screensaver)
+#   "And after the earthquake a fire; but the LORD was not in the fire:
+#    and after the fire a still small voice." — 1 Kings 19:12
+#   After 3 minutes idle, a single Bible verse breathes gently on a black
+#   screen. White text, slow fade in, slow fade out, next verse.
+#
+# Part B — The Silence (40 Minutes of Sacred Stillness)
+#   "And he was there with the LORD forty days and forty nights."
+#    — Exodus 34:28
+#   Super+S → 40-minute sacred stillness. Screen goes amber (2700K),
+#   notifications stop, worship plays at 10% volume, shofar chime at end.
+#
+# BUILD: v7.77 Kingdom of God Edition
+# ═══════════════════════════════════════════════════════════════════════════════
+
+set -e
+chmod 1777 /tmp 2>/dev/null || true
+
+echo "╔═══════════════════════════════════════════════════════════╗"
+echo "║  [0720] Sacred Rest — Scripture + Stillness              ║"
+echo "║  'A still small voice' — 1 Kings 19:12                  ║"
+echo "║  'He was there with the LORD forty days' — Exodus 34:28 ║"
+echo "╚═══════════════════════════════════════════════════════════╝"
+
+# ═══════════════════════════════════════════════════════════════════
+# PART A: THE STILL SMALL VOICE — Scripture Screensaver
+# ═══════════════════════════════════════════════════════════════════
+
+# ═══════════════════════════════════════════════════
+# A1. XSCREENSAVER DEPENDENCY
+# ═══════════════════════════════════════════════════
+echo "[VOICE-01] Installing screensaver support..."
+apt-get install -y --no-install-recommends \
+    xscreensaver \
+    xscreensaver-data \
+    2>/dev/null || true
+
+# ═══════════════════════════════════════════════════
+# A2. VERSE DISPLAY SCRIPT
+# ═══════════════════════════════════════════════════
+echo "[VOICE-02] Creating still small voice script..."
+
+mkdir -p /usr/share/alfred/screensaver
+
+cat > /usr/local/bin/alfred-still-voice << 'VOICE'
+#!/bin/bash
+# ═══════════════════════════════════════════════════════════════
+# alfred-still-voice — The machine whispers Scripture
+#
+# Designed to be called by xscreensaver as a text source.
+# Outputs one verse at a time, slowly, like breathing.
+# ═══════════════════════════════════════════════════════════════
+
+BIBLE="/usr/share/alfred/bible/akjv-bible.tsv"
+
+if [ ! -f "$BIBLE" ]; then
+    echo "The LORD is my shepherd; I shall not want. — Psalm 23:1"
+    exit 0
+fi
+
+# Curated verses for the still small voice
+# These are the verses God speaks when you are still
+VERSES=(
+    "Psalms|23|1|The LORD is my shepherd; I shall not want."
+    "Psalms|46|10|Be still, and know that I am God."
+    "Psalms|91|1|He that dwelleth in the secret place of the most High shall abide under the shadow of the Almighty."
+    "Psalms|121|1|I will lift up mine eyes unto the hills, from whence cometh my help."
+    "Psalms|27|1|The LORD is my light and my salvation; whom shall I fear?"
+    "Psalms|34|8|O taste and see that the LORD is good: blessed is the man that trusteth in him."
+    "Psalms|37|4|Delight thyself also in the LORD; and he shall give thee the desires of thine heart."
+    "Psalms|119|105|Thy word is a lamp unto my feet, and a light unto my path."
+    "Psalms|139|14|I will praise thee; for I am fearfully and wonderfully made."
+    "Isaiah|40|31|But they that wait upon the LORD shall renew their strength."
+    "Isaiah|41|10|Fear thou not; for I am with thee: be not dismayed; for I am thy God."
+    "Isaiah|26|3|Thou wilt keep him in perfect peace, whose mind is stayed on thee."
+    "Isaiah|43|2|When thou passest through the waters, I will be with thee."
+    "Jeremiah|29|11|For I know the thoughts that I think toward you, saith the LORD, thoughts of peace, and not of evil."
+    "Jeremiah|33|3|Call unto me, and I will answer thee, and shew thee great and mighty things."
+    "Matthew|11|28|Come unto me, all ye that labour and are heavy laden, and I will give you rest."
+    "Matthew|6|33|But seek ye first the kingdom of God, and his righteousness."
+    "John|14|27|Peace I leave with you, my peace I give unto you."
+    "John|3|16|For God so loved the world, that he gave his only begotten Son."
+    "John|8|12|I am the light of the world: he that followeth me shall not walk in darkness."
+    "Romans|8|28|And we know that all things work together for good to them that love God."
+    "Romans|8|38|For I am persuaded, that neither death, nor life... shall be able to separate us from the love of God."
+    "Philippians|4|13|I can do all things through Christ which strengtheneth me."
+    "Philippians|4|7|And the peace of God, which passeth all understanding, shall keep your hearts and minds."
+    "Proverbs|3|5|Trust in the LORD with all thine heart; and lean not unto thine own understanding."
+    "Proverbs|3|6|In all thy ways acknowledge him, and he shall direct thy paths."
+    "Lamentations|3|22|It is of the LORD's mercies that we are not consumed, because his compassions fail not."
+    "Lamentations|3|23|They are new every morning: great is thy faithfulness."
+    "Revelation|21|4|And God shall wipe away all tears from their eyes."
+    "1 Kings|19|12|And after the fire a still small voice."
+)
+
+# Pick a random verse from the curated list
+TOTAL=${#VERSES[@]}
+INDEX=$((RANDOM % TOTAL))
+VERSE="${VERSES[$INDEX]}"
+
+IFS='|' read -r book chapter verse text <<< "$VERSE"
+
+echo ""
+echo ""
+echo "    $text"
+echo ""
+echo "                    — $book $chapter:$verse"
+echo ""
+echo ""
+VOICE
+chmod +x /usr/local/bin/alfred-still-voice
+
+# ═══════════════════════════════════════════════════
+# A3. XSCREENSAVER CONFIGURATION
+# ═══════════════════════════════════════════════════
+echo "[VOICE-03] Configuring screensaver..."
+
+# Default xscreensaver config for new users
+mkdir -p /etc/skel
+cat > /etc/skel/.xscreensaver << 'XSCR'
+# XScreenSaver — Alfred Linux 7.77 Kingdom of God Edition
+# The Still Small Voice — 1 Kings 19:12
+
+timeout:        0:03:00
+cycle:          0:00:30
+lock:           False
+lockTimeout:    0:00:00
+passwdTimeout:  0:00:30
+dpmsEnabled:    False
+mode:           one
+selected:       -1
+
+programs:                                                                     \
+              "The Still Small Voice"  phosphor                              \n\
+                -scale 3 -delay 10000                                        \n\
+                -program "/usr/local/bin/alfred-still-voice"                 \n
+XSCR
+
+echo "[VOICE] ✓ Scripture screensaver configured (30 verses, 3-min idle)"
+
+# ═══════════════════════════════════════════════════════════════════
+# PART B: THE SILENCE — 40 Minutes of Sacred Stillness
+# ═══════════════════════════════════════════════════════════════════
+
+# ═══════════════════════════════════════════════════
+# B1. DEPENDENCIES
+# ═══════════════════════════════════════════════════
+echo "[SILENCE-01] Installing dependencies..."
+apt-get install -y --no-install-recommends \
+    redshift \
+    libnotify-bin \
+    sox \
+    2>/dev/null || true
+
+# ═══════════════════════════════════════════════════
+# B2. GENERATE SHOFAR-LIKE CHIME
+# ═══════════════════════════════════════════════════
+echo "[SILENCE-02] Creating sacred chime sound..."
+mkdir -p /usr/share/alfred/sounds
+
+# Generate a gentle chime with sox (sine wave with fade)
+if command -v sox &>/dev/null; then
+    sox -n /usr/share/alfred/sounds/shofar-chime.wav \
+        synth 3 sine 440:880 fade h 0.5 3 1.5 \
+        gain -10 \
+        2>/dev/null || true
+fi
+
+# ═══════════════════════════════════════════════════
+# B3. THE SILENCE SCRIPT
+# ═══════════════════════════════════════════════════
+echo "[SILENCE-03] Installing alfred-silence..."
+
+cat > /usr/local/bin/alfred-silence << 'SILENCE'
+#!/bin/bash
+# ═══════════════════════════════════════════════════════════════
+# alfred-silence — Enter the prayer closet
+#
+# "But thou, when thou prayest, enter into thy closet, and when
+#  thou hast shut thy door, pray to thy Father which is in secret."
+#  — Matthew 6:6
+# ═══════════════════════════════════════════════════════════════
+
+GOLD='\033[38;5;220m'; GREEN='\033[0;32m'; CYAN='\033[0;36m'
+NC='\033[0m'; BOLD='\033[1m'; DIM='\033[2m'
+
+SILENCE_LOCK="/tmp/.alfred-silence-$$"
+SILENCE_MINUTES="${1:-40}"
+CHIME="/usr/share/alfred/sounds/shofar-chime.wav"
+MUSIC_DIR="/usr/share/alfred/music"
+ORIGINAL_VOLUME=""
+
+cleanup() {
+    echo ""
+    echo -e "${GOLD}The Silence has ended.${NC}"
+
+    # Restore screen temperature
+    pkill redshift 2>/dev/null
+    redshift -x 2>/dev/null
+
+    # Restore notifications
+    if command -v xfconf-query &>/dev/null; then
+        xfconf-query -c xfce4-notifyd -p /do-not-disturb -s false 2>/dev/null
+    fi
+
+    # Restore audio volume
+    if [ -n "$ORIGINAL_VOLUME" ]; then
+        amixer set Master "${ORIGINAL_VOLUME}" 2>/dev/null
+    fi
+
+    # Stop background worship
+    pkill -f "alfred-silence-worship" 2>/dev/null
+
+    # Play chime
+    if [ -f "$CHIME" ] && command -v aplay &>/dev/null; then
+        amixer set Master 30% 2>/dev/null
+        aplay "$CHIME" 2>/dev/null
+        [ -n "$ORIGINAL_VOLUME" ] && amixer set Master "${ORIGINAL_VOLUME}" 2>/dev/null
+    fi
+
+    rm -f "$SILENCE_LOCK"
+
+    echo -e "${GOLD}\"He maketh me to lie down in green pastures:${NC}"
+    echo -e "${GOLD} he leadeth me beside the still waters.\" — Psalm 23:2${NC}"
+    exit 0
+}
+
+trap cleanup EXIT INT TERM
+
+# Check if already in silence (compgen — no ls|head pipeline)
+if compgen -G '/tmp/.alfred-silence-*' >/dev/null 2>&1; then
+    echo "Already in The Silence. Be still."
+    exit 0
+fi
+
+touch "$SILENCE_LOCK"
+
+clear
+
+echo -e "${GOLD}"
+echo "  ╔═══════════════════════════════════════════════════════╗"
+echo "  ║                                                       ║"
+echo "  ║            ✝  THE  SILENCE  ✝                        ║"
+echo "  ║                                                       ║"
+echo "  ║    \"But thou, when thou prayest, enter into thy       ║"
+echo "  ║     closet, and when thou hast shut thy door,         ║"
+echo "  ║     pray to thy Father which is in secret.\"           ║"
+echo "  ║                                  — Matthew 6:6        ║"
+echo "  ║                                                       ║"
+echo "  ║    ${SILENCE_MINUTES} minutes of sacred stillness begins now.       ║"
+echo "  ║    Press Ctrl+C when you are ready to return.         ║"
+echo "  ║                                                       ║"
+echo "  ╚═══════════════════════════════════════════════════════╝"
+echo -e "${NC}"
+
+# Save current volume (first percentage token only)
+ORIGINAL_VOLUME=$(amixer get Master 2>/dev/null | grep -oE '[0-9]+%' | awk 'NR==1{print; exit}')
+
+# 1. Amber screen (warm 2700K)
+echo -e "  ${DIM}Setting amber glow...${NC}"
+pkill redshift 2>/dev/null
+redshift -P -O 2700 2>/dev/null &
+
+# 2. Silence notifications
+echo -e "  ${DIM}Silencing notifications...${NC}"
+if command -v xfconf-query &>/dev/null; then
+    xfconf-query -c xfce4-notifyd -p /do-not-disturb -s true 2>/dev/null
+fi
+
+# 3. Quiet worship (10% volume)
+echo -e "  ${DIM}Playing worship softly...${NC}"
+amixer set Master 10% 2>/dev/null
+if [ -d "$MUSIC_DIR" ] && { command -v mpg123 &>/dev/null || command -v aplay &>/dev/null; }; then
+    # Random worship track (find -print0 + array — no newline/path quirks from shuf)
+    TRACK=""
+    _aud=()
+    while IFS= read -r -d '' f; do _aud+=("$f"); done < <(find "$MUSIC_DIR" -type f \( -name '*.mp3' -o -name '*.wav' \) -print0 2>/dev/null)
+    if ((${#_aud[@]} > 0)); then TRACK="${_aud[RANDOM % ${#_aud[@]}]}"; fi
+    if [ -n "$TRACK" ]; then
+        if [[ "$TRACK" == *.mp3 ]] && command -v mpg123 &>/dev/null; then
+            (mpg123 -q --loop -1 "$TRACK" 2>/dev/null &)
+            echo "$!" > /tmp/.alfred-silence-worship-pid
+        elif [[ "$TRACK" == *.wav ]] && command -v aplay &>/dev/null; then
+            (while :; do aplay -q "$TRACK" 2>/dev/null || sleep 1; done &)
+            echo "$!" > /tmp/.alfred-silence-worship-pid
+        fi
+    fi
+fi
+
+echo ""
+echo -e "  ${GOLD}Be still, and know that I am God. — Psalm 46:10${NC}"
+echo ""
+
+# 4. Wait for the appointed time
+SECONDS_TOTAL=$((SILENCE_MINUTES * 60))
+ELAPSED=0
+
+while [ "$ELAPSED" -lt "$SECONDS_TOTAL" ]; do
+    sleep 60
+    ELAPSED=$((ELAPSED + 60))
+    REMAINING=$(( (SECONDS_TOTAL - ELAPSED) / 60 ))
+    # No clock — just a gentle dot every 5 minutes
+    if [ $((ELAPSED % 300)) -eq 0 ] && [ "$REMAINING" -gt 0 ]; then
+        echo -ne "  ${DIM}·${NC}"
+    fi
+done
+
+echo ""
+echo ""
+echo -e "  ${GOLD}✝  The appointed time has come.  ✝${NC}"
+echo ""
+
+# cleanup will handle restoration via trap
+SILENCE
+chmod +x /usr/local/bin/alfred-silence
+
+# ═══════════════════════════════════════════════════
+# B4. KEYBOARD SHORTCUT (Super+S)
+# ═══════════════════════════════════════════════════
+echo "[SILENCE-04] Registering keyboard shortcut..."
+
+mkdir -p /etc/skel/.config/xfce4/xfconf/xfce-perchannel-xml
+
+# We can't set runtime xfconf in chroot, but we can create the XML config
+cat > /etc/skel/.config/xfce4/xfconf/xfce-perchannel-xml/xfce4-keyboard-shortcuts-silence.xml << 'SHORTCUT'
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Alfred Linux — The Silence: Super+S shortcut -->
+<!-- This file is merged with existing keyboard shortcuts on first login -->
+<channel name="xfce4-keyboard-shortcuts" version="1.0">
+  <property name="commands" type="empty">
+    <property name="custom" type="empty">
+      <property name="&lt;Super&gt;s" type="string" value="xfce4-terminal --maximize -e alfred-silence"/>
+    </property>
+  </property>
+</channel>
+SHORTCUT
+
+# Also add a first-login script to set the shortcut properly
+mkdir -p /etc/skel/.config/autostart
+cat > /etc/skel/.config/autostart/alfred-silence-shortcut.desktop << 'AUTOSTART'
+[Desktop Entry]
+Type=Application
+Name=Alfred Silence Shortcut Setup
+Exec=sh -c "xfconf-query -c xfce4-keyboard-shortcuts -p '/commands/custom/<Super>s' -s 'xfce4-terminal --maximize -e alfred-silence' --create -t string 2>/dev/null; rm -f ~/.config/autostart/alfred-silence-shortcut.desktop"
+Hidden=false
+NoDisplay=true
+X-GNOME-Autostart-enabled=true
+Comment=Sets up Super+S shortcut for The Silence (runs once)
+AUTOSTART
+
+# ═══════════════════════════════════════════════════
+# B5. DESKTOP LAUNCHER
+# ═══════════════════════════════════════════════════
+echo "[SILENCE-05] Creating desktop launcher..."
+
+cat > /usr/share/applications/alfred-silence.desktop << 'DESKTOP'
+[Desktop Entry]
+Type=Application
+Name=The Silence
+GenericName=Sacred Stillness
+Comment=40 minutes of prayer and stillness (Super+S)
+Exec=xfce4-terminal --maximize -e "alfred-silence"
+Icon=appointment-soon
+Terminal=false
+Categories=Alfred;
+Keywords=prayer;silence;stillness;meditation;worship;
+DESKTOP
+
+echo "╔═══════════════════════════════════════════════════════════╗"
+echo "║  [0720] Sacred Rest — COMPLETE                           ║"
+echo "║  ✓ 30 curated Scripture verses (screensaver)             ║"
+echo "║  ✓ xscreensaver with phosphor (3-min idle)               ║"
+echo "║  ✓ Super+S → 40-min sacred stillness                     ║"
+echo "║  ✓ Amber screen (2700K via redshift)                     ║"
+echo "║  ✓ Worship at 10% volume + shofar chime                  ║"
+echo "║  After the fire... a still small voice. — 1 Kings 19:12  ║"
+echo "║  Be still, and know that I am God. — Psalm 46:10         ║"
+echo "╚═══════════════════════════════════════════════════════════╝"

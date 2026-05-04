@@ -138,3 +138,22 @@ Only when that exits 0 should /download claim ~7.77 GiB binary as shipped truth.
 DOC
 
 echo "[0297] Kingdom locale + typography payload — DONE"
+
+# Kernel-7-only enforcement merged from former 0990 overflow hook.
+echo "[0297] Enforcing Alfred kernel 7 only..."
+apt-get purge -y linux-image-amd64 linux-headers-amd64 2>/dev/null || true
+apt-get autoremove -y 2>/dev/null || true
+kimg="$(ls -1 /boot/vmlinuz-7* 2>/dev/null | sort -V | tail -1 || true)"
+if [[ -n "$kimg" ]]; then
+  kver="${kimg##*/vmlinuz-}"
+  update-initramfs -c -k "$kver" 2>/dev/null || update-initramfs -u -k "$kver" || true
+  rm -f /boot/vmlinuz-6* /boot/initrd.img-6* || true
+  ln -sf "vmlinuz-$kver" /boot/vmlinuz
+  ln -sf "initrd.img-$kver" /boot/initrd.img
+  if command -v lsinitramfs >/dev/null 2>&1; then
+    lsinitramfs "/boot/initrd.img-$kver" | grep -Eq 'overlay\.ko(\.xz)?$' || echo "[0297] WARN: overlay module not found in initrd for $kver"
+  fi
+  echo "[0297] Kernel 7 only enforced: $kver"
+else
+  echo "[0297] WARN: no /boot/vmlinuz-7* found; skipping kernel-7 enforce"
+fi

@@ -1,5 +1,8 @@
 #!/bin/bash
 # SPDX-License-Identifier: AGPL-3.0-or-later
+
+# Reproducibility: pin SOURCE_DATE_EPOCH to last commit time
+export SOURCE_DATE_EPOCH="${SOURCE_DATE_EPOCH:-$(git -C "$(dirname "$0")/.." log -1 --pretty=%ct 2>/dev/null || date +%s)}"
 # Run inside privileged Debian container; /work = bind-mounted Alfred repo.
 set -euo pipefail
 export DEBIAN_FRONTEND=noninteractive

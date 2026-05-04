@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Run before lb build. Exit 1 if staged kernel debs are missing (linux-image-7.0.1*).
+# Run before lb build. Exit 1 if staged kernel debs are missing (linux-image-7.0.3*).
 set -euo pipefail
 ROOT="${ALFRED_SRC:-$(cd "$(dirname "$0")/.." && pwd)}"
 PC="${ROOT}/config/packages.chroot"
@@ -48,23 +48,23 @@ bash "$ROOT/scripts/stage-kernel-debs-for-iso.sh"
 
 echo "--- kernel packages in $PC ---"
 shopt -s nullglob
-debs=( "$PC"/linux-image-7.0.1*.deb )
+debs=( "$PC"/linux-image-7.0.3*.deb )
 if ((${#debs[@]})); then
   for f in "${debs[@]}"; do echo "  OK $f"; done
 else
-  echo "  FAIL: no linux-image-7.0.1*.deb — lb/apt will fail without the Alfred kernel debs."
+  echo "  FAIL: no linux-image-7.0.3*.deb — lb/apt will fail without the Alfred kernel debs."
   echo "  See: $ROOT/config/packages.chroot/README-KERNEL7.txt"
-  echo "  Fetch sources: bash scripts/kernel-download-7.0.1.sh"
+  echo "  Fetch sources: bash scripts/kernel-download-7.0.3.sh"
   echo "  Pack debs from a builder: bash scripts/pack-kernel-debs-archive.sh"
-  echo "  Then place linux-7.0.1-debs-for-iso.tar.gz under build-assets/kernel-7.0.1-debs/ or set ALFRED_KERNEL_DEBS_ARCHIVE"
+  echo "  Then place linux-7.0.3-debs-for-iso.tar.gz under build-assets/kernel-7.0.3-debs/ or set ALFRED_KERNEL_DEBS_ARCHIVE"
   exit 1
 fi
 
-hdr=( "$PC"/linux-headers-7.0.1*.deb )
+hdr=( "$PC"/linux-headers-7.0.3*.deb )
 if ((${#hdr[@]})); then
   for f in "${hdr[@]}"; do echo "  OK $f"; done
 else
-  echo "  WARN: no linux-headers-7.0.1*.deb (often required alongside image)."
+  echo "  WARN: no linux-headers-7.0.3*.deb (often required alongside image)."
 fi
 
 echo "=== preflight OK ==="

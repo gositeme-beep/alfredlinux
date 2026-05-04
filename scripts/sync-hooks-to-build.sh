@@ -1,52 +1,69 @@
 #!/usr/bin/env bash
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copy every Kingdom hook from the single source of truth (config/hooks/live/)
-# into the live-build tree under build/config/hooks/ (flat layout for this repo's
-# lb profile). The exact set is every *.hook.chroot under live/ (e.g. 0100
-# through 0725 in the current tree — not necessarily low-numbered Debian lb hooks).
-#
-# After install, removes orphan flat *.hook.chroot in the destination (stale
-# copies no longer present under live/). Skips symlinks. Nested DST/live/ is
-# removed when possible (often root-owned from lb in Docker: host rm, else docker
-# alpine on the bind mount, else WARN).
-#
-# Usage (repo root):
-#   bash scripts/sync-hooks-to-build.sh
-#   ALFRED_SYNC_HOOKS_SKIP_DOCKER=1  Skip docker fallback for nested hooks/live/ (CI / no pull).
-# Docker: invoked automatically from lb-docker-inner-build.sh before lb config.
+# Copy canonical hooks from config/hooks/ into build/config/hooks/.
+# Chroot hooks: config/hooks/live/*.hook.chroot
+# Binary hooks: config/hooks/*.hook.binary
 set -euo pipefail
+
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-SRC="${ROOT}/config/hooks/live"
+CHROOT_SRC="${ROOT}/config/hooks/live"
+BINARY_SRC="${ROOT}/config/hooks"
 DST="${ALFRED_BUILD_DIR:-${ROOT}/build}/config/hooks"
 
-if [[ ! -d "$SRC" ]]; then
-  echo "error: missing hook source dir: $SRC" >&2
+if [[ ! -d "$CHROOT_SRC" ]]; then
+  echo "error: missing chroot hook source dir: $CHROOT_SRC" >&2
   exit 1
 fi
 
 mkdir -p "$DST"
 shopt -s nullglob
-hooks=( "$SRC"/*.hook.chroot )
-if ((${#hooks[@]} == 0)); then
-  echo "error: no *.hook.chroot under $SRC" >&2
+chroot_hooks=( "$CHROOT_SRC"/*.hook.chroot )
+binary_hooks=( "$BINARY_SRC"/*.binary )
+
+if ((${#chroot_hooks[@]} == 0)); then
+  echo "error: no *.hook.chroot under $CHROOT_SRC" >&2
   exit 1
 fi
 
-for f in "${hooks[@]}"; do
+for f in "${chroot_hooks[@]}"; do
+  install -m0755 "$f" "$DST/$(basename "$f")"
+done
+
+for f in "${binary_hooks[@]}"; do
   install -m0755 "$f" "$DST/$(basename "$f")"
 done
 
 declare -A valid=()
-for f in "${hooks[@]}"; do
+for f in "${chroot_hooks[@]}"; do
   valid["$(basename "$f")"]=1
 done
-for f in "$DST"/*.hook.chroot; do
+for f in "${binary_hooks[@]}"; do
+  valid["$(basename "$f")"]=1
+done
+
+for f in "$DST"/*.hook.chroot "$DST"/*.binary; do
+  [[ -e "$f" ]] || continue
   b="$(basename "$f")"
   [[ -L "$f" ]] && continue
   [[ -n "${valid[$b]+x}" ]] && continue
   rm -f "$f"
   echo "Removed orphan hook: $f"
 done
+
+# --- Sync includes.binary/ (splash, isolinux, grub) ---
+INC_SRC="${ROOT}/config/includes.binary"
+INC_DST="${ALFRED_BUILD_DIR:-${ROOT}/build}/config/includes.binary"
+if [[ -d "$INC_SRC" ]]; then
+  mkdir -p "$INC_DST"
+  if command -v rsync >/dev/null 2>&1; then
+    rsync -a --delete "$INC_SRC/" "$INC_DST/"
+  else
+    rm -rf "$INC_DST"
+    cp -a "$INC_SRC" "$INC_DST"
+  fi
+  _ic=$(find "$INC_DST" -type f 2>/dev/null | wc -l)
+  echo "[sync-hooks-to-build] synced includes.binary ($_ic files)"
+fi
 
 # Stale nested live/ (not used by this profile; confuses greps). May be root-owned.
 _nested="${DST}/live"
@@ -61,4 +78,4 @@ if [[ -d "$_nested" ]] || [[ -L "$_nested" ]]; then
   fi
 fi
 
-echo "[sync-hooks-to-build] installed ${#hooks[@]} hooks from $SRC -> $DST"
+echo "[sync-hooks-to-build] installed ${#chroot_hooks[@]} chroot hooks and ${#binary_hooks[@]} binary hooks to $DST"

@@ -56,36 +56,26 @@ fi
 # ═══════════════════════════════════════════════════
 # 3. CALAMARES FDE MODULE
 # ═══════════════════════════════════════════════════
-echo "[FDE-03] Configuring Calamares for LUKS encryption..."
-CALA_DIR="/etc/calamares"
-CALA_MOD="${CALA_DIR}/modules"
-mkdir -p "${CALA_MOD}"
+echo "[FDE-03] Staging Calamares LUKS overrides for post-install merge..."
+# DO NOT write to /etc/calamares/ here — calamares-settings-debian
+# isn't installed yet; touching its conffiles triggers dpkg conffile prompts
+# which kills the build. Stage overrides; hook 0601 merges them after install.
+STAGE_DIR="/usr/share/alfred/calamares-overrides"
+mkdir -p "$STAGE_DIR/modules"
 
-# Set LUKS encryption module defaults
-cat > "${CALA_MOD}/luksopenswaphookcfg.conf" 2>/dev/null << 'LUKSSWAP' || true
+cat > "$STAGE_DIR/modules/luksopenswaphookcfg.conf" << 'LUKSSWAP'
 ---
 configFilePath: /etc/openswap.conf
 LUKSSWAP
 
-# Partition module — offer encryption checkbox
-if [ -f "${CALA_MOD}/partition.conf" ]; then
-    # Ensure encryption options are present
-    if ! grep -q 'enableLuksAutomatedPartitioning' "${CALA_MOD}/partition.conf"; then
-        cat >> "${CALA_MOD}/partition.conf" << 'PARTCRYPT'
-
-# Alfred Linux — FDE enabled by default in guided installer
-enableLuksAutomatedPartitioning: true
-PARTCRYPT
-    fi
-else
-    cat > "${CALA_MOD}/partition.conf" << 'PARTCONF'
+cat > "$STAGE_DIR/modules/partition.conf" << 'PARTCONF'
 ---
 efiSystemPartition: "/boot/efi"
 efiSystemPartitionSize: 512M
 enableLuksAutomatedPartitioning: true
 defaultFileSystemType: "ext4"
 PARTCONF
-fi
+echo "[FDE-03] Calamares overrides staged at $STAGE_DIR"
 
 # ═══════════════════════════════════════════════════
 # 4. FDE HELPER TOOL

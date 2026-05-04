@@ -54,7 +54,7 @@ footer a{color:#6366f1;text-decoration:none;}
 
 <div class="hero">
     <div class="pill">Public transparency</div>
-    <h1>Linux <span>7.0.1</span> — security &amp; supply chain</h1>
+    <h1>Linux <span>7.0.3</span> — security &amp; supply chain</h1>
     <p>What Alfred verifies in git, what still depends on your builder, and where the full technical write-ups live on GoForge. Honest scope for auditors and the public.</p>
 </div>
 
