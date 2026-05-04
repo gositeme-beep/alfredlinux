@@ -12,7 +12,7 @@ log() { echo "[$(ts)] $*" | tee -a "$LOG"; }
 # lb-docker-build.sh didn't pass --name and Docker assigned a random name like naughty_nobel).
 CONTAINER=$(docker ps --filter name=alfred-lb --format '{{.Names}}' 2>/dev/null | head -1)
 if [[ -z "$CONTAINER" ]]; then
-    CONTAINER=$(docker ps --format '{{.Names}}\t{{.Command}}' 2>/dev/null | grep -E 'lb-docker-inner-build|live-build|/usr/lib/live/build' | head -1 | awk '{print $1}')
+    CONTAINER=$(docker ps --no-trunc --format '{{.Names}}\t{{.Command}}' 2>/dev/null | grep -E 'lb-docker-inner-build|live-build|/usr/lib/live/build' | head -1 | awk '{print $1}')
 fi
 
 if [[ -z "$CONTAINER" ]]; then
