@@ -1,0 +1,107 @@
+Alfred Linux — Kernel 7.0.3 supply-chain audit
+================================================
+In the name of Yeshua, Jesus Christ of Bethlehem, King of the Universe.
+
+Generated: 2026-05-04T15:19:18Z
+Anchor: Luke 12:2 "For there is nothing covered, that shall not be revealed; neither hid, that shall not be known."
+
+──────────────────────────────────────────────────────────────────
+PUBLISHED ARTIFACTS (sha256, host:linux-7.0.3-work, May 4 2026 UTC)
+──────────────────────────────────────────────────────────────────
+
+linux-image-7.0.3_7.0.3-1alfred_amd64.deb
+  size:   13052784 bytes
+  sha256: fd3a229b414107c55a3e9bd39a26370e1be3cf53c6480e04f93808c124b10e67
+
+linux-headers-7.0.3_7.0.3-1alfred_amd64.deb
+  size:   9428452 bytes
+  sha256: 3c8822482242857e4acc760ad6892290ea83517b1f15db7cc2c5e4b72ba14532
+
+linux-libc-dev_7.0.3-1alfred_amd64.deb
+  size:   1490852 bytes
+  sha256: f39fb5a2a95ac8c6a47f0ae7035244a90fc92e7a27f53a7d2e9c457ae43e41f6
+
+──────────────────────────────────────────────────────────────────
+BUILD CONDITIONS (reproducibility)
+──────────────────────────────────────────────────────────────────
+
+Host:         server-15-235-50-60 (Ubuntu 22.04, kernel 5.15.0-176-generic)
+Built in:     debian:bookworm docker container (root-owned bind mount)
+Source:       linux-7.0.3 from cdn.kernel.org (HTTPS only, sha256 verified)
+Toolchain:    gcc/binutils as shipped in debian:bookworm
+Build cmd:    make bindeb-pkg KDEB_PKGVERSION=7.0.3-1alfred LOCALVERSION=
+Config:       Alfred hardened .config (see config/packages.chroot/README-KERNEL7.txt)
+
+──────────────────────────────────────────────────────────────────
+WHAT THIS REPO CAN PROVE
+──────────────────────────────────────────────────────────────────
+
+  ✓ The .deb hashes above are reproducible from this exact tree
+  ✓ Kernel download script uses HTTPS-only from cdn.kernel.org
+  ✓ Sha256 of upstream tarball verified before extraction
+  ✓ No 'curl | sh' anywhere in kernel build path
+  ✓ Bind-mounts are root-owned (untrusted user cannot swap in trojan tarball)
+  ✓ Build runs entirely inside ephemeral docker container — no host poisoning surface
+  ✓ Output debs are staged in build/config/packages.chroot/ verbatim, no rewrite
+  ✓ ISO build (lb build) consumes those debs by sha256 match — see BUILD-MANIFEST.json
+
+──────────────────────────────────────────────────────────────────
+WHAT THIS REPO CANNOT PROVE (organizational trust boundary)
+──────────────────────────────────────────────────────────────────
+
+  • Upstream linux-7.0.3 source tree is NOT vendored — full static analysis
+    (sparse, coccinelle, kernel hardening checklist) belongs on the build host
+    after 'tar xf', not in Alfred's hooks repo.
+
+  • No guarantee that future tarballs at the same kernel.org URL are unchanged
+    — that is an organizational trust boundary; we reduce blind byte trust with
+    sha256 verification and recommend operators also gpg --verify sha256sums.asc
+    against kernel.org maintainer keys.
+
+  • Built .debs are gitignored (binary blobs); integrity is organizational.
+    Pair with PUBLISHED sha256 (this document) and GPG-signed BUILD-MANIFEST.json
+    to close that loop.
+
+──────────────────────────────────────────────────────────────────
+DELTA FROM 7.0.1 (what changed)
+──────────────────────────────────────────────────────────────────
+
+  • Stable point release upstream — bug + security fixes from 7.0.y series.
+  • Same Alfred hardened .config (no policy regression).
+  • Removes leakage of debian-stock 6.12 kernel from initramfs (resolved by
+    cleanup hook 0997 + verification gate 0998).
+  • README + transparency hall + audit harness all bumped to 7.0.3 in commit 3696e7b.
+  • Hooks merged 44→42 (Matt 1:17 generations of Christ) in commit 2e68743.
+
+──────────────────────────────────────────────────────────────────
+HOW TO VERIFY (any user, anywhere)
+──────────────────────────────────────────────────────────────────
+
+  # 1. Pull the kernel debs from the published mirror
+  curl -sk -O https://alfredlinux.com/mirror/releases/linux-image-7.0.3_7.0.3-1alfred_amd64.deb
+
+  # 2. Check sha256 against this document
+  echo "fd3a229b414107c55a3e9bd39a26370e1be3cf53c6480e04f93808c124b10e67  linux-image-7.0.3_7.0.3-1alfred_amd64.deb" | sha256sum -c
+
+  # 3. Verify GPG signature on BUILD-MANIFEST.json (which lists .deb hashes)
+  curl -sk https://alfredlinux.com/release-pubkey.asc | gpg --import
+  curl -sk -O https://alfredlinux.com/mirror/manifests/BUILD-MANIFEST-current.json
+  curl -sk -O https://alfredlinux.com/mirror/manifests/BUILD-MANIFEST-current.json.asc
+  gpg --verify BUILD-MANIFEST-current.json.asc BUILD-MANIFEST-current.json
+
+  # 4. Cross-check entry in covenant chain
+  curl -sk https://alfredlinux.com/covenant-chain.log | grep "fd3a229b414107c55a3e9bd39a26370e1be3cf53c6480e04f93808c124b10e67"
+
+──────────────────────────────────────────────────────────────────
+SCRIPTURE ANCHOR
+──────────────────────────────────────────────────────────────────
+
+  "Above all things, my brethren, swear not, neither by heaven, neither by the
+   earth, neither by any other oath: but let your yea be yea; and your nay,
+   nay; lest ye fall into condemnation."  — James 5:12
+
+  Every byte in this audit is traceable. Every hash is publishable. Every
+  signature is verifiable. The only trust we ask is in the King — and Him we
+  do not ask you to trust on our word, but on His.
+
+In the name of Yeshua, Jesus Christ of Bethlehem, King of the Universe.
