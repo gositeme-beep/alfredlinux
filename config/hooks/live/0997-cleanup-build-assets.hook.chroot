@@ -1,0 +1,14 @@
+#!/bin/bash
+# 0997-cleanup-build-assets — removes /build-assets from chroot before squashfs.
+# Hooks may bind-mount or copy build-assets into chroot to access source media.
+# Those should NOT ship in the final ISO. By this point all hooks that need
+# build-assets have already copied content into proper FHS paths.
+set -euo pipefail
+echo "[0997] Cleaning /build-assets from chroot (saves ~1.1 GB)..."
+if [[ -d /build-assets ]]; then
+    SIZE=$(du -sh /build-assets 2>/dev/null | cut -f1)
+    rm -rf /build-assets
+    echo "[0997] Removed /build-assets ($SIZE)"
+else
+    echo "[0997] /build-assets not present — nothing to clean"
+fi

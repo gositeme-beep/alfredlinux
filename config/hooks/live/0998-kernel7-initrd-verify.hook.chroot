@@ -1,0 +1,60 @@
+#!/bin/bash
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# 0998 - Alfred Linux: Kernel 7 initrd enforcer (fail-loud)
+# Generates initrd-7.x, removes 6.x, validates overlay module present.
+set -euo pipefail
+
+echo "[0998] Verifying Alfred kernel 7 initrd + boot symlinks..."
+
+kimg="$(ls -1 /boot/vmlinuz-7* 2>/dev/null | sort -V | tail -1 || true)"
+if [ -z "$kimg" ]; then
+  echo "[0998] FATAL: no /boot/vmlinuz-7* found" >&2
+  echo "[0998]   chroot is missing kernel 7 .deb. Did 0050 / kernel package gate run?" >&2
+  exit 1
+fi
+kver="${kimg##*/vmlinuz-}"
+echo "[0998] selected kernel version: $kver"
+
+# Make sure modules tree exists (initramfs-tools needs it)
+if [ ! -d "/lib/modules/$kver" ]; then
+  echo "[0998] FATAL: missing /lib/modules/$kver" >&2
+  exit 1
+fi
+
+# Refresh module deps so initramfs-tools finds them
+depmod -a "$kver" || { echo "[0998] FATAL: depmod failed for $kver" >&2; exit 1; }
+
+# Generate initrd
+echo "[0998] update-initramfs -c -k $kver ..."
+update-initramfs -c -k "$kver" 2>&1 || update-initramfs -u -k "$kver" 2>&1
+
+if [ ! -f "/boot/initrd.img-$kver" ]; then
+  echo "[0998] FATAL: missing /boot/initrd.img-$kver after update-initramfs" >&2
+  ls -la /boot/ >&2
+  exit 1
+fi
+
+# Remove kernel 6.x debris
+echo "[0998] removing /boot/vmlinuz-6* and /boot/initrd.img-6*"
+rm -fv /boot/vmlinuz-6* /boot/initrd.img-6* 2>/dev/null || true
+
+# Repoint generic symlinks
+ln -sf "vmlinuz-$kver"   /boot/vmlinuz
+ln -sf "initrd.img-$kver" /boot/initrd.img
+
+# Validate overlay module is in initrd (live-boot needs it)
+if command -v lsinitramfs >/dev/null 2>&1; then
+  if ! lsinitramfs "/boot/initrd.img-$kver" | grep -Eq 'overlay\.ko(\.[xz]+)?$|overlay\.ko\.zst$'; then
+    echo "[0998] FATAL: overlay module missing from initrd for $kver" >&2
+    echo "[0998]   live-boot will drop to initramfs without overlay" >&2
+    exit 1
+  fi
+  if ! lsinitramfs "/boot/initrd.img-$kver" | grep -Eq 'squashfs\.ko'; then
+    echo "[0998] FATAL: squashfs module missing from initrd for $kver" >&2
+    exit 1
+  fi
+fi
+
+# Final state
+ls -la /boot/vmlinuz* /boot/initrd.img*
+echo "[0998] Kernel 7 initrd enforced + verified: $kver"

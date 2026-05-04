@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # fakeroot make bindeb-pkg in background for linux-7.0.1.
-# KERNEL_WORK default: <repo>/../kernel-7.0.1-work  (put linux-7.0.1.tar.xz there; use kernel-download-7.0.1.sh)
+# KERNEL_WORK default: <repo>/../kernel-7.0.3-work  (put linux-7.0.3.tar.xz there; use kernel-download-7.0.1.sh)
 # Log: $KERNEL_WORK/bindeb-pkg.log
 # Optional: ALFRED_KERNEL_CONFIG=/path/.config
 set -euo pipefail
 REPO="$(cd "$(dirname "$0")/.." && pwd)"
-WORK="${KERNEL_WORK:-$REPO/../kernel-7.0.1-work}"
-TAR="${WORK}/linux-7.0.1.tar.xz"
+WORK="${KERNEL_WORK:-$REPO/../kernel-7.0.3-work}"
+TAR="${WORK}/linux-7.0.3.tar.xz"
 LOG="${WORK}/bindeb-pkg.log"
 NJOBS="${NJOBS:-$(nproc)}"
 
@@ -44,6 +44,6 @@ make ARCH=x86_64 olddefconfig
 
 : >"$LOG"
 echo "Starting fakeroot make bindeb-pkg (jobs=$NJOBS). Log: $LOG"
-nohup fakeroot make -j"$NJOBS" ARCH=x86_64 bindeb-pkg LOCALVERSION= KDEB_PKGVERSION=7.0.1-1alfred >>"$LOG" 2>&1 &
+nohup fakeroot make -j"$NJOBS" ARCH=x86_64 bindeb-pkg LOCALVERSION= KDEB_PKGVERSION=7.0.3-1alfred >>"$LOG" 2>&1 &
 echo $! >"${WORK}/bindeb-pkg.pid"
 echo "PID $(cat "${WORK}/bindeb-pkg.pid") — tail -f $LOG"

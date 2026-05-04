@@ -1,0 +1,22 @@
+#!/bin/bash
+# 0601-alfred-installer-overrides — runs AFTER 0600 installs calamares.
+# Merges staged Alfred LUKS/FDE overrides into /etc/calamares/modules/
+# without triggering dpkg conffile prompts.
+set -euo pipefail
+echo "[0601] Merging Alfred Calamares overrides..."
+
+STAGE=/usr/share/alfred/calamares-overrides
+TARGET=/etc/calamares/modules
+
+if [[ ! -d "$STAGE/modules" ]]; then
+    echo "[0601] No staged overrides at $STAGE — skipping (FDE hook 0170 may not have run)"
+    exit 0
+fi
+if [[ ! -d "$TARGET" ]]; then
+    echo "[0601] WARN: /etc/calamares/modules missing — calamares-settings-debian not installed?"
+    echo "[0601] Creating target dir; overrides will land there for runtime."
+    mkdir -p "$TARGET"
+fi
+
+cp -fv "$STAGE/modules/"*.conf "$TARGET/"
+echo "[0601] Merge complete — calamares modules now Alfred-tuned."

@@ -1,14 +1,14 @@
 #!/usr/bin/env bash
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Download linux-7.0.1 tarball + patch into KERNEL_WORK (default: sibling dir kernel-7.0.1-work). Does NOT compile.
+# Download linux-7.0.1 tarball + patch into KERNEL_WORK (default: sibling dir kernel-7.0.3-work). Does NOT compile.
 set -euo pipefail
 REPO="$(cd "$(dirname "$0")/.." && pwd)"
-BASE="${KERNEL_WORK:-$REPO/../kernel-7.0.1-work}"
+BASE="${KERNEL_WORK:-$REPO/../kernel-7.0.3-work}"
 mkdir -p "$BASE"
 cd "$BASE"
 
-TAR="linux-7.0.1.tar.xz"
-PATCH="patch-7.0.1.xz"
+TAR="linux-7.0.3.tar.xz"
+PATCH="patch-7.0.3.xz"
 BASE_URL="https://cdn.kernel.org/pub/linux/kernel/v7.x"
 
 echo "=== Downloading into $BASE ==="
