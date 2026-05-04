@@ -1,0 +1,29 @@
+#!/bin/bash
+# /home/gositeme/law/alfredlinux-com-source-live/config/hooks/9990-kernel7-initrd.hook.chroot
+# Generate initrd for custom kernel 7.0.3 inside chroot stage so binary_linux-image
+# can find /boot/initrd.img-7.0.3 to copy into binary/live/.
+# Without this, live-build fails: "ls: cannot access 'binary/live/vmlinuz-*'".
+# In the name of Yeshua, Jesus Christ of Bethlehem, King of the Universe.
+set -euo pipefail
+
+KVER=7.0.3
+
+if [[ ! -f /boot/vmlinuz-${KVER} ]]; then
+    echo "[9990] WARN: /boot/vmlinuz-${KVER} not present in chroot; skipping initrd gen"
+    exit 0
+fi
+
+if [[ -f /boot/initrd.img-${KVER} ]]; then
+    echo "[9990] initrd.img-${KVER} already present"
+    exit 0
+fi
+
+if ! command -v update-initramfs >/dev/null; then
+    echo "[9990] ERROR: update-initramfs not installed"
+    exit 1
+fi
+
+echo "[9990] Generating initrd for kernel ${KVER}..."
+update-initramfs -c -k "${KVER}"
+ls -la /boot/initrd.img-${KVER}
+echo "[9990] Done."
