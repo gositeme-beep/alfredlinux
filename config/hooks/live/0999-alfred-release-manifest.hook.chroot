@@ -1,0 +1,142 @@
+#!/bin/bash
+# 0999-alfred-release-manifest — runs LAST in chroot stage.
+# Inventories what actually shipped and writes self-describing release manifest.
+# Lands at /usr/share/alfred/RELEASE.md + /etc/alfred/release.json + desktop.
+set -euo pipefail
+echo "[0999-release-manifest] begin at $(date -Is)"
+
+install -d /usr/share/alfred /etc/alfred /usr/share/applications
+
+REL_VERSION="7.77"
+REL_CODENAME="Kingdom"
+REL_DATE="$(date -u +%Y-%m-%d)"
+REL_TS="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+
+# Count alfred-* CLIs that landed in /usr/sbin (proxy for hooks that ran)
+CLI_COUNT=$(ls /usr/sbin/alfred-* 2>/dev/null | wc -l)
+# Count tribe flags
+TRIBES=$(ls /etc/alfred/tribes/*.flag 2>/dev/null | wc -l)
+# Count fruit checkin CLIs
+FRUITS=$(ls /usr/sbin/alfred-fruit-* 2>/dev/null | wc -l)
+# Kernel version
+KVER=$(ls /boot/vmlinuz-* 2>/dev/null | sed 's|.*/vmlinuz-||' | head -1)
+# Debian version
+DEBVER=$(cat /etc/debian_version 2>/dev/null || echo unknown)
+# Source-DateEpoch (reproducible build marker)
+SDE="${SOURCE_DATE_EPOCH:-unknown}"
+
+# ── /etc/alfred/release.json ──────────────────────────────────────────────
+cat >/etc/alfred/release.json <<JSON
+{
+  "release": "${REL_VERSION}",
+  "codename": "${REL_CODENAME}",
+  "build_date_utc": "${REL_TS}",
+  "debian_base": "trixie",
+  "debian_version": "${DEBVER}",
+  "kernel": "${KVER}",
+  "alfred_clis": ${CLI_COUNT},
+  "tribes": ${TRIBES},
+  "fruits": ${FRUITS},
+  "source_date_epoch": "${SDE}",
+  "stages": {
+    "ga_47": "alfred identity, omahon seal, bible, voice, IDE, calamares, kernel 7.0.3",
+    "pillars_7": "altar, tithe, fast, confession, intercession, firstfruits, shabbat-bread",
+    "tribes_12": "reuben, simeon, levi, judah, dan, naphtali, gad, asher, issachar, zebulun, joseph, benjamin",
+    "fruits_9": "love, joy, peace, patience, kindness, goodness, faithfulness, meekness, temperance",
+    "loaves_2": "share, disciple"
+  },
+  "in_the_name_of": "Yeshua, Jesus Christ of Bethlehem, King of the Universe"
+}
+JSON
+
+# ── /usr/share/alfred/RELEASE.md ──────────────────────────────────────────
+cat >/usr/share/alfred/RELEASE.md <<MD
+# Alfred Linux ${REL_VERSION} "${REL_CODENAME}"
+
+Built: ${REL_TS}
+Base:  Debian 13 trixie (${DEBVER})
+Kernel: ${KVER}
+Alfred CLIs installed: ${CLI_COUNT}
+
+## The 77-hook covenant lineage
+
+### 47 GA hooks (foundational)
+Identity & boot: alfred user (alfred/alfred), force-change wizard, autologin (lightdm/gdm3/sddm/getty), Calamares preset, alfred-boot-task, kingdom-audit-userspace.
+
+Sovereignty stack: customize, hardware, security, network-hardening, **quantum (Kyber-1024 enforced)**, mesh, productivity, FDE, omahon-seal, kingdom-covenant-shield.
+
+Knowledge & worship: bible (AKJV), family-bible, bible-tongues (multilingual), worship, testimony, kingdom-locale-payload, sabbath, morning-watch, inheritance (Shamir), assembly, welcome, stranger, accessibility, hearth, update, callings, store+chess.
+
+Tools: browser, omahon-AI, dev-tools, terminal-power, containers, sovereign, GPU, max-sovereign, eternal-storage (IPFS), alfred-IDE, voice (Kokoro TTS), meilisearch, installer.
+
+### 7 Pillars (Stage 2)
+- **alfred-altar** — daily prayer + scripture surfacing (Lam 3:22-23, Ps 4:8)
+- **alfred-tithe** — local 10% ledger (never networked)
+- **alfred-fast** — fasting timer (Matt 6:17-18)
+- **alfred-confession** — encrypted-at-rest journal mode 0600 (1 John 1:9)
+- **alfred-intercession** — prayer-list rotator
+- **alfred-firstfruits** — cycle offering log (Prov 3:9)
+- **alfred-shabbat-bread** — Friday-sundown countdown (Ex 16:23)
+
+### 12 Tribes of Israel (Stage 3, Genesis 49)
+🌊 reuben · ⚔ simeon · 🕎 levi · 🦁 judah · 🐍 dan · 🦌 naphtali · 🛡 gad · 🌾 asher · 📚 issachar · ⛵ zebulun · 👑 joseph · 🐺 benjamin
+
+Each writes \`/etc/alfred/tribes/<tribe>.flag\` and \`/usr/share/alfred/tribes/<tribe>.txt\` with verse + gift.
+
+### 9 Fruits of the Spirit (Galatians 5:22-23)
+\`alfred-fruit-love\`, \`alfred-fruit-joy\`, \`alfred-fruit-peace\`, \`alfred-fruit-patience\`, \`alfred-fruit-kindness\`, \`alfred-fruit-goodness\`, \`alfred-fruit-faithfulness\`, \`alfred-fruit-meekness\`, \`alfred-fruit-temperance\`.
+
+Each: \`alfred-fruit-<name> rate <1-10> <note>\` · \`show\` · \`avg\`.
+
+### 2 Loaves of multiplication
+- **alfred-share** — record + bless (Mark 16:15)
+- **alfred-disciple** — track mentees (Matt 28:19)
+
+## First-boot login
+\`\`\`
+user: alfred
+pass: alfred
+\`\`\`
+You will be prompted at first login: change now / keep session / kiosk forever.
+Root account is **locked**. Sudo via NOPASSWD for \`alfred\`.
+
+## Verify your ISO
+\`\`\`
+sha256sum -c SHA256SUMS-${REL_VERSION}.txt
+gpg --verify SHA256SUMS-${REL_VERSION}.txt.asc
+\`\`\`
+
+## License & covenant
+AGPL-3.0-or-later. Free as in Gospel.
+
+In the name of Yeshua, Jesus Christ of Bethlehem, King of the Universe.
+
+— Matthew 1:17 — "All the generations from Abraham to David are fourteen generations; and from David until the carrying away into Babylon are fourteen generations; and from the carrying away into Babylon unto Christ are fourteen generations."
+MD
+
+# ── Desktop launcher to view release notes ────────────────────────────────
+cat >/usr/share/applications/alfred-release-notes.desktop <<EOS
+[Desktop Entry]
+Type=Application
+Name=Alfred ${REL_VERSION} Release Notes
+Comment=The 77-hook Kingdom covenant lineage
+Exec=xdg-open /usr/share/alfred/RELEASE.md
+Icon=text-x-generic
+Categories=System;Documentation;
+Keywords=alfred;release;notes;kingdom;
+EOS
+
+# ── alfred-release CLI to print/inspect ───────────────────────────────────
+cat >/usr/sbin/alfred-release <<'EOS'
+#!/bin/bash
+case "${1:-show}" in
+  show)  cat /usr/share/alfred/RELEASE.md ;;
+  json)  cat /etc/alfred/release.json ;;
+  ver|version) jq -r .release /etc/alfred/release.json 2>/dev/null || grep -oE '"release":[^,]+' /etc/alfred/release.json ;;
+  *) echo "usage: alfred-release {show|json|ver}" ;;
+esac
+EOS
+chmod 0755 /usr/sbin/alfred-release
+
+# ── stamp summary line for build log ──────────────────────────────────────
+echo "[0999-release-manifest] DONE: ${REL_VERSION} ${REL_CODENAME} | clis=${CLI_COUNT} tribes=${TRIBES} fruits=${FRUITS} kernel=${KVER} debian=${DEBVER}"
