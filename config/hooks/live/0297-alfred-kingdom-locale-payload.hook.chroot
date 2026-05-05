@@ -26,7 +26,9 @@ filter_pkgs() {
     done
 }
 
-mapfile -t PKGS < <(filter_pkgs \
+PKG_TMP=/tmp/0297-pkgs.list
+rm -f $PKG_TMP
+filter_pkgs \
     fonts-noto-cjk \
     fonts-noto-cjk-extra \
     fonts-noto-extra \
@@ -102,7 +104,9 @@ mapfile -t PKGS < <(filter_pkgs \
     libreoffice-l10n-om \
     libreoffice-l10n-sw \
     libreoffice-l10n-zu \
-)
+> $PKG_TMP
+mapfile -t PKGS < $PKG_TMP
+rm -f $PKG_TMP
 
 if ((${#PKGS[@]} == 0)); then
     echo "[0297] WARNING: no packages resolved — check apt sources in chroot."

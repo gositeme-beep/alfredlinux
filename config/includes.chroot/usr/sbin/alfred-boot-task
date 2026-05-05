@@ -1,0 +1,29 @@
+#!/bin/bash
+# alfred-boot-task — invoked early in boot when alfred.task=<name> is on cmdline.
+# Wired by /etc/systemd/system/alfred-boot-task.service
+TASK=$(cat /proc/cmdline | tr ' ' '\n' | grep '^alfred.task=' | cut -d= -f2)
+[ -z "$TASK" ] && exit 0
+LOG=/var/log/alfred-boot-task.log
+exec > >(tee -a "$LOG") 2>&1
+echo "[$(date)] alfred-boot-task: $TASK"
+case "$TASK" in
+    grub-reinstall)   echo "  → would: grub-install /dev/sda && update-grub" ;;
+    fsck-all)         for d in $(lsblk -nrpo NAME,TYPE | awk '$2=="part"{print $1}'); do echo "  fsck $d"; fsck -y "$d" || true; done ;;
+    reset-root)       echo "  → interactive: passwd root"; passwd root ;;
+    snapshot-restore) echo "  → would: snapper / timeshift restore (interactive)" ;;
+    luks-decrypt)     for d in $(blkid -t TYPE=crypto_LUKS -o device); do cryptsetup luksOpen "$d" "luks-$(basename $d)" || true; done ;;
+    stress-cpu)       command -v stress-ng >/dev/null && stress-ng --cpu $(nproc) --timeout 60s --metrics-brief ;;
+    smart-report)     for d in $(lsblk -ndo NAME,TYPE | awk '$2=="disk"{print $1}'); do smartctl -a /dev/$d || true; done ;;
+    hwprobe)          lshw -short > /tmp/hwprobe.txt; inxi -F >> /tmp/hwprobe.txt; less /tmp/hwprobe.txt ;;
+    netdiag)          ip a; ip r; cat /etc/resolv.conf; ping -c3 1.1.1.1; mtr -r -c3 1.1.1.1 ;;
+    tpm-dump)         tpm2_pcrread 2>/dev/null || echo "tpm2-tools not available or no TPM" ;;
+    sb-status)        mokutil --sb-state; bootctl status 2>/dev/null || true ;;
+    sign-kernel)      echo "  → would: sbsign --key MOK.key --cert MOK.crt /boot/vmlinuz-* ;;" ;;
+    verify-omahon)    /usr/sbin/omahon-verify 2>/dev/null || echo "omahon-verify not present" ;;
+    kingdom-attest)   /usr/sbin/integrity-attest 2>/dev/null || echo "integrity-attest not present" ;;
+    kyber-selftest)   /usr/sbin/kyber-selftest 2>/dev/null || echo "kyber-selftest not present" ;;
+    tftp-recover)     echo "  → would: tftp recovery flow" ;;
+    *) echo "  unknown task: $TASK" ;;
+esac
+echo "Press ENTER to continue boot, or Ctrl-C for shell."
+read -r _

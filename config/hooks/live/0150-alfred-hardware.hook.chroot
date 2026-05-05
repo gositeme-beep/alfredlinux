@@ -358,6 +358,7 @@ apt-get install -y --no-install-recommends \
 systemctl enable tlp.service 2>/dev/null || true
 
 # TLP config tweaks for maximum battery life on old hardware
+mkdir -p /etc/tlp.d
 cat > /etc/tlp.d/01-alfred.conf << 'TLPCONF'
 # Alfred Linux — Power tuning for old + new hardware
 # Aggressive power saving when on battery

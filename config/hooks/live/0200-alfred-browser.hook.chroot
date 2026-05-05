@@ -22,9 +22,7 @@ if ! dpkg -l alfred-browser 2>/dev/null | grep -q '^ii'; then
     BROWSER_DEB=""
     for _d in /root/packages /tmp; do
         [[ -d "$_d" ]] || continue
-        while IFS= read -r -d '' f; do BROWSER_DEB="$f"; break; done < <(
-            find "$_d" -maxdepth 3 -name 'alfred-browser*.deb' -type f -print0 2>/dev/null
-        )
+          BROWSER_DEB="$(find "$_d" -maxdepth 3 -name 'alfred-browser*.deb' -type f -print -quit 2>/dev/null)"
         [[ -n "$BROWSER_DEB" ]] && break
     done
     if [[ -n "$BROWSER_DEB" ]]; then

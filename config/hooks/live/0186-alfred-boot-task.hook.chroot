@@ -1,0 +1,7 @@
+#!/bin/bash
+# 0186-alfred-boot-task — enable boot-time task dispatcher
+set -e
+if [ -f /etc/systemd/system/alfred-boot-task.service ]; then
+    systemctl enable alfred-boot-task.service || true
+    echo "alfred-boot-task: enabled"
+fi
