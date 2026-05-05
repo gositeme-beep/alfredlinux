@@ -39,7 +39,7 @@ fi
 
 apt-get update -y
 apt-get install -y --no-install-recommends \
-  live-build debootstrap cdebootstrap ca-certificates cpio wget gnupg \
+  live-build apt-utils xz-utils debootstrap cdebootstrap ca-certificates cpio wget gnupg \
   rsync xz-utils bzip2 gzip file
 
 # Debian trixie chroot + bookworm live-build: binary_syslinux cp into chroot/root/isolinux can fail on
@@ -96,8 +96,7 @@ lb clean --all || lb clean || true
 echo "[inner] remove stale ISO artifacts before fresh build at $(date -Is)"
 rm -f /work/build/*.iso /work/build/*.iso.zsync* /work/build/live-image-amd64.* 2>/dev/null || true
 
-echo "[inner] apt-get update -qq && apt-get install -y --no-install-recommends apt-utils ca-certificates xz-utils debootstrap || true
- lb config at $(date -Is)"
+echo "[inner] lb config at $(date -Is)"
 lb config --ignore-system-defaults || lb config
 
 BUILD_STARTED_EPOCH="$(date +%s)"
