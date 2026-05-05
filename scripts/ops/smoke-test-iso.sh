@@ -6,7 +6,14 @@ set -euo pipefail
 
 SL=/home/gositeme/law/alfredlinux-com-source-live
 ISO=$SL/iso-output/live-image-amd64.hybrid.iso
-INNER_LOG="${ALFRED_SMOKE_INNER_LOG:-$SL/lb-docker-build.log}"
+# Prefer 77ga log if it exists and is non-empty; else fall back to legacy.
+if [ -n "${ALFRED_SMOKE_INNER_LOG:-}" ]; then
+  INNER_LOG="$ALFRED_SMOKE_INNER_LOG"
+elif [ -s "$SL/lb-docker-build-77ga.log" ]; then
+  INNER_LOG="$SL/lb-docker-build-77ga.log"
+else
+  INNER_LOG="$SL/lb-docker-build.log"
+fi
 if [[ -n "${ALFRED_ISO_MIN_MTIME_EPOCH:-}" ]]; then
   THRESHOLD=$((ALFRED_ISO_MIN_MTIME_EPOCH))
 else

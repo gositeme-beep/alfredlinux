@@ -81,3 +81,13 @@ if [[ -d local ]] && [[ -n "$(ls -A local 2>/dev/null)" ]]; then
   rsync -a "${ROOT}/local/" "${ROOT}/build/local/"
   echo "[sync-canonical] local/ → build/local/"
 fi
+
+# ─── PATCH: always sync canonical auto/config → build/auto/config ─────────
+# Without this, stale build/auto/config from prior builds (e.g. bookworm) wins
+# and lb config picks up the wrong distribution/bootloaders.
+if [ -f /work/auto/config ] && [ -d /work/build ]; then
+  mkdir -p /work/build/auto
+  cp -f /work/auto/config /work/build/auto/config
+  chmod 0755 /work/build/auto/config
+  echo "[sync-canonical] auto/config → build/auto/config (canonical pin)"
+fi
