@@ -96,7 +96,8 @@ lb clean --all || lb clean || true
 echo "[inner] remove stale ISO artifacts before fresh build at $(date -Is)"
 rm -f /work/build/*.iso /work/build/*.iso.zsync* /work/build/live-image-amd64.* 2>/dev/null || true
 
-echo "[inner] lb config at $(date -Is)"
+echo "[inner] apt-get update -qq && apt-get install -y --no-install-recommends apt-utils ca-certificates xz-utils debootstrap || true
+ lb config at $(date -Is)"
 lb config --ignore-system-defaults || lb config
 
 BUILD_STARTED_EPOCH="$(date +%s)"
