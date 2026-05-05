@@ -1,0 +1,20 @@
+#!/bin/bash
+# 0182-alfred-intercession — names + needs to lift up daily.
+set -euo pipefail
+echo "[0182-intercession] begin"
+cat >/usr/sbin/alfred-intercession <<"EOS"
+#!/bin/bash
+set -euo pipefail
+L=${ALFRED_INTERCESSION_LIST:-$HOME/.alfred/intercession.tsv}
+mkdir -p "$(dirname "$L")"
+[ -f "$L" ] || printf "added\tname\tneed\n" >"$L"
+case "${1:-}" in
+  add) shift; name="${1:?name}"; shift; printf "%s\t%s\t%s\n" "$(date -Is)" "$name" "$*" >>"$L"; echo "added $name" ;;
+  list) column -t -s$"\t" "$L" 2>/dev/null || cat "$L" ;;
+  pick) tail -n +2 "$L" | shuf -n 1 2>/dev/null || true ;;
+  *) echo "usage: alfred-intercession {add <name> <need>|list|pick}"; exit 0 ;;
+esac
+EOS
+chmod 0755 /usr/sbin/alfred-intercession
+echo "[0182-intercession] done"
+

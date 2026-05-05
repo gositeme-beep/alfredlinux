@@ -1,0 +1,21 @@
+#!/bin/bash
+# 0180-alfred-fast — fasting timer + sacred reminders.
+set -euo pipefail
+echo "[0180-fast] begin"
+cat >/usr/sbin/alfred-fast <<"EOS"
+#!/bin/bash
+set -euo pipefail
+ST=${ALFRED_FAST_STATE:-$HOME/.alfred/fast.state}
+mkdir -p "$(dirname "$ST")"
+case "${1:-}" in
+  start) date +%s >"$ST"; echo "fast started: $(date -Is)"; echo "Matt 6:17-18 — anoint thy head, wash thy face." ;;
+  status) [ -f "$ST" ] || { echo "no active fast"; exit 0; }
+    s=$(cat "$ST"); n=$(date +%s); el=$((n-s))
+    printf "fasting %02d:%02d:%02d (%d s)\n" $((el/3600)) $(( (el%3600)/60 )) $((el%60)) "$el" ;;
+  break) [ -f "$ST" ] && { echo "broke fast at $(date -Is) — duration $(( ($(date +%s)-$(cat "$ST"))/60 )) min"; rm -f "$ST"; } || echo "no active fast" ;;
+  *) echo "usage: alfred-fast {start|status|break}"; exit 0 ;;
+esac
+EOS
+chmod 0755 /usr/sbin/alfred-fast
+echo "[0180-fast] done"
+

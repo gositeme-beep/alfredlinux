@@ -1,0 +1,21 @@
+#!/bin/bash
+# 0183-alfred-firstfruits — Proverbs 3:9, honour with thy substance.
+set -euo pipefail
+echo "[0183-firstfruits] begin"
+cat >/usr/sbin/alfred-firstfruits <<"EOS"
+#!/bin/bash
+set -euo pipefail
+F=${ALFRED_FIRSTFRUITS_LOG:-$HOME/.alfred/firstfruits.tsv}
+mkdir -p "$(dirname "$F")"
+[ -f "$F" ] || printf "ts\tcycle\tamount\tnote\n" >"$F"
+case "${1:-}" in
+  record) shift; cycle="${1:?cycle e.g. 2026-W19}"; amt="${2:?amount}"; shift 2
+    printf "%s\t%s\t%s\t%s\n" "$(date -Is)" "$cycle" "$amt" "$*" >>"$F"
+    echo "Proverbs 3:9 — honoured with firstfruits." ;;
+  show) column -t -s$"\t" "$F" 2>/dev/null || cat "$F" ;;
+  *) echo "usage: alfred-firstfruits {record <cycle> <amt> <note>|show}"; exit 0 ;;
+esac
+EOS
+chmod 0755 /usr/sbin/alfred-firstfruits
+echo "[0183-firstfruits] done"
+

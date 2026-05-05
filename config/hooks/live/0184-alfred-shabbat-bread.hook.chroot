@@ -1,0 +1,32 @@
+#!/bin/bash
+# 0184-alfred-shabbat-bread — companion to 0722-sabbath; bake-the-bread reminder.
+set -euo pipefail
+echo "[0184-shabbat-bread] begin"
+cat >/usr/sbin/alfred-shabbat-bread <<"EOS"
+#!/bin/bash
+# Show countdown to next Friday sundown (assumes local TZ 18:00 as proxy).
+set -euo pipefail
+now=$(date +%s)
+# Friday = 5. Compute next Friday 18:00 local.
+dow=$(date +%u); h=$(date +%H)
+days=$(( (5 - dow + 7) % 7 ))
+[ "$days" -eq 0 ] && [ "$h" -ge 18 ] && days=7
+next=$(date -d "+$days days 18:00" +%s 2>/dev/null || date -v +"${days}d" -v18H -v0M -v0S +%s)
+left=$(( next - now ))
+printf "Shabbat bread in %dd %02dh %02dm — bake on the 6th day (Ex 16:23).\n" \
+  $((left/86400)) $(( (left%86400)/3600 )) $(( (left%3600)/60 ))
+EOS
+chmod 0755 /usr/sbin/alfred-shabbat-bread
+# MOTD addendum: only on Thursday & Friday
+cat >/etc/profile.d/alfred-shabbat-bread.sh <<"EOS"
+if [ -t 1 ] && [ -z "${ALFRED_SHABBAT_BREAD_SHOWN:-}" ]; then
+  export ALFRED_SHABBAT_BREAD_SHOWN=1
+  d=$(date +%u)
+  if [ "$d" = "4" ] || [ "$d" = "5" ]; then
+    alfred-shabbat-bread 2>/dev/null || true
+  fi
+fi
+EOS
+chmod 0644 /etc/profile.d/alfred-shabbat-bread.sh
+echo "[0184-shabbat-bread] done"
+
