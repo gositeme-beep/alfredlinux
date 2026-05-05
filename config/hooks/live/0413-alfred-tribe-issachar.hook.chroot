@@ -1,0 +1,18 @@
+#!/bin/bash
+# 0413-alfred-tribe-issachar — 📚 issachar — wisdom-of-seasons
+set -euo pipefail
+echo "[0413-tribe-issachar] begin"
+install -d /etc/alfred/tribes /usr/share/alfred/tribes
+cat >/etc/alfred/tribes/issachar.flag <<EOS
+TRIBE=issachar
+EMOJI=📚
+GIFT=wisdom-of-seasons
+VERSE="1 Chron 12:32 — understood the times."
+EOS
+cat >/usr/share/alfred/tribes/issachar.txt <<EOS
+📚  Tribe of issachar
+1 Chron 12:32 — understood the times.
+Gift: wisdom-of-seasons
+EOS
+echo "[0413-tribe-issachar] done"
+

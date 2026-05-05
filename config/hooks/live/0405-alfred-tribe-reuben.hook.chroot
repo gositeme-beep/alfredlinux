@@ -1,0 +1,18 @@
+#!/bin/bash
+# 0405-alfred-tribe-reuben — 🌊 reuben — honour-of-the-firstborn
+set -euo pipefail
+echo "[0405-tribe-reuben] begin"
+install -d /etc/alfred/tribes /usr/share/alfred/tribes
+cat >/etc/alfred/tribes/reuben.flag <<EOS
+TRIBE=reuben
+EMOJI=🌊
+GIFT=honour-of-the-firstborn
+VERSE="Genesis 49:3 — my firstborn, my might."
+EOS
+cat >/usr/share/alfred/tribes/reuben.txt <<EOS
+🌊  Tribe of reuben
+Genesis 49:3 — my firstborn, my might.
+Gift: honour-of-the-firstborn
+EOS
+echo "[0405-tribe-reuben] done"
+

@@ -1,0 +1,18 @@
+#!/bin/bash
+# 0408-alfred-tribe-judah — 🦁 judah — kingship-and-praise
+set -euo pipefail
+echo "[0408-tribe-judah] begin"
+install -d /etc/alfred/tribes /usr/share/alfred/tribes
+cat >/etc/alfred/tribes/judah.flag <<EOS
+TRIBE=judah
+EMOJI=🦁
+GIFT=kingship-and-praise
+VERSE="Genesis 49:9-10 — sceptre shall not depart."
+EOS
+cat >/usr/share/alfred/tribes/judah.txt <<EOS
+🦁  Tribe of judah
+Genesis 49:9-10 — sceptre shall not depart.
+Gift: kingship-and-praise
+EOS
+echo "[0408-tribe-judah] done"
+

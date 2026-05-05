@@ -1,0 +1,23 @@
+#!/bin/bash
+# 0821-alfred-disciple — track those you mentor (Matt 28:19 — make disciples).
+set -euo pipefail
+echo "[0821-disciple] begin"
+cat >/usr/sbin/alfred-disciple <<"EOS"
+#!/bin/bash
+set -euo pipefail
+L=${ALFRED_DISCIPLE_LOG:-$HOME/.alfred/disciple.tsv}
+mkdir -p "$(dirname "$L")"
+[ -f "$L" ] || printf "ts\tname\tmilestone\tnote\n" >"$L"
+case "${1:-}" in
+  add) shift; n="${1:?name}"; m="${2:?milestone}"; shift 2
+    printf "%s\t%s\t%s\t%s\n" "$(date -Is)" "$n" "$m" "$*" >>"$L"
+    echo "Matthew 28:19 — go ye therefore, and teach all nations."
+    echo "Logged disciple step: $n / $m" ;;
+  list) column -t -s$"\t" "$L" 2>/dev/null || cat "$L" ;;
+  count) tail -n +2 "$L" | awk -F"\t" "{print \$2}" | sort -u | wc -l ;;
+  *) echo "usage: alfred-disciple {add <name> <milestone> <note>|list|count}"; exit 0 ;;
+esac
+EOS
+chmod 0755 /usr/sbin/alfred-disciple
+echo "[0821-disciple] done"
+

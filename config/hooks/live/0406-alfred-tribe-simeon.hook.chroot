@@ -1,0 +1,18 @@
+#!/bin/bash
+# 0406-alfred-tribe-simeon — ⚔ simeon — fierce-zeal-tempered
+set -euo pipefail
+echo "[0406-tribe-simeon] begin"
+install -d /etc/alfred/tribes /usr/share/alfred/tribes
+cat >/etc/alfred/tribes/simeon.flag <<EOS
+TRIBE=simeon
+EMOJI=⚔
+GIFT=fierce-zeal-tempered
+VERSE="Genesis 49:5 — instruments of cruelty."
+EOS
+cat >/usr/share/alfred/tribes/simeon.txt <<EOS
+⚔  Tribe of simeon
+Genesis 49:5 — instruments of cruelty.
+Gift: fierce-zeal-tempered
+EOS
+echo "[0406-tribe-simeon] done"
+

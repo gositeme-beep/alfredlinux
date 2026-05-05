@@ -1,0 +1,25 @@
+#!/bin/bash
+# 0820-alfred-share — share Alfred ISO/tools with another, log who you blessed.
+set -euo pipefail
+echo "[0820-share] begin"
+cat >/usr/sbin/alfred-share <<"EOS"
+#!/bin/bash
+# alfred-share — record who you shared Alfred with; print share-script copy command.
+set -euo pipefail
+L=${ALFRED_SHARE_LOG:-$HOME/.alfred/share.tsv}
+mkdir -p "$(dirname "$L")"
+[ -f "$L" ] || printf "ts\tname\tmedium\tnote\n" >"$L"
+case "${1:-}" in
+  give) shift; n="${1:?name}"; m="${2:?usb|link|disk|cd}"; shift 2
+    printf "%s\t%s\t%s\t%s\n" "$(date -Is)" "$n" "$m" "$*" >>"$L"
+    echo "Mark 16:15 — Go ye into all the world."
+    echo "Shared with: $n via $m" ;;
+  count) tail -n +2 "$L" | wc -l ;;
+  show)  column -t -s$"\t" "$L" 2>/dev/null || cat "$L" ;;
+  iso)   echo "Copy ISO: dd if=/usr/share/alfred/iso/alfred.iso of=/dev/sdX bs=4M status=progress" ;;
+  *) echo "usage: alfred-share {give <name> <usb|link|disk|cd> <note>|count|show|iso}"; exit 0 ;;
+esac
+EOS
+chmod 0755 /usr/sbin/alfred-share
+echo "[0820-share] done"
+

@@ -1,0 +1,18 @@
+#!/bin/bash
+# 0412-alfred-tribe-asher — 🌾 asher — abundance-and-hospitality
+set -euo pipefail
+echo "[0412-tribe-asher] begin"
+install -d /etc/alfred/tribes /usr/share/alfred/tribes
+cat >/etc/alfred/tribes/asher.flag <<EOS
+TRIBE=asher
+EMOJI=🌾
+GIFT=abundance-and-hospitality
+VERSE="Genesis 49:20 — his bread shall be fat."
+EOS
+cat >/usr/share/alfred/tribes/asher.txt <<EOS
+🌾  Tribe of asher
+Genesis 49:20 — his bread shall be fat.
+Gift: abundance-and-hospitality
+EOS
+echo "[0412-tribe-asher] done"
+

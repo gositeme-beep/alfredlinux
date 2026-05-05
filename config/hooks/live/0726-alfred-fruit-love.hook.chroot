@@ -1,0 +1,21 @@
+#!/bin/bash
+# 0726-alfred-fruit-love — Galatians 5:22-23
+set -euo pipefail
+echo "[0726-fruit-love] begin"
+cat >/usr/sbin/alfred-fruit-love <<"EOS"
+#!/bin/bash
+# alfred-fruit-love — daily checkin (1-10 self-rating)
+set -euo pipefail
+LOG=${ALFRED_FRUIT_LOG:-$HOME/.alfred/fruit.tsv}
+mkdir -p "$(dirname "$LOG")"
+[ -f "$LOG" ] || printf 'ts\tfruit\trating\tnote\n' >"$LOG"
+case "${1:-}" in
+  rate) shift; r="${1:?1-10}"; shift; printf '%s\t%s\t%s\t%s\n' "$(date -Is)" 'love' "$r" "$*" >>"$LOG"; echo "love rated $r" ;;
+  show) grep -P "\\tlove\\t" "$LOG" | tail -10 ;;
+  avg)  grep -P "\\tlove\\t" "$LOG" | awk -F'\t' '{s+=$3;n++}END{if(n)printf "%.2f over %d entries\n",s/n,n;else print "no data"}' ;;
+  *) echo "Galatians 5:22 — the fruit of the Spirit is love."; echo "usage: alfred-fruit-love {rate <1-10> <note>|show|avg}" ;;
+esac
+EOS
+chmod 0755 /usr/sbin/alfred-fruit-love
+echo "[0726-fruit-love] done"
+

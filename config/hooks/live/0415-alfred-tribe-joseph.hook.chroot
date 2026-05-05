@@ -1,0 +1,18 @@
+#!/bin/bash
+# 0415-alfred-tribe-joseph — 👑 joseph — fruitfulness-restored
+set -euo pipefail
+echo "[0415-tribe-joseph] begin"
+install -d /etc/alfred/tribes /usr/share/alfred/tribes
+cat >/etc/alfred/tribes/joseph.flag <<EOS
+TRIBE=joseph
+EMOJI=👑
+GIFT=fruitfulness-restored
+VERSE="Genesis 49:22 — fruitful bough by a well."
+EOS
+cat >/usr/share/alfred/tribes/joseph.txt <<EOS
+👑  Tribe of joseph
+Genesis 49:22 — fruitful bough by a well.
+Gift: fruitfulness-restored
+EOS
+echo "[0415-tribe-joseph] done"
+

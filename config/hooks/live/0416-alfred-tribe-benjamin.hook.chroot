@@ -1,0 +1,18 @@
+#!/bin/bash
+# 0416-alfred-tribe-benjamin — 🐺 benjamin — loyalty-of-the-beloved
+set -euo pipefail
+echo "[0416-tribe-benjamin] begin"
+install -d /etc/alfred/tribes /usr/share/alfred/tribes
+cat >/etc/alfred/tribes/benjamin.flag <<EOS
+TRIBE=benjamin
+EMOJI=🐺
+GIFT=loyalty-of-the-beloved
+VERSE="Genesis 49:27 — ravening as a wolf."
+EOS
+cat >/usr/share/alfred/tribes/benjamin.txt <<EOS
+🐺  Tribe of benjamin
+Genesis 49:27 — ravening as a wolf.
+Gift: loyalty-of-the-beloved
+EOS
+echo "[0416-tribe-benjamin] done"
+

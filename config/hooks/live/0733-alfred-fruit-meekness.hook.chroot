@@ -1,0 +1,21 @@
+#!/bin/bash
+# 0733-alfred-fruit-meekness — Galatians 5:22-23
+set -euo pipefail
+echo "[0733-fruit-meekness] begin"
+cat >/usr/sbin/alfred-fruit-meekness <<"EOS"
+#!/bin/bash
+# alfred-fruit-meekness — daily checkin (1-10 self-rating)
+set -euo pipefail
+LOG=${ALFRED_FRUIT_LOG:-$HOME/.alfred/fruit.tsv}
+mkdir -p "$(dirname "$LOG")"
+[ -f "$LOG" ] || printf 'ts\tfruit\trating\tnote\n' >"$LOG"
+case "${1:-}" in
+  rate) shift; r="${1:?1-10}"; shift; printf '%s\t%s\t%s\t%s\n' "$(date -Is)" 'meekness' "$r" "$*" >>"$LOG"; echo "meekness rated $r" ;;
+  show) grep -P "\\tmeekness\\t" "$LOG" | tail -10 ;;
+  avg)  grep -P "\\tmeekness\\t" "$LOG" | awk -F'\t' '{s+=$3;n++}END{if(n)printf "%.2f over %d entries\n",s/n,n;else print "no data"}' ;;
+  *) echo "Galatians 5:23 — meekness."; echo "usage: alfred-fruit-meekness {rate <1-10> <note>|show|avg}" ;;
+esac
+EOS
+chmod 0755 /usr/sbin/alfred-fruit-meekness
+echo "[0733-fruit-meekness] done"
+

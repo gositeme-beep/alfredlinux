@@ -1,0 +1,18 @@
+#!/bin/bash
+# 0411-alfred-tribe-gad — 🛡 gad — resilience-after-loss
+set -euo pipefail
+echo "[0411-tribe-gad] begin"
+install -d /etc/alfred/tribes /usr/share/alfred/tribes
+cat >/etc/alfred/tribes/gad.flag <<EOS
+TRIBE=gad
+EMOJI=🛡
+GIFT=resilience-after-loss
+VERSE="Genesis 49:19 — a troop shall overcome."
+EOS
+cat >/usr/share/alfred/tribes/gad.txt <<EOS
+🛡  Tribe of gad
+Genesis 49:19 — a troop shall overcome.
+Gift: resilience-after-loss
+EOS
+echo "[0411-tribe-gad] done"
+
