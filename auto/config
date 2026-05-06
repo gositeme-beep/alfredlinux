@@ -13,7 +13,7 @@ lb config noauto \
     --apt-source-archives false \
     --binary-images iso-hybrid \
     --bootloaders "grub-efi syslinux" \
-    --debootstrap-options "--variant=minbase" \
+    --debootstrap-options "--variant=minbase --include=apt-utils" \
     --linux-flavours 7.0.3 \
     --linux-packages "linux-image" \
     --memtest none \
