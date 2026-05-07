@@ -15,6 +15,26 @@ set -e
 # Fix /tmp permissions (may be restricted by earlier hooks in chroot)
 chmod 1777 /tmp 2>/dev/null || true
 
+apt_update_nonfatal() {
+    local tag="${1:-apt-update}"
+    mkdir -p /var/lib/alfred/build-flags
+    if ! apt-get update -qq 2>/dev/null; then
+        echo "[DEV-APT] WARN: update failed (non-fatal): ${tag}" >&2
+        echo "${tag}_update_failed=$(date -Is)" >> /var/lib/alfred/build-flags/dev-tools-apt-failed
+    fi
+}
+
+apt_nonfatal() {
+    local tag="${1:-apt-install}"
+    shift || true
+    mkdir -p /var/lib/alfred/build-flags
+    if ! apt-get install -y --no-install-recommends "$@" 2>/dev/null; then
+        echo "[DEV-APT] WARN: install failed (non-fatal): ${tag} ($*)" >&2
+        echo "${tag}_install_failed=$(date -Is)" >> /var/lib/alfred/build-flags/dev-tools-apt-failed
+    fi
+}
+
+
 echo "═══════════════════════════════════════════════════════"
 echo "  ALFRED DEVELOPER ARSENAL — Every weapon, loaded"
 echo "═══════════════════════════════════════════════════════"
@@ -40,15 +60,15 @@ else
     if [ -f /etc/apt/keyrings/nodesource.gpg ] && [ -s /etc/apt/keyrings/nodesource.gpg ]; then
         echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_20.x nodistro main" \
             > /etc/apt/sources.list.d/nodesource.list
-        apt-get update -qq 2>/dev/null || true
-        apt-get install -y --no-install-recommends nodejs || true
+        apt_update_nonfatal nodesource-index
+        apt_nonfatal nodejs nodejs
     fi
 fi
 echo "[DEV] Node.js $(node --version 2>/dev/null || echo 'FAILED') / npm $(npm --version 2>/dev/null || echo 'FAILED')"
 
 # ── 2. Go ──
 echo "[DEV] Installing Go..."
-apt-get install -y --no-install-recommends golang-go || true
+apt_nonfatal golang golang-go
 
 # ── 3. Rust — ready-to-install on first login ──
 # We don't install the full toolchain in the ISO (saves 500MB)
@@ -90,7 +110,7 @@ chmod +x /usr/local/bin/install-rust
 # ── 4. Database Clients ──
 # Every database client. Zero servers (keep it light).
 echo "[DEV] Installing database clients..."
-apt-get install -y --no-install-recommends \
+apt_nonfatal db-clients \
     postgresql-client \
     mariadb-client \
     redis-tools \
@@ -99,7 +119,7 @@ apt-get install -y --no-install-recommends \
 
 # ── 5. Build Tools ──
 echo "[DEV] Installing build tools..."
-apt-get install -y --no-install-recommends \
+apt_nonfatal db-clients \
     cmake \
     meson \
     ninja-build \
@@ -109,7 +129,7 @@ apt-get install -y --no-install-recommends \
 
 # ── 6. Git Extensions ──
 echo "[DEV] Installing git extensions..."
-apt-get install -y --no-install-recommends git-lfs || true
+apt_nonfatal git-lfs git-lfs
 git lfs install --system 2>/dev/null || true
 
 # ── 7. GoForge CLI (Sovereign Git - replaces GitHub CLI) ──
@@ -134,7 +154,7 @@ fi
 
 # ── 8. Debug & Profiling Tools ──
 echo "[DEV] Installing debug tools..."
-apt-get install -y --no-install-recommends \
+apt_nonfatal db-clients \
     strace \
     ltrace \
     gdb \
@@ -142,7 +162,7 @@ apt-get install -y --no-install-recommends \
 
 # ── 9. JSON/YAML tools ──
 echo "[DEV] Installing data tools..."
-apt-get install -y --no-install-recommends \
+apt_nonfatal db-clients \
     jq \
     || true
 # yq via pip (more reliable than snap)

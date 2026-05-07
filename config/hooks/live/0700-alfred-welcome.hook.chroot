@@ -12,12 +12,32 @@
 set -e
 chmod 1777 /tmp 2>/dev/null || true
 
+
+apt_update_nonfatal() {
+    local tag="${1:-apt-update}"
+    mkdir -p /var/lib/alfred/build-flags
+    if ! apt-get update -qq 2>/dev/null; then
+        echo "[WELCOME-APT] WARN: update failed (non-fatal): ${tag}" >&2
+        echo "${tag}_update_failed=$(date -Is)" >> /var/lib/alfred/build-flags/welcome-apt-failed
+    fi
+}
+
+apt_nonfatal() {
+    local tag="${1:-apt-install}"
+    shift || true
+    mkdir -p /var/lib/alfred/build-flags
+    if ! apt-get install -y --no-install-recommends "$@" 2>/dev/null; then
+        echo "[WELCOME-APT] WARN: install failed (non-fatal): ${tag} ($*)" >&2
+        echo "${tag}_install_failed=$(date -Is)" >> /var/lib/alfred/build-flags/welcome-apt-failed
+    fi
+}
+
 echo "╔═══════════════════════════════════════════════════════════╗"
 echo "║  [0700] Kingdom Welcome Experience                        ║"
 echo "╚═══════════════════════════════════════════════════════════╝"
 
-apt-get update -qq 2>/dev/null || true
-apt-get install -y --no-install-recommends zenity xdg-utils 2>/dev/null || true
+apt_update_nonfatal welcome-baseline
+apt_nonfatal welcome-tools zenity xdg-utils
 
 install -d -m 0755 /usr/local/bin /var/lib/alfred
 
@@ -51,7 +71,6 @@ echo "[WELCOME-02] Installing first-boot welcome..."
 cat > /usr/local/bin/alfred-first-boot.sh << 'EOF'
 #!/bin/bash
 set -e
-chmod 1777 /tmp 2>/dev/null || true
 
 STAMP_FILE="/var/lib/alfred/welcome.done"
 

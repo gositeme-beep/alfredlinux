@@ -14,6 +14,23 @@ echo "════════════════════════�
 echo "  ALFRED SOVEREIGN LAYER — The Crown"
 echo "═══════════════════════════════════════════════════════"
 export DEBIAN_FRONTEND=noninteractive
+# ── apt_nonfatal helpers (injected: apt-swallow observability) ──
+apt_update_nonfatal() {
+    local tag="$1"
+    mkdir -p /var/lib/alfred/build-flags
+    if ! DEBIAN_FRONTEND=noninteractive apt-get update -qq 2>/dev/null; then
+        echo "[WARN] apt-get update (${tag}) failed (nonfatal)" >&2
+        echo "${tag}_update_failed=$(date -Is)" >> /var/lib/alfred/build-flags/${tag}-apt-failed
+    fi
+}
+apt_nonfatal() {
+    local tag="$1"; shift
+    mkdir -p /var/lib/alfred/build-flags
+    if ! DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends "$@" 2>/dev/null; then
+        echo "[WARN] ${tag} install failed (nonfatal)" >&2
+        echo "${tag}_install_failed=$(date -Is)" >> /var/lib/alfred/build-flags/${tag}-apt-failed
+    fi
+}
 
 # ═══════════════════════════════════════════════════
 # 1. SELF-HEALING SECURITY — The OS fixes itself
@@ -214,7 +231,7 @@ chmod +x /usr/local/bin/alfred-whoami
 # 5. MESH DISCOVERY — Alfred devices find each other
 # ═══════════════════════════════════════════════════
 echo "[SOVEREIGN] Installing mesh discovery..."
-apt-get install -y --no-install-recommends avahi-daemon avahi-utils || true
+apt_nonfatal sovereign-mesh avahi-daemon avahi-utils
 mkdir -p /etc/avahi/services
 cat > /etc/avahi/services/alfred.service << 'AVAHI'
 <?xml version="1.0" standalone='no'?>

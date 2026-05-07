@@ -17,6 +17,23 @@
 set -e
 chmod 1777 /tmp 2>/dev/null || true
 export DEBIAN_FRONTEND=noninteractive
+# ── apt_nonfatal helpers (injected: apt-swallow observability) ──
+apt_update_nonfatal() {
+    local tag="$1"
+    mkdir -p /var/lib/alfred/build-flags
+    if ! DEBIAN_FRONTEND=noninteractive apt-get update -qq 2>/dev/null; then
+        echo "[WARN] apt-get update (${tag}) failed (nonfatal)" >&2
+        echo "${tag}_update_failed=$(date -Is)" >> /var/lib/alfred/build-flags/${tag}-apt-failed
+    fi
+}
+apt_nonfatal() {
+    local tag="$1"; shift
+    mkdir -p /var/lib/alfred/build-flags
+    if ! DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends "$@" 2>/dev/null; then
+        echo "[WARN] ${tag} install failed (nonfatal)" >&2
+        echo "${tag}_install_failed=$(date -Is)" >> /var/lib/alfred/build-flags/${tag}-apt-failed
+    fi
+}
 
 echo "╔═══════════════════════════════════════════════════════════╗"
 echo "║  [0800] Alfred Store + Chess                             ║"
@@ -28,16 +45,15 @@ echo "╚═══════════════════════�
 # ═══════════════════════════════════════════════════════════════════
 
 echo "[STORE-01] Installing store stack..."
-apt-get update -qq 2>/dev/null || true
-apt-get install -y --no-install-recommends flatpak gnome-software-plugin-flatpak 2>/dev/null || true
-apt-get install -y --no-install-recommends snapd 2>/dev/null || true
+apt_update_nonfatal store
+apt_nonfatal store-flatpak flatpak gnome-software-plugin-flatpak
+apt_nonfatal store-snapd snapd
 
 install -d -m 0755 /usr/local/bin /usr/share/applications
 
 cat > /usr/local/bin/alfred-store << 'EOF'
 #!/bin/bash
 set -e
-chmod 1777 /tmp 2>/dev/null || true
 
 URL="https://gositeme.com/store.php"
 if command -v xdg-open >/dev/null 2>&1; then
@@ -78,7 +94,7 @@ echo "[STORE] ✓ Alfred Store configured"
 # B1. INSTALL CHESS ENGINE
 # ═══════════════════════════════════════════════════
 echo "[CHESS-01] Installing Stockfish chess engine..."
-apt-get install -y --no-install-recommends stockfish 2>/dev/null || true
+apt_nonfatal store-chess stockfish
 
 # ═══════════════════════════════════════════════════
 # B2. CREATE CHESS DIRECTORY STRUCTURE

@@ -21,6 +21,23 @@
 # BUILD: v4.0 GA
 # ═══════════════════════════════════════════════════════════════
 set -e
+# ── apt_nonfatal helpers (injected: apt-swallow observability) ──
+apt_update_nonfatal() {
+    local tag="$1"
+    mkdir -p /var/lib/alfred/build-flags
+    if ! DEBIAN_FRONTEND=noninteractive apt-get update -qq 2>/dev/null; then
+        echo "[WARN] apt-get update (${tag}) failed (nonfatal)" >&2
+        echo "${tag}_update_failed=$(date -Is)" >> /var/lib/alfred/build-flags/${tag}-apt-failed
+    fi
+}
+apt_nonfatal() {
+    local tag="$1"; shift
+    mkdir -p /var/lib/alfred/build-flags
+    if ! DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends "$@" 2>/dev/null; then
+        echo "[WARN] ${tag} install failed (nonfatal)" >&2
+        echo "${tag}_install_failed=$(date -Is)" >> /var/lib/alfred/build-flags/${tag}-apt-failed
+    fi
+}
 echo "╔═══════════════════════════════════════════════════════════╗"
 echo "║  [0175] The Omahon Seal — Breath of God                   ║"
 echo "║  Final Security Hardening · Alfred Linux 4.0 GA           ║"
@@ -192,7 +209,7 @@ chmod 700 /var/lib/omahon
 # ═══════════════════════════════════════════════════
 echo "[OMAHON-02] Installing runtime tamper watchman..."
 
-apt-get install -y --no-install-recommends inotify-tools 2>/dev/null || true
+apt_nonfatal omahon inotify-tools
 
 cat > /usr/local/bin/omahon-watchman << 'WATCHMAN'
 #!/bin/bash

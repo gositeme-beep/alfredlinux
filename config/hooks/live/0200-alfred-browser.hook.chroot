@@ -11,10 +11,28 @@
 
 set -e
 
+# ── apt_nonfatal helpers (injected: apt-swallow observability) ──
+apt_update_nonfatal() {
+    local tag="$1"
+    mkdir -p /var/lib/alfred/build-flags
+    if ! DEBIAN_FRONTEND=noninteractive apt-get update -qq 2>/dev/null; then
+        echo "[WARN] apt-get update (${tag}) failed (nonfatal)" >&2
+        echo "${tag}_update_failed=$(date -Is)" >> /var/lib/alfred/build-flags/${tag}-apt-failed
+    fi
+}
+apt_nonfatal() {
+    local tag="$1"; shift
+    mkdir -p /var/lib/alfred/build-flags
+    if ! DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends "$@" 2>/dev/null; then
+        echo "[WARN] ${tag} install failed (nonfatal)" >&2
+        echo "${tag}_install_failed=$(date -Is)" >> /var/lib/alfred/build-flags/${tag}-apt-failed
+    fi
+}
+
 echo "[Alfred Linux v2.0] Installing Alfred Browser..."
 
 # ── 1. Install Alfred Browser dependencies ──
-apt-get install -y libwebkit2gtk-4.1-0 libgtk-3-0 libayatana-appindicator3-1 2>/dev/null || true
+apt_nonfatal browser-libs libwebkit2gtk-4.1-0 libgtk-3-0 libayatana-appindicator3-1
 
 # ── 2. Install Alfred Browser from packages.chroot ──
 if ! dpkg -l alfred-browser 2>/dev/null | grep -q '^ii'; then
@@ -123,8 +141,16 @@ DEFAULTS
     echo "[Alfred Linux v2.0] Alfred Browser set as default browser"
 else
     echo "[WARN] /usr/bin/alfred-browser not found — installing Firefox ESR as default browser (Kingdom fallback)"
-    apt-get update -qq 2>/dev/null || apt-get update 2>/dev/null || true
-    apt-get install -y --no-install-recommends firefox-esr 2>/dev/null || apt-get install -y firefox-esr 2>/dev/null || true
+    mkdir -p /var/lib/alfred/build-flags
+    if ! (apt-get update -qq 2>/dev/null || apt-get update 2>/dev/null); then
+        echo "[BROWSER-04] WARN: apt update failed while restoring firefox-esr" >&2
+        echo "firefox_restore_update_failed=$(date -Is)" >> /var/lib/alfred/build-flags/browser-install-failed
+    fi
+
+    if ! (apt-get install -y --no-install-recommends firefox-esr 2>/dev/null || apt-get install -y firefox-esr 2>/dev/null); then
+        echo "[BROWSER-04] WARN: firefox-esr restore failed (non-fatal)" >&2
+        echo "firefox_restore_install_failed=$(date -Is)" >> /var/lib/alfred/build-flags/browser-install-failed
+    fi
     if [[ -x /usr/bin/firefox-esr ]] || [[ -x /usr/bin/firefox ]]; then
         FFX_BIN=""
         [[ -x /usr/bin/firefox-esr ]] && FFX_BIN="/usr/bin/firefox-esr"

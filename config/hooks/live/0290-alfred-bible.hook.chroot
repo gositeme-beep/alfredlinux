@@ -3,6 +3,23 @@
 # Edition HTML: dynamic strings via Python html.escape; bible-engine script is a
 # quoted heredoc (no bash expansion on $ or `). Per-edition .desktop via Python.
 set -e
+# ── apt_nonfatal helpers (injected: apt-swallow observability) ──
+apt_update_nonfatal() {
+    local tag="$1"
+    mkdir -p /var/lib/alfred/build-flags
+    if ! DEBIAN_FRONTEND=noninteractive apt-get update -qq 2>/dev/null; then
+        echo "[WARN] apt-get update (${tag}) failed (nonfatal)" >&2
+        echo "${tag}_update_failed=$(date -Is)" >> /var/lib/alfred/build-flags/${tag}-apt-failed
+    fi
+}
+apt_nonfatal() {
+    local tag="$1"; shift
+    mkdir -p /var/lib/alfred/build-flags
+    if ! DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends "$@" 2>/dev/null; then
+        echo "[WARN] ${tag} install failed (nonfatal)" >&2
+        echo "${tag}_install_failed=$(date -Is)" >> /var/lib/alfred/build-flags/${tag}-apt-failed
+    fi
+}
 echo "╔══════════════════════════════════════════════════════════════════════╗"
 echo "║  HOOK 0290: The Word of God + Music of the Kingdom                 ║"
 echo "║  Alfred Linux 7.77 — Kingdom of God Edition                         ║"
@@ -346,7 +363,7 @@ EOF
 # 8. Install mpv for music playback
 ###############################################################################
 echo "[MUSIC] Installing mpv player..."
-apt-get install -y mpv --no-install-recommends 2>/dev/null || true
+apt_nonfatal bible-media mpv
 
 echo ""
 echo "╔══════════════════════════════════════════════════════════════════════╗"

@@ -1,10 +1,27 @@
 #!/bin/bash
 # SPDX-License-Identifier: AGPL-3.0-or-later
 set -e
+
+# ── apt_nonfatal helpers (injected: apt-swallow observability) ──
+apt_update_nonfatal() {
+    local tag="$1"
+    mkdir -p /var/lib/alfred/build-flags
+    if ! DEBIAN_FRONTEND=noninteractive apt-get update -qq 2>/dev/null; then
+        echo "[WARN] apt-get update (${tag}) failed (nonfatal)" >&2
+        echo "${tag}_update_failed=$(date -Is)" >> /var/lib/alfred/build-flags/${tag}-apt-failed
+    fi
+}
+apt_nonfatal() {
+    local tag="$1"; shift
+    mkdir -p /var/lib/alfred/build-flags
+    if ! DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends "$@" 2>/dev/null; then
+        echo "[WARN] ${tag} install failed (nonfatal)" >&2
+        echo "${tag}_install_failed=$(date -Is)" >> /var/lib/alfred/build-flags/${tag}-apt-failed
+    fi
+}
 # Fix /tmp permissions (may be restricted by earlier hooks in chroot)
 chmod 1777 /tmp 2>/dev/null || true
 # Fix /tmp permissions (may be restricted by earlier hooks in chroot)
-chmod 1777 /tmp 2>/dev/null || true
 echo "╔═══════════════════════════════════════════════════╗"
 echo "║  HOOK 0275: Alfred GPU — Sovereign Compute Stack  ║"
 echo "╚═══════════════════════════════════════════════════╝"
@@ -24,7 +41,7 @@ cat > /etc/apt/sources.list.d/non-free.list << 'REPOEOF'
 deb http://deb.debian.org/debian trixie main contrib non-free non-free-firmware
 deb http://deb.debian.org/debian trixie-updates main contrib non-free non-free-firmware
 REPOEOF
-apt-get update -qq || true
+apt_update_nonfatal gpu
 
 ###############################################################################
 # 2. Universal GPU Drivers — Mesa (AMD/Intel) + NVIDIA firmware
@@ -88,9 +105,7 @@ cat > /usr/local/bin/alfred-gpu-nvidia-setup << 'NVIDIAEOF'
 # Run this when NVIDIA hardware is detected at boot
 set -e
 # Fix /tmp permissions (may be restricted by earlier hooks in chroot)
-chmod 1777 /tmp 2>/dev/null || true
 # Fix /tmp permissions (may be restricted by earlier hooks in chroot)
-chmod 1777 /tmp 2>/dev/null || true
 
 echo "[Alfred GPU] Detected NVIDIA hardware — installing proprietary drivers + CUDA..."
 
@@ -123,9 +138,7 @@ cat > /usr/local/bin/alfred-gpu-rocm-setup << 'ROCMEOF'
 # Alfred GPU — AMD ROCm On-Demand Installer
 set -e
 # Fix /tmp permissions (may be restricted by earlier hooks in chroot)
-chmod 1777 /tmp 2>/dev/null || true
 # Fix /tmp permissions (may be restricted by earlier hooks in chroot)
-chmod 1777 /tmp 2>/dev/null || true
 
 echo "[Alfred GPU] Detected AMD GPU — installing ROCm compute stack..."
 

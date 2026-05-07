@@ -27,6 +27,23 @@ echo "╔═══════════════════════�
 echo "║  [0167] Alfred Mesh Cloud — Sovereign Peer Network       ║"
 echo "╚═══════════════════════════════════════════════════════════╝"
 export DEBIAN_FRONTEND=noninteractive
+# ── apt_nonfatal helpers (injected: apt-swallow observability) ──
+apt_update_nonfatal() {
+    local tag="$1"
+    mkdir -p /var/lib/alfred/build-flags
+    if ! DEBIAN_FRONTEND=noninteractive apt-get update -qq 2>/dev/null; then
+        echo "[WARN] apt-get update (${tag}) failed (nonfatal)" >&2
+        echo "${tag}_update_failed=$(date -Is)" >> /var/lib/alfred/build-flags/${tag}-apt-failed
+    fi
+}
+apt_nonfatal() {
+    local tag="$1"; shift
+    mkdir -p /var/lib/alfred/build-flags
+    if ! DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends "$@" 2>/dev/null; then
+        echo "[WARN] ${tag} install failed (nonfatal)" >&2
+        echo "${tag}_install_failed=$(date -Is)" >> /var/lib/alfred/build-flags/${tag}-apt-failed
+    fi
+}
 
 # ═══════════════════════════════════════════════════
 # 1. INSTALL MESH DEPENDENCIES
@@ -57,7 +74,7 @@ if [ -f /etc/apt/keyrings/syncthing-archive-keyring.gpg ] && [ -s /etc/apt/keyri
         > /etc/apt/sources.list.d/syncthing.list
     apt-get update -o Dir::Etc::sourcelist="sources.list.d/syncthing.list" \
         -o Dir::Etc::sourceparts="-" -o APT::Get::List-Cleanup="0" 2>/dev/null || true
-    apt-get install -y --no-install-recommends syncthing 2>/dev/null || true
+    apt_nonfatal mesh-sync syncthing
 fi
 
 # Syncthing autostart for user (systemd user service)

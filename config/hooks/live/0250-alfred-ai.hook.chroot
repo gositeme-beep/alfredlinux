@@ -37,10 +37,17 @@ else
         echo "[AI] WARN: No staged Ollama under build-assets; skipping GitHub download (set ALFRED_ALLOW_HOOK_NETWORK_DOWNLOADS=1 to allow)." >&2
     else
         echo "[AI] No pre-staged binary — downloading Ollama ${OLLAMA_VERSION}..."
-        wget -qO /tmp/ollama "https://github.com/ollama/ollama/releases/download/v${OLLAMA_VERSION}/ollama-linux-amd64" \
-            && install -m 755 /tmp/ollama /usr/local/bin/ollama \
-            && rm -f /tmp/ollama \
-            || echo "[AI] WARNING: Ollama install failed — will need manual install"
+        if [[ "${ALFRED_ALLOW_UNVERIFIED_BINARIES:-}" != "1" ]]; then
+            echo "[AI] WARN: refusing unverified Ollama binary download (set ALFRED_ALLOW_UNVERIFIED_BINARIES=1 to override)." >&2
+        else
+            OLLAMA_TMP="$(mktemp /tmp/ollama.XXXXXX)"
+            if wget -qO "$OLLAMA_TMP" "https://github.com/ollama/ollama/releases/download/v${OLLAMA_VERSION}/ollama-linux-amd64"; then
+                install -m 755 "$OLLAMA_TMP" /usr/local/bin/ollama || true
+            else
+                echo "[AI] WARNING: Ollama download failed — will need manual install"
+            fi
+            rm -f "$OLLAMA_TMP"
+        fi
     fi
 fi
 

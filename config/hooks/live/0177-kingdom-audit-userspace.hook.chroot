@@ -125,7 +125,6 @@ copy_exec /bin/dd                    /bin
 mkdir -p "${DESTDIR}/etc/integrity"
 [ -d /etc/integrity ] && cp -a /etc/integrity "${DESTDIR}/etc/" 2>/dev/null || true
 
-exit 0
 IRHOOK_EOF
 chmod 0755 /etc/initramfs-tools/hooks/kingdom-audit
 

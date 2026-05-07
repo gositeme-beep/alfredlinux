@@ -13,6 +13,23 @@
 # ═══════════════════════════════════════════════════════════════
 
 set +e  # Voice is optional — don't kill the build if TTS install fails
+# ── apt_nonfatal helpers (injected: apt-swallow observability) ──
+apt_update_nonfatal() {
+    local tag="$1"
+    mkdir -p /var/lib/alfred/build-flags
+    if ! DEBIAN_FRONTEND=noninteractive apt-get update -qq 2>/dev/null; then
+        echo "[WARN] apt-get update (${tag}) failed (nonfatal)" >&2
+        echo "${tag}_update_failed=$(date -Is)" >> /var/lib/alfred/build-flags/${tag}-apt-failed
+    fi
+}
+apt_nonfatal() {
+    local tag="$1"; shift
+    mkdir -p /var/lib/alfred/build-flags
+    if ! DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends "$@" 2>/dev/null; then
+        echo "[WARN] ${tag} install failed (nonfatal)" >&2
+        echo "${tag}_install_failed=$(date -Is)" >> /var/lib/alfred/build-flags/${tag}-apt-failed
+    fi
+}
 
 echo "[Alfred Linux v2.0-b4] Installing Voice subsystem..."
 
@@ -28,8 +45,7 @@ fi
 
 # ── 1. Install audio dependencies (lightweight — stays in ISO) ──
 PYVER=$(python3 -c 'import sys; print("%d.%d" % sys.version_info[:2])' 2>/dev/null || echo "3")
-apt-get install -y python3-pip "python${PYVER}-venv" espeak-ng sox libsox-fmt-all 2>/dev/null || \
-apt-get install -y python3-pip python3-venv espeak-ng sox libsox-fmt-all 2>/dev/null || true
+apt_nonfatal voice-audio python3-pip python3-venv espeak-ng sox libsox-fmt-all
 
 # ── 2. Kokoro TTS — DEFERRED TO FIRST BOOT ──
 # Kokoro + PyTorch + spacy + blis adds ~2GB to the chroot which causes lb_binary
@@ -201,16 +217,11 @@ echo "[Alfred Linux v2.0-b4] Voice subsystem installed."
 # Pipewire + Wireplumber + alfred-voice-doctor diagnostic CLI.
 # ═══════════════════════════════════════════════════════════════
 chmod 1777 /tmp 2>/dev/null || true
-# Fix /tmp permissions (may be restricted by earlier hooks in chroot)
-chmod 1777 /tmp 2>/dev/null || true
 
 echo "[Alfred Voice v2] Installing realtime audio stack..."
 
-apt-get update -qq 2>/dev/null || true
-apt-get install -y --no-install-recommends \
-  pipewire pipewire-audio wireplumber \
-  alsa-utils sox pulseaudio-utils jq \
-  2>/dev/null || true
+apt_update_nonfatal voice-v2
+apt_nonfatal voice-v2 pipewire pipewire-audio wireplumber alsa-utils sox pulseaudio-utils jq
 
 install -d -m 0755 /usr/local/bin
 
@@ -218,9 +229,6 @@ cat > /usr/local/bin/alfred-voice-doctor << 'EOF'
 #!/bin/bash
 set -e
 # Fix /tmp permissions (may be restricted by earlier hooks in chroot)
-chmod 1777 /tmp 2>/dev/null || true
-# Fix /tmp permissions (may be restricted by earlier hooks in chroot)
-chmod 1777 /tmp 2>/dev/null || true
 
 echo "=== Alfred Voice Doctor ==="
 echo "Date: $(date -Iseconds)"

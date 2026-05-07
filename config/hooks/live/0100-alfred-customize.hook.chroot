@@ -212,7 +212,7 @@ if command -v convert &>/dev/null; then
     # --- Helper: generate all 3 resolutions from an 8K source ---
     # Usage: gen_resolutions <basename>
     gen_resolutions() {
-        local name="$1"
+        local name="${1:-}"
         local src="/usr/share/backgrounds/alfred-linux/8k/${name}.png"
         # 4K downscale
         convert "$src" -resize 3840x2160 -quality 95 \
@@ -590,21 +590,25 @@ echo ""
 read -r -p "Choose [1-3]: " choice
 case $choice in
     1)
-        wg genkey | tee /tmp/wg-privkey | wg pubkey > /tmp/wg-pubkey
+        umask 077
+        WG_PRIVKEY_TMP="$(mktemp /tmp/wg-privkey.XXXXXX)"
+        WG_PUBKEY_TMP="$(mktemp /tmp/wg-pubkey.XXXXXX)"
+        chmod 600 "$WG_PRIVKEY_TMP" "$WG_PUBKEY_TMP"
+        wg genkey | tee "$WG_PRIVKEY_TMP" | wg pubkey > "$WG_PUBKEY_TMP"
         echo ""
-        echo "Your public key: $(cat /tmp/wg-pubkey)"
+        echo "Your public key: $(cat "$WG_PUBKEY_TMP")"
         echo "Share this with your mesh admin."
-        echo "Private key saved temporarily at /tmp/wg-privkey"
+        echo "Private key saved temporarily in protected file: $WG_PRIVKEY_TMP"
         echo ""
         echo "To complete setup, create /etc/wireguard/wg0.conf with:"
         echo "  [Interface]"
-        echo "  PrivateKey = $(cat /tmp/wg-privkey)"
+        echo "  PrivateKey = <use contents of $WG_PRIVKEY_TMP>"
         echo "  Address = <your-mesh-ip>/24"
         echo "  [Peer]"
         echo "  PublicKey = <admin-pubkey>"
         echo "  Endpoint = <admin-ip>:51820"
         echo "  AllowedIPs = 10.66.66.0/24"
-        rm -f /tmp/wg-privkey /tmp/wg-pubkey
+        rm -f "$WG_PRIVKEY_TMP" "$WG_PUBKEY_TMP"
         ;;
     2)
         read -r -p "Path to WireGuard config file: " cfgpath

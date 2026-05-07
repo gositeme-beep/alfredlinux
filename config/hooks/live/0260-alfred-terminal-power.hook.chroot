@@ -18,6 +18,17 @@
 set -e
 
 echo "═══════════════════════════════════════════════════════"
+
+apt_nonfatal() {
+    local tag="${1:-apt-install}"
+    shift || true
+    mkdir -p /var/lib/alfred/build-flags
+    if ! apt-get install -y --no-install-recommends "$@" 2>/dev/null; then
+        echo "[TERM-APT] WARN: install failed (non-fatal): ${tag} ($*)" >&2
+        echo "${tag}_install_failed=$(date -Is)" >> /var/lib/alfred/build-flags/terminal-apt-failed
+    fi
+}
+
 echo "  ALFRED TERMINAL POWER — Feel like a god"
 echo "═══════════════════════════════════════════════════════"
 
@@ -26,7 +37,7 @@ ARCH=$(dpkg --print-architecture)
 
 # ── 1. APT-installable power tools ──
 echo "[TERM] Installing terminal power tools from repos..."
-apt-get install -y --no-install-recommends \
+apt_nonfatal terminal-tools \
     bat \
     fd-find \
     ripgrep \
@@ -40,7 +51,7 @@ apt-get install -y --no-install-recommends \
 
 # ── 2. btop (better top) ──
 echo "[TERM] Installing btop..."
-apt-get install -y --no-install-recommends btop || true
+apt_nonfatal btop btop
 
 # ── 3. eza (modern ls — may not be in Trixie repos yet) ──
 echo "[TERM] Installing eza..."
@@ -73,9 +84,22 @@ echo "[TERM] Installing duf..."
 apt-get install -y --no-install-recommends duf 2>/dev/null || {
     if [ "$ARCH" = "amd64" ] && [[ "${ALFRED_ALLOW_HOOK_NETWORK_DOWNLOADS:-}" == "1" ]]; then
         DUF_VERSION="0.8.1"
-        wget -qO /tmp/duf.deb \
-            "https://github.com/muesli/duf/releases/download/v${DUF_VERSION}/duf_${DUF_VERSION}_linux_amd64.deb" \
-            && dpkg -i /tmp/duf.deb && rm -f /tmp/duf.deb || true
+        DUF_DEB_URL="https://github.com/muesli/duf/releases/download/v${DUF_VERSION}/duf_${DUF_VERSION}_linux_amd64.deb"
+        DUF_SUM_URL="https://github.com/muesli/duf/releases/download/v${DUF_VERSION}/duf_${DUF_VERSION}_checksums.txt"
+        DUF_TMP_DEB="$(mktemp /tmp/duf.XXXXXX.deb)"
+        DUF_TMP_SUM="$(mktemp /tmp/duf.XXXXXX.checksums)"
+        if wget -qO "$DUF_TMP_DEB" "$DUF_DEB_URL" && wget -qO "$DUF_TMP_SUM" "$DUF_SUM_URL"; then
+            DUF_EXPECTED_SHA="$(grep -E "[[:space:]]duf_${DUF_VERSION}_linux_amd64.deb$" "$DUF_TMP_SUM" | awk '{print $1}' | head -n1)"
+            DUF_ACTUAL_SHA="$(sha256sum "$DUF_TMP_DEB" | awk '{print $1}')"
+            if [ -n "$DUF_EXPECTED_SHA" ] && [ "$DUF_EXPECTED_SHA" = "$DUF_ACTUAL_SHA" ]; then
+                dpkg -i "$DUF_TMP_DEB"
+            else
+                echo "[TERM] WARN: duf checksum mismatch; skipping deb install." >&2
+            fi
+        else
+            echo "[TERM] WARN: duf download/checksum fetch failed; skipping deb install." >&2
+        fi
+        rm -f "$DUF_TMP_DEB" "$DUF_TMP_SUM"
     elif [ "$ARCH" = "amd64" ]; then
         echo "[TERM] WARN: skipping duf GitHub fetch (set ALFRED_ALLOW_HOOK_NETWORK_DOWNLOADS=1)." >&2
     fi
@@ -191,7 +215,7 @@ echo "[TERM] Installing tldr..."
 if [[ "${ALFRED_ALLOW_HOOK_NETWORK_DOWNLOADS:-}" == "1" ]]; then
     pip3 install --break-system-packages --no-cache-dir tldr 2>/dev/null || true
 fi
-apt-get install -y --no-install-recommends tldr 2>/dev/null || true
+apt_nonfatal tldr tldr
 
 # ── 9. Shell Power Aliases ──
 echo "[TERM] Setting up power aliases..."

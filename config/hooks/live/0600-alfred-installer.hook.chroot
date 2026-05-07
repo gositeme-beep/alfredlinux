@@ -10,6 +10,23 @@
 set -e
 
 export DEBIAN_FRONTEND=noninteractive
+# ── apt_nonfatal helpers (injected: apt-swallow observability) ──
+apt_update_nonfatal() {
+    local tag="$1"
+    mkdir -p /var/lib/alfred/build-flags
+    if ! DEBIAN_FRONTEND=noninteractive apt-get update -qq 2>/dev/null; then
+        echo "[WARN] apt-get update (${tag}) failed (nonfatal)" >&2
+        echo "${tag}_update_failed=$(date -Is)" >> /var/lib/alfred/build-flags/${tag}-apt-failed
+    fi
+}
+apt_nonfatal() {
+    local tag="$1"; shift
+    mkdir -p /var/lib/alfred/build-flags
+    if ! DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends "$@" 2>/dev/null; then
+        echo "[WARN] ${tag} install failed (nonfatal)" >&2
+        echo "${tag}_install_failed=$(date -Is)" >> /var/lib/alfred/build-flags/${tag}-apt-failed
+    fi
+}
 export UCF_FORCE_CONFFNEW=1
 export APT_LISTCHANGES_FRONTEND=none
 
@@ -18,12 +35,10 @@ echo "[Alfred Linux v2.0-b6] Installing Calamares installer..."
 # ── 1. Install Calamares and dependencies ──
 # 0170 may have written /etc/calamares/modules/luksopenswaphookcfg.conf; force non-interactive merge.
 # Install calamares — fail loudly if it doesn't work (no silent swallow).
-if ! apt-get install -y \
+apt-get install -y \
     -o Dpkg::Options::=--force-confdef \
     -o Dpkg::Options::=--force-confnew \
-    calamares calamares-settings-debian; then
-    true
-fi
+    calamares calamares-settings-debian
 # ── 2. Alfred branding for Calamares ──
 BRAND_DIR="/etc/calamares/branding/alfred"
 mkdir -p "$BRAND_DIR"
@@ -400,7 +415,7 @@ X-GNOME-Autostart-enabled=true
 LIVEWELC_AUTO
 
 # ── 7. Ensure zenity is available for the dialog ──
-apt-get install -y --no-install-recommends zenity 2>/dev/null || true
+apt_nonfatal installer-ui zenity
 
 echo "[Alfred Linux v4.0] Calamares installer branded, configured, and install prompt enabled."
 

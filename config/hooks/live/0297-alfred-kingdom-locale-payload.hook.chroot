@@ -9,11 +9,29 @@ set -euo pipefail
 
 export DEBIAN_FRONTEND=noninteractive
 
+# ── apt_nonfatal helpers (injected: apt-swallow observability) ──
+apt_update_nonfatal() {
+    local tag="$1"
+    mkdir -p /var/lib/alfred/build-flags
+    if ! DEBIAN_FRONTEND=noninteractive apt-get update -qq 2>/dev/null; then
+        echo "[WARN] apt-get update (${tag}) failed (nonfatal)" >&2
+        echo "${tag}_update_failed=$(date -Is)" >> /var/lib/alfred/build-flags/${tag}-apt-failed
+    fi
+}
+apt_nonfatal() {
+    local tag="$1"; shift
+    mkdir -p /var/lib/alfred/build-flags
+    if ! DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends "$@" 2>/dev/null; then
+        echo "[WARN] ${tag} install failed (nonfatal)" >&2
+        echo "${tag}_install_failed=$(date -Is)" >> /var/lib/alfred/build-flags/${tag}-apt-failed
+    fi
+}
+
 echo "╔════════════════════════════════════════════════════════════════╗"
 echo "║ 0297: Kingdom locale + typography payload (7.77 GiB target)     ║"
 echo "╚════════════════════════════════════════════════════════════════╝"
 
-apt-get update -qq 2>/dev/null || apt-get update 2>/dev/null || true
+apt_update_nonfatal locale
 
 filter_pkgs() {
     local p

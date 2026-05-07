@@ -15,6 +15,17 @@ echo "║  [0160] Alfred Linux — Comprehensive Security Hardening   ║"
 echo "║  Target: Harder than Ubuntu 24.04 LTS out-of-the-box     ║"
 echo "╚═══════════════════════════════════════════════════════════╝"
 
+apt_nonfatal() {
+    local tag="${1:-apt}"
+    shift || true
+    mkdir -p /var/lib/alfred/build-flags
+    if ! apt-get install -y --no-install-recommends "$@" 2>/dev/null; then
+        echo "[SEC-APT] WARN: ${tag} install failed (non-fatal): $*" >&2
+        echo "${tag}_install_failed=$(date -Is)" >> /var/lib/alfred/build-flags/security-install-failed
+    fi
+}
+
+
 # ═══════════════════════════════════════════════════
 # 1. KERNEL SYSCTL HARDENING (45+ rules)
 # ═══════════════════════════════════════════════════
@@ -124,7 +135,7 @@ fi
 # 3. APPARMOR ENFORCEMENT
 # ═══════════════════════════════════════════════════
 echo "[SEC-03] Enabling AppArmor with full profile enforcement..."
-apt-get install -y --no-install-recommends apparmor apparmor-utils apparmor-profiles apparmor-profiles-extra 2>/dev/null || true
+apt_nonfatal apparmor apparmor apparmor-utils apparmor-profiles apparmor-profiles-extra
 systemctl enable apparmor 2>/dev/null || true
 
 if command -v aa-enforce &>/dev/null; then
@@ -178,7 +189,7 @@ APPARMOR_MS
 # 4. AUTOMATIC SECURITY UPDATES
 # ═══════════════════════════════════════════════════
 echo "[SEC-04] Configuring automatic security updates..."
-apt-get install -y --no-install-recommends unattended-upgrades apt-listchanges 2>/dev/null || true
+apt_nonfatal unattended unattended-upgrades apt-listchanges
 
 cat > /etc/apt/apt.conf.d/50unattended-upgrades << 'UNATTENDED'
 Unattended-Upgrade::Allowed-Origins {
@@ -204,7 +215,7 @@ AUTOUPGRADE
 # 5. FAIL2BAN
 # ═══════════════════════════════════════════════════
 echo "[SEC-05] Installing fail2ban..."
-apt-get install -y --no-install-recommends fail2ban 2>/dev/null || true
+apt_nonfatal fail2ban fail2ban
 
 cat > /etc/fail2ban/jail.local << 'JAIL'
 [DEFAULT]
@@ -226,7 +237,7 @@ systemctl enable fail2ban 2>/dev/null || true
 # 6. AUDIT LOGGING (auditd)
 # ═══════════════════════════════════════════════════
 echo "[SEC-06] Enabling comprehensive audit logging..."
-apt-get install -y --no-install-recommends auditd 2>/dev/null || true
+apt_nonfatal auditd auditd
 systemctl enable auditd 2>/dev/null || true
 
 cat > /etc/audit/rules.d/alfred-security.rules << 'AUDIT'
@@ -326,7 +337,7 @@ BLACKLIST
 # 10. PAM PASSWORD HARDENING
 # ═══════════════════════════════════════════════════
 echo "[SEC-10] Hardening PAM password policies..."
-apt-get install -y --no-install-recommends libpam-pwquality 2>/dev/null || true
+apt_nonfatal pwquality libpam-pwquality
 
 cat > /etc/security/pwquality.conf << 'PWQUALITY'
 minlen = 10
@@ -353,7 +364,7 @@ FAILLOCK
 # 11. FILE INTEGRITY MONITORING (AIDE)
 # ═══════════════════════════════════════════════════
 echo "[SEC-11] Installing AIDE file integrity monitoring..."
-apt-get install -y --no-install-recommends aide aide-common 2>/dev/null || true
+apt_nonfatal aide aide aide-common
 
 cat > /etc/aide/aide.conf.d/99_alfred_custom << 'AIDE'
 /etc/passwd Full
@@ -387,7 +398,7 @@ chmod +x /etc/cron.daily/aide-check
 # 12. CLAMAV ANTIVIRUS
 # ═══════════════════════════════════════════════════
 echo "[SEC-12] Installing ClamAV antivirus..."
-apt-get install -y --no-install-recommends clamav clamav-freshclam clamav-daemon 2>/dev/null || true
+apt_nonfatal clamav clamav clamav-freshclam clamav-daemon
 systemctl enable clamav-freshclam 2>/dev/null || true
 
 cat > /etc/cron.weekly/clamav-scan << 'CLAMSCAN'
@@ -415,7 +426,7 @@ chmod +x /usr/local/bin/alfred-scan
 # 13. ROOTKIT DETECTION
 # ═══════════════════════════════════════════════════
 echo "[SEC-13] Installing rootkit detection..."
-apt-get install -y --no-install-recommends rkhunter chkrootkit 2>/dev/null || true
+apt_nonfatal rootkit rkhunter chkrootkit
 if [ -f /etc/default/rkhunter ]; then
     sed -i 's/^CRON_DAILY_RUN=.*/CRON_DAILY_RUN="yes"/' /etc/default/rkhunter 2>/dev/null || true
 fi
@@ -504,7 +515,7 @@ done
 # 20. SECURE NTP (NTS-authenticated)
 # ═══════════════════════════════════════════════════
 echo "[SEC-20] Configuring NTS-authenticated time sync..."
-apt-get install -y --no-install-recommends chrony 2>/dev/null || true
+apt_nonfatal chrony chrony
 cat > /etc/chrony/chrony.conf << 'CHRONY'
 server time.cloudflare.com iburst nts
 server nts.netnod.se iburst nts

@@ -6,7 +6,26 @@ set -e
 # Fix /tmp permissions (may be restricted by earlier hooks in chroot)
 chmod 1777 /tmp 2>/dev/null || true
 # Fix /tmp permissions (may be restricted by earlier hooks in chroot)
-chmod 1777 /tmp 2>/dev/null || true
+
+
+apt_update_nonfatal() {
+    local tag="${1:-apt-update}"
+    mkdir -p /var/lib/alfred/build-flags
+    if ! apt-get update -qq 2>/dev/null; then
+        echo "[UPDATE-APT] WARN: update failed (non-fatal): ${tag}" >&2
+        echo "${tag}_update_failed=$(date -Is)" >> /var/lib/alfred/build-flags/update-apt-failed
+    fi
+}
+
+apt_nonfatal() {
+    local tag="${1:-apt-install}"
+    shift || true
+    mkdir -p /var/lib/alfred/build-flags
+    if ! apt-get install -y --no-install-recommends "$@" 2>/dev/null; then
+        echo "[UPDATE-APT] WARN: install failed (non-fatal): ${tag} ($*)" >&2
+        echo "${tag}_install_failed=$(date -Is)" >> /var/lib/alfred/build-flags/update-apt-failed
+    fi
+}
 
 # Keep smoke-test path contract directories in an existing canonical hook.
 mkdir -p /etc/alfred
@@ -20,8 +39,8 @@ mkdir -p /usr/lib/alfred
 
 echo "[Alfred Update] Installing update subsystem..."
 
-apt-get update -qq 2>/dev/null || true
-apt-get install -y --no-install-recommends unattended-upgrades apt-listchanges needrestart 2>/dev/null || true
+apt_update_nonfatal update-subsystem
+apt_nonfatal update-packages unattended-upgrades apt-listchanges needrestart
 
 cat > /etc/apt/apt.conf.d/20auto-upgrades << 'EOF2'
 APT::Periodic::Update-Package-Lists "1";
@@ -45,9 +64,7 @@ cat > /usr/local/sbin/alfred-update-healthcheck << 'EOF2'
 #!/bin/bash
 set -e
 # Fix /tmp permissions (may be restricted by earlier hooks in chroot)
-chmod 1777 /tmp 2>/dev/null || true
 # Fix /tmp permissions (may be restricted by earlier hooks in chroot)
-chmod 1777 /tmp 2>/dev/null || true
 
 LOG_DIR="/var/log/alfred"
 mkdir -p "$LOG_DIR"

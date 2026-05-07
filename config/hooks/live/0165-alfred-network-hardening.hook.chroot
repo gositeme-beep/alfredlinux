@@ -13,6 +13,17 @@
 # BUILD: v4.0+ (RC8+)
 # ═══════════════════════════════════════════════════════════════
 set -e
+
+apt_nonfatal() {
+    local tag="${1:-apt-install}"
+    shift || true
+    mkdir -p /var/lib/alfred/build-flags
+    if ! apt-get install -y --no-install-recommends "$@" 2>/dev/null; then
+        echo "[NET-APT] WARN: install failed (non-fatal): ${tag} ($*)" >&2
+        echo "${tag}_install_failed=$(date -Is)" >> /var/lib/alfred/build-flags/network-apt-failed
+    fi
+}
+
 echo "╔═══════════════════════════════════════════════════════════╗"
 echo "║  [0165] Alfred Linux — Network Hardening                   ║"
 echo "╚═══════════════════════════════════════════════════════════╝"
@@ -38,7 +49,7 @@ NMRANDOM
 # 2. NFTABLES BASELINE RULES
 # ═══════════════════════════════════════════════════
 echo "[NET-02] Installing nftables baseline firewall rules..."
-apt-get install -y --no-install-recommends nftables 2>/dev/null || true
+apt_nonfatal nftables nftables
 
 cat > /etc/nftables.conf << 'NFTABLES'
 #!/usr/sbin/nft -f
