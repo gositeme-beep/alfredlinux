@@ -1,17 +1,9 @@
 #!/bin/bash
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# ═══════════════════════════════════════════════════════════════
-# HOOK 0700: Alfred Linux 7.77 — Kingdom Welcome Experience
-#
-# "The LORD bless thee, and keep thee:
-#  The LORD make his face shine upon thee, and be gracious unto thee:
-#  The LORD lift up his countenance upon thee, and give thee peace."
-#                                              — Numbers 6:24-26
-# ═══════════════════════════════════════════════════════════════
+# HOOK 0700: Alfred Linux 7.77 - Kingdom Welcome Experience
 
 set -e
 chmod 1777 /tmp 2>/dev/null || true
-
 
 apt_update_nonfatal() {
     local tag="${1:-apt-update}"
@@ -32,86 +24,129 @@ apt_nonfatal() {
     fi
 }
 
-echo "╔═══════════════════════════════════════════════════════════╗"
-echo "║  [0700] Kingdom Welcome Experience                        ║"
-echo "╚═══════════════════════════════════════════════════════════╝"
+echo "[0700] Kingdom Welcome Experience"
 
 apt_update_nonfatal welcome-baseline
 apt_nonfatal welcome-tools zenity xdg-utils
 
-install -d -m 0755 /usr/local/bin /var/lib/alfred
+install -d -m 0755 /usr/local/bin /var/lib/alfred /usr/share/alfred/welcome /usr/share/backgrounds/alfred
 
-# ═══════════════════════════════════════════════════
-# 1. REPLACE DEBIAN MOTD WITH KINGDOM BANNER
-# ═══════════════════════════════════════════════════
-echo "[WELCOME-01] Installing Kingdom MOTD..."
+# Prefer #2 AL image first, then fallback artwork.
+WELCOME_SRC=""
+for p in \
+  /build-assets/music/cover-art-zion-2.png \
+  /build-assets/music/cover-art-truth-2.jpeg \
+  /build-assets/music/cover-art-zion.png \
+  /build-assets/music/cover-art-truth-1.jpeg; do
+  if [ -f "$p" ]; then
+    WELCOME_SRC="$p"
+    break
+  fi
+done
+if [ -n "$WELCOME_SRC" ]; then
+  cp -f "$WELCOME_SRC" /usr/share/alfred/welcome/al-2.png
+  cp -f "$WELCOME_SRC" /usr/share/backgrounds/alfred/kingdom-default.png
+fi
+
+# 1) MOTD
 cat > /etc/motd << 'MOTD'
 
-  ╔══════════════════════════════════════════════════════════╗
-  ║                                                          ║
-  ║   ✝  Alfred Linux 7.77 — Kingdom of God Edition          ║
-  ║                                                          ║
-  ║   "The LORD is my shepherd; I shall not want."           ║
-  ║                                  — Psalm 23:1            ║
-  ║                                                          ║
-  ║   SOLI DEO GLORIA                                        ║
-  ╚══════════════════════════════════════════════════════════╝
+  ==============================================================
+   Alfred Linux 7.77 - Kingdom of God Edition
+   "The LORD is my shepherd; I shall not want." - Psalm 23:1
+  ==============================================================
 
   Type 'alfred-bible' for the Word of God.
-  Type 'alfred-worship' for the sacred music player.
-  Type 'alfred-mesh status' for your sovereign network.
-  Type 'alfred-quantum status' for post-quantum encryption.
+  Type 'alfred-worship' for sacred music.
 
 MOTD
 
-# ═══════════════════════════════════════════════════
-# 2. FIRST-BOOT WELCOME — IN THE NAME OF THE LORD
-# ═══════════════════════════════════════════════════
+# 2) Wallpaper setter
+cat > /usr/local/bin/alfred-set-wallpaper.sh << 'EOF'
+#!/bin/bash
+set -e
+IMG="/usr/share/backgrounds/alfred/kingdom-default.png"
+[ -f "$IMG" ] || exit 0
+if command -v gsettings >/dev/null 2>&1; then
+  gsettings set org.gnome.desktop.background picture-uri "file://$IMG" 2>/dev/null || true
+  gsettings set org.gnome.desktop.background picture-uri-dark "file://$IMG" 2>/dev/null || true
+fi
+EOF
+chmod 0755 /usr/local/bin/alfred-set-wallpaper.sh
+
+# 3) Visual welcome card
+cat > /usr/share/alfred/welcome/kingdom-welcome.html << 'EOF'
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Kingdom of God Edition</title>
+<style>
+body{margin:0;background:#0f1e33;color:#f5e6b3;font-family:Georgia,"Times New Roman",serif}
+.card{max-width:860px;margin:30px auto;background:#142845;border:1px solid #d4af37;border-radius:14px;overflow:hidden}
+.hero{width:100%;max-height:360px;object-fit:cover;display:block}
+.pad{padding:18px 22px}
+h1{margin:0 0 10px}
+</style>
+</head>
+<body>
+<div class="card">
+  <img class="hero" src="al-2.png" alt="AL #2" />
+  <div class="pad">
+    <h1>Kingdom of God Edition</h1>
+    <p>Worship and Scripture are ready offline.</p>
+    <p>Use: <b>alfred-bible</b> and <b>alfred-worship</b></p>
+  </div>
+</div>
+</body>
+</html>
+EOF
+
+cat > /usr/local/bin/alfred-welcome-card.sh << 'EOF'
+#!/bin/bash
+set -e
+CARD="/usr/share/alfred/welcome/kingdom-welcome.html"
+ICON="/usr/share/alfred/welcome/al-2.png"
+[ -f "$CARD" ] && command -v xdg-open >/dev/null 2>&1 && xdg-open "$CARD" >/dev/null 2>&1 &
+if command -v zenity >/dev/null 2>&1 && [ -n "${DISPLAY:-}" ]; then
+  if zenity --question --title="Welcome to the Kingdom of God Edition" --window-icon="$ICON" --width=640 --ok-label="Open Bible" --cancel-label="Open Worship" --text="Choose your first action. #2 AL is set as default wallpaper."; then
+    command -v alfred-bible >/dev/null 2>&1 && alfred-bible >/dev/null 2>&1 &
+  else
+    command -v alfred-worship >/dev/null 2>&1 && alfred-worship >/dev/null 2>&1 &
+  fi
+fi
+EOF
+chmod 0755 /usr/local/bin/alfred-welcome-card.sh
+
+# 4) First boot runner
 echo "[WELCOME-02] Installing first-boot welcome..."
 cat > /usr/local/bin/alfred-first-boot.sh << 'EOF'
 #!/bin/bash
 set -e
-
 STAMP_FILE="/var/lib/alfred/welcome.done"
-
 if [[ -f "$STAMP_FILE" ]]; then
   exit 0
 fi
-
-if command -v zenity >/dev/null 2>&1 && [[ -n "${DISPLAY:-}" ]]; then
-  zenity --info \
-    --title="✝ Welcome to the Kingdom of God Edition" \
-    --width=560 \
-    --text="Welcome to Alfred Linux 7.77\nKingdom of God Edition\n\n✝  'The LORD bless thee, and keep thee:\n    The LORD make his face shine upon thee,\n    and be gracious unto thee.'\n                                    — Numbers 6:24-25\n\n♪  27 worship tracks are ready — open Kingdom Worship\n📖  39,482 Bible verses (AKJV) — type alfred-bible\n🔐  Kyber-1024 post-quantum encryption active\n🌐  Sovereign mesh network ready\n\nBuilt with love by Commander Danny William Perez\nand his daughter Eden, for the glory of God.\n\nSOLI DEO GLORIA"
-fi
-
-# Play a gentle notification sound if possible
+/usr/local/bin/alfred-set-wallpaper.sh || true
+/usr/local/bin/alfred-welcome-card.sh || true
 if command -v paplay &>/dev/null && [ -f /usr/share/sounds/freedesktop/stereo/complete.oga ]; then
-    paplay /usr/share/sounds/freedesktop/stereo/complete.oga 2>/dev/null &
+  paplay /usr/share/sounds/freedesktop/stereo/complete.oga 2>/dev/null &
 fi
-
 touch "$STAMP_FILE"
 exit 0
 EOF
-
 chmod 0755 /usr/local/bin/alfred-first-boot.sh
 
 cat > /etc/xdg/autostart/alfred-first-boot.desktop << 'EOF'
 [Desktop Entry]
 Type=Application
 Name=Alfred First Boot
-Comment=Kingdom of God Edition — first-boot blessing
+Comment=Kingdom of God Edition - first-boot blessing
 Exec=/usr/local/bin/alfred-first-boot.sh
 Terminal=false
 X-GNOME-Autostart-enabled=true
 OnlyShowIn=XFCE;GNOME;KDE;LXQt;
 EOF
-
 chmod 0644 /etc/xdg/autostart/alfred-first-boot.desktop
 
-echo "╔═══════════════════════════════════════════════════════════╗"
-echo "║  [0700] Kingdom Welcome — COMPLETE                        ║"
-echo "║  ✓ Kingdom MOTD replaces Debian default                   ║"
-echo "║  ✓ First-boot blessing with God's Word                    ║"
-echo "║  ✓ Tool reminders (Bible, Worship, Mesh, Quantum)         ║"
-echo "╚═══════════════════════════════════════════════════════════╝"
+echo "[0700] Kingdom Welcome COMPLETE"
