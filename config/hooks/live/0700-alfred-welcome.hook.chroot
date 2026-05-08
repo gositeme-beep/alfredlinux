@@ -31,18 +31,24 @@ apt_nonfatal welcome-tools zenity xdg-utils
 
 install -d -m 0755 /usr/local/bin /var/lib/alfred /usr/share/alfred/welcome /usr/share/backgrounds/alfred
 
-# Prefer #2 AL image first, then fallback artwork.
+# Prefer 8k wallpapers first (sorted), then fallback artwork.
 WELCOME_SRC=""
-for p in \
-  /build-assets/music/cover-art-zion-2.png \
-  /build-assets/music/cover-art-truth-2.jpeg \
-  /build-assets/music/cover-art-zion.png \
-  /build-assets/music/cover-art-truth-1.jpeg; do
-  if [ -f "$p" ]; then
-    WELCOME_SRC="$p"
-    break
-  fi
+for p in $(find /build-assets/wallpapers/8k -maxdepth 1 -type f \( -iname '*.png' -o -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.webp' \) 2>/dev/null | sort); do
+  WELCOME_SRC="$p"
+  break
 done
+if [ -z "$WELCOME_SRC" ]; then
+  for p in \
+    /build-assets/music/cover-art-zion-2.png \
+    /build-assets/music/cover-art-truth-2.jpeg \
+    /build-assets/music/cover-art-zion.png \
+    /build-assets/music/cover-art-truth-1.jpeg; do
+    if [ -f "$p" ]; then
+      WELCOME_SRC="$p"
+      break
+    fi
+  done
+fi
 if [ -n "$WELCOME_SRC" ]; then
   cp -f "$WELCOME_SRC" /usr/share/alfred/welcome/al-2.png
   cp -f "$WELCOME_SRC" /usr/share/backgrounds/alfred/kingdom-default.png
