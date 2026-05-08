@@ -546,3 +546,22 @@
   Built for the family. Built for eternity.
 
 ═══════════════════════════════════════════════════════════════════════════════
+
+  KERNEL 7.0.4 PASS 5 (VERIFIED TRUTH)
+  Source of truth: /tmp/kernel-hardened-704-git/.config-7.0.4-hardened
+  Enabled (verified):
+  - CONFIG_SECCOMP=y
+  - CONFIG_SECCOMP_FILTER=y
+  - CONFIG_SECURITY_YAMA=y
+  - CONFIG_SECURITY_LOCKDOWN_LSM=y
+  Disabled (verified):
+  - CONFIG_BPF_SYSCALL is not set
+  - CONFIG_USER_NS is not set
+  - CONFIG_CHECKPOINT_RESTORE is not set
+  - CONFIG_IO_URING is not set
+  - CONFIG_KEXEC is not set
+  - CONFIG_HIBERNATION is not set
+  - CONFIG_STRICT_DEVMEM is not set
+  Not present in this config (do not claim enabled):
+  - CONFIG_BPF_UNPRIV_DEFAULT_OFF
+  - CONFIG_DEVKMEM
