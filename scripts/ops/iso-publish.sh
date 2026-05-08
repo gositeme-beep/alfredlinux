@@ -137,7 +137,7 @@ if [[ -f "$VJSON" ]]; then
     BUILD_HASH=$(cd "$REPO" && git rev-parse --short HEAD 2>/dev/null || echo unknown)
     cat > "$VJSON" <<EOF
 {
-  "kernel": "7.0.3",
+  "kernel": "7.0.4",
   "build": "$BUILD_HASH",
   "iso": "$CANON_NAME",
   "iso_sha256": "$ISO_HASH",

@@ -1,0 +1,32 @@
+#!/bin/bash
+set -euo pipefail
+echo [0146-scripture-ui] begin
+install -d /usr/local/share/alfred/bible
+cp /build-assets/bible/*.tsv /usr/local/share/alfred/bible/
+cp /build-assets/bible/BIBLE-MANIFEST.json /usr/local/share/alfred/bible/
+
+cat > /usr/sbin/alfred-bible << BIBLEEOF
+#!/bin/bash
+set -euo pipefail
+BIBLE_DIR=/usr/local/share/alfred/bible
+case  in
+  search) shift; grep -i  /akjv-bible.tsv | head -5 || echo (not found) ;;
+  books) head -66 /akjv-books.tsv | cut -f1,2 ;;
+  *) echo usage: alfred-bible {search <text>|books}; exit 0 ;;
+esac
+BIBLEEOF
+chmod 755 /usr/sbin/alfred-bible
+
+cat > /usr/share/applications/alfred-bible.desktop << DESKTOPEOF
+[Desktop Entry]
+Type=Application
+Name=Alfred Scripture
+Comment=Offline AKJV Bible reference
+Exec=alfred-bible search
+Icon=text-editor
+Categories=Office;Reference;
+Terminal=false
+DESKTOPEOF
+chmod 644 /usr/share/applications/alfred-bible.desktop
+
+echo [0146-scripture-ui] end

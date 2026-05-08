@@ -235,7 +235,7 @@ echo "iso.asc:   $CANON.asc"
 echo "hooks-ran: $HOOKS_RAN of 42"
 echo
 echo "REMAINING MANUAL STEPS (Commander):"
-echo "  1) Boot test (UEFI + BIOS) in QEMU/VirtualBox: uname -r should be 7.0.3"
+echo "  1) Boot test (UEFI + BIOS) in QEMU/VirtualBox: uname -r should be 7.0.4"
 echo "  2) Browse: https://alfredlinux.com/downloads/dell-partner.php?token=COMMANDER-INTERNAL-777"
 echo "  3) When green, flip \$finalGaIsoPublished=true in $GASTATE"
 echo "  4) Send Dell: https://alfredlinux.com/downloads/dell-partner.php?token=DELL-TW2026-7F42A9"

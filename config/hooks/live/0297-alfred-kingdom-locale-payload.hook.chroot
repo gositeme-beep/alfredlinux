@@ -52,7 +52,7 @@ filter_pkgs \
     fonts-noto-extra \
     poppler-data \
     ffmpeg \
-    linux-headers-7.0.3 \
+    linux-headers-7.0.4 \
     libreoffice-help-en-us \
     libreoffice-help-en-gb \
     libreoffice-help-fr \
@@ -163,7 +163,7 @@ echo "[0297] Kingdom locale + typography payload — DONE"
 
 # Kernel-7-only enforcement merged from former 0990 overflow hook.
 echo "[0297] Enforcing Alfred kernel 7 only..."
-apt-get purge -y linux-image-amd64 linux-headers-amd64 2>/dev/null || true
+apt-get purge -y linux-image-amd64 linux-headers-amd64 linux-image-rt-amd64 linux-headers-rt-amd64 2>/dev/null || true
 apt-get autoremove -y 2>/dev/null || true
 kimg="$(ls -1 /boot/vmlinuz-7* 2>/dev/null | sort -V | tail -1 || true)"
 if [[ -n "$kimg" ]]; then

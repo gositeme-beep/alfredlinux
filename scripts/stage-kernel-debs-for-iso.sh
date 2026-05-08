@@ -1,15 +1,15 @@
 #!/usr/bin/env bash
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Populate config/packages.chroot/ with linux 7.0.3 .deb files for live-build / iso-preflight.
+# Populate config/packages.chroot/ with linux 7.0.4 .deb files for live-build / iso-preflight.
 #
 # Order (first hit wins after "already present"):
-#   1) Nothing if linux-image-7.0.3*.deb already in config/packages.chroot/
+#   1) Nothing if linux-image-7.0.4*.deb already in config/packages.chroot/
 #   2) ALFRED_KERNEL_DEBS_ARCHIVE=path.tar.gz|.tar.zst  OR default archive under build-assets/ (see README there)
-#   3) KERNEL_WORK (default: ../kernel-7.0.3-work relative to repo) — same files copy-kernel-debs used
+#   3) KERNEL_WORK (default: ../kernel-7.0.4-work relative to repo) — same files copy-kernel-debs used
 #
 # Usage:
 #   bash scripts/stage-kernel-debs-for-iso.sh           # idempotent; exit 0 even if nothing found
-#   bash scripts/stage-kernel-debs-for-iso.sh --strict # exit 1 if linux-image-7.0.3*.deb still missing after staging
+#   bash scripts/stage-kernel-debs-for-iso.sh --strict # exit 1 if linux-image-7.0.4*.deb still missing after staging
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 PC="${ROOT}/config/packages.chroot"
@@ -18,9 +18,9 @@ STRICT=0
 
 mkdir -p "$PC"
 shopt -s nullglob
-have_img=( "$PC"/linux-image-7.0.3*.deb )
+have_img=( "$PC"/linux-image-7.0.4*.deb )
 if ((${#have_img[@]})); then
-  echo "[stage-kernel] OK — linux-image-7.0.3*.deb already in $PC"
+  echo "[stage-kernel] OK — linux-image-7.0.4*.deb already in $PC"
   exit 0
 fi
 
@@ -47,8 +47,8 @@ stage_from_archive() {
 ARCHIVE="${ALFRED_KERNEL_DEBS_ARCHIVE:-}"
 if [[ -z "$ARCHIVE" ]]; then
   for cand in \
-    "$ROOT/build-assets/kernel-7.0.3-debs/linux-7.0.3-debs-for-iso.tar.gz" \
-    "$ROOT/build-assets/kernel-7.0.3-debs/linux-7.0.3-debs-for-iso.tar.zst"
+    "$ROOT/build-assets/kernel-7.0.4-debs/linux-7.0.4-debs-for-iso.tar.gz" \
+    "$ROOT/build-assets/kernel-7.0.4-debs/linux-7.0.4-debs-for-iso.tar.zst"
   do
     if [[ -f "$cand" ]]; then
       ARCHIVE="$cand"
@@ -67,16 +67,16 @@ fi
 
 shopt -u nullglob
 shopt -s nullglob
-have_img=( "$PC"/linux-image-7.0.3*.deb )
+have_img=( "$PC"/linux-image-7.0.4*.deb )
 if ((${#have_img[@]})); then
-  echo "[stage-kernel] OK — linux-image-7.0.3*.deb present after archive extract"
+  echo "[stage-kernel] OK — linux-image-7.0.4*.deb present after archive extract"
   exit 0
 fi
 
-WORK="${KERNEL_WORK:-$ROOT/../kernel-7.0.3-work}"
+WORK="${KERNEL_WORK:-$ROOT/../kernel-7.0.4-work}"
 found=0
 shopt -s nullglob
-for f in "$WORK"/linux-image-7.0.3*.deb "$WORK"/linux-headers-7.0.3*.deb "$WORK"/linux-libc-dev_*.deb; do
+for f in "$WORK"/linux-image-7.0.4*.deb "$WORK"/linux-headers-7.0.4*.deb "$WORK"/linux-libc-dev_*.deb; do
   [[ -f "$f" ]] || continue
   echo "[stage-kernel] cp $f -> $PC/"
   cp -a "$f" "$PC/"
@@ -84,9 +84,9 @@ for f in "$WORK"/linux-image-7.0.3*.deb "$WORK"/linux-headers-7.0.3*.deb "$WORK"
 done
 shopt -u nullglob
 
-have_img=( "$PC"/linux-image-7.0.3*.deb )
+have_img=( "$PC"/linux-image-7.0.4*.deb )
 if ((${#have_img[@]})); then
-  echo "[stage-kernel] OK — copied linux 7.0.3 debs from $WORK"
+  echo "[stage-kernel] OK — copied linux 7.0.4 debs from $WORK"
   exit 0
 fi
 
@@ -95,9 +95,9 @@ if [[ "$found" -eq 0 ]]; then
 fi
 
 if [[ "$STRICT" -eq 1 ]]; then
-  have_img=( "$PC"/linux-image-7.0.3*.deb )
+  have_img=( "$PC"/linux-image-7.0.4*.deb )
   if ((!${#have_img[@]})); then
-    echo "[stage-kernel] FAIL: still no linux-image-7.0.3*.deb under $PC" >&2
+    echo "[stage-kernel] FAIL: still no linux-image-7.0.4*.deb under $PC" >&2
     exit 1
   fi
 fi

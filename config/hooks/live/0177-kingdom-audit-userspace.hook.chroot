@@ -223,9 +223,9 @@ chmod 0755 /etc/initramfs-tools/scripts/init-bottom/01-kingdom-audit
 
 # ─────────────────────────────────────────────────────────────
 # 6. Regenerate initrd so the hook + ceremony are baked in
-#    (0998-kernel7-initrd-verify will re-run for kernel 7.0.3 anyway)
+#    (0998-kernel7-initrd-verify will re-run for kernel 7.0.4 anyway)
 # ─────────────────────────────────────────────────────────────
-echo "[0177-06] update-initramfs (will be re-done by hook 0998 for kernel 7.0.3)"
+echo "[0177-06] update-initramfs (will be re-done by hook 0998 for kernel 7.0.4)"
 update-initramfs -u 2>&1 | tail -5 || true
 
 # ─────────────────────────────────────────────────────────────

@@ -1,0 +1,8 @@
+#!/bin/bash
+set -euo pipefail
+echo [0145-album-player] begin
+apt-get update
+apt-get install -y mpg123 cmus
+install -d /usr/share/alfred/music
+cp /build-assets/music/*.mp3 /usr/share/alfred/music/
+echo [0145-album-player] end

@@ -1,17 +1,17 @@
 #!/usr/bin/env bash
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# fakeroot make bindeb-pkg in background for linux-7.0.3.
-# KERNEL_WORK default: <repo>/../kernel-7.0.3-work  (put linux-7.0.3.tar.xz there; use kernel-download-7.0.3.sh)
+# fakeroot make bindeb-pkg in background for linux-7.0.4.
+# KERNEL_WORK default: <repo>/../kernel-7.0.4-work  (put linux-7.0.4.tar.xz there; use kernel-download-7.0.4.sh)
 # Log: $KERNEL_WORK/bindeb-pkg.log
 # Optional: ALFRED_KERNEL_CONFIG=/path/.config
 set -euo pipefail
 REPO="$(cd "$(dirname "$0")/.." && pwd)"
-WORK="${KERNEL_WORK:-$REPO/../kernel-7.0.3-work}"
-TAR="${WORK}/linux-7.0.3.tar.xz"
+WORK="${KERNEL_WORK:-$REPO/../kernel-7.0.4-work}"
+TAR="${WORK}/linux-7.0.4.tar.xz"
 LOG="${WORK}/bindeb-pkg.log"
 NJOBS="${NJOBS:-$(nproc)}"
 
-[[ -f "$TAR" ]] || { echo "Missing $TAR — run: bash scripts/kernel-download-7.0.3.sh" >&2; exit 1; }
+[[ -f "$TAR" ]] || { echo "Missing $TAR — run: bash scripts/kernel-download-7.0.4.sh" >&2; exit 1; }
 
 for p in debhelper libdw-dev; do
   dpkg -s "$p" &>/dev/null || {
@@ -21,12 +21,12 @@ for p in debhelper libdw-dev; do
 done
 
 cd "$WORK"
-if [[ ! -d linux-7.0.3 ]]; then
+if [[ ! -d linux-7.0.4 ]]; then
   echo "Extracting $TAR ..."
   tar xf "$TAR"
 fi
 
-cd linux-7.0.3
+cd linux-7.0.4
 
 if [[ -n "${ALFRED_KERNEL_CONFIG:-}" && -f "${ALFRED_KERNEL_CONFIG}" ]]; then
   cp -a "${ALFRED_KERNEL_CONFIG}" .config
@@ -44,6 +44,6 @@ make ARCH=x86_64 olddefconfig
 
 : >"$LOG"
 echo "Starting fakeroot make bindeb-pkg (jobs=$NJOBS). Log: $LOG"
-nohup fakeroot make -j"$NJOBS" ARCH=x86_64 bindeb-pkg LOCALVERSION= KDEB_PKGVERSION=7.0.3-1alfred >>"$LOG" 2>&1 &
+nohup fakeroot make -j"$NJOBS" ARCH=x86_64 bindeb-pkg LOCALVERSION= KDEB_PKGVERSION=7.0.4-1alfred >>"$LOG" 2>&1 &
 echo $! >"${WORK}/bindeb-pkg.pid"
 echo "PID $(cat "${WORK}/bindeb-pkg.pid") — tail -f $LOG"

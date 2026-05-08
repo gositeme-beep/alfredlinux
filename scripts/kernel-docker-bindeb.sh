@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Same as /home/gositeme/law/alfred-kernel-docker-bindeb.sh — Docker Bookworm, no host sudo.
-# KERNEL_WORK default: <repo>/../kernel-7.0.3-work
+# KERNEL_WORK default: <repo>/../kernel-7.0.4-work
 set -euo pipefail
 REPO="$(cd "$(dirname "$0")/.." && pwd)"
-WORK="${KERNEL_WORK:-$REPO/../kernel-7.0.3-work}"
+WORK="${KERNEL_WORK:-$REPO/../kernel-7.0.4-work}"
 IMAGE="${DOCKER_KERNEL_IMAGE:-debian:bookworm}"
 NAME="${ALFRED_KERNEL_DOCKER_NAME:-alfred-kernel-bindeb-$(date +%s)}"
 INNER_SRC="$REPO/scripts/kernel-docker-inner-bindeb.sh"
@@ -14,8 +14,8 @@ mkdir -p "$WORK"
 cp -a "$INNER_SRC" "$INNER_DST"
 chmod 750 "$INNER_DST"
 
-[[ -f "$WORK/linux-7.0.3.tar.xz" ]] || { echo "Run first: bash scripts/kernel-download-7.0.3.sh" >&2; exit 1; }
-[[ -f "$WORK/linux-7.0.3/Makefile" ]] || tar xf "$WORK/linux-7.0.3.tar.xz" -C "$WORK"
+[[ -f "$WORK/linux-7.0.4.tar.xz" ]] || { echo "Run first: bash scripts/kernel-download-7.0.4.sh" >&2; exit 1; }
+[[ -f "$WORK/linux-7.0.4/Makefile" ]] || tar xf "$WORK/linux-7.0.4.tar.xz" -C "$WORK"
 
 docker pull "$IMAGE" >/dev/null
 
@@ -34,4 +34,4 @@ fi
 docker run --rm "${common_env[@]}"
 
 echo "=== .deb under $WORK ==="
-ls -lh "$WORK"/linux-image-7.0.3*.deb 2>/dev/null || ls -lh "$WORK"/*.deb 2>/dev/null | head -30
+ls -lh "$WORK"/linux-image-7.0.4*.deb 2>/dev/null || ls -lh "$WORK"/*.deb 2>/dev/null | head -30
