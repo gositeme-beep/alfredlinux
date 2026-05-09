@@ -641,3 +641,35 @@
 
 
 
+
+---
+
+## Alfred Automator Module (New)
+
+A new optional build hook is included:
+
+- `config/hooks/live/0315-alfred-automator.hook.chroot`
+
+What it installs in the target system:
+
+- `xdotool` as the primary automation backend (X11-friendly).
+- `ydotool` as optional fallback when available in the apt archive.
+- `/usr/local/bin/alfred-automator` unified wrapper command.
+- `/usr/local/bin/alfred-automator-smoke` dry-run smoke test.
+- `/usr/lib/systemd/user/alfred-automator.service` (disabled by default).
+- `/usr/share/doc/alfred-automator/THIRD_PARTY.md` backend attribution and license notes.
+
+Wrapper commands:
+
+- `alfred-automator status`
+- `alfred-automator backend`
+- `alfred-automator move X Y [absolute|rel]`
+- `alfred-automator click [left|middle|right]`
+- `alfred-automator type "text"`
+- `alfred-automator key "ctrl+l"` (xdotool backend)
+- `alfred-automator --dry-run ...` for safe validation
+
+Safety defaults:
+
+- User service remains disabled by default.
+- No pointer movement in smoke path unless explicit non-dry-run command is executed.
