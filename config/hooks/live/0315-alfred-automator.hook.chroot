@@ -3,6 +3,18 @@ set -euo pipefail
 
 export DEBIAN_FRONTEND=noninteractive
 
+AUTOMATOR_CFG="/config/alfred-automator.conf"
+ALFRED_AUTOMATOR_ENABLE=1
+if [[ -f "$AUTOMATOR_CFG" ]]; then
+  # shellcheck source=/dev/null
+  source "$AUTOMATOR_CFG"
+fi
+
+if [[ "${ALFRED_AUTOMATOR_ENABLE:-1}" != "1" ]]; then
+  echo "[0315-alfred-automator] Disabled by config/alfred-automator.conf"
+  exit 0
+fi
+
 apt-get update
 apt-get install -y --no-install-recommends xdotool
 if apt-cache show ydotool >/dev/null 2>&1; then

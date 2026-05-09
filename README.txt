@@ -673,3 +673,6 @@ Safety defaults:
 
 - User service remains disabled by default.
 - No pointer movement in smoke path unless explicit non-dry-run command is executed.
+
+Build toggle:
+- config/alfred-automator.conf controls automator hook (ALFRED_AUTOMATOR_ENABLE=1|0).
