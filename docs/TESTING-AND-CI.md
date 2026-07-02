@@ -16,9 +16,9 @@ runs, and a few pieces are broken-on-arrival:
   `tests/bootstrap.php`) that **do not exist**, so `phpunit` fails immediately. There is
   no Composer and no test anywhere.
 - **Shell** — good test scripts (`tests/boot-test.sh`, `tests/hook-lint.sh`) exist but are
-  **orphaned** — no CI or build step runs them. `hook-lint.sh` asserts an exact hook count
-  of **1335**; the repo has **1369** today, so it fails on day one for a reason unrelated to
-  any real defect. `shellcheck` in CI covers only **2 files** by default.
+  **orphaned** — no CI or build step runs them. `hook-lint.sh` correctly
+  asserts **1335** hooks against `config/hooks/live/` (which holds exactly that).
+  `shellcheck` in CI covers only **2 files** by default.
 - **Node** — the 5 bundled services have no real `test` script (npm's failing stub or none)
   and no linting. `opt/hsd/` is an empty stub; `alfred-remote-ssh` is a VS Code
   extension manifest with no first-party code.
@@ -50,9 +50,10 @@ reproducible by contributors. The fast, cheap gates below are the missing layer.
 - `tests/boot-test.sh` (QEMU headless boot check), `tests/hook-lint.sh` (10 checks on
   `config/hooks/live/*.hook.chroot`), `tests/security-audit.sh` (CIS-style live-system audit)
   are well-written but **not referenced anywhere** — no workflow or script runs them.
-- `tests/hook-lint.sh` hard-asserts `== 1335` hooks; actual count is **1369**. See
-  `docs/HOOK-COUNT-DOCTRINE.md` — the check should derive from the doctrine / a range, not a
-  frozen literal.
+- `tests/hook-lint.sh` correctly asserts `== 1335` against `config/hooks/live/` (which holds
+  exactly 1335 `.hook.chroot` files). *(An earlier draft flagged a 1335-vs-1369 mismatch by
+  counting the broader `config/hooks/` tree incl. `config/hooks/normal/` — our miscount;
+  retracted. See `docs/HOOK-COUNT-DOCTRINE.md`.)*
 - **Name collision:** `tests/security-audit.sh` (live CIS audit, needs a booted/mounted target)
   vs `scripts/security-audit.sh` (the static grep sweep that *actually runs in CI*). Two very
   different scripts, same name — a real footgun for contributors.
@@ -79,8 +80,11 @@ reproducible by contributors. The fast, cheap gates below are the missing layer.
 
 1. **`phpunit.xml`** — either create the referenced `tests/` dirs + `tests/bootstrap.php`, or
    trim the config to the suites you actually add. Until then `phpunit` cannot run.
-2. **`tests/hook-lint.sh` magic number** — replace the `== 1335` assert with a doctrine-derived
-   or `>=` check so it stops failing on a stale literal.
+2. ~~`tests/hook-lint.sh` magic number~~ — **retracted (our error):** `hook-lint.sh` defaults to
+   `config/hooks/live/` and correctly asserts **1335**, which matches that directory exactly.
+   An earlier draft counted the broader `config/hooks/` tree (1369, incl. the 34 files in
+   `config/hooks/normal/`) — a directory the test doesn't check. Nothing to fix here; the count
+   is correct by design.
 3. **`security-audit.sh` name collision** — rename one (e.g. `tests/system-cis-audit.sh`) so the
    live-system audit and the static CI sweep aren't confusable.
 4. **Add Composer** at `var/www/` — even with zero runtime deps, it unlocks PHPUnit/PHPStan/PHPCS
@@ -148,7 +152,7 @@ additional files, or keep the copies in sync by hand). This PR adds the starter 
 |---|---|---|
 | `php -l` syntax check (all `*.php` under `var/www`) | today | yes (should pass now) |
 | `shellcheck` (all `*.sh`) | today | no at first (baseline), then block on `error` |
-| `hook-lint.sh` | after the count fix | yes |
+| `hook-lint.sh` | today (passes against `config/hooks/live/`) | yes |
 | PHPUnit + PHPStan(`includes/`, level 1) + PHPCS(report-only) | once tests + Composer exist | phpunit yes; static non-blocking at first |
 | Node matrix (`npm ci`/`npm test`/lint per service, exclude `hsd`) | once real test scripts exist | yes when enabled |
 
@@ -173,14 +177,16 @@ containers to the workflow, and set a dummy `GOSITEME_DB_PASS` so bootstrap can 
 
 ---
 
-## 5. Security observations (out of scope for testing/CI — flagged for your attention)
+## 5. Security — see `docs/SECURITY-FINDINGS.md`
 
-Surfaced while reading the code; not part of this assessment's mandate, but worth a look:
-- **Hardcoded fallback secrets:** `gohostme-backend/server.js` has `DB_PASS || '!q@w#e$r5t'`;
-  the PHP layer expects `GOSITEME_DB_PASS`. A default password in source is a real risk.
-- **Bare-string admin auth:** `admin-build-orchestrator.php` gates on `$_GET['k'] === 'BUILD-777'`
-  and then shells out (`proc_open`/SSH) from top-level code — key-in-URL + arbitrary exec.
-- A dedicated security pass (separate from testing) would be worthwhile.
+A dedicated read-only security pass of the high-risk surfaces (PHP app + control panel, Node
+services, secrets/build) was done alongside this assessment. It found a fixable cluster of
+**unauthenticated privileged endpoints and committed secrets** (some of which ship in the ISO),
+against an otherwise disciplined codebase (first-order SQLi came back clean; OAuth/webhooks/the
+control-plane are solid). The full findings — severity-ranked, with `file:line`, fixes,
+deployment-conditional caveats, and **locations rather than literal secret values** — are in
+**[`docs/SECURITY-FINDINGS.md`](SECURITY-FINDINGS.md)**. Most time-sensitive: several credentials
+are hardcoded in source / baked into the ISO — worth rotating before the next image.
 
 ---
 
@@ -188,7 +194,7 @@ Surfaced while reading the code; not part of this assessment's mandate, but wort
 
 1. **Phase 0 (this PR):** this doc + a merge-safe starter workflow (`php -l` blocking +
    `shellcheck` non-blocking). Green on merge; nothing new to fix.
-2. **Phase 1:** the fix-first list (§2) — dangling `phpunit.xml`, the 1335→1369 assert, the name
+2. **Phase 1:** the fix-first list (§2) — dangling `phpunit.xml`, the name
    collision, add Composer + version pins. Wire `hook-lint.sh` into the fast job.
 3. **Phase 2:** PHP Tier-1 PHPUnit (validators/redirect) + PHPStan level 1 on `includes/`.
 4. **Phase 3:** Node per-service tests (start with `sovereign-dns`/`handshake` pure logic) + the

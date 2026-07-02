@@ -7,7 +7,7 @@
 #   - php -l    : PHP syntax check (blocking — a failure here is a real syntax error to fix)
 #   - shellcheck: baseline over scripts/ + tests/ (non-blocking — triage, then make errors block)
 # The commented jobs at the bottom (PHPUnit, Node tests, hook-lint) are ready to enable once
-# tests + Composer land and the tests/hook-lint.sh count is fixed. See docs/TESTING-AND-CI.md.
+# tests + Composer land. See docs/TESTING-AND-CI.md.
 name: alfred-tests
 
 on:
@@ -87,7 +87,7 @@ jobs:
 #        working-directory: ${{ matrix.service }}
 #    # Excludes opt/hsd (empty stub) and alfred-remote-ssh (no first-party Node code).
 #
-#  hook-lint:            # enable AFTER fixing the hardcoded 1335 count in tests/hook-lint.sh
+#  hook-lint:            # runs today against config/hooks/live/ (correctly asserts the sacred 1335)
 #    runs-on: ubuntu-latest
 #    steps:
 #      - uses: actions/checkout@v4
