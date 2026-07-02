@@ -1,3 +1,5 @@
+![Alfred Linux — Powering the Planet](assets/img/alfred-logo-banner.png)
+
 <p align="center">
   <a href="https://alfredlinux.com"><img src="https://img.shields.io/badge/Website-alfredlinux.com-blue?style=for-the-badge" alt="Website"/></a>
   <a href="https://github.com/GoSiteMe-com/alfredlinux/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-AGPL--3.0-green?style=for-the-badge" alt="License"/></a>
@@ -22,8 +24,8 @@ Installation:
 4. Boot into the Operating System.
 
 ---
-\\n     _    _     _____ ____  _____ ____    _     ___ _   _ _   ___  __
 ```
+     _    _     _____ ____  _____ ____    _     ___ _   _ _   ___  __
     / \  | |   |  ___|  _ \| ____|  _ \  | |   |_ _| \ | | | | \ \/ /
    / _ \ | |   | |_  | |_) |  _| | | | | | |    | ||  \| | | | |\  /
   / ___ \| |___|  _| |  _ <| |___| |_| | | |___ | || |\  | |_| |/  \
@@ -39,6 +41,7 @@ Installation:
 
 ---
   WHAT IS ALFRED LINUX?
+
 ---
 
   The world's first 100% offline AI-native sovereign operating system.
@@ -78,6 +81,7 @@ Installation:
 
 ---
   WHAT'S INCLUDED — UNABRIDGED (1335 Hooks, 4,497+ Packages)
+
 ---
 
   1335+ hooks — The original 42 milestone (one for each generation from Abraham to Christ, Matthew 1:17) has grown significantly to 1335+.
@@ -385,6 +389,7 @@ Installation:
 
 ---
   THE OMAHON SEAL — THE BREATH OF GOD
+
 ---
 
   The Omahon Seal is the final layer of sovereign protection. It consists
@@ -416,6 +421,7 @@ Installation:
 
 ---
   KERNEL 7.0.12 HARDENING — 40+ FLAGS ACROSS 4 COMPILATION PASSES
+
 ---
 
   Linux kernel 7.0.12 is hardened with 40+ security configuration flags (including Framebuffer & DRM Graphics fixes):
@@ -536,6 +542,7 @@ Installation:
 
 ---
   SYSTEM REQUIREMENTS
+
 ---
 
   Minimum:
@@ -553,6 +560,7 @@ Installation:
 
 ---
   INSTALLATION
+
 ---
 
   METHOD 1: USB FLASH DRIVE (RECOMMENDED)
@@ -595,6 +603,7 @@ Installation:
 
 ---
   VERIFICATION — TRUST BUT VERIFY
+
 ---
 
   No one — including any corporation — can be stopped from *making* a
@@ -645,6 +654,7 @@ Installation:
 
 ---
   DOWNLOADS
+
 ---
 
   STATUS: Canonical GA basename is intel-amd64-20260426; public flags live in
@@ -657,6 +667,7 @@ Installation:
 
 ---
   THE KINGDOM
+
 ---
 
   Alfred Linux is one of eight pillars of the GoSiteMe Kingdom:
@@ -674,6 +685,7 @@ Installation:
 
 ---
   GOFORGE + COMMANDER HANDOFF (2026)
+
 ---
 
   When this repo is on GoForge, put this link in the forge README:
@@ -696,6 +708,7 @@ Installation:
 
 ---
   LEGAL
+
 ---
 
   Alfred Linux is published by GoSiteMe Inc.
@@ -710,6 +723,7 @@ Installation:
 
 ---
   GOLDEN MASTER v7.77 EXPANSION: NATION-STATE C4ISR SUITE & OMAHON AUTO-HEAL
+
 ---
 
   Alfred Linux v7.77 has transcended its origins as a secure desktop OS to
@@ -769,6 +783,7 @@ Installation:
 
 ---
 ## [4] THE ASCENSION CAPABILITIES: ESOTERIC & METAPHYSICAL CYBER ARCHITECTURE
+
 ---
 
   Beyond standard C4ISR, Alfred Linux 7.77 contains a deeply classified,
@@ -805,6 +820,7 @@ Installation:
 
 ---
 ## [5] DAILY DRIVER SUPREMACY: CREATOR STACK & GAMING
+
 ---
 
   While Alfred Linux is a weaponized C4ISR platform, it is also designed to be
@@ -830,6 +846,7 @@ Installation:
 
 ---
 ## [6] THE LATEST INNOVATIONS & ARCHITECTURAL UPGRADES
+
 ---
 
   Recent audits have cataloged massive, undocumented upgrades transforming 
@@ -898,9 +915,10 @@ Installation:
 
 
 
-================================================================================
+---
 ## [5] THE GENESIS FORGE — WORLD-FIRST INNOVATIONS
-================================================================================
+
+---
 
   Alfred Linux contains multiple world-first technologies never before
   assembled in a single operating system:
@@ -960,9 +978,10 @@ Installation:
     custom module compilation against the hardened 7.0.12 kernel.
     Location: /opt/dkms-wrapper/
 
-================================================================================
+---
 ## [6] SOVEREIGN MEDIA & CONTENT PAYLOAD
-================================================================================
+
+---
 
   The ISO ships with a curated sovereign media library — zero internet
   required for a complete computing experience from first boot:
@@ -1004,9 +1023,10 @@ Installation:
     - Whisper Large V3 Turbo (Instant speech-to-text)
     - 4x-UltraSharp (Neural image upscaling)
 
-================================================================================
+---
 ## [8] THE APOCALYPSE PROTOCOLS (Sovereign Survival Matrices)
-================================================================================
+
+---
 Beyond standard desktop usage, Alfred Linux operates as a highly classified, 
 post-apocalyptic survival instrument. Deep within the chroot build hooks 
 lies a clandestine layer of twelve undocumented architectures, mathematically 
