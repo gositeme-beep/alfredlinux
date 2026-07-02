@@ -1,0 +1,54 @@
+Alfred Linux v7.77 GA — Launch honesty checklist (server: alfredlinux.com)
+================================================================================
+Edit includes/ga-release-state.php ONLY after each line is true.
+
+--- BUILD HOST (before lb build) ---
+[ ] A1. Root-capable machine; Debian/Ubuntu with live-build v3; `lb debootstrap mksquashfs xorriso` present.
+[ ] A2. Free disk ≥ 50 GB on build volume (ISO + chroot + cache).
+[ ] A3. `alfred-linux-v2/assets/alfred-commander-5.0.0.tar.gz` exists (Commander 5.0.0 in ISO skel).
+[ ] A4. `build/scripts/build-unified.sh ga` (from site or Forge tree) — hooks list complete; no MISSING_HOOKS. GA basename comes from `build/scripts/ga-iso-release.conf` (must match `includes/ga-release-state.php` `$gaIsoBasename`).
+[ ] A4b. After ISO + `.torrent` land under `downloads/`, run `bash build/scripts/verify-ga-publish-alignment.sh` (SHA256 vs `SHA256SUMS-7.77.txt`; btih vs `$gaTorrentBtihHex` if `transmission-show` is installed). Or one step: `VERIFY_SITE=1 ALFRED_SITE_ROOT=... bash build/scripts/smoke-test-iso.sh path/to/frozen.iso`.
+
+--- ARTIFACT (after lb build) ---
+[ ] B1. ISO under `alfred-linux-v2/iso-output/` — e.g. `alfred-linux-7.77-ga-intel-amd64-YYYYMMDD.iso` (canonical public basename; Debian live-build may still emit `amd64` in intermediate names).
+[ ] B2. `sha256sum *.iso > *.iso.sha256` beside the file (build machine record).
+[ ] B3. Known SHA256 for current frozen GA target (replace when you reseal to new bytes — keep this line + `downloads/SHA256SUMS-7.77.txt` + `releases/7.77/SHA256SUMS` in lock-step):
+       2026-04-27 reseal:  474eecaac93960dc0e813117c158df3759ddc863fcec81e17b88bb6fbc5144c5  alfred-linux-7.77-ga-intel-amd64-omega-point.iso  (3,516,334,080 B = 3.27 GiB binary)
+       Previous (Apr 26):  28f88491f3f5e984719c20475e4f049e60cb18da10491f98da870a8dc6e71707
+       Verify:            (cd public_html/downloads && sha256sum -c SHA256SUMS-7.77.txt)
+       Note: 3.27 GiB is **below** the ~7.77 GiB Kingdom target (B6); see B6 — `/download` measures size honestly via `filesize()` and the page does not claim the gate is met until the bytes are there. Regenerate `releases/7.77/SHA512SUMS` + `BLAKE3SUMS` after each reseal.
+[ ] B4. Boot smoke: UEFI + BIOS (or document UEFI-only if `--uefi` not used).
+[ ] B5. Live session + Calamares install smoke on bare metal or VM.
+[ ] B6. **Kingdom ISO size (~7.77 GiB binary):** `bash build/scripts/check-iso-777gib.sh path/to/frozen.iso` (same script mirrored at `alfred-linux-v2/scripts/` on the build host) must exit 0 before the download page claims ~7.77 GiB. **Primary ~1 GiB path:** **Kingdom cinematic video + 4K/8K (and raw) masters** under `build-assets/` → `0285-alfred-eternal-storage` §7 → `/usr/share/alfred-linux/kingdom-media/` (beauty for **Yeshua** — see `build-assets/videos/README-KINGDOM-MEDIA.txt`). **Supporting:** hook **`0297-alfred-kingdom-locale-payload`** (fonts, LibreOffice help+l10n, `ffmpeg`, headers). Prior 20260412 candidate ~6.74 GiB predates both — see `alfred-linux-v2/docs/ISO-777-GiB-PLAN.txt` — do **not** pad the hybrid image tail with junk bytes.
+
+--- GOFORGE vs COMMANDER EXTENSION (do not confuse) ---
+[ ] C1. `https://alfredlinux.com/forge/commander/alfred-ide.git` = **IDE launcher / ops** (start.sh, config) — NOT the same tree as the VS Code extension folder.
+[ ] C2. **Commander 5.0.0** source of truth for packaging: `~/.local/share/code-server/extensions/gositeme.alfred-commander-5.0.0/`
+[ ] C3. Repack Theia vsix: `bash gocodeme/scripts/pack-alfred-commander-vsix.sh` → `gocodeme/theia-fork/plugins/gositeme.alfred-commander-5.0.0.vsix`
+[ ] C4. If a separate **extension git** exists on GoForge, push from (C2) there; do not expect `alfred-ide.git` root to match extension.js layout.
+
+--- PUBLISH (alfredlinux.com) ---
+[x] D1. **2026-04-26:** `downloads/alfred-linux-7.77-ga-intel-amd64-omega-point.iso` → **symlink** to `alfred-linux-v2/iso-output/` (same bytes as prior `*-amd64-20260412.iso` until reseal; no duplicate 6.8G). `downloads/.htaccess` denies **static** `*.iso` (covenant-sealed HTTP: `downloads/iso.php?t=…` after `/covenant`; P2P-first).
+[x] D2. `downloads/SHA256SUMS-7.77.txt` — real line for that file (`sha256sum -c` OK). Also `*.iso.sha256` copy for wget users.
+[ ] D3. GPG detach-sign sums if /download promises "GPG signed".
+[x] D4. `.torrent` + magnet: `downloads/alfred-linux-7.77-ga-intel-amd64-omega-point.iso.torrent` from `mktorrent` on the **same bytes** as D1; `download.php` reads btih from `$gaTorrentBtihHex` in `includes/ga-release-state.php` (must match `.torrent` info-hash until ISO bytes change).
+[ ] D4b. **Seed smoke:** load the torrent on a client you control; confirm peers/piece completion (swarm truth — not automated here).
+[ ] D5. `download.php`: `$isoName` + `$isoSize` match copied file (`stat -c %s` or `du -h`; binary GiB = bytes/1024³). If B6 gate not met yet, say the measured size + “~7.77 GiB target” honestly — never round up a smaller file.
+[ ] D6. Set `$finalGaIsoPublished = true` when the **full bar** in `includes/ga-release-state.php` (UEFI **+** BIOS boot smoke, seed smoke, GPG `.iso.asc` **or** site copy that does not claim detach-sign, custody) is satisfied.
+[ ] D7. Set `$gaP2pDownloadsEnabled = true` when you are happy the **torrent/magnet swarm** moves bytes; usually **same moment as D6**, but may stay `false` if you publish GA checksums first and **intentionally pause** WebTorrent (kill switch).
+[ ] D8. `kingdom-of-god-edition.mp4` OR rely on conditional block on `features.php` (already hides if missing).
+
+--- COPY / TRUTH ---
+[ ] E1. index roadmap, docs GA card, 42 Kingdom canon + Voice v1/v2 note — match shipped bits. Marketing `.torrent` buttons should land users on `/download#ga-p2p-links` (covenant-first), not a raw `/downloads/*.iso.torrent` hop alone. `/release` GA buttons must point at `/download` (not `/releases/7.77/*.iso` — that tree is checksum mirrors only unless you intentionally mirror the ISO there).
+[ ] E2. Theia / Alfred IDE hosts: **restart** after new Commander vsix.
+
+Rendezvous: Commander returns here in Cursor — same repo — say what happened.
+Countdown end: includes/download-countdown-end.txt (Unix epoch, Montreal-aligned).
+
+--- Scripted gates (site tree) ---
+`build/scripts/check-iso-777gib.sh` — ISO byte size ≥ 7.77 GiB binary (1024³).
+`build/scripts/verify-ga-publish-alignment.sh` — SUMS + optional `transmission-show` btih vs `ga-release-state.php` (reads **on-disk** `downloads/` paths; not an HTTP probe).
+`build/scripts/smoke-test-iso.sh` — wraps check-iso + optional `VERIFY_SITE=1` verify (see /reseal operator block).
+After pull: `apachectl configtest` — root `.htaccess` is tracked (clean URLs + headers); `downloads/.htaccess` denies static `*.iso`.
+
+OMAHON — no phantom releases.

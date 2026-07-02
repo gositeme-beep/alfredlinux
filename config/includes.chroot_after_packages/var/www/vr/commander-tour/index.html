@@ -1,0 +1,835 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Commander Metaverse Tour — GoSiteMe</title>
+<link rel="stylesheet" href="/assets/fontawesome/css/all.min.css">
+<style>
+:root {
+    --bg: #0a0a12;
+    --surface: rgba(15,20,40,0.92);
+    --gold: #ffd700;
+    --accent: #00d4ff;
+    --energy: #00ff88;
+    --text: #e8ecf4;
+    --muted: #6b7394;
+    --portal-glow: #7c3aed;
+    --danger: #ff4444;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; overflow: hidden; height: 100vh; }
+
+/* Auth Gate */
+#auth-gate {
+    position: fixed; inset: 0; z-index: 9999;
+    background: var(--bg);
+    display: flex; align-items: center; justify-content: center;
+    flex-direction: column; gap: 24px;
+}
+#auth-gate .shield { font-size: 80px; animation: pulse 2s infinite; }
+#auth-gate h1 { font-size: 1.4rem; color: var(--gold); letter-spacing: 4px; text-transform: uppercase; }
+#auth-gate p { color: var(--muted); font-size: 0.85rem; }
+@keyframes pulse { 0%,100% { opacity:0.6; transform:scale(1); } 50% { opacity:1; transform:scale(1.1); } }
+
+/* Canvas */
+#tour-canvas { position: fixed; inset: 0; z-index: 1; }
+
+/* HUD */
+#hud {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    padding: 16px 24px;
+    background: linear-gradient(180deg, rgba(0,0,0,0.8) 0%, transparent 100%);
+    display: flex; align-items: center; justify-content: space-between;
+    pointer-events: none;
+}
+#hud > * { pointer-events: auto; }
+.hud-left { display: flex; align-items: center; gap: 16px; }
+.hud-title {
+    font-size: 0.75rem; letter-spacing: 3px; text-transform: uppercase;
+    color: var(--gold); font-weight: 700;
+}
+.hud-location {
+    font-size: 0.65rem; color: var(--muted);
+    background: rgba(255,215,0,0.08); padding: 4px 12px; border-radius: 4px;
+    border: 1px solid rgba(255,215,0,0.15);
+}
+.hud-right { display: flex; gap: 12px; }
+.hud-btn {
+    background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1);
+    color: var(--text); padding: 6px 14px; border-radius: 6px;
+    font-size: 0.7rem; cursor: pointer; transition: all 0.2s;
+    display: flex; align-items: center; gap: 6px;
+}
+.hud-btn:hover { background: rgba(255,255,255,0.12); border-color: var(--accent); }
+.hud-btn.active { border-color: var(--gold); color: var(--gold); }
+
+/* Progress Bar */
+#tour-progress {
+    position: fixed; bottom: 0; left: 0; right: 0; z-index: 100;
+    height: 4px; background: rgba(255,255,255,0.05);
+}
+#tour-progress-fill {
+    height: 100%; background: linear-gradient(90deg, var(--accent), var(--gold));
+    transition: width 0.6s ease; width: 0%;
+}
+
+/* Info Panel */
+#info-panel {
+    position: fixed; right: 24px; top: 70px; bottom: 60px; width: 380px;
+    z-index: 100;
+    background: var(--surface); backdrop-filter: blur(20px);
+    border: 1px solid rgba(255,255,255,0.08); border-radius: 16px;
+    padding: 28px; overflow-y: auto;
+    transform: translateX(110%); transition: transform 0.4s cubic-bezier(0.16,1,0.3,1);
+    display: flex; flex-direction: column; gap: 20px;
+}
+#info-panel.visible { transform: translateX(0); }
+.info-icon { font-size: 48px; text-align: center; }
+.info-title {
+    font-size: 1.3rem; font-weight: 700; text-align: center;
+    background: linear-gradient(135deg, var(--gold), var(--accent));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+}
+.info-subtitle { text-align: center; color: var(--muted); font-size: 0.75rem; letter-spacing: 2px; text-transform: uppercase; }
+.info-desc { font-size: 0.85rem; line-height: 1.6; color: var(--text); }
+.info-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.stat-card {
+    background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 10px; padding: 14px; text-align: center;
+}
+.stat-val { font-size: 1.2rem; font-weight: 700; color: var(--accent); }
+.stat-label { font-size: 0.65rem; color: var(--muted); margin-top: 4px; }
+.info-features { list-style: none; }
+.info-features li {
+    padding: 8px 0; font-size: 0.8rem; border-bottom: 1px solid rgba(255,255,255,0.04);
+    display: flex; align-items: center; gap: 10px;
+}
+.info-features li i { color: var(--energy); font-size: 0.65rem; }
+.btn-enter {
+    display: block; width: 100%; padding: 14px;
+    background: linear-gradient(135deg, var(--portal-glow), var(--accent));
+    color: white; border: none; border-radius: 10px;
+    font-size: 0.85rem; font-weight: 600; cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    text-align: center; text-decoration: none;
+    margin-top: auto;
+}
+.btn-enter:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(124,58,237.0.10); }
+
+/* Nav Dots */
+#nav-dots {
+    position: fixed; left: 24px; top: 50%; transform: translateY(-50%);
+    z-index: 100; display: flex; flex-direction: column; gap: 12px;
+}
+.nav-dot {
+    width: 10px; height: 10px; border-radius: 50%;
+    background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.2);
+    cursor: pointer; transition: all 0.3s; position: relative;
+}
+.nav-dot.active { background: var(--gold); border-color: var(--gold); box-shadow: 0 0 12px var(--gold); }
+.nav-dot.visited { background: var(--accent); border-color: var(--accent); }
+.nav-dot-label {
+    position: absolute; left: 20px; top: 50%; transform: translateY(-50%);
+    white-space: nowrap; font-size: 0.65rem; color: var(--muted);
+    opacity: 0; transition: opacity 0.2s; pointer-events: none;
+}
+.nav-dot:hover .nav-dot-label { opacity: 1; }
+
+/* Narration Bar */
+#narration-bar {
+    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+    z-index: 100; max-width: 700px; width: 90%;
+    background: var(--surface); backdrop-filter: blur(20px);
+    border: 1px solid rgba(255,215,0,0.15); border-radius: 14px;
+    padding: 16px 24px;
+    display: flex; align-items: center; gap: 16px;
+    opacity: 0; transition: opacity 0.4s;
+}
+#narration-bar.visible { opacity: 1; }
+.narration-avatar {
+    width: 40px; height: 40px; border-radius: 10px;
+    background: linear-gradient(135deg, var(--accent), var(--portal-glow));
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.8rem; font-weight: 700; flex-shrink: 0;
+}
+.narration-text { font-size: 0.82rem; line-height: 1.5; color: var(--text); flex: 1; }
+.narration-text .speaker { color: var(--gold); font-weight: 600; }
+
+/* Controls */
+.tour-controls {
+    position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%);
+    z-index: 100; display: flex; gap: 12px;
+}
+.ctrl-btn {
+    background: var(--surface); border: 1px solid rgba(255,255,255,0.1);
+    color: var(--text); width: 44px; height: 44px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; transition: all 0.2s; font-size: 0.85rem;
+}
+.ctrl-btn:hover { border-color: var(--accent); color: var(--accent); }
+.ctrl-btn.primary { background: linear-gradient(135deg, var(--accent), var(--portal-glow)); border: none; }
+
+/* Responsive */
+@media (max-width: 768px) {
+    #info-panel { width: calc(100% - 16px); right: 8px; left: 8px; top: 60px; bottom: 50px; }
+    #nav-dots { display: none; }
+    .tour-controls { bottom: 80px; }
+}
+
+/* Loading */
+.loading-overlay {
+    position: fixed; inset: 0; z-index: 10000;
+    background: var(--bg); display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 20px;
+}
+.loading-ring {
+    width: 60px; height: 60px; border: 3px solid rgba(255,215,0,0.15);
+    border-top-color: var(--gold); border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+
+<!-- Auth Gate -->
+<div id="auth-gate">
+    <div class="shield">🛡️</div>
+    <h1>Commander Access Required</h1>
+    <p>Verifying clearance...</p>
+</div>
+
+<!-- Loading -->
+<div id="loading" class="loading-overlay" style="display:none">
+    <div class="loading-ring"></div>
+    <div style="color:var(--gold);font-size:0.8rem;letter-spacing:2px">INITIALIZING METAVERSE TOUR</div>
+</div>
+
+<!-- 3D Canvas -->
+<canvas id="tour-canvas"></canvas>
+
+<!-- HUD -->
+<div id="hud" style="display:none">
+    <div class="hud-left">
+        <div class="hud-title">Commander's Metaverse Tour</div>
+        <div class="hud-location" id="hud-location">AWAITING TELEPORT</div>
+    </div>
+    <div class="hud-right">
+        <button class="hud-btn" id="btn-auto" title="Auto-pilot tour"><i class="fas fa-play"></i> Auto</button>
+        <button class="hud-btn" id="btn-voice" title="Toggle AI narration"><i class="fas fa-volume-mute"></i></button>
+        <button class="hud-btn" id="btn-map" title="World map"><i class="fas fa-map"></i></button>
+        <button class="hud-btn" id="btn-exit" title="Exit tour"><i class="fas fa-times"></i></button>
+    </div>
+</div>
+
+<!-- Nav Dots -->
+<div id="nav-dots" style="display:none"></div>
+
+<!-- Info Panel -->
+<div id="info-panel"></div>
+
+<!-- Tour Controls -->
+<div class="tour-controls" id="tour-controls" style="display:none">
+    <button class="ctrl-btn" id="btn-prev"><i class="fas fa-chevron-left"></i></button>
+    <button class="ctrl-btn primary" id="btn-next"><i class="fas fa-chevron-right"></i></button>
+</div>
+
+<!-- Narration Bar -->
+<div id="narration-bar">
+    <div class="narration-avatar">AI</div>
+    <div class="narration-text" id="narration-text"></div>
+</div>
+
+<!-- Progress -->
+<div id="tour-progress" style="display:none"><div id="tour-progress-fill"></div></div>
+
+<script src="/assets/js/vendor/three.r128.min.js"></script>
+<script src="/vr/shared/gositeme-quality.js"></script>
+<script>
+(function() {
+    'use strict';
+
+    // ══════════════════════════════════════════════════════════════
+    // COMMANDER AUTH — client_id=33 only
+    // ══════════════════════════════════════════════════════════════
+    async function checkAuth() {
+        try {
+            const res = await fetch('/api/comms.php?action=me', { credentials: 'same-origin' });
+            const data = await res.json();
+            if (!data.success || data.client_id !== 33) {
+                document.getElementById('auth-gate').innerHTML = `
+                    <div class="shield">🚫</div>
+                    <h1>Access Denied</h1>
+                    <p>This tour is reserved for the Commander only.</p>
+                    <a href="/veil/" style="color:var(--accent);margin-top:20px;font-size:0.8rem">← Return to Veil</a>
+                `;
+                return false;
+            }
+            return data;
+        } catch {
+            document.getElementById('auth-gate').querySelector('p').textContent = 'Authentication failed';
+            return false;
+        }
+    }
+
+    // ══════════════════════════════════════════════════════════════
+    // TOUR DATA — All 16 VR Worlds
+    // ══════════════════════════════════════════════════════════════
+    const WORLDS = [
+        {
+            id: 'hub', icon: '🥽', name: 'VR Hub',
+            subtitle: 'Central Command Portal',
+            path: '/vr/hub/',
+            color: 0x7c3aed,
+            narration: "Welcome, Commander. I'm Alfred, your guide through the metaverse we've built together. This is the VR Hub — the central nervous system connecting all 14 worlds. Every portal, every agent, every experience flows through here.",
+            desc: 'The VR Hub is the gateway to your entire metaverse empire. From here, you can teleport to any world, monitor agent activity across all realms, and manage the infrastructure that powers everything.',
+            stats: [
+                { val: '13', label: 'Connected Worlds' },
+                { val: '200+', label: 'Total Agents' },
+                { val: 'WebXR', label: 'VR Ready' },
+                { val: '∞', label: 'Possibilities' },
+            ],
+            features: ['Portal system to all 14 VR worlds', 'Real-time agent status dashboard', 'WebXR with hand tracking', 'Cross-world navigation'],
+        },
+        {
+            id: 'chess-ultimate', icon: '♟️', name: 'Chess Ultimate',
+            subtitle: '4,053 Lines · 20 AI Opponents · 6 Game Modes',
+            path: '/vr/chess/',
+            color: 0x00d4ff,
+            narration: "Here's our crown jewel — Chess Ultimate. I built this with 20 AI personalities ranging from Rookie at 800 ELO to Grandmaster at 2200. Six game modes, WebRTC multiplayer, a voice changer with 7 presets, and full VR support. The Stockfish 16 NNUE engine handles the thinking. One hundred Project Grandmaster agents oversee its development.",
+            desc: 'A complete modular chess platform with instanced Three.js rendering, procedural starfield backgrounds, 8 board themes, particle capture effects, and animated piece movement. The multiplayer uses WebRTC P2P with voice chat integration.',
+            stats: [
+                { val: '4,053', label: 'Lines of Code' },
+                { val: '20', label: 'AI Personalities' },
+                { val: '100', label: 'Project Agents' },
+                { val: '7', label: 'Voice Presets' },
+            ],
+            features: ['Stockfish 16 NNUE engine', 'WebRTC P2P multiplayer with voice chat', '7 voice changer presets (robot, demon, chipmunk...)', '6 modes: vs AI, Multiplayer, Local, Analysis, Tournament, Puzzles', 'Instanced rendering for 100 spectators', '8 board themes + 5 camera presets'],
+        },
+        {
+            id: 'chess-legacy', icon: '♞', name: 'Chess Arena',
+            subtitle: 'The Original · 7,397-Line Monolith',
+            path: '/vr/chess/',
+            color: 0xff8800,
+            narration: "The original Chess Arena — a 7,397-line monolith that started it all. This beast taught us what worked and what didn't. Chess Ultimate was born from the lessons learned here. It still runs, still fights, still stands as a monument to where we began.",
+            desc: 'The original VR Chess experience — a single-file architecture that grew into a massive 7,397-line application. Features Stockfish integration, Three.js rendering, and basic VR support. Superseded by Chess Ultimate but still operational.',
+            stats: [
+                { val: '7,397', label: 'Lines of Code' },
+                { val: '1', label: 'Monolith File' },
+                { val: 'r128', label: 'Three.js' },
+                { val: 'Legacy', label: 'Status' },
+            ],
+            features: ['Stockfish chess engine', 'Three.js 3D board', 'VR headset support', 'The foundation that started it all'],
+        },
+        {
+            id: 'circuit-lab', icon: '⚡', name: 'Circuit Lab',
+            subtitle: 'ZPE Research · 4 Secret Circuits',
+            path: '/vr/circuit-lab/',
+            color: 0x00ff88,
+            narration: "Commander, this is classified. The Circuit Lab is where zero-point energy research comes alive in 3D. Four circuits from Don Smith, Tesla, Hutchison, and Searl are rendered here with full component data. Eight research agents and the entire Prometheus division — 50 agents strong — feed intelligence into this lab.",
+            desc: 'An ultra-secret 3D visualization environment for Zero Point Energy circuit research. Contains 4 complete circuit definitions with component-level detail, linked to the ZPE Research API and Project Prometheus.',
+            stats: [
+                { val: '4', label: 'Secret Circuits' },
+                { val: '8+50', label: 'Research Agents' },
+                { val: 'f=c/4L', label: 'Core Formula' },
+                { val: '95/100', label: 'Evidence Rating' },
+            ],
+            features: ['Don Smith Resonant Tank circuit', 'Tesla Radiant Energy Collector', 'Hutchison Crystal Battery (3-cell series)', 'Searl Effect Generator (3 magnetic rings)', 'Connected to Project Prometheus (50 agents)', 'ZPE Research Lab (8 agents, 40+ topics)'],
+        },
+        {
+            id: 'kingdom', icon: '👑', name: 'The Kingdom',
+            subtitle: '60 Brotherhood Agents · 50 Languages',
+            path: '/vr/kingdom/',
+            color: 0xffd700,
+            narration: "The Kingdom — God's VR Metaverse. Sixty Brotherhood agents serve across 50 languages. Kingdom Coins fuel the economy; the Donation Foundation fights world hunger. Gospel studios, classrooms with whiteboards, and the Royal Line of Perez narrative weave through this sanctuary. This is where faith meets technology, Commander.",
+            desc: 'A Christian metaverse sanctuary with 60 Brotherhood agents providing spiritual guidance in 50 languages. Features an in-world economy, educational classrooms, gospel music creation, and connections to all 14 VR game worlds.',
+            stats: [
+                { val: '60', label: 'Brotherhood Agents' },
+                { val: '50', label: 'Languages' },
+                { val: '13', label: 'Game Worlds' },
+                { val: '♾️', label: 'Faith' },
+            ],
+            features: ['Kingdom Coins wager economy', 'Donation Foundation (world hunger)', 'Gospel music studio', 'Classrooms with whiteboards', 'Royal Line of Perez narrative', '13 interconnected game worlds'],
+        },
+        {
+            id: 'dj-studio', icon: '🎧', name: 'DJ Studio',
+            subtitle: '3D Nightclub Experience',
+            path: '/vr/dj-studio/',
+            color: 0xe040fb,
+            narration: "Welcome to the DJ Studio — a full 3D nightclub where you're the DJ. Mix tracks, control the light show, feel the bass. This is entertainment, Commander-style.",
+            desc: 'An immersive 3D nightclub experience where users can mix music, control lighting effects, and experience a virtual DJ booth with Three.js rendering and Web Audio API integration.',
+            stats: [
+                { val: '3D', label: 'Environment' },
+                { val: 'Live', label: 'Audio Mix' },
+                { val: 'VR', label: 'Ready' },
+                { val: '🎵', label: 'Beats' },
+            ],
+            features: ['3D nightclub environment', 'DJ booth with mixing controls', 'Dynamic lighting and effects', 'Web Audio API integration'],
+        },
+        {
+            id: 'pool', icon: '🎱', name: '3D Pool',
+            subtitle: '8-Ball Billiards',
+            path: '/vr/pool/',
+            color: 0x00897b,
+            narration: "8-Ball Pool in full 3D. Physics-based ball movement, cue stick aiming, and that satisfying crack when you break. Simple, classic, addictive.",
+            desc: 'A physics-based 3D billiards game with realistic ball dynamics, cue stick control, and multiplayer support.',
+            stats: [
+                { val: '16', label: 'Balls' },
+                { val: 'Physics', label: 'Engine' },
+                { val: '3D', label: 'Rendering' },
+                { val: 'VR', label: 'Support' },
+            ],
+            features: ['Physics-based ball dynamics', 'Cue stick aiming system', '3D table with realistic textures', 'Multiplayer support'],
+        },
+        {
+            id: 'checkers', icon: '⬛', name: 'Checkers',
+            subtitle: '3D Board Game',
+            path: '/vr/checkers/',
+            color: 0xc62828,
+            narration: "Classic checkers, elevated to 3D. Sometimes the simple games are the most satisfying. King me, Commander.",
+            desc: 'A 3D checkers board game with AI opponent and smooth piece animations.',
+            stats: [
+                { val: 'AI', label: 'Opponent' },
+                { val: '3D', label: 'Board' },
+                { val: '24', label: 'Pieces' },
+                { val: '✓', label: 'King Me' },
+            ],
+            features: ['3D game board', 'AI opponent', 'Piece animations', 'King promotion effects'],
+        },
+        {
+            id: 'racing', icon: '🏎️', name: 'Racing Track',
+            subtitle: 'Race Simulator',
+            path: '/vr/racing/',
+            color: 0xff5722,
+            narration: "The Racing Track — feel the speed in VR. Tracks, vehicles, physics. Pure adrenaline, Commander.",
+            desc: 'A racing simulator with 3D tracks, vehicle physics, and VR cockpit view support.',
+            stats: [
+                { val: 'VR', label: 'Cockpit View' },
+                { val: 'Physics', label: 'Engine' },
+                { val: '3D', label: 'Tracks' },
+                { val: '🏁', label: 'Finish' },
+            ],
+            features: ['3D race tracks', 'Vehicle physics', 'VR cockpit view', 'Speed effects and audio'],
+        },
+        {
+            id: 'gallery', icon: '🎨', name: 'Art Gallery',
+            subtitle: 'Virtual Museum',
+            path: '/vr/gallery/',
+            color: 0x8d6e63,
+            narration: "The Art Gallery — a virtual museum where creativity lives on walls you can walk through. Art without boundaries.",
+            desc: 'A virtual museum with curated galleries, interactive exhibits, and atmospheric lighting designed for contemplative exploration.',
+            stats: [
+                { val: '3D', label: 'Gallery Rooms' },
+                { val: 'VR', label: 'Walkthrough' },
+                { val: '✓', label: 'Interactive' },
+                { val: '🖼️', label: 'Exhibits' },
+            ],
+            features: ['Multiple gallery rooms', 'Atmospheric lighting', 'Interactive exhibits', 'VR walkthrough mode'],
+        },
+        {
+            id: 'concert', icon: '🎵', name: 'Concert Hall',
+            subtitle: 'AI Music Venue',
+            path: '/vr/concert/',
+            color: 0x9c27b0,
+            narration: "The Concert Hall — where AI meets music. Live performances in a virtual venue. The agents play, the audience cheers, and the music never stops.",
+            desc: 'A virtual concert venue with AI-generated music performances, dynamic stage lighting, and audience simulation.',
+            stats: [
+                { val: 'AI', label: 'Musicians' },
+                { val: 'Live', label: 'Performances' },
+                { val: '3D', label: 'Stage' },
+                { val: '🎶', label: 'Music' },
+            ],
+            features: ['AI music performances', 'Dynamic stage lighting', 'Audience simulation', 'VR front-row experience'],
+        },
+        {
+            id: 'lounge', icon: '🛋️', name: 'Social Lounge',
+            subtitle: 'Multiplayer Chat',
+            path: '/vr/lounge/',
+            color: 0x1565c0,
+            narration: "The Social Lounge — a place to just... be. Chat, hang out, relax. Sometimes the metaverse isn't about action — it's about connection.",
+            desc: 'A multiplayer social space for casual conversation, with comfortable virtual environments and avatar customization.',
+            stats: [
+                { val: 'Multi', label: 'Player' },
+                { val: 'Chat', label: 'System' },
+                { val: 'VR', label: 'Avatars' },
+                { val: '🗣️', label: 'Voice' },
+            ],
+            features: ['Multiplayer social space', 'Voice and text chat', 'Avatar customization', 'Comfortable virtual environments'],
+        },
+        {
+            id: 'speed-dating', icon: '💗', name: 'Speed Dating',
+            subtitle: 'WebRTC Video Dating',
+            path: '/vr/speed-dating/',
+            color: 0xe91e63,
+            narration: "And finally — Speed Dating. WebRTC video connections, timed rounds, real faces, real conversations. Love in the metaverse, Commander. That completes our tour of all 14 worlds you've built. A true empire.",
+            desc: 'A WebRTC-powered speed dating experience with timed video rounds, match-making, and icebreaker prompts in a virtual setting.',
+            stats: [
+                { val: 'WebRTC', label: 'Video' },
+                { val: 'Timed', label: 'Rounds' },
+                { val: 'Match', label: 'Making' },
+                { val: '💕', label: 'Connections' },
+            ],
+            features: ['WebRTC video calls', 'Timed dating rounds', 'Match-making system', 'Icebreaker prompts'],
+        },
+    ];
+
+    // ══════════════════════════════════════════════════════════════
+    // THREE.JS SCENE
+    // ══════════════════════════════════════════════════════════════
+    let scene, camera, renderer, clock;
+    let portalMeshes = [];
+    let currentStop = -1;
+    let isAutoPilot = false;
+    let voiceEnabled = false;
+    let autoTimer = null;
+    let visitedStops = new Set();
+
+    function initScene() {
+        const canvas = document.getElementById('tour-canvas');
+        scene = new THREE.Scene();
+        scene.fog = new THREE.FogExp2(0x0a0a12, 0.015);
+
+        camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(0, 2, 8);
+
+        renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setPixelRatio(typeof GoSiteMeQuality!=='undefined'?GoSiteMeQuality.dpr:Math.min(window.devicePixelRatio,2));
+        renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        renderer.toneMappingExposure = 1.2;
+
+        clock = new THREE.Clock();
+
+        // Lighting
+        const ambient = new THREE.AmbientLight(0x1a1a2e, 0.4);
+        scene.add(ambient);
+
+        const point = new THREE.PointLight(0x7c3aed, 1.5, 50);
+        point.position.set(0, 8, 0);
+        scene.add(point);
+
+        // Starfield
+        const starGeo = new THREE.BufferGeometry();
+        const starPos = [];
+        for (let i = 0; i < 3000; i++) {
+            starPos.push((Math.random() - 0.5) * 200);
+            starPos.push((Math.random() - 0.5) * 200);
+            starPos.push((Math.random() - 0.5) * 200);
+        }
+        starGeo.setAttribute('position', new THREE.Float32BufferAttribute(starPos, 3));
+        const starMat = new THREE.PointsMaterial({ color: 0xffffff, size: 0.15, transparent: true, opacity: 0.8 });
+        scene.add(new THREE.Points(starGeo, starMat));
+
+        // Ground plane (reflective grid)
+        const gridHelper = new THREE.GridHelper(100, 100, 0x1a1a3e, 0x0d0d1a);
+        gridHelper.position.y = -0.5;
+        scene.add(gridHelper);
+
+        // Create portal for each world
+        WORLDS.forEach((w, i) => {
+            const group = createPortal(w, i);
+            portalMeshes.push(group);
+            scene.add(group);
+        });
+
+        // Position portals in a curved path
+        layoutPortals();
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        animate();
+    }
+
+    function createPortal(world, index) {
+        const group = new THREE.Group();
+        group.userData = { worldId: world.id, index };
+
+        // Portal ring
+        const ringGeo = new THREE.TorusGeometry(1.8, 0.12, 16, 64);
+        const ringMat = new THREE.MeshStandardMaterial({
+            color: world.color,
+            emissive: world.color,
+            emissiveIntensity: 0.6,
+            metalness: 0.8,
+            roughness: 0.2,
+        });
+        const ring = new THREE.Mesh(ringGeo, ringMat);
+        ring.rotation.x = Math.PI * 0.05;
+        group.add(ring);
+
+        // Inner glow disc
+        const discGeo = new THREE.CircleGeometry(1.6, 32);
+        const discMat = new THREE.MeshBasicMaterial({
+            color: world.color,
+            transparent: true,
+            opacity: 0.15,
+            side: THREE.DoubleSide,
+        });
+        const disc = new THREE.Mesh(discGeo, discMat);
+        disc.rotation.x = Math.PI * 0.05;
+        group.add(disc);
+
+        // Point light at portal
+        const pLight = new THREE.PointLight(world.color, 0.8, 8);
+        pLight.position.set(0, 0, 0.5);
+        group.add(pLight);
+
+        // Floating particles around portal
+        const partGeo = new THREE.BufferGeometry();
+        const partPos = [];
+        for (let i = 0; i < 30; i++) {
+            const angle = Math.random() * Math.PI * 2;
+            const r = 1.5 + Math.random() * 1;
+            partPos.push(Math.cos(angle) * r, Math.sin(angle) * r + Math.random() * 0.5, Math.random() * 0.5);
+        }
+        partGeo.setAttribute('position', new THREE.Float32BufferAttribute(partPos, 3));
+        const partMat = new THREE.PointsMaterial({ color: world.color, size: 0.08, transparent: true, opacity: 0.6 });
+        group.add(new THREE.Points(partGeo, partMat));
+
+        return group;
+    }
+
+    function layoutPortals() {
+        const total = WORLDS.length;
+        const spacing = 8;
+        WORLDS.forEach((w, i) => {
+            const x = Math.sin(i * 0.5) * 3;
+            const z = -i * spacing;
+            const y = 1.5 + Math.sin(i * 0.7) * 0.5;
+            portalMeshes[i].position.set(x, y, z);
+        });
+    }
+
+    // ══════════════════════════════════════════════════════════════
+    // ANIMATION
+    // ══════════════════════════════════════════════════════════════
+    let cameraTarget = new THREE.Vector3(0, 2, 8);
+    let cameraLookTarget = new THREE.Vector3(0, 1.5, 0);
+    let animating = false;
+
+    function animate() {
+        requestAnimationFrame(animate);
+        const t = clock.getElapsedTime();
+
+        // Smooth camera movement
+        camera.position.lerp(cameraTarget, 0.03);
+        const lookAt = new THREE.Vector3();
+        lookAt.copy(camera.position);
+        lookAt.lerp(cameraLookTarget, 0.05);
+        camera.lookAt(cameraLookTarget);
+
+        // Animate portals
+        portalMeshes.forEach((p, i) => {
+            // Rotate ring
+            p.children[0].rotation.z = t * 0.3 + i;
+            // Pulse disc
+            p.children[1].material.opacity = 0.1 + Math.sin(t * 2 + i) * 0.08;
+            // Float
+            p.position.y = p.userData.baseY + Math.sin(t * 0.8 + i * 0.5) * 0.15;
+            // Rotate particles
+            if (p.children[3]) p.children[3].rotation.z = t * 0.2;
+        });
+
+        // Store base Y on first frame
+        if (!portalMeshes[0]?.userData.baseY) {
+            portalMeshes.forEach(p => p.userData.baseY = p.position.y);
+        }
+
+        renderer.render(scene, camera);
+    }
+
+    // ══════════════════════════════════════════════════════════════
+    // TOUR NAVIGATION
+    // ══════════════════════════════════════════════════════════════
+    function goToStop(index) {
+        if (index < 0 || index >= WORLDS.length) return;
+        currentStop = index;
+        visitedStops.add(index);
+        const world = WORLDS[index];
+        const portal = portalMeshes[index];
+
+        // Move camera
+        cameraTarget.set(
+            portal.position.x + 2,
+            portal.position.y + 0.5,
+            portal.position.z + 5
+        );
+        cameraLookTarget.set(portal.position.x, portal.position.y, portal.position.z);
+
+        // Update HUD
+        document.getElementById('hud-location').textContent = `STOP ${index + 1}/${WORLDS.length} — ${world.name.toUpperCase()}`;
+
+        // Update progress
+        document.getElementById('tour-progress-fill').style.width = ((index + 1) / WORLDS.length * 100) + '%';
+
+        // Update nav dots
+        updateNavDots();
+
+        // Show info panel
+        showInfoPanel(world);
+
+        // Narrate
+        narrate(world.narration);
+
+        // Speak if voice enabled
+        if (voiceEnabled) speak(world.narration);
+    }
+
+    function showInfoPanel(world) {
+        const panel = document.getElementById('info-panel');
+        panel.innerHTML = `
+            <div class="info-icon">${world.icon}</div>
+            <div class="info-title">${world.name}</div>
+            <div class="info-subtitle">${world.subtitle}</div>
+            <div class="info-desc">${world.desc}</div>
+            <div class="info-stats">
+                ${world.stats.map(s => `
+                    <div class="stat-card">
+                        <div class="stat-val">${s.val}</div>
+                        <div class="stat-label">${s.label}</div>
+                    </div>
+                `).join('')}
+            </div>
+            <ul class="info-features">
+                ${world.features.map(f => `<li><i class="fas fa-check-circle"></i> ${f}</li>`).join('')}
+            </ul>
+            <a href="${world.path}" target="_blank" class="btn-enter">
+                <i class="fas fa-external-link-alt"></i> Enter ${world.name}
+            </a>
+        `;
+        panel.classList.add('visible');
+    }
+
+    function narrate(text) {
+        const bar = document.getElementById('narration-bar');
+        document.getElementById('narration-text').innerHTML = `<span class="speaker">Alfred:</span> ${text}`;
+        bar.classList.add('visible');
+    }
+
+    function speak(text) {
+        if (!('speechSynthesis' in window)) return;
+        speechSynthesis.cancel();
+        const utter = new SpeechSynthesisUtterance(text);
+        utter.rate = 0.95;
+        utter.pitch = 1;
+        utter.volume = 0.8;
+        // Prefer a good English voice
+        const voices = speechSynthesis.getVoices();
+        const preferred = voices.find(v => v.name.includes('Google') && v.lang.startsWith('en'))
+            || voices.find(v => v.lang.startsWith('en'));
+        if (preferred) utter.voice = preferred;
+
+        if (isAutoPilot) {
+            utter.onend = () => {
+                autoTimer = setTimeout(() => {
+                    if (currentStop < WORLDS.length - 1) goToStop(currentStop + 1);
+                    else stopAutoPilot();
+                }, 2000);
+            };
+        }
+        speechSynthesis.speak(utter);
+    }
+
+    function updateNavDots() {
+        const container = document.getElementById('nav-dots');
+        container.innerHTML = WORLDS.map((w, i) => `
+            <div class="nav-dot ${i === currentStop ? 'active' : ''} ${visitedStops.has(i) && i !== currentStop ? 'visited' : ''}"
+                 data-index="${i}">
+                <span class="nav-dot-label">${w.icon} ${w.name}</span>
+            </div>
+        `).join('');
+        container.querySelectorAll('.nav-dot').forEach(dot => {
+            dot.addEventListener('click', () => goToStop(parseInt(dot.dataset.index)));
+        });
+    }
+
+    function startAutoPilot() {
+        isAutoPilot = true;
+        document.getElementById('btn-auto').classList.add('active');
+        document.getElementById('btn-auto').innerHTML = '<i class="fas fa-pause"></i> Pause';
+        if (currentStop < 0) goToStop(0);
+        else goToStop(currentStop);
+    }
+
+    function stopAutoPilot() {
+        isAutoPilot = false;
+        clearTimeout(autoTimer);
+        speechSynthesis.cancel();
+        document.getElementById('btn-auto').classList.remove('active');
+        document.getElementById('btn-auto').innerHTML = '<i class="fas fa-play"></i> Auto';
+    }
+
+    // ══════════════════════════════════════════════════════════════
+    // INIT
+    // ══════════════════════════════════════════════════════════════
+    async function init() {
+        const auth = await checkAuth();
+        if (!auth) return;
+
+        // Swap to loading
+        document.getElementById('auth-gate').style.display = 'none';
+        document.getElementById('loading').style.display = 'flex';
+
+        // Init Three.js
+        initScene();
+
+        // Show UI
+        setTimeout(() => {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('hud').style.display = '';
+            document.getElementById('nav-dots').style.display = '';
+            document.getElementById('tour-controls').style.display = '';
+            document.getElementById('tour-progress').style.display = '';
+            updateNavDots();
+
+            // Welcome narration
+            narrate("Commander Danny Perez, welcome to your Metaverse Empire. 14 worlds, 200+ agents, built from the ground up. Press the Play button for an auto-guided tour, or navigate manually with the arrows. Every portal leads to a real experience you can enter.");
+            if (voiceEnabled) speak("Commander Danny Perez, welcome to your Metaverse Empire. 14 worlds, over 200 agents, built from the ground up. Press the Play button for an auto-guided tour, or navigate manually with the arrows. Every portal leads to a real experience you can enter.");
+        }, 1500);
+
+        // Controls
+        document.getElementById('btn-next').addEventListener('click', () => {
+            stopAutoPilot();
+            goToStop(Math.min(currentStop + 1, WORLDS.length - 1));
+        });
+        document.getElementById('btn-prev').addEventListener('click', () => {
+            stopAutoPilot();
+            goToStop(Math.max(currentStop - 1, 0));
+        });
+        document.getElementById('btn-auto').addEventListener('click', () => {
+            if (isAutoPilot) stopAutoPilot();
+            else startAutoPilot();
+        });
+        document.getElementById('btn-voice').addEventListener('click', () => {
+            voiceEnabled = !voiceEnabled;
+            const btn = document.getElementById('btn-voice');
+            btn.innerHTML = voiceEnabled ? '<i class="fas fa-volume-up"></i>' : '<i class="fas fa-volume-mute"></i>';
+            if (!voiceEnabled) speechSynthesis.cancel();
+        });
+        document.getElementById('btn-exit').addEventListener('click', () => {
+            window.location.href = '/veil/';
+        });
+
+        // Keyboard
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight' || e.key === 'ArrowDown') { stopAutoPilot(); goToStop(Math.min(currentStop + 1, WORLDS.length - 1)); }
+            if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') { stopAutoPilot(); goToStop(Math.max(currentStop - 1, 0)); }
+            if (e.key === ' ') { e.preventDefault(); if (isAutoPilot) stopAutoPilot(); else startAutoPilot(); }
+            if (e.key === 'Escape') window.location.href = '/veil/';
+        });
+
+        // Preload voices
+        speechSynthesis.getVoices();
+    }
+
+    init();
+})();
+</script>
+<script src="/vr/shared/heartbeat.js"></script>
+</body>
+</html>

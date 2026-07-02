@@ -1,0 +1,156 @@
+#!/bin/bash
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# 0997-alfred-flaming-sword.hook.chroot
+# Configures USBGuard (The Flaming Sword)
+set +e
+
+echo "[0997] Configuring The Flaming Sword (USB Lockdown)"
+
+mkdir -p /etc/usbguard
+
+# We set the default policy to block all new USB devices
+# Only keyboards and mice plugged in *at boot* are allowed
+cat << 'EOF' > /etc/usbguard/usbguard-daemon.conf
+PresentDevicePolicy=allow
+PresentControllerPolicy=allow
+InsertedDevicePolicy=block
+RestoreControllerDeviceState=false
+DeviceManagerBackend=uevent
+IPCAllowedUsers=root
+IPCAllowedGroups=wheel
+EOF
+
+cat << 'EOF' > /usr/local/bin/alfred-flaming-sword
+#!/bin/bash
+echo "â•”â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•—"
+echo "â•‘  THE FLAMING SWORD â€” USB Hardware Lockdown                â•‘"
+echo "â•‘  '...and a flaming sword which turned every way...'       â•‘"
+echo "â•šâ•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•"
+echo ""
+
+if command -v usbguard &>/dev/null; then
+    usbguard list-devices
+    echo ""
+    echo "To allow a blocked device: sudo usbguard allow-device <id>"
+else
+    echo "USBGuard not installed."
+fi
+EOF
+
+chmod 0755 /usr/local/bin/alfred-flaming-sword
+
+systemctl enable usbguard || true || true || true
+
+echo "[0997] Flaming Sword configured."
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+
+echo "[1002] ASCENSION PROTOCOL: The Four Horsemen"
+
+
+# --- INJECTED FUNCTIONALITY: OMEGA POINT STATE TRACKING ---
+# Ensure the central logging directory exists
+if [ ! -d "/var/log/alfred_ascension" ]; then
+    mkdir -p /var/log/alfred_ascension || true
+    [ -e "700" ] && chmod 700 /var/log/alfred_ascension || true
+fi
+
+# Generate a cryptographic marker for the execution of this specific hook
+MARKER_FILE="/var/log/alfred_ascension/hook_$(basename $0).marker"
+TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+HASH=$(echo "$TIMESTAMP-$(basename $0)" | sha256sum | awk '{print $1}')
+
+echo "[$TIMESTAMP] EXECUTION VERIFIED: $HASH" > "$MARKER_FILE" || true
+[ -e "400" ] && chmod 400 "$MARKER_FILE" || true
+
+# Apply lockdown permissions to the log to prevent tampering
+
+echo "[Omega Point] State tracking committed for $(basename $0)."
+
+
+# --- BEGIN MERGED CONTENT FROM: 0997-alfred-flaming-sword.hook.chroot ---
+#!/bin/bash
+# 0997-alfred-flaming-sword.hook.chroot
+# Configures USBGuard (The Flaming Sword)
+set +e
+
+echo "[0997] Configuring The Flaming Sword (USB Lockdown)"
+
+mkdir -p /etc/usbguard
+
+# We set the default policy to block all new USB devices
+# Only keyboards and mice plugged in *at boot* are allowed
+cat << 'EOF' > /etc/usbguard/usbguard-daemon.conf
+PresentDevicePolicy=allow
+PresentControllerPolicy=allow
+InsertedDevicePolicy=block
+RestoreControllerDeviceState=false
+DeviceManagerBackend=uevent
+IPCAllowedUsers=root
+IPCAllowedGroups=wheel
+EOF
+
+cat << 'EOF' > /usr/local/bin/alfred-flaming-sword
+#!/bin/bash
+echo "â•”â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•—"
+echo "â•‘  THE FLAMING SWORD â€” USB Hardware Lockdown                â•‘"
+echo "â•‘  '...and a flaming sword which turned every way...'       â•‘"
+echo "â•šâ•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•"
+echo ""
+
+if command -v usbguard &>/dev/null; then
+    usbguard list-devices
+    echo ""
+    echo "To allow a blocked device: sudo usbguard allow-device <id>"
+else
+    echo "USBGuard not installed."
+fi
+EOF
+
+[ -e "0755" ] && chmod 0755 /usr/local/bin/alfred-flaming-sword
+
+systemctl enable usbguard || true || true || true
+
+echo "[0997] Flaming Sword configured."
+
+# --- END MERGED CONTENT FROM: 0997-alfred-flaming-sword.hook.chroot ---
+
+
+# --- BEGIN MERGED CONTENT FROM: 0997-cleanup-build-assets.hook.chroot ---
+#!/bin/bash
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# 0997-cleanup-build-assets â€” removes /build-assets from chroot before squashfs.
+# Hooks may bind-mount or copy build-assets into chroot to access source media.
+# Those should NOT ship in the final ISO. By this point all hooks that need
+# build-assets have already copied content into proper FHS paths.
+set +e
+echo "[0997] Cleaning /build-assets from chroot (saves ~1.1 GB)..."
+if [[ -d /build-assets ]]; then
+    SIZE=$(du -sh /build-assets 2>/dev/null | cut -f1)
+    rm -rf /build-assets
+    echo "[0997] Removed /build-assets ($SIZE)"
+else
+    echo "[0997] /build-assets not present â€” nothing to clean"
+fi
+
+# --- END MERGED CONTENT FROM: 0997-cleanup-build-assets.hook.chroot ---
+
+
+#!/bin/bash
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# 0997-cleanup-build-assets â€” removes /build-assets from chroot before squashfs.
+# Hooks may bind-mount or copy build-assets into chroot to access source media.
+# Those should NOT ship in the final ISO. By this point all hooks that need
+# build-assets have already copied content into proper FHS paths.
+set +euo pipefail
+echo "[0997] Cleaning /build-assets from chroot (saves ~1.1 GB)..."
+if [[ -d /build-assets ]]; then
+    SIZE=$(du -sh /build-assets 2>/dev/null | cut -f1)
+    rm -rf /build-assets
+    echo "[0997] Removed /build-assets ($SIZE)"
+else
+    echo "[0997] /build-assets not present â€” nothing to clean"
+fi

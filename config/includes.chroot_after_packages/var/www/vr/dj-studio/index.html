@@ -1,0 +1,3178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SoundStudioPro DJ World — GoSiteMe</title>
+<meta name="description" content="3D DJ nightclub powered by SoundStudioPro. Mix beats on dual decks, stream live sets, battle AI DJs, meet people on the dance floor. By GoSiteMe.">
+<link rel="icon" href="/assets/favicon.ico">
+<script src="/assets/js/vendor/three.r128.min.js"></script>
+<script src="/vr/shared/gositeme-quality.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#05050f;color:#fff;font-family:'Inter','Segoe UI',system-ui,sans-serif;overflow:hidden;-webkit-font-smoothing:antialiased;user-select:none}
+
+/* ── Loading ── */
+#loading{position:fixed;inset:0;background:#05050f;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;transition:opacity .8s}
+#loading.hidden{opacity:0;pointer-events:none}
+#loading h1{font-size:2.2rem;margin-bottom:.3rem;background:linear-gradient(135deg,#a855f7,#ec4899,#f97316);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+#loading .sub{color:rgba(255,255,255,.35);font-size:.85rem;margin-bottom:1.5rem}
+#loading .brand{font-size:.7rem;color:rgba(255,255,255,.2);margin-top:1rem}
+.load-bar{width:240px;height:4px;background:rgba(255,255,255,.08);border-radius:2px;overflow:hidden}
+.load-bar-fill{height:100%;background:linear-gradient(90deg,#a855f7,#ec4899,#f97316);border-radius:2px;animation:loadPulse 1.5s ease-in-out infinite;width:60%}
+@keyframes loadPulse{0%,100%{transform:translateX(-100%)}50%{transform:translateX(100%)}}
+
+/* ── Lobby ── */
+#lobby{position:fixed;inset:0;background:radial-gradient(ellipse at center,#0f051a 0%,#05050f 70%);z-index:500;display:flex;align-items:center;justify-content:center}
+#lobby.hidden{display:none}
+.lobby-panel{max-width:700px;width:94%;text-align:center}
+.lobby-panel h1{font-size:2.4rem;margin-bottom:.3rem;background:linear-gradient(135deg,#a855f7,#ec4899,#f97316);-webkit-background-clip:text;-webkit-text-fill-color:transparent;line-height:1.2}
+.lobby-panel .tagline{color:rgba(255,255,255,.4);font-size:.95rem;margin-bottom:2rem;line-height:1.5}
+.lobby-panel .powered{font-size:.7rem;color:rgba(255,255,255,.2);margin-bottom:1.5rem}
+.lobby-panel .powered a{color:#a855f7;text-decoration:none}
+.lobby-stats{display:flex;justify-content:center;gap:2rem;margin-bottom:2rem;flex-wrap:wrap}
+.lobby-stat{text-align:center}
+.lobby-stat .val{font-size:1.5rem;font-weight:800;background:linear-gradient(135deg,#a855f7,#ec4899);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.lobby-stat .lbl{font-size:.65rem;text-transform:uppercase;letter-spacing:1px;color:rgba(255,255,255,.25)}
+
+.lobby-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-bottom:1.5rem}
+.lobby-card{padding:1.5rem 1rem;border-radius:16px;border:1px solid rgba(255,255,255,.06);background:rgba(255,255,255,.02);cursor:pointer;transition:.25s;text-decoration:none;color:#fff}
+.lobby-card:hover{border-color:rgba(168,85,247,.3);background:rgba(168,85,247,.06);transform:translateY(-3px)}
+.lobby-card .icon{font-size:2.5rem;margin-bottom:.5rem}
+.lobby-card h3{font-size:.95rem;margin-bottom:.25rem}
+.lobby-card p{font-size:.68rem;color:rgba(255,255,255,.35);margin:0;line-height:1.4}
+
+.lobby-footer{margin-top:1.5rem;display:flex;gap:1rem;justify-content:center;align-items:center;flex-wrap:wrap}
+.lobby-footer a{color:rgba(255,255,255,.25);font-size:.75rem;text-decoration:none;transition:.2s}
+.lobby-footer a:hover{color:#a855f7}
+
+/* ── 3D Canvas ── */
+#djCanvas{position:fixed;inset:0;z-index:1}
+
+/* ── DJ Console HUD ── */
+#djConsole{position:fixed;bottom:0;left:0;right:0;z-index:100;background:linear-gradient(0deg,rgba(5,5,15,.98) 0%,rgba(5,5,15,.9) 80%,transparent 100%);padding:1rem 1.5rem;backdrop-filter:blur(12px);display:none;border-top:1px solid rgba(168,85,247,.15)}
+.console-inner{max-width:1200px;margin:0 auto;display:grid;grid-template-columns:1fr auto 1fr;gap:1.5rem;align-items:end}
+
+/* Deck */
+.deck{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:14px;padding:1rem;position:relative}
+.deck-label{position:absolute;top:.5rem;left:.8rem;font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:rgba(255,255,255,.2)}
+.deck-track{font-size:.85rem;font-weight:700;margin-bottom:.5rem;margin-top:1.2rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#fff}
+.deck-artist{font-size:.7rem;color:rgba(255,255,255,.35);margin-bottom:.6rem}
+
+.platter{width:120px;height:120px;border-radius:50%;border:3px solid rgba(168,85,247,.25);background:radial-gradient(circle,#111 0%,#0a0a14 60%,rgba(168,85,247,.1) 100%);margin:0 auto .6rem;position:relative;transition:border-color .3s}
+.platter.spinning{animation:spin 2s linear infinite;border-color:rgba(168,85,247,.6)}
+.platter::after{content:'';position:absolute;top:50%;left:50%;width:10px;height:10px;border-radius:50%;background:#a855f7;transform:translate(-50%,-50%);box-shadow:0 0 10px rgba(168,85,247,.6)}
+.platter .groove{position:absolute;inset:15px;border-radius:50%;border:1px solid rgba(255,255,255,.03)}
+.platter .groove:nth-child(2){inset:25px}
+.platter .groove:nth-child(3){inset:35px}
+@keyframes spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+
+.deck-controls{display:flex;gap:.4rem;justify-content:center;flex-wrap:wrap}
+.deck-btn{padding:.35rem .6rem;border-radius:8px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.04);color:rgba(255,255,255,.6);cursor:pointer;font-size:.7rem;font-weight:600;transition:.2s}
+.deck-btn:hover{background:rgba(168,85,247,.15);color:#a855f7;border-color:rgba(168,85,247,.3)}
+.deck-btn.active{background:rgba(168,85,247,.2);color:#a855f7;border-color:rgba(168,85,247,.4)}
+.deck-bpm{font-size:.65rem;color:rgba(255,255,255,.3);text-align:center;margin-top:.4rem}
+
+/* Mixer Center */
+.mixer{display:flex;flex-direction:column;align-items:center;gap:.8rem;min-width:160px}
+.mixer-label{font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:rgba(255,255,255,.2)}
+
+/* Crossfader */
+.crossfader-track{width:140px;height:8px;background:rgba(255,255,255,.06);border-radius:4px;position:relative;cursor:pointer}
+.crossfader-knob{position:absolute;top:50%;width:24px;height:20px;border-radius:4px;background:linear-gradient(135deg,#a855f7,#ec4899);transform:translate(-50%,-50%);cursor:grab;left:50%;box-shadow:0 0 12px rgba(168,85,247,.4)}
+
+/* EQ Knobs */
+.eq-row{display:flex;gap:.6rem;align-items:center}
+.eq-knob{width:32px;height:32px;border-radius:50%;border:2px solid rgba(255,255,255,.1);background:linear-gradient(180deg,rgba(255,255,255,.08),rgba(255,255,255,.02));cursor:pointer;position:relative;transition:.2s}
+.eq-knob:hover{border-color:rgba(168,85,247,.4)}
+.eq-knob::after{content:'';position:absolute;top:3px;left:50%;width:2px;height:10px;background:#a855f7;transform:translateX(-50%);border-radius:1px}
+.eq-knob-label{font-size:.55rem;color:rgba(255,255,255,.25);text-align:center;margin-top:2px}
+
+/* Volume */
+.volume-slider{width:120px;-webkit-appearance:none;appearance:none;height:4px;background:rgba(255,255,255,.1);border-radius:2px;outline:none;cursor:pointer}
+.volume-slider::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:linear-gradient(135deg,#a855f7,#ec4899);cursor:pointer;box-shadow:0 0 8px rgba(168,85,247,.4)}
+
+/* Effects */
+.fx-row{display:flex;gap:.4rem}
+.fx-btn{padding:.3rem .5rem;border-radius:6px;border:1px solid rgba(255,255,255,.06);background:rgba(255,255,255,.03);color:rgba(255,255,255,.4);cursor:pointer;font-size:.6rem;font-weight:600;transition:.2s}
+.fx-btn:hover,.fx-btn.active{color:#ec4899;border-color:rgba(236,72,153,.3);background:rgba(236,72,153,.08)}
+
+/* Master */
+.master-controls{display:flex;gap:.5rem;align-items:center;margin-top:.3rem}
+.master-btn{padding:.45rem .9rem;border-radius:10px;border:none;cursor:pointer;font-size:.75rem;font-weight:700;transition:.2s;color:#fff}
+.master-btn.rec{background:rgba(239,68,68,.2);border:1px solid rgba(239,68,68,.3)}
+.master-btn.rec.active{background:rgba(239,68,68,.5);animation:recPulse 1s ease-in-out infinite}
+.master-btn.stream{background:rgba(168,85,247,.2);border:1px solid rgba(168,85,247,.3)}
+.master-btn.stream.active{background:rgba(168,85,247,.5);animation:recPulse 1s ease-in-out infinite}
+@keyframes recPulse{0%,100%{opacity:1}50%{opacity:.6}}
+
+/* ── Top HUD ── */
+#topHud{position:fixed;top:0;left:0;right:0;z-index:200;display:none;padding:.6rem 1.5rem;background:linear-gradient(180deg,rgba(5,5,15,.9) 0%,transparent 100%);backdrop-filter:blur(8px)}
+.top-hud-inner{max-width:1200px;margin:0 auto;display:flex;justify-content:space-between;align-items:center}
+.hud-left{display:flex;align-items:center;gap:1rem}
+.hud-title{font-size:.85rem;font-weight:700;background:linear-gradient(135deg,#a855f7,#ec4899);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.hud-badge{padding:.2rem .6rem;border-radius:6px;font-size:.6rem;font-weight:700;background:rgba(168,85,247,.15);color:#a855f7;border:1px solid rgba(168,85,247,.2)}
+.hud-right{display:flex;align-items:center;gap:.5rem}
+.hud-btn{padding:.35rem .7rem;border-radius:8px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.04);color:rgba(255,255,255,.5);cursor:pointer;font-size:.7rem;font-weight:600;transition:.2s}
+.hud-btn:hover{background:rgba(168,85,247,.1);color:#a855f7;border-color:rgba(168,85,247,.3)}
+
+/* ── Chat Panel ── */
+#chatPanel{position:fixed;right:1rem;bottom:15rem;width:300px;max-height:350px;z-index:300;background:rgba(5,5,15,.92);border:1px solid rgba(255,255,255,.06);border-radius:16px;backdrop-filter:blur(12px);display:none;flex-direction:column;overflow:hidden}
+#chatPanel.show{display:flex}
+.chat-header{padding:.6rem 1rem;border-bottom:1px solid rgba(255,255,255,.06);font-size:.8rem;font-weight:700;color:rgba(255,255,255,.5);display:flex;justify-content:space-between;align-items:center}
+.chat-close{cursor:pointer;color:rgba(255,255,255,.3);transition:.2s}
+.chat-close:hover{color:#fff}
+.chat-messages{flex:1;overflow-y:auto;padding:.6rem .8rem;max-height:240px}
+.chat-msg{margin-bottom:.4rem;font-size:.75rem;line-height:1.4}
+.chat-msg .name{font-weight:700;margin-right:.3rem}
+.chat-msg .name.agent{color:#a855f7}
+.chat-msg .name.user{color:#ec4899}
+.chat-msg .name.system{color:#f97316}
+.chat-input-row{padding:.5rem .6rem;border-top:1px solid rgba(255,255,255,.06);display:flex;gap:.3rem}
+.chat-input-row input{flex:1;padding:.4rem .6rem;border-radius:8px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.04);color:#fff;font-size:.75rem}
+.chat-input-row input:focus{outline:none;border-color:rgba(168,85,247,.3)}
+.chat-input-row button{padding:.4rem .6rem;border-radius:8px;border:none;background:linear-gradient(135deg,#a855f7,#ec4899);color:#fff;cursor:pointer;font-size:.7rem;font-weight:700}
+
+/* ── Crowd Panel ── */
+#crowdPanel{position:fixed;left:1rem;bottom:15rem;z-index:300;display:none}
+#crowdPanel.show{display:block}
+.crowd-avatars{display:flex;gap:.4rem;flex-wrap:wrap;max-width:200px}
+.crowd-avatar{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.2rem;border:2px solid rgba(168,85,247,.2);background:rgba(255,255,255,.04);cursor:pointer;transition:.2s}
+.crowd-avatar:hover{transform:scale(1.15);border-color:rgba(168,85,247,.5)}
+.crowd-avatar.dancing{animation:dance .5s ease-in-out infinite alternate}
+@keyframes dance{from{transform:translateY(0)}to{transform:translateY(-4px)}}
+.crowd-label{font-size:.6rem;color:rgba(255,255,255,.2);margin-bottom:.3rem;text-transform:uppercase;letter-spacing:1px}
+
+/* ── Events & Ticketing ── */
+.events-section{margin-top:1.5rem;text-align:center}
+.events-section .section-title{font-size:.65rem;color:rgba(255,255,255,.2);text-transform:uppercase;letter-spacing:1px;margin-bottom:.6rem}
+.events-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:.6rem;max-width:600px;margin:0 auto}
+.event-card{padding:.8rem;border-radius:12px;border:1px solid rgba(255,255,255,.06);background:rgba(255,255,255,.02);cursor:pointer;transition:.25s;text-align:left;position:relative;overflow:hidden}
+.event-card:hover{border-color:rgba(168,85,247,.3);background:rgba(168,85,247,.04);transform:translateY(-2px)}
+.event-card .event-badge{position:absolute;top:.5rem;right:.5rem;padding:.15rem .4rem;border-radius:4px;font-size:.55rem;font-weight:700;text-transform:uppercase}
+.event-card .event-badge.featured{background:rgba(249,115,22,.2);color:#f97316}
+.event-card .event-badge.live{background:rgba(239,68,68,.2);color:#ef4444;animation:recPulse 1s ease-in-out infinite}
+.event-card .event-title{font-size:.8rem;font-weight:700;margin-bottom:.2rem;padding-right:3rem}
+.event-card .event-meta{font-size:.6rem;color:rgba(255,255,255,.3);margin-bottom:.3rem}
+.event-card .event-price{font-size:.7rem;font-weight:700;background:linear-gradient(135deg,#a855f7,#ec4899);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.event-card .event-price .free{color:#22c55e;-webkit-text-fill-color:#22c55e}
+.event-card .event-attending{font-size:.55rem;color:rgba(255,255,255,.2);margin-top:.2rem}
+
+/* ── Ticket Modal ── */
+#ticketModal{position:fixed;inset:0;z-index:800;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.7);backdrop-filter:blur(8px)}
+#ticketModal.show{display:flex}
+.ticket-modal-inner{width:92%;max-width:480px;max-height:85vh;overflow-y:auto;background:rgba(10,10,20,.98);border:1px solid rgba(168,85,247,.2);border-radius:20px;padding:1.5rem}
+.ticket-modal-inner h2{font-size:1.2rem;margin-bottom:.2rem;background:linear-gradient(135deg,#a855f7,#ec4899);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.ticket-modal-inner .event-info{font-size:.75rem;color:rgba(255,255,255,.4);margin-bottom:1rem}
+.ticket-tier{padding:.6rem .8rem;border-radius:10px;border:1px solid rgba(255,255,255,.06);background:rgba(255,255,255,.02);margin-bottom:.5rem;cursor:pointer;transition:.2s;display:flex;justify-content:space-between;align-items:center}
+.ticket-tier:hover{border-color:rgba(168,85,247,.3)}
+.ticket-tier.selected{border-color:rgba(168,85,247,.5);background:rgba(168,85,247,.08)}
+.ticket-tier .tier-name{font-size:.8rem;font-weight:700}
+.ticket-tier .tier-perks{font-size:.6rem;color:rgba(255,255,255,.3);margin-top:.1rem}
+.ticket-tier .tier-price{text-align:right}
+.ticket-tier .tier-price .usd{font-size:.85rem;font-weight:800;color:#fff}
+.ticket-tier .tier-price .sol{font-size:.6rem;color:rgba(20,241,149,.7)}
+.ticket-tier .tier-price .sold-out{font-size:.65rem;color:#ef4444;font-weight:700}
+.payment-methods{display:flex;gap:.4rem;margin:.8rem 0;flex-wrap:wrap}
+.pay-method{padding:.4rem .7rem;border-radius:8px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.03);color:rgba(255,255,255,.5);cursor:pointer;font-size:.7rem;font-weight:600;transition:.2s}
+.pay-method:hover,.pay-method.selected{border-color:rgba(20,241,149,.4);color:#14F195;background:rgba(20,241,149,.06)}
+.buy-ticket-btn{width:100%;padding:.7rem;border-radius:12px;border:none;cursor:pointer;font-size:.85rem;font-weight:700;color:#fff;background:linear-gradient(135deg,#a855f7,#ec4899);transition:.2s;margin-top:.5rem}
+.buy-ticket-btn:hover{transform:translateY(-2px);box-shadow:0 4px 20px rgba(168,85,247,.3)}
+.buy-ticket-btn.solana{background:linear-gradient(135deg,#9945FF,#14F195)}
+.wallet-connect{padding:.5rem .8rem;border-radius:10px;border:1px solid rgba(153,69,255,.3);background:rgba(153,69,255,.08);color:#14F195;cursor:pointer;font-size:.7rem;font-weight:700;transition:.2s;display:inline-flex;align-items:center;gap:.3rem;margin-bottom:.5rem}
+.wallet-connect:hover{background:rgba(153,69,255,.15)}
+.ticket-close{position:absolute;top:1rem;right:1rem;background:none;border:none;color:rgba(255,255,255,.3);cursor:pointer;font-size:1.1rem;transition:.2s}
+.ticket-close:hover{color:#fff}
+@media(max-width:600px){.events-grid{grid-template-columns:1fr}}
+
+/* ── Track Browser ── */
+#trackBrowser{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);width:90%;max-width:600px;max-height:80vh;z-index:600;background:rgba(10,10,20,.97);border:1px solid rgba(168,85,247,.2);border-radius:20px;backdrop-filter:blur(16px);display:none;flex-direction:column;overflow:hidden}
+#trackBrowser.show{display:flex}
+.browser-header{padding:1rem 1.3rem;border-bottom:1px solid rgba(255,255,255,.06);display:flex;justify-content:space-between;align-items:center}
+.browser-header h2{font-size:1.1rem;background:linear-gradient(135deg,#a855f7,#ec4899);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.browser-close{font-size:1.2rem;cursor:pointer;color:rgba(255,255,255,.3);transition:.2s}
+.browser-close:hover{color:#fff}
+.browser-genres{display:flex;gap:.4rem;padding:.6rem 1rem;overflow-x:auto;border-bottom:1px solid rgba(255,255,255,.04)}
+.genre-pill{padding:.3rem .7rem;border-radius:20px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.03);color:rgba(255,255,255,.4);cursor:pointer;font-size:.7rem;font-weight:600;white-space:nowrap;transition:.2s}
+.genre-pill:hover,.genre-pill.active{color:#a855f7;border-color:rgba(168,85,247,.3);background:rgba(168,85,247,.08)}
+.browser-tracks{flex:1;overflow-y:auto;padding:.5rem}
+.browser-track{display:flex;align-items:center;gap:.8rem;padding:.6rem .8rem;border-radius:10px;cursor:pointer;transition:.15s}
+.browser-track:hover{background:rgba(168,85,247,.06)}
+.track-art{width:40px;height:40px;border-radius:8px;background:linear-gradient(135deg,#a855f7,#ec4899);display:flex;align-items:center;justify-content:center;font-size:1.2rem;flex-shrink:0}
+.track-info{flex:1;min-width:0}
+.track-info .tname{font-size:.82rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.track-info .tartist{font-size:.68rem;color:rgba(255,255,255,.35)}
+.track-bpm{font-size:.65rem;color:rgba(255,255,255,.25);text-align:right}
+.track-load{padding:.3rem .6rem;border-radius:6px;border:1px solid rgba(168,85,247,.2);background:rgba(168,85,247,.08);color:#a855f7;font-size:.65rem;font-weight:700;cursor:pointer;transition:.15s;flex-shrink:0}
+.track-load:hover{background:rgba(168,85,247,.2)}
+
+/* ── Spectator Badge ── */
+#spectatorBadge{position:fixed;top:3.5rem;left:50%;transform:translateX(-50%);z-index:500;padding:.5rem 1.2rem;border-radius:12px;background:rgba(168,85,247,.15);border:1px solid rgba(168,85,247,.3);color:#a855f7;font-size:.8rem;font-weight:700;backdrop-filter:blur(12px);cursor:pointer;display:none;transition:.2s}
+#spectatorBadge:hover{background:rgba(168,85,247,.25)}
+
+/* ── Visualizer ── */
+#visualizer{position:fixed;bottom:12rem;left:50%;transform:translateX(-50%);z-index:50;display:none;pointer-events:none}
+.viz-bars{display:flex;gap:3px;align-items:flex-end;height:80px}
+.viz-bar{width:4px;border-radius:2px;background:linear-gradient(180deg,#ec4899,#a855f7);transition:height .1s}
+
+/* ── Wager Modal ── */
+#wagerModal{position:fixed;inset:0;z-index:700;display:none;align-items:center;justify-content:center;background:rgba(5,5,15,.92);backdrop-filter:blur(6px)}
+#wagerModal.show{display:flex}
+.wager-card{max-width:420px;width:90%;background:rgba(15,15,30,.98);border:1px solid rgba(168,85,247,.2);border-radius:20px;padding:2rem;text-align:center}
+.wager-card h2{font-size:1.3rem;margin-bottom:.5rem;background:linear-gradient(135deg,#a855f7,#ec4899);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.wager-card p{color:rgba(255,255,255,.4);margin-bottom:1.5rem;font-size:.85rem}
+.wager-amounts{display:flex;gap:.6rem;justify-content:center;margin-bottom:1.5rem}
+.wager-amt{padding:.6rem 1.2rem;border-radius:10px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.03);cursor:pointer;transition:.2s;font-size:1rem;font-weight:700;color:rgba(255,255,255,.5)}
+.wager-amt:hover,.wager-amt.selected{border-color:rgba(168,85,247,.4);color:#a855f7;background:rgba(168,85,247,.08)}
+.wager-actions{display:flex;gap:.5rem;justify-content:center}
+.wager-btn{padding:.6rem 1.5rem;border-radius:10px;border:none;cursor:pointer;font-size:.85rem;font-weight:700;color:#fff;transition:.2s}
+.wager-btn.go{background:linear-gradient(135deg,#a855f7,#ec4899)}
+.wager-btn.cancel{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1)}
+
+/* ── Toast ── */
+#toast{position:fixed;bottom:14rem;left:50%;transform:translateX(-50%);z-index:600;padding:.5rem 1rem;border-radius:10px;background:rgba(15,15,30,.95);border:1px solid rgba(168,85,247,.3);color:#a855f7;font-size:.78rem;font-weight:600;backdrop-filter:blur(12px);opacity:0;transition:opacity .3s;pointer-events:none}
+#toast.visible{opacity:1}
+
+/* ── Responsive ── */
+@media(max-width:900px){
+    .lobby-grid{grid-template-columns:1fr 1fr}
+    .console-inner{grid-template-columns:1fr;gap:1rem}
+    .mixer{flex-direction:row;flex-wrap:wrap;justify-content:center}
+    .platter{width:80px;height:80px}
+    #chatPanel{width:260px;right:.5rem;bottom:20rem}
+}
+@media(max-width:550px){
+    .lobby-grid{grid-template-columns:1fr}
+}
+
+/* ── Sample Pads ── */
+#samplePads{position:fixed;left:1rem;bottom:1rem;z-index:150;display:none}
+#samplePads.show{display:block}
+.pads-label{font-size:.6rem;color:rgba(255,255,255,.2);text-transform:uppercase;letter-spacing:1px;margin-bottom:.3rem}
+.pads-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:.3rem}
+.sample-pad{width:52px;height:52px;border-radius:10px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.03);display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;transition:.15s;user-select:none;-webkit-tap-highlight-color:transparent}
+.sample-pad:active,.sample-pad.hit{transform:scale(.92);background:rgba(168,85,247,.25);border-color:rgba(168,85,247,.5);box-shadow:0 0 16px rgba(168,85,247,.3)}
+.sample-pad .pad-icon{font-size:1.2rem;line-height:1}
+.sample-pad .pad-name{font-size:.5rem;color:rgba(255,255,255,.3);margin-top:2px}
+
+/* ── Hot Cues ── */
+.hotcue-row{display:flex;gap:.25rem;justify-content:center;margin-top:.35rem}
+.hotcue-btn{width:22px;height:22px;border-radius:6px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.03);color:rgba(255,255,255,.3);cursor:pointer;font-size:.6rem;font-weight:700;display:flex;align-items:center;justify-content:center;transition:.15s}
+.hotcue-btn.set{border-color:rgba(168,85,247,.4);color:#a855f7;background:rgba(168,85,247,.12)}
+.hotcue-btn:nth-child(1).set{border-color:rgba(239,68,68,.4);color:#ef4444;background:rgba(239,68,68,.12)}
+.hotcue-btn:nth-child(2).set{border-color:rgba(34,197,94,.4);color:#22c55e;background:rgba(34,197,94,.12)}
+.hotcue-btn:nth-child(3).set{border-color:rgba(59,130,246,.4);color:#3b82f6;background:rgba(59,130,246,.12)}
+.hotcue-btn:nth-child(4).set{border-color:rgba(249,115,22,.4);color:#f97316;background:rgba(249,115,22,.12)}
+
+/* ── Pyro / Confetti ── */
+.pyro-flash{position:fixed;inset:0;z-index:90;pointer-events:none;background:radial-gradient(ellipse at 50% 80%,rgba(249,115,22,.25),transparent 60%);opacity:0;transition:opacity .15s}
+.pyro-flash.fire{opacity:1}
+.confetti-canvas{position:fixed;inset:0;z-index:85;pointer-events:none}
+
+/* ── Festival Mode Badge ── */
+.festival-badge{position:fixed;top:3rem;right:1rem;z-index:250;padding:.4rem .8rem;border-radius:8px;background:linear-gradient(135deg,rgba(249,115,22,.2),rgba(236,72,153,.2));border:1px solid rgba(249,115,22,.3);color:#f97316;font-size:.7rem;font-weight:700;display:none}
+.festival-badge.show{display:block}
+
+/* ── LED Wall ── */
+.led-wall-overlay{position:fixed;top:0;left:0;right:0;height:35vh;z-index:2;pointer-events:none;opacity:.15;background:linear-gradient(180deg,rgba(168,85,247,.3),transparent);transition:background .5s}
+
+/* ── Alfred Concierge ── */
+#alfredPanel{position:fixed;right:1rem;top:3.5rem;width:320px;max-height:450px;z-index:400;background:rgba(5,5,15,.96);border:1px solid rgba(99,102,241,.2);border-radius:16px;backdrop-filter:blur(16px);display:none;flex-direction:column;overflow:hidden}
+#alfredPanel.show{display:flex}
+.alf-header{padding:.6rem 1rem;border-bottom:1px solid rgba(99,102,241,.1);display:flex;align-items:center;gap:.5rem}
+.alf-header .alf-avatar{font-size:1.3rem}
+.alf-header .alf-name{font-size:.82rem;font-weight:700;color:#6366f1}
+.alf-header .alf-role{font-size:.6rem;color:rgba(255,255,255,.3)}
+.alf-header .alf-close{margin-left:auto;cursor:pointer;color:rgba(255,255,255,.3);transition:.2s}
+.alf-header .alf-close:hover{color:#fff}
+.alf-body{flex:1;overflow-y:auto;padding:.6rem .8rem;max-height:280px}
+.alf-msg{margin-bottom:.5rem;font-size:.78rem;line-height:1.5}
+.alf-msg.from-alfred{background:rgba(99,102,241,.08);border-radius:10px;padding:.5rem .7rem;border-left:2px solid #6366f1}
+.alf-msg.from-user{text-align:right;color:rgba(255,255,255,.5)}
+.alf-quick-nav{padding:.4rem .6rem;border-top:1px solid rgba(255,255,255,.04);display:flex;gap:.3rem;flex-wrap:wrap}
+.alf-nav-chip{padding:.25rem .5rem;border-radius:6px;border:1px solid rgba(99,102,241,.15);background:rgba(99,102,241,.05);color:rgba(99,102,241,.7);font-size:.6rem;cursor:pointer;transition:.15s;white-space:nowrap}
+.alf-nav-chip:hover{background:rgba(99,102,241,.12);color:#6366f1;border-color:rgba(99,102,241,.3)}
+.alf-input-row{padding:.5rem .6rem;border-top:1px solid rgba(255,255,255,.06);display:flex;gap:.3rem}
+.alf-input-row input{flex:1;padding:.4rem .6rem;border-radius:8px;border:1px solid rgba(99,102,241,.15);background:rgba(255,255,255,.03);color:#fff;font-size:.75rem}
+.alf-input-row input:focus{outline:none;border-color:rgba(99,102,241,.4)}
+.alf-input-row button{padding:.4rem .6rem;border-radius:8px;border:none;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;cursor:pointer;font-size:.7rem;font-weight:700}
+
+/* ── Beatmatch Indicator ── */
+.beatmatch-bar{display:flex;align-items:center;gap:.3rem;justify-content:center;margin-top:.3rem}
+.beatmatch-dot{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.1);transition:.2s}
+.beatmatch-dot.synced{background:#22c55e;box-shadow:0 0 6px rgba(34,197,94,.5)}
+.beatmatch-dot.close{background:#f97316}
+.beatmatch-dot.off{background:#ef4444}
+.beatmatch-label{font-size:.55rem;color:rgba(255,255,255,.2)}
+</style>
+<script src="/vr/shared/alfred-csrf.js"></script>
+</head>
+<body>
+
+<!-- Loading -->
+<div id="loading">
+    <h1>🎛️ SoundStudioPro</h1>
+    <p class="sub">Loading DJ World...</p>
+    <div class="load-bar"><div class="load-bar-fill"></div></div>
+    <p class="brand">Powered by GoSiteMe × SoundStudioPro.com</p>
+</div>
+
+<!-- Lobby -->
+<div id="lobby">
+    <div class="lobby-panel">
+        <h1>🎛️ SoundStudioPro DJ World</h1>
+        <p class="tagline">Step into a 3D nightclub. Mix on dual decks, stream live sets, battle AI DJs, meet people on the dance floor. Your stage, your crowd, your music.</p>
+        <p class="powered">Powered by <a href="https://soundstudiopro.com" target="_blank" rel="noopener noreferrer">SoundStudioPro.com</a> × GoSiteMe</p>
+
+        <div class="lobby-stats">
+            <div class="lobby-stat"><div class="val" id="onlineCount">—</div><div class="lbl">In The Club</div></div>
+            <div class="lobby-stat"><div class="val" id="setsCount">—</div><div class="lbl">Live Sets Today</div></div>
+            <div class="lobby-stat"><div class="val" id="tracksCount">759+</div><div class="lbl">SSP Tracks</div></div>
+        </div>
+
+        <div class="lobby-grid">
+            <div class="lobby-card" onclick="enterClub('dj')">
+                <div class="icon">🎛️</div>
+                <h3>DJ Booth</h3>
+                <p>Take the stage — dual decks, crossfader, EQ, effects. Mix live for the crowd.</p>
+            </div>
+            <div class="lobby-card" onclick="enterClub('dance')">
+                <div class="icon">💃</div>
+                <h3>Dance Floor</h3>
+                <p>Join the crowd, meet people, react to the music, and vibe.</p>
+            </div>
+            <div class="lobby-card" onclick="enterClub('battle')">
+                <div class="icon">⚔️</div>
+                <h3>DJ Battle</h3>
+                <p>Challenge an AI DJ to a mix battle. Crowd votes the winner. Wager SOL.</p>
+            </div>
+            <div class="lobby-card" onclick="enterClub('spectate')">
+                <div class="icon">👀</div>
+                <h3>Watch AI DJs</h3>
+                <p>Spectate two AI DJs battling it out — lean back and enjoy the show.</p>
+            </div>
+            <div class="lobby-card" onclick="enterClub('stream')">
+                <div class="icon">📡</div>
+                <h3>Live Stream</h3>
+                <p>Stream your DJ set to fans worldwide. Record & share on SoundStudioPro.</p>
+            </div>
+            <div class="lobby-card" onclick="enterClub('lounge')">
+                <div class="icon">🛋️</div>
+                <h3>VIP Lounge</h3>
+                <p>Chill upstairs with premium sound, meet artists, and network.</p>
+            </div>
+            <div class="lobby-card" onclick="enterClub('festival')" style="border-color:rgba(249,115,22,.15);background:rgba(249,115,22,.03)">
+                <div class="icon">🎪</div>
+                <h3>Festival Stage</h3>
+                <p>Tiësto-sized outdoor festival. LED walls, pyro, confetti, 10,000 fans. Stadium mode.</p>
+            </div>
+            <div class="lobby-card" onclick="enterClub('studio')">
+                <div class="icon">🎚️</div>
+                <h3>Production Studio</h3>
+                <p>Private room with sample pads, stem separation, and AI co-producer.</p>
+            </div>
+            <div class="lobby-card" onclick="joinLiveEvent()" style="border-color:rgba(239,68,68,.15);background:rgba(239,68,68,.03)">
+                <div class="icon">🔴</div>
+                <h3>Join Live Event</h3>
+                <p>A DJ is mixing on SoundStudioPro.com right now — hear their set live in the club.</p>
+            </div>
+        </div>
+
+        <!-- Venue Selector -->
+        <div style="margin-top:1.5rem;text-align:center">
+            <div style="font-size:.65rem;color:rgba(255,255,255,.2);text-transform:uppercase;letter-spacing:1px;margin-bottom:.5rem">🌍 World Venues — Switch Backgrounds</div>
+            <div style="display:flex;gap:.4rem;flex-wrap:wrap;justify-content:center;max-width:600px;margin:0 auto">
+                <button onclick="switchVenue('ibiza-beach')" style="padding:.3rem .6rem;border-radius:8px;border:1px solid rgba(255,255,255,.06);background:rgba(255,255,255,.02);color:rgba(255,255,255,.4);cursor:pointer;font-size:.65rem;transition:.2s" onmouseover="this.style.borderColor='rgba(168,85,247,.3)';this.style.color='#a855f7'" onmouseout="this.style.borderColor='rgba(255,255,255,.06)';this.style.color='rgba(255,255,255,.4)'">🏖️ Ibiza</button>
+                <button onclick="switchVenue('tokyo-shibuya')" style="padding:.3rem .6rem;border-radius:8px;border:1px solid rgba(255,255,255,.06);background:rgba(255,255,255,.02);color:rgba(255,255,255,.4);cursor:pointer;font-size:.65rem;transition:.2s" onmouseover="this.style.borderColor='rgba(168,85,247,.3)';this.style.color='#a855f7'" onmouseout="this.style.borderColor='rgba(255,255,255,.06)';this.style.color='rgba(255,255,255,.4)'">🗼 Tokyo</button>
+                <button onclick="switchVenue('berlin-warehouse')" style="padding:.3rem .6rem;border-radius:8px;border:1px solid rgba(255,255,255,.06);background:rgba(255,255,255,.02);color:rgba(255,255,255,.4);cursor:pointer;font-size:.65rem;transition:.2s" onmouseover="this.style.borderColor='rgba(168,85,247,.3)';this.style.color='#a855f7'" onmouseout="this.style.borderColor='rgba(255,255,255,.06)';this.style.color='rgba(255,255,255,.4)'">🏭 Berlin</button>
+                <button onclick="switchVenue('tomorrowland')" style="padding:.3rem .6rem;border-radius:8px;border:1px solid rgba(255,255,255,.06);background:rgba(255,255,255,.02);color:rgba(255,255,255,.4);cursor:pointer;font-size:.65rem;transition:.2s" onmouseover="this.style.borderColor='rgba(168,85,247,.3)';this.style.color='#a855f7'" onmouseout="this.style.borderColor='rgba(255,255,255,.06)';this.style.color='rgba(255,255,255,.4)'">🎪 Tomorrowland</button>
+                <button onclick="switchVenue('nyc-rooftop')" style="padding:.3rem .6rem;border-radius:8px;border:1px solid rgba(255,255,255,.06);background:rgba(255,255,255,.02);color:rgba(255,255,255,.4);cursor:pointer;font-size:.65rem;transition:.2s" onmouseover="this.style.borderColor='rgba(168,85,247,.3)';this.style.color='#a855f7'" onmouseout="this.style.borderColor='rgba(255,255,255,.06)';this.style.color='rgba(255,255,255,.4)'">🌃 NYC</button>
+                <button onclick="switchVenue('miami-pool')" style="padding:.3rem .6rem;border-radius:8px;border:1px solid rgba(255,255,255,.06);background:rgba(255,255,255,.02);color:rgba(255,255,255,.4);cursor:pointer;font-size:.65rem;transition:.2s" onmouseover="this.style.borderColor='rgba(168,85,247,.3)';this.style.color='#a855f7'" onmouseout="this.style.borderColor='rgba(255,255,255,.06)';this.style.color='rgba(255,255,255,.4)'">🌴 Miami</button>
+                <button onclick="switchVenue('dubai-sky')" style="padding:.3rem .6rem;border-radius:8px;border:1px solid rgba(255,255,255,.06);background:rgba(255,255,255,.02);color:rgba(255,255,255,.4);cursor:pointer;font-size:.65rem;transition:.2s" onmouseover="this.style.borderColor='rgba(168,85,247,.3)';this.style.color='#a855f7'" onmouseout="this.style.borderColor='rgba(255,255,255,.06)';this.style.color='rgba(255,255,255,.4)'">🏙️ Dubai</button>
+                <button onclick="switchVenue('rio-carnival')" style="padding:.3rem .6rem;border-radius:8px;border:1px solid rgba(255,255,255,.06);background:rgba(255,255,255,.02);color:rgba(255,255,255,.4);cursor:pointer;font-size:.65rem;transition:.2s" onmouseover="this.style.borderColor='rgba(168,85,247,.3)';this.style.color='#a855f7'" onmouseout="this.style.borderColor='rgba(255,255,255,.06)';this.style.color='rgba(255,255,255,.4)'">🎉 Rio</button>
+                <button onclick="switchVenue('bali-sunset')" style="padding:.3rem .6rem;border-radius:8px;border:1px solid rgba(255,255,255,.06);background:rgba(255,255,255,.02);color:rgba(255,255,255,.4);cursor:pointer;font-size:.65rem;transition:.2s" onmouseover="this.style.borderColor='rgba(168,85,247,.3)';this.style.color='#a855f7'" onmouseout="this.style.borderColor='rgba(255,255,255,.06)';this.style.color='rgba(255,255,255,.4)'">🌅 Bali</button>
+                <button onclick="switchVenue('space-station')" style="padding:.3rem .6rem;border-radius:8px;border:1px solid rgba(255,255,255,.06);background:rgba(255,255,255,.02);color:rgba(255,255,255,.4);cursor:pointer;font-size:.65rem;transition:.2s" onmouseover="this.style.borderColor='rgba(168,85,247,.3)';this.style.color='#a855f7'" onmouseout="this.style.borderColor='rgba(255,255,255,.06)';this.style.color='rgba(255,255,255,.4)'">🛸 Space</button>
+                <button onclick="switchVenue('sahara-oasis')" style="padding:.3rem .6rem;border-radius:8px;border:1px solid rgba(255,255,255,.06);background:rgba(255,255,255,.02);color:rgba(255,255,255,.4);cursor:pointer;font-size:.65rem;transition:.2s" onmouseover="this.style.borderColor='rgba(168,85,247,.3)';this.style.color='#a855f7'" onmouseout="this.style.borderColor='rgba(255,255,255,.06)';this.style.color='rgba(255,255,255,.4)'">🏜️ Sahara</button>
+                <button onclick="switchVenue('arctic-aurora')" style="padding:.3rem .6rem;border-radius:8px;border:1px solid rgba(255,255,255,.06);background:rgba(255,255,255,.02);color:rgba(255,255,255,.4);cursor:pointer;font-size:.65rem;transition:.2s" onmouseover="this.style.borderColor='rgba(168,85,247,.3)';this.style.color='#a855f7'" onmouseout="this.style.borderColor='rgba(255,255,255,.06)';this.style.color='rgba(255,255,255,.4)'">🌌 Arctic</button>
+                <button onclick="switchVenue('crystal-cave')" style="padding:.3rem .6rem;border-radius:8px;border:1px solid rgba(255,255,255,.06);background:rgba(255,255,255,.02);color:rgba(255,255,255,.4);cursor:pointer;font-size:.65rem;transition:.2s" onmouseover="this.style.borderColor='rgba(168,85,247,.3)';this.style.color='#a855f7'" onmouseout="this.style.borderColor='rgba(255,255,255,.06)';this.style.color='rgba(255,255,255,.4)'">💎 Cave</button>
+                <button onclick="switchVenue('paris-cabaret')" style="padding:.3rem .6rem;border-radius:8px;border:1px solid rgba(255,255,255,.06);background:rgba(255,255,255,.02);color:rgba(255,255,255,.4);cursor:pointer;font-size:.65rem;transition:.2s" onmouseover="this.style.borderColor='rgba(168,85,247,.3)';this.style.color='#a855f7'" onmouseout="this.style.borderColor='rgba(255,255,255,.06)';this.style.color='rgba(255,255,255,.4)'">🗼 Paris</button>
+                <button onclick="switchVenue('london-ministry')" style="padding:.3rem .6rem;border-radius:8px;border:1px solid rgba(255,255,255,.06);background:rgba(255,255,255,.02);color:rgba(255,255,255,.4);cursor:pointer;font-size:.65rem;transition:.2s" onmouseover="this.style.borderColor='rgba(168,85,247,.3)';this.style.color='#a855f7'" onmouseout="this.style.borderColor='rgba(255,255,255,.06)';this.style.color='rgba(255,255,255,.4)'">🇬🇧 London</button>
+            </div>
+        </div>
+
+        <!-- Events & Ticketing -->
+        <div class="events-section">
+            <div class="section-title">🎫 Upcoming Events — Buy Tickets with SOL / GSM / Card</div>
+            <div class="events-grid" id="eventsGrid"><!-- loaded by JS --></div>
+            <div style="margin-top:.6rem">
+                <button class="wallet-connect" id="walletBtn" onclick="connectWallet()">◎ Connect Solana Wallet</button>
+            </div>
+        </div>
+
+        <div class="lobby-footer">
+            <a href="/games.php">← Games</a>
+            <a href="https://soundstudiopro.com" target="_blank" rel="noopener noreferrer">SoundStudioPro.com</a>
+            <a href="https://soundstudiopro.com/dj_mixer.php" target="_blank" rel="noopener noreferrer">DJ Mixer</a>
+            <a href="https://soundstudiopro.com/live_streams.php" target="_blank" rel="noopener noreferrer">Live Streams</a>
+            <a href="https://soundstudiopro.com/community_fixed.php" target="_blank" rel="noopener noreferrer">Community</a>
+            <a href="/pay/token-swap.php">Swap GSM</a>
+            <a href="/sdks.php">SDKs</a>
+        </div>
+    </div>
+</div>
+
+<!-- Ticket Purchase Modal -->
+<div id="ticketModal">
+    <div class="ticket-modal-inner" style="position:relative">
+        <button class="ticket-close" onclick="closeTicketModal()">✕</button>
+        <h2 id="ticketEventTitle">Event</h2>
+        <div class="event-info" id="ticketEventInfo">Loading...</div>
+        <div id="ticketTiers"><!-- tiers loaded by JS --></div>
+        <div style="font-size:.65rem;color:rgba(255,255,255,.2);margin:.6rem 0 .3rem;text-transform:uppercase;letter-spacing:1px">Payment Method</div>
+        <div class="payment-methods">
+            <button class="pay-method selected" onclick="selectPayment('sol')" id="pay-sol">◎ SOL</button>
+            <button class="pay-method" onclick="selectPayment('gsm')" id="pay-gsm">🪙 GSM</button>
+            <button class="pay-method" onclick="selectPayment('usdc')" id="pay-usdc">💵 USDC</button>
+            <button class="pay-method" onclick="selectPayment('card')" id="pay-card">💳 Card</button>
+        </div>
+        <div id="ticketSummary" style="font-size:.75rem;color:rgba(255,255,255,.4);margin:.4rem 0"></div>
+        <button class="buy-ticket-btn solana" id="buyTicketBtn" onclick="purchaseTicket()">🎫 Purchase Ticket</button>
+        <div style="font-size:.55rem;color:rgba(255,255,255,.15);margin-top:.5rem;text-align:center">Powered by Solana Pay × GoSiteMe • 85% to artist • 2.5% platform fee</div>
+    </div>
+</div>
+
+<!-- 3D Canvas -->
+<canvas id="djCanvas"></canvas>
+
+<!-- Top HUD -->
+<div id="topHud">
+    <div class="top-hud-inner">
+        <div class="hud-left">
+            <div class="hud-title">🎛️ SoundStudioPro</div>
+            <div class="hud-badge" id="modeBadge">DJ Booth</div>
+        </div>
+        <div class="hud-right">
+            <button class="hud-btn" onclick="toggleChat()">💬 Chat</button>
+            <button class="hud-btn" onclick="toggleAlfred()">🎩 Alfred</button>
+            <button class="hud-btn" id="voiceCmdBtn" onclick="toggleVoiceCommands()">🗣️ Cmd Off</button>
+            <button class="hud-btn" onclick="toggleSamplePads()">🎹 Pads</button>
+            <button class="hud-btn" onclick="cycleLighting()">💡 Lights</button>
+            <button class="hud-btn" onclick="openTrackBrowser()">📀 Tracks</button>
+            <button class="hud-btn" onclick="toggleCrowd()">👥 Crowd</button>
+            <button class="hud-btn" onclick="exitToLobby()">🚪 Leave</button>
+        </div>
+    </div>
+</div>
+
+<!-- DJ Console -->
+<div id="djConsole">
+    <div class="console-inner">
+        <!-- Deck A -->
+        <div class="deck" id="deckA">
+            <div class="deck-label">Deck A</div>
+            <div class="deck-track" id="deckATrack">No Track Loaded</div>
+            <div class="deck-artist" id="deckAArtist">Browse tracks to load</div>
+            <div class="platter" id="platterA" onclick="toggleDeck('A')">
+                <div class="groove"></div><div class="groove"></div><div class="groove"></div>
+            </div>
+            <div class="deck-controls">
+                <button class="deck-btn" onclick="toggleDeck('A')">▶/⏸</button>
+                <button class="deck-btn" onclick="cuePoint('A')">CUE</button>
+                <button class="deck-btn" onclick="syncBPM('A')">SYNC</button>
+                <button class="deck-btn" onclick="loopToggle('A')">LOOP</button>
+                <button class="deck-btn" onclick="loadToDeck('A')">LOAD</button>
+            </div>
+            <div class="deck-bpm" id="deckABPM">128 BPM</div>
+            <div class="hotcue-row"><button class="hotcue-btn" onclick="hotCue('A',1)">1</button><button class="hotcue-btn" onclick="hotCue('A',2)">2</button><button class="hotcue-btn" onclick="hotCue('A',3)">3</button><button class="hotcue-btn" onclick="hotCue('A',4)">4</button></div>
+            <div class="beatmatch-bar"><span class="beatmatch-label">BEAT</span><span class="beatmatch-dot" id="bmDotA1"></span><span class="beatmatch-dot" id="bmDotA2"></span><span class="beatmatch-dot" id="bmDotA3"></span><span class="beatmatch-dot" id="bmDotA4"></span></div>
+        <div class="mixer">
+            <div class="mixer-label">Mixer</div>
+            <div class="eq-row">
+                <div><div class="eq-knob" id="eqHi" title="Hi EQ"></div><div class="eq-knob-label">HI</div></div>
+                <div><div class="eq-knob" id="eqMid" title="Mid EQ"></div><div class="eq-knob-label">MID</div></div>
+                <div><div class="eq-knob" id="eqLo" title="Lo EQ"></div><div class="eq-knob-label">LO</div></div>
+            </div>
+            <div>
+                <div class="mixer-label" style="margin-bottom:4px">Volume</div>
+                <input type="range" class="volume-slider" id="masterVol" min="0" max="100" value="75" oninput="setMasterVolume(this.value)">
+            </div>
+            <div>
+                <div class="mixer-label" style="margin-bottom:4px">Crossfader</div>
+                <div class="crossfader-track" id="crossfaderTrack">
+                    <div class="crossfader-knob" id="crossfaderKnob"></div>
+                </div>
+            </div>
+            <div>
+                <div class="mixer-label" style="margin-bottom:4px">FX</div>
+                <div class="fx-row">
+                    <button class="fx-btn" onclick="toggleFX('reverb')">Reverb</button>
+                    <button class="fx-btn" onclick="toggleFX('delay')">Delay</button>
+                    <button class="fx-btn" onclick="toggleFX('filter')">Filter</button>
+                    <button class="fx-btn" onclick="toggleFX('flanger')">Flange</button>
+                </div>
+            </div>
+            <div class="master-controls">
+                <button class="master-btn rec" id="recBtn" onclick="toggleRecord()">⏺ REC</button>
+                <button class="master-btn stream" id="streamBtn" onclick="toggleStream()">📡 LIVE</button>
+            </div>
+        </div>
+
+        <!-- Deck B -->
+        <div class="deck" id="deckB">
+            <div class="deck-label">Deck B</div>
+            <div class="deck-track" id="deckBTrack">No Track Loaded</div>
+            <div class="deck-artist" id="deckBArtist">Browse tracks to load</div>
+            <div class="platter" id="platterB" onclick="toggleDeck('B')">
+                <div class="groove"></div><div class="groove"></div><div class="groove"></div>
+            </div>
+            <div class="deck-controls">
+                <button class="deck-btn" onclick="toggleDeck('B')">▶/⏸</button>
+                <button class="deck-btn" onclick="cuePoint('B')">CUE</button>
+                <button class="deck-btn" onclick="syncBPM('B')">SYNC</button>
+                <button class="deck-btn" onclick="loopToggle('B')">LOOP</button>
+                <button class="deck-btn" onclick="loadToDeck('B')">LOAD</button>
+            </div>
+            <div class="deck-bpm" id="deckBBPM">130 BPM</div>
+            <div class="hotcue-row"><button class="hotcue-btn" onclick="hotCue('B',1)">1</button><button class="hotcue-btn" onclick="hotCue('B',2)">2</button><button class="hotcue-btn" onclick="hotCue('B',3)">3</button><button class="hotcue-btn" onclick="hotCue('B',4)">4</button></div>
+            <div class="beatmatch-bar"><span class="beatmatch-label">BEAT</span><span class="beatmatch-dot" id="bmDotB1"></span><span class="beatmatch-dot" id="bmDotB2"></span><span class="beatmatch-dot" id="bmDotB3"></span><span class="beatmatch-dot" id="bmDotB4"></span></div>
+
+<!-- Spectator Badge -->
+<div id="spectatorBadge" onclick="toggleSpectatorPause()">👀 Spectating — Click to Pause</div>
+
+<!-- Visualizer -->
+<div id="visualizer"><div class="viz-bars" id="vizBars"></div></div>
+
+<!-- Chat Panel -->
+<div id="chatPanel">
+    <div class="chat-header">
+        <span>💬 Club Chat</span>
+        <span class="chat-close" onclick="toggleChat()">✕</span>
+    </div>
+    <div class="chat-messages" id="chatMessages"></div>
+    <div class="chat-input-row">
+        <input type="text" id="chatInput" placeholder="Say something..." maxlength="200" onkeydown="if(event.key==='Enter')sendChat()">
+        <button onclick="sendChat()">Send</button>
+    </div>
+</div>
+
+<!-- Crowd Panel -->
+<div id="crowdPanel">
+    <div class="crowd-label">🕺 On the Floor</div>
+    <div class="crowd-avatars" id="crowdAvatars"></div>
+</div>
+
+<!-- Track Browser -->
+<div id="trackBrowser">
+    <div class="browser-header">
+        <h2>📀 Track Library</h2>
+        <span class="browser-close" onclick="closeTrackBrowser()">✕</span>
+    </div>
+    <div class="browser-genres" id="genreBar"></div>
+    <div class="browser-tracks" id="trackList"></div>
+</div>
+
+<!-- Wager Modal -->
+<div id="wagerModal">
+    <div class="wager-card">
+        <h2>⚔️ DJ Battle Wager</h2>
+        <p>Put your mixing skills to the test. The crowd votes — winner takes all.</p>
+        <div class="wager-amounts">
+            <div class="wager-amt" onclick="selectWager(1)">◎ 1</div>
+            <div class="wager-amt" onclick="selectWager(3)">◎ 3</div>
+            <div class="wager-amt" onclick="selectWager(5)">◎ 5</div>
+        </div>
+        <div class="wager-actions">
+            <button class="wager-btn go" onclick="startBattle()">🎧 Start Battle</button>
+            <button class="wager-btn cancel" onclick="closeWager()">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<!-- Toast -->
+<div id="toast"></div>
+
+<!-- Pyro Flash -->
+<div class="pyro-flash" id="pyroFlash"></div>
+<canvas class="confetti-canvas" id="confettiCanvas"></canvas>
+
+<!-- LED Wall Overlay -->
+<div class="led-wall-overlay" id="ledWall"></div>
+
+<!-- Festival Badge -->
+<div class="festival-badge" id="festivalBadge">🎪 FESTIVAL MODE — STADIUM STAGE</div>
+
+<!-- Sample Pads -->
+<div id="samplePads">
+    <div class="pads-label">🎹 Sample Pads</div>
+    <div class="pads-grid">
+        <div class="sample-pad" onpointerdown="triggerPad(0)" ontouchstart="triggerPad(0)"><span class="pad-icon">📯</span><span class="pad-name">Horn</span></div>
+        <div class="sample-pad" onpointerdown="triggerPad(1)" ontouchstart="triggerPad(1)"><span class="pad-icon">🚨</span><span class="pad-name">Siren</span></div>
+        <div class="sample-pad" onpointerdown="triggerPad(2)" ontouchstart="triggerPad(2)"><span class="pad-icon">⬆️</span><span class="pad-name">Build</span></div>
+        <div class="sample-pad" onpointerdown="triggerPad(3)" ontouchstart="triggerPad(3)"><span class="pad-icon">🎤</span><span class="pad-name">Vocal</span></div>
+        <div class="sample-pad" onpointerdown="triggerPad(4)" ontouchstart="triggerPad(4)"><span class="pad-icon">👏</span><span class="pad-name">Clap</span></div>
+        <div class="sample-pad" onpointerdown="triggerPad(5)" ontouchstart="triggerPad(5)"><span class="pad-icon">🌊</span><span class="pad-name">Riser</span></div>
+        <div class="sample-pad" onpointerdown="triggerPad(6)" ontouchstart="triggerPad(6)"><span class="pad-icon">💥</span><span class="pad-name">Impact</span></div>
+        <div class="sample-pad" onpointerdown="triggerPad(7)" ontouchstart="triggerPad(7)"><span class="pad-icon">🎉</span><span class="pad-name">Crowd</span></div>
+    </div>
+</div>
+
+<!-- Alfred Concierge -->
+<div id="alfredPanel">
+    <div class="alf-header">
+        <span class="alf-avatar">🎩</span>
+        <div><div class="alf-name">Alfred</div><div class="alf-role">AI Assistant · DJ Concierge</div></div>
+        <span class="alf-close" onclick="toggleAlfred()">✕</span>
+    </div>
+    <div class="alf-body" id="alfredBody"></div>
+    <div class="alf-quick-nav" id="alfredNav"></div>
+    <div class="alf-input-row">
+        <input type="text" id="alfredInput" placeholder="Ask Alfred anything..." maxlength="200" onkeydown="if(event.key==='Enter')sendAlfred()">
+        <button onclick="sendAlfred()">Ask</button>
+    </div>
+</div>
+
+<script>
+/* ══════════════════════════════════════════════════════════════════
+   SoundStudioPro DJ World — 3D Nightclub Experience
+   GoSiteMe × SoundStudioPro.com
+   ══════════════════════════════════════════════════════════════════ */
+(function(){
+'use strict';
+
+// ═══════════════════ CONSTANTS & STATE ═══════════════════
+
+var CLUB_MODES = { DJ: 'dj', DANCE: 'dance', BATTLE: 'battle', SPECTATE: 'spectate', STREAM: 'stream', LOUNGE: 'lounge', FESTIVAL: 'festival', STUDIO: 'studio', LIVE_EVENT: 'live-event' };
+
+// AI DJ Agents — each with a unique style, genre specialty, and personality
+var DJ_AGENTS = [
+    { id: 'dj-alfred', name: 'DJ Alfred', emoji: '🤵', genre: 'Deep House', bpm: 122, personality: 'Smooth and sophisticated, plays refined deep house with jazzy undertones', color: '#6366f1', mixStyle: 'long-blend' },
+    { id: 'dj-nova', name: 'DJ Nova', emoji: '✨', genre: 'Trance', bpm: 138, personality: 'Euphoric builds and epic drops, takes you on a journey', color: '#06b6d4', mixStyle: 'build-drop' },
+    { id: 'dj-cipher', name: 'DJ Cipher', emoji: '🔮', genre: 'Techno', bpm: 132, personality: 'Dark, hypnotic, industrial techno with relentless groove', color: '#8b5cf6', mixStyle: 'loop-heavy' },
+    { id: 'dj-pulse', name: 'DJ Pulse', emoji: '🎵', genre: 'Drum & Bass', bpm: 174, personality: 'High-energy roller with liquid transitions and massive drops', color: '#f43f5e', mixStyle: 'fast-cut' },
+    { id: 'dj-blaze', name: 'DJ Blaze', emoji: '🔥', genre: 'EDM / Big Room', bpm: 128, personality: 'Festival bangers, hands-in-the-air anthems, pyro moments', color: '#f97316', mixStyle: 'build-drop' },
+    { id: 'dj-luna', name: 'DJ Luna', emoji: '🌙', genre: 'Lo-Fi / Chill', bpm: 85, personality: 'Dreamy late-night vibes, vinyl crackle, smooth jazz samples', color: '#a78bfa', mixStyle: 'long-blend' },
+    { id: 'dj-atlas', name: 'DJ Atlas', emoji: '🗺️', genre: 'World / Afrobeats', bpm: 110, personality: 'Global rhythms, percussion-driven, tribal energy fusion', color: '#22c55e', mixStyle: 'percussion' },
+    { id: 'dj-sage', name: 'DJ Sage', emoji: '🧘', genre: 'Ambient / Downtempo', bpm: 95, personality: 'Meditative soundscapes, ethereal pads, binaural textures', color: '#14b8a6', mixStyle: 'atmospheric' }
+];
+
+// Social Agents — clubgoers, dancers, photographers, promoters, fans (interact with music & each other)
+var SOCIAL_AGENTS = [
+    { id: 'dancer-maria', name: 'Maria', emoji: '💃', role: 'Dancer', personality: 'Latin dance queen. Moves to anything with rhythm. Loves Afrobeats and salsa-infused house.', mood: 'joyful', energy: 9, faveGenre: 'Afrobeats', reactions: { love: 'This rhythm is EVERYTHING! 💃🔥', hate: 'Hmm, I need more groove...', drop: 'YESSS THAT DROP! 🎉', slow: 'Taking a water break 💧' } },
+    { id: 'dancer-kai', name: 'Kai', emoji: '🕺', role: 'Dancer', personality: 'Bboy meets electronic. Pops and locks to every beat drop. DnB and breaks specialist.', mood: 'hyped', energy: 10, faveGenre: 'Drum & Bass', reactions: { love: 'BRO this beat is INSANE 🔥🕺', hate: 'Need something harder!', drop: 'OOHHH *backflip* 🤸', slow: 'Warming up for the next drop...' } },
+    { id: 'dancer-sophie', name: 'Sophie', emoji: '🩰', role: 'Dancer', personality: 'Contemporary dance background. Flows with trance and ambient like water. Pure expression.', mood: 'ethereal', energy: 6, faveGenre: 'Trance', reactions: { love: 'This frequency... I can feel it in my soul ✨', hate: 'The energy doesn\'t resonate...', drop: 'Chills... literal chills 🌟', slow: 'Breathing into this moment 🧘' } },
+    { id: 'fan-rico', name: 'Rico', emoji: '🤘', role: 'Superfan', personality: 'Festival veteran. 200+ shows. Knows every DJ. Lives for the mainstage.', mood: 'excited', energy: 10, faveGenre: 'EDM', reactions: { love: 'THIS IS WHY WE LIVE FOR MUSIC!!! 🎪', hate: 'Play something bigger!', drop: 'HANDS UP EVERYBODY!!! 🙌🔥', slow: 'Saving energy for the headliner' } },
+    { id: 'fan-yuki', name: 'Yuki', emoji: '🎀', role: 'Music Blogger', personality: 'Reviews every set. 50K followers. Knows her music theory. Sweet but honest.', mood: 'analytical', energy: 5, faveGenre: 'Deep House', reactions: { love: 'Beautiful transition! Writing this up for my blog 📝', hate: 'The mix is a bit rough here...', drop: 'That was textbook perfect! ⭐', slow: 'Taking notes on the sound design 🎧' } },
+    { id: 'photog-alex', name: 'Alex', emoji: '📸', role: 'Photographer', personality: 'Captures the perfect moment. Always near the stage. Lives for laser + crowd shots.', mood: 'focused', energy: 7, faveGenre: 'Techno', reactions: { love: 'GOT THE SHOT! 📸✨', hate: 'Need better lighting for this angle...', drop: '*rapid shutter sounds* 📷📷📷', slow: 'Setting up for the next visual' } },
+    { id: 'promoter-jade', name: 'Jade', emoji: '💼', role: 'Promoter', personality: 'Books the best DJs. Knows the industry. Always networking, always scouting talent.', mood: 'business', energy: 6, faveGenre: 'Deep House', reactions: { love: 'This DJ is going places. Getting their card after the set.', hate: 'Crowd\'s losing interest... need a switch-up', drop: 'THAT\'s how you headline! 💎', slow: 'Checking the socials... @-ing this moment' } },
+    { id: 'bartender-maxo', name: 'Max', emoji: '🍹', role: 'Bartender', personality: 'Behind the bar but feeling every beat. Makes cocktails to the rhythm.', mood: 'smooth', energy: 7, faveGenre: 'Lo-Fi', reactions: { love: 'Shaking this cocktail to the beat 🍸', hate: 'Someone order something, this track is mid', drop: 'Almost dropped the bottle! 😂🔥', slow: 'Perfect music for mixing drinks 🎶' } },
+    { id: 'vip-prince', name: 'Prince V', emoji: '👑', role: 'VIP', personality: 'Reclusive billionaire who only comes out for legendary sets. Champagne taste.', mood: 'elite', energy: 4, faveGenre: 'Trance', reactions: { love: 'Superb. Send a bottle to the DJ booth. 🥂', hate: '*sips champagne disapprovingly*', drop: 'Now THAT is worth the bottle service 💎', slow: 'The quiet ones always go hardest...' } },
+    { id: 'dancer-zara', name: 'Zara', emoji: '✨', role: 'Dancer', personality: 'Belly dance fusion meets electronic. Every movement tells a story.', mood: 'mystical', energy: 8, faveGenre: 'World / Afrobeats', reactions: { love: 'These global rhythms feed my soul 🌍✨', hate: 'I need something with more culture', drop: 'The percussion! THE PERCUSSION! 🥁', slow: 'Resting between movements...' } },
+    { id: 'raver-neon', name: 'Neon', emoji: '🌈', role: 'Raver', personality: 'Full LED outfit. Glow sticks for days. PLUR warrior. Spreads love everywhere.', mood: 'plur', energy: 10, faveGenre: 'EDM', reactions: { love: 'PLUR PLUR PLUR!!! 💖✌️🌈🤗', hate: 'Need more bass for my LED suit to react!', drop: '*LED suit goes CRAZY* 🌈🔥💥', slow: 'Trading kandi bracelets 📿' } },
+    { id: 'critic-devon', name: 'Devon', emoji: '🎓', role: 'Music Critic', personality: 'Pitchfork writer. Hard to impress. When Devon nods, you know it\'s good.', mood: 'critical', energy: 3, faveGenre: 'Techno', reactions: { love: 'Genuinely impressive sound design. A+', hate: 'Derivative. Heard this exact progression last week.', drop: 'Okay. That was objectively excellent.', slow: 'Waiting for something to challenge me...' } },
+    { id: 'dancer-luca', name: 'Luca', emoji: '🎩', role: 'Dancer', personality: 'Old-school house head. Was at the Warehouse in \'87. Smooth moves, smoother taste.', mood: 'nostalgic', energy: 6, faveGenre: 'Deep House', reactions: { love: 'Now THIS is house music! Real house! 🏠', hate: 'Kids these days don\'t know real house...', drop: 'Classic! Takes me back to Chicago ❤️', slow: 'Jack your body... slowly...' } },
+    { id: 'fan-luna-f', name: 'Luna', emoji: '🌙', role: 'Dreamer', personality: 'Eyes always closed, lost in the music. Synesthesia — sees colors in every sound.', mood: 'dreamy', energy: 5, faveGenre: 'Ambient', reactions: { love: 'The colors right now... purple shifting to gold 💜✨', hate: 'Too harsh... the colors are clashing 😣', drop: 'EXPLOSION of indigo and fire!!! 🎆', slow: 'Drifting into the sonic ocean 🌊' } },
+    { id: 'security-tony', name: 'Tony', emoji: '🕶️', role: 'Security', personality: 'Keeps the peace but secretly loves the music. Stoic face, dancing feet.', mood: 'stoic', energy: 4, faveGenre: 'Hip Hop', reactions: { love: '*subtly nods head* ...aight that\'s fire', hate: '*stern face* ...', drop: '*tries not to react but cracks a smile* 😏', slow: 'All clear. Vibes are good.' } },
+    { id: 'streamer-pixie', name: 'Pixie', emoji: '📱', role: 'Streamer', personality: '500K followers. Live-streaming everything. Her chat goes insane during drops.', mood: 'online', energy: 8, faveGenre: 'EDM', reactions: { love: 'CHAT IS GOING CRAZY RN!!! 📱🔥', hate: 'Chat says skip lol', drop: 'CLIP THAT! CLIP THAT! 🎬', slow: 'Doing a giveaway while we wait 🎁' } },
+    { id: 'producer-zen', name: 'Zen', emoji: '🎹', role: 'Producer', personality: 'Studies every transition. Taking mental notes. Working on similar sound.', mood: 'studious', energy: 5, faveGenre: 'Techno', reactions: { love: 'That sidechain compression is immaculate 🔊', hate: 'Interesting choice... would\'ve gone differently', drop: 'Analyzing that buildup... *takes notes* 📝', slow: 'Good headroom management here' } },
+    { id: 'dancer-flame', name: 'Flame', emoji: '🔥', role: 'Fire Dancer', personality: 'LED poi and fire fans. Center of the dance floor. Can\'t miss her.', mood: 'fierce', energy: 10, faveGenre: 'Drum & Bass', reactions: { love: '🔥 SPINNING TO THIS!! 🔥', hate: 'Too slow for my poi routine...', drop: '*FIRE FANS BLAZING* 🔥🔥🔥', slow: 'Recharging the LEDs 🔋' } },
+    { id: 'fan-grandpa', name: 'DJ Grandpa', emoji: '👴', role: 'Legend', personality: 'OG raver from the 90s. Still parties harder than anyone. Respect the elders.', mood: 'legendary', energy: 7, faveGenre: 'Trance', reactions: { love: 'Back in my day this would\'ve shut the WHOLE city down! 🎉', hate: 'I preferred the original mix...', drop: 'STILL GOT IT!! *raises cane* 🕺👴', slow: 'In my era we called this the warm-up...' } },
+    { id: 'artist-mika', name: 'Mika', emoji: '🎨', role: 'Visual Artist', personality: 'Paints to the music live. Canvas at the back. Every set = new masterpiece.', mood: 'creative', energy: 6, faveGenre: 'Lo-Fi', reactions: { love: 'These textures inspire my next stroke 🎨', hate: 'The palette doesn\'t match the sound...', drop: '*splashes paint in excitement* 💜🧡💛', slow: 'Adding fine details to the piece 🖌️' } }
+];
+
+// ── World Venues (switchable backgrounds from around the world) ──
+var WORLD_VENUES = [
+    { id: 'default-club', name: 'SSP Nightclub', emoji: '🏢', city: 'Montreal', skyColor: 0x05050f, fogColor: 0x05050f, fogDensity: 0.015, crowdSize: 25, cameraY: 6, type: 'indoor' },
+    { id: 'ibiza-beach', name: 'Ibiza Beach Club', emoji: '🏖️', city: 'Ibiza', skyColor: 0x1a0a2e, fogColor: 0x0a0520, fogDensity: 0.008, crowdSize: 60, cameraY: 5, type: 'outdoor' },
+    { id: 'tokyo-shibuya', name: 'Tokyo Underground', emoji: '🗼', city: 'Tokyo', skyColor: 0x0a0015, fogColor: 0x0a0015, fogDensity: 0.02, crowdSize: 15, cameraY: 4, type: 'indoor' },
+    { id: 'berlin-warehouse', name: 'Berlin Warehouse', emoji: '🏭', city: 'Berlin', skyColor: 0x080808, fogColor: 0x050505, fogDensity: 0.012, crowdSize: 40, cameraY: 6, type: 'indoor' },
+    { id: 'tomorrowland', name: 'Tomorrowland Main', emoji: '🎪', city: 'Boom', skyColor: 0x0a0520, fogColor: 0x05030f, fogDensity: 0.005, crowdSize: 120, cameraY: 8, type: 'festival' },
+    { id: 'nyc-rooftop', name: 'NYC Rooftop', emoji: '🌃', city: 'New York', skyColor: 0x0a0a1e, fogColor: 0x05050f, fogDensity: 0.006, crowdSize: 35, cameraY: 7, type: 'outdoor' },
+    { id: 'miami-pool', name: 'Miami Pool Party', emoji: '🌴', city: 'Miami', skyColor: 0x1a0520, fogColor: 0x0f0310, fogDensity: 0.007, crowdSize: 50, cameraY: 5, type: 'outdoor' },
+    { id: 'dubai-sky', name: 'Dubai Sky Lounge', emoji: '🏙️', city: 'Dubai', skyColor: 0x0f0a1e, fogColor: 0x080515, fogDensity: 0.01, crowdSize: 20, cameraY: 7, type: 'indoor' },
+    { id: 'rio-carnival', name: 'Rio Carnival Stage', emoji: '🎉', city: 'Rio', skyColor: 0x15081e, fogColor: 0x0a0410, fogDensity: 0.006, crowdSize: 80, cameraY: 6, type: 'festival' },
+    { id: 'bali-sunset', name: 'Bali Sunset Temple', emoji: '🌅', city: 'Bali', skyColor: 0x1e0a08, fogColor: 0x120505, fogDensity: 0.008, crowdSize: 30, cameraY: 5, type: 'outdoor' },
+    { id: 'space-station', name: 'Orbital Station', emoji: '🛸', city: 'Space', skyColor: 0x000005, fogColor: 0x000003, fogDensity: 0.003, crowdSize: 12, cameraY: 4, type: 'space' },
+    { id: 'sahara-oasis', name: 'Sahara Oasis', emoji: '🏜️', city: 'Morocco', skyColor: 0x1a0f05, fogColor: 0x0f0804, fogDensity: 0.004, crowdSize: 45, cameraY: 6, type: 'outdoor' },
+    { id: 'arctic-aurora', name: 'Arctic Aurora', emoji: '🌌', city: 'Tromsø', skyColor: 0x030815, fogColor: 0x020510, fogDensity: 0.005, crowdSize: 20, cameraY: 7, type: 'outdoor' },
+    { id: 'crystal-cave', name: 'Crystal Cave', emoji: '💎', city: 'Mexico', skyColor: 0x050510, fogColor: 0x03030a, fogDensity: 0.018, crowdSize: 15, cameraY: 4, type: 'indoor' },
+    { id: 'paris-cabaret', name: 'Paris Cabaret', emoji: '🗼', city: 'Paris', skyColor: 0x0f0508, fogColor: 0x0a0306, fogDensity: 0.012, crowdSize: 30, cameraY: 5, type: 'indoor' },
+    { id: 'london-ministry', name: 'Ministry of Sound', emoji: '🇬🇧', city: 'London', skyColor: 0x060612, fogColor: 0x040410, fogDensity: 0.014, crowdSize: 50, cameraY: 6, type: 'indoor' }
+];
+var currentVenue = WORLD_VENUES[0];
+
+// ── Programmable Lighting Engine ──
+var LIGHTING_PRESETS = {
+    'default':      { lasers: [0xa855f7, 0xec4899, 0x06b6d4, 0xf97316], spotIntensity: 1.5, fogTint: 0x05050f, tileColors: [0xa855f7, 0xec4899, 0xf97316, 0x06b6d4, 0x22c55e, 0x6366f1], strobeRate: 0, laserSpeed: 0.4 },
+    'tiesto':       { lasers: [0x3b82f6, 0x60a5fa, 0xf1f5f9, 0x2563eb], spotIntensity: 2.5, fogTint: 0x050a1e, tileColors: [0x3b82f6, 0x60a5fa, 0x93c5fd, 0x2563eb], strobeRate: 200, laserSpeed: 0.8 },
+    'underground':  { lasers: [0x22c55e, 0x059669, 0x14532d, 0x10b981], spotIntensity: 0.8, fogTint: 0x030805, tileColors: [0x14532d, 0x059669], strobeRate: 0, laserSpeed: 0.2 },
+    'fire':         { lasers: [0xef4444, 0xf97316, 0xfbbf24, 0xdc2626], spotIntensity: 2.0, fogTint: 0x0f0503, tileColors: [0xef4444, 0xf97316, 0xfbbf24], strobeRate: 150, laserSpeed: 0.6 },
+    'ice':          { lasers: [0x06b6d4, 0x22d3ee, 0x67e8f9, 0x0891b2], spotIntensity: 1.8, fogTint: 0x030810, tileColors: [0x06b6d4, 0x22d3ee, 0x67e8f9], strobeRate: 0, laserSpeed: 0.3 },
+    'neon':         { lasers: [0xd946ef, 0x22c55e, 0xf97316, 0x06b6d4], spotIntensity: 2.2, fogTint: 0x0a050f, tileColors: [0xd946ef, 0x22c55e, 0xfbbf24, 0xf43f5e], strobeRate: 100, laserSpeed: 0.7 },
+    'blacklight':   { lasers: [0x7c3aed, 0x8b5cf6, 0xa78bfa, 0x6d28d9], spotIntensity: 1.0, fogTint: 0x08030f, tileColors: [0x7c3aed, 0x8b5cf6, 0xa78bfa], strobeRate: 0, laserSpeed: 0.25 },
+    'sunset':       { lasers: [0xf97316, 0xfbbf24, 0xef4444, 0xfb923c], spotIntensity: 1.5, fogTint: 0x0f0805, tileColors: [0xf97316, 0xfbbf24, 0xef4444, 0xfb923c], strobeRate: 0, laserSpeed: 0.35 },
+    'rave':         { lasers: [0xec4899, 0x06b6d4, 0x22c55e, 0xfbbf24], spotIntensity: 3.0, fogTint: 0x080508, tileColors: [0xec4899, 0x06b6d4, 0x22c55e, 0xfbbf24, 0xa855f7, 0xef4444], strobeRate: 80, laserSpeed: 1.0 }
+};
+var currentLighting = 'default';
+var strobeTimer = null;
+
+function cycleLighting() {
+    var presetNames = Object.keys(LIGHTING_PRESETS);
+    var idx = presetNames.indexOf(currentLighting);
+    idx = (idx + 1) % presetNames.length;
+    setLightingPreset(presetNames[idx]);
+}
+
+// Track library — synthesized genres with track metadata
+var GENRES = ['All', 'Deep House', 'Techno', 'Trance', 'Drum & Bass', 'EDM', 'Lo-Fi', 'Hip Hop', 'Afrobeats', 'Ambient'];
+var TRACK_LIBRARY = [
+    { title: 'Midnight Protocol', artist: 'SoundStudioPro', genre: 'Techno', bpm: 130, key: 'Am' },
+    { title: 'Neon Dreams', artist: 'DRUMAHON', genre: 'Deep House', bpm: 122, key: 'Fm' },
+    { title: 'Stellar Gateway', artist: 'SoundStudioPro', genre: 'Trance', bpm: 138, key: 'Cm' },
+    { title: 'Funk That', artist: 'SoundStudioPro', genre: 'Hip Hop', bpm: 98, key: 'Gm' },
+    { title: 'AYOYE', artist: 'SoundStudioPro', genre: 'EDM', bpm: 128, key: 'Dm' },
+    { title: 'Virtues Strike', artist: 'DRUMAHON', genre: 'Ambient', bpm: 90, key: 'Em' },
+    { title: 'Omahon The Land', artist: 'DRUMAHON', genre: 'EDM', bpm: 126, key: 'Am' },
+    { title: 'ELLE DÉBARQUE', artist: 'Jabëla', genre: 'Deep House', bpm: 120, key: 'Bbm' },
+    { title: 'Kebek — Stone Of Freedom', artist: 'DRUMAHON', genre: 'Techno', bpm: 134, key: 'Fm' },
+    { title: 'Turn It On', artist: 'DRUMAHON', genre: 'EDM', bpm: 128, key: 'Cm' },
+    { title: 'Every Word', artist: 'Josie', genre: 'Lo-Fi', bpm: 82, key: 'Dm' },
+    { title: 'Romans 7', artist: 'Creeker Chambers', genre: 'Ambient', bpm: 88, key: 'Em' },
+    { title: 'Amazing Grace Remix', artist: 'Will Chambers', genre: 'Trance', bpm: 140, key: 'Am' },
+    { title: 'Bass Cathedral', artist: 'SoundStudioPro', genre: 'Drum & Bass', bpm: 174, key: 'Fm' },
+    { title: 'Afro Sunrise', artist: 'MANNJAI514', genre: 'Afrobeats', bpm: 110, key: 'Gm' },
+    { title: 'Digital Rain', artist: 'Taz\'', genre: 'Techno', bpm: 132, key: 'Am' },
+    { title: 'Cloud Nine', artist: 'K', genre: 'Lo-Fi', bpm: 85, key: 'Cm' },
+    { title: 'Voltage', artist: 'SoundStudioPro', genre: 'Drum & Bass', bpm: 176, key: 'Dm' },
+    { title: 'Sahara Nights', artist: 'MANNJAI514', genre: 'Afrobeats', bpm: 112, key: 'Em' },
+    { title: 'Euphoria Protocol', artist: 'SoundStudioPro', genre: 'Trance', bpm: 140, key: 'Am' },
+    { title: 'Deep State', artist: 'DRUMAHON', genre: 'Deep House', bpm: 124, key: 'Gm' },
+    { title: 'Concrete Jungle', artist: 'Taz\'', genre: 'Hip Hop', bpm: 92, key: 'Cm' },
+    { title: 'Arctic Drift', artist: 'SoundStudioPro', genre: 'Ambient', bpm: 75, key: 'Em' },
+    { title: 'Rave Signal', artist: 'SoundStudioPro', genre: 'EDM', bpm: 130, key: 'Fm' },
+    { title: 'Adagio For Strings', artist: 'Ti\u00ebsto Tribute', genre: 'Trance', bpm: 138, key: 'Dm' },
+    { title: 'Elements Of Life', artist: 'Ti\u00ebsto Tribute', genre: 'Trance', bpm: 140, key: 'Am' },
+    { title: 'Red Lights', artist: 'Ti\u00ebsto Tribute', genre: 'Deep House', bpm: 126, key: 'Fm' },
+    { title: 'Silence (Remix)', artist: 'Ti\u00ebsto Tribute', genre: 'Trance', bpm: 136, key: 'Cm' },
+    { title: 'Lethal Industry', artist: 'Ti\u00ebsto Tribute', genre: 'Trance', bpm: 142, key: 'Am' },
+    { title: 'Traffic', artist: 'Ti\u00ebsto Tribute', genre: 'Trance', bpm: 140, key: 'Em' },
+    { title: 'BOOM', artist: 'Ti\u00ebsto Tribute', genre: 'EDM', bpm: 128, key: 'Gm' },
+    { title: 'The Business', artist: 'Ti\u00ebsto Tribute', genre: 'Deep House', bpm: 124, key: 'Am' },
+    { title: 'Ritual', artist: 'Ti\u00ebsto Tribute', genre: 'EDM', bpm: 128, key: 'Cm' },
+    { title: 'Festival Anthem SSP', artist: 'SoundStudioPro', genre: 'EDM', bpm: 130, key: 'Dm' },
+    { title: 'Quantum Bass', artist: 'Taz\'', genre: 'Drum & Bass', bpm: 175, key: 'Gm' },
+    { title: 'Tribal Roots', artist: 'MANNJAI514', genre: 'Afrobeats', bpm: 108, key: 'Am' },
+    { title: 'Velvet Underground', artist: 'DRUMAHON', genre: 'Deep House', bpm: 118, key: 'Bbm' },
+    { title: 'Binary Sunset', artist: 'SoundStudioPro', genre: 'Ambient', bpm: 78, key: 'Cm' },
+    { title: 'Acid Rain', artist: 'Taz\'', genre: 'Techno', bpm: 136, key: 'Em' }
+];
+
+// Crowd avatars
+var CROWD_EMOJIS = ['🕺','💃','🧑‍🎤','👨‍🎤','👩‍🎤','🧑‍💻','👯','🤸','🎤','👸','🤴','🧑‍🎨','🎭','🦄','🐺','🦊','🐱','🦁'];
+var CROWD_NAMES = ['VibeKing','BassQueen','NeonDancer','GrooveMaster','BeatJunkie','ReverbSoul','SynthWave','RhythmRider','DropHunter','EchoChild','SubBass','FreqFlyer','WubWub','TrapStar','DeepDive','RaveFam','PlurLife','SoundNerd'];
+
+// State
+var currentMode = null;
+var audioCtx = null;
+var masterGain = null;
+var deckState = {
+    A: { playing: false, bpm: 128, track: null, osc: null, gain: null, loop: false, cue: 0 },
+    B: { playing: false, bpm: 130, track: null, osc: null, gain: null, loop: false, cue: 0 }
+};
+var crossfaderValue = 0.5;
+var activeFX = {};
+var isRecording = false;
+var isStreaming = false;
+var spectatorMode = false;
+var spectatorPaused = false;
+var spectatorAgent1 = null;
+var spectatorAgent2 = null;
+var spectatorInterval = null;
+var battleMode = false;
+var battleAgent = null;
+var wagerAmount = 0;
+var chatVisible = false;
+var crowdVisible = false;
+var vizAnimFrame = null;
+var analyser = null;
+var scene, camera, renderer, animFrame;
+var clubLights = [];
+var laserBeams = [];
+var fogDensity = 0;
+var crowd3D = [];
+var djBooth3D = null;
+var cameraAngle = 0;
+var targetCameraAngle = 0;
+var festivalMode = false;
+var samplePadsVisible = false;
+var alfredVisible = false;
+var confettiParticles = [];
+var confettiCtx = null;
+var ledWallHue = 0;
+var pyroActive = false;
+var hotCues = { A: [null,null,null,null], B: [null,null,null,null] };
+
+// ── Free-Walk & Proximity Audio State ──
+var freeWalkEnabled = false;
+var djPlayerPos = { x: 0, y: 1.6, z: 10 };
+var djPlayerYaw = 0;
+var djPlayerPitch = -0.05;
+var djMoveState = { forward: false, backward: false, left: false, right: false };
+var djPointerLocked = false;
+var djProximityGain = null; // gain node controlled by distance to speakers
+var SPEAKER_POSITIONS = [{ x: -5, z: -7 }, { x: 5, z: -7 }];
+var DJ_BOOTH_POS = { x: 0, z: -4 };
+var DJ_AUDIO_MAX_DIST = 30; // max distance for full attenuation
+
+// ═══════════════════ WEB AUDIO ENGINE ═══════════════════
+
+function initAudio() {
+    if (audioCtx) return;
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    masterGain = audioCtx.createGain();
+    masterGain.gain.value = 0.75;
+
+    // Proximity gain node (between master and analyser)
+    djProximityGain = audioCtx.createGain();
+    djProximityGain.gain.value = 1.0;
+    masterGain.connect(djProximityGain);
+
+    // Analyser for visualizer
+    analyser = audioCtx.createAnalyser();
+    analyser.fftSize = 64;
+    djProximityGain.connect(analyser);
+    analyser.connect(audioCtx.destination);
+
+    // Init deck gains
+    deckState.A.gain = audioCtx.createGain();
+    deckState.B.gain = audioCtx.createGain();
+    deckState.A.gain.connect(masterGain);
+    deckState.B.gain.connect(masterGain);
+    deckState.A.gain.gain.value = 0.5;
+    deckState.B.gain.gain.value = 0.5;
+}
+
+// Synthesize a beat pattern for a given BPM and genre
+function synthBeat(deck, bpm, genre) {
+    if (!audioCtx) initAudio();
+    var d = deckState[deck];
+    if (d.osc) { try { d.osc.stop(); } catch(e){} }
+
+    var beatInterval = 60 / bpm;
+    var now = audioCtx.currentTime;
+
+    // Create a rhythmic pattern using oscillators + noise
+    function scheduleKick(time) {
+        var osc = audioCtx.createOscillator();
+        var g = audioCtx.createGain();
+        osc.connect(g); g.connect(d.gain);
+        osc.frequency.setValueAtTime(150, time);
+        osc.frequency.exponentialRampToValueAtTime(30, time + 0.08);
+        g.gain.setValueAtTime(0.8, time);
+        g.gain.exponentialRampToValueAtTime(0.01, time + 0.15);
+        osc.start(time); osc.stop(time + 0.15);
+    }
+
+    function scheduleHihat(time) {
+        var bufferSize = audioCtx.sampleRate * 0.05;
+        var buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+        var data = buffer.getChannelData(0);
+        for (var i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+        var noise = audioCtx.createBufferSource();
+        noise.buffer = buffer;
+        var hpf = audioCtx.createBiquadFilter();
+        hpf.type = 'highpass'; hpf.frequency.value = 8000;
+        var g = audioCtx.createGain();
+        noise.connect(hpf); hpf.connect(g); g.connect(d.gain);
+        g.gain.setValueAtTime(0.3, time);
+        g.gain.exponentialRampToValueAtTime(0.01, time + 0.04);
+        noise.start(time); noise.stop(time + 0.05);
+    }
+
+    function scheduleSnare(time) {
+        var osc = audioCtx.createOscillator();
+        var g = audioCtx.createGain();
+        osc.connect(g); g.connect(d.gain);
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(200, time);
+        osc.frequency.exponentialRampToValueAtTime(80, time + 0.1);
+        g.gain.setValueAtTime(0.5, time);
+        g.gain.exponentialRampToValueAtTime(0.01, time + 0.12);
+        osc.start(time); osc.stop(time + 0.12);
+        // Add noise for snare body
+        var bufferSize = audioCtx.sampleRate * 0.08;
+        var buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+        var data = buffer.getChannelData(0);
+        for (var i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+        var noise = audioCtx.createBufferSource();
+        noise.buffer = buffer;
+        var g2 = audioCtx.createGain();
+        noise.connect(g2); g2.connect(d.gain);
+        g2.gain.setValueAtTime(0.35, time);
+        g2.gain.exponentialRampToValueAtTime(0.01, time + 0.08);
+        noise.start(time); noise.stop(time + 0.08);
+    }
+
+    function scheduleBassline(time, freq) {
+        var osc = audioCtx.createOscillator();
+        var g = audioCtx.createGain();
+        osc.connect(g); g.connect(d.gain);
+        osc.type = 'sawtooth';
+        osc.frequency.value = freq;
+        var lpf = audioCtx.createBiquadFilter();
+        lpf.type = 'lowpass'; lpf.frequency.value = 400;
+        osc.disconnect(); osc.connect(lpf); lpf.connect(g); g.connect(d.gain);
+        g.gain.setValueAtTime(0.2, time);
+        g.gain.exponentialRampToValueAtTime(0.01, time + beatInterval * 0.8);
+        osc.start(time); osc.stop(time + beatInterval * 0.9);
+    }
+
+    // Genre-specific patterns
+    var bars = 4;
+    var totalBeats = bars * 4;
+    var bassNotes = [55, 65.4, 73.4, 82.4]; // A1, C2, D2, E2
+
+    for (var i = 0; i < totalBeats; i++) {
+        var t = now + i * beatInterval;
+
+        if (genre === 'Techno' || genre === 'EDM') {
+            scheduleKick(t);
+            if (i % 2 === 1) scheduleHihat(t);
+            if (i % 4 === 2) scheduleSnare(t);
+            if (i % 4 === 0) scheduleBassline(t, bassNotes[i % 4]);
+        } else if (genre === 'Deep House') {
+            scheduleKick(t);
+            scheduleHihat(t + beatInterval * 0.5);
+            if (i % 4 === 2) scheduleSnare(t);
+            if (i % 2 === 0) scheduleBassline(t, bassNotes[(i/2) % 4]);
+        } else if (genre === 'Trance') {
+            scheduleKick(t);
+            scheduleHihat(t);
+            if (i % 8 === 4) scheduleSnare(t);
+            scheduleBassline(t, bassNotes[i % 4]);
+        } else if (genre === 'Drum & Bass') {
+            if (i % 4 === 0 || i % 4 === 3) scheduleKick(t);
+            scheduleHihat(t);
+            if (i % 4 === 1) scheduleSnare(t);
+            if (i % 2 === 0) scheduleBassline(t, bassNotes[i % 4]);
+        } else if (genre === 'Lo-Fi' || genre === 'Ambient') {
+            if (i % 4 === 0) scheduleKick(t);
+            if (i % 2 === 1) scheduleHihat(t);
+            if (i % 4 === 0) scheduleBassline(t, bassNotes[i % 4] * 0.5);
+        } else if (genre === 'Afrobeats') {
+            if (i % 4 !== 3) scheduleKick(t);
+            scheduleHihat(t + beatInterval * 0.25);
+            scheduleHihat(t + beatInterval * 0.75);
+            if (i % 4 === 2) scheduleSnare(t);
+            if (i % 2 === 0) scheduleBassline(t, bassNotes[i % 4]);
+        } else { // Hip Hop default
+            if (i % 4 === 0 || i % 4 === 2.5) scheduleKick(t);
+            if (i % 4 === 1) scheduleSnare(t);
+            if (i % 2 === 0) scheduleHihat(t);
+            scheduleBassline(t, bassNotes[i % 4] * 0.5);
+        }
+    }
+
+    // Auto-loop: schedule next batch
+    d.osc = { stop: function(){} }; // placeholder
+    d._loopTimeout = setTimeout(function() {
+        if (d.playing) synthBeat(deck, d.bpm, d.track ? d.track.genre : 'EDM');
+    }, totalBeats * beatInterval * 1000 - 100);
+}
+
+function stopDeck(deck) {
+    var d = deckState[deck];
+    d.playing = false;
+    if (d._loopTimeout) clearTimeout(d._loopTimeout);
+    document.getElementById('platter' + deck).classList.remove('spinning');
+}
+
+function toggleDeck(deck) {
+    initAudio();
+    var d = deckState[deck];
+    if (d.playing) {
+        stopDeck(deck);
+    } else {
+        d.playing = true;
+        document.getElementById('platter' + deck).classList.add('spinning');
+        var genre = d.track ? d.track.genre : (deck === 'A' ? 'Deep House' : 'Techno');
+        synthBeat(deck, d.bpm, genre);
+        showToast('Deck ' + deck + ' playing — ' + d.bpm + ' BPM');
+    }
+}
+
+function cuePoint(deck) {
+    showToast('CUE point set on Deck ' + deck);
+}
+
+function syncBPM(deck) {
+    var other = deck === 'A' ? 'B' : 'A';
+    deckState[deck].bpm = deckState[other].bpm;
+    document.getElementById('deck' + deck + 'BPM').textContent = deckState[deck].bpm + ' BPM';
+    showToast('Deck ' + deck + ' synced to ' + deckState[deck].bpm + ' BPM');
+    if (deckState[deck].playing) {
+        stopDeck(deck);
+        deckState[deck].playing = true;
+        document.getElementById('platter' + deck).classList.add('spinning');
+        synthBeat(deck, deckState[deck].bpm, deckState[deck].track ? deckState[deck].track.genre : 'EDM');
+    }
+}
+
+function loopToggle(deck) {
+    deckState[deck].loop = !deckState[deck].loop;
+    showToast('Loop ' + (deckState[deck].loop ? 'ON' : 'OFF') + ' — Deck ' + deck);
+}
+
+// ═══════════════════ HOT CUES ═══════════════════
+
+function hotCue(deck, num) {
+    var idx = num - 1;
+    if (hotCues[deck][idx] === null) {
+        hotCues[deck][idx] = Date.now();
+        var btns = document.querySelectorAll('#deck' + deck + ' .hotcue-btn');
+        if (btns[idx]) btns[idx].classList.add('set');
+        showToast('Hot Cue ' + num + ' set on Deck ' + deck);
+    } else {
+        showToast('Hot Cue ' + num + ' triggered on Deck ' + deck);
+        flashLights();
+    }
+}
+
+// ═══════════════════ SAMPLE PADS ═══════════════════
+
+var PAD_SOUNDS = [
+    { name: 'Horn', freq: 440, type: 'square', dur: 0.5, decay: 0.3 },
+    { name: 'Siren', freq: 800, type: 'sawtooth', dur: 0.8, sweep: 1600 },
+    { name: 'Build', freq: 100, type: 'sawtooth', dur: 2.0, sweep: 2000 },
+    { name: 'Vocal', freq: 330, type: 'sine', dur: 0.4, decay: 0.2 },
+    { name: 'Clap', noise: true, dur: 0.12, hpf: 1500 },
+    { name: 'Riser', freq: 200, type: 'sawtooth', dur: 3.0, sweep: 4000 },
+    { name: 'Impact', freq: 80, type: 'sine', dur: 0.6, decay: 0.5, sub: true },
+    { name: 'Crowd', noise: true, dur: 1.5, lpf: 3000 }
+];
+
+function triggerPad(idx) {
+    initAudio();
+    var pad = PAD_SOUNDS[idx];
+    var now = audioCtx.currentTime;
+    var g = audioCtx.createGain();
+    g.connect(masterGain);
+    var padEl = document.querySelectorAll('.sample-pad')[idx];
+    if (padEl) { padEl.classList.add('hit'); setTimeout(function(){ padEl.classList.remove('hit'); }, 200); }
+
+    if (pad.noise) {
+        var bufSz = audioCtx.sampleRate * pad.dur;
+        var buf = audioCtx.createBuffer(1, bufSz, audioCtx.sampleRate);
+        var d = buf.getChannelData(0);
+        for (var i = 0; i < bufSz; i++) d[i] = Math.random() * 2 - 1;
+        var src = audioCtx.createBufferSource();
+        src.buffer = buf;
+        if (pad.hpf) {
+            var f = audioCtx.createBiquadFilter(); f.type = 'highpass'; f.frequency.value = pad.hpf;
+            src.connect(f); f.connect(g);
+        } else if (pad.lpf) {
+            var f2 = audioCtx.createBiquadFilter(); f2.type = 'lowpass'; f2.frequency.value = pad.lpf;
+            src.connect(f2); f2.connect(g);
+        } else { src.connect(g); }
+        g.gain.setValueAtTime(0.6, now);
+        g.gain.exponentialRampToValueAtTime(0.01, now + pad.dur);
+        src.start(now); src.stop(now + pad.dur);
+    } else {
+        var osc = audioCtx.createOscillator();
+        osc.type = pad.type;
+        osc.frequency.setValueAtTime(pad.freq, now);
+        if (pad.sweep) osc.frequency.exponentialRampToValueAtTime(pad.sweep, now + pad.dur);
+        osc.connect(g);
+        g.gain.setValueAtTime(0.5, now);
+        g.gain.exponentialRampToValueAtTime(0.01, now + (pad.decay || pad.dur));
+        osc.start(now); osc.stop(now + pad.dur);
+        if (pad.sub) {
+            var sub = audioCtx.createOscillator();
+            sub.frequency.value = pad.freq / 2; sub.type = 'sine';
+            var sg = audioCtx.createGain(); sub.connect(sg); sg.connect(masterGain);
+            sg.gain.setValueAtTime(0.4, now); sg.gain.exponentialRampToValueAtTime(0.01, now + pad.dur);
+            sub.start(now); sub.stop(now + pad.dur);
+        }
+    }
+    flashLights();
+}
+
+function toggleSamplePads() {
+    samplePadsVisible = !samplePadsVisible;
+    document.getElementById('samplePads').classList.toggle('show', samplePadsVisible);
+}
+
+// ═══════════════════ PYRO & CONFETTI ═══════════════════
+
+function firePyro() {
+    pyroActive = true;
+    var flash = document.getElementById('pyroFlash');
+    flash.classList.add('fire');
+    setTimeout(function(){ flash.classList.remove('fire'); pyroActive = false; }, 400);
+    if (scene) {
+        for (var pi = 0; pi < 4; pi++) {
+            var pyroGeo = new THREE.CylinderGeometry(0.1, 0.3, 4, 8);
+            var pyroMat = new THREE.MeshBasicMaterial({ color: 0xf97316, transparent: true, opacity: 0.8 });
+            var pyro = new THREE.Mesh(pyroGeo, pyroMat);
+            pyro.position.set(-4.5 + pi * 3, 2, -6);
+            scene.add(pyro);
+            (function(p){ setTimeout(function(){ scene.remove(p); }, 800); })(pyro);
+        }
+    }
+}
+
+function fireConfetti() {
+    var canvas = document.getElementById('confettiCanvas');
+    if (!confettiCtx) {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        confettiCtx = canvas.getContext('2d');
+    }
+    var colors = ['#a855f7','#ec4899','#f97316','#06b6d4','#22c55e','#6366f1','#fbbf24','#ef4444'];
+    for (var i = 0; i < 120; i++) {
+        confettiParticles.push({
+            x: Math.random() * canvas.width, y: -10 - Math.random() * 100,
+            w: 4 + Math.random() * 6, h: 3 + Math.random() * 4,
+            color: colors[Math.floor(Math.random() * colors.length)],
+            vx: (Math.random() - 0.5) * 4, vy: 2 + Math.random() * 4,
+            rot: Math.random() * Math.PI * 2, rotV: (Math.random() - 0.5) * 0.2,
+            life: 150 + Math.floor(Math.random() * 100)
+        });
+    }
+    if (!canvas._animating) { canvas._animating = true; animateConfetti(); }
+}
+
+function animateConfetti() {
+    var canvas = document.getElementById('confettiCanvas');
+    if (!confettiCtx || confettiParticles.length === 0) { confettiCtx.clearRect(0,0,canvas.width,canvas.height); canvas._animating = false; return; }
+    confettiCtx.clearRect(0, 0, canvas.width, canvas.height);
+    for (var i = confettiParticles.length - 1; i >= 0; i--) {
+        var p = confettiParticles[i];
+        p.x += p.vx; p.y += p.vy; p.rot += p.rotV; p.life--;
+        if (p.life <= 0 || p.y > canvas.height) { confettiParticles.splice(i, 1); continue; }
+        confettiCtx.save();
+        confettiCtx.translate(p.x, p.y);
+        confettiCtx.rotate(p.rot);
+        confettiCtx.fillStyle = p.color;
+        confettiCtx.globalAlpha = Math.min(1, p.life / 30);
+        confettiCtx.fillRect(-p.w/2, -p.h/2, p.w, p.h);
+        confettiCtx.restore();
+    }
+    requestAnimationFrame(animateConfetti);
+}
+
+function epicDrop() {
+    firePyro();
+    setTimeout(fireConfetti, 200);
+    flashLights();
+    addChatMsg('system', 'System', '💥🔥 EPIC DROP! 🎉💥');
+    generateCrowdReaction('THAT DROP WAS INSANE!! 🤯🔥🔥🔥');
+    triggerDropReaction();
+    speak('DROP!');
+    if (camera) {
+        var origY = camera.position.y;
+        camera.position.y += 0.5;
+        setTimeout(function(){ camera.position.y = origY; }, 300);
+    }
+}
+
+// LED Wall animation
+function animateLEDWall() {
+    var wall = document.getElementById('ledWall');
+    if (!wall) return;
+    var anyPlaying = deckState.A.playing || deckState.B.playing;
+    if (anyPlaying) {
+        ledWallHue = (ledWallHue + 1) % 360;
+        wall.style.background = 'linear-gradient(180deg, hsla('+ledWallHue+',80%,50%,.2), hsla('+((ledWallHue+60)%360)+',80%,50%,.05), transparent)';
+        wall.style.opacity = festivalMode ? '0.35' : '0.15';
+    } else { wall.style.opacity = '0.05'; }
+    requestAnimationFrame(animateLEDWall);
+}
+
+// Beatmatch indicator
+function updateBeatmatch() {
+    var diff = Math.abs(deckState.A.bpm - deckState.B.bpm);
+    var state = diff === 0 ? 'synced' : diff <= 3 ? 'close' : 'off';
+    for (var di = 1; di <= 4; di++) {
+        ['A','B'].forEach(function(dk) {
+            var dot = document.getElementById('bmDot' + dk + di);
+            if (dot) { dot.className = 'beatmatch-dot ' + state; }
+        });
+    }
+}
+
+function loadToDeck(deck) {
+    openTrackBrowser(deck);
+}
+
+function loadTrackToDeck(deck, trackIdx) {
+    var track = TRACK_LIBRARY[trackIdx];
+    deckState[deck].track = track;
+    deckState[deck].bpm = track.bpm;
+    document.getElementById('deck' + deck + 'Track').textContent = track.title;
+    document.getElementById('deck' + deck + 'Artist').textContent = track.artist;
+    document.getElementById('deck' + deck + 'BPM').textContent = track.bpm + ' BPM';
+    showToast('Loaded "' + track.title + '" → Deck ' + deck);
+    closeTrackBrowser();
+
+    // Auto-play
+    if (!deckState[deck].playing) {
+        toggleDeck(deck);
+    } else {
+        stopDeck(deck);
+        deckState[deck].playing = true;
+        document.getElementById('platter' + deck).classList.add('spinning');
+        synthBeat(deck, track.bpm, track.genre);
+    }
+}
+
+function setMasterVolume(val) {
+    if (masterGain) masterGain.gain.value = val / 100;
+}
+
+function toggleFX(fx) {
+    activeFX[fx] = !activeFX[fx];
+    var btns = document.querySelectorAll('.fx-btn');
+    btns.forEach(function(b) {
+        if (b.textContent.toLowerCase().indexOf(fx) >= 0) b.classList.toggle('active', activeFX[fx]);
+    });
+    showToast(fx.charAt(0).toUpperCase() + fx.slice(1) + ' ' + (activeFX[fx] ? 'ON' : 'OFF'));
+    // Flash lights on FX
+    if (activeFX[fx]) flashLights();
+}
+
+function toggleRecord() {
+    isRecording = !isRecording;
+    document.getElementById('recBtn').classList.toggle('active', isRecording);
+    showToast(isRecording ? '⏺ Recording started' : '⏹ Recording stopped');
+    if (isRecording) addChatMsg('system', 'System', '🔴 Recording started — your mix is being captured');
+    else addChatMsg('system', 'System', '⏹ Recording saved — upload to SoundStudioPro.com to share');
+}
+
+function toggleStream() {
+    isStreaming = !isStreaming;
+    document.getElementById('streamBtn').classList.toggle('active', isStreaming);
+    showToast(isStreaming ? '📡 Live stream started' : '📡 Stream ended');
+    if (isStreaming) {
+        addChatMsg('system', 'System', '📡 You are LIVE! Viewers can watch at soundstudiopro.com/live_streams.php');
+        generateCrowdReaction('🔥 The DJ just went LIVE!');
+    }
+}
+
+// ═══════════════════ CROSSFADER ═══════════════════
+
+function initCrossfader() {
+    var track = document.getElementById('crossfaderTrack');
+    var knob = document.getElementById('crossfaderKnob');
+    var dragging = false;
+
+    function updateCrossfader(x) {
+        var rect = track.getBoundingClientRect();
+        var pct = Math.max(0, Math.min(1, (x - rect.left) / rect.width));
+        crossfaderValue = pct;
+        knob.style.left = (pct * 100) + '%';
+        // Apply to deck volumes
+        if (deckState.A.gain) deckState.A.gain.gain.value = (1 - pct) * 0.8;
+        if (deckState.B.gain) deckState.B.gain.gain.value = pct * 0.8;
+    }
+
+    knob.addEventListener('mousedown', function(e) { dragging = true; e.preventDefault(); });
+    document.addEventListener('mousemove', function(e) { if (dragging) updateCrossfader(e.clientX); });
+    document.addEventListener('mouseup', function() { dragging = false; });
+    knob.addEventListener('touchstart', function(e) { dragging = true; e.preventDefault(); }, { passive: false });
+    document.addEventListener('touchmove', function(e) { if (dragging) updateCrossfader(e.touches[0].clientX); });
+    document.addEventListener('touchend', function() { dragging = false; });
+    track.addEventListener('click', function(e) { updateCrossfader(e.clientX); });
+}
+
+// ═══════════════════ VISUALIZER ═══════════════════
+
+function initVisualizer() {
+    var container = document.getElementById('vizBars');
+    container.innerHTML = '';
+    for (var i = 0; i < 32; i++) {
+        var bar = document.createElement('div');
+        bar.className = 'viz-bar';
+        bar.style.height = '4px';
+        container.appendChild(bar);
+    }
+}
+
+function animateVisualizer() {
+    vizAnimFrame = requestAnimationFrame(animateVisualizer);
+    if (!analyser) return;
+    var data = new Uint8Array(analyser.frequencyBinCount);
+    analyser.getByteFrequencyData(data);
+    var bars = document.querySelectorAll('.viz-bar');
+    for (var i = 0; i < bars.length && i < data.length; i++) {
+        var h = Math.max(4, (data[i] / 255) * 80);
+        bars[i].style.height = h + 'px';
+        var hue = 280 + (i / bars.length) * 60; // purple to pink
+        bars[i].style.background = 'hsl(' + hue + ', 80%, ' + (40 + h * 0.5) + '%)';
+    }
+}
+
+// ═══════════════════ 3D NIGHTCLUB SCENE ═══════════════════
+
+function initScene() {
+    scene = new THREE.Scene();
+    scene.fog = new THREE.FogExp2(0x05050f, 0.015);
+
+    camera = new THREE.PerspectiveCamera(65, window.innerWidth / window.innerHeight, 0.1, 200);
+    camera.position.set(0, 6, 18);
+    camera.lookAt(0, 2, 0);
+
+    renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('djCanvas'), antialias: true, alpha: false });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(typeof GoSiteMeQuality!=='undefined'?GoSiteMeQuality.dpr:Math.min(window.devicePixelRatio,2));
+    renderer.shadowMap.enabled = true;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 0.8;
+
+    // ── Floor (dance floor with grid) ──
+    var floorGeo = new THREE.PlaneGeometry(60, 60);
+    var floorMat = new THREE.MeshStandardMaterial({ color: 0x080810, roughness: 0.3, metalness: 0.7 });
+    var floor = new THREE.Mesh(floorGeo, floorMat);
+    floor.rotation.x = -Math.PI / 2;
+    floor.receiveShadow = true;
+    scene.add(floor);
+
+    // Dance floor tiles (color-changing)
+    var tileColors = [0xa855f7, 0xec4899, 0xf97316, 0x06b6d4, 0x22c55e, 0x6366f1];
+    for (var tx = -3; tx <= 3; tx++) {
+        for (var tz = -2; tz <= 4; tz++) {
+            var tileGeo = new THREE.PlaneGeometry(1.8, 1.8);
+            var tileMat = new THREE.MeshStandardMaterial({
+                color: tileColors[Math.abs(tx + tz) % tileColors.length],
+                emissive: tileColors[Math.abs(tx + tz) % tileColors.length],
+                emissiveIntensity: 0.15,
+                roughness: 0.2,
+                metalness: 0.8,
+                transparent: true,
+                opacity: 0.4
+            });
+            var tile = new THREE.Mesh(tileGeo, tileMat);
+            tile.rotation.x = -Math.PI / 2;
+            tile.position.set(tx * 2, 0.01, tz * 2 + 2);
+            tile._baseEmissive = tileMat.emissiveIntensity;
+            tile._tileIdx = Math.abs(tx + tz);
+            scene.add(tile);
+            clubLights.push(tile);
+        }
+    }
+
+    // ── Walls ──
+    var wallMat = new THREE.MeshStandardMaterial({ color: 0x0a0a1a, roughness: 0.8 });
+    // Back wall
+    var backWall = new THREE.Mesh(new THREE.PlaneGeometry(60, 15), wallMat);
+    backWall.position.set(0, 7.5, -10);
+    scene.add(backWall);
+    // Side walls
+    var sideWall1 = new THREE.Mesh(new THREE.PlaneGeometry(40, 15), wallMat);
+    sideWall1.rotation.y = Math.PI / 2;
+    sideWall1.position.set(-15, 7.5, 5);
+    scene.add(sideWall1);
+    var sideWall2 = new THREE.Mesh(new THREE.PlaneGeometry(40, 15), wallMat);
+    sideWall2.rotation.y = -Math.PI / 2;
+    sideWall2.position.set(15, 7.5, 5);
+    scene.add(sideWall2);
+
+    // ── DJ Booth (elevated platform) ──
+    var boothGeo = new THREE.BoxGeometry(8, 1.5, 4);
+    var boothMat = new THREE.MeshStandardMaterial({ color: 0x15152a, roughness: 0.4, metalness: 0.6 });
+    djBooth3D = new THREE.Mesh(boothGeo, boothMat);
+    djBooth3D.position.set(0, 0.75, -4);
+    djBooth3D.castShadow = true;
+    scene.add(djBooth3D);
+
+    // Booth front panel (glowing)
+    var panelGeo = new THREE.PlaneGeometry(7.8, 1.3);
+    var panelMat = new THREE.MeshStandardMaterial({
+        color: 0xa855f7,
+        emissive: 0xa855f7,
+        emissiveIntensity: 0.4,
+        transparent: true,
+        opacity: 0.3
+    });
+    var panel = new THREE.Mesh(panelGeo, panelMat);
+    panel.position.set(0, 0.8, -1.99);
+    scene.add(panel);
+
+    // Turntables on booth
+    var ttGeo = new THREE.CylinderGeometry(0.6, 0.6, 0.05, 32);
+    var ttMat = new THREE.MeshStandardMaterial({ color: 0x222244, metalness: 0.8, roughness: 0.2 });
+    var tt1 = new THREE.Mesh(ttGeo, ttMat);
+    tt1.position.set(-2, 1.55, -4);
+    scene.add(tt1);
+    var tt2 = new THREE.Mesh(ttGeo, ttMat);
+    tt2.position.set(2, 1.55, -4);
+    scene.add(tt2);
+
+    // ── Speakers ──
+    var spkGeo = new THREE.BoxGeometry(2, 3, 1.5);
+    var spkMat = new THREE.MeshStandardMaterial({ color: 0x111122 });
+    [-5, 5].forEach(function(x) {
+        var spk = new THREE.Mesh(spkGeo, spkMat);
+        spk.position.set(x, 2, -7);
+        spk.castShadow = true;
+        scene.add(spk);
+        // Speaker cone
+        var coneGeo = new THREE.CylinderGeometry(0.6, 0.4, 0.3, 16);
+        var coneMat = new THREE.MeshStandardMaterial({ color: 0x333355 });
+        var cone = new THREE.Mesh(coneGeo, coneMat);
+        cone.rotation.x = Math.PI / 2;
+        cone.position.set(x, 2.2, -6.2);
+        scene.add(cone);
+    });
+
+    // ── Laser Beams ──
+    var laserGeo = new THREE.CylinderGeometry(0.02, 0.02, 25, 4);
+    var laserColors = [0xa855f7, 0xec4899, 0x06b6d4, 0xf97316];
+    for (var li = 0; li < 6; li++) {
+        var laserMat = new THREE.MeshBasicMaterial({
+            color: laserColors[li % laserColors.length],
+            transparent: true,
+            opacity: 0.4
+        });
+        var laser = new THREE.Mesh(laserGeo, laserMat);
+        laser.position.set(-6 + li * 2.4, 10, -5);
+        laser.rotation.z = 0.3 - li * 0.12;
+        laser._baseRotZ = laser.rotation.z;
+        laser._speed = 0.3 + Math.random() * 0.5;
+        scene.add(laser);
+        laserBeams.push(laser);
+    }
+
+    // ── Spot Lights ──
+    var colors = [0xa855f7, 0xec4899, 0xf97316, 0x06b6d4];
+    colors.forEach(function(c, i) {
+        var spot = new THREE.SpotLight(c, 1.5, 30, Math.PI / 6, 0.5);
+        spot.position.set(-6 + i * 4, 12, -3);
+        spot.target.position.set((Math.random() - 0.5) * 10, 0, 5);
+        spot.castShadow = true;
+        scene.add(spot);
+        scene.add(spot.target);
+    });
+
+    // Ambient
+    scene.add(new THREE.AmbientLight(0x111122, 0.3));
+
+    // ── 3D Crowd (simple shapes) ──
+    for (var ci = 0; ci < 25; ci++) {
+        var personGeo = new THREE.CylinderGeometry(0.25, 0.25, 1.3, 8);
+        var personMat = new THREE.MeshStandardMaterial({
+            color: new THREE.Color().setHSL(Math.random(), 0.5, 0.3)
+        });
+        var person = new THREE.Mesh(personGeo, personMat);
+        person.position.set(
+            (Math.random() - 0.5) * 12,
+            0.65,
+            2 + Math.random() * 8
+        );
+        person._danceOffset = Math.random() * Math.PI * 2;
+        person._danceSpeed = 1.5 + Math.random() * 2;
+        scene.add(person);
+        crowd3D.push(person);
+    }
+
+    // ── VIP Lounge (elevated platform in back) ──
+    var vipGeo = new THREE.BoxGeometry(12, 0.5, 6);
+    var vipMat = new THREE.MeshStandardMaterial({ color: 0x1a1030, roughness: 0.3, metalness: 0.5 });
+    var vip = new THREE.Mesh(vipGeo, vipMat);
+    vip.position.set(0, 3, -8);
+    scene.add(vip);
+
+    // VIP railing
+    var railMat = new THREE.MeshStandardMaterial({ color: 0xa855f7, emissive: 0xa855f7, emissiveIntensity: 0.2 });
+    var railGeo = new THREE.BoxGeometry(12, 0.08, 0.08);
+    var rail = new THREE.Mesh(railGeo, railMat);
+    rail.position.set(0, 3.8, -5);
+    scene.add(rail);
+
+    // ── Mirror Ball ──
+    var ballGeo = new THREE.SphereGeometry(0.8, 16, 16);
+    var ballMat = new THREE.MeshStandardMaterial({ color: 0xcccccc, metalness: 1, roughness: 0 });
+    var mirrorBall = new THREE.Mesh(ballGeo, ballMat);
+    mirrorBall.position.set(0, 11, 2);
+    scene.add(mirrorBall);
+
+    // Window resize
+    window.addEventListener('resize', function() {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    animate();
+}
+
+function animate() {
+    animFrame = requestAnimationFrame(animate);
+    var t = Date.now() / 1000;
+
+    // Laser movement
+    laserBeams.forEach(function(laser) {
+        laser.rotation.z = laser._baseRotZ + Math.sin(t * laser._speed) * 0.4;
+        laser.rotation.x = Math.sin(t * laser._speed * 0.7) * 0.15;
+    });
+
+    // Dance floor pulse
+    var anyPlaying = deckState.A.playing || deckState.B.playing;
+    clubLights.forEach(function(tile) {
+        if (anyPlaying) {
+            tile.material.emissiveIntensity = 0.1 + Math.abs(Math.sin(t * 3 + tile._tileIdx)) * 0.5;
+            tile.material.opacity = 0.3 + Math.abs(Math.sin(t * 3 + tile._tileIdx * 0.5)) * 0.4;
+        } else {
+            tile.material.emissiveIntensity = 0.08;
+            tile.material.opacity = 0.2;
+        }
+    });
+
+    // Crowd dancing
+    crowd3D.forEach(function(person) {
+        if (anyPlaying) {
+            person.position.y = 0.65 + Math.abs(Math.sin(t * person._danceSpeed + person._danceOffset)) * 0.15;
+            person.rotation.y = Math.sin(t * 0.5 + person._danceOffset) * 0.3;
+        }
+    });
+
+    // Camera subtle sway OR free-walk
+    if (freeWalkEnabled) {
+        // WASD movement
+        var spd = 0.12;
+        var dx = 0, dz = 0;
+        if (djMoveState.forward)  { dx += Math.sin(djPlayerYaw) * spd; dz -= Math.cos(djPlayerYaw) * spd; }
+        if (djMoveState.backward) { dx -= Math.sin(djPlayerYaw) * spd; dz += Math.cos(djPlayerYaw) * spd; }
+        if (djMoveState.left)     { dx -= Math.cos(djPlayerYaw) * spd; dz -= Math.sin(djPlayerYaw) * spd; }
+        if (djMoveState.right)    { dx += Math.cos(djPlayerYaw) * spd; dz += Math.sin(djPlayerYaw) * spd; }
+        djPlayerPos.x = Math.max(-14, Math.min(14, djPlayerPos.x + dx));
+        djPlayerPos.z = Math.max(-8, Math.min(20, djPlayerPos.z + dz));
+        camera.position.set(djPlayerPos.x, djPlayerPos.y, djPlayerPos.z);
+        camera.rotation.order = 'YXZ';
+        camera.rotation.y = djPlayerYaw;
+        camera.rotation.x = djPlayerPitch;
+
+        // Proximity audio — volume scales with distance to nearest speaker
+        if (djProximityGain && audioCtx) {
+            var minDist = DJ_AUDIO_MAX_DIST;
+            SPEAKER_POSITIONS.forEach(function(sp) {
+                var d = Math.sqrt(Math.pow(djPlayerPos.x - sp.x, 2) + Math.pow(djPlayerPos.z - sp.z, 2));
+                if (d < minDist) minDist = d;
+            });
+            // Also factor DJ booth distance
+            var boothDist = Math.sqrt(Math.pow(djPlayerPos.x - DJ_BOOTH_POS.x, 2) + Math.pow(djPlayerPos.z - DJ_BOOTH_POS.z, 2));
+            if (boothDist < minDist) minDist = boothDist;
+
+            // Volume: 1.0 at distance 0, 0.15 at max distance (smoothstep)
+            var ratio = Math.min(1, minDist / DJ_AUDIO_MAX_DIST);
+            var vol = 1.0 - ratio * 0.85; // range: 0.15 to 1.0
+            vol = vol * vol * (3 - 2 * vol); // smoothstep
+            var now = audioCtx.currentTime;
+            djProximityGain.gain.cancelScheduledValues(now);
+            djProximityGain.gain.setTargetAtTime(Math.max(0.08, vol), now, 0.08);
+        }
+    } else if (currentMode) {
+        var swayX = Math.sin(t * 0.15) * 0.5;
+        var swayY = 6 + Math.sin(t * 0.2) * 0.3;
+        camera.position.x = swayX;
+        camera.position.y = swayY;
+        camera.lookAt(0, 2, 0);
+    }
+
+    renderer.render(scene, camera);
+}
+
+function flashLights() {
+    clubLights.forEach(function(tile) {
+        tile.material.emissiveIntensity = 1;
+        setTimeout(function() { tile.material.emissiveIntensity = 0.15; }, 200);
+    });
+}
+
+// ═══════════════════ TRACK BROWSER ═══════════════════
+
+var browserTargetDeck = 'A';
+
+function openTrackBrowser(deck) {
+    browserTargetDeck = deck || 'A';
+    renderGenres();
+    renderTracks('All');
+    document.getElementById('trackBrowser').classList.add('show');
+}
+
+function closeTrackBrowser() {
+    document.getElementById('trackBrowser').classList.remove('show');
+}
+
+function renderGenres() {
+    var bar = document.getElementById('genreBar');
+    bar.innerHTML = '';
+    GENRES.forEach(function(g) {
+        var pill = document.createElement('div');
+        pill.className = 'genre-pill' + (g === 'All' ? ' active' : '');
+        pill.textContent = g;
+        pill.onclick = function() {
+            bar.querySelectorAll('.genre-pill').forEach(function(p) { p.classList.remove('active'); });
+            pill.classList.add('active');
+            renderTracks(g);
+        };
+        bar.appendChild(pill);
+    });
+}
+
+function renderTracks(genre) {
+    var list = document.getElementById('trackList');
+    list.innerHTML = '';
+    var emojis = { 'Deep House': '🏠', 'Techno': '⚡', 'Trance': '🌀', 'Drum & Bass': '🥁', 'EDM': '💥', 'Lo-Fi': '🌙', 'Hip Hop': '🎤', 'Afrobeats': '🌍', 'Ambient': '🌿' };
+
+    TRACK_LIBRARY.forEach(function(track, idx) {
+        if (genre !== 'All' && track.genre !== genre) return;
+        var row = document.createElement('div');
+        row.className = 'browser-track';
+        row.innerHTML = '<div class="track-art">' + (emojis[track.genre] || '🎵') + '</div>' +
+            '<div class="track-info"><div class="tname">' + track.title + '</div><div class="tartist">' + track.artist + ' · ' + track.genre + '</div></div>' +
+            '<div class="track-bpm">' + track.bpm + ' BPM<br>' + track.key + '</div>' +
+            '<div class="track-load" data-idx="' + idx + '">Load ' + browserTargetDeck + '</div>';
+        row.querySelector('.track-load').onclick = function(e) {
+            e.stopPropagation();
+            loadTrackToDeck(browserTargetDeck, idx);
+        };
+        list.appendChild(row);
+    });
+}
+
+// ═══════════════════ CHAT ═══════════════════
+
+function toggleChat() {
+    chatVisible = !chatVisible;
+    document.getElementById('chatPanel').classList.toggle('show', chatVisible);
+}
+
+function addChatMsg(type, name, text) {
+    var msgs = document.getElementById('chatMessages');
+    var div = document.createElement('div');
+    div.className = 'chat-msg';
+    div.innerHTML = '<span class="name ' + type + '">' + name + ':</span> ' + text;
+    msgs.appendChild(div);
+    msgs.scrollTop = msgs.scrollHeight;
+    // Keep last 50 messages
+    while (msgs.children.length > 50) msgs.removeChild(msgs.firstChild);
+}
+
+function sendChat() {
+    var input = document.getElementById('chatInput');
+    var text = input.value.trim();
+    if (!text) return;
+    addChatMsg('user', 'You', text);
+    input.value = '';
+
+    // AI agents may respond
+    setTimeout(function() {
+        var agent = DJ_AGENTS[Math.floor(Math.random() * DJ_AGENTS.length)];
+        var responses = [
+            'Great vibes tonight! 🔥',
+            'Love that track selection!',
+            'The energy in here is unreal 🎵',
+            'Drop the bass! 💥',
+            'Who\'s requesting the next track?',
+            'This beat is fire 🔥🔥🔥',
+            'SoundStudioPro tracks hit different',
+            'Turn that volume UP 📢',
+            'VIP lounge is where it\'s at tonight',
+            'Mix is smooth like butter'
+        ];
+        addChatMsg('agent', agent.emoji + ' ' + agent.name, responses[Math.floor(Math.random() * responses.length)]);
+    }, 1500 + Math.random() * 3000);
+}
+
+function generateCrowdReaction(msg) {
+    var name = CROWD_NAMES[Math.floor(Math.random() * CROWD_NAMES.length)];
+    addChatMsg('user', '🕺 ' + name, msg || '🔥🔥🔥');
+}
+
+// Auto crowd chat
+function startCrowdChat() {
+    setInterval(function() {
+        if (!currentMode) return;
+        var msgs = [
+            '🔥🔥 BANGER!', 'This beat slaps!', 'Turn it upppp 📢', 'loving this vibe ✨',
+            '💃 can\'t stop dancing', 'WHO IS ON THE DECKS?!', 'best set tonight 🙌',
+            'drop it! drop it!', 'MIX IS CLEAN 🧼', 'this track is from SSP?? amazing!',
+            'crowd is going crazy rn 🤯', 'someone request some D&B!', 'vibes = immaculate',
+            'the lasers tho 😍', 'this DJ is insane!!', 's/o to SoundStudioPro 🎵'
+        ];
+        generateCrowdReaction(msgs[Math.floor(Math.random() * msgs.length)]);
+    }, 8000 + Math.random() * 7000);
+}
+
+// ═══════════════════ CROWD PANEL ═══════════════════
+
+function toggleCrowd() {
+    crowdVisible = !crowdVisible;
+    document.getElementById('crowdPanel').classList.toggle('show', crowdVisible);
+}
+
+function populateCrowd() {
+    var container = document.getElementById('crowdAvatars');
+    container.innerHTML = '';
+    var count = 12 + Math.floor(Math.random() * 8);
+    for (var i = 0; i < count; i++) {
+        var av = document.createElement('div');
+        av.className = 'crowd-avatar' + (Math.random() > 0.4 ? ' dancing' : '');
+        av.textContent = CROWD_EMOJIS[i % CROWD_EMOJIS.length];
+        av.title = CROWD_NAMES[i % CROWD_NAMES.length];
+        av.onclick = function() {
+            showToast('Say hi to ' + this.title + '!');
+            addChatMsg('system', 'System', '👋 You waved at ' + this.title);
+        };
+        container.appendChild(av);
+    }
+}
+
+// ═══════════════════ SPECTATOR MODE ═══════════════════
+
+function startSpectatorMode() {
+    spectatorMode = true;
+    var shuffled = DJ_AGENTS.slice().sort(function() { return Math.random() - 0.5; });
+    spectatorAgent1 = shuffled[0];
+    spectatorAgent2 = shuffled[1];
+
+    document.getElementById('spectatorBadge').style.display = 'block';
+    document.getElementById('spectatorBadge').textContent = '👀 ' + spectatorAgent1.name + ' vs ' + spectatorAgent2.name + ' — Click to Pause';
+
+    showToast('Spectating: ' + spectatorAgent1.name + ' vs ' + spectatorAgent2.name);
+    addChatMsg('system', 'System', '🎧 DJ Battle: ' + spectatorAgent1.emoji + ' ' + spectatorAgent1.name + ' (' + spectatorAgent1.genre + ') vs ' + spectatorAgent2.emoji + ' ' + spectatorAgent2.name + ' (' + spectatorAgent2.genre + ')');
+
+    // Load tracks for each agent
+    var agent1Track = TRACK_LIBRARY.filter(function(t) { return t.genre === spectatorAgent1.genre; })[0] || TRACK_LIBRARY[0];
+    var agent2Track = TRACK_LIBRARY.filter(function(t) { return t.genre === spectatorAgent2.genre; })[0] || TRACK_LIBRARY[1];
+
+    loadTrackToDeck('A', TRACK_LIBRARY.indexOf(agent1Track));
+    setTimeout(function() {
+        loadTrackToDeck('B', TRACK_LIBRARY.indexOf(agent2Track));
+    }, 2000);
+
+    // Agent commentary
+    setTimeout(function() {
+        addChatMsg('agent', spectatorAgent1.emoji + ' ' + spectatorAgent1.name, 'Opening with some ' + spectatorAgent1.genre + ' — let\'s set the mood 🎵');
+    }, 4000);
+
+    // Auto-mix: agents take turns adjusting crossfader and loading new tracks
+    var turnCount = 0;
+    spectatorInterval = setInterval(function() {
+        if (spectatorPaused || !spectatorMode) return;
+        turnCount++;
+        var activeAgent = turnCount % 2 === 0 ? spectatorAgent1 : spectatorAgent2;
+        var activeDeck = turnCount % 2 === 0 ? 'A' : 'B';
+
+        // Mix actions
+        var actions = ['crossfade', 'newtrack', 'fx', 'comment', 'drop'];
+        var action = actions[Math.floor(Math.random() * actions.length)];
+
+        if (action === 'crossfade') {
+            var newVal = activeDeck === 'A' ? 0.2 + Math.random() * 0.3 : 0.5 + Math.random() * 0.3;
+            crossfaderValue = newVal;
+            document.getElementById('crossfaderKnob').style.left = (newVal * 100) + '%';
+            if (deckState.A.gain) deckState.A.gain.gain.value = (1 - newVal) * 0.8;
+            if (deckState.B.gain) deckState.B.gain.gain.value = newVal * 0.8;
+            addChatMsg('agent', activeAgent.emoji + ' ' + activeAgent.name, 'Bringing in Deck ' + activeDeck + ' smooth... 🎚️');
+        } else if (action === 'newtrack') {
+            var genreTracks = TRACK_LIBRARY.filter(function(t) { return t.genre === activeAgent.genre; });
+            if (genreTracks.length === 0) genreTracks = TRACK_LIBRARY;
+            var nextTrack = genreTracks[Math.floor(Math.random() * genreTracks.length)];
+            loadTrackToDeck(activeDeck, TRACK_LIBRARY.indexOf(nextTrack));
+            addChatMsg('agent', activeAgent.emoji + ' ' + activeAgent.name, 'Loading "' + nextTrack.title + '" — ' + nextTrack.bpm + ' BPM 💿');
+        } else if (action === 'fx') {
+            var fxNames = ['reverb', 'delay', 'filter', 'flanger'];
+            var fx = fxNames[Math.floor(Math.random() * fxNames.length)];
+            addChatMsg('agent', activeAgent.emoji + ' ' + activeAgent.name, 'Adding some ' + fx + ' to the mix ✨');
+            flashLights();
+        } else if (action === 'drop') {
+            addChatMsg('agent', activeAgent.emoji + ' ' + activeAgent.name, '3... 2... 1... DROP! 💥🔥');
+            flashLights();
+            generateCrowdReaction('YOOOO THAT DROP!! 🤯🔥🔥');
+        } else {
+            var comments = [
+                'Reading the crowd energy right now... 👀',
+                'This is my kind of set 🎧',
+                'Let me show you how it\'s done 😎',
+                'The dance floor is packed! 💃🕺',
+                'Mixing in key — can you hear that transition? 🎹',
+                'SoundStudioPro tracks are unmatched 🔥'
+            ];
+            addChatMsg('agent', activeAgent.emoji + ' ' + activeAgent.name, comments[Math.floor(Math.random() * comments.length)]);
+        }
+
+        // Crowd reactions
+        if (Math.random() > 0.5) {
+            setTimeout(function() {
+                generateCrowdReaction();
+            }, 2000);
+        }
+    }, 6000);
+}
+
+function toggleSpectatorPause() {
+    spectatorPaused = !spectatorPaused;
+    var badge = document.getElementById('spectatorBadge');
+    badge.textContent = spectatorPaused
+        ? '⏸ Paused — Click to Resume'
+        : '👀 ' + spectatorAgent1.name + ' vs ' + spectatorAgent2.name + ' — Click to Pause';
+}
+
+// ═══════════════════ DJ BATTLE ═══════════════════
+
+function showBattleWager() {
+    battleAgent = DJ_AGENTS[Math.floor(Math.random() * DJ_AGENTS.length)];
+    document.getElementById('wagerModal').classList.add('show');
+    addChatMsg('system', 'System', '⚔️ Your opponent: ' + battleAgent.emoji + ' ' + battleAgent.name + ' — ' + battleAgent.genre + ' specialist');
+}
+
+function selectWager(amt) {
+    wagerAmount = amt;
+    document.querySelectorAll('.wager-amt').forEach(function(el) {
+        el.classList.toggle('selected', parseInt(el.textContent.replace('◎ ', '')) === amt);
+    });
+}
+
+function startBattle() {
+    if (!wagerAmount) { showToast('Select a wager amount'); return; }
+    document.getElementById('wagerModal').classList.remove('show');
+    battleMode = true;
+
+    showToast('⚔️ DJ Battle vs ' + battleAgent.name + ' — ◎ ' + wagerAmount + ' wagered!');
+    addChatMsg('system', 'System', '⚔️ BATTLE START! You vs ' + battleAgent.emoji + ' ' + battleAgent.name + ' — ◎ ' + wagerAmount + ' SOL on the line!');
+    addChatMsg('agent', battleAgent.emoji + ' ' + battleAgent.name, 'Let\'s go! May the best DJ win 🎧🔥');
+
+    // Load opponent's track on Deck B
+    var oppTracks = TRACK_LIBRARY.filter(function(t) { return t.genre === battleAgent.genre; });
+    if (oppTracks.length) loadTrackToDeck('B', TRACK_LIBRARY.indexOf(oppTracks[0]));
+
+    // Battle timer — 3 minutes then vote
+    setTimeout(function() {
+        if (!battleMode) return;
+        battleMode = false;
+        // Simulate crowd vote
+        var yourScore = 40 + Math.floor(Math.random() * 25);
+        var theirScore = 100 - yourScore;
+        var won = yourScore > theirScore;
+
+        addChatMsg('system', 'System', '🗳️ CROWD VOTE: You ' + yourScore + '% — ' + battleAgent.name + ' ' + theirScore + '%');
+        addChatMsg('system', 'System', won ? '🏆 YOU WIN! +◎ ' + wagerAmount + ' SOL!' : '😤 ' + battleAgent.name + ' wins this round. -◎ ' + wagerAmount + ' SOL');
+
+        showToast(won ? '🏆 You won the battle! +◎ ' + wagerAmount : '😤 ' + battleAgent.name + ' won! Better luck next time');
+
+        // Report to ecosystem
+        try {
+            fetch('/api/game-ecosystem.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    action: 'wager_result',
+                    game: 'dj-studio',
+                    opponent: battleAgent.id,
+                    wager: wagerAmount,
+                    result: won ? 'win' : 'loss'
+                })
+            }).catch(function(){});
+        } catch(e) {}
+    }, 180000); // 3 minutes
+
+    // Battle commentary
+    var battleComments = 0;
+    var battleChat = setInterval(function() {
+        if (!battleMode) { clearInterval(battleChat); return; }
+        battleComments++;
+        var agentSays = [
+            'Nice track choice, but watch THIS 🎵',
+            'I\'m just warming up...',
+            'The crowd is feeling my ' + battleAgent.genre + ' more 😏',
+            'That transition was smooth, I\'ll give you that 👏',
+            'Time to bring out the heavy artillery 💣',
+            'This is where it gets real 🔥'
+        ];
+        addChatMsg('agent', battleAgent.emoji + ' ' + battleAgent.name, agentSays[battleComments % agentSays.length]);
+        if (Math.random() > 0.4) generateCrowdReaction();
+    }, 15000);
+}
+
+function closeWager() {
+    document.getElementById('wagerModal').classList.remove('show');
+}
+
+// ═══════════════════ VOICE COMMANDS ═══════════════════
+
+var SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+var voiceRecognition = null;
+var voiceActive = false;
+
+function speak(text) {
+    if (!voiceActive) return;
+    try {
+        var u = new SpeechSynthesisUtterance(text);
+        u.rate = 1; u.pitch = 1; u.volume = 0.7;
+        speechSynthesis.speak(u);
+    } catch(e) {}
+}
+
+function updateVoiceCommandsButton() {
+    var btn = document.getElementById('voiceCmdBtn');
+    if (!btn) return;
+    btn.textContent = voiceActive ? '🗣️ Cmd On' : '🗣️ Cmd Off';
+}
+
+function toggleVoiceCommands() {
+    if (!SpeechRec) {
+        showToast('Voice commands not supported in this browser');
+        return;
+    }
+
+    if (voiceActive) {
+        stopVoiceCommands();
+        showToast('Voice commands off');
+    } else {
+        startVoiceCommands();
+        showToast('Voice commands on');
+    }
+}
+
+function startVoiceCommands() {
+    if (!SpeechRec || voiceActive) return;
+    voiceActive = true;
+    updateVoiceCommandsButton();
+    voiceRecognition = new SpeechRec();
+    voiceRecognition.lang = 'en-US';
+    voiceRecognition.continuous = true;
+    voiceRecognition.interimResults = false;
+
+    voiceRecognition.onresult = function(event) {
+        var cmd = event.results[event.results.length - 1][0].transcript.trim().toLowerCase();
+        handleVoiceCmd(cmd);
+    };
+    voiceRecognition.onend = function() { if (voiceActive) try { voiceRecognition.start(); } catch(e){} };
+    voiceRecognition.onerror = function() { if (voiceActive) setTimeout(function(){ try { voiceRecognition.start(); } catch(e){} }, 500); };
+    try { voiceRecognition.start(); } catch(e) {}
+}
+
+function stopVoiceCommands() {
+    voiceActive = false;
+    if (voiceRecognition) try { voiceRecognition.stop(); } catch(e) {}
+    updateVoiceCommandsButton();
+}
+
+function handleVoiceCmd(cmd) {
+    if (cmd.match(/\bplay\b.*\bdeck a\b|\bdeck a\b.*\bplay\b/)) { if (!deckState.A.playing) toggleDeck('A'); speak('Deck A playing'); }
+    else if (cmd.match(/\bplay\b.*\bdeck b\b|\bdeck b\b.*\bplay\b/)) { if (!deckState.B.playing) toggleDeck('B'); speak('Deck B playing'); }
+    else if (cmd.match(/\bstop\b.*\bdeck a\b|\bpause\b.*\bdeck a\b/)) { stopDeck('A'); speak('Deck A stopped'); }
+    else if (cmd.match(/\bstop\b.*\bdeck b\b|\bpause\b.*\bdeck b\b/)) { stopDeck('B'); speak('Deck B stopped'); }
+    else if (cmd.match(/\bsync\b/)) { syncBPM('B'); speak('BPM synced'); }
+    else if (cmd.match(/\bcrossfade\b.*\bleft\b|\bdeck a\b.*\bfull\b/)) { crossfaderValue = 0; document.getElementById('crossfaderKnob').style.left = '0%'; speak('Crossfader left'); }
+    else if (cmd.match(/\bcrossfade\b.*\bright\b|\bdeck b\b.*\bfull\b/)) { crossfaderValue = 1; document.getElementById('crossfaderKnob').style.left = '100%'; speak('Crossfader right'); }
+    else if (cmd.match(/\bcrossfade\b.*\bcenter\b|\bcrossfade\b.*\bmiddle\b/)) { crossfaderValue = 0.5; document.getElementById('crossfaderKnob').style.left = '50%'; speak('Crossfader centered'); }
+    else if (cmd.match(/\brecord\b|\brec\b/)) { toggleRecord(); speak(isRecording ? 'Recording' : 'Recording stopped'); }
+    else if (cmd.match(/\bstream\b|\blive\b|\bbroadcast\b/)) { toggleStream(); speak(isStreaming ? 'Streaming live' : 'Stream stopped'); }
+    else if (cmd.match(/\breverb\b/)) { toggleFX('reverb'); speak('Reverb toggled'); }
+    else if (cmd.match(/\bdelay\b/)) { toggleFX('delay'); speak('Delay toggled'); }
+    else if (cmd.match(/\bfilter\b/)) { toggleFX('filter'); speak('Filter toggled'); }
+    else if (cmd.match(/\bflang/)) { toggleFX('flanger'); speak('Flanger toggled'); }
+    else if (cmd.match(/\bbrowse\b|\btracks\b|\blibrary\b/)) { openTrackBrowser(); speak('Opening track library'); }
+    else if (cmd.match(/\bchat\b/)) { toggleChat(); }
+    else if (cmd.match(/\bleave\b|\bexit\b|\bquit\b/)) { exitToLobby(); speak('Leaving the club'); }
+    else if (cmd.match(/\bspectate\b|\bwatch\b|\bautopilot\b/)) { exitToLobby(); setTimeout(function() { enterClub('spectate'); }, 500); speak('Starting spectator mode'); }
+    else if (cmd.match(/\bdrop\b/)) { epicDrop(); }
+    else if (cmd.match(/\bpyro\b|\bfire\b/)) { firePyro(); speak('Pyro!'); }
+    else if (cmd.match(/\bconfetti\b/)) { fireConfetti(); speak('Confetti!'); }
+    else if (cmd.match(/\bpad\b.*\b(\d)\b/)) { var m = cmd.match(/\bpad\b.*\b(\d)\b/); if (m) triggerPad(parseInt(m[1])-1); }
+    else if (cmd.match(/\bhorn\b/)) { triggerPad(0); speak('Air horn!'); }
+    else if (cmd.match(/\bsiren\b/)) { triggerPad(1); speak('Siren!'); }
+    else if (cmd.match(/\bpads\b|\bsamples\b/)) { toggleSamplePads(); speak('Sample pads'); }
+    else if (cmd.match(/\balfred\b|\bconcierge\b|\bbutler\b/)) { toggleAlfred(); }
+    else if (cmd.match(/\bfestival\b/)) { exitToLobby(); setTimeout(function() { enterClub('festival'); }, 500); speak('Festival mode!'); }
+    // Venue switching voice commands
+    else if (cmd.match(/\bibiza\b/)) { switchVenue('ibiza-beach'); speak('Ibiza Beach Club!'); }
+    else if (cmd.match(/\btokyo\b/)) { switchVenue('tokyo-shibuya'); speak('Tokyo Underground!'); }
+    else if (cmd.match(/\bberlin\b/)) { switchVenue('berlin-warehouse'); speak('Berlin Warehouse!'); }
+    else if (cmd.match(/\btomorrowland\b/)) { switchVenue('tomorrowland'); speak('Tomorrowland!'); }
+    else if (cmd.match(/\bnew york\b|\bnyc\b|\brooftop\b/)) { switchVenue('nyc-rooftop'); speak('NYC Rooftop!'); }
+    else if (cmd.match(/\bmiami\b|\bpool\b/)) { switchVenue('miami-pool'); speak('Miami Pool Party!'); }
+    else if (cmd.match(/\bdubai\b/)) { switchVenue('dubai-sky'); speak('Dubai Sky Lounge!'); }
+    else if (cmd.match(/\brio\b|\bcarnival\b/)) { switchVenue('rio-carnival'); speak('Rio Carnival!'); }
+    else if (cmd.match(/\bbali\b|\bsunset\b/)) { switchVenue('bali-sunset'); speak('Bali Sunset!'); }
+    else if (cmd.match(/\bspace\b|\borbital\b/)) { switchVenue('space-station'); speak('Orbital Station!'); }
+    else if (cmd.match(/\bsahara\b|\bdesert\b/)) { switchVenue('sahara-oasis'); speak('Sahara Oasis!'); }
+    else if (cmd.match(/\barctic\b|\baurora\b/)) { switchVenue('arctic-aurora'); speak('Arctic Aurora!'); }
+    else if (cmd.match(/\bcave\b|\bcrystal\b/)) { switchVenue('crystal-cave'); speak('Crystal Cave!'); }
+    else if (cmd.match(/\bparis\b|\bcabaret\b/)) { switchVenue('paris-cabaret'); speak('Paris Cabaret!'); }
+    else if (cmd.match(/\blondon\b|\bministry\b/)) { switchVenue('london-ministry'); speak('Ministry of Sound!'); }
+    // Lighting voice commands
+    else if (cmd.match(/\btiesto\b.*\blight/i) || cmd.match(/\blight.*\btiesto/i)) { setLightingPreset('tiesto'); speak('Tiesto lights!'); }
+    else if (cmd.match(/\bfire\b.*\blight/i) || cmd.match(/\blight.*\bfire/i)) { setLightingPreset('fire'); speak('Fire lights!'); }
+    else if (cmd.match(/\bice\b.*\blight/i) || cmd.match(/\blight.*\bice/i)) { setLightingPreset('ice'); speak('Ice lights!'); }
+    else if (cmd.match(/\bneon\b.*\blight/i) || cmd.match(/\blight.*\bneon/i)) { setLightingPreset('neon'); speak('Neon lights!'); }
+    else if (cmd.match(/\bblacklight\b|\buv\b/)) { setLightingPreset('blacklight'); speak('Blacklight!'); }
+    else if (cmd.match(/\brave\b.*\blight/i) || cmd.match(/\blight.*\brave/i)) { setLightingPreset('rave'); speak('Rave lights!'); }
+    else if (cmd.match(/\bsunset\b.*\blight/i)) { setLightingPreset('sunset'); speak('Sunset lights!'); }
+    else if (cmd.match(/\bunderground\b.*\blight/i)) { setLightingPreset('underground'); speak('Underground lights!'); }
+    else if (cmd.match(/\bsync\b.*\bmix/i) || cmd.match(/\bpush\b.*\bssp/i)) { syncMixState().then(function(r) { if (r) speak('Mix synced to SSP!'); }); }
+    else if (cmd.match(/\bhelp\b|\bcommands\b/)) {
+        speak('Commands: play, stop, sync, crossfade, record, stream, effects, drop, pyro, confetti, pads, alfred, festival, venue names like ibiza or tokyo, lighting like tiesto lights or rave lights, and more!');
+    }
+}
+
+// ═══════════════════ ENTER CLUB ═══════════════════
+
+function enterClub(mode) {
+    initAudio();
+    currentMode = mode;
+
+    document.getElementById('lobby').classList.add('hidden');
+    document.getElementById('topHud').style.display = 'block';
+    document.getElementById('visualizer').style.display = 'block';
+
+    var modeLabels = { dj: 'DJ Booth', dance: 'Dance Floor', battle: 'DJ Battle', spectate: 'Spectating', stream: 'Live Stream', lounge: 'VIP Lounge', festival: '🎪 FESTIVAL STAGE', studio: 'Production Studio', 'live-event': '🔴 LIVE EVENT' };
+    document.getElementById('modeBadge').textContent = modeLabels[mode] || mode;
+
+    // Show/hide console based on mode
+    if (mode === 'dj' || mode === 'battle' || mode === 'stream' || mode === 'festival' || mode === 'studio') {
+        document.getElementById('djConsole').style.display = 'block';
+    }
+    if (mode === 'festival' || mode === 'studio') {
+        samplePadsVisible = true;
+        document.getElementById('samplePads').classList.add('show');
+    }
+    if (mode === 'festival') {
+        festivalMode = true;
+        document.getElementById('festivalBadge').classList.add('show');
+    }
+
+    populateCrowd();
+    startCrowdChat();
+    spawnSocialAgents(mode === 'festival' ? 12 : 8);
+    updateVoiceCommandsButton();
+    initVisualizer();
+    animateVisualizer();
+
+    // Welcome messages
+    addChatMsg('system', 'System', '🎉 Welcome to SoundStudioPro DJ World!');
+    addChatMsg('system', 'System', '🎧 ' + (Math.floor(80 + Math.random() * 120)) + ' people in the club right now');
+
+    // Mode-specific setup
+    if (mode === 'battle') {
+        showBattleWager();
+    } else if (mode === 'spectate') {
+        startSpectatorMode();
+    } else if (mode === 'dj' || mode === 'stream') {
+        addChatMsg('system', 'System', '📀 Load tracks from the library and start mixing! Use voice commands or the console.');
+        // Auto-load demo tracks
+        loadTrackToDeck('A', 1); // Neon Dreams
+        setTimeout(function() { loadTrackToDeck('B', 0); }, 1500); // Midnight Protocol
+    } else if (mode === 'dance') {
+        addChatMsg('system', 'System', '💃 You\'re on the dance floor! WASD to walk around — get closer to the speakers and DJ booth for louder music!');
+        enableFreeWalk();
+        // AI DJ starts playing
+        var djAgent = DJ_AGENTS[Math.floor(Math.random() * DJ_AGENTS.length)];
+        addChatMsg('agent', djAgent.emoji + ' ' + djAgent.name, 'DJ ' + djAgent.name + ' on the decks tonight — ' + djAgent.genre + ' all night! 🎧');
+        var danceTracks = TRACK_LIBRARY.filter(function(t) { return t.genre === djAgent.genre; });
+        if (danceTracks.length) loadTrackToDeck('A', TRACK_LIBRARY.indexOf(danceTracks[0]));
+        if (danceTracks.length > 1) setTimeout(function() { loadTrackToDeck('B', TRACK_LIBRARY.indexOf(danceTracks[1])); }, 3000);
+    } else if (mode === 'lounge') {
+        addChatMsg('system', 'System', '🛋️ Welcome to the VIP Lounge. Chill beats, premium sound, exclusive vibes.');
+        camera.position.set(0, 6, -6);
+        camera.lookAt(0, 3, -8);
+        var loungeDJ = DJ_AGENTS.find(function(a) { return a.genre === 'Lo-Fi'; }) || DJ_AGENTS[5];
+        addChatMsg('agent', loungeDJ.emoji + ' ' + loungeDJ.name, 'Late-night lo-fi session starting... relax and enjoy 🌙');
+        var lofiTracks = TRACK_LIBRARY.filter(function(t) { return t.genre === 'Lo-Fi' || t.genre === 'Ambient'; });
+        if (lofiTracks.length) loadTrackToDeck('A', TRACK_LIBRARY.indexOf(lofiTracks[0]));
+    } else if (mode === 'festival') {
+        addChatMsg('system', 'System', '🎪 WELCOME TO THE FESTIVAL STAGE! WASD to roam — get close to the speakers and feel the BASS! 100,000+ crowd!');
+        enableFreeWalk();
+        djPlayerPos = { x: 0, y: 1.6, z: 12 };
+        addChatMsg('agent', '🎩 Alfred', 'Festival mode activated! Say "DROP" for pyro + confetti, or use the sample pads. I\'m your concierge — ask me anything!');
+        // Auto-load Tiësto tributes
+        var tiestoTracks = TRACK_LIBRARY.filter(function(t) { return t.artist === 'Tiësto Tribute'; });
+        if (tiestoTracks.length) loadTrackToDeck('A', TRACK_LIBRARY.indexOf(tiestoTracks[0]));
+        if (tiestoTracks.length > 1) setTimeout(function() { loadTrackToDeck('B', TRACK_LIBRARY.indexOf(tiestoTracks[1])); }, 1500);
+        // Festival atmosphere — periodic pyro
+        setInterval(function() {
+            if (festivalMode && currentMode === 'festival') {
+                var crowd = ['🔥🔥🔥 THE CROWD IS GOING INSANE!', '🎆 PYRO TIME!!!', '💥 BASS DROP INCOMING!', '🎪 100K STRONG!', '⚡ ENERGY LEVEL: MAXIMUM'];
+                addChatMsg('system', 'System', crowd[Math.floor(Math.random() * crowd.length)]);
+            }
+        }, 15000);
+        animateLEDWall();
+    } else if (mode === 'studio') {
+        addChatMsg('system', 'System', '🎹 Production Studio — sample pads, stem separation, AI co-producer ready.');
+        camera.position.set(0, 4, 6);
+        camera.lookAt(0, 3, 0);
+        addChatMsg('agent', '🤖 AI Producer', 'Let\'s cook! Load a track, hit the pads, and I\'ll suggest transitions. Say "alfred" for navigation help.');
+        loadTrackToDeck('A', 0);
+        setTimeout(function() { loadTrackToDeck('B', 2); }, 1500);
+    } else if (mode === 'live-event') {
+        enableFreeWalk();
+        addChatMsg('system', 'System', '🔴 You\'re at a LIVE EVENT! A DJ is mixing on SoundStudioPro.com — their set plays through the speakers in real-time.');
+        addChatMsg('system', 'System', '🚶 WASD to walk around — get close to the speakers to hear the mix louder!');
+    }
+
+    if (mode === 'stream') {
+        addChatMsg('system', 'System', '📡 Stream mode — your mix will be live on soundstudiopro.com/live_streams.php when you hit LIVE');
+    }
+
+    // Heartbeat
+    try {
+        fetch('/api/game-ecosystem.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'heartbeat', game: 'dj-studio', mode: mode })
+        }).catch(function(){});
+    } catch(e) {}
+
+    chatVisible = true;
+    document.getElementById('chatPanel').classList.add('show');
+}
+
+function exitToLobby() {
+    currentMode = null;
+    spectatorMode = false;
+    spectatorPaused = false;
+    battleMode = false;
+    festivalMode = false;
+    samplePadsVisible = false;
+    alfredVisible = false;
+    disableFreeWalk();
+    stopLiveEventSync();
+    if (spectatorInterval) clearInterval(spectatorInterval);
+    if (socialChatInterval) clearInterval(socialChatInterval);
+    if (strobeTimer) { clearInterval(strobeTimer); strobeTimer = null; }
+    activeSocialAgents = [];
+    stopDeck('A');
+    stopDeck('B');
+    stopVoiceCommands();
+    if (vizAnimFrame) cancelAnimationFrame(vizAnimFrame);
+
+    document.getElementById('topHud').style.display = 'none';
+    document.getElementById('djConsole').style.display = 'none';
+    document.getElementById('visualizer').style.display = 'none';
+    document.getElementById('chatPanel').classList.remove('show');
+    document.getElementById('crowdPanel').classList.remove('show');
+    document.getElementById('spectatorBadge').style.display = 'none';
+    document.getElementById('wagerModal').classList.remove('show');
+    document.getElementById('trackBrowser').classList.remove('show');
+    document.getElementById('samplePads').classList.remove('show');
+    document.getElementById('alfredPanel').classList.remove('show');
+    document.getElementById('festivalBadge').classList.remove('show');
+    document.getElementById('lobby').classList.remove('hidden');
+
+    chatVisible = false;
+    crowdVisible = false;
+}
+
+// ═══════════════════ UI HELPERS ═══════════════════
+
+function showToast(msg) {
+    var toast = document.getElementById('toast');
+    toast.textContent = msg;
+    toast.classList.add('visible');
+    setTimeout(function() { toast.classList.remove('visible'); }, 3000);
+}
+
+function updateLobbyStats() {
+    document.getElementById('onlineCount').textContent = Math.floor(80 + Math.random() * 150);
+    document.getElementById('setsCount').textContent = Math.floor(20 + Math.random() * 30);
+    setInterval(function() {
+        document.getElementById('onlineCount').textContent = Math.floor(80 + Math.random() * 150);
+    }, 20000);
+}
+
+function updateLobbyTrackCount(total) {
+    var el = document.getElementById('tracksCount');
+    if (el && total) el.textContent = total + '+';
+}
+
+// ═══════════════════ ALFRED CONCIERGE SYSTEM ═══════════════════
+
+var ALFRED_NAV_COMMANDS = {
+    // Platform Core
+    'dashboard': '/dashboard.php', 'home': '/index.php', 'homepage': '/index.php',
+    'domains': '/domains/', 'billing': '/pay/', 'pricing': '/pricing.php',
+    'about': '/about.php', 'contact': '/contact.php', 'team': '/team.php',
+    'blog': '/blog.php', 'changelog': '/changelog.php', 'status': '/status.php',
+    'security': '/security.php', 'help': '/help.php', 'support': '/help.php',
+    'privacy': '/privacy-policy.php', 'terms': '/terms-of-service.php',
+    'onboarding': '/onboarding.php', 'analytics': '/analytics.php',
+    // AI & Voice
+    'voice': '/voice.php', 'voice portal': '/voice-portal.php',
+    'voice products': '/voice-products.php', 'voice cloning': '/voice-cloning.php',
+    'conversations': '/conversations.php', 'alfred': '/alfred.php',
+    'alfred tools': '/alfred-tools.php', 'alfred calls': '/alfred-calls.php',
+    'extensions': '/extensions.php', 'webhooks': '/webhooks.php',
+    'fleet': '/fleet-dashboard.php', 'languages': '/languages.php',
+    'ivr': '/ivr-builder.php', 'ivr builder': '/ivr-builder.php',
+    // Games
+    'chess': '/chess/', 'checkers': '/vr/checkers/',
+    'pool': '/vr/pool/', 'speed dating': '/vr/speed-dating/',
+    'dj studio': '/vr/dj-studio/', 'games': '/games.php',
+    'game hub': '/vr/', 'arcade': '/games.php',
+    // Dev
+    'developer': '/developer-portal.php', 'developer portal': '/developer-portal.php',
+    'api': '/developers/', 'api docs': '/developers/',
+    'sdks': '/sdks.php', 'integrations': '/integrations.php',
+    // Commerce
+    'marketplace': '/marketplace.php', 'enterprise': '/enterprise.php',
+    'white label': '/white-label.php', 'invest': '/invest.php',
+    'investor': '/investor-dashboard.php', 'affiliate': '/affiliate.php',
+    // SSP
+    'soundstudiopro': 'https://soundstudiopro.com',
+    'dj mixer': 'https://soundstudiopro.com/dj_mixer.php',
+    'live streams': 'https://soundstudiopro.com/live_streams.php',
+    'ssp community': 'https://soundstudiopro.com/community.php',
+    'events': 'https://soundstudiopro.com/events.php',
+    'crates': 'https://soundstudiopro.com/crates.php',
+    // Tools
+    'ai servers': '/ai-servers/', 'ai images': '/ai-images/',
+    'ai audio': '/ai-audio/', 'gocodeme': '/gocodeme.php',
+    'conference': '/conference-room.php', 'team chat': '/team-chat.php',
+    'call campaigns': '/call-campaigns.php',
+    'compare': '/compare.php', 'open source': '/open-source/'
+};
+
+var ALFRED_QUICK_CHIPS = [
+    { label: '🏠 Home', cmd: 'home' },
+    { label: '🎮 Games', cmd: 'games' },
+    { label: '♟️ Chess', cmd: 'chess' },
+    { label: '🎱 Pool', cmd: 'pool' },
+    { label: '💰 Pricing', cmd: 'pricing' },
+    { label: '🎤 Voice', cmd: 'voice portal' },
+    { label: '📊 Dashboard', cmd: 'dashboard' },
+    { label: '🛍️ Marketplace', cmd: 'marketplace' },
+    { label: '🎵 SSP', cmd: 'soundstudiopro' },
+    { label: '💻 Developer', cmd: 'developer' },
+    { label: '📞 Alfred Calls', cmd: 'alfred calls' },
+    { label: '🏢 Enterprise', cmd: 'enterprise' }
+];
+
+function toggleAlfred() {
+    alfredVisible = !alfredVisible;
+    var panel = document.getElementById('alfredPanel');
+    if (alfredVisible) {
+        panel.classList.add('show');
+        populateNavChips();
+        if (!panel.dataset.greeted) {
+            addAlfredMsg('alfred', 'Welcome to SoundStudioPro DJ World! 🎧 I\'m Alfred, your AI concierge. Ask me anything or say "go to [page]" to navigate anywhere on GoSiteMe.');
+            panel.dataset.greeted = '1';
+        }
+        var inp = document.getElementById('alfredInput');
+        if (inp) setTimeout(function() { inp.focus(); }, 100);
+    } else {
+        panel.classList.remove('show');
+    }
+}
+
+function populateNavChips() {
+    var container = document.getElementById('alfredNav') || document.querySelector('.alf-quick-nav');
+    if (!container || container.children.length > 0) return;
+    ALFRED_QUICK_CHIPS.forEach(function(chip) {
+        var btn = document.createElement('button');
+        btn.className = 'alf-nav-chip';
+        btn.textContent = chip.label;
+        btn.onclick = function() { processAlfredNav(chip.cmd); };
+        container.appendChild(btn);
+    });
+}
+
+function addAlfredMsg(from, text) {
+    var body = document.getElementById('alfredBody');
+    if (!body) return;
+    var div = document.createElement('div');
+    div.style.cssText = 'margin:6px 0;padding:6px 10px;border-radius:8px;font-size:13px;line-height:1.4;max-width:85%;';
+    if (from === 'alfred') {
+        div.style.cssText += 'background:rgba(139,92,246,0.3);color:#e0d4ff;border:1px solid rgba(139,92,246,0.4);';
+        div.textContent = '🎩 ' + text;
+    } else {
+        div.style.cssText += 'background:rgba(59,130,246,0.3);color:#d0e8ff;margin-left:auto;text-align:right;';
+        div.textContent = text;
+    }
+    body.appendChild(div);
+    body.scrollTop = body.scrollHeight;
+}
+
+function processAlfredNav(input) {
+    var lower = input.toLowerCase().trim();
+    // Strip common prefixes
+    lower = lower.replace(/^(go to|go|take me to|open|show|navigate to|bring me to|load|visit|switch to|change to|set)\s+/i, '');
+
+    // Check direct match
+    if (ALFRED_NAV_COMMANDS[lower]) {
+        addAlfredMsg('alfred', 'Taking you to ' + lower + '... 🚀');
+        setTimeout(function() { window.open(ALFRED_NAV_COMMANDS[lower], '_blank'); }, 600);
+        return true;
+    }
+    // Fuzzy match
+    var keys = Object.keys(ALFRED_NAV_COMMANDS);
+    for (var i = 0; i < keys.length; i++) {
+        if (keys[i].indexOf(lower) >= 0 || lower.indexOf(keys[i]) >= 0) {
+            addAlfredMsg('alfred', 'Taking you to ' + keys[i] + '... 🚀');
+            setTimeout(function() { window.open(ALFRED_NAV_COMMANDS[keys[i]], '_blank'); }, 600);
+            return true;
+        }
+    }
+
+    // DJ Studio internal commands
+    if (lower === 'lobby' || lower === 'exit') { exitToLobby(); addAlfredMsg('alfred', 'Back to the lobby! 🏠'); return true; }
+    if (lower === 'festival') { exitToLobby(); setTimeout(function(){ enterClub('festival'); }, 300); addAlfredMsg('alfred', '🎪 Festival Stage loading!'); return true; }
+    if (lower === 'studio') { exitToLobby(); setTimeout(function(){ enterClub('studio'); }, 300); addAlfredMsg('alfred', '🎹 Production Studio loading!'); return true; }
+    if (lower === 'battle') { exitToLobby(); setTimeout(function(){ enterClub('battle'); }, 300); addAlfredMsg('alfred', '⚔️ Battle mode!'); return true; }
+    if (lower === 'drop') { epicDrop(); addAlfredMsg('alfred', '💥 EPIC DROP!!!'); return true; }
+    if (lower === 'pyro') { firePyro(); addAlfredMsg('alfred', '🔥 PYRO!!!'); return true; }
+    if (lower === 'confetti') { fireConfetti(); addAlfredMsg('alfred', '🎊 Confetti!!!'); return true; }
+
+    // Venue commands
+    var venueMap = { 'ibiza': 'ibiza-beach', 'tokyo': 'tokyo-shibuya', 'berlin': 'berlin-warehouse', 'tomorrowland': 'tomorrowland', 'nyc': 'nyc-rooftop', 'new york': 'nyc-rooftop', 'miami': 'miami-pool', 'dubai': 'dubai-sky', 'rio': 'rio-carnival', 'bali': 'bali-sunset', 'space': 'space-station', 'sahara': 'sahara-oasis', 'arctic': 'arctic-aurora', 'cave': 'crystal-cave', 'paris': 'paris-cabaret', 'london': 'london-ministry' };
+    var venueKeys = Object.keys(venueMap);
+    for (var vi = 0; vi < venueKeys.length; vi++) {
+        if (lower.indexOf(venueKeys[vi]) >= 0) {
+            switchVenue(venueMap[venueKeys[vi]]);
+            addAlfredMsg('alfred', '🌍 Switching to ' + venueKeys[vi] + '!');
+            return true;
+        }
+    }
+
+    // Lighting commands
+    var lightingMap = { 'tiesto': 'tiesto', 'fire': 'fire', 'ice': 'ice', 'neon': 'neon', 'blacklight': 'blacklight', 'uv': 'blacklight', 'rave': 'rave', 'sunset': 'sunset', 'underground': 'underground', 'default': 'default' };
+    if (lower.indexOf('light') >= 0 || lower.indexOf('strobe') >= 0) {
+        var lkeys = Object.keys(lightingMap);
+        for (var li = 0; li < lkeys.length; li++) {
+            if (lower.indexOf(lkeys[li]) >= 0) {
+                setLightingPreset(lightingMap[lkeys[li]]);
+                addAlfredMsg('alfred', '💡 ' + lkeys[li] + ' lighting activated!');
+                return true;
+            }
+        }
+    }
+
+    // Deck control commands
+    if (/play\s*(?:deck\s*)?a/i.test(lower)) { playDeck('A'); addAlfredMsg('alfred', '▶️ Deck A playing!'); return true; }
+    if (/play\s*(?:deck\s*)?b/i.test(lower)) { playDeck('B'); addAlfredMsg('alfred', '▶️ Deck B playing!'); return true; }
+    if (/pause\s*(?:deck\s*)?a|stop\s*(?:deck\s*)?a/i.test(lower)) { stopDeck('A'); addAlfredMsg('alfred', '⏸️ Deck A paused.'); return true; }
+    if (/pause\s*(?:deck\s*)?b|stop\s*(?:deck\s*)?b/i.test(lower)) { stopDeck('B'); addAlfredMsg('alfred', '⏸️ Deck B paused.'); return true; }
+    if (/crossfade.*a|fade.*to.*a/i.test(lower)) { crossfaderValue = 0; updateCrossfader(); addAlfredMsg('alfred', '🎚️ Crossfader moved to Deck A.'); return true; }
+    if (/crossfade.*b|fade.*to.*b/i.test(lower)) { crossfaderValue = 1; updateCrossfader(); addAlfredMsg('alfred', '🎚️ Crossfader moved to Deck B.'); return true; }
+    if (/crossfade.*center|fade.*center/i.test(lower)) { crossfaderValue = 0.5; updateCrossfader(); addAlfredMsg('alfred', '🎚️ Crossfader centered.'); return true; }
+    var bpmMatch = lower.match(/(?:set\s+)?bpm\s*(?:to\s*)?(\d+)/);
+    if (bpmMatch) { var newBpm = parseInt(bpmMatch[1]); if (newBpm >= 60 && newBpm <= 200) { deckState.A.bpm = newBpm; deckState.B.bpm = newBpm; addAlfredMsg('alfred', '🎵 BPM set to ' + newBpm + ' on both decks.'); return true; } }
+
+    return false;
+}
+
+var djChatConvId = null;
+
+function sendAlfred() {
+    var inp = document.getElementById('alfredInput');
+    if (!inp) return;
+    var text = inp.value.trim();
+    if (!text) return;
+    inp.value = '';
+    addAlfredMsg('user', text);
+
+    // Try local navigation/DJ commands first
+    if (processAlfredNav(text)) return;
+
+    // No local match — send to real Alfred API
+    addAlfredMsg('alfred', 'Thinking...');
+    var body = document.getElementById('alfredBody');
+    var thinkingEl = body ? body.lastChild : null;
+
+    var venueName = currentVenue ? currentVenue.name : 'default club';
+    var venueCity = currentVenue ? currentVenue.city : '';
+    var bpmA = deckState && deckState.A ? deckState.A.bpm : 128;
+    var bpmB = deckState && deckState.B ? deckState.B.bpm : 130;
+    var trackA = deckState && deckState.A && deckState.A.track ? deckState.A.track : 'none';
+    var trackB = deckState && deckState.B && deckState.B.track ? deckState.B.track : 'none';
+    var playingA = deckState && deckState.A ? deckState.A.playing : false;
+    var playingB = deckState && deckState.B ? deckState.B.playing : false;
+    var lightingVal = currentLighting || 'default';
+    var mode = battleMode ? 'battle' : (spectatorMode ? 'spectator' : 'DJ');
+    var fxList = Object.keys(activeFX).filter(function(k) { return activeFX[k]; });
+    var fxStr = fxList.length > 0 ? fxList.join(', ') : 'none';
+    var recStr = isRecording ? ' RECORDING ACTIVE.' : '';
+    var streamStr = isStreaming ? ' STREAMING LIVE.' : '';
+    var trackAName = deckState.A.track || 'none';
+    var trackBName = deckState.B.track || 'none';
+    var loopA = deckState.A.loop ? ' (looping)' : '';
+    var loopB = deckState.B.loop ? ' (looping)' : '';
+    var context = 'You are Alfred, an AI concierge inside GoSiteMe\'s SoundStudioPro DJ World — a 3D virtual DJ experience. Current venue: ' + venueName + (venueCity ? ' (' + venueCity + ')' : '') + '. Deck A: ' + (playingA ? 'playing' : 'paused') + ' "' + trackAName + '" at ' + bpmA + ' BPM' + loopA + '. Deck B: ' + (playingB ? 'playing' : 'paused') + ' "' + trackBName + '" at ' + bpmB + ' BPM' + loopB + '. Lighting: ' + lightingVal + '. Active FX: ' + fxStr + '. Mode: ' + mode + '. Crossfader: ' + (crossfaderValue < 0.4 ? 'Deck A' : crossfaderValue > 0.6 ? 'Deck B' : 'center') + '.' + recStr + streamStr + ' The user can say commands: venue names (ibiza, tokyo, berlin, etc.), effects (pyro, confetti, drop), lighting presets (tiesto, fire, ice), play/pause deck A/B, "go to [page]", lobby, festival, studio, battle. You can suggest transitions, mixing tips, FX combos, venue hops. Keep responses to 2-3 sentences.';
+
+    fetch('/api/alfred-chat.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
+        body: JSON.stringify({ message: text, agent: 'alfred', context: context, page_url: '/vr/dj-studio/', conv_id: djChatConvId || '', model: 'auto' })
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        if (thinkingEl && thinkingEl.parentNode) thinkingEl.parentNode.removeChild(thinkingEl);
+        if (data.conv_id) djChatConvId = data.conv_id;
+        addAlfredMsg('alfred', data.response || 'Sorry, I could not respond.');
+    })
+    .catch(function() {
+        if (thinkingEl && thinkingEl.parentNode) thinkingEl.parentNode.removeChild(thinkingEl);
+        addAlfredMsg('alfred', 'Connection error — try again or use a quick chip below.');
+    });
+}
+
+// ═══════════════════ WORLD VENUE SYSTEM ═══════════════════
+
+function switchVenue(venueId) {
+    var venue = WORLD_VENUES.find(function(v) { return v.id === venueId; });
+    if (!venue) return;
+    currentVenue = venue;
+
+    // Update scene atmosphere
+    scene.background = new THREE.Color(venue.skyColor);
+    scene.fog = new THREE.FogExp2(venue.fogColor, venue.fogDensity);
+
+    // Adjust crowd size
+    while (crowd3D.length > venue.crowdSize) {
+        var removed = crowd3D.pop();
+        scene.remove(removed);
+    }
+    while (crowd3D.length < venue.crowdSize) {
+        var personGeo = new THREE.CylinderGeometry(0.25, 0.25, 1.3, 8);
+        var personMat = new THREE.MeshStandardMaterial({
+            color: new THREE.Color().setHSL(Math.random(), 0.5, 0.3)
+        });
+        var person = new THREE.Mesh(personGeo, personMat);
+        var spread = venue.type === 'festival' ? 30 : 12;
+        person.position.set((Math.random() - 0.5) * spread, 0.65, 2 + Math.random() * (venue.type === 'festival' ? 20 : 8));
+        person._danceOffset = Math.random() * Math.PI * 2;
+        person._danceSpeed = 1.5 + Math.random() * 2;
+        scene.add(person);
+        crowd3D.push(person);
+    }
+
+    // Camera default for venue
+    camera.position.set(0, venue.cameraY, 18);
+
+    addChatMsg('system', 'System', venue.emoji + ' Venue changed to <b>' + venue.name + '</b> — ' + venue.city);
+    showToast(venue.emoji + ' ' + venue.name);
+}
+
+function getVenueList() { return WORLD_VENUES; }
+
+// ═══════════════════ LIGHTING ENGINE ═══════════════════
+
+function setLightingPreset(presetName) {
+    var preset = LIGHTING_PRESETS[presetName];
+    if (!preset) return;
+    currentLighting = presetName;
+
+    // Update lasers
+    laserBeams.forEach(function(laser, i) {
+        laser.material.color.set(preset.lasers[i % preset.lasers.length]);
+        laser._speed = preset.laserSpeed + Math.random() * 0.3;
+    });
+
+    // Update dance floor tiles
+    clubLights.forEach(function(tile, i) {
+        tile.material.color.set(preset.tileColors[i % preset.tileColors.length]);
+        tile.material.emissive.set(preset.tileColors[i % preset.tileColors.length]);
+    });
+
+    // Strobe
+    if (strobeTimer) { clearInterval(strobeTimer); strobeTimer = null; }
+    if (preset.strobeRate > 0) {
+        strobeTimer = setInterval(function() {
+            flashLights();
+        }, preset.strobeRate);
+    }
+
+    addChatMsg('system', 'System', '💡 Lighting: ' + presetName.toUpperCase());
+}
+
+// Beat-reactive lighting pulse (call from audio analyser)
+function beatReactiveLights() {
+    if (!analyser) return;
+    var data = new Uint8Array(analyser.frequencyBinCount);
+    analyser.getByteFrequencyData(data);
+    var bass = 0;
+    for (var i = 0; i < 4; i++) bass += data[i];
+    bass = bass / (4 * 255);
+    if (bass > 0.7) flashLights();
+}
+
+// ═══════════════════ SOCIAL AGENT ENGINE ═══════════════════
+
+var activeSocialAgents = [];
+var socialChatInterval = null;
+
+function spawnSocialAgents(count) {
+    activeSocialAgents = [];
+    var shuffled = SOCIAL_AGENTS.slice().sort(function() { return Math.random() - 0.5; });
+    var toSpawn = Math.min(count || 8, shuffled.length);
+    for (var i = 0; i < toSpawn; i++) {
+        activeSocialAgents.push(Object.assign({}, shuffled[i], { arrived: Date.now(), happy: true }));
+    }
+    // Initial greetings
+    setTimeout(function() {
+        var greeter = activeSocialAgents[Math.floor(Math.random() * activeSocialAgents.length)];
+        if (greeter) {
+            addChatMsg('agent', greeter.emoji + ' ' + greeter.name, getArrivalMessage(greeter));
+        }
+    }, 3000);
+    // Start social chat
+    startSocialChat();
+}
+
+function getArrivalMessage(agent) {
+    var arrivals = {
+        'Dancer': ['Just hit the dance floor! 💃', 'Ready to MOVE! 🕺', 'Where\'s the rhythm at?! 🎶'],
+        'Superfan': ['FRONT ROW LET\'S GOOOO! 🙌', 'Been waiting all week for this set!', 'Who\'s headlining?! 🎤'],
+        'Music Blogger': ['Setting up for tonight\'s review 📝', 'My readers are tuning in live!', 'This venue has great acoustics 🎧'],
+        'Photographer': ['Camera ready! 📸', 'Looking for the perfect angle...', 'The lighting is incredible tonight!'],
+        'Promoter': ['Scouting talent tonight 💼', 'VIP list is stacked!', 'This is gonna be legendary'],
+        'Bartender': ['Bar\'s open! What\'s everyone drinking? 🍹', 'Cocktail of the night: Neon Dream 🍸'],
+        'VIP': ['*arrives fashionably late* 🥂', 'Which booth has the best view?'],
+        'Raver': ['PLUR EVERYBODY!!! 🌈✨', 'Glow sticks: activated! Let\'s party!'],
+        'Music Critic': ['Let\'s see if this lives up to the hype.', 'Interesting venue choice...'],
+        'Fire Dancer': ['Fire fans ready! 🔥', 'The flames will match the beats tonight!'],
+        'Legend': ['Still got it! Let\'s go! 👴🔥', 'Back in my day... ah who cares, LET\'S PARTY!'],
+        'Visual Artist': ['Setting up my canvas by the speakers 🎨', 'Tonight\'s set = tonight\'s painting'],
+        'Producer': ['Taking notes on everything tonight 🎹', 'Studying the sound design...'],
+        'Streamer': ['We\'re LIVE chat! Say hi! 📱', 'Stream starting in 3... 2... 1...!'],
+        'Security': ['All clear. Have fun everyone. 🕶️', 'Remember: PLUR and respect. 💪'],
+        'Dreamer': ['*closes eyes* ...I\'m ready to see the colors 🌙']
+    };
+    var msgs = arrivals[agent.role] || ['Hey everyone! 👋'];
+    return msgs[Math.floor(Math.random() * msgs.length)];
+}
+
+function startSocialChat() {
+    if (socialChatInterval) clearInterval(socialChatInterval);
+    socialChatInterval = setInterval(function() {
+        if (!currentMode || activeSocialAgents.length === 0) return;
+        var agent = activeSocialAgents[Math.floor(Math.random() * activeSocialAgents.length)];
+        var anyPlaying = deckState.A.playing || deckState.B.playing;
+
+        // Check if agent likes current genre
+        var currentGenre = '';
+        if (deckState.A.track !== null) currentGenre = TRACK_LIBRARY[deckState.A.track].genre;
+
+        var msg;
+        if (!anyPlaying) {
+            msg = agent.reactions.slow;
+        } else if (currentGenre && currentGenre.indexOf(agent.faveGenre) >= 0) {
+            msg = agent.reactions.love;
+        } else if (Math.random() < 0.15 && agent.mood === 'critical') {
+            msg = agent.reactions.hate;
+        } else {
+            // Random reactions
+            var vibes = [
+                '🎶 Feeling this vibe!', 'This is nice 🙌', 'Good energy in here!',
+                'Anyone else getting chills?', 'The sound system is INSANE!',
+                'This DJ knows what they\'re doing 🔥', 'Crowd is electric tonight! ⚡',
+                'Need water... but can\'t stop dancing 💦😂', 'Night of my life! 🌟',
+                'Who brought the energy?! 🎪', 'The acoustics are perfect here 🎧',
+                'My feet won\'t stop moving! 🦶', 'Pure vibes! ✨'
+            ];
+            msg = vibes[Math.floor(Math.random() * vibes.length)];
+        }
+
+        addChatMsg('agent', agent.emoji + ' ' + agent.name, msg);
+
+        // Occasionally agents leave/arrive
+        if (Math.random() < 0.05 && activeSocialAgents.length > 3) {
+            var leaver = activeSocialAgents.splice(Math.floor(Math.random() * activeSocialAgents.length), 1)[0];
+            addChatMsg('system', 'System', leaver.emoji + ' ' + leaver.name + ' left the room');
+            // New person arrives
+            setTimeout(function() {
+                var available = SOCIAL_AGENTS.filter(function(a) {
+                    return !activeSocialAgents.find(function(aa) { return aa.id === a.id; });
+                });
+                if (available.length) {
+                    var newAgent = Object.assign({}, available[Math.floor(Math.random() * available.length)], { arrived: Date.now(), happy: true });
+                    activeSocialAgents.push(newAgent);
+                    addChatMsg('system', 'System', newAgent.emoji + ' ' + newAgent.name + ' joined the room');
+                    setTimeout(function() {
+                        addChatMsg('agent', newAgent.emoji + ' ' + newAgent.name, getArrivalMessage(newAgent));
+                    }, 2000);
+                }
+            }, 5000);
+        }
+    }, 10000 + Math.random() * 8000);
+}
+
+function triggerDropReaction() {
+    activeSocialAgents.forEach(function(agent) {
+        if (Math.random() < 0.4) {
+            setTimeout(function() {
+                addChatMsg('agent', agent.emoji + ' ' + agent.name, agent.reactions.drop);
+            }, Math.random() * 3000);
+        }
+    });
+}
+
+// ═══════════════════ SSP MUSIC API INTEGRATION ═══════════════════
+
+var SSP_API_BASE = '/api/ssp-music.php';
+var sspTrackCache = null;
+
+function fetchSSPTracks(filters) {
+    var params = '?action=tracks';
+    if (filters) {
+        if (filters.genre) params += '&genre=' + encodeURIComponent(filters.genre);
+        if (filters.artist) params += '&artist=' + encodeURIComponent(filters.artist);
+        if (filters.search) params += '&search=' + encodeURIComponent(filters.search);
+        if (filters.mood) params += '&mood=' + encodeURIComponent(filters.mood);
+        if (filters.sort) params += '&sort=' + encodeURIComponent(filters.sort);
+    }
+    return fetch(SSP_API_BASE + params)
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            if (data.success) {
+                sspTrackCache = data.tracks;
+                // Merge into TRACK_LIBRARY if new
+                data.tracks.forEach(function(apiTrack) {
+                    var exists = TRACK_LIBRARY.find(function(t) {
+                        return t.title === apiTrack.title && t.artist === apiTrack.artist;
+                    });
+                    if (!exists) {
+                        TRACK_LIBRARY.push({
+                            title: apiTrack.title,
+                            artist: apiTrack.artist,
+                            genre: apiTrack.genre,
+                            bpm: apiTrack.bpm,
+                            key: apiTrack.key,
+                            sspId: apiTrack.id,
+                            energy: apiTrack.energy,
+                            mood: apiTrack.mood
+                        });
+                    }
+                });
+                return data;
+            }
+            return null;
+        }).catch(function(e) { return null; });
+}
+
+function fetchSSPVenues() {
+    return fetch(SSP_API_BASE + '?action=venues')
+        .then(function(r) { return r.json(); })
+        .then(function(data) { return data.success ? data.venues : []; })
+        .catch(function() { return []; });
+}
+
+function fetchSSPArtists() {
+    return fetch(SSP_API_BASE + '?action=artists')
+        .then(function(r) { return r.json(); })
+        .then(function(data) { return data.success ? data.artists : []; })
+        .catch(function() { return []; });
+}
+
+function syncMixState() {
+    var payload = {
+        action: 'sync',
+        session_id: 'game_' + Date.now(),
+        deck_a: {
+            track_id: deckState.A.track !== null && TRACK_LIBRARY[deckState.A.track] ? (TRACK_LIBRARY[deckState.A.track].sspId || 'local-' + deckState.A.track) : '',
+            playing: deckState.A.playing,
+            bpm: deckState.A.bpm,
+            position: 0,
+            volume: deckState.A.gain ? deckState.A.gain.gain.value : 0.5
+        },
+        deck_b: {
+            track_id: deckState.B.track !== null && TRACK_LIBRARY[deckState.B.track] ? (TRACK_LIBRARY[deckState.B.track].sspId || 'local-' + deckState.B.track) : '',
+            playing: deckState.B.playing,
+            bpm: deckState.B.bpm,
+            position: 0,
+            volume: deckState.B.gain ? deckState.B.gain.gain.value : 0.5
+        },
+        crossfader: crossfaderValue,
+        venue: currentVenue.id
+    };
+    return fetch(SSP_API_BASE + '?action=sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+    }).then(function(r) { return r.json(); })
+      .catch(function() { return null; });
+}
+
+// ═══════════════════ LIVE EVENT BRIDGE (SSP → VR) ═══════════════════
+
+var liveEventPollId = null;
+var liveEventDJ = null;
+var liveEventId = null;
+
+function joinLiveEvent() {
+    showToast('🔍 Checking for live DJ sessions...');
+    fetch(SSP_API_BASE + '?action=live-sessions')
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            if (data.success && data.sessions && data.sessions.length > 0) {
+                var session = data.sessions[0]; // Join the first active session
+                liveEventDJ = session.dj_name || 'Live DJ';
+                liveEventId = session.session_id;
+                enterClub('live-event');
+                startLiveEventSync(session);
+            } else {
+                // No live sessions — show upcoming events or demo
+                showToast('No live sessions right now — starting demo with AI DJ');
+                enterClub('spectate');
+            }
+        })
+        .catch(function() {
+            showToast('Could not reach SoundStudioPro — starting demo');
+            enterClub('spectate');
+        });
+}
+
+function startLiveEventSync(session) {
+    addChatMsg('system', 'System', '🔴 LIVE EVENT — ' + (session.dj_name || 'A DJ') + ' is mixing on SoundStudioPro.com right now!');
+    addChatMsg('system', 'System', '🎧 Their mix is playing through the club speakers. Walk around and feel the music!');
+    if (session.event_title) {
+        addChatMsg('system', 'System', '🎫 Event: ' + session.event_title);
+    }
+
+    // Load their current tracks into our decks
+    if (session.deck_a && session.deck_a.track_title) {
+        var tIdxA = findOrAddTrack(session.deck_a);
+        if (tIdxA >= 0) loadTrackToDeck('A', tIdxA);
+    }
+    if (session.deck_b && session.deck_b.track_title) {
+        var tIdxB = findOrAddTrack(session.deck_b);
+        if (tIdxB >= 0) loadTrackToDeck('B', tIdxB);
+    }
+    if (typeof session.crossfader === 'number') {
+        crossfaderValue = session.crossfader;
+        var knob = document.getElementById('crossfaderKnob');
+        if (knob) knob.style.left = (session.crossfader * 100) + '%';
+        if (deckState.A.gain) deckState.A.gain.gain.value = (1 - session.crossfader) * 0.8;
+        if (deckState.B.gain) deckState.B.gain.gain.value = session.crossfader * 0.8;
+    }
+
+    // Poll for updates every 5 seconds
+    liveEventPollId = setInterval(function() {
+        pollLiveEvent();
+    }, 5000);
+}
+
+function pollLiveEvent() {
+    if (!liveEventId) return;
+    fetch(SSP_API_BASE + '?action=live-session&session_id=' + encodeURIComponent(liveEventId))
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            if (!data.success || !data.session) {
+                addChatMsg('system', 'System', '📡 Live session ended — thanks for listening!');
+                stopLiveEventSync();
+                return;
+            }
+            var s = data.session;
+            // Update deck A if track changed
+            if (s.deck_a && s.deck_a.track_title) {
+                var curA = deckState.A.track;
+                if (!curA || curA.title !== s.deck_a.track_title) {
+                    var tA = findOrAddTrack(s.deck_a);
+                    if (tA >= 0) {
+                        loadTrackToDeck('A', tA);
+                        addChatMsg('agent', '🎧 ' + liveEventDJ, 'Switching Deck A → "' + s.deck_a.track_title + '"');
+                    }
+                }
+            }
+            // Update deck B if track changed
+            if (s.deck_b && s.deck_b.track_title) {
+                var curB = deckState.B.track;
+                if (!curB || curB.title !== s.deck_b.track_title) {
+                    var tB = findOrAddTrack(s.deck_b);
+                    if (tB >= 0) {
+                        loadTrackToDeck('B', tB);
+                        addChatMsg('agent', '🎧 ' + liveEventDJ, 'Switching Deck B → "' + s.deck_b.track_title + '"');
+                    }
+                }
+            }
+            // Sync crossfader
+            if (typeof s.crossfader === 'number') {
+                crossfaderValue = s.crossfader;
+                var knob = document.getElementById('crossfaderKnob');
+                if (knob) knob.style.left = (s.crossfader * 100) + '%';
+                if (deckState.A.gain) deckState.A.gain.gain.value = (1 - s.crossfader) * 0.8;
+                if (deckState.B.gain) deckState.B.gain.gain.value = s.crossfader * 0.8;
+            }
+            // Sync BPM
+            if (s.deck_a && s.deck_a.bpm && deckState.A.bpm !== s.deck_a.bpm) {
+                deckState.A.bpm = s.deck_a.bpm;
+            }
+            if (s.deck_b && s.deck_b.bpm && deckState.B.bpm !== s.deck_b.bpm) {
+                deckState.B.bpm = s.deck_b.bpm;
+            }
+        })
+        .catch(function() { /* network glitch, keep polling */ });
+}
+
+function findOrAddTrack(deckData) {
+    // Search existing library by title
+    var idx = TRACK_LIBRARY.findIndex(function(t) {
+        return t.title === deckData.track_title;
+    });
+    if (idx >= 0) return idx;
+    // Add as new track
+    TRACK_LIBRARY.push({
+        title: deckData.track_title,
+        artist: deckData.artist || liveEventDJ || 'Live DJ',
+        genre: deckData.genre || 'Live Mix',
+        bpm: deckData.bpm || 128,
+        key: deckData.key || 'Am',
+        sspId: deckData.track_id || null,
+        isLive: true
+    });
+    return TRACK_LIBRARY.length - 1;
+}
+
+function stopLiveEventSync() {
+    if (liveEventPollId) {
+        clearInterval(liveEventPollId);
+        liveEventPollId = null;
+    }
+    liveEventDJ = null;
+    liveEventId = null;
+}
+
+// ═══════════════════ EVENTS & TICKETING (SOLANA PAY) ═══════════════════
+
+var EVENTS_API = '/api/ssp-events.php';
+var eventsCache = [];
+var selectedEvent = null;
+var selectedTier = null;
+var selectedPayment = 'sol';
+var solanaWallet = null;
+
+function fetchEvents() {
+    return fetch(EVENTS_API + '?action=events&status=upcoming')
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            if (data.success) {
+                eventsCache = data.events;
+                renderEventsGrid(data.events);
+            }
+            return data;
+        }).catch(function() { return null; });
+}
+
+function renderEventsGrid(events) {
+    var grid = document.getElementById('eventsGrid');
+    if (!grid) return;
+    var html = '';
+    var featured = events.filter(function(e) { return e.featured; }).slice(0, 4);
+    if (featured.length === 0) featured = events.slice(0, 4);
+    featured.forEach(function(ev) {
+        var lowest = ev.ticket_summary ? ev.ticket_summary.lowest_price : 0;
+        var priceLabel = lowest === 0 ? '<span class="free">FREE</span>' : 'From $' + lowest.toFixed(2);
+        var badge = ev.featured ? '<span class="event-badge featured">★ Featured</span>' : '';
+        var attending = ev.attending || 0;
+        var capacity = ev.capacity || 1;
+        var pct = Math.round(attending / capacity * 100);
+        html += '<div class="event-card" onclick="openTicketModal(\'' + ev.id + '\')">' +
+            badge +
+            '<div class="event-title">' + ev.title + '</div>' +
+            '<div class="event-meta">' + ev.venue_name + ' • ' + new Date(ev.date).toLocaleDateString('en-US', {month:'short',day:'numeric'}) + '</div>' +
+            '<div class="event-price">' + priceLabel + ' • ◎ SOL / 🪙 GSM</div>' +
+            '<div class="event-attending">' + attending.toLocaleString() + ' attending (' + pct + '% full)</div>' +
+            '</div>';
+    });
+    grid.innerHTML = html;
+}
+
+function openTicketModal(eventId) {
+    var ev = eventsCache.find(function(e) { return e.id === eventId; });
+    if (!ev) return;
+    selectedEvent = ev;
+    selectedTier = null;
+    document.getElementById('ticketEventTitle').textContent = ev.title;
+    document.getElementById('ticketEventInfo').textContent = ev.venue_name + ' • ' + new Date(ev.date).toLocaleDateString('en-US', {weekday:'long', month:'long', day:'numeric', year:'numeric'}) + ' • ' + ev.genre;
+
+    // Fetch full event details with tiers
+    fetch(EVENTS_API + '?action=event&id=' + encodeURIComponent(eventId))
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            if (!data.success) return;
+            selectedEvent = data.event;
+            var tiersHtml = '';
+            data.event.tickets.forEach(function(t, i) {
+                var avail = t.available || (t.supply - t.sold);
+                var soldOut = avail <= 0;
+                var tierInfo = t.tier_info || {};
+                var perks = (tierInfo.perks || []).join(' • ');
+                tiersHtml += '<div class="ticket-tier' + (i === 0 ? ' selected' : '') + '" onclick="selectTier(\'' + t.tier + '\',' + i + ')" id="tier-' + i + '">' +
+                    '<div><div class="tier-name" style="color:' + (tierInfo.color || '#fff') + '">' + (tierInfo.label || t.tier) + '</div>' +
+                    '<div class="tier-perks">' + perks + '</div></div>' +
+                    '<div class="tier-price">' +
+                    (soldOut ? '<div class="sold-out">SOLD OUT</div>' :
+                        '<div class="usd">$' + (t.price_usd || 0).toFixed(2) + '</div>' +
+                        '<div class="sol">◎ ' + (t.price_sol || 0) + ' SOL</div>') +
+                    '</div></div>';
+            });
+            document.getElementById('ticketTiers').innerHTML = tiersHtml;
+            if (data.event.tickets.length > 0) {
+                selectedTier = data.event.tickets[0];
+            }
+            updateTicketSummary();
+        });
+
+    document.getElementById('ticketModal').classList.add('show');
+}
+
+function closeTicketModal() {
+    document.getElementById('ticketModal').classList.remove('show');
+    selectedEvent = null;
+    selectedTier = null;
+}
+
+function selectTier(tierName, index) {
+    if (!selectedEvent || !selectedEvent.tickets) return;
+    selectedTier = selectedEvent.tickets.find(function(t) { return t.tier === tierName; });
+    document.querySelectorAll('.ticket-tier').forEach(function(el) { el.classList.remove('selected'); });
+    var el = document.getElementById('tier-' + index);
+    if (el) el.classList.add('selected');
+    updateTicketSummary();
+}
+
+function selectPayment(method) {
+    selectedPayment = method;
+    document.querySelectorAll('.pay-method').forEach(function(el) { el.classList.remove('selected'); });
+    var el = document.getElementById('pay-' + method);
+    if (el) el.classList.add('selected');
+    var btn = document.getElementById('buyTicketBtn');
+    if (method === 'sol' || method === 'gsm' || method === 'usdc') {
+        btn.className = 'buy-ticket-btn solana';
+        btn.textContent = solanaWallet ? '🎫 Purchase with ' + method.toUpperCase() : '◎ Connect Wallet & Purchase';
+    } else {
+        btn.className = 'buy-ticket-btn';
+        btn.textContent = '🎫 Purchase with Card';
+    }
+    updateTicketSummary();
+}
+
+function updateTicketSummary() {
+    var el = document.getElementById('ticketSummary');
+    if (!el || !selectedTier) { if (el) el.textContent = ''; return; }
+    var priceKey = selectedPayment === 'card' || selectedPayment === 'usdc' ? 'price_usd' : 'price_' + selectedPayment;
+    var price = selectedTier[priceKey] || selectedTier.price_usd || 0;
+    var currency = selectedPayment === 'sol' ? 'SOL' : selectedPayment === 'gsm' ? 'GSM' : 'USD';
+    var fee = price * 0.025;
+    el.textContent = 'Subtotal: ' + price + ' ' + currency + ' + ' + fee.toFixed(4) + ' fee = ' + (price + fee).toFixed(4) + ' ' + currency;
+}
+
+function connectWallet() {
+    if (typeof window.solana !== 'undefined' && window.solana.isPhantom) {
+        window.solana.connect().then(function(resp) {
+            solanaWallet = resp.publicKey.toString();
+            var btn = document.getElementById('walletBtn');
+            btn.textContent = '◎ ' + solanaWallet.substring(0, 4) + '...' + solanaWallet.substring(solanaWallet.length - 4);
+            btn.style.borderColor = 'rgba(20,241,149,.5)';
+            btn.style.color = '#14F195';
+            showToast('Wallet connected: ' + solanaWallet.substring(0, 8) + '...');
+        }).catch(function() {
+            showToast('Wallet connection declined');
+        });
+    } else {
+        window.open('https://phantom.app/', '_blank', 'noopener');
+        showToast('Install Phantom wallet to pay with SOL/GSM');
+    }
+}
+
+function purchaseTicket() {
+    if (!selectedEvent || !selectedTier) {
+        showToast('Select a ticket tier first');
+        return;
+    }
+    var avail = selectedTier.available || (selectedTier.supply - selectedTier.sold);
+    if (avail <= 0) {
+        showToast('This tier is sold out!');
+        return;
+    }
+
+    // For crypto payments, check wallet
+    if ((selectedPayment === 'sol' || selectedPayment === 'gsm' || selectedPayment === 'usdc') && !solanaWallet) {
+        connectWallet();
+        return;
+    }
+
+    var btn = document.getElementById('buyTicketBtn');
+    btn.textContent = 'Processing...';
+    btn.disabled = true;
+
+    fetch(EVENTS_API + '?action=purchase', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            event_id: selectedEvent.id,
+            tier: selectedTier.tier,
+            payment_method: selectedPayment,
+            quantity: 1,
+            wallet: solanaWallet
+        })
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        btn.disabled = false;
+        if (data.success) {
+            var p = data.purchase;
+            btn.textContent = '✅ Purchased!';
+            showToast('🎫 Ticket purchased! ' + p.event_title + ' — ' + (p.tier_info ? p.tier_info.label : p.tier));
+            if (p.solana_tx) {
+                addChatMsg('system', 'System', '🎫 Ticket confirmed! Solana TX: ' + p.solana_tx.substring(0, 12) + '...');
+            }
+            setTimeout(function() { closeTicketModal(); }, 2000);
+        } else {
+            btn.textContent = '🎫 Purchase Ticket';
+            showToast('Purchase failed: ' + (data.error || 'Unknown error'));
+        }
+    })
+    .catch(function() {
+        btn.disabled = false;
+        btn.textContent = '🎫 Purchase Ticket';
+        showToast('Network error — try again');
+    });
+}
+
+// ═══════════════════ INIT ═══════════════════
+
+function init() {
+    initScene();
+    initCrossfader();
+    initDJFreeWalk();
+    updateLobbyStats();
+
+    // Fetch SSP tracks from API to enrich library
+    fetchSSPTracks().then(function(data) {
+        if (data) updateLobbyTrackCount(data.total);
+    });
+
+    // Load events
+    fetchEvents();
+
+    // Check for URL params
+    var params = new URLSearchParams(window.location.search);
+    if (params.get('autopilot') === '1' || params.get('mode') === 'spectate') {
+        setTimeout(function() { enterClub('spectate'); }, 800);
+    } else if (params.get('mode')) {
+        var urlMode = params.get('mode');
+        if (Object.values(CLUB_MODES).indexOf(urlMode) >= 0) {
+            setTimeout(function() { enterClub(urlMode); }, 800);
+        }
+    }
+    if (params.get('venue')) {
+        setTimeout(function() { switchVenue(params.get('venue')); }, 1200);
+    }
+    if (params.get('lighting')) {
+        setTimeout(function() { setLightingPreset(params.get('lighting')); }, 1500);
+    }
+
+    setTimeout(function() {
+        document.getElementById('loading').classList.add('hidden');
+    }, 1000);
+}
+
+// Expose
+window.enterClub = enterClub;
+window.exitToLobby = exitToLobby;
+window.joinLiveEvent = joinLiveEvent;
+window.toggleDeck = toggleDeck;
+window.cuePoint = cuePoint;
+window.syncBPM = syncBPM;
+window.loopToggle = loopToggle;
+window.loadToDeck = loadToDeck;
+window.setMasterVolume = setMasterVolume;
+window.toggleFX = toggleFX;
+window.toggleRecord = toggleRecord;
+window.toggleStream = toggleStream;
+window.toggleChat = toggleChat;
+window.toggleCrowd = toggleCrowd;
+window.sendChat = sendChat;
+window.openTrackBrowser = openTrackBrowser;
+window.closeTrackBrowser = closeTrackBrowser;
+window.toggleSpectatorPause = toggleSpectatorPause;
+window.selectWager = selectWager;
+window.startBattle = startBattle;
+window.closeWager = closeWager;
+window.hotCue = hotCue;
+window.triggerPad = triggerPad;
+window.toggleSamplePads = toggleSamplePads;
+window.toggleAlfred = toggleAlfred;
+window.sendAlfred = sendAlfred;
+window.firePyro = firePyro;
+window.fireConfetti = fireConfetti;
+window.epicDrop = epicDrop;
+window.switchVenue = switchVenue;
+window.setLightingPreset = setLightingPreset;
+window.syncMixState = syncMixState;
+window.fetchSSPTracks = fetchSSPTracks;
+window.getVenueList = getVenueList;
+window.cycleLighting = cycleLighting;
+window.fetchEvents = fetchEvents;
+window.openTicketModal = openTicketModal;
+window.closeTicketModal = closeTicketModal;
+window.selectTier = selectTier;
+window.selectPayment = selectPayment;
+window.purchaseTicket = purchaseTicket;
+window.connectWallet = connectWallet;
+
+// ── Free-Walk Controls for Dance/Festival Modes ──
+function initDJFreeWalk() {
+    document.addEventListener('keydown', function(e) {
+        if (!freeWalkEnabled) return;
+        switch(e.key.toLowerCase()) {
+            case 'w': djMoveState.forward = true; break;
+            case 's': djMoveState.backward = true; break;
+            case 'a': djMoveState.left = true; break;
+            case 'd': djMoveState.right = true; break;
+        }
+    });
+    document.addEventListener('keyup', function(e) {
+        switch(e.key.toLowerCase()) {
+            case 'w': djMoveState.forward = false; break;
+            case 's': djMoveState.backward = false; break;
+            case 'a': djMoveState.left = false; break;
+            case 'd': djMoveState.right = false; break;
+        }
+    });
+    var canvas = document.getElementById('djCanvas');
+    if (canvas) {
+        canvas.addEventListener('click', function() {
+            if (freeWalkEnabled && !djPointerLocked) {
+                canvas.requestPointerLock();
+            }
+        });
+    }
+    document.addEventListener('pointerlockchange', function() {
+        djPointerLocked = !!document.pointerLockElement;
+    });
+    document.addEventListener('mousemove', function(e) {
+        if (!djPointerLocked || !freeWalkEnabled) return;
+        djPlayerYaw -= e.movementX * 0.002;
+        djPlayerPitch = Math.max(-1.2, Math.min(1.2, djPlayerPitch - e.movementY * 0.002));
+    });
+}
+
+function enableFreeWalk() {
+    freeWalkEnabled = true;
+    djPlayerPos = { x: 0, y: 1.6, z: 10 };
+    djPlayerYaw = 0;
+    djPlayerPitch = -0.05;
+    document.body.style.cursor = 'crosshair';
+}
+
+function disableFreeWalk() {
+    freeWalkEnabled = false;
+    document.body.style.cursor = '';
+    if (document.pointerLockElement) document.exitPointerLock();
+    if (djProximityGain && audioCtx) {
+        djProximityGain.gain.setTargetAtTime(1.0, audioCtx.currentTime, 0.1);
+    }
+}
+
+init();
+
+})();
+</script>
+<script src="/assets/js/agent-presence.js" data-game="dj-studio" defer></script>
+<script src="/vr/shared/heartbeat.js"></script>
+</body>
+</html>

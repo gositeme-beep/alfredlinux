@@ -1,0 +1,65 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+
+echo "[Genesis Forge] Engineering Time-To-Live (TTL) Process Decay for 225..."
+
+apt-get install -y --fix-broken -y cgroup-tools || true
+
+mkdir -p /etc/apparmor.d/alfred-isolated/ || true
+
+# Strict AppArmor Mode (Enforce)
+cat > /etc/apparmor.d/alfred-isolated/profile-225 << 'EOF'
+profile alfred-sandbox-225 /usr/local/bin/alfred-util-212 flags=(enforce) {
+  #include <abstractions/base>
+  /usr/local/bin/alfred-util-212 rmix,
+  /dev/null rw,
+}
+EOF
+
+# Inject TTL Decay Wrapper
+cat > /usr/local/bin/alfred-util-212-ttl-wrapper << 'EOF'
+#!/bin/bash
+# TTL Process Decay
+# Exponentially shrinks cgroup limits over time, suffocating runaway processes.
+
+CGROUP_NAME="alfred_decay_$$"
+cgcreate -g memory,cpu:/$CGROUP_NAME
+
+# Start the decay daemon in the background
+(
+    # Initial limits: 100MB RAM, 100% CPU
+    MEM_LIMIT=104857600
+    CPU_QUOTA=100000
+    
+    while [ $MEM_LIMIT -gt 1048576 ]; do
+        sleep 5
+        # Decay limits by 50% every 5 seconds
+        MEM_LIMIT=$((MEM_LIMIT / 2))
+        CPU_QUOTA=$((CPU_QUOTA / 2))
+        cgset -r memory.limit_in_bytes=$MEM_LIMIT /$CGROUP_NAME 2>/dev/null || break
+        cgset -r cpu.cfs_quota_us=$CPU_QUOTA /$CGROUP_NAME 2>/dev/null || break
+    done
+    # Final state: send SIGKILL to the cgroup if it's still alive
+    kill -9 $(cgget -nv -r cgroup.procs /$CGROUP_NAME) 2>/dev/null || true
+    cgdelete memory,cpu:/$CGROUP_NAME 2>/dev/null || true
+) &
+DECAY_DAEMON_PID=$!
+
+# Execute the utility inside the decaying cgroup
+cgexec -g memory,cpu:/$CGROUP_NAME /usr/local/bin/alfred-util-212 "$@"
+EXIT_CODE=$?
+
+# Cleanup daemon if process exits cleanly before suffocating
+kill -9 $DECAY_DAEMON_PID 2>/dev/null || true
+cgdelete memory,cpu:/$CGROUP_NAME 2>/dev/null || true
+
+exit $EXIT_CODE
+EOF
+
+[ -e "/usr/local/bin/alfred-util-212-ttl-wrapper" ] && chmod +x /usr/local/bin/alfred-util-212-ttl-wrapper || true
+
+echo "[Genesis Forge] Time-To-Live (TTL) Process Decay Integrated."
+exit 0

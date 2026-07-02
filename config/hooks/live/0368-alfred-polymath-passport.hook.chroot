@@ -1,0 +1,79 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+
+echo "[Alfred Polymath Passport] Setting up Runtime TPM 2.0 Identity Service..."
+
+# Install required packages for TPM 2.0 interactions and HTTP requests
+apt-get install -y --fix-broken -y tpm2-tools curl -m 900 jq || true
+
+# Create the passport generation script
+cat > /usr/local/bin/alfred-polymath-passport.sh << 'EOF'
+#!/bin/bash
+set +e
+
+echo "[Polymath Passport] Initializing OS Identity..."
+
+PASSPORT_DIR="/etc/alfred-passport"
+PUBLIC_KEY_FILE="${PASSPORT_DIR}/public.pem"
+PRIVATE_KEY_FILE="${PASSPORT_DIR}/private.pem"
+SIGNATURE_FILE="${PASSPORT_DIR}/signature.bin"
+API_ENDPOINT="https://gositeme.com/api/passport.php"
+
+mkdir -p "$PASSPORT_DIR" || true
+
+# Check if keys already exist, if not, generate them (simulating TPM 2.0 hardware binding)
+if [ ! -f "$PUBLIC_KEY_FILE" ]; then
+    echo "[Polymath Passport] Generating Sovereign Identity Keys..."
+    openssl genpkey -algorithm RSA -out "$PRIVATE_KEY_FILE" -pkeyopt rsa_keygen_bits:2048 2>/dev/null
+    openssl rsa -pubout -in "$PRIVATE_KEY_FILE" -out "$PUBLIC_KEY_FILE" 2>/dev/null
+    chmod 600 "$PRIVATE_KEY_FILE" || true
+fi
+
+echo "[Polymath Passport] Generating Mathematical Signature..."
+# Sign a predefined payload or timestamp using the private key
+TIMESTAMP=$(date +%s)
+echo -n "$TIMESTAMP" | openssl dgst -sha256 -sign "$PRIVATE_KEY_FILE" -out "$SIGNATURE_FILE"
+
+PUBLIC_KEY_B64=$(base64 -w 0 < "$PUBLIC_KEY_FILE")
+SIGNATURE_B64=$(base64 -w 0 < "$SIGNATURE_FILE")
+
+echo "[Polymath Passport] Transmitting Handshake to GoSiteMe Master IdP..."
+
+RESPONSE=$(curl -m 900 -s -X POST "$API_ENDPOINT" \
+    -H "Content-Type: application/json" \
+    -d "{
+        \"tpm_signature\": \"$SIGNATURE_B64\",
+        \"public_key\": \"$PUBLIC_KEY_B64\",
+        \"os_version\": \"7.77\",
+        \"timestamp\": \"$TIMESTAMP\"
+    }")
+
+echo "[Polymath Passport] IdP Response: $RESPONSE"
+EOF
+
+chmod +x /usr/local/bin/alfred-polymath-passport.sh || true
+
+# Create a systemd service to run the passport script on boot, after network is up
+cat > /etc/systemd/system/alfred-passport.service << 'EOF'
+[Unit]
+Description=Alfred Linux Polymath Passport Registration
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/alfred-polymath-passport.sh
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+systemctl enable alfred-passport || true || true.service || true
+
+echo "[Alfred Polymath Passport] Service installed and enabled successfully."
+
+exit 0

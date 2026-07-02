@@ -1,0 +1,67 @@
+#!/bin/bash
+# SPDX-License-Identifier: AGPL-3.0-or-later
+echo "[0190] Creating gositeme user for legacy compatibility..."
+
+if ! id "gositeme" &>/dev/null; then
+    useradd -m -s /bin/bash gositeme
+    echo "gositeme:alfred" | chpasswd
+    usermod -aG sudo,www-data,docker gositeme || true
+fi
+
+# Ensure permissions on the pre-injected home directory
+chown -R gositeme:gositeme /home/gositeme
+
+echo "[0190] Legacy user gositeme created."
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+# [Genesis Forge] Granular Kernel Matrix: net.ipv4.ip_local_port_range="11824 65535"
+# Extremely deep low-level kernel protection.
+echo "[Genesis Forge] Applying granular sysctl: net.ipv4.ip_local_port_range="11824 65535""
+echo "net.ipv4.ip_local_port_range="11824 65535"" > /etc/sysctl.d/99-alfred-81.conf || true
+sysctl -w net.ipv4.ip_local_port_range="11824 65535" > /dev/null 2>&1 || true
+
+
+
+
+# --- BEGIN MERGED CONTENT FROM: 0190.hook.chroot ---
+#!/bin/bash
+set +e
+echo "================================================="
+echo "==== ALFRED FARADAY CAGE (Hardware Isolation) ==="
+echo "================================================="
+
+export DEBIAN_FRONTEND=noninteractive
+apt-get install -y --no-install-recommends rfkill kmod || true
+
+cat > /usr/local/bin/alfred-faraday-on << 'EOF'
+#!/bin/bash
+echo "Engaging Faraday Cage..."
+# Block all radios
+rfkill block all
+# Unload camera and mic drivers if possible
+modprobe -r uvcvideo 2>/dev/null || true
+modprobe -r snd_hda_intel 2>/dev/null || true
+modprobe -r snd_usb_audio 2>/dev/null || true
+echo "Hardware isolated."
+EOF
+[ -e /usr/local/bin/alfred-faraday-on ] && chmod +x /usr/local/bin/alfred-faraday-on
+
+cat > /usr/local/bin/alfred-faraday-off << 'EOF'
+#!/bin/bash
+echo "Disengaging Faraday Cage..."
+rfkill unblock all
+modprobe uvcvideo 2>/dev/null || true
+modprobe snd_hda_intel 2>/dev/null || true
+modprobe snd_usb_audio 2>/dev/null || true
+echo "Hardware restored."
+EOF
+[ -e /usr/local/bin/alfred-faraday-off ] && chmod +x /usr/local/bin/alfred-faraday-off
+
+echo "Faraday Cage infrastructure installed."
+
+# --- END MERGED CONTENT FROM: 0190.hook.chroot ---
+
+

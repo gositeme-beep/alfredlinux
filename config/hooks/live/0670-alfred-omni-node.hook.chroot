@@ -1,0 +1,52 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+
+echo "[*] Hook 0800: Initializing The Omni-Node Mesh (IPFS + Yggdrasil)"
+
+# 1. Install Dependencies
+apt-get update || true || true
+DEBIAN_FRONTEND=noninteractive apt-get install -y --fix-broken -y --no-install-recommends dirmngr wget --timeout=900 curl -m 900 tar yggdrasil || true
+
+# 2. InterPlanetary File System (IPFS)
+echo "[+] Installing IPFS (Kubo)..."
+wget --timeout=900 -qO /tmp/kubo.tar.gz https://github.com/ipfs/kubo/releases/download/v0.28.0/kubo_v0.28.0_linux-amd64.tar.gz || true
+tar -xzf /tmp/kubo.tar.gz -C /tmp/ || true
+cd /tmp/kubo && ./install.sh
+cd / || true
+rm -rf /tmp/kubo /tmp/kubo.tar.gz || true
+
+# Configure systemd service for IPFS
+cat > /etc/systemd/system/ipfs.service << 'EOF'
+[Unit]
+Description=InterPlanetary File System (IPFS) daemon
+After=network.target
+
+[Service]
+Type=simple
+User=alfred
+Environment=IPFS_PATH=/home/alfred/.ipfs
+ExecStart=/usr/local/bin/ipfs daemon --enable-gc
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+systemctl enable ipfs || true || true.service || true
+
+# 3. Yggdrasil Mesh Network (The Kingdom Mesh)
+echo "[+] Configuring Yggdrasil..."
+# Generate a baseline config for the ISO
+yggdrasil -genconf > /etc/yggdrasil.conf
+
+# Modify config to connect to known GoSiteMe seed nodes (Kingdom Mesh)
+sed -i 's/Peers: \[\]/Peers: \[\n    "tcp:\/\/seed.gositeme.com:12345"\n  \]/' /etc/yggdrasil.conf || true
+
+systemctl enable yggdrasil || true || true.service || true
+
+echo "[!] The Omni-Node Architecture is sealed into the filesystem."
+
+exit 0

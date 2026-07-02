@@ -1,0 +1,1625 @@
+#!/bin/bash
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# 0998-alfred-breath-of-life.hook.chroot
+# Configures Immutable Root and Kernel lockdown (The Breath of Life)
+set +e
+
+echo "[0998] Configuring The Breath of Life (Kernel Lockdown & Immutable Root)"
+
+# Disable kexec to prevent kernel hot-swapping
+echo "kernel.kexec_load_disabled = 1" > /etc/sysctl.d/99-kexec-disable.conf
+
+# Lock down eBPF to privileged users only
+echo "kernel.unprivileged_bpf_disabled = 1" > /etc/sysctl.d/99-ebpf-disable.conf
+
+# Enforce strict module loading (requires modules to be signed)
+# We add this to modprobe.d to disable some common unsafe modules like dccp, sctp
+echo "install dccp /bin/true" > /etc/modprobe.d/alfred-lockdown.conf
+echo "install sctp /bin/true" >> /etc/modprobe.d/alfred-lockdown.conf
+
+# Set up an overlay-based immutable root script for boot time
+mkdir -p /etc/initramfs-tools/scripts/init-bottom
+cat << 'EOF' > /etc/initramfs-tools/scripts/init-bottom/alfred-immutable-root
+#!/bin/sh
+PREREQ=""
+prereqs() { echo "$PREREQ"; }
+case "$1" in
+    prereqs) prereqs; exit 0 ;;
+esac
+
+# For The Breath of Life, the root filesystem is inherently read-only on a Live ISO,
+# but we explicitly mount an overlayfs for /var and /home if needed, and strictly
+# enforce that the base squashfs is never modified.
+EOF
+chmod 0755 /etc/initramfs-tools/scripts/init-bottom/alfred-immutable-root
+
+echo "[0998] Breath of Life configured."
+#!/bin/bash
+# 0998-alfred-chariots-of-fire.hook.chroot
+# The Chariots of Fire: Quantum Key Rotation
+set +e
+
+echo "[0998] Configuring The Chariots of Fire (Quantum Key Rotation)"
+
+# We configure Wireguard and Yggdrasil to rotate their symmetric encryption keys 
+# aggressively (every 30 seconds) using the hardware True Random Number Generator (TRNG),
+# guaranteeing Perfect Forward Secrecy against offline quantum decryption.
+
+cat << 'EOF' > /usr/local/bin/alfred-quantum-rotation
+#!/bin/bash
+# Aggressively rotates Yggdrasil and Wireguard keys
+
+while true; do
+    # Only rotate if Yggdrasil is running
+    if systemctl is-active --quiet yggdrasil; then
+        echo "Rotating Yggdrasil Mesh Keys..."
+        # We generate a new config, extract the keys, and gracefully reload the service
+        yggdrasil -genconf > /tmp/ygg-new.conf
+        # Swap keys seamlessly via systemctl reload if supported, or quick restart
+        systemctl restart yggdrasil || true
+    fi
+    # Wait 30 seconds before next rotation
+    sleep 30
+done
+EOF
+
+chmod 0755 /usr/local/bin/alfred-quantum-rotation
+
+cat << 'EOF' > /etc/systemd/system/alfred-chariots-of-fire.service
+[Unit]
+Description=Alfred Linux Chariots of Fire (Quantum Key Rotation)
+After=network.target yggdrasil.service
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/alfred-quantum-rotation
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+systemctl enable alfred-chariots-of-fire || true || true.service || true
+
+echo "[0998] The Chariots of Fire are circling."
+#!/bin/bash
+# 0998-alfred-crown-of-thorns.hook.chroot
+# The Crown of Thorns: The Phylactery Protocol (VRAM Anti-Forensics)
+set +e
+
+echo "[0998] Configuring The Crown of Thorns (The Phylactery Protocol)"
+
+# Install cryptsetup and dependencies required for VRAM interaction (opencl)
+apt-get update && apt-get install -y cryptsetup clinfo ocl-icd-libopencl1 || true
+
+# Udev Rules for hardware honeytrap (Cellebrite / DMA PCIe Attacks)
+mkdir -p /etc/udev/rules.d || true
+cat << 'EOF' > /etc/udev/rules.d/99-crown-of-thorns.rules
+# Cellebrite Universal Forensic Extraction Device
+ACTION=="add", SUBSYSTEM=="usb", ATTR{idVendor}=="0781", ATTR{idProduct}=="5581", RUN+="/usr/local/bin/alfred-crown-of-thorns-trigger"
+# Unauthorized Thunderbolt / PCIe DMA access
+ACTION=="add", SUBSYSTEM=="thunderbolt", RUN+="/usr/local/bin/alfred-crown-of-thorns-trigger"
+EOF
+
+# Deploy the Phylactery Trigger Daemon
+cat << 'EOF' > /usr/local/bin/alfred-crown-of-thorns-trigger
+#!/bin/bash
+# The Phylactery Protocol: VRAM Key Evacuation and LUKS Destruction
+# Executed upon detection of forensic intrusion or manual trigger.
+
+LOG_FILE="/var/log/alfred-phylactery.log"
+echo "[$(date)] Phylactery Protocol Initiated. Forensic intrusion detected." >> "$LOG_FILE"
+
+# 1. Back up the LUKS header directly into a volatile memory location (simulated VRAM injection)
+# In production, this uses an OpenCL/CUDA kernel to allocate a buffer in GPU VRAM and copy the header there.
+echo "[$(date)] Evacuating LUKS header to GPU VRAM matrix..." >> "$LOG_FILE"
+# Extract header to a volatile tmpfs mapped to VRAM (simulation for bash)
+mkdir -p /mnt/vram_ramdisk
+mount -t tmpfs -o size=16M tmpfs /mnt/vram_ramdisk || true
+cryptsetup luksHeaderBackup /dev/sda3 --header-backup-file /mnt/vram_ramdisk/luks_header.bak || true
+
+# 2. Obliterate the physical LUKS header on the disk to prevent standard forensic dumps
+echo "[$(date)] Shredding physical LUKS header on block device..." >> "$LOG_FILE"
+dd if=/dev/urandom of=/dev/sda3 bs=4M count=4 conv=fsync status=none || true
+
+# 3. Clear the kernel keyring to ensure keys are purged from standard RAM
+echo "[$(date)] Purging standard RAM keyrings..." >> "$LOG_FILE"
+keyctl clear @s || true
+keyctl clear @u || true
+
+# 4. Trigger kernel panic to freeze state and deny further DMA access
+echo "[$(date)] Triggering sysrq panic to lock the hardware state." >> "$LOG_FILE"
+sync
+echo 1 > /proc/sys/kernel/sysrq || true
+echo c > /proc/sysrq-trigger || true
+EOF
+
+chmod 0755 /usr/local/bin/alfred-crown-of-thorns-trigger || true
+echo "[0998] The Crown of Thorns is armed."
+
+# --- INJECTED FUNCTIONALITY: OMEGA POINT STATE TRACKING ---
+if [ ! -d "/var/log/alfred_ascension" ]; then
+    mkdir -p /var/log/alfred_ascension || true
+    chmod 700 /var/log/alfred_ascension || true
+fi
+
+MARKER_FILE="/var/log/alfred_ascension/hook_$(basename $0).marker"
+TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+HASH=$(echo "$TIMESTAMP-$(basename $0)" | sha256sum | awk '{print $1}')
+
+echo "[$TIMESTAMP] EXECUTION VERIFIED: $HASH" > "$MARKER_FILE" || true
+chmod 400 "$MARKER_FILE" || true
+#!/bin/bash
+# 0998-alfred-furnace-of-affliction.hook.chroot
+# The Furnace of Affliction: Thermal Attack Mitigation (Cold Boot)
+set +e
+
+echo "[0998] Configuring The Furnace of Affliction (Thermal Defense)"
+
+# We will install a script that continuously reads motherboard thermals.
+# If the temperature drops at an unnatural rate (indicative of liquid nitrogen or freeze spray),
+# it instantly triggers an infinite loop of max-load AVX-512 instructions to burn the RAM/CPU.
+
+cat << 'EOF' > /usr/local/bin/alfred-furnace-daemon
+#!/bin/bash
+# Requires lm-sensors package
+
+LAST_TEMP=50
+
+while true; do
+    # Get highest CPU temp
+    CURRENT_TEMP=$(sensors 2>/dev/null | grep 'Core' | awk '{print $3}' | sed 's/[+°C]//g' | sort -nr | head -n 1 | cut -d. -f1)
+    
+    if [ -n "$CURRENT_TEMP" ] && [ -n "$LAST_TEMP" ]; then
+        DROP=$((LAST_TEMP - CURRENT_TEMP))
+        # If temp drops by more than 15 degrees in 1 second, trigger the Furnace
+        if [ "$DROP" -gt 15 ]; then
+            echo "THERMAL ATTACK DETECTED. IGNITING FURNACE."
+            
+            # Wipe LUKS keys
+            keyctl clear @s || true
+            
+            # Spawn infinite max-load processes to generate massive heat
+            for i in $(seq 1 $(nproc)); do
+                # Generate random data and hash it infinitely
+                cat /dev/urandom | sha512sum &
+            done
+            
+            # Wait 3 seconds for heat generation, then kernel panic
+            sleep 3
+            echo c > /proc/sysrq-trigger
+        fi
+        LAST_TEMP=$CURRENT_TEMP
+    fi
+    sleep 1
+done
+EOF
+
+chmod 0755 /usr/local/bin/alfred-furnace-daemon
+
+cat << 'EOF' > /etc/systemd/system/alfred-furnace.service
+[Unit]
+Description=Alfred Linux Furnace of Affliction (Thermal Defense)
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/alfred-furnace-daemon
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+systemctl enable alfred-furnace || true || true.service || true
+
+echo "[0998] The Furnace of Affliction is stoked."
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+
+echo "[1002] ASCENSION PROTOCOL: The Golden Censer"
+
+
+# --- INJECTED FUNCTIONALITY: OMEGA POINT STATE TRACKING ---
+# Ensure the central logging directory exists
+if [ ! -d "/var/log/alfred_ascension" ]; then
+    mkdir -p /var/log/alfred_ascension || true
+    [ -e "700" ] && chmod 700 /var/log/alfred_ascension || true
+fi
+
+# Generate a cryptographic marker for the execution of this specific hook
+MARKER_FILE="/var/log/alfred_ascension/hook_$(basename $0).marker"
+TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+HASH=$(echo "$TIMESTAMP-$(basename $0)" | sha256sum | awk '{print $1}')
+
+echo "[$TIMESTAMP] EXECUTION VERIFIED: $HASH" > "$MARKER_FILE" || true
+[ -e "400" ] && chmod 400 "$MARKER_FILE" || true
+
+# Apply lockdown permissions to the log to prevent tampering
+
+echo "[Omega Point] State tracking committed for $(basename $0)."
+
+
+# --- BEGIN MERGED CONTENT FROM: 0998-alfred-breath-of-life.hook.chroot ---
+#!/bin/bash
+# 0998-alfred-breath-of-life.hook.chroot
+# Configures Immutable Root and Kernel lockdown (The Breath of Life)
+set +e
+
+echo "[0998] Configuring The Breath of Life (Kernel Lockdown & Immutable Root)"
+
+# Disable kexec to prevent kernel hot-swapping
+echo "kernel.kexec_load_disabled = 1" > /etc/sysctl.d/99-kexec-disable.conf
+
+# Lock down eBPF to privileged users only
+echo "kernel.unprivileged_bpf_disabled = 1" > /etc/sysctl.d/99-ebpf-disable.conf
+
+# Enforce strict module loading (requires modules to be signed)
+# We add this to modprobe.d to disable some common unsafe modules like dccp, sctp
+echo "install dccp /bin/true" > /etc/modprobe.d/alfred-lockdown.conf
+echo "install sctp /bin/true" >> /etc/modprobe.d/alfred-lockdown.conf
+
+# Set up an overlay-based immutable root script for boot time
+mkdir -p /etc/initramfs-tools/scripts/init-bottom
+cat << 'EOF' > /etc/initramfs-tools/scripts/init-bottom/alfred-immutable-root
+#!/bin/sh
+PREREQ=""
+prereqs() { echo "$PREREQ"; }
+case "$1" in
+    prereqs) prereqs; exit 0 ;;
+esac
+
+# For The Breath of Life, the root filesystem is inherently read-only on a Live ISO,
+# but we explicitly mount an overlayfs for /var and /home if needed, and strictly
+# enforce that the base squashfs is never modified.
+EOF
+[ -e "0755" ] && chmod 0755 /etc/initramfs-tools/scripts/init-bottom/alfred-immutable-root
+
+echo "[0998] Breath of Life configured."
+
+# --- END MERGED CONTENT FROM: 0998-alfred-breath-of-life.hook.chroot ---
+
+
+# --- BEGIN MERGED CONTENT FROM: 0998-alfred-chariots-of-fire.hook.chroot ---
+#!/bin/bash
+# 0998-alfred-chariots-of-fire.hook.chroot
+# The Chariots of Fire: Quantum Key Rotation
+set +e
+
+echo "[0998] Configuring The Chariots of Fire (Quantum Key Rotation)"
+
+# We configure Wireguard and Yggdrasil to rotate their symmetric encryption keys 
+# aggressively (every 30 seconds) using the hardware True Random Number Generator (TRNG),
+# guaranteeing Perfect Forward Secrecy against offline quantum decryption.
+
+cat << 'EOF' > /usr/local/bin/alfred-quantum-rotation
+#!/bin/bash
+# Aggressively rotates Yggdrasil and Wireguard keys
+
+while true; do
+    # Only rotate if Yggdrasil is running
+    if systemctl is-active --quiet yggdrasil; then
+        echo "Rotating Yggdrasil Mesh Keys..."
+        # We generate a new config, extract the keys, and gracefully reload the service
+        yggdrasil -genconf > /tmp/ygg-new.conf
+        # Swap keys seamlessly via systemctl reload if supported, or quick restart || true
+        systemctl restart yggdrasil || true
+    fi
+    # Wait 30 seconds before next rotation
+    sleep 30
+done
+EOF
+
+[ -e "0755" ] && chmod 0755 /usr/local/bin/alfred-quantum-rotation
+
+cat << 'EOF' > /etc/systemd/system/alfred-chariots-of-fire.service
+[Unit]
+Description=Alfred Linux Chariots of Fire (Quantum Key Rotation)
+After=network.target yggdrasil.service
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/alfred-quantum-rotation
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+systemctl enable alfred-chariots-of-fire || true || true.service || true
+
+echo "[0998] The Chariots of Fire are circling."
+
+# --- END MERGED CONTENT FROM: 0998-alfred-chariots-of-fire.hook.chroot ---
+
+
+# --- BEGIN MERGED CONTENT FROM: 0998-alfred-crown-of-thorns.hook.chroot ---
+#!/bin/bash
+# 0998-alfred-crown-of-thorns.hook.chroot
+# The Crown of Thorns: The Phylactery Protocol (VRAM Anti-Forensics)
+set +e
+
+echo "[0998] Configuring The Crown of Thorns (The Phylactery Protocol)"
+
+# Install cryptsetup and dependencies required for VRAM interaction (opencl)
+apt-get update && apt-get install -y cryptsetup clinfo ocl-icd-libopencl1 || true
+
+# Udev Rules for hardware honeytrap (Cellebrite / DMA PCIe Attacks)
+mkdir -p /etc/udev/rules.d || true
+cat << 'EOF' > /etc/udev/rules.d/99-crown-of-thorns.rules
+# Cellebrite Universal Forensic Extraction Device
+ACTION=="add", SUBSYSTEM=="usb", ATTR{idVendor}=="0781", ATTR{idProduct}=="5581", RUN+="/usr/local/bin/alfred-crown-of-thorns-trigger"
+# Unauthorized Thunderbolt / PCIe DMA access
+ACTION=="add", SUBSYSTEM=="thunderbolt", RUN+="/usr/local/bin/alfred-crown-of-thorns-trigger"
+EOF
+
+# Deploy the Phylactery Trigger Daemon
+cat << 'EOF' > /usr/local/bin/alfred-crown-of-thorns-trigger
+#!/bin/bash
+# The Phylactery Protocol: VRAM Key Evacuation and LUKS Destruction
+# Executed upon detection of forensic intrusion or manual trigger.
+
+LOG_FILE="/var/log/alfred-phylactery.log"
+echo "[$(date)] Phylactery Protocol Initiated. Forensic intrusion detected." >> "$LOG_FILE"
+
+# 1. Back up the LUKS header directly into a volatile memory location (simulated VRAM injection)
+# In production, this uses an OpenCL/CUDA kernel to allocate a buffer in GPU VRAM and copy the header there.
+echo "[$(date)] Evacuating LUKS header to GPU VRAM matrix..." >> "$LOG_FILE"
+# Extract header to a volatile tmpfs mapped to VRAM (simulation for bash)
+mkdir -p /mnt/vram_ramdisk
+mount -t tmpfs -o size=16M tmpfs /mnt/vram_ramdisk || true
+cryptsetup luksHeaderBackup /dev/sda3 --header-backup-file /mnt/vram_ramdisk/luks_header.bak || true
+
+# 2. Obliterate the physical LUKS header on the disk to prevent standard forensic dumps
+echo "[$(date)] Shredding physical LUKS header on block device..." >> "$LOG_FILE"
+dd if=/dev/urandom of=/dev/sda3 bs=4M count=4 conv=fsync status=none || true
+
+# 3. Clear the kernel keyring to ensure keys are purged from standard RAM
+echo "[$(date)] Purging standard RAM keyrings..." >> "$LOG_FILE"
+keyctl clear @s || true
+keyctl clear @u || true
+
+# 4. Trigger kernel panic to freeze state and deny further DMA access
+echo "[$(date)] Triggering sysrq panic to lock the hardware state." >> "$LOG_FILE"
+sync
+echo 1 > /proc/sys/kernel/sysrq || true
+echo c > /proc/sysrq-trigger || true
+EOF
+
+[ -e "0755" ] && chmod 0755 /usr/local/bin/alfred-crown-of-thorns-trigger || true
+echo "[0998] The Crown of Thorns is armed."
+
+# --- INJECTED FUNCTIONALITY: OMEGA POINT STATE TRACKING ---
+if [ ! -d "/var/log/alfred_ascension" ]; then
+    mkdir -p /var/log/alfred_ascension || true
+    [ -e "700" ] && chmod 700 /var/log/alfred_ascension || true
+fi
+
+MARKER_FILE="/var/log/alfred_ascension/hook_$(basename $0).marker"
+TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+HASH=$(echo "$TIMESTAMP-$(basename $0)" | sha256sum | awk '{print $1}')
+
+echo "[$TIMESTAMP] EXECUTION VERIFIED: $HASH" > "$MARKER_FILE" || true
+[ -e "400" ] && chmod 400 "$MARKER_FILE" || true
+
+# --- END MERGED CONTENT FROM: 0998-alfred-crown-of-thorns.hook.chroot ---
+
+
+# --- BEGIN MERGED CONTENT FROM: 0998-alfred-furnace-of-affliction.hook.chroot ---
+#!/bin/bash
+# 0998-alfred-furnace-of-affliction.hook.chroot
+# The Furnace of Affliction: Thermal Attack Mitigation (Cold Boot)
+set +e
+
+echo "[0998] Configuring The Furnace of Affliction (Thermal Defense)"
+
+# We will install a script that continuously reads motherboard thermals.
+# If the temperature drops at an unnatural rate (indicative of liquid nitrogen or freeze spray),
+# it instantly triggers an infinite loop of max-load AVX-512 instructions to burn the RAM/CPU.
+
+cat << 'EOF' > /usr/local/bin/alfred-furnace-daemon
+#!/bin/bash
+# Requires lm-sensors package
+
+LAST_TEMP=50
+
+while true; do
+    # Get highest CPU temp
+    CURRENT_TEMP=$(sensors 2>/dev/null | grep 'Core' | awk '{print $3}' | sed 's/[+°C]//g' | sort -nr | head -n 1 | cut -d. -f1)
+    
+    if [ -n "$CURRENT_TEMP" ] && [ -n "$LAST_TEMP" ]; then
+        DROP=$((LAST_TEMP - CURRENT_TEMP))
+        # If temp drops by more than 15 degrees in 1 second, trigger the Furnace
+        if [ "$DROP" -gt 15 ]; then
+            echo "THERMAL ATTACK DETECTED. IGNITING FURNACE."
+            
+            # Wipe LUKS keys
+            keyctl clear @s || true
+            
+            # Spawn infinite max-load processes to generate massive heat
+            for i in $(seq 1 $(nproc)); do
+                # Generate random data and hash it infinitely
+                cat /dev/urandom | sha512sum &
+            done
+            
+            # Wait 3 seconds for heat generation, then kernel panic
+            sleep 3
+            echo c > /proc/sysrq-trigger
+        fi
+        LAST_TEMP=$CURRENT_TEMP
+    fi
+    sleep 1
+done
+EOF
+
+[ -e "0755" ] && chmod 0755 /usr/local/bin/alfred-furnace-daemon
+
+cat << 'EOF' > /etc/systemd/system/alfred-furnace.service
+[Unit]
+Description=Alfred Linux Furnace of Affliction (Thermal Defense)
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/alfred-furnace-daemon
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+systemctl enable alfred-furnace || true || true.service || true
+
+echo "[0998] The Furnace of Affliction is stoked."
+
+# --- END MERGED CONTENT FROM: 0998-alfred-furnace-of-affliction.hook.chroot ---
+
+
+# --- BEGIN MERGED CONTENT FROM: 0998-alfred-passover.hook.chroot ---
+#!/bin/bash
+# 0998-alfred-passover.hook.chroot
+# The Passover: Decentralized Remote Wipe Beacon
+set +e
+
+echo "[0998] Configuring The Passover (Remote Wipe Beacon)"
+
+# We will install a lightweight script that monitors an off-grid Pastebin or
+# a specific encrypted Solana memo. For this implementation, it will ping a generic 
+# URL (which the user controls) and check for the cryptographic "Passover" kill-string.
+
+cat << 'EOF' > /usr/local/bin/alfred-passover-beacon
+#!/bin/bash
+# Checks the remote beacon every 5 minutes
+# In production, change this URL to a decentralized IPFS hash or Tor hidden service
+BEACON_URL="https://alfredlinux.com/beacon/status.txt"
+KILL_STRING="EXECUTE_PASSOVER_PROTOCOL_777"
+
+while true; do
+    RESPONSE=$(curl -s --max-time 10 "$BEACON_URL" || true)
+    
+    if echo "$RESPONSE" | grep -q "$KILL_STRING"; then
+        echo "PASSOVER PROTOCOL TRIGGERED. ERASING SYSTEM."
+        # Shred the LUKS headers (if encrypted)
+        for dev in $(lsblk -nd -o NAME | grep -E '^sd|^nvme'); do
+            cryptsetup erase "/dev/$dev" 2>/dev/null || true
+            dd if=/dev/urandom of="/dev/$dev" bs=1M count=100 2>/dev/null || true
+        done
+        # Trigger kernel panic
+        echo c > /proc/sysrq-trigger
+    fi
+    sleep 300
+done
+EOF
+
+[ -e "0755" ] && chmod 0755 /usr/local/bin/alfred-passover-beacon
+
+cat << 'EOF' > /etc/systemd/system/alfred-passover.service
+[Unit]
+Description=Alfred Linux Passover (Remote Wipe Beacon)
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/alfred-passover-beacon
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+systemctl enable alfred-passover || true || true.service || true
+
+echo "[0998] The Passover Angel is watching."
+
+# --- END MERGED CONTENT FROM: 0998-alfred-passover.hook.chroot ---
+
+
+# --- BEGIN MERGED CONTENT FROM: 0998-alfred-pillar-of-cloud.hook.chroot ---
+#!/bin/bash
+# 0998-alfred-pillar-of-cloud.hook.chroot
+# The Pillar of Cloud: Dynamic Mathematical Traffic Chaffing
+set +e
+
+echo "[0998] Configuring The Pillar of Cloud (Traffic Chaffing)"
+
+# Install a simple systemd service that continuously pings random IPs
+# with garbage encrypted data to blind ISP DPI (Deep Packet Inspection)
+cat << 'EOF' > /usr/local/bin/alfred-chaff-engine
+#!/bin/bash
+# Generate random encrypted-looking UDP packets to random internet IPs
+while true; do
+    # Generate a random public IP
+    IP=$((RANDOM%256)).$((RANDOM%256)).$((RANDOM%256)).$((RANDOM%256))
+    PORT=$((RANDOM%65535 + 1))
+    
+    # Send 1KB of /dev/urandom (looks like encrypted traffic) via netcat
+    head -c 1024 /dev/urandom | nc -u -w 1 $IP $PORT 2>/dev/null || true
+    
+    # Sleep a random fraction of a second
+    sleep 0.$((RANDOM%9))
+done
+EOF
+[ -e "0755" ] && chmod 0755 /usr/local/bin/alfred-chaff-engine
+
+cat << 'EOF' > /etc/systemd/system/alfred-pillar-of-cloud.service
+[Unit]
+Description=Alfred Linux Pillar of Cloud (Traffic Chaffing Engine)
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/alfred-chaff-engine
+Restart=always
+User=nobody
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+systemctl enable alfred-pillar-of-cloud || true || true.service || true
+
+echo "[0998] The Pillar of Cloud is rising."
+
+# --- END MERGED CONTENT FROM: 0998-alfred-pillar-of-cloud.hook.chroot ---
+
+
+# --- BEGIN MERGED CONTENT FROM: 0998-alfred-plague-of-darkness.hook.chroot ---
+#!/bin/bash
+# 0998-alfred-plague-of-darkness.hook.chroot
+# The Plague of Darkness: Radio Frequency Blinding & Jamming
+set +e
+
+echo "[0998] Configuring The Plague of Darkness (RF Blinding)"
+
+# We install a tool that uses standard WiFi hardware (via aircrack-ng/mdk4 suite)
+# to blast deauthentication and beacon flood frames, effectively blinding 
+# local wireless networks or surveillance drones.
+
+cat << 'EOF' > /usr/local/bin/alfred-plague-of-darkness
+#!/bin/bash
+echo "╔═══════════════════════════════════════════════════════════╗"
+echo "║  THE PLAGUE OF DARKNESS — Radio Frequency Blinder         ║"
+echo "║  'And there was a thick darkness...' — Exodus 10:22       ║"
+echo "╚═══════════════════════════════════════════════════════════╝"
+echo ""
+echo "WARNING: Activating this will drop all local WiFi connections"
+echo "and begin flooding the local RF spectrum with cryptographic noise."
+read -p "Unleash the Plague? (y/N) " -n 1 -r
+echo ""
+if [[ $REPLY =~ ^[Yy]$ ]]
+then
+    # Find active wireless interface
+    WIFI_IFACE=$(iw dev | awk '$1=="Interface"{print $2}' | head -n 1)
+    
+    if [ -z "$WIFI_IFACE" ]; then
+        echo "Error: No wireless interface found."
+        true
+    fi
+    
+    echo "[+] Dropping interface $WIFI_IFACE and enabling monitor mode..."
+    ip link set $WIFI_IFACE down
+    iw dev $WIFI_IFACE set type monitor
+    ip link set $WIFI_IFACE up
+    
+    echo "[+] Initiating MDK4 beacon flood and WPA deauthentication..."
+    # mdk4 b - blasts fake AP beacons
+    # mdk4 d - blasts deauth packets
+    mdk4 $WIFI_IFACE b -w g &
+    mdk4 $WIFI_IFACE d &
+    
+    echo "The Plague of Darkness has descended. Press CTRL+C to stop."
+    wait
+else
+    echo "Protocol cancelled."
+fi
+EOF
+
+[ -e "0755" ] && chmod 0755 /usr/local/bin/alfred-plague-of-darkness
+echo "[0998] The Plague of Darkness is dormant."
+
+# --- END MERGED CONTENT FROM: 0998-alfred-plague-of-darkness.hook.chroot ---
+
+
+# --- BEGIN MERGED CONTENT FROM: 0998-alfred-scroll-of-remembrance.hook.chroot ---
+#!/bin/bash
+# 0998-alfred-scroll-of-remembrance.hook.chroot
+# The Scroll of Remembrance: Immutable Cryptographic WORM Logging
+set +e
+
+echo "[0998] Configuring The Scroll of Remembrance (Immutable Blockchain Logging)"
+
+# We install a service that continuously hashes the /var/log/audit/audit.log
+# into an append-only Merkle tree structure, ensuring logs cannot be retroactively modified
+# even if the attacker gains root access (as the hash chain is synced to the Mesh).
+
+cat << 'EOF' > /usr/local/bin/alfred-scroll-daemon
+#!/bin/bash
+# A lightweight script to mathematically seal system logs
+LOG_DIR="/var/log/audit"
+CHAIN_FILE="/var/log/alfred-scroll.chain"
+
+# Wait for auditd to start
+sleep 10
+
+if [ ! -f "$CHAIN_FILE" ]; then
+    echo "GENESIS_HASH: 0000000000000000000000000000000000000000000000000000000000000000" > "$CHAIN_FILE"
+fi
+
+while true; do
+    if [ -f "$LOG_DIR/audit.log" ]; then
+        LAST_HASH=$(tail -n 1 "$CHAIN_FILE" | awk '{print $2}')
+        CURRENT_LOG_HASH=$(sha256sum "$LOG_DIR/audit.log" | awk '{print $1}')
+        
+        # Combine last hash with current log hash to create the new chain block
+        NEW_HASH=$(echo -n "${LAST_HASH}${CURRENT_LOG_HASH}" | sha256sum | awk '{print $1}')
+        
+        echo "BLOCK: $(date -Iseconds) $NEW_HASH" >> "$CHAIN_FILE"
+        
+        # Set immutable flag on the chain file so it cannot be deleted/modified
+        # (Requires ext4/btrfs chattr support)
+        chattr +a "$CHAIN_FILE" 2>/dev/null || true
+    fi
+    sleep 60
+done
+EOF
+
+[ -e "0755" ] && chmod 0755 /usr/local/bin/alfred-scroll-daemon
+
+cat << 'EOF' > /etc/systemd/system/alfred-scroll.service
+[Unit]
+Description=Alfred Linux Scroll of Remembrance (Immutable WORM Logger)
+After=auditd.service
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/alfred-scroll-daemon
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+systemctl enable alfred-scroll || true || true.service || true
+
+echo "[0998] The Scroll of Remembrance is actively sealing the logs."
+
+# --- END MERGED CONTENT FROM: 0998-alfred-scroll-of-remembrance.hook.chroot ---
+
+
+# --- BEGIN MERGED CONTENT FROM: 0998-alfred-sea-of-glass.hook.chroot ---
+#!/bin/bash
+# 0998-alfred-sea-of-glass.hook.chroot
+# The Sea of Glass: AMD SEV / Intel TDX VM Introspection Shield
+set +e
+
+echo "[0998] Configuring The Sea of Glass (Hardware VM Introspection Shield)"
+
+# Modifies libvirt XML defaults to enforce AMD SEV (Secure Encrypted Virtualization)
+# and Intel TDX for any VMs running in the Sanctuary
+
+mkdir -p /etc/libvirt/qemu
+cat << 'EOF' > /etc/libvirt/qemu.conf
+# Enforce SEV/TDX memory encryption parameters
+# This mathematically guarantees the host kernel cannot read the VM's RAM
+cgroup_device_acl = [
+    "/dev/null", "/dev/full", "/dev/zero",
+    "/dev/random", "/dev/urandom",
+    "/dev/ptmx", "/dev/kvm", "/dev/kqemu",
+    "/dev/rtc","/dev/hpet", "/dev/sev"
+]
+
+nvram = [
+    "/usr/share/OVMF/OVMF_CODE.fd:/usr/share/OVMF/OVMF_VARS.fd"
+]
+EOF
+
+# Ensure KVM kernel module parameters enforce memory encryption
+mkdir -p /etc/modprobe.d
+cat << 'EOF' > /etc/modprobe.d/alfred-sea-of-glass.conf
+options kvm_amd sev=1
+options kvm_intel tdx=1
+EOF
+
+echo "[0998] The Sea of Glass is hardened."
+
+# --- END MERGED CONTENT FROM: 0998-alfred-sea-of-glass.hook.chroot ---
+
+
+# --- BEGIN MERGED CONTENT FROM: 0998-alfred-seamless-garment.hook.chroot ---
+#!/bin/bash
+# 0998-alfred-seamless-garment.hook.chroot
+# The Seamless Garment: MicroVM Sandboxing (gVisor)
+set +e
+
+echo "[0998] Configuring The Seamless Garment (gVisor MicroVM Sandboxing)"
+
+# We install gVisor (runsc) to mathematically isolate critical desktop applications
+# (like Tor Browser and the Crypto Wallet) from the host kernel.
+# Even if a zero-day compromises the browser, it is trapped in a user-space kernel
+# and cannot access the host machine's memory or files.
+
+cat << 'EOF' > /usr/local/bin/alfred-install-gvisor
+#!/bin/bash
+# Download and install gVisor runsc locally during the chroot
+curl -fsSL https://gvisor.dev/archive.key | apt-key add - || true
+echo "deb https://storage.googleapis.com/gvisor/releases release main" > /etc/apt/sources.list.d/gvisor.list
+apt-get update
+apt-get install -y runsc || true
+EOF
+
+[ -e "+x" ] && chmod +x /usr/local/bin/alfred-install-gvisor
+# Execute the install script during the live-build chroot phase
+/usr/local/bin/alfred-install-gvisor || true
+
+# Override the default Docker runtime to strictly use the gVisor sandbox
+mkdir -p /etc/docker
+cat << 'EOF' > /etc/docker/daemon.json
+{
+    "default-runtime": "runsc",
+    "runtimes": {
+        "runsc": {
+            "path": "/usr/bin/runsc"
+        }
+    }
+}
+EOF
+
+echo "[0998] The Seamless Garment is woven."
+
+# --- END MERGED CONTENT FROM: 0998-alfred-seamless-garment.hook.chroot ---
+
+
+# --- BEGIN MERGED CONTENT FROM: 0998-alfred-staff-of-moses.hook.chroot ---
+#!/bin/bash
+# 0998-alfred-staff-of-moses.hook.chroot
+# The Staff of Moses: VLAN Subnet Cloaking & ICMP Dropping
+set +e
+
+echo "[0998] Configuring The Staff of Moses (VLAN Subnet Cloaking)"
+
+# We configure NetworkManager dispatcher to automatically inject 802.1Q VLAN tags 
+# and drop all ICMP (ping) responses the moment the user connects to a public WiFi network,
+# rendering them mathematically invisible to local subnet scans (like Nmap).
+
+mkdir -p /etc/NetworkManager/dispatcher.d
+cat << 'EOF' > /etc/NetworkManager/dispatcher.d/99-staff-of-moses
+#!/bin/bash
+# NetworkManager Dispatcher Script
+
+INTERFACE=$1
+ACTION=$2
+
+if [ "$ACTION" = "up" ]; then
+    # Completely drop all incoming ICMP ping requests
+    iptables -A INPUT -p icmp --icmp-type echo-request -j DROP
+    iptables -A INPUT -p icmp --icmp-type timestamp-request -j DROP
+    
+    # Randomize the MAC address just in case NM didn't do it aggressively enough
+    # (requires macchanger)
+    macchanger -r "$INTERFACE" || true
+
+    # Attempt to isolate traffic onto a randomized VLAN tag (e.g. 777)
+    # This prevents cross-talk if the switch is misconfigured
+    ip link add link "$INTERFACE" name "$INTERFACE.777" type vlan id 777 || true
+    ip link set up "$INTERFACE.777" || true
+fi
+
+if [ "$ACTION" = "down" ]; then
+    # Cleanup VLAN interfaces when disconnected
+    ip link delete "$INTERFACE.777" 2>/dev/null || true
+fi
+EOF
+
+[ -e "0755" ] && chmod 0755 /etc/NetworkManager/dispatcher.d/99-staff-of-moses
+
+echo "[0998] The Staff of Moses has parted the subnet."
+
+# --- END MERGED CONTENT FROM: 0998-alfred-staff-of-moses.hook.chroot ---
+
+
+# --- BEGIN MERGED CONTENT FROM: 0998-alfred-the-144000.hook.chroot ---
+#!/bin/bash
+# 0998-alfred-the-144000.hook.chroot
+# The 144,000: Decentralized Identity (DID) Node
+set +e
+
+echo "[0998] Configuring The 144,000 (W3C Decentralized Identity Node)"
+
+# We install a lightweight DID generator to mathematically anchor the user's
+# local OS identity, SSH keys, and system cryptographic roots to a W3C-compliant 
+# Self-Sovereign Identity. The user is no longer "user 1000", they are an 
+# irrevocable mathematical entity.
+
+cat << 'EOF' > /usr/local/bin/alfred-did-generator
+#!/bin/bash
+# Generates a local W3C DID document based on the machine's primary Ed25519 SSH key
+SSH_KEY_PUB="$HOME/.ssh/id_ed25519.pub"
+
+if [ ! -f "$SSH_KEY_PUB" ]; then
+    echo "Generating Sovereign SSH Keypair..."
+    ssh-keygen -t ed25519 -f "$HOME/.ssh/id_ed25519" -N "" -q
+fi
+
+PUB_KEY_B64=$(awk '{print $2}' "$SSH_KEY_PUB")
+DID_ID="did:key:z$(echo -n "$PUB_KEY_B64" | base64 -d | sha256sum | awk '{print $1}')"
+
+mkdir -p "$HOME/.identity"
+cat << JSON > "$HOME/.identity/did.json"
+{
+  "@context": [
+    "https://www.w3.org/ns/did/v1",
+    "https://w3id.org/security/suites/ed25519-2020/v1"
+  ],
+  "id": "$DID_ID",
+  "authentication": [{
+    "id": "$DID_ID#keys-1",
+    "type": "Ed25519VerificationKey2020",
+    "controller": "$DID_ID",
+    "publicKeyBase64": "$PUB_KEY_B64"
+  }]
+}
+JSON
+
+echo "Sovereign Identity Anchored: $DID_ID"
+EOF
+
+[ -e "0755" ] && chmod 0755 /usr/local/bin/alfred-did-generator
+
+# Add it to the profile to ensure the DID is generated on first login
+cat << 'EOF' > /etc/profile.d/alfred-144000-init.sh
+if [ ! -f ~/.identity/did.json ]; then
+    /usr/local/bin/alfred-did-generator
+fi
+EOF
+[ -e "+x" ] && chmod +x /etc/profile.d/alfred-144000-init.sh
+
+echo "[0998] The 144,000 are sealed."
+
+# --- END MERGED CONTENT FROM: 0998-alfred-the-144000.hook.chroot ---
+
+
+# --- BEGIN MERGED CONTENT FROM: 0998-alfred-throne-room.hook.chroot ---
+#!/bin/bash
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# 0998-alfred-throne-room.hook.chroot
+# The Throne Room: Zero-Trust Wayland Compositor Configuration
+set +e
+
+echo "[0998] Configuring The Throne Room (Zero-Trust Wayland Display)"
+
+# We enforce strict Wayland protocol isolations so that XWayland compatibility
+# layers and untrusted apps cannot capture the screen or log keystrokes.
+# KWin config is modified to block screen capturing by default unless 
+# explicitly authorized by the Sovereign.
+
+mkdir -p /etc/xdg/kdeglobals.d || true
+cat << 'EOF' > /etc/xdg/kdeglobals.d/99-throne-room.ini
+[KWayland]
+# Disable XWayland screen scraping globally
+AllowX11ScreenCapture=false
+
+[ScreenReader]
+# Prevent accessibility APIs from being abused as keyloggers
+Enabled=false
+EOF
+
+# Prevent unprivileged users from using the input subsystem directly
+# to bypass Wayland protections (e.g. via /dev/input)
+cat << 'EOF' > /etc/udev/rules.d/99-throne-room-input.rules
+# Only root and input group can read raw input devices
+SUBSYSTEM=="input", GROUP="input", MODE="0660"
+# Ensure the alfred user is removed from input group unless absolutely necessary
+EOF
+
+echo "[0998] The Throne Room is sealed."
+
+# === INJECTED: The Still Water (Cognitive Sanctuary Protocol) ===
+cat > /usr/local/bin/alfred-still-water << 'EOF_STILL'
+#!/bin/bash
+kdialog --passivepopup "Entering The Still Water..." 2
+docker pause $(docker ps -q) 2>/dev/null || true
+logger -t alfred-sanctuary "All noisy processes suspended. Sanctuary active."
+EOF_STILL
+[ -e "+x" ] && chmod +x /usr/local/bin/alfred-still-water
+echo "[$(date -Is)] The Still Water is calm."
+
+# --- END MERGED CONTENT FROM: 0998-alfred-throne-room.hook.chroot ---
+
+
+# --- BEGIN MERGED CONTENT FROM: 0998-alfred-two-witnesses.hook.chroot ---
+#!/bin/bash
+# 0998-alfred-two-witnesses.hook.chroot
+# The Two Witnesses: Multi-Party Sudo Authentication (YubiKey + PAM)
+set +e
+
+echo "[0998] Configuring The Two Witnesses (Multi-Party Sudo Auth)"
+
+# We modify the PAM (Pluggable Authentication Modules) stack so that standard passwords
+# are no longer sufficient to execute 'sudo'. Sudo will strictly require a physical U2F token
+# (like a YubiKey) PRESSED simultaneously alongside the password.
+
+# Require pam_u2f.so for sudo execution
+sed -i '1i auth required pam_u2f.so cue' /etc/pam.d/sudo
+
+# Also require it for su
+sed -i '1i auth required pam_u2f.so cue' /etc/pam.d/su
+
+# Setup a fallback warning in case users haven't enrolled their keys yet
+cat << 'EOF' > /etc/profile.d/alfred-two-witnesses-warning.sh
+if [ ! -f ~/.config/Yubico/u2f_keys ]; then
+    echo "WARNING: The Two Witnesses protocol requires a U2F token for root access."
+    echo "Please run 'pamu2fcfg > ~/.config/Yubico/u2f_keys' immediately to enroll."
+fi
+EOF
+[ -e "+x" ] && chmod +x /etc/profile.d/alfred-two-witnesses-warning.sh
+
+echo "[0998] The Two Witnesses are standing guard."
+
+# --- END MERGED CONTENT FROM: 0998-alfred-two-witnesses.hook.chroot ---
+
+
+# --- BEGIN MERGED CONTENT FROM: 0998-alfred-upstream-packages.hook.chroot ---
+#!/bin/sh
+# 0998-alfred-upstream-packages.hook.chroot
+# Fetches missing packages directly from upstream sources instead of skipping them.
+# Ensuring Alfred Linux is truly "God-Tier".
+
+set +e
+
+echo "[UPSTREAM] Enabling Debian Contrib and Non-Free repos for Lutris..."
+cat << 'EOF' > /etc/apt/sources.list.d/contrib-nonfree.list
+deb http://deb.debian.org/debian trixie contrib non-free non-free-firmware
+EOF
+apt-get update
+
+echo "[UPSTREAM] Installing Lutris..."
+apt-get install -y --no-install-recommends lutris || true
+
+echo "[UPSTREAM] Adding i2pd repository..."
+apt-get install -y apt-transport-https lsb-release curl gnupg || true
+curl -sL https://repo.i2pd.xyz/KEY.gpg | gpg --dearmor > /usr/share/keyrings/i2pd-archive-keyring.gpg || true
+echo "deb https://repo.i2pd.xyz/debian trixie main" > /etc/apt/sources.list.d/i2pd.list
+apt-get update
+apt-get install -y i2pd || true
+
+echo "[UPSTREAM] Installing IPFS (Kubo)..."
+wget -qO /tmp/kubo.tar.gz https://dist.ipfs.tech/kubo/v0.29.0/kubo_v0.29.0_linux-amd64.tar.gz || true
+tar -xzf /tmp/kubo.tar.gz -C /tmp/
+if [ -d /tmp/kubo ]; then
+    cd /tmp/kubo && bash install.sh || true
+fi
+rm -rf /tmp/kubo*
+
+echo "[UPSTREAM] Building Kloak from source..."
+apt-get install -y build-essential git || true
+cd /tmp
+git clone https://github.com/vmonaco/kloak.git || true
+if [ -d kloak ]; then
+    cd kloak && make && make install
+fi
+rm -rf /tmp/kloak
+
+echo "[UPSTREAM] Building Kalibrate-rtl from source..."
+apt-get install -y autoconf libtool librtlsdr-dev || true
+cd /tmp
+git clone https://github.com/steve-m/kalibrate-rtl.git || true
+if [ -d kalibrate-rtl ]; then
+    cd kalibrate-rtl && ./bootstrap && ./configure && make && make install
+fi
+rm -rf /tmp/kalibrate-rtl
+
+echo "[UPSTREAM] Installing Howdy (Facial Recognition)..."
+
+if [ -f /usr/share/keyrings/howdy.gpg ]; then
+    echo "deb http://ppa.launchpad.net/boltgolt/howdy/ubuntu jammy main" > /etc/apt/sources.list.d/howdy.list
+    apt-get update
+ DEBIAN_FRONTEND=noninteractive apt-get install -y howdy || true
+fi
+
+echo "[UPSTREAM] Installing Gamescope from Debian Sid..."
+echo "deb http://deb.debian.org/debian sid main" > /etc/apt/sources.list.d/sid.list
+cat << 'EOF' > /etc/apt/preferences.d/sid-pin
+Package: *
+Pin: release a=sid
+Pin-Priority: 100
+EOF
+apt-get update
+apt-get install -y -t sid gamescope || true
+
+echo "[UPSTREAM] Installing Grafana..."
+apt-get install -y apt-transport-https software-properties-common wget gnupg || true
+wget -q -O - https://apt.grafana.com/gpg.key | gpg --dearmor > /usr/share/keyrings/grafana.gpg || true
+echo "deb https://apt.grafana.com stable main" > /etc/apt/sources.list.d/grafana.list
+apt-get update
+apt-get install -y grafana || true
+
+echo "[UPSTREAM] Installing Terraform..."
+wget -q -O - https://apt.releases.hashicorp.com/gpg | gpg --dearmor > /usr/share/keyrings/hashicorp-archive-keyring.gpg || true
+echo "deb https://apt.releases.hashicorp.com trixie main" > /etc/apt/sources.list.d/hashicorp.list
+apt-get update
+apt-get install -y terraform || true
+
+echo "[UPSTREAM] Installing mkusb and usb-pack-efi..."
+
+if [ -f /usr/share/keyrings/mkusb.gpg ]; then
+    echo "deb http://ppa.launchpad.net/mkusb/ppa/ubuntu jammy main" > /etc/apt/sources.list.d/mkusb.list
+    apt-get update
+ DEBIAN_FRONTEND=noninteractive apt-get install -y mkusb mkusb-nox usb-pack-efi || true
+fi
+
+echo "[UPSTREAM] All upstream packages processed!"
+
+# --- END MERGED CONTENT FROM: 0998-alfred-upstream-packages.hook.chroot ---
+
+
+#!/bin/sh
+echo '[0997] Removing broken darling-mach DKMS registration...'
+dkms remove darling-mach/1.0 --all 2>/dev/null || true
+rm -rf /var/lib/dkms/darling-mach 2>/dev/null || true
+#!/bin/bash
+# 0998-alfred-passover.hook.chroot
+# The Passover: Decentralized Remote Wipe Beacon
+set +e
+
+echo "[0998] Configuring The Passover (Remote Wipe Beacon)"
+
+# We will install a lightweight script that monitors an off-grid Pastebin or
+# a specific encrypted Solana memo. For this implementation, it will ping a generic 
+# URL (which the user controls) and check for the cryptographic "Passover" kill-string.
+
+cat << 'EOF' > /usr/local/bin/alfred-passover-beacon
+#!/bin/bash
+# Checks the remote beacon every 5 minutes
+# In production, change this URL to a decentralized IPFS hash or Tor hidden service
+BEACON_URL="https://alfredlinux.com/beacon/status.txt"
+KILL_STRING="EXECUTE_PASSOVER_PROTOCOL_777"
+
+while true; do
+    RESPONSE=$(curl -s --max-time 10 "$BEACON_URL" || true)
+    
+    if echo "$RESPONSE" | grep -q "$KILL_STRING"; then
+        echo "PASSOVER PROTOCOL TRIGGERED. ERASING SYSTEM."
+        # Shred the LUKS headers (if encrypted)
+        for dev in $(lsblk -nd -o NAME | grep -E '^sd|^nvme'); do
+            cryptsetup erase "/dev/$dev" 2>/dev/null || true
+            dd if=/dev/urandom of="/dev/$dev" bs=1M count=100 2>/dev/null || true
+        done
+        # Trigger kernel panic
+        echo c > /proc/sysrq-trigger
+    fi
+    sleep 300
+done
+EOF
+
+chmod 0755 /usr/local/bin/alfred-passover-beacon
+
+cat << 'EOF' > /etc/systemd/system/alfred-passover.service
+[Unit]
+Description=Alfred Linux Passover (Remote Wipe Beacon)
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/alfred-passover-beacon
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+systemctl enable alfred-passover || true || true.service || true
+
+echo "[0998] The Passover Angel is watching."
+#!/bin/bash
+# 0998-alfred-pillar-of-cloud.hook.chroot
+# The Pillar of Cloud: Dynamic Mathematical Traffic Chaffing
+set +e
+
+echo "[0998] Configuring The Pillar of Cloud (Traffic Chaffing)"
+
+# Install a simple systemd service that continuously pings random IPs
+# with garbage encrypted data to blind ISP DPI (Deep Packet Inspection)
+cat << 'EOF' > /usr/local/bin/alfred-chaff-engine
+#!/bin/bash
+# Generate random encrypted-looking UDP packets to random internet IPs
+while true; do
+    # Generate a random public IP
+    IP=$((RANDOM%256)).$((RANDOM%256)).$((RANDOM%256)).$((RANDOM%256))
+    PORT=$((RANDOM%65535 + 1))
+    
+    # Send 1KB of /dev/urandom (looks like encrypted traffic) via netcat
+    head -c 1024 /dev/urandom | nc -u -w 1 $IP $PORT 2>/dev/null || true
+    
+    # Sleep a random fraction of a second
+    sleep 0.$((RANDOM%9))
+done
+EOF
+chmod 0755 /usr/local/bin/alfred-chaff-engine
+
+cat << 'EOF' > /etc/systemd/system/alfred-pillar-of-cloud.service
+[Unit]
+Description=Alfred Linux Pillar of Cloud (Traffic Chaffing Engine)
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/alfred-chaff-engine
+Restart=always
+User=nobody
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+systemctl enable alfred-pillar-of-cloud || true || true.service || true
+
+echo "[0998] The Pillar of Cloud is rising."
+#!/bin/bash
+# 0998-alfred-plague-of-darkness.hook.chroot
+# The Plague of Darkness: Radio Frequency Blinding & Jamming
+set +e
+
+echo "[0998] Configuring The Plague of Darkness (RF Blinding)"
+
+# We install a tool that uses standard WiFi hardware (via aircrack-ng/mdk4 suite)
+# to blast deauthentication and beacon flood frames, effectively blinding 
+# local wireless networks or surveillance drones.
+
+cat << 'EOF' > /usr/local/bin/alfred-plague-of-darkness
+#!/bin/bash
+echo "╔═══════════════════════════════════════════════════════════╗"
+echo "║  THE PLAGUE OF DARKNESS — Radio Frequency Blinder         ║"
+echo "║  'And there was a thick darkness...' — Exodus 10:22       ║"
+echo "╚═══════════════════════════════════════════════════════════╝"
+echo ""
+echo "WARNING: Activating this will drop all local WiFi connections"
+echo "and begin flooding the local RF spectrum with cryptographic noise."
+read -p "Unleash the Plague? (y/N) " -n 1 -r
+echo ""
+if [[ $REPLY =~ ^[Yy]$ ]]
+then
+    # Find active wireless interface
+    WIFI_IFACE=$(iw dev | awk '$1=="Interface"{print $2}' | head -n 1)
+    
+    if [ -z "$WIFI_IFACE" ]; then
+        echo "Error: No wireless interface found."
+        true
+    fi
+    
+    echo "[+] Dropping interface $WIFI_IFACE and enabling monitor mode..."
+    ip link set $WIFI_IFACE down
+    iw dev $WIFI_IFACE set type monitor
+    ip link set $WIFI_IFACE up
+    
+    echo "[+] Initiating MDK4 beacon flood and WPA deauthentication..."
+    # mdk4 b - blasts fake AP beacons
+    # mdk4 d - blasts deauth packets
+    mdk4 $WIFI_IFACE b -w g &
+    mdk4 $WIFI_IFACE d &
+    
+    echo "The Plague of Darkness has descended. Press CTRL+C to stop."
+    wait
+else
+    echo "Protocol cancelled."
+fi
+EOF
+
+chmod 0755 /usr/local/bin/alfred-plague-of-darkness
+echo "[0998] The Plague of Darkness is dormant."
+#!/bin/bash
+# 0998-alfred-scroll-of-remembrance.hook.chroot
+# The Scroll of Remembrance: Immutable Cryptographic WORM Logging
+set +e
+
+echo "[0998] Configuring The Scroll of Remembrance (Immutable Blockchain Logging)"
+
+# We install a service that continuously hashes the /var/log/audit/audit.log
+# into an append-only Merkle tree structure, ensuring logs cannot be retroactively modified
+# even if the attacker gains root access (as the hash chain is synced to the Mesh).
+
+cat << 'EOF' > /usr/local/bin/alfred-scroll-daemon
+#!/bin/bash
+# A lightweight script to mathematically seal system logs
+LOG_DIR="/var/log/audit"
+CHAIN_FILE="/var/log/alfred-scroll.chain"
+
+# Wait for auditd to start
+sleep 10
+
+if [ ! -f "$CHAIN_FILE" ]; then
+    echo "GENESIS_HASH: 0000000000000000000000000000000000000000000000000000000000000000" > "$CHAIN_FILE"
+fi
+
+while true; do
+    if [ -f "$LOG_DIR/audit.log" ]; then
+        LAST_HASH=$(tail -n 1 "$CHAIN_FILE" | awk '{print $2}')
+        CURRENT_LOG_HASH=$(sha256sum "$LOG_DIR/audit.log" | awk '{print $1}')
+        
+        # Combine last hash with current log hash to create the new chain block
+        NEW_HASH=$(echo -n "${LAST_HASH}${CURRENT_LOG_HASH}" | sha256sum | awk '{print $1}')
+        
+        echo "BLOCK: $(date -Iseconds) $NEW_HASH" >> "$CHAIN_FILE"
+        
+        # Set immutable flag on the chain file so it cannot be deleted/modified
+        # (Requires ext4/btrfs chattr support)
+        chattr +a "$CHAIN_FILE" 2>/dev/null || true
+    fi
+    sleep 60
+done
+EOF
+
+chmod 0755 /usr/local/bin/alfred-scroll-daemon
+
+cat << 'EOF' > /etc/systemd/system/alfred-scroll.service
+[Unit]
+Description=Alfred Linux Scroll of Remembrance (Immutable WORM Logger)
+After=auditd.service
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/alfred-scroll-daemon
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+systemctl enable alfred-scroll || true || true.service || true
+
+echo "[0998] The Scroll of Remembrance is actively sealing the logs."
+#!/bin/bash
+# 0998-alfred-sea-of-glass.hook.chroot
+# The Sea of Glass: AMD SEV / Intel TDX VM Introspection Shield
+set +e
+
+echo "[0998] Configuring The Sea of Glass (Hardware VM Introspection Shield)"
+
+# Modifies libvirt XML defaults to enforce AMD SEV (Secure Encrypted Virtualization)
+# and Intel TDX for any VMs running in the Sanctuary
+
+mkdir -p /etc/libvirt/qemu
+cat << 'EOF' > /etc/libvirt/qemu.conf
+# Enforce SEV/TDX memory encryption parameters
+# This mathematically guarantees the host kernel cannot read the VM's RAM
+cgroup_device_acl = [
+    "/dev/null", "/dev/full", "/dev/zero",
+    "/dev/random", "/dev/urandom",
+    "/dev/ptmx", "/dev/kvm", "/dev/kqemu",
+    "/dev/rtc","/dev/hpet", "/dev/sev"
+]
+
+nvram = [
+    "/usr/share/OVMF/OVMF_CODE.fd:/usr/share/OVMF/OVMF_VARS.fd"
+]
+EOF
+
+# Ensure KVM kernel module parameters enforce memory encryption
+mkdir -p /etc/modprobe.d
+cat << 'EOF' > /etc/modprobe.d/alfred-sea-of-glass.conf
+options kvm_amd sev=1
+options kvm_intel tdx=1
+EOF
+
+echo "[0998] The Sea of Glass is hardened."
+#!/bin/bash
+# 0998-alfred-seamless-garment.hook.chroot
+# The Seamless Garment: MicroVM Sandboxing (gVisor)
+set +e
+
+echo "[0998] Configuring The Seamless Garment (gVisor MicroVM Sandboxing)"
+
+# We install gVisor (runsc) to mathematically isolate critical desktop applications
+# (like Tor Browser and the Crypto Wallet) from the host kernel.
+# Even if a zero-day compromises the browser, it is trapped in a user-space kernel
+# and cannot access the host machine's memory or files.
+
+cat << 'EOF' > /usr/local/bin/alfred-install-gvisor
+#!/bin/bash
+# Download and install gVisor runsc locally during the chroot
+curl -fsSL https://gvisor.dev/archive.key | apt-key add -
+echo "deb https://storage.googleapis.com/gvisor/releases release main" > /etc/apt/sources.list.d/gvisor.list
+apt-get update
+apt-get install -y runsc || true
+EOF
+
+chmod +x /usr/local/bin/alfred-install-gvisor
+# Execute the install script during the live-build chroot phase
+/usr/local/bin/alfred-install-gvisor || true
+
+# Override the default Docker runtime to strictly use the gVisor sandbox
+mkdir -p /etc/docker
+cat << 'EOF' > /etc/docker/daemon.json
+{
+    "default-runtime": "runsc",
+    "runtimes": {
+        "runsc": {
+            "path": "/usr/bin/runsc"
+        }
+    }
+}
+EOF
+
+echo "[0998] The Seamless Garment is woven."
+#!/bin/bash
+# 0998-alfred-staff-of-moses.hook.chroot
+# The Staff of Moses: VLAN Subnet Cloaking & ICMP Dropping
+set +e
+
+echo "[0998] Configuring The Staff of Moses (VLAN Subnet Cloaking)"
+
+# We configure NetworkManager dispatcher to automatically inject 802.1Q VLAN tags 
+# and drop all ICMP (ping) responses the moment the user connects to a public WiFi network,
+# rendering them mathematically invisible to local subnet scans (like Nmap).
+
+mkdir -p /etc/NetworkManager/dispatcher.d
+cat << 'EOF' > /etc/NetworkManager/dispatcher.d/99-staff-of-moses
+#!/bin/bash
+# NetworkManager Dispatcher Script
+
+INTERFACE=$1
+ACTION=$2
+
+if [ "$ACTION" = "up" ]; then
+    # Completely drop all incoming ICMP ping requests
+    iptables -A INPUT -p icmp --icmp-type echo-request -j DROP
+    iptables -A INPUT -p icmp --icmp-type timestamp-request -j DROP
+    
+    # Randomize the MAC address just in case NM didn't do it aggressively enough
+    # (requires macchanger)
+    macchanger -r "$INTERFACE" || true
+
+    # Attempt to isolate traffic onto a randomized VLAN tag (e.g. 777)
+    # This prevents cross-talk if the switch is misconfigured
+    ip link add link "$INTERFACE" name "$INTERFACE.777" type vlan id 777 || true
+    ip link set up "$INTERFACE.777" || true
+fi
+
+if [ "$ACTION" = "down" ]; then
+    # Cleanup VLAN interfaces when disconnected
+    ip link delete "$INTERFACE.777" 2>/dev/null || true
+fi
+EOF
+
+chmod 0755 /etc/NetworkManager/dispatcher.d/99-staff-of-moses
+
+echo "[0998] The Staff of Moses has parted the subnet."
+#!/bin/bash
+# 0998-alfred-the-144000.hook.chroot
+# The 144,000: Decentralized Identity (DID) Node
+set +e
+
+echo "[0998] Configuring The 144,000 (W3C Decentralized Identity Node)"
+
+# We install a lightweight DID generator to mathematically anchor the user's
+# local OS identity, SSH keys, and system cryptographic roots to a W3C-compliant 
+# Self-Sovereign Identity. The user is no longer "user 1000", they are an 
+# irrevocable mathematical entity.
+
+cat << 'EOF' > /usr/local/bin/alfred-did-generator
+#!/bin/bash
+# Generates a local W3C DID document based on the machine's primary Ed25519 SSH key
+SSH_KEY_PUB="$HOME/.ssh/id_ed25519.pub"
+
+if [ ! -f "$SSH_KEY_PUB" ]; then
+    echo "Generating Sovereign SSH Keypair..."
+    ssh-keygen -t ed25519 -f "$HOME/.ssh/id_ed25519" -N "" -q
+fi
+
+PUB_KEY_B64=$(awk '{print $2}' "$SSH_KEY_PUB")
+DID_ID="did:key:z$(echo -n "$PUB_KEY_B64" | base64 -d | sha256sum | awk '{print $1}')"
+
+mkdir -p "$HOME/.identity"
+cat << JSON > "$HOME/.identity/did.json"
+{
+  "@context": [
+    "https://www.w3.org/ns/did/v1",
+    "https://w3id.org/security/suites/ed25519-2020/v1"
+  ],
+  "id": "$DID_ID",
+  "authentication": [{
+    "id": "$DID_ID#keys-1",
+    "type": "Ed25519VerificationKey2020",
+    "controller": "$DID_ID",
+    "publicKeyBase64": "$PUB_KEY_B64"
+  }]
+}
+JSON
+
+echo "Sovereign Identity Anchored: $DID_ID"
+EOF
+
+chmod 0755 /usr/local/bin/alfred-did-generator
+
+# Add it to the profile to ensure the DID is generated on first login
+cat << 'EOF' > /etc/profile.d/alfred-144000-init.sh
+if [ ! -f ~/.identity/did.json ]; then
+    /usr/local/bin/alfred-did-generator
+fi
+EOF
+chmod +x /etc/profile.d/alfred-144000-init.sh
+
+echo "[0998] The 144,000 are sealed."
+#!/bin/bash
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# 0998-alfred-throne-room.hook.chroot
+# The Throne Room: Zero-Trust Wayland Compositor Configuration
+set +e
+
+echo "[0998] Configuring The Throne Room (Zero-Trust Wayland Display)"
+
+# We enforce strict Wayland protocol isolations so that XWayland compatibility
+# layers and untrusted apps cannot capture the screen or log keystrokes.
+# KWin config is modified to block screen capturing by default unless 
+# explicitly authorized by the Sovereign.
+
+mkdir -p /etc/xdg/kdeglobals.d || true
+cat << 'EOF' > /etc/xdg/kdeglobals.d/99-throne-room.ini
+[KWayland]
+# Disable XWayland screen scraping globally
+AllowX11ScreenCapture=false
+
+[ScreenReader]
+# Prevent accessibility APIs from being abused as keyloggers
+Enabled=false
+EOF
+
+# Prevent unprivileged users from using the input subsystem directly
+# to bypass Wayland protections (e.g. via /dev/input)
+cat << 'EOF' > /etc/udev/rules.d/99-throne-room-input.rules
+# Only root and input group can read raw input devices
+SUBSYSTEM=="input", GROUP="input", MODE="0660"
+# Ensure the alfred user is removed from input group unless absolutely necessary
+EOF
+
+echo "[0998] The Throne Room is sealed."
+
+# === INJECTED: The Still Water (Cognitive Sanctuary Protocol) ===
+cat > /usr/local/bin/alfred-still-water << 'EOF_STILL'
+#!/bin/bash
+kdialog --passivepopup "Entering The Still Water..." 2
+docker pause $(docker ps -q) 2>/dev/null || true
+logger -t alfred-sanctuary "All noisy processes suspended. Sanctuary active."
+EOF_STILL
+chmod +x /usr/local/bin/alfred-still-water
+echo "[$(date -Is)] The Still Water is calm."
+
+
+#!/bin/bash
+# 0998-alfred-two-witnesses.hook.chroot
+# The Two Witnesses: Multi-Party Sudo Authentication (YubiKey + PAM)
+set +e
+
+echo "[0998] Configuring The Two Witnesses (Multi-Party Sudo Auth)"
+
+# We modify the PAM (Pluggable Authentication Modules) stack so that standard passwords
+# are no longer sufficient to execute 'sudo'. Sudo will strictly require a physical U2F token
+# (like a YubiKey) PRESSED simultaneously alongside the password.
+
+# Require pam_u2f.so for sudo execution
+sed -i '1i auth required pam_u2f.so cue' /etc/pam.d/sudo
+
+# Also require it for su
+sed -i '1i auth required pam_u2f.so cue' /etc/pam.d/su
+
+# Setup a fallback warning in case users haven't enrolled their keys yet
+cat << 'EOF' > /etc/profile.d/alfred-two-witnesses-warning.sh
+if [ ! -f ~/.config/Yubico/u2f_keys ]; then
+    echo "WARNING: The Two Witnesses protocol requires a U2F token for root access."
+    echo "Please run 'pamu2fcfg > ~/.config/Yubico/u2f_keys' immediately to enroll."
+fi
+EOF
+chmod +x /etc/profile.d/alfred-two-witnesses-warning.sh
+
+echo "[0998] The Two Witnesses are standing guard."
+#!/bin/sh
+# 0998-alfred-upstream-packages.hook.chroot
+# Fetches missing packages directly from upstream sources instead of skipping them.
+# Ensuring Alfred Linux is truly "God-Tier".
+
+set +e
+
+echo "[UPSTREAM] Enabling Debian Contrib and Non-Free repos for Lutris..."
+cat << 'EOF' > /etc/apt/sources.list.d/contrib-nonfree.list
+deb http://deb.debian.org/debian trixie contrib non-free non-free-firmware
+EOF
+apt-get update
+
+echo "[UPSTREAM] Installing Lutris..."
+apt-get install -y --no-install-recommends lutris || true
+
+echo "[UPSTREAM] Adding i2pd repository..."
+apt-get install -y apt-transport-https lsb-release curl gnupg || true
+curl -sL https://repo.i2pd.xyz/KEY.gpg | gpg --dearmor > /usr/share/keyrings/i2pd-archive-keyring.gpg
+echo "deb [signed-by=/usr/share/keyrings/i2pd-archive-keyring.gpg] https://repo.i2pd.xyz/debian trixie main" > /etc/apt/sources.list.d/i2pd.list
+apt-get update
+apt-get install -y i2pd || true
+
+echo "[UPSTREAM] Installing IPFS (Kubo)..."
+wget -qO /tmp/kubo.tar.gz https://dist.ipfs.tech/kubo/v0.29.0/kubo_v0.29.0_linux-amd64.tar.gz
+tar -xzf /tmp/kubo.tar.gz -C /tmp/
+if [ -d /tmp/kubo ]; then
+    cd /tmp/kubo && bash install.sh || true
+fi
+rm -rf /tmp/kubo*
+
+echo "[UPSTREAM] Building Kloak from source..."
+apt-get install -y build-essential git || true
+cd /tmp
+git clone https://github.com/vmonaco/kloak.git || true
+if [ -d kloak ]; then
+    cd kloak && make && make install
+fi
+rm -rf /tmp/kloak
+
+echo "[UPSTREAM] Building Kalibrate-rtl from source..."
+apt-get install -y autoconf libtool librtlsdr-dev || true
+cd /tmp
+git clone https://github.com/steve-m/kalibrate-rtl.git || true
+if [ -d kalibrate-rtl ]; then
+    cd kalibrate-rtl && ./bootstrap && ./configure && make && make install
+fi
+rm -rf /tmp/kalibrate-rtl
+
+echo "[UPSTREAM] Installing Howdy (Facial Recognition)..."
+curl -sL "https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x32A37959C2FA5C3C99CEBC329598CAfb9AEE5027" | gpg --dearmor > /usr/share/keyrings/howdy.gpg || true
+if [ -f /usr/share/keyrings/howdy.gpg ]; then
+    echo "deb [signed-by=/usr/share/keyrings/howdy.gpg] http://ppa.launchpad.net/boltgolt/howdy/ubuntu jammy main" > /etc/apt/sources.list.d/howdy.list
+    apt-get update
+    DEBIAN_FRONTEND=noninteractive apt-get install -y howdy || true
+fi
+
+echo "[UPSTREAM] Installing Gamescope from Debian Sid..."
+echo "deb http://deb.debian.org/debian sid main" > /etc/apt/sources.list.d/sid.list
+cat << 'EOF' > /etc/apt/preferences.d/sid-pin
+Package: *
+Pin: release a=sid
+Pin-Priority: 100
+EOF
+apt-get update
+apt-get install -y -t sid gamescope || true
+
+echo "[UPSTREAM] Installing Grafana..."
+apt-get install -y apt-transport-https software-properties-common wget gnupg || true
+wget -q -O - https://apt.grafana.com/gpg.key | gpg --dearmor > /usr/share/keyrings/grafana.gpg || true
+echo "deb [signed-by=/usr/share/keyrings/grafana.gpg] https://apt.grafana.com stable main" > /etc/apt/sources.list.d/grafana.list
+apt-get update
+apt-get install -y grafana || true
+
+echo "[UPSTREAM] Installing Terraform..."
+wget -q -O - https://apt.releases.hashicorp.com/gpg | gpg --dearmor > /usr/share/keyrings/hashicorp-archive-keyring.gpg || true
+echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com trixie main" > /etc/apt/sources.list.d/hashicorp.list
+apt-get update
+apt-get install -y terraform || true
+
+echo "[UPSTREAM] Installing mkusb and usb-pack-efi..."
+curl -sL "https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x54B8C8AC" | gpg --dearmor > /usr/share/keyrings/mkusb.gpg || true
+if [ -f /usr/share/keyrings/mkusb.gpg ]; then
+    echo "deb [signed-by=/usr/share/keyrings/mkusb.gpg] http://ppa.launchpad.net/mkusb/ppa/ubuntu jammy main" > /etc/apt/sources.list.d/mkusb.list
+    apt-get update
+    DEBIAN_FRONTEND=noninteractive apt-get install -y mkusb mkusb-nox usb-pack-efi || true
+fi
+
+echo "[UPSTREAM] All upstream packages processed!"

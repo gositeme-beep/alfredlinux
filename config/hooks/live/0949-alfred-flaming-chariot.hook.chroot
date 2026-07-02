@@ -1,0 +1,36 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# 0999-alfred-flaming-chariot.hook.chroot
+# The Flaming Chariot: Network Exfiltration Honeytokens
+set +e
+
+echo "[0999] Configuring The Flaming Chariot (Honeytokens)"
+
+# We generate highly enticing decoy files (fake AWS keys, fake Bitcoin wallets)
+# that are mathematically tracked by the OS. If malware reads or copies them,
+# the audit system immediately alerts the user. If the attacker actually uses
+# the fake API keys online, a Canary token pings the user's phone.
+
+# Create the bait directory
+BAIT_DIR="/home/alfred/Desktop/Confidential_Keys"
+mkdir -p "$BAIT_DIR" || true
+
+# Generate fake AWS credentials
+cat << 'EOF' > "$BAIT_DIR/aws_root_credentials.csv"
+User name,Access key ID,Secret access key
+root,AKIAIOSFODNN7EXAMPLE,wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
+EOF
+
+# Generate a fake Bitcoin wallet (wallet.dat format dummy)
+head -c 1024 /dev/urandom > "$BAIT_DIR/wallet.dat"
+
+# Configure auditd to aggressively monitor any read/execution of the bait files
+cat << 'EOF' > /etc/audit/rules.d/alfred-flaming-chariot.rules
+-w /home/alfred/Desktop/Confidential_Keys/ -p rwxa -k FLAMING_CHARIOT_TRIGGERED
+EOF
+
+echo "[0999] The Flaming Chariots are positioned."
+
+exit 0

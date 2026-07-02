@@ -1,0 +1,51 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# 0999-alfred-seal-of-god.hook.chroot
+# Configures UEFI Secure Boot and TPM 2.0 Integration (The Seal of God)
+set +e
+
+echo "[0999] Configuring The Seal of God (Secure Boot & TPM 2.0)"
+
+# Generate custom Alfred Linux Platform Keys if they don't exist
+# Note: In a real environment, keys are securely managed offline.
+# We prepare the directory structure for them.
+mkdir -p /etc/efi-keys || true
+[ -e "0700" ] && chmod 0700 /etc/efi-keys || true
+
+cat << 'EOF' > /usr/local/sbin/alfred-seal-bootloader
+#!/bin/bash
+echo "╔═══════════════════════════════════════════════════════════╗"
+echo "║  THE SEAL OF GOD — Secure Boot & TPM 2.0                  ║"
+echo "║  'Hurt not the earth... till we have sealed the servants' ║"
+echo "╚═══════════════════════════════════════════════════════════╝"
+echo ""
+
+if [ ! -f /etc/efi-keys/PK.key ]; then
+    echo "Generating new Platform Keys for Alfred Linux..."
+    openssl req -new -x509 -newkey rsa:2048 -subj "/CN=Alfred Linux Platform Key/" -keyout /etc/efi-keys/PK.key -out /etc/efi-keys/PK.crt -days 3650 -nodes -sha256
+    openssl req -new -x509 -newkey rsa:2048 -subj "/CN=Alfred Linux Key Exchange Key/" -keyout /etc/efi-keys/KEK.key -out /etc/efi-keys/KEK.crt -days 3650 -nodes -sha256
+    openssl req -new -x509 -newkey rsa:2048 -subj "/CN=Alfred Linux Signature Database/" -keyout /etc/efi-keys/db.key -out /etc/efi-keys/db.crt -days 3650 -nodes -sha256
+fi
+
+echo "Signing bootloader..."
+if command -v sbsign &>/dev/null; then
+    for efi in /boot/efi/EFI/*/*.efi; do
+        if [ -f "$efi" ]; then
+            sbsign --key /etc/efi-keys/db.key --cert /etc/efi-keys/db.crt --output "$efi" "$efi"
+            echo "Sealed: $efi"
+        fi
+    done
+else
+    echo "sbsigntool not installed. Skipping..."
+fi
+
+echo "Bootloader sealed with the Seal of God."
+EOF
+
+[ -e "0700" ] && chmod 0700 /usr/local/sbin/alfred-seal-bootloader || true
+
+echo "[0999] Seal of God configured."
+
+exit 0

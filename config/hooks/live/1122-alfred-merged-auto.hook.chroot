@@ -1,0 +1,96 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+# [Genesis Forge] AppArmor Isolation: /usr/local/bin/alfred-util-157
+# Creates a granular zero-trust execution envelope for individual binaries.
+echo "[Genesis Forge] Enveloping binary: /usr/local/bin/alfred-util-157"
+mkdir -p /etc/apparmor.d/alfred-isolated/ || true
+# We only construct the profile structure if it doesn't already exist
+if [ ! -f "/etc/apparmor.d/alfred-isolated/profile-170" ]; then
+    cat > /etc/apparmor.d/alfred-isolated/profile-170 << 'EOF'
+profile alfred-sandbox-170 /usr/local/bin/alfred-util-157 flags=(complain) {
+  #include <abstractions/base>
+  /usr/local/bin/alfred-util-157 rmix,
+  /dev/null rw,
+}
+EOF
+fi
+
+
+# --- BEGIN MERGED CONTENT FROM: 1122-alfred-whisper-of-angels.hook.chroot ---
+#!/bin/bash
+set +e
+echo "[1122] Initializing Whisper of the Angels (Mesh Gossip Protocol)"
+
+cat > /usr/local/bin/alfred-mesh-gossip << 'EOF'
+#!/bin/bash
+# Monitors system state and sends pubsub messages to Lazarus Mesh
+while true; do
+    LOAD=$(cat /proc/loadavg | awk '{print $1}')
+    if (($(echo "$LOAD > 4.0" | bc -l))); then
+        # Publish to IPFS pubsub
+        ipfs pubsub pub lazarus-gossip "A brother node is under heavy labor." 2>/dev/null || true
+    fi
+    sleep 60
+done
+EOF
+
+[ -e "+x" ] && chmod +x /usr/local/bin/alfred-mesh-gossip
+
+cat > /etc/systemd/system/alfred-mesh-gossip.service << 'EOF'
+[Unit]
+Description=Whisper of the Angels (Mesh Gossip)
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/alfred-mesh-gossip
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+systemctl enable alfred-mesh-gossip || true || true.service 2>/dev/null || true
+echo "The Angels are whispering."
+
+# --- END MERGED CONTENT FROM: 1122-alfred-whisper-of-angels.hook.chroot ---
+
+
+#!/bin/bash
+set +e
+echo "[1122] Initializing Whisper of the Angels (Mesh Gossip Protocol)"
+
+cat > /usr/local/bin/alfred-mesh-gossip << 'EOF'
+#!/bin/bash
+# Monitors system state and sends pubsub messages to Lazarus Mesh
+while true; do
+    LOAD=$(cat /proc/loadavg | awk '{print $1}')
+    if (($(echo "$LOAD > 4.0" | bc -l))); then
+        # Publish to IPFS pubsub
+        ipfs pubsub pub lazarus-gossip "A brother node is under heavy labor." 2>/dev/null || true
+    fi
+    sleep 60
+done
+EOF
+
+chmod +x /usr/local/bin/alfred-mesh-gossip
+
+cat > /etc/systemd/system/alfred-mesh-gossip.service << 'EOF'
+[Unit]
+Description=Whisper of the Angels (Mesh Gossip)
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/alfred-mesh-gossip
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+systemctl enable alfred-mesh-gossip || true || true.service 2>/dev/null || true
+echo "The Angels are whispering."

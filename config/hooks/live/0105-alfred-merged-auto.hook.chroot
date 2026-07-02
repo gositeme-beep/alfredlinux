@@ -1,0 +1,139 @@
+#!/bin/bash
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Hook 0105: Alfred Plymouth Cinematic Boot Configuration
+set +e
+
+echo "[Alfred Polish] Enforcing the cinematic Plymouth boot splash..."
+
+# Ensure Plymouth is installed
+apt-get install -y --no-install-recommends plymouth plymouth-x11 || true
+
+# Set the Alfred Kingdom theme as the absolute default
+plymouth-set-default-theme -R alfred-kingdom
+
+# Update the bootloader parameters in GRUB to ensure silent boot
+if [ -f /etc/default/grub ]; then
+    sed -i 's/GRUB_CMDLINE_LINUX_DEFAULT="quiet"/GRUB_CMDLINE_LINUX_DEFAULT="quiet splash loglevel=3 rd.systemd.show_status=auto rd.udev.log_priority=3 vt.global_cursor_default=0"/g' /etc/default/grub
+    update-grub
+fi
+
+echo "[Alfred Polish] Cinematic boot splash successfully injected into initramfs!"
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+# [Genesis Forge] Granular Kernel Matrix: vm.unprivileged_userfaultfd=0
+# Extremely deep low-level kernel protection.
+echo "[Genesis Forge] Applying granular sysctl: vm.unprivileged_userfaultfd=0"
+echo "vm.unprivileged_userfaultfd=0" > /etc/sysctl.d/99-alfred-6.conf || true
+sysctl -w vm.unprivileged_userfaultfd=0 > /dev/null 2>&1 || true
+
+
+# --- BEGIN MERGED CONTENT FROM: 0105-alfred-plymouth.hook.chroot ---
+#!/bin/bash
+# Hook 0105: Alfred Plymouth Cinematic Boot Configuration
+set +e
+
+echo "[Alfred Polish] Enforcing the cinematic Plymouth boot splash..."
+
+# Ensure Plymouth is installed
+apt-get install -y --no-install-recommends plymouth plymouth-x11 || true
+
+# Set the Alfred Kingdom theme as the absolute default
+plymouth-set-default-theme -R alfred-kingdom
+
+# Update the bootloader parameters in GRUB to ensure silent boot
+if [ -f /etc/default/grub ]; then
+    sed -i 's/GRUB_CMDLINE_LINUX_DEFAULT="quiet"/GRUB_CMDLINE_LINUX_DEFAULT="quiet splash loglevel=3 rd.systemd.show_status=auto rd.udev.log_priority=3 vt.global_cursor_default=0"/g' /etc/default/grub
+    update-grub
+fi
+
+echo "[Alfred Polish] Cinematic boot splash successfully injected into initramfs!"
+
+# --- END MERGED CONTENT FROM: 0105-alfred-plymouth.hook.chroot ---
+
+
+# --- BEGIN MERGED CONTENT FROM: 0105-alfred-wine-subsystem.hook.chroot ---
+#!/bin/bash
+# 0105-alfred-wine-subsystem.hook.chroot
+# Enables i386 multiarch and installs Wine to run Windows .exe applications
+
+set +e
+
+echo "[0105] Enabling Wine Windows Subsystem..."
+
+# Add 32-bit architecture for legacy Windows apps
+dpkg --add-architecture i386
+
+# Update package lists
+apt-get update
+
+# Install Wine components
+# Note: we use DEBIAN_FRONTEND=noninteractive to avoid any prompts
+DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends wine wine64 wine32 winetricks || true
+
+# Create a showcase Windows app (PuTTY) on the default desktop
+mkdir -p "/etc/skel/Desktop/Windows Apps"
+cd "/etc/skel/Desktop/Windows Apps"
+# Download a lightweight, standalone Windows executable (PuTTY)
+wget -q https://the.earth.li/~sgtatham/putty/latest/w64/putty.exe -O putty.exe || true
+[ -e putty.exe ] && chmod +x putty.exe
+
+# Configure Wine to automatically open .exe files via desktop MIME
+mkdir -p /usr/share/applications
+cat << 'EOF' > /usr/share/applications/wine.desktop
+[Desktop Entry]
+Name=Wine Windows Program Loader
+Exec=wine start /unix %f
+MimeType=application/x-ms-dos-executable;application/x-msi;application/x-ms-shortcut;
+Icon=wine
+NoDisplay=true
+Type=Application
+Categories=X-Wine;
+EOF
+
+echo "[0105] Wine Windows Subsystem configured."
+
+# --- END MERGED CONTENT FROM: 0105-alfred-wine-subsystem.hook.chroot ---
+
+
+#!/bin/bash
+# 0105-alfred-wine-subsystem.hook.chroot
+# Enables i386 multiarch and installs Wine to run Windows .exe applications
+
+set +e
+
+echo "[0105] Enabling Wine Windows Subsystem..."
+
+# Add 32-bit architecture for legacy Windows apps
+dpkg --add-architecture i386
+
+# Update package lists
+apt-get update
+
+# Install Wine components
+# Note: we use DEBIAN_FRONTEND=noninteractive to avoid any prompts
+DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends wine wine64 wine32 winetricks || true
+
+# Create a showcase Windows app (PuTTY) on the default desktop
+mkdir -p "/etc/skel/Desktop/Windows Apps"
+cd "/etc/skel/Desktop/Windows Apps"
+# Download a lightweight, standalone Windows executable (PuTTY)
+wget -q https://the.earth.li/~sgtatham/putty/latest/w64/putty.exe -O putty.exe
+chmod +x putty.exe
+
+# Configure Wine to automatically open .exe files via desktop MIME
+mkdir -p /usr/share/applications
+cat << 'EOF' > /usr/share/applications/wine.desktop
+[Desktop Entry]
+Name=Wine Windows Program Loader
+Exec=wine start /unix %f
+MimeType=application/x-ms-dos-executable;application/x-msi;application/x-ms-shortcut;
+Icon=wine
+NoDisplay=true
+Type=Application
+Categories=X-Wine;
+EOF
+
+echo "[0105] Wine Windows Subsystem configured."

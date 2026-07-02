@@ -1,0 +1,8 @@
+# Example drop-in: full shellcheck during repo-health (slower — use weekly timer, not every 15 min).
+# Install:
+#   mkdir -p ~/.config/systemd/user/alfred-linux-repo-health.service.d
+#   cp 10-shellcheck.conf.example ~/.config/systemd/user/alfred-linux-repo-health.service.d/10-shellcheck.conf
+#   systemctl --user daemon-reload
+#
+[Service]
+Environment=ALFRED_REPO_HEALTH_SHELLCHECK_ALL=1

@@ -1,0 +1,50 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+
+echo "=== Alfred Linux: Setting ZSH as Default Shell ==="
+
+# Change default shell for root
+chsh -s /bin/zsh root
+
+# Change default shell for alfred (and any skel users)
+if id "alfred" &>/dev/null; then
+    chsh -s /bin/zsh alfred
+fi
+
+# Set it as default for newly created users
+sed -i 's/DSHELL=\/bin\/bash/DSHELL=\/bin\/zsh/' /etc/default/useradd 2>/dev/null || true
+
+# Create a default .zshrc in skel so everyone gets it
+cat << 'EOF' > /etc/skel/.zshrc
+# Alfred Linux ZSH Configuration
+autoload -Uz compinit
+compinit
+
+# Enable syntax highlighting and autosuggestions if installed
+if [ -f /usr/share/zsh-autosuggestions/zsh-autosuggestions.zsh ]; then
+    source /usr/share/zsh-autosuggestions/zsh-autosuggestions.zsh
+fi
+if [ -f /usr/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh ]; then
+    source /usr/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
+fi
+
+# Basic beautiful prompt
+PROMPT='%F{yellow}👑 %n%f@%F{cyan}%m%f %F{green}%~%f %# '
+
+# Aliases
+alias ll='ls -alF'
+alias la='ls -A'
+alias l='ls -CF'
+alias cat='bat --paging=never'
+alias find='fd'
+alias grep='rg'
+EOF
+
+[ -e /etc/skel/.zshrc ] && chmod 644 /etc/skel/.zshrc
+
+echo "=== ZSH Configured Successfully ==="
+
+exit 0

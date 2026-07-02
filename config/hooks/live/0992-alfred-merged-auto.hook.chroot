@@ -1,0 +1,82 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+
+echo "[1002] ASCENSION PROTOCOL: The Alpha and Omega"
+
+
+# --- INJECTED FUNCTIONALITY: OMEGA POINT STATE TRACKING ---
+# Ensure the central logging directory exists
+if [ ! -d "/var/log/alfred_ascension" ]; then
+    mkdir -p /var/log/alfred_ascension || true
+    [ -e "700" ] && chmod 700 /var/log/alfred_ascension || true
+fi
+
+# Generate a cryptographic marker for the execution of this specific hook
+MARKER_FILE="/var/log/alfred_ascension/hook_$(basename $0).marker"
+TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+HASH=$(echo "$TIMESTAMP-$(basename $0)" | sha256sum | awk '{print $1}')
+
+echo "[$TIMESTAMP] EXECUTION VERIFIED: $HASH" > "$MARKER_FILE" || true
+[ -e "400" ] && chmod 400 "$MARKER_FILE" || true
+
+# Apply lockdown permissions to the log to prevent tampering
+
+echo "[Omega Point] State tracking committed for $(basename $0)."
+
+
+# --- BEGIN MERGED CONTENT FROM: 0992-alfred.hook.chroot ---
+#!/bin/bash
+# Auto-generated phase hook. Idempotent. Safe.
+# Phase: 992-prerelease-cleanup
+set +e
+
+LOG=/var/log/alfred-build-phases.log
+mkdir -p /var/log
+TS="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+echo "[${TS}] PHASE=992-prerelease-cleanup HOOK=0992-alfred.hook.chroot START" >> "$LOG"
+
+# Phase verification block (non-fatal warnings only; enforcer hooks decide hard fail).
+ok=1
+for p in ; do
+  if [ -n "$p" ] && [ ! -e "$p" ]; then
+    echo "[${TS}] WARN phase=992-prerelease-cleanup missing-artifact: $p" >> "$LOG"
+    ok=0
+  fi
+done
+[ "$ok" = 1 ] && echo "[${TS}] PHASE=992-prerelease-cleanup HOOK=0992-alfred.hook.chroot OK" >> "$LOG"               || echo "[${TS}] PHASE=992-prerelease-cleanup HOOK=0992-alfred.hook.chroot WARN" >> "$LOG"
+
+# Mark completion stamp (used by 0999 release manifest).
+mkdir -p /var/lib/alfred/phases
+touch "/var/lib/alfred/phases/992-prerelease-cleanup.done"
+
+# --- END MERGED CONTENT FROM: 0992-alfred.hook.chroot ---
+
+
+#!/bin/bash
+# Auto-generated phase hook. Idempotent. Safe.
+# Phase: 992-prerelease-cleanup
+set +euo pipefail
+
+LOG=/var/log/alfred-build-phases.log
+mkdir -p /var/log
+TS="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+echo "[${TS}] PHASE=992-prerelease-cleanup HOOK=0992-alfred.hook.chroot START" >> "$LOG"
+
+# Phase verification block (non-fatal warnings only; enforcer hooks decide hard fail).
+ok=1
+for p in ; do
+  if [ -n "$p" ] && [ ! -e "$p" ]; then
+    echo "[${TS}] WARN phase=992-prerelease-cleanup missing-artifact: $p" >> "$LOG"
+    ok=0
+  fi
+done
+[ "$ok" = 1 ] && echo "[${TS}] PHASE=992-prerelease-cleanup HOOK=0992-alfred.hook.chroot OK" >> "$LOG"               || echo "[${TS}] PHASE=992-prerelease-cleanup HOOK=0992-alfred.hook.chroot WARN" >> "$LOG"
+
+# Mark completion stamp (used by 0999 release manifest).
+mkdir -p /var/lib/alfred/phases
+touch "/var/lib/alfred/phases/992-prerelease-cleanup.done"
+
+

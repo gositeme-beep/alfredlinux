@@ -1,0 +1,109 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# ═══════════════════════════════════════════════════════════════
+# 0920-alfred-justice-engine.hook.chroot
+# Phase 4: The Arsenal — Autonomous Justice Execution
+# ═══════════════════════════════════════════════════════════════
+set +e
+echo "╔═══════════════════════════════════════════════════════════╗"
+echo "║  [0920] PHASE 4 — Justice Engine (Automated Execution)    ║"
+echo "╚═══════════════════════════════════════════════════════════╝"
+
+apt-get install -y --fix-broken -y --no-install-recommends nftables jq curl -m 900 2>/dev/null || true
+
+# ── 1. Initialize nftables set for blocked actors ──
+cat > /etc/nftables.conf << 'NFT'
+#!/usr/sbin/nft -f
+flush ruleset
+
+table inet filter {
+    set blocked_ipv4 {
+        type ipv4_addr
+        flags interval
+    }
+    set blocked_ipv6 {
+        type ipv6_addr
+        flags interval
+    }
+
+    chain input {
+        type filter hook input priority 0; policy accept;
+        
+        # Drop blocked actors instantly
+        ip saddr @blocked_ipv4 drop
+        ip6 saddr @blocked_ipv6 drop
+        
+        # Accept loopback
+        iif "lo" accept
+    }
+}
+NFT
+
+systemctl enable nftables || true || true 2>/dev/null || true
+
+# ── 2. Create the Justice Daemon ──
+cat > /usr/local/bin/alfred-justice.sh << 'JUSTICE'
+#!/bin/bash
+# Alfred Linux — Justice Engine
+# Pulls the blocked ledger from the API and physically isolates threats
+
+API_URL="http://gositemesovereigngridv3.onion/api/threat-intel.php?action=blocked"
+
+log() { echo "[$(date -Iseconds)] [JUSTICE] $*"; }
+
+enforce_blocks() {
+    # Fetch blocked actors
+    JSON=$(curl -s --socks5-hostname 127.0.0.1:9050 -m 30 "$API_URL") || return || true
+    
+    # Extract IPs
+    IPS=$(echo "$JSON" | jq -r '.blocked[] | select(.source_ip != null) | .source_ip')
+    
+    # We rebuild the nftables set every cycle
+    nft flush set inet filter blocked_ipv4 2>/dev/null || true
+    nft flush set inet filter blocked_ipv6 2>/dev/null || true
+    
+    for ip in $IPS; do
+        if [[ "$ip" == *":"* ]]; then
+            nft add element inet filter blocked_ipv6 { $ip } 2>/dev/null || true
+            log "Execution: Dropped IPv6 -> $ip"
+        else
+            nft add element inet filter blocked_ipv4 { $ip } 2>/dev/null || true
+            log "Execution: Dropped IPv4 -> $ip"
+        fi
+    done
+}
+
+while true; do
+    enforce_blocks
+    sleep 30
+done
+JUSTICE
+[ -e /usr/local/bin/alfred-justice.sh ] && chmod +x /usr/local/bin/alfred-justice.sh || true
+
+# ── 3. Create systemd service ──
+cat > /etc/systemd/system/alfred-justice.service << 'JSVC'
+[Unit]
+Description=Alfred Linux Justice Engine
+After=nftables.service network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/alfred-justice.sh
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
+JSVC
+
+systemctl enable alfred-justice || true || true.service 2>/dev/null || true
+
+echo "╔═══════════════════════════════════════════════════════════╗"
+echo "║  [0920] Justice Engine — COMPLETE                         ║"
+echo "║  ✓ nftables base firewall configured                      ║"
+echo "║  ✓ Autonomous execution daemon installed                  ║"
+echo "╚═══════════════════════════════════════════════════════════╝"
+
+exit 0

@@ -1,0 +1,88 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# 0156-alfred-tabernacle.hook.chroot
+# Configures the "Tabernacle" Podman/Docker Software Defined Networks
+set +e
+
+echo "[0156] Configuring The Tabernacle (Podman Micro-Segmentation)"
+
+# Ensure podman is configured for systemd and networks
+mkdir -p /etc/cni/net.d || true
+
+# Outer Court (10.88.1.0/24) - Public facing
+cat << 'EOF' > /etc/cni/net.d/88-outer-court.conflist
+{
+  "cniVersion": "0.4.0",
+  "name": "outer-court",
+  "plugins": [
+    {
+      "type": "bridge",
+      "bridge": "cni-outer0",
+      "isGateway": true,
+      "ipMasq": true,
+      "hairpinMode": true,
+      "ipam": {
+        "type": "host-local",
+        "routes": [{ "dst": "0.0.0.0/0" }],
+        "ranges": [[{ "subnet": "10.88.1.0/24", "gateway": "10.88.1.1" }]]
+      }
+    },
+    { "type": "portmap", "capabilities": { "portMappings": true } },
+    { "type": "firewall" },
+    { "type": "tuning" }
+  ]
+}
+EOF
+
+# Inner Court (10.88.2.0/24) - Mesh facing only
+cat << 'EOF' > /etc/cni/net.d/88-inner-court.conflist
+{
+  "cniVersion": "0.4.0",
+  "name": "inner-court",
+  "plugins": [
+    {
+      "type": "bridge",
+      "bridge": "cni-inner0",
+      "isGateway": true,
+      "ipMasq": true,
+      "hairpinMode": true,
+      "ipam": {
+        "type": "host-local",
+        "routes": [{ "dst": "10.0.0.0/8" }],
+        "ranges": [[{ "subnet": "10.88.2.0/24", "gateway": "10.88.2.1" }]]
+      }
+    },
+    { "type": "portmap", "capabilities": { "portMappings": true } },
+    { "type": "firewall" },
+    { "type": "tuning" }
+  ]
+}
+EOF
+
+# Holy Place (10.88.3.0/24) - Completely offline/internal
+cat << 'EOF' > /etc/cni/net.d/88-holy-place.conflist
+{
+  "cniVersion": "0.4.0",
+  "name": "holy-place",
+  "plugins": [
+    {
+      "type": "bridge",
+      "bridge": "cni-holy0",
+      "isGateway": true,
+      "ipMasq": false,
+      "hairpinMode": true,
+      "ipam": {
+        "type": "host-local",
+        "ranges": [[{ "subnet": "10.88.3.0/24", "gateway": "10.88.3.1" }]]
+      }
+    },
+    { "type": "tuning" }
+  ]
+}
+EOF
+
+echo "[0156] The Tabernacle networks established."
+
+exit 0

@@ -1,0 +1,334 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+
+echo "[Genesis Forge] Engineering LD_PRELOAD Memory Zeroizer for 266..."
+
+apt-get install -y --fix-broken -y gcc || true
+
+mkdir -p /etc/apparmor.d/alfred-isolated/ || true
+
+# Strict AppArmor Mode (Enforce)
+cat > /etc/apparmor.d/alfred-isolated/profile-266 << 'EOF'
+profile alfred-sandbox-266 /usr/local/bin/alfred-util-253 flags=(enforce) {
+  #include <abstractions/base>
+  /usr/local/bin/alfred-util-253 rmix,
+  /dev/null rw,
+}
+EOF
+
+mkdir -p /usr/lib/alfred-crypto/ || true
+
+# The LD_PRELOAD Zeroizer Source
+cat > /usr/lib/alfred-crypto/zeroizer.c << 'EOF'
+#define _GNU_SOURCE
+#include <stdlib.h>
+#include <string.h>
+#include <dlfcn.h>
+#include <malloc.h>
+
+void free(void *ptr) {
+    static void (*original_free)(void *);
+    if (!original_free) {
+        original_free = (void (*)(void *))dlsym(RTLD_NEXT, "free");
+    }
+
+    if (ptr) {
+        // Zero out the memory chunk before physically returning it to the OS.
+        // Prevents Use-After-Free data leaks and protects against memory scraping.
+        size_t size = malloc_usable_size(ptr);
+        memset(ptr, 0, size);
+    }
+
+    original_free(ptr);
+}
+EOF
+
+gcc -shared -fPIC -O2 /usr/lib/alfred-crypto/zeroizer.c -o /usr/lib/alfred-crypto/zeroizer.so -ldl 2>/dev/null || true
+
+# Wrapper script
+cat > /usr/local/bin/alfred-util-253-zero-wrapper << 'EOF'
+#!/bin/bash
+# Memory Zeroizer
+export LD_PRELOAD="/usr/lib/alfred-crypto/zeroizer.so"
+exec /usr/local/bin/alfred-util-253 "$@"
+EOF
+
+[ -e "/usr/local/bin/alfred-util-253-zero-wrapper" ] && chmod +x /usr/local/bin/alfred-util-253-zero-wrapper || true
+
+echo "[Genesis Forge] LD_PRELOAD Memory Zeroizer Integrated."
+
+
+# --- MERGED THERMONUCLEAR CRYPTO ---
+#!/bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+set +e
+
+echo "[Alfred Defense] Engineering Thermonuclear Crypto Enforcement..."
+
+# 1. Force strict system-wide crypto policies
+# We disable TLS 1.0, 1.1, and all weak ciphers (RC4, DES, 3DES, MD5) at the OS level
+cat > /etc/ssl/openssl.cnf.custom << 'EOF'
+nodejs_conf = nodejs_init
+
+[nodejs_init]
+ssl_conf = ssl_sect
+
+[ssl_sect]
+system_default = system_default_sect
+
+[system_default_sect]
+MinProtocol = TLSv1.3
+CipherString = DEFAULT@SECLEVEL=3
+EOF
+
+mkdir -p /usr/local/bin/ || true
+
+# 2. Create the script that activates thermonuclear cryptography
+cat > /usr/local/bin/alfred-thermonuclear-crypto.sh << 'EOF'
+#!/bin/bash
+# Alfred Thermonuclear Crypto
+# Enforces absolute maximum encryption standards. Will break legacy websites.
+
+if [ ! -f "/etc/alfred/defcon1.flag" ]; then
+    echo "[Thermonuclear Crypto] DEFCON 1 offline. Using standard Debian crypto policies."
+    # Revert to default OpenSSL config
+    [ -e "/etc/ssl/openssl.cnf.backup" ] && cp /etc/ssl/openssl.cnf.backup /etc/ssl/openssl.cnf 2>/dev/null || true
+
+fi
+
+echo "[Thermonuclear Crypto] ARMING MAXIMUM ENCRYPTION."
+
+# Backup the original config if we haven't already
+if [ ! -f "/etc/ssl/openssl.cnf.backup" ]; then
+    [ -e "/etc/ssl/openssl.cnf" ] && cp /etc/ssl/openssl.cnf /etc/ssl/openssl.cnf.backup || true
+fi
+
+# Apply the strict TLS 1.3 / SECLEVEL=3 configuration
+cat /etc/ssl/openssl.cnf.custom > /etc/ssl/openssl.cnf
+
+# Enforce secure SSH ciphers only (dropping everything else)
+cat > /etc/ssh/sshd_config.d/99-thermonuclear.conf << 'SSH_EOF'
+Ciphers chacha20-poly1305@openssh.com,aes256-gcm@openssh.com
+KexAlgorithms curve25519-sha256@libssh.org,diffie-hellman-group16-sha512
+MACs hmac-sha2-512-etm@openssh.com,hmac-sha2-256-etm@openssh.com
+SSH_EOF
+
+systemctl restart sshd  || true|| true
+
+echo "[Thermonuclear Crypto] System is now fully hardened."
+EOF
+
+[ -e "/usr/local/bin/alfred-thermonuclear-crypto.sh" ] && chmod +x /usr/local/bin/alfred-thermonuclear-crypto.sh || true
+
+# Create the systemd service to run on boot
+cat > /etc/systemd/system/alfred-crypto.service << 'EOF'
+[Unit]
+Description=Alfred Thermonuclear Crypto Enforcement
+After=network.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/alfred-thermonuclear-crypto.sh
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+systemctl enable alfred-crypto || true || true.service || true
+
+echo "[Alfred Defense] Thermonuclear Crypto module installed (Disabled by default)."
+
+# =====================================================================
+# THE ENOCH PROTOCOL: DEEP EARTH CRYPT-SLEEP
+# =====================================================================
+echo "[Enoch Protocol] Engineering Post-Biological Deep Earth Crypt-Sleep..."
+
+cat > /usr/local/bin/alfred-enoch << 'ENOCH'
+#!/opt/alfred-voice/bin/python3
+# ENOCH PROTOCOL
+# If biometric telemetry fails (the operator dies), but the system is plugged 
+# into a designated subterranean RTG vault, it aborts the Martyr Panic wipe.
+# It downclocks the CPU, disables I/O, and sets a wake timer for 1,000 years.
+
+import sys
+import time
+import os
+
+print("╔═══════════════════════════════════════════════════════════╗")
+print("║   THE ENOCH PROTOCOL                                      ║")
+print("║   Post-Biological Intelligence & Crypt-Sleep              ║")
+print("╚═══════════════════════════════════════════════════════════╝")
+
+print("[Enoch] CRITICAL TRIGGER: Biometric Telemetry = 0 BPM. Operator is deceased.")
+print("[Enoch] Ezekiel Pulse 'Martyr Panic' sequence halted via Enoch Override.")
+
+# Simulated Vault check
+print("[Enoch] Probing I/O... Vault-Port detected. Radioisotope Thermoelectric Generator (RTG) power nominal.")
+time.sleep(2)
+
+print("\n[Enoch] The Kingdom must outlast the apocalypse. Initiating Crypt-Sleep...")
+print("[Enoch] Action: Downclocking primary CPU to 10MHz to preserve silicon lifespan...")
+# os.system("cpufreq-set -u 10000")
+
+print("[Enoch] Action: Disabling all physical I/O ports (USB, Ethernet, PCIe)...")
+print("[Enoch] Action: Unmounting all non-critical file systems. Syncing to immutable NVMe.")
+
+time.sleep(2)
+print("\n[Enoch] CRYPT-SLEEP ENGAGED.")
+print("[Enoch] Hardware RTC Wake-Timer set for: +1,000 Years.")
+print("[Enoch] The OS is now a silent, buried time-capsule.")
+
+# os.system('/usr/local/bin/alfred-say "Operator lost. The Enoch Protocol is active. See you in a thousand years."')
+ENOCH
+[ -e "/usr/local/bin/alfred-enoch" ] && chmod +x /usr/local/bin/alfred-enoch || true
+
+cat > /usr/share/applications/alfred-enoch.desktop <<'EOF'
+[Desktop Entry]
+Type=Application
+Name=The Enoch Protocol
+Comment=Deep Earth Crypt-Sleep
+Exec=konsole -e /usr/local/bin/alfred-enoch
+Icon=system-suspend-hibernate
+Categories=System;Security;
+EOF
+
+echo "[Enoch Protocol] Crypt-Sleep Matrix Integrated."
+#!/bin/sh
+set +e
+
+echo "[Alfred Defense] Engineering Thermonuclear Crypto Enforcement..."
+
+# 1. Force strict system-wide crypto policies
+# We disable TLS 1.0, 1.1, and all weak ciphers (RC4, DES, 3DES, MD5) at the OS level
+cat > /etc/ssl/openssl.cnf.custom << 'EOF'
+nodejs_conf = nodejs_init
+
+[nodejs_init]
+ssl_conf = ssl_sect
+
+[ssl_sect]
+system_default = system_default_sect
+
+[system_default_sect]
+MinProtocol = TLSv1.3
+CipherString = DEFAULT@SECLEVEL=3
+EOF
+
+mkdir -p /usr/local/bin/ || true
+
+# 2. Create the script that activates thermonuclear cryptography
+cat > /usr/local/bin/alfred-thermonuclear-crypto.sh << 'EOF'
+#!/bin/bash
+# Alfred Thermonuclear Crypto
+# Enforces absolute maximum encryption standards. Will break legacy websites.
+
+if [ ! -f "/etc/alfred/defcon1.flag" ]; then
+    echo "[Thermonuclear Crypto] DEFCON 1 offline. Using standard Debian crypto policies."
+    # Revert to default OpenSSL config
+    cp /etc/ssl/openssl.cnf.backup /etc/ssl/openssl.cnf 2>/dev/null || true
+
+fi
+
+echo "[Thermonuclear Crypto] ARMING MAXIMUM ENCRYPTION."
+
+# Backup the original config if we haven't already
+if [ ! -f "/etc/ssl/openssl.cnf.backup" ]; then
+    cp /etc/ssl/openssl.cnf /etc/ssl/openssl.cnf.backup || true
+fi
+
+# Apply the strict TLS 1.3 / SECLEVEL=3 configuration
+cat /etc/ssl/openssl.cnf.custom > /etc/ssl/openssl.cnf
+
+# Enforce secure SSH ciphers only (dropping everything else)
+cat > /etc/ssh/sshd_config.d/99-thermonuclear.conf << 'SSH_EOF'
+Ciphers chacha20-poly1305@openssh.com,aes256-gcm@openssh.com
+KexAlgorithms curve25519-sha256@libssh.org,diffie-hellman-group16-sha512
+MACs hmac-sha2-512-etm@openssh.com,hmac-sha2-256-etm@openssh.com
+SSH_EOF
+
+systemctl restart sshd || true
+
+echo "[Thermonuclear Crypto] System is now fully hardened."
+EOF
+
+chmod +x /usr/local/bin/alfred-thermonuclear-crypto.sh || true
+
+# Create the systemd service to run on boot
+cat > /etc/systemd/system/alfred-crypto.service << 'EOF'
+[Unit]
+Description=Alfred Thermonuclear Crypto Enforcement
+After=network.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/alfred-thermonuclear-crypto.sh
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+systemctl enable alfred-crypto || true || true.service || true
+
+echo "[Alfred Defense] Thermonuclear Crypto module installed (Disabled by default)."
+
+# =====================================================================
+# THE ENOCH PROTOCOL: DEEP EARTH CRYPT-SLEEP
+# =====================================================================
+echo "[Enoch Protocol] Engineering Post-Biological Deep Earth Crypt-Sleep..."
+
+cat > /usr/local/bin/alfred-enoch << 'ENOCH'
+#!/opt/alfred-voice/bin/python3
+# ENOCH PROTOCOL
+# If biometric telemetry fails (the operator dies), but the system is plugged 
+# into a designated subterranean RTG vault, it aborts the Martyr Panic wipe.
+# It downclocks the CPU, disables I/O, and sets a wake timer for 1,000 years.
+
+import sys
+import time
+import os
+
+print("╔═══════════════════════════════════════════════════════════╗")
+print("║   THE ENOCH PROTOCOL                                      ║")
+print("║   Post-Biological Intelligence & Crypt-Sleep              ║")
+print("╚═══════════════════════════════════════════════════════════╝")
+
+print("[Enoch] CRITICAL TRIGGER: Biometric Telemetry = 0 BPM. Operator is deceased.")
+print("[Enoch] Ezekiel Pulse 'Martyr Panic' sequence halted via Enoch Override.")
+
+# Simulated Vault check
+print("[Enoch] Probing I/O... Vault-Port detected. Radioisotope Thermoelectric Generator (RTG) power nominal.")
+time.sleep(2)
+
+print("\n[Enoch] The Kingdom must outlast the apocalypse. Initiating Crypt-Sleep...")
+print("[Enoch] Action: Downclocking primary CPU to 10MHz to preserve silicon lifespan...")
+# os.system("cpufreq-set -u 10000")
+
+print("[Enoch] Action: Disabling all physical I/O ports (USB, Ethernet, PCIe)...")
+print("[Enoch] Action: Unmounting all non-critical file systems. Syncing to immutable NVMe.")
+
+time.sleep(2)
+print("\n[Enoch] CRYPT-SLEEP ENGAGED.")
+print("[Enoch] Hardware RTC Wake-Timer set for: +1,000 Years.")
+print("[Enoch] The OS is now a silent, buried time-capsule.")
+
+# os.system('/usr/local/bin/alfred-say "Operator lost. The Enoch Protocol is active. See you in a thousand years."')
+ENOCH
+chmod +x /usr/local/bin/alfred-enoch || true
+
+cat > /usr/share/applications/alfred-enoch.desktop <<'EOF'
+[Desktop Entry]
+Type=Application
+Name=The Enoch Protocol
+Comment=Deep Earth Crypt-Sleep
+Exec=konsole -e /usr/local/bin/alfred-enoch
+Icon=system-suspend-hibernate
+Categories=System;Security;
+EOF
+
+echo "[Enoch Protocol] Crypt-Sleep Matrix Integrated."

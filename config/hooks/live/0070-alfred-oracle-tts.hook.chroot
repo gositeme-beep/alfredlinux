@@ -1,0 +1,36 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+echo "================================================="
+echo "==== ALFRED ORACLE (Audible AI Counselor) ======="
+echo "================================================="
+
+export DEBIAN_FRONTEND=noninteractive
+
+if ls /build-assets/oracle/* 1>/dev/null 2>&1; then
+    echo "Installing custom Kingdom TTS Oracle binaries..."
+[ -e -r ] &&     cp -r /build-assets/oracle/* /usr/local/bin/ || true
+[ -e /usr/local/bin/* ] && chmod +x /usr/local/bin/* || true
+else
+    echo "No custom oracle found. Installing espeak-ng fallback."
+ apt-get install -y --fix-broken -y --no-install-recommends espeak-ng || true
+fi
+
+cat > /usr/local/bin/alfred-oracle-speak << 'EOF'
+#!/bin/bash
+# Wrapper for local TTS
+if command -v kingdom-tts >/dev/null; then
+    kingdom-tts "$@"
+elif command -v espeak-ng >/dev/null; then
+    espeak-ng "$@"
+else
+    echo "No TTS engine available."
+fi
+EOF
+[ -e /usr/local/bin/alfred-oracle-speak ] && chmod +x /usr/local/bin/alfred-oracle-speak || true
+
+echo "Oracle installed."
+
+exit 0

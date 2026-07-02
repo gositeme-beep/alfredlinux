@@ -1,0 +1,77 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+echo "[0122] Baking The Covenant First-Boot Gateway..."
+
+mkdir -p /usr/local/bin || true
+cat > /usr/local/bin/alfred-covenant-gate << 'SCRIPT'
+#!/bin/bash
+# If covenant is already accepted, exit silently
+if [ -f ~/.config/alfred-covenant-accepted ]; then
+    exit 0
+fi
+
+# Launch the Covenant Gate UI
+python3 -c " || true
+import sys
+from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QPushButton, QLabel, QTextEdit, QMessageBox
+from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QFont
+import os
+
+class CovenantGate(QWidget):
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle('The Covenant - Lavocat Justice System')
+        self.setFixedSize(800, 600)
+        self.setStyleSheet('background-color: #0b0c10; color: #c5c6c7;')
+        self.setWindowFlags(Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint)
+
+        layout = QVBoxLayout()
+        layout.setAlignment(Qt.AlignCenter)
+
+        title = QLabel('THE COVENANT GATE')
+        title.setFont(QFont('Georgia', 24, QFont.Bold))
+        title.setAlignment(Qt.AlignCenter)
+        layout.addWidget(title)
+
+        text = QTextEdit()
+        text.setReadOnly(True)
+        text.setStyleSheet('background-color: #1f2833; padding: 20px; font-size: 14px;')
+        text.setText('Welcome to Alfred Linux.\n\nBy proceeding, you enter into a binding agreement with the Lavocat Justice System.\nYou agree to uphold the sovereign laws of this digital ecosystem.\n\nThis oath is cryptographically bound to your digital identity.')
+        layout.addWidget(text)
+
+        btn = QPushButton('I ACCEPT THE SOVEREIGN OATH')
+        btn.setStyleSheet('background-color: #66fcf1; color: #0b0c10; font-weight: bold; padding: 15px;')
+        btn.clicked.connect(self.accept)
+        layout.addWidget(btn)
+
+        self.setLayout(layout)
+
+    def accept(self):
+        os.system('mkdir -p ~/.config && touch ~/.config/alfred-covenant-accepted')
+        self.close()
+
+app = QApplication(sys.argv)
+ex = CovenantGate()
+ex.showFullScreen()
+sys.exit(app.exec_())
+"
+SCRIPT
+[ -e /usr/local/bin/alfred-covenant-gate ] && chmod +x /usr/local/bin/alfred-covenant-gate || true
+
+# Add it to KDE Autostart for all users
+mkdir -p /etc/xdg/autostart || true
+cat > /etc/xdg/autostart/alfred-covenant.desktop << 'DESKTOP'
+[Desktop Entry]
+Name=The Covenant Gate
+Exec=/usr/local/bin/alfred-covenant-gate
+Type=Application
+X-KDE-autostart-phase=1
+DESKTOP
+
+echo "[0122] Covenant Gateway built."
+
+exit 0

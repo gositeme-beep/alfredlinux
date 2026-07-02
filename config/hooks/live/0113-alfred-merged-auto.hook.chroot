@@ -1,0 +1,225 @@
+#!/bin/bash
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+echo "=========================================="
+echo "==== ALFRED AI DROPDOWN COUNSELOR HOOK ==="
+echo "=========================================="
+
+# 1. The Counselor Script
+cat > /usr/local/bin/alfred-counselor << 'EOF'
+#!/bin/bash
+clear
+echo "========================================================="
+echo "  âœ ALFRED LOCAL AI COUNSELOR"
+echo "  Sovereign computing. Zero cloud tracking."
+echo "========================================================="
+echo ""
+echo "Ask your theological questions or prayer requests below."
+echo "(Type /bye to exit)"
+echo ""
+
+if command -v alfred-ai &>/dev/null; then
+    exec alfred-ai
+else
+    echo "AI Stack not installed properly. Missing alfred-ai."
+fi
+EOF
+chmod 0755 /usr/local/bin/alfred-counselor
+
+# 2. Autostart Yakuake (so Meta+Space always works immediately)
+mkdir -p /etc/skel/.config/autostart
+cat > /etc/skel/.config/autostart/org.kde.yakuake.desktop << 'EOF'
+[Desktop Entry]
+Exec=yakuake
+Name=Yakuake Dropdown Terminal
+Type=Application
+X-KDE-StartupNotify=false
+X-KDE-autostart-phase=1
+EOF
+
+# 3. Basic Yakuake Config for aesthetics
+cat > /etc/skel/.config/yakuakerc << 'EOF'
+[Appearance]
+BackgroundColorOpacity=85
+Skin=breeze-dark
+Translucency=true
+
+[Window]
+Height=60
+Width=80
+EOF
+
+echo "AI Dropdown Counselor configured."
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Description: Offline kit â€” Wikipedia, OpenStreetMap, Khan Academy, library + survival reference
+set +e
+
+echo '==============================================='
+echo '  ALFRED OFFLINE KIT - Library, Maps, Education'
+echo '==============================================='
+export DEBIAN_FRONTEND=noninteractive
+
+apt-get update 2>/dev/null || true || true
+apt-get install -y --fix-broken -y --no-install-recommends \
+    kiwix-tools \
+    kiwix-serve \
+    python3-pip \
+    python3-venv \
+    gnome-maps \
+    2>/dev/null || true
+
+if ! command -v kolibri >/dev/null 2>&1; then
+    pip3 install --break-system-packages kolibri 2>/dev/null || true
+fi
+
+mkdir -p /usr/local/share/alfred/offline-kit/zim || true
+mkdir -p /usr/local/share/alfred/offline-kit/maps || true
+mkdir -p /usr/local/share/alfred/offline-kit/education || true
+
+find /build-assets -maxdepth 2 -type f -name '*.zim' -exec cp -f {} /usr/local/share/alfred/offline-kit/zim/ \; 2>/dev/null || true
+
+if command -v kiwix-manage >/dev/null 2>&1; then
+    rm -f /usr/local/share/alfred/offline-kit/kiwix-library.xml || true
+    touch /usr/local/share/alfred/offline-kit/kiwix-library.xml
+    find /usr/local/share/alfred/offline-kit/zim -maxdepth 1 -type f -name '*.zim' -print0 | while IFS= read -r -d '' zim; do
+        kiwix-manage /usr/local/share/alfred/offline-kit/kiwix-library.xml add "$zim" >/dev/null 2>&1 || true
+    done
+fi
+
+cat > /usr/local/bin/alfred-library <<'ALIB'
+#!/bin/bash
+if command -v kiwix-serve >/dev/null 2>&1; then
+    exec kiwix-serve --library /usr/local/share/alfred/offline-kit/kiwix-library.xml --port=8090
+fi
+printf 'Kiwix is not installed on this system.\n' >&2 || true
+
+ALIB
+[ -e /usr/local/bin/alfred-library ] && chmod +x /usr/local/bin/alfred-library || true
+
+cat > /usr/local/bin/alfred-education <<'AEDU'
+#!/bin/bash
+if command -v kolibri >/dev/null 2>&1; then
+    exec kolibri start
+fi
+printf 'Kolibri is not installed.\n' >&2 || true
+
+AEDU
+[ -e /usr/local/bin/alfred-education ] && chmod +x /usr/local/bin/alfred-education || true
+
+cat > /usr/local/bin/alfred-maps <<'AMAP'
+#!/bin/bash
+if command -v gnome-maps >/dev/null 2>&1; then
+    exec gnome-maps
+fi
+printf 'Maps viewer is not installed.\n' >&2 || true
+
+AMAP
+[ -e /usr/local/bin/alfred-maps ] && chmod +x /usr/local/bin/alfred-maps || true
+
+cat > /usr/share/applications/alfred-library.desktop <<'DESK1'
+[Desktop Entry]
+Name=Alfred Library
+Comment=Offline reference library starter pack
+Exec=konsole -e "alfred-library"
+Icon=help-browser
+Terminal=false
+Type=Application
+Categories=Education;Office;
+DESK1
+
+cat > /usr/share/applications/alfred-education.desktop <<'DESK2'
+[Desktop Entry]
+Name=Alfred Education
+Comment=Offline education platform
+Exec=konsole -e "alfred-education"
+Icon=applications-education
+Terminal=false
+Type=Application
+Categories=Education;
+DESK2
+
+cat > /usr/share/applications/alfred-maps.desktop <<'DESK3'
+[Desktop Entry]
+Name=Alfred Maps
+Comment=Offline maps viewer
+Exec=alfred-maps
+Icon=emblem-web
+Terminal=false
+Type=Application
+Categories=Education;Geography;
+DESK3
+
+cat > /usr/local/share/alfred/offline-kit/README.txt <<'README'
+ALFRED OFFLINE KIT
+
+Included on ISO:
+- Alfred Library starter pack
+- Mini Wikipedia ZIM seed
+- Alfred Education launcher
+- Alfred Maps launcher
+
+Expand later with larger reference, map, and education packs.
+README
+
+echo '[OFFLINE-KIT] complete'
+
+
+# --- BEGIN MERGED CONTENT FROM: 0113-alfred-ai-dropdown.hook.chroot ---
+#!/bin/bash
+set +e
+echo "=========================================="
+echo "==== ALFRED AI DROPDOWN COUNSELOR HOOK ==="
+echo "=========================================="
+
+# 1. The Counselor Script
+cat > /usr/local/bin/alfred-counselor << 'EOF'
+#!/bin/bash
+clear
+echo "========================================================="
+echo "  âœ ALFRED LOCAL AI COUNSELOR"
+echo "  Sovereign computing. Zero cloud tracking."
+echo "========================================================="
+echo ""
+echo "Ask your theological questions or prayer requests below."
+echo "(Type /bye to exit)"
+echo ""
+
+if command -v alfred-ai &>/dev/null; then
+    exec alfred-ai
+else
+    echo "AI Stack not installed properly. Missing alfred-ai."
+fi
+EOF
+[ -e /usr/local/bin/alfred-counselor ] && chmod 0755 /usr/local/bin/alfred-counselor
+
+# 2. Autostart Yakuake (so Meta+Space always works immediately)
+mkdir -p /etc/skel/.config/autostart
+cat > /etc/skel/.config/autostart/org.kde.yakuake.desktop << 'EOF'
+[Desktop Entry]
+Exec=yakuake
+Name=Yakuake Dropdown Terminal
+Type=Application
+X-KDE-StartupNotify=false
+X-KDE-autostart-phase=1
+EOF
+
+# 3. Basic Yakuake Config for aesthetics
+cat > /etc/skel/.config/yakuakerc << 'EOF'
+[Appearance]
+BackgroundColorOpacity=85
+Skin=breeze-dark
+Translucency=true
+
+[Window]
+Height=60
+Width=80
+EOF
+
+echo "AI Dropdown Counselor configured."
+
+# --- END MERGED CONTENT FROM: 0113-alfred-ai-dropdown.hook.chroot ---
+
+

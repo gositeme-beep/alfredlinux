@@ -1,0 +1,46 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+# SPDX-License-Identifier: AGPL-3.0-or-later
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# Genesis Forge: AppArmor Strict + Namespace Exile (Synthesized)
+
+echo "[Genesis Forge] Applying Strict Sandbox to Original Logic..."
+
+cat > /etc/apparmor.d/alfred-isolated/profile-312 << 'EOF'
+profile alfred-sandbox-312 /usr/local/bin/alfred-util-299 flags=(enforce) {
+  #include <abstractions/base>
+  /usr/local/bin/alfred-util-299 rmix,
+  /dev/null rw,
+}
+EOF
+
+# Inject Seccomp via Firejail wrapper
+cat > /usr/local/bin/alfred-util-299-wrapper << 'EOF'
+#!/bin/bash
+# Seccomp-BPF execution wrapper
+# Physically drops privileges and blocks dangerous system calls
+# (execve, ptrace, mount) at the kernel level.
+firejail --noprofile --seccomp=execve,ptrace,mount,chroot,kcmp /usr/local/bin/alfred-util-299 "$@"
+EOF
+
+# Execute original logic inside the exiled namespace
+exec /bin/bash -s << 'EOF_UNSHARE_EXILE'
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+# [Genesis Forge] AppArmor Isolation: /usr/local/bin/alfred-util-299
+# Creates a granular zero-trust execution envelope for individual binaries.
+echo "[Genesis Forge] Enveloping binary: /usr/local/bin/alfred-util-299"
+mkdir -p /etc/apparmor.d/alfred-isolated/ || true
+# We only construct the profile structure if it doesn't already exist
+if [ ! -f "/etc/apparmor.d/alfred-isolated/profile-312" ]; then
+    cat > /etc/apparmor.d/alfred-isolated/profile-312 << 'EOF'
+profile alfred-sandbox-312 /usr/local/bin/alfred-util-299 flags=(complain) {
+  #include <abstractions/base>
+  /usr/local/bin/alfred-util-299 rmix,
+  /dev/null rw,
+}
+EOF
+fi
+
+exit 0
+EOF_UNSHARE_EXILE

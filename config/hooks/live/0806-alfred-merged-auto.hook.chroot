@@ -1,0 +1,72 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+# [Genesis Forge] Systemd Hardening: alfred-daemon-273.service
+# Enforces deep PrivateTmp, ProtectSystem, and ProtectHome on native daemons.
+echo "[Genesis Forge] Hardening systemd service: alfred-daemon-273.service"
+mkdir -p /etc/systemd/system/alfred-daemon-273.service.d/ || true
+cat > /etc/systemd/system/alfred-daemon-273.service.d/override.conf << 'EOF'
+[Service]
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=read-only
+NoNewPrivileges=yes
+RestrictRealtime=yes
+EOF
+
+
+# --- BEGIN MERGED CONTENT FROM: 0806-alfred-watchman-companion.hook.chroot ---
+#!/bin/bash
+# 0806-alfred-watchman-companion.hook.chroot
+# Installs a desktop shortcut to launch the offline AI
+
+set +e
+
+echo "[0806] Installing Watchman AI Desktop Companion..."
+
+# Create a desktop shortcut that launches the local Ollama model in konsole
+cat << 'EOF' > /usr/share/applications/alfred-watchman-ai.desktop
+[Desktop Entry]
+Name=Watchman AI Companion
+Exec=konsole -e "ollama run phi3:mini"
+Icon=utilities-terminal
+Type=Application
+Categories=Utility;
+EOF
+
+# Put a copy on the user's desktop as well
+mkdir -p /etc/skel/Desktop
+[ -e "/usr/share/applications/alfred-watchman-ai.desktop" ] && cp /usr/share/applications/alfred-watchman-ai.desktop /etc/skel/Desktop/
+[ -e "/etc/skel/Desktop/alfred-watchman-ai.desktop" ] && chmod +x /etc/skel/Desktop/alfred-watchman-ai.desktop
+
+echo "[0806] Watchman AI Companion configured."
+
+# --- END MERGED CONTENT FROM: 0806-alfred-watchman-companion.hook.chroot ---
+
+
+#!/bin/bash
+# 0806-alfred-watchman-companion.hook.chroot
+# Installs a desktop shortcut to launch the offline AI
+
+set +e
+
+echo "[0806] Installing Watchman AI Desktop Companion..."
+
+# Create a desktop shortcut that launches the local Ollama model in konsole
+cat << 'EOF' > /usr/share/applications/alfred-watchman-ai.desktop
+[Desktop Entry]
+Name=Watchman AI Companion
+Exec=konsole -e "ollama run phi3:mini"
+Icon=utilities-terminal
+Type=Application
+Categories=Utility;
+EOF
+
+# Put a copy on the user's desktop as well
+mkdir -p /etc/skel/Desktop
+cp /usr/share/applications/alfred-watchman-ai.desktop /etc/skel/Desktop/
+chmod +x /etc/skel/Desktop/alfred-watchman-ai.desktop
+
+echo "[0806] Watchman AI Companion configured."

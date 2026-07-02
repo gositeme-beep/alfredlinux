@@ -1,0 +1,169 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+# [Genesis Forge] AppArmor Isolation: /usr/local/bin/alfred-util-4
+# Creates a granular zero-trust execution envelope for individual binaries.
+echo "[Genesis Forge] Enveloping binary: /usr/local/bin/alfred-util-4"
+mkdir -p /etc/apparmor.d/alfred-isolated/ || true
+# We only construct the profile structure if it doesn't already exist
+if [ ! -f "/etc/apparmor.d/alfred-isolated/profile-17" ]; then
+    cat > /etc/apparmor.d/alfred-isolated/profile-17 << 'EOF'
+profile alfred-sandbox-17 /usr/local/bin/alfred-util-4 flags=(complain) {
+  #include <abstractions/base>
+  /usr/local/bin/alfred-util-4 rmix,
+  /dev/null rw,
+}
+EOF
+fi
+
+
+# --- BEGIN MERGED CONTENT FROM: 0855-alfred-burn-windows.hook.chroot ---
+#!/bin/bash
+# 0855-alfred-burn-windows.hook.chroot
+# Installs Burn-My-Windows KWin effects for Spatial Desktop
+set +e
+
+echo "[0855] Installing Burn My Windows KWin Effects (Plasma 6)"
+
+# We need wget and tar, they should be present, but ensure it.
+apt-get update -y || true
+apt-get install -y wget tar kpackagetool6 || true
+
+TMP_DIR=$(mktemp -d)
+cd "$TMP_DIR"
+
+echo "Downloading Fire effect..."
+wget -q --timeout=30 "https://github.com/Schneegans/Burn-My-Windows/releases/download/v48/kwin6_effect_fire.tar.gz" || true
+
+echo "Installing Fire effect globally..."
+if [ -f kwin6_effect_fire.tar.gz ]; then
+    kpackagetool6 --global -t KWin/Effect -i kwin6_effect_fire.tar.gz || echo "[WARN] Failed to install Fire effect via kpackagetool6, it might already be installed."
+else
+    echo "[ERROR] Failed to download kwin6_effect_fire.tar.gz"
+fi
+
+cd /
+rm -rf "$TMP_DIR"
+
+echo "[0855] Burn My Windows effects installation hook completed."
+
+# --- END MERGED CONTENT FROM: 0855-alfred-burn-windows.hook.chroot ---
+
+
+# --- BEGIN MERGED CONTENT FROM: 0855-alfred-tongues.hook.chroot ---
+#!/bin/bash
+# 0855-alfred-tongues.hook.chroot
+# Configures The Tower of Babel Protocol (Offline AI Voice Translation)
+set +e
+
+echo "[0855] Configuring Tower of Babel Protocol (Offline Translation)"
+
+# Install whisper via pipx to avoid system package conflicts
+apt-get install -y pipx || true
+pipx install openai-whisper || true
+
+cat << 'EOF' > /usr/local/bin/alfred-tongues
+#!/bin/bash
+echo "â•”â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•—"
+echo "â•‘  THE TOWER OF BABEL PROTOCOL â€” Offline Translation        â•‘"
+echo "â•‘  'Therefore is the name of it called Babel...'            â•‘"
+echo "â•šâ•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•"
+echo ""
+
+if [ -z "$1" ]; then
+    echo "Usage: alfred-tongues <audio-file.wav> [target-language]"
+    true
+fi
+
+AUDIO_FILE=$1
+LANG=${2:-en}
+
+if command -v whisper &>/dev/null; then
+    echo "Translating $AUDIO_FILE to $LANG entirely offline..."
+    # We use the local model cache in /opt/models/whisper
+    export WHISPER_CACHE_DIR=/opt/models/whisper
+    mkdir -p $WHISPER_CACHE_DIR
+    whisper "$AUDIO_FILE" --model small --language "$LANG" --task translate
+else
+    echo "Whisper AI engine not fully initialized."
+fi
+EOF
+
+[ -e "/usr/local/bin/alfred-tongues" ] && chmod 0755 /usr/local/bin/alfred-tongues
+
+echo "[0855] Tower of Babel Protocol configured."
+
+# --- END MERGED CONTENT FROM: 0855-alfred-tongues.hook.chroot ---
+
+
+#!/bin/bash
+# 0855-alfred-burn-windows.hook.chroot
+# Installs Burn-My-Windows KWin effects for Spatial Desktop
+set +e
+
+echo "[0855] Installing Burn My Windows KWin Effects (Plasma 6)"
+
+# We need wget and tar, they should be present, but ensure it.
+apt-get update -y || true
+apt-get install -y wget tar kpackagetool6 || true
+
+TMP_DIR=$(mktemp -d)
+cd "$TMP_DIR"
+
+echo "Downloading Fire effect..."
+wget -q --timeout=30 "https://github.com/Schneegans/Burn-My-Windows/releases/download/v48/kwin6_effect_fire.tar.gz"
+
+echo "Installing Fire effect globally..."
+if [ -f kwin6_effect_fire.tar.gz ]; then
+    kpackagetool6 --global -t KWin/Effect -i kwin6_effect_fire.tar.gz || echo "[WARN] Failed to install Fire effect via kpackagetool6, it might already be installed."
+else
+    echo "[ERROR] Failed to download kwin6_effect_fire.tar.gz"
+fi
+
+cd /
+rm -rf "$TMP_DIR"
+
+echo "[0855] Burn My Windows effects installation hook completed."
+#!/bin/bash
+# 0855-alfred-tongues.hook.chroot
+# Configures The Tower of Babel Protocol (Offline AI Voice Translation)
+set +e
+
+echo "[0855] Configuring Tower of Babel Protocol (Offline Translation)"
+
+# Install whisper via pipx to avoid system package conflicts
+apt-get install -y pipx || true
+pipx install openai-whisper || true
+
+cat << 'EOF' > /usr/local/bin/alfred-tongues
+#!/bin/bash
+echo "â•”â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•—"
+echo "â•‘  THE TOWER OF BABEL PROTOCOL â€” Offline Translation        â•‘"
+echo "â•‘  'Therefore is the name of it called Babel...'            â•‘"
+echo "â•šâ•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•"
+echo ""
+
+if [ -z "$1" ]; then
+    echo "Usage: alfred-tongues <audio-file.wav> [target-language]"
+    true
+fi
+
+AUDIO_FILE=$1
+LANG=${2:-en}
+
+if command -v whisper &>/dev/null; then
+    echo "Translating $AUDIO_FILE to $LANG entirely offline..."
+    # We use the local model cache in /opt/models/whisper
+    export WHISPER_CACHE_DIR=/opt/models/whisper
+    mkdir -p $WHISPER_CACHE_DIR
+    whisper "$AUDIO_FILE" --model small --language "$LANG" --task translate
+else
+    echo "Whisper AI engine not fully initialized."
+fi
+EOF
+
+chmod 0755 /usr/local/bin/alfred-tongues
+
+echo "[0855] Tower of Babel Protocol configured."

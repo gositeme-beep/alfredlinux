@@ -1,0 +1,58 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+# 0161-alfred-tomoyo-stub.hook.chroot
+# ---------------------------------------------------------------
+# Fixes: kernel panic at boot — `tomoyo_check_profile` -> `STOP!`
+#
+# Cause: Alfred kernel 7.0.12 has CONFIG_SECURITY_TOMOYO=y compiled in.
+# When TOMOYO initializes during early boot it reads a "profile.conf"
+# describing operating modes for the security domains. If the file
+# is missing or empty the kernel panics with `not syncing: STOP!`.
+#
+# Fix: drop the minimal stub policy files Debian ships in the
+# `tomoyo-tools` source tree directly into /etc/tomoyo/ in the chroot.
+# These four files are the canonical "learning mode disabled, all
+# policies start empty" configuration documented at
+# https://tomoyo.osdn.jp/2.6/spec.html#policy_files
+#
+# Safe to run unconditionally: if /etc/tomoyo/ already exists and has
+# the four files we leave them alone.
+# ---------------------------------------------------------------
+set +eu
+
+TDIR=/etc/tomoyo
+mkdir -p "$TDIR" || true
+[ -e "$TDIR" ] && chmod 700 "$TDIR" || true
+
+# 1) profile.conf — tells the kernel TOMOYO is *disabled* by default
+#    (mode=0). This makes TOMOYO load happily but enforce nothing.
+if [ ! -s "$TDIR/profile.conf" ]; then
+  cat > "$TDIR/profile.conf" <<'EOF'
+PROFILE_VERSION=20150505
+0-COMMENT=-----Disabled Mode-----
+0-PREFERENCE={ max_audit_log=1024 max_learning_entry=2048 enforcing_penalty=0 }
+0-CONFIG={ mode=disabled grant_log=no reject_log=yes }
+EOF
+fi
+
+# 2) exception_policy.conf — required, can be empty
+[ -s "$TDIR/exception_policy.conf" ] || : > "$TDIR/exception_policy.conf"
+
+# 3) domain_policy.conf — required, can be empty
+[ -s "$TDIR/domain_policy.conf" ] || : > "$TDIR/domain_policy.conf"
+
+# 4) manager.conf — required, can be empty (no userspace managers)
+[ -s "$TDIR/manager.conf" ] || : > "$TDIR/manager.conf"
+
+# 5) stat.conf — required since kernel 2.6.33+
+[ -s "$TDIR/stat.conf" ] || : > "$TDIR/stat.conf"
+
+[ -e "$TDIR"/*.conf ] && chmod 600 "$TDIR"/*.conf || true
+
+echo "[0161-tomoyo-stub] wrote $(ls "$TDIR" | wc -l) files in $TDIR"
+ls -la "$TDIR"
+
+exit 0

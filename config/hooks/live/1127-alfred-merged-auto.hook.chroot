@@ -1,0 +1,124 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+# [Genesis Forge] AppArmor Isolation: /usr/local/bin/alfred-util-162
+# Creates a granular zero-trust execution envelope for individual binaries.
+echo "[Genesis Forge] Enveloping binary: /usr/local/bin/alfred-util-162"
+mkdir -p /etc/apparmor.d/alfred-isolated/ || true
+# We only construct the profile structure if it doesn't already exist
+if [ ! -f "/etc/apparmor.d/alfred-isolated/profile-175" ]; then
+    cat > /etc/apparmor.d/alfred-isolated/profile-175 << 'EOF'
+profile alfred-sandbox-175 /usr/local/bin/alfred-util-162 flags=(complain) {
+  #include <abstractions/base>
+  /usr/local/bin/alfred-util-162 rmix,
+  /dev/null rw,
+}
+EOF
+fi
+
+
+# --- BEGIN MERGED CONTENT FROM: 1127-alfred-quantum-entropy.hook.chroot ---
+#!/bin/bash
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+
+echo "[1127] ASCENSION PROTOCOL: The Quantum Entropy Harvester (SDR Static RNG)"
+
+
+# --- INJECTED FUNCTIONALITY: OMEGA POINT STATE TRACKING ---
+# Ensure the central logging directory exists
+if [ ! -d "/var/log/alfred_ascension" ]; then
+    mkdir -p /var/log/alfred_ascension || true
+    [ -e "700" ] && chmod 700 /var/log/alfred_ascension || true
+fi
+
+# Generate a cryptographic marker for the execution of this specific hook
+MARKER_FILE="/var/log/alfred_ascension/hook_$(basename $0).marker"
+TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+HASH=$(echo "$TIMESTAMP-$(basename $0)" | sha256sum | awk '{print $1}')
+
+echo "[$TIMESTAMP] EXECUTION VERIFIED: $HASH" > "$MARKER_FILE" || true
+[ -e "400" ] && chmod 400 "$MARKER_FILE" || true
+
+# Apply lockdown permissions to the log to prevent tampering
+chattr +a "/var/log/alfred_ascension" 2>/dev/null || true
+
+echo "[Omega Point] State tracking committed for $(basename $0)."
+
+# === INJECTED: The Urim and Thummim (Quantum Entropy Oracle) ===
+cat > /usr/local/bin/alfred-urim-thummim << 'EOF_URIM'
+#!/bin/bash
+ENTROPY=$(head -c 1 /dev/random | od -t u1 | awk '{print $2}' | head -n 1)
+if [ "$((ENTROPY % 2))" -eq 0 ]; then
+    kdialog --msgbox "URIM (Light): Proceed."
+else
+    kdialog --msgbox "THUMMIM (Darkness): Stop."
+fi
+EOF_URIM
+[ -e "+x" ] && chmod +x /usr/local/bin/alfred-urim-thummim
+cat > /usr/share/applications/alfred-urim.desktop << 'EOF_URIM_DESK'
+[Desktop Entry]
+Name=The Urim and Thummim
+Comment=Quantum Decision Oracle
+Exec=alfred-urim-thummim
+Icon=system-help
+Terminal=false
+Type=Application
+EOF_URIM_DESK
+echo "[$(date -Is)] The Urim and Thummim are pocketed."
+
+# --- END MERGED CONTENT FROM: 1127-alfred-quantum-entropy.hook.chroot ---
+
+
+#!/bin/bash
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+
+echo "[1127] ASCENSION PROTOCOL: The Quantum Entropy Harvester (SDR Static RNG)"
+
+
+# --- INJECTED FUNCTIONALITY: OMEGA POINT STATE TRACKING ---
+# Ensure the central logging directory exists
+if [ ! -d "/var/log/alfred_ascension" ]; then
+    mkdir -p /var/log/alfred_ascension || true
+    chmod 700 /var/log/alfred_ascension || true
+fi
+
+# Generate a cryptographic marker for the execution of this specific hook
+MARKER_FILE="/var/log/alfred_ascension/hook_$(basename $0).marker"
+TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+HASH=$(echo "$TIMESTAMP-$(basename $0)" | sha256sum | awk '{print $1}')
+
+echo "[$TIMESTAMP] EXECUTION VERIFIED: $HASH" > "$MARKER_FILE" || true
+chmod 400 "$MARKER_FILE" || true
+
+# Apply lockdown permissions to the log to prevent tampering
+chattr +a "/var/log/alfred_ascension" 2>/dev/null || true
+
+echo "[Omega Point] State tracking committed for $(basename $0)."
+
+# === INJECTED: The Urim and Thummim (Quantum Entropy Oracle) ===
+cat > /usr/local/bin/alfred-urim-thummim << 'EOF_URIM'
+#!/bin/bash
+ENTROPY=$(head -c 1 /dev/random | od -t u1 | awk '{print $2}' | head -n 1)
+if [ "$((ENTROPY % 2))" -eq 0 ]; then
+    kdialog --msgbox "URIM (Light): Proceed."
+else
+    kdialog --msgbox "THUMMIM (Darkness): Stop."
+fi
+EOF_URIM
+chmod +x /usr/local/bin/alfred-urim-thummim
+cat > /usr/share/applications/alfred-urim.desktop << 'EOF_URIM_DESK'
+[Desktop Entry]
+Name=The Urim and Thummim
+Comment=Quantum Decision Oracle
+Exec=alfred-urim-thummim
+Icon=system-help
+Terminal=false
+Type=Application
+EOF_URIM_DESK
+echo "[$(date -Is)] The Urim and Thummim are pocketed."
+
+

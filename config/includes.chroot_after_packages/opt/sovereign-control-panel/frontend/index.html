@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sovereign Control Panel - Alfred 7.77</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap');
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', sans-serif;
+            color: #ffffff;
+        }
+
+        body {
+            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 2rem;
+            overflow: hidden;
+        }
+
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 24px;
+            padding: 3rem;
+            width: 100%;
+            max-width: 800px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            animation: fadeIn 1s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        h1 {
+            font-weight: 800;
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(to right, #60a5fa, #c084fc);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        p.subtitle {
+            color: #94a3b8;
+            margin-bottom: 3rem;
+            font-size: 1.1rem;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+        }
+
+        .toggle-card {
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            padding: 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s ease;
+        }
+
+        .toggle-card:hover {
+            background: rgba(255, 255, 255, 0.05);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        }
+
+        .toggle-info h3 {
+            font-size: 1.1rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .toggle-info p {
+            font-size: 0.85rem;
+            color: #64748b;
+        }
+
+        /* Switch UI */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 28px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: #334155;
+            transition: .4s;
+            border-radius: 34px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 20px;
+            width: 20px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: #3b82f6;
+        }
+
+        input:checked + .slider.danger {
+            background-color: #ef4444;
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(22px);
+        }
+
+        .panic-btn {
+            grid-column: span 2;
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: #fca5a5;
+            text-align: center;
+            padding: 1.5rem;
+            border-radius: 16px;
+            cursor: pointer;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            transition: all 0.3s;
+        }
+
+        .panic-btn:hover {
+            background: rgba(239, 68, 68, 0.3);
+            transform: scale(1.02);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="glass-panel">
+        <h1>Omni-Control Matrix</h1>
+        <p class="subtitle">Alfred Linux 7.77 God-Tier Subsystems</p>
+
+        <div class="grid">
+            
+            <div class="toggle-card">
+                <div class="toggle-info">
+                    <h3>BCI Neuro-Link</h3>
+                    <p>OpenBCI Electroencephalography</p>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" onchange="toggleFeature('bci', this.checked)">
+                    <span class="slider"></span>
+                </label>
+            </div>
+
+            <div class="toggle-card">
+                <div class="toggle-info">
+                    <h3>XR Desktop</h3>
+                    <p>SimulaVR Display Compositor</p>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" onchange="toggleFeature('xr', this.checked)">
+                    <span class="slider"></span>
+                </label>
+            </div>
+
+            <div class="toggle-card">
+                <div class="toggle-info">
+                    <h3>Universal Translation</h3>
+                    <p>macOS Darling & Windows binfmt_misc</p>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" checked onchange="toggleFeature('dkms', this.checked)">
+                    <span class="slider"></span>
+                </label>
+            </div>
+            
+            <div class="toggle-card">
+                <div class="toggle-info">
+                    <h3>Waydroid DJI Bridge</h3>
+                    <p>Android Kernel Drone Emulator</p>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" checked onchange="toggleFeature('waydroid', this.checked)">
+                    <span class="slider"></span>
+                </label>
+            </div>
+
+            <div class="toggle-card">
+                <div class="toggle-info">
+                    <h3>SIGINT Radio Stack</h3>
+                    <p>RTL-SDR Base Station Intercept</p>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" onchange="toggleFeature('sdr', this.checked)">
+                    <span class="slider"></span>
+                </label>
+            </div>
+            
+            <div class="toggle-card">
+                <div class="toggle-info">
+                    <h3>Sovereign Mesh</h3>
+                    <p>LoRa IPFS Decentralized Routing</p>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" checked onchange="toggleFeature('mesh', this.checked)">
+                    <span class="slider"></span>
+                </label>
+            </div>
+
+            <div class="toggle-card">
+                <div class="toggle-info">
+                    <h3>Sovereign Grid (GSM Miner)</h3>
+                    <p>Decentralized GPU Hardware Pooling</p>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" checked onchange="toggleFeature('grid', this.checked)">
+                    <span class="slider"></span>
+                </label>
+            </div>
+
+            <div class="panic-btn" onclick="triggerPanic()">
+                [!] Engage Crown of Thorns [!]
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Integrate Qt WebChannel for Python Backend -->
+    <script type="text/javascript" src="qrc:///qtwebchannel/qwebchannel.js"></script>
+    <script>
+        var backend;
+        window.onload = function() {
+            if (typeof qt !== 'undefined') {
+                new QWebChannel(qt.webChannelTransport, function (channel) {
+                    backend = channel.objects.backend;
+                });
+            }
+        };
+
+        function toggleFeature(feature, state) {
+            console.log("Toggling " + feature + " to " + state);
+            if(backend) {
+                backend.toggle_feature(feature, state);
+            }
+        }
+
+        function triggerPanic() {
+            if(confirm("CRITICAL WARNING: This will immediately invoke the LUKS Nuke and Ghost Exfil. Are you sure?")) {
+                if(backend) backend.trigger_panic();
+            }
+        }
+    </script>
+</body>
+</html>

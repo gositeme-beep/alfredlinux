@@ -1,0 +1,38 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# 0996-alfred-babylon-fall.hook.chroot
+# Configures Intel ME Neutralization (The Fall of Babylon)
+set +e
+
+echo "[0996] Configuring The Fall of Babylon (Intel ME Neutralization)"
+
+# Aggressively blacklist all Intel ME / AMT kernel modules
+mkdir -p /etc/modprobe.d || true
+cat << 'EOF' > /etc/modprobe.d/alfred-babylon-fall.conf
+blacklist mei
+blacklist mei_me
+blacklist intel_ips
+blacklist mei_hdcp
+blacklist mei_wdt
+EOF
+
+# Create the CLI tool
+cat << 'EOF' > /usr/local/bin/alfred-babylon-fall
+#!/bin/bash
+echo "╔═══════════════════════════════════════════════════════════╗"
+echo "║  THE FALL OF BABYLON — Hardware Backdoor Neutralization   ║"
+echo "║  'Babylon the great is fallen...' — Revelation 18:2       ║"
+echo "╚═══════════════════════════════════════════════════════════╝"
+echo ""
+echo "Intel Management Engine (ME) and AMT kernel modules are permanently blacklisted."
+echo "Checking loaded modules..."
+lsmod | grep mei || echo "No Intel ME modules are loaded. Babylon has fallen."
+EOF
+
+[ -e "0755" ] && chmod 0755 /usr/local/bin/alfred-babylon-fall || true
+
+echo "[0996] Babylon has fallen."
+
+exit 0

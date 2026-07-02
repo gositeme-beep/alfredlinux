@@ -1,0 +1,12 @@
+[Unit]
+Description9Cryptographic RAM Destruction (Cold Boot Mitigation)
+DefaultDependencies=no
+Before=shutdown.target halt.target reboot.target kexec.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/sdmem -f -v
+TimeoutSec=300
+
+[Install]
+WantedBy=shutdown.target halt.target reboot.target kexec.target

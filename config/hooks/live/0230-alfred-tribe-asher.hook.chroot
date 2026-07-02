@@ -1,0 +1,24 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+# 0412-alfred-tribe-asher — 🌾 asher — abundance-and-hospitality
+
+echo "[0412-tribe-asher] begin"
+install -d /etc/alfred/tribes /usr/share/alfred/tribes
+cat >/etc/alfred/tribes/asher.flag <<EOS
+TRIBE=asher
+EMOJI=🌾
+GIFT=abundance-and-hospitality
+VERSE="Genesis 49:20 — his bread shall be fat."
+EOS
+cat >/usr/share/alfred/tribes/asher.txt <<EOS
+🌾  Tribe of asher
+Genesis 49:20 — his bread shall be fat.
+Gift: abundance-and-hospitality
+EOS
+echo "[0412-tribe-asher] done"
+
+
+exit 0

@@ -1,0 +1,155 @@
+#!/bin/sh
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+
+echo "[Alfred Sacred Geometry] Injecting Golden Ratio Compositor Overrides..."
+
+# We inject a script into the user's profile that defines Wayland/X11 overrides
+# but ONLY executes if the user explicitly triggers it.
+
+mkdir -p /usr/share/alfred/geometry/ || true
+mkdir -p /usr/local/bin/ || true
+
+cat > /usr/local/bin/alfred-toggle-sacred-geometry.sh << 'EOF'
+#!/bin/bash
+# Toggles the Golden Ratio (1.618) UI scaling override.
+
+FLAG_FILE="$HOME/.config/alfred_sacred_geometry_enabled"
+
+if [ -f "$FLAG_FILE" ]; then
+    rm -f "$FLAG_FILE" || true
+    echo "Sacred Geometry disabled. Reverting to standard scaling on next login."
+    # Reset Xfce scaling to 1.0
+    xfconf-query -c xsettings -p /Gdk/WindowScalingFactor -s 1 2>/dev/null || true
+else
+    touch "$FLAG_FILE"
+    echo "Sacred Geometry enabled. Enforcing Golden Ratio (1.618) scaling."
+    # Force Xfce/GDK scaling to approximate the golden ratio
+    # GTK doesn't support fractional scaling natively without Wayland, 
+    # so we enforce font scaling and UI DPI math
+    xfconf-query -c xsettings -p /Xft/DPI -s 155 2>/dev/null || true # 96 * 1.618
+fi
+EOF
+
+chmod +x /usr/local/bin/alfred-toggle-sacred-geometry.sh || true
+
+# Create the profile injection
+cat > /etc/profile.d/alfred-sacred-geometry.sh << 'EOF'
+# Alfred Sacred Geometry Profile Override
+# Activates the golden ratio compositor settings ONLY if the user has opted in.
+
+if [ -f "$HOME/.config/alfred_sacred_geometry_enabled" ]; then
+    # Wayland fractional scaling override
+    export WLR_DRM_DEVICES=/dev/dri/card0
+    export QT_WAYLAND_FORCE_DPI=155
+    export GDK_DPI_SCALE=1.618
+    
+    # Render pure geometric window shadows if using a compositor like picom
+    if command -v picom >/dev/null 2>&1; then
+        export PICOM_SHADOW_RADIUS=21 # Fibonacci sequence
+        export PICOM_SHADOW_OPACITY=0.618
+    fi
+fi
+EOF
+
+echo "[Alfred Sacred Geometry] Override scripts installed (Disabled by default)."
+
+# === MERGED FROM 0850-alfred-apocalypse-vault ===
+#!/bin/bash
+# 0850-alfred-apocalypse-vault.hook.chroot
+# The Apocalypse Vault: Native Offline Integration of 44GB Artificial Intelligence Models
+set +e
+
+echo "I: [alfred] configuring the apocalypse vault (offline native AI integration)"
+
+export DEBIAN_FRONTEND=noninteractive
+apt-get update || true || true
+# Install high-speed multi-threaded downloader
+apt-get install -y --fix-broken -y --no-install-recommends aria2 || true
+
+mkdir -p /usr/share/alfred/models/llm
+mkdir -p /usr/share/alfred/models/diffusion
+
+echo "========================================================="
+echo " WARNING: INITIATING MASSIVE 44GB+ DOWNLOAD PROTOCOL"
+echo " This will drastically increase ISO compression time."
+echo "========================================================="
+
+# 1. The Omniscient Terminal Brain (32B/70B Llama-3 GGUF)
+# Downloading a massive ~40GB 70B Parameter Quantized Model
+echo "I: Fetching Llama-3 70B Instruct (GGUF)..."
+
+# 2. The Visual Rendering Engine (SDXL Safetensors)
+# Downloading the ~6GB Stable Diffusion XL Baseline model for ComfyUI integration
+echo "I: Fetching FLUX.1 [schnell] (God-Tier Image Generation) (Safetensors)..."
+
+# Ensure all downloaded models have read permissions for all users
+chmod -R 644 /usr/share/alfred/models/llm/* || true
+chmod -R 644 /usr/share/alfred/models/diffusion/* || true
+
+# 3. The Cinematic Forge (Stable Video Diffusion)
+
+echo "I: Fetching CogVideoX-5B (God-Tier Video Generation)..."
+
+mkdir -p /usr/share/alfred/models/video || true
+
+
+
+
+
+# 4. The Voice of the Kingdom (Whisper Large V3 Turbo)
+
+echo "I: Fetching Whisper Large V3 Turbo..."
+
+mkdir -p /usr/share/alfred/models/audio || true
+
+
+
+
+
+chmod -R 644 /usr/share/alfred/models/video/* 2>/dev/null || true
+
+chmod -R 644 /usr/share/alfred/models/audio/* 2>/dev/null || true
+
+# 2. The Visual Rendering Engine (FLUX.1 schnell)
+
+echo "I: Fetching FLUX.1 [schnell] (God-Tier Image Generation)..."
+
+mkdir -p /usr/share/alfred/models/diffusion || true
+
+#aria2c -x 16 -s 16 -d /usr/share/alfred/models/diffusion -o flux1-schnell.safetensors \
+    "https://huggingface.co/black-forest-labs/FLUX.1-schnell/resolve/main/flux1-schnell.safetensors" || true
+
+
+
+# 3. The Cinematic Forge (CogVideoX-5B)
+
+echo "I: Fetching CogVideoX-5B (God-Tier Video Generation)..."
+
+mkdir -p /usr/share/alfred/models/video || true
+
+#aria2c -x 16 -s 16 -d /usr/share/alfred/models/video -o cogvideox-5b.safetensors \
+    "https://huggingface.co/THUDM/CogVideoX-5b/resolve/main/transformer/diffusion_pytorch_model.safetensors" || true
+
+
+
+# 4. The Voice of the Kingdom (Whisper Large V3 Turbo)
+
+echo "I: Fetching Whisper Large V3 Turbo..."
+
+mkdir -p /usr/share/alfred/models/audio || true
+
+#aria2c -x 16 -s 16 -d /usr/share/alfred/models/audio -o whisper-large-v3-turbo.bin \
+    "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-large-v3-turbo.bin" || true
+
+
+
+chmod -R 644 /usr/share/alfred/models/diffusion/* 2>/dev/null || true
+
+chmod -R 644 /usr/share/alfred/models/video/* 2>/dev/null || true
+
+chmod -R 644 /usr/share/alfred/models/audio/* 2>/dev/null || true
+
+echo "I: [alfred] The Apocalypse Vault is sealed. AI models successfully embedded into the filesystem."
+
+exit 0

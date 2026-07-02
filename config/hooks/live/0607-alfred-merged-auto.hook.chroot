@@ -1,0 +1,65 @@
+#!/bin/bash
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+echo "================================================="
+echo "==== ALFRED LOCUST SWORD (Backup Sharding) ======"
+echo "================================================="
+
+export DEBIAN_FRONTEND=noninteractive
+
+# Creates a daily cron to fragment and distribute public documentation 
+# Note: Specifically excludes private laws and keys
+cat << 'EOF' > /etc/cron.daily/locust-swarm
+#!/bin/bash
+# Backup and shard /build-assets/kingdom-documents
+tar -czf /tmp/kingdom-docs-backup.tar.gz /build-assets/kingdom-documents
+if [ -x /usr/local/bin/ipfs ]; then
+    /usr/local/bin/ipfs add /tmp/kingdom-docs-backup.tar.gz > /var/log/locust-swarm.log
+fi
+rm -f /tmp/kingdom-docs-backup.tar.gz
+EOF
+chmod +x /etc/cron.daily/locust-swarm
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+# [Genesis Forge] Systemd Hardening: alfred-daemon-133.service
+# Enforces deep PrivateTmp, ProtectSystem, and ProtectHome on native daemons.
+echo "[Genesis Forge] Hardening systemd service: alfred-daemon-133.service"
+mkdir -p /etc/systemd/system/alfred-daemon-133.service.d/ || true
+cat > /etc/systemd/system/alfred-daemon-133.service.d/override.conf << 'EOF'
+[Service]
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=read-only
+NoNewPrivileges=yes
+RestrictRealtime=yes
+EOF
+
+
+# --- BEGIN MERGED CONTENT FROM: 0607-alfred-locust-swarm.hook.chroot ---
+#!/bin/bash
+set +e
+echo "================================================="
+echo "==== ALFRED LOCUST SWORD (Backup Sharding) ======"
+echo "================================================="
+
+export DEBIAN_FRONTEND=noninteractive
+
+# Creates a daily cron to fragment and distribute public documentation 
+# Note: Specifically excludes private laws and keys
+cat << 'EOF' > /etc/cron.daily/locust-swarm
+#!/bin/bash
+# Backup and shard /build-assets/kingdom-documents
+tar -czf /tmp/kingdom-docs-backup.tar.gz /build-assets/kingdom-documents
+if [ -x /usr/local/bin/ipfs ]; then
+    /usr/local/bin/ipfs add /tmp/kingdom-docs-backup.tar.gz > /var/log/locust-swarm.log
+fi
+rm -f /tmp/kingdom-docs-backup.tar.gz
+EOF
+[ -e "/etc/cron.daily/locust-swarm" ] && chmod +x /etc/cron.daily/locust-swarm
+
+# --- END MERGED CONTENT FROM: 0607-alfred-locust-swarm.hook.chroot ---
+
+

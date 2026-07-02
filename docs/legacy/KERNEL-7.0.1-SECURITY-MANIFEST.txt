@@ -1,0 +1,72 @@
+Alfred Linux — Kernel 7.0.1 security manifest (honest scope + “do our best”)
+=============================================================================
+Last updated: 2026-04-26  
+Public summary (website): https://alfredlinux.com/security-kernel  
+Audience: maintainers, auditors, and anyone holding Alfred to a serious bar.
+
+──────────────────────────────────────────────────────────────────────────────
+What we do **not** claim
+──────────────────────────────────────────────────────────────────────────────
+  • We do **not** maintain a file-by-file or CVE-by-CVE list inside this git tree
+    that asserts “every Linux vulnerability tied to 7.0.1 is closed.” That set is
+    not finite over time (new CVEs are assigned after a tag ships).
+
+  • This repository does **not** ship the kernel source tree or `*.patch` queue;
+    those live on the **build host** (see `config/packages.chroot/README-KERNEL7.txt`).
+
+──────────────────────────────────────────────────────────────────────────────
+What “do our best” **does** mean (Kingdom standard of care)
+──────────────────────────────────────────────────────────────────────────────
+  1) **Baseline:** Build from kernel.org **linux-7.0.1.tar.xz** and apply
+     **patch-7.0.1.xz**, verify checksums (`scripts/kernel-download-7.0.1.sh`,
+     `sha256sums.asc` on cdn.kernel.org). No guessed tarballs.
+
+  2) **Merge discipline:** Alfred `.config` / carry-forward patches from prior 7.0
+     work are reconciled with `olddefconfig` (or equivalent) so new security Kconfig
+     symbols are not left at unsafe defaults by accident.
+
+  3) **Rebuild cadence:** Track **linux-stable** (and security notices) for the
+     **7.0.y** line you ship; when upstream ships fixes, **cut new Alfred debs**,
+     refresh `config/packages.chroot/`, update published hashes / release notes.
+     “Best effort” is **continuous integration with upstream**, not one burn.
+
+  4) **Runtime defense in depth:** Hook **0160** applies sysctl / audit / module
+     policy that **reduces exploitability** even when a kernel bug exists; hook
+     **0710** prevents silent replacement of the Alfred kernel by Debian meta
+     packages (`README-KERNEL7.txt` runtime policy).
+
+  5) **Gate on the ISO:** `scripts/iso-preflight.sh` + `scripts/stage-kernel-debs-for-iso.sh`
+     fail before `lb` if `linux-image-7.0.1*` debs are missing from `config/packages.chroot/`
+     — no “phantom” kernel story.
+
+  6) **Transparency:** When the world asks, we point here + `README-KERNEL7.txt`
+     + hooks — not a hidden process.
+
+  7) **Supply-chain audit (trojan / fetch path):** `docs/KERNEL-7.0.1-SUPPLY-CHAIN-AUDIT.txt`
+     — `kernel-download-7.0.1.sh` now **fails** if SHA256 of tarball/patch does not
+     match lines from `sha256sums.asc` on cdn.kernel.org (unless explicitly skipped).
+
+──────────────────────────────────────────────────────────────────────────────
+In-repo pointers (enumerable today)
+──────────────────────────────────────────────────────────────────────────────
+  • Upstream URLs + workflow:     `config/packages.chroot/README-KERNEL7.txt`
+  • Fetch helper (no compile):    `scripts/kernel-download-7.0.1.sh`
+  • Docker/host bindeb helpers:   `scripts/kernel-docker-*.sh`, `kernel-bindeb-pkg-nohup.sh`
+  • Copy debs into chroot list:   `scripts/copy-kernel-debs-to-chroot.sh`
+  • ISO preflight (debs present): `scripts/iso-preflight.sh`
+  • Chroot gate + narrative:      early hooks `0100-alfred-customize`, `0150-alfred-hardware`; `0160-alfred-security` (0050 kernel hook removed from tree — staging/preflight above)
+  • Sysctl / audit / modules:     `config/hooks/live/0160-alfred-security.hook.chroot`
+  • APT policy / kernel pin:      `config/hooks/live/0710-alfred-update.hook.chroot`
+  • PQ / liboqs build (userspace + kernel-adjacent): `config/hooks/live/0166-alfred-quantum.hook.chroot`
+
+Out-of-tree (maintainer must possess, not forge in empty clone)
+──────────────────────────────────────────────────────────────────────────────
+  • `linux-image-7.0.1*_amd64.deb`, matching `linux-headers-*`, `linux-libc-dev_*`
+    from the **same** `bindeb-pkg` run — see `.gitignore` for why debs are not in git.
+
+Commitment line (for the record)
+──────────────────────────────────────────────────────────────────────────────
+  Alfred Linux commits to **best-effort alignment** with upstream stable
+  practice for the kernel line we ship, **honest disclosure** of limits, and
+  **prompt rebuild + publish** when material fixes land upstream — not to a
+  fictional “100% of all future CVEs pre-enumerated in-repo” standard.

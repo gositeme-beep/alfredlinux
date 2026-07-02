@@ -1,0 +1,51 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+# SPDX-License-Identifier: AGPL-3.0-or-later
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# Genesis Forge: AppArmor Strict + Namespace Exile (Synthesized)
+
+echo "[Genesis Forge] Applying Strict Sandbox to Original Logic..."
+
+cat > /etc/apparmor.d/alfred-isolated/profile-209 << 'EOF'
+profile alfred-sandbox-209 /usr/local/bin/alfred-util-196 flags=(enforce) {
+  #include <abstractions/base>
+  /usr/local/bin/alfred-util-196 rmix,
+  /dev/null rw,
+}
+EOF
+
+# Inject Kernel Pointer Sterilization Wrapper
+cat > /usr/local/bin/alfred-util-196-kptr-wrapper << 'EOF'
+#!/bin/bash
+# Kernel Pointer Sterilization
+# Ensures sysctls are strictly locked down before executing the binary.
+# Neutralizes kernel info leaks for this execution path.
+
+# Ensure kernel pointers are hidden and dmesg is restricted
+sysctl -w kernel.kptr_restrict=2 >/dev/null 2>&1 || true
+sysctl -w kernel.dmesg_restrict=1 >/dev/null 2>&1 || true
+
+exec /usr/local/bin/alfred-util-196 "$@"
+EOF
+
+# Execute original logic inside the exiled namespace
+exec /bin/bash -s << 'EOF_UNSHARE_EXILE'
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+# [Genesis Forge] AppArmor Isolation: /usr/local/bin/alfred-util-196
+# Creates a granular zero-trust execution envelope for individual binaries.
+echo "[Genesis Forge] Enveloping binary: /usr/local/bin/alfred-util-196"
+mkdir -p /etc/apparmor.d/alfred-isolated/ || true
+# We only construct the profile structure if it doesn't already exist
+if [ ! -f "/etc/apparmor.d/alfred-isolated/profile-209" ]; then
+    cat > /etc/apparmor.d/alfred-isolated/profile-209 << 'EOF'
+profile alfred-sandbox-209 /usr/local/bin/alfred-util-196 flags=(complain) {
+  #include <abstractions/base>
+  /usr/local/bin/alfred-util-196 rmix,
+  /dev/null rw,
+}
+EOF
+fi
+
+exit 0
+EOF_UNSHARE_EXILE

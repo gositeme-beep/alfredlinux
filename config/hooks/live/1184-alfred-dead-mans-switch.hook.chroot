@@ -1,0 +1,89 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+
+echo "[Genesis Forge] Engineering Cryptographic Heartbeat Monitor (Dead Man's Switch)..."
+
+apt-get install -y --fix-broken -y curl || true
+
+mkdir -p /var/log/alfred_ascension || true
+[ -e "700" ] && chmod 700 /var/log/alfred_ascension || true
+
+mkdir -p /opt/alfred-deadman || true
+
+# Inject Dead Man's Switch Daemon Script
+cat > /opt/alfred-deadman/heartbeat_daemon.sh << 'EOF'
+#!/bin/bash
+# The Dead Man's Switch
+# Requires a heartbeat file to be touched every 24 hours.
+# If the heartbeat fails, triggers the Thermite Wipe script.
+
+LOG_FILE="/var/log/alfred_ascension/deadman_switch.log"
+HEARTBEAT_FILE="/opt/alfred-deadman/heartbeat.token"
+MAX_AGE_SECONDS=86400 # 24 Hours
+
+# Initialize heartbeat
+touch "$HEARTBEAT_FILE"
+
+echo "[$(date -u +"%Y-%m-%dT%H:%M:%SZ")] Dead Man's Switch Armed. 24-Hour Timer Initiated." >> "$LOG_FILE"
+
+while true; do
+    # Check if heartbeat file exists
+    if [ ! -f "$HEARTBEAT_FILE" ]; then
+        echo "CRITICAL ALARM: HEARTBEAT TOKEN MISSING." >> "$LOG_FILE"
+        /opt/alfred-kinetic/thermite_trigger.sh "KILL_SIGNAL_OVERRIDE" &
+exit 0
+    fi
+    
+    # Calculate age of the heartbeat
+    CURRENT_TIME=$(date +%s)
+    FILE_TIME=$(stat -c %Y "$HEARTBEAT_FILE")
+    AGE=$((CURRENT_TIME - FILE_TIME))
+    
+    if [ $AGE -gt $MAX_AGE_SECONDS ]; then
+        echo "CRITICAL ALARM: OPERATOR HEARTBEAT EXPIRED ($AGE seconds). INITIATING KINETIC DESTRUCT." >> "$LOG_FILE"
+        
+        # Trigger Thermite Wipe
+        # We assume the thermite script handles the actual wiping
+        # In this context, we signal it or execute its payload directly.
+        # Fallback to direct SysRq kill if thermite script fails.
+        echo 1 > /proc/sys/kernel/sysrq
+        echo b > /proc/sysrq-trigger
+    fi
+    
+    sleep 3600 # Check every hour
+done
+EOF
+
+[ -e "+x" ] && chmod +x /opt/alfred-deadman/heartbeat_daemon.sh || true
+
+# Create systemd service for the daemon
+cat > /etc/systemd/system/alfred-deadman.service << 'EOF'
+[Unit]
+Description=Alfred Cryptographic Heartbeat Monitor
+After=local-fs.target
+
+[Service]
+Type=simple
+ExecStart=/opt/alfred-deadman/heartbeat_daemon.sh
+Restart=always
+RestartSec=60
+User=root
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+systemctl enable alfred-deadman || true || true.service || true
+
+# Original marker functionality
+MARKER_FILE="/var/log/alfred_ascension/hook_1184-alfred-dead-mans-switch.hook.chroot.marker"
+TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+HASH=$(echo "$TIMESTAMP-1184-alfred-dead-mans-switch.hook.chroot" | sha256sum | awk '{print $1}')
+echo "[$TIMESTAMP] EXECUTION VERIFIED: $HASH" > "$MARKER_FILE" || true
+[ -e "400" ] && chmod 400 "$MARKER_FILE" || true
+
+echo "[Genesis Forge] Cryptographic Heartbeat Monitor Integrated."
+exit 0

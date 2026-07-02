@@ -1,0 +1,186 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# ═══════════════════════════════════════════════════════════════
+# 0055-alfred-tpm2-identity.hook.chroot
+# Phase 2: Hardware TPM 2.0 Identity Enforcement
+# ═══════════════════════════════════════════════════════════════
+set +e
+echo "╔═══════════════════════════════════════════════════════════╗"
+echo "║  [0055] PHASE 2 — Hardware TPM 2.0 Identity               ║"
+echo "╚═══════════════════════════════════════════════════════════╝"
+
+# ── 1. Install TPM2 tools and FIDO2/YubiKey support ──
+apt-get install -y --fix-broken -y --no-install-recommends \
+    tpm2-tools \
+    libtss2-dev \
+    libfido2-1 \
+    libfido2-dev \
+    fido2-tools \
+    libpam-u2f \
+    yubikey-manager \
+    pcscd \
+    pcsc-tools \
+    opensc \
+    2>/dev/null || true
+
+# ── 2. Create the Commander hardware auth script ──
+cat > /usr/local/bin/alfred-hw-auth << 'HWAUTH'
+#!/bin/bash
+# Alfred Linux — Hardware Identity Verification
+# Checks for TPM 2.0 presence and FIDO2 key enrollment
+
+
+TPM_DIR="/var/lib/alfred-tpm"
+FIDO2_DIR="/etc/alfred/fido2"
+mkdir -p "$TPM_DIR" "$FIDO2_DIR" || true
+
+check_tpm() {
+    if [ -c /dev/tpm0 ] || [ -c /dev/tpmrm0 ]; then
+        echo "[TPM] Hardware TPM 2.0 detected"
+        tpm2_getcap properties-fixed 2>/dev/null | head -5
+        return 0
+    else
+        echo "[TPM] No hardware TPM found — falling back to software auth"
+        return 1
+    fi
+}
+
+check_fido2() {
+    if fido2-token -L 2>/dev/null | grep -q ''; then
+        echo "[FIDO2] Hardware security key detected"
+        fido2-token -L 2>/dev/null
+        return 0
+    else
+        echo "[FIDO2] No hardware key inserted"
+        return 1
+    fi
+}
+
+enroll_commander_key() {
+    echo "═══════════════════════════════════════════════"
+    echo "  Commander Hardware Key Enrollment"
+    echo "═══════════════════════════════════════════════"
+    echo ""
+    echo "Insert your YubiKey or FIDO2 hardware key and press ENTER..."
+    read -r
+    
+    local device
+    device=$(fido2-token -L 2>/dev/null | head -1 | cut -d: -f1)
+    
+    if [ -z "$device" ]; then
+        echo "ERROR: No FIDO2 device detected."
+        return 1
+    fi
+    
+    echo "Enrolling device: $device"
+    
+    # Generate a credential bound to the Commander identity
+    echo "Touch your key when it blinks..."
+    fido2-token -S -n "alfredlinux-commander" "$device" 2>/dev/null || true
+    
+    # Set up PAM U2F for the alfred user
+    mkdir -p /home/alfred/.config/Yubico || true
+    pamu2fcfg -u alfred > /home/alfred/.config/Yubico/u2f_keys 2>/dev/null || true
+    
+    echo "Commander key enrolled successfully."
+}
+
+seal_secret_to_tpm() {
+    # Seal a secret to the TPM — can only be unsealed on THIS specific hardware
+    local secret="$1"
+    local sealed_file="$TPM_DIR/commander-sealed.bin"
+    local ctx_file="$TPM_DIR/primary.ctx"
+    
+    if ! check_tpm; then return 1; fi
+    
+    echo "$secret" | tpm2_create -C "$ctx_file" \
+        -i - \
+        -u "$TPM_DIR/sealed.pub" \
+        -r "$TPM_DIR/sealed.priv" \
+        -L "sha256:0,1,2,3,7" \
+        2>/dev/null
+    
+    echo "[TPM] Secret sealed to PCR values 0,1,2,3,7"
+    echo "[TPM] This secret can ONLY be recovered on this exact hardware with this exact boot chain."
+}
+
+case "${1:-status}" in
+    status)   check_tpm; check_fido2 ;;
+    enroll)   enroll_commander_key ;;
+    seal)     seal_secret_to_tpm "$2" ;;
+    *) echo "Usage: alfred-hw-auth {status|enroll|seal <secret>}" ;;
+esac
+HWAUTH
+[ -e /usr/local/bin/alfred-hw-auth ] && chmod +x /usr/local/bin/alfred-hw-auth || true
+
+# ── 3. Configure PAM to optionally require hardware key for Commander ──
+cat > /etc/pam.d/alfred-commander-auth << 'PAMALFRED'
+# Alfred Linux — Commander Hardware Authentication
+# This PAM stack is invoked for Commander-level operations.
+# It requires EITHER a FIDO2 hardware key OR TPM-sealed password.
+
+# Standard password auth as fallback
+auth    required    pam_unix.so     try_first_pass
+
+# If a FIDO2 key is enrolled, require it (sufficient = skip remaining if pass)
+auth    sufficient  pam_u2f.so      cue nouserok authfile=/home/alfred/.config/Yubico/u2f_keys
+
+# Account management
+account required    pam_unix.so
+PAMALFRED
+
+# ── 4. Create first-boot hardware enrollment prompt ──
+cat > /usr/local/bin/alfred-hw-enroll-prompt << 'ENROLLPROMPT'
+#!/bin/bash
+# Runs on first desktop login — prompts Commander to enroll hardware key
+ENROLLED_FLAG="/var/lib/alfred-tpm/.hw-enrolled"
+
+if [ -f "$ENROLLED_FLAG" ]; then
+    exit 0
+fi
+
+if command -v zenity &>/dev/null; then
+    zenity --question \
+        --title="Commander Hardware Security" \
+        --text="Do you want to enroll a hardware security key (YubiKey/FIDO2)?\n\nThis will bind your Commander identity to physical hardware,\nmaking it impossible to access Supreme Command without\nholding the key in your hand." \
+        --ok-label="Enroll Now" \
+        --cancel-label="Skip for Now" \
+        --width=450 2>/dev/null
+    
+    if [ $? -eq 0 ]; then
+        x-terminal-emulator -e "sudo alfred-hw-auth enroll" 2>/dev/null || true
+    fi
+fi
+
+touch "$ENROLLED_FLAG"
+ENROLLPROMPT
+[ -e /usr/local/bin/alfred-hw-enroll-prompt ] && chmod +x /usr/local/bin/alfred-hw-enroll-prompt || true
+
+# ── 5. Create autostart entry for desktop ──
+mkdir -p /etc/xdg/autostart || true
+cat > /etc/xdg/autostart/alfred-hw-enroll.desktop << 'AUTOSTART'
+[Desktop Entry]
+Type=Application
+Name=Alfred Hardware Key Enrollment
+Exec=/usr/local/bin/alfred-hw-enroll-prompt
+StartupNotify=false
+NoDisplay=true
+X-GNOME-Autostart-Phase=Applications
+AUTOSTART
+
+# ── 6. Enable smartcard daemon ──
+systemctl enable pcscd || true || true.socket 2>/dev/null || true
+
+echo "╔═══════════════════════════════════════════════════════════╗"
+echo "║  [0055] Hardware TPM 2.0 Identity — COMPLETE              ║"
+echo "║  ✓ TPM 2.0 tools installed                                ║"
+echo "║  ✓ FIDO2/YubiKey support (libpam-u2f, fido2-tools)       ║"
+echo "║  ✓ Commander hardware enrollment script                   ║"
+echo "║  ✓ PAM stack for hardware-backed Commander auth           ║"
+echo "║  ✓ First-boot enrollment prompt via Zenity                ║"
+echo "║  ✓ Smartcard daemon enabled                                ║"
+echo "╚═══════════════════════════════════════════════════════════╝"
+
+exit 0

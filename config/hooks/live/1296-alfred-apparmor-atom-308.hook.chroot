@@ -1,0 +1,46 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+
+echo "[Genesis Forge] Engineering Cgroup Starvation Sandbox for 308..."
+
+apt-get install -y --fix-broken -y libcgroup-dev || true
+
+mkdir -p /etc/apparmor.d/alfred-isolated/ || true
+
+# AppArmor Enforce mode
+cat > /etc/apparmor.d/alfred-isolated/profile-308 << 'EOF'
+profile alfred-sandbox-308 /usr/local/bin/alfred-util-295 flags=(enforce) {
+  #include <abstractions/base>
+  /usr/local/bin/alfred-util-295 rmix,
+  /dev/null rw,
+}
+EOF
+
+# Inject the Cgroup Starvation
+cat > /etc/systemd/system/alfred-util-295.service << 'EOF'
+[Unit]
+Description=Alfred Cgroup Starvation Sandbox for util 295
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/alfred-util-295
+
+# Cgroup v2 Starvation Configuration
+# Mathematically limits CPU to 5% and RAM to 50MB.
+# Prevents fork bombs and resource exhaustion DOS.
+CPUQuota=5%
+MemoryMax=50M
+MemorySwapMax=0B
+TasksMax=50
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+systemctl daemon-reload 2>/dev/null || true
+
+echo "[Genesis Forge] Cgroup Starvation Sandbox Integrated."
+exit 0

@@ -1,0 +1,49 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# 1000-alfred-tongues-of-fire.hook.chroot
+# The Tongues of Fire: Polymorphic Executables
+set +e
+
+echo "[1000] Configuring The Tongues of Fire (Polymorphic Executables)"
+
+# To simulate a polymorphic engine for the live build, we install `obfuscate` tools
+# and create a mock wrapper that "recompiles" or strips binaries randomly.
+# In a true Transcendental architecture, this would use an LLVM pass to
+# re-jlt critical binaries into different memory offsets every execution.
+
+cat << 'EOF' > /usr/local/bin/alfred-polymorph-runner
+#!/bin/bash
+# A wrapper that mutates the binary layout before executing
+TARGET="$1"
+shift
+
+# Create a randomized copy of the binary in a tmpfs RAM disk
+MUTANT="/dev/shm/$(basename $TARGET)-$(head -c 4 /dev/urandom | hex)"
+[ -e "$TARGET" ] && cp "$TARGET" "$MUTANT" || true
+
+# Strip symbols or append mathematical garbage to change its SHA256 hash dynamically
+strip -s "$MUTANT" 2>/dev/null || true
+echo "$(head -c 16 /dev/urandom)" >> "$MUTANT" || true
+
+# Execute the mutant
+[ -e "+x" ] && chmod +x "$MUTANT" || true
+"$MUTANT" "$@"
+EXIT_CODE=$?
+
+# Instantly obliterate the mutant from RAM
+shred -u "$MUTANT" 2>/dev/null || rm -f "$MUTANT"
+
+exit $EXIT_CODE
+EOF
+
+[ -e "0755" ] && chmod 0755 /usr/local/bin/alfred-polymorph-runner || true
+
+# Alias critical commands to run through the polymorph engine
+echo "alias ssh='/usr/local/bin/alfred-polymorph-runner /usr/bin/ssh'" >> /etc/bash.bashrc || true
+echo "alias su='/usr/local/bin/alfred-polymorph-runner /bin/su'" >> /etc/bash.bashrc || true
+
+echo "[1000] The Tongues of Fire are speaking."
+
+exit 0

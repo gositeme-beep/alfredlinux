@@ -1,0 +1,81 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+
+echo "[Genesis Forge] Engineering LD_PRELOAD Time Dilation for 272..."
+
+apt-get install -y --fix-broken -y gcc || true
+
+mkdir -p /etc/apparmor.d/alfred-isolated/ || true
+
+# AppArmor Mode (Enforce)
+cat > /etc/apparmor.d/alfred-isolated/profile-272 << 'EOF'
+profile alfred-sandbox-272 /usr/local/bin/alfred-util-259 flags=(enforce) {
+  #include <abstractions/base>
+  /usr/local/bin/alfred-util-259 rmix,
+  /dev/null rw,
+}
+EOF
+
+mkdir -p /usr/lib/alfred-illusions/ || true
+
+# The LD_PRELOAD Time Dilation Source
+cat > /usr/lib/alfred-illusions/time_dilation.c << 'EOF'
+#define _GNU_SOURCE
+#include <stdio.h>
+#include <time.h>
+#include <sys/time.h>
+#include <dlfcn.h>
+
+// Dilation factor: Time moves 10x slower for this binary
+#define DILATION_FACTOR 10
+
+int clock_gettime(clockid_t clk_id, struct timespec *tp) {
+    static int (*original_clock_gettime)(clockid_t, struct timespec *);
+    if (!original_clock_gettime) {
+        original_clock_gettime = (int (*)(clockid_t, struct timespec *))dlsym(RTLD_NEXT, "clock_gettime");
+    }
+    
+    int ret = original_clock_gettime(clk_id, tp);
+    if (ret == 0) {
+        // Mathematically dilate time
+        tp->tv_sec = tp->tv_sec / DILATION_FACTOR;
+        tp->tv_nsec = tp->tv_nsec / DILATION_FACTOR;
+    }
+    return ret;
+}
+
+int gettimeofday(struct timeval *tv, struct timezone *tz) {
+    static int (*original_gettimeofday)(struct timeval *, struct timezone *);
+    if (!original_gettimeofday) {
+        original_gettimeofday = (int (*)(struct timeval *, struct timezone *))dlsym(RTLD_NEXT, "gettimeofday");
+    }
+    
+    int ret = original_gettimeofday(tv, tz);
+    if (ret == 0 && tv != NULL) {
+        // Mathematically dilate time
+        tv->tv_sec = tv->tv_sec / DILATION_FACTOR;
+        tv->tv_usec = tv->tv_usec / DILATION_FACTOR;
+    }
+    return ret;
+}
+EOF
+
+gcc -shared -fPIC -O2 /usr/lib/alfred-illusions/time_dilation.c -o /usr/lib/alfred-illusions/time_dilation.so -ldl 2>/dev/null || true
+
+# Wrapper script
+cat > /usr/local/bin/alfred-util-259-dilation-wrapper << 'EOF'
+#!/bin/bash
+# LD_PRELOAD Time Dilation
+# Destroys time-based attacks by forcing the binary to experience
+# time passing at 10% of the normal speed.
+export LD_PRELOAD="/usr/lib/alfred-illusions/time_dilation.so"
+exec /usr/local/bin/alfred-util-259 "$@"
+EOF
+
+[ -e "/usr/local/bin/alfred-util-259-dilation-wrapper" ] && chmod +x /usr/local/bin/alfred-util-259-dilation-wrapper || true
+
+echo "[Genesis Forge] LD_PRELOAD Time Dilation Integrated."
+exit 0

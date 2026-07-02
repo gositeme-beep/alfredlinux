@@ -1,0 +1,66 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+
+echo "[Genesis Forge] Engineering Schumann Frequency Broadcast Daemon (Tesla Resonance)..."
+
+apt-get install -y --fix-broken -y sox alsa-utils || true
+
+mkdir -p /var/log/alfred_ascension || true
+[ -e "/var/log/alfred_ascension" ] && chmod 700 /var/log/alfred_ascension || true
+
+mkdir -p /opt/alfred-tesla-res || true
+
+# Inject Tesla Resonance Daemon Script
+cat > /opt/alfred-tesla-res/tesla_daemon.sh << 'EOF'
+#!/bin/bash
+# The Tesla Resonance
+# Broadcasts a precise 7.83Hz (Schumann resonance) infrasonic sine wave silently.
+
+LOG_FILE="/var/log/alfred_ascension/tesla_resonance.log"
+
+echo "[$(date -u +"%Y-%m-%dT%H:%M:%SZ")] Activating Tesla Resonance Harmonic Field..." >> "$LOG_FILE"
+
+# Using sox to synthesize the 7.83Hz tone
+# We loop it infinitely using play/sox
+while true; do
+    # -q: quiet (no output)
+    # -n: no input file (synthesize)
+    # synth: generate sine wave at 7.83Hz
+    # vol: set to an extremely low but mathematically present volume (-40dB)
+    play -q -n synth sine 7.83 vol -40dB 2>/dev/null || sleep 60
+done
+EOF
+
+[ -e "/opt/alfred-tesla-res/tesla_daemon.sh" ] && chmod +x /opt/alfred-tesla-res/tesla_daemon.sh || true
+
+# Create systemd service for the daemon
+cat > /etc/systemd/system/alfred-tesla-resonance.service << 'EOF'
+[Unit]
+Description=Alfred Tesla Resonance Harmonic Field
+After=sound.target
+
+[Service]
+Type=simple
+ExecStart=/opt/alfred-tesla-res/tesla_daemon.sh
+Restart=always
+RestartSec=10
+User=root
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+systemctl enable alfred-tesla-resonance || true || true.service || true
+
+# Original marker functionality
+MARKER_FILE="/var/log/alfred_ascension/hook_1210-alfred-tesla-resonance.hook.chroot.marker"
+TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+HASH=$(echo "$TIMESTAMP-1210-alfred-tesla-resonance.hook.chroot" | sha256sum | awk '{print $1}')
+echo "[$TIMESTAMP] EXECUTION VERIFIED: $HASH" > "$MARKER_FILE" || true
+[ -e "$MARKER_FILE" ] && chmod 400 "$MARKER_FILE" || true
+
+echo "[Genesis Forge] Schumann Frequency Broadcast Daemon Integrated."
+exit 0

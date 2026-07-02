@@ -1,0 +1,61 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# 0998-alfred-the-144000.hook.chroot
+# The 144,000: Decentralized Identity (DID) Node
+set +e
+
+echo "[0998] Configuring The 144,000 (W3C Decentralized Identity Node)"
+
+# We install a lightweight DID generator to mathematically anchor the user's
+# local OS identity, SSH keys, and system cryptographic roots to a W3C-compliant 
+# Self-Sovereign Identity. The user is no longer "user 1000", they are an 
+# irrevocable mathematical entity.
+
+cat << 'EOF' > /usr/local/bin/alfred-did-generator
+#!/bin/bash
+# Generates a local W3C DID document based on the machine's primary Ed25519 SSH key
+SSH_KEY_PUB="$HOME/.ssh/id_ed25519.pub"
+
+if [ ! -f "$SSH_KEY_PUB" ]; then
+    echo "Generating Sovereign SSH Keypair..."
+    ssh-keygen -t ed25519 -f "$HOME/.ssh/id_ed25519" -N "" -q
+fi
+
+PUB_KEY_B64=$(awk '{print $2}' "$SSH_KEY_PUB")
+DID_ID="did:key:z$(echo -n "$PUB_KEY_B64" | base64 -d | sha256sum | awk '{print $1}')"
+
+mkdir -p "$HOME/.identity" || true
+cat << JSON > "$HOME/.identity/did.json"
+{
+  "@context": [
+    "https://www.w3.org/ns/did/v1",
+    "https://w3id.org/security/suites/ed25519-2020/v1"
+  ],
+  "id": "$DID_ID",
+  "authentication": [{
+    "id": "$DID_ID#keys-1",
+    "type": "Ed25519VerificationKey2020",
+    "controller": "$DID_ID",
+    "publicKeyBase64": "$PUB_KEY_B64"
+  }]
+}
+JSON
+
+echo "Sovereign Identity Anchored: $DID_ID"
+EOF
+
+[ -e "0755" ] && chmod 0755 /usr/local/bin/alfred-did-generator || true
+
+# Add it to the profile to ensure the DID is generated on first login
+cat << 'EOF' > /etc/profile.d/alfred-144000-init.sh
+if [ ! -f ~/.identity/did.json ]; then
+    /usr/local/bin/alfred-did-generator
+fi
+EOF
+[ -e "+x" ] && chmod +x /etc/profile.d/alfred-144000-init.sh || true
+
+echo "[0998] The 144,000 are sealed."
+
+exit 0

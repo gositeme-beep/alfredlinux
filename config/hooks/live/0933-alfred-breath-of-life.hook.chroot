@@ -1,0 +1,40 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# 0998-alfred-breath-of-life.hook.chroot
+# Configures Immutable Root and Kernel lockdown (The Breath of Life)
+set +e
+
+echo "[0998] Configuring The Breath of Life (Kernel Lockdown & Immutable Root)"
+
+# Disable kexec to prevent kernel hot-swapping
+echo "kernel.kexec_load_disabled = 1" > /etc/sysctl.d/99-kexec-disable.conf || true
+
+# Lock down eBPF to privileged users only
+echo "kernel.unprivileged_bpf_disabled = 1" > /etc/sysctl.d/99-ebpf-disable.conf || true
+
+# Enforce strict module loading (requires modules to be signed)
+# We add this to modprobe.d to disable some common unsafe modules like dccp, sctp
+echo "install dccp /bin/true" > /etc/modprobe.d/alfred-lockdown.conf || true
+echo "install sctp /bin/true" >> /etc/modprobe.d/alfred-lockdown.conf || true
+
+# Set up an overlay-based immutable root script for boot time
+mkdir -p /etc/initramfs-tools/scripts/init-bottom || true
+cat << 'EOF' > /etc/initramfs-tools/scripts/init-bottom/alfred-immutable-root
+#!/bin/sh
+PREREQ=""
+prereqs() { echo "$PREREQ"; }
+case "$1" in
+    prereqs) prereqs; exit 0 ;;
+esac
+
+# For The Breath of Life, the root filesystem is inherently read-only on a Live ISO,
+# but we explicitly mount an overlayfs for /var and /home if needed, and strictly
+# enforce that the base squashfs is never modified.
+EOF
+[ -e "0755" ] && chmod 0755 /etc/initramfs-tools/scripts/init-bottom/alfred-immutable-root || true
+
+echo "[0998] Breath of Life configured."
+
+exit 0

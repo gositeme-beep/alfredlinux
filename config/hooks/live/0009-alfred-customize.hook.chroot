@@ -1,0 +1,101 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+# SPDX-License-Identifier: AGPL-3.0-or-later
+apt-get update && apt-get install -y --no-install-recommends wget curl gnupg ca-certificates || true
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+set +e
+
+# Holy MOTD Injection
+echo -e "\e[1;36m      ::::::::::.     :::     :::       :::     ::::::::::.    \e[0m" > /etc/motd
+echo -e "\e[1;36m      ;;;;;;;;;;;'  ;;;;;   ;;;;;     ;;;;;    ;;;;;;;;;;;'    \e[0m" >> /etc/motd
+echo -e "\e[1;36m      [[[[        ,[[[ [[[ [[[ [[    ,[[[ [[[  [[[[     [[     \e[0m" >> /etc/motd
+echo -e "\e[1;36m      \$\$\$\$\$\$\$\$\$\$  \$\$\$   \$\$\$\$\$  \$\$    \$\$\$   \$\$\$ \$\$\$\$\$\$\$\$\$\$'     \e[0m" >> /etc/motd
+echo -e "\e[1;36m      8888        888   \"888\"  88    888   888 8888    88.     \e[0m" >> /etc/motd
+echo -e "\e[1;36m      ::::        :::    :::   ::    :::   ::: ::::    :::     \e[0m" >> /etc/motd
+echo -e "\e[1;36m      ::::        :::    :::   ::::::::::  ::: ::::    :::     \e[0m" >> /etc/motd
+echo -e "\e[1;33m      ======================================================\e[0m" >> /etc/motd
+echo -e "\e[1;33m                 ALFRED LINUX - KERNEL 7.0.12               \e[0m" >> /etc/motd
+echo -e "\e[1;33m                  [ OMEGA POINT ARCHITECTURE ]              \e[0m" >> /etc/motd
+echo -e "\e[1;33m      ======================================================\e[0m" >> /etc/motd
+
+[ -e /etc/motd ] && chmod 644 /etc/motd
+#!/bin/sh
+set +e
+
+echo "=========================================="
+echo " DOWNLOADING CLASSIC WINDOWS WINAMP (WINE)"
+echo "=========================================="
+
+mkdir -p /opt/Winamp
+
+# Download the classic Winamp 5.666 Full installer (the last true classic version)
+wget -q -O /opt/Winamp/Winamp_5.666_Installer.exe "https://archive.org/download/winamp5666_lite_en-us/winamp5666_full_en-us_redux.exe" || true
+
+# Create a desktop shortcut to easily launch the installer via Wine
+cat <<EOF > /usr/share/applications/winamp-installer.desktop
+[Desktop Entry]
+Name=Install Classic Winamp (Wine)
+Comment=Launch the classic Windows Winamp installer via Wine
+Exec=wine /opt/Winamp/Winamp_5.666_Installer.exe
+Icon=wine
+Terminal=false
+Type=Application
+Categories=AudioVideo;Audio;
+EOF
+
+echo "=========================================="
+echo " WINAMP (WINE) INJECTED SUCCESSFULLY "
+echo "=========================================="
+#!/bin/sh
+set +e
+
+echo "=========================================="
+echo " INSTALLING APOCALYPSE-READY COMMANDER APPS "
+echo "=========================================="
+
+# Add Jellyfin Repo (Plex equivalent)
+#curl -fsSL https://repo.jellyfin.org/jellyfin_team.gpg.key | gpg --dearmor --yes -o /etc/apt/trusted.gpg.d/jellyfin.gpg
+#echo jellyfin repo
+
+apt-get update
+#apt-get install -y jellyfin
+
+# Download AppImages to /opt for OpenCut and Jami
+mkdir -p /opt/AppImages
+
+# Download Jami AppImage (Decentralized Zoom alternative)
+echo "Downloading Jami AppImage..."
+wget -q -O /opt/AppImages/Jami.AppImage "https://dl.jami.net/linux/jami.AppImage" || true
+chmod +x /opt/AppImages/Jami.AppImage || true
+
+# Download OpenCut AppImage
+echo "Downloading OpenCut AppImage..."
+wget -q -O /opt/AppImages/OpenCut.AppImage "https://github.com/OpenCut-app/OpenCut/releases/latest/download/OpenCut.AppImage" || true
+chmod +x /opt/AppImages/OpenCut.AppImage || true
+
+# Create Desktop shortcuts
+cat <<EOF > /usr/share/applications/opencut.desktop
+[Desktop Entry]
+Name=OpenCut
+Comment=The open-source CapCut alternative
+Exec=/opt/AppImages/OpenCut.AppImage
+Icon=video
+Terminal=false
+Type=Application
+Categories=AudioVideo;Video;
+EOF
+
+cat <<EOF > /usr/share/applications/jami.desktop
+[Desktop Entry]
+Name=Jami
+Comment=Decentralized Peer-to-Peer Video Chat
+Exec=/opt/AppImages/Jami.AppImage
+Icon=phone
+Terminal=false
+Type=Application
+Categories=Network;InstantMessaging;
+EOF
+
+echo "=========================================="
+echo " APOCALYPSE APPS INJECTED SUCCESSFULLY "
+echo "=========================================="

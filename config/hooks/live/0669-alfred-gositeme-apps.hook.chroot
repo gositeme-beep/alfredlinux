@@ -1,0 +1,47 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+APPS=(
+  "android-pulse:Android Pulse"
+  "voice:Alfred Voice"
+  "vr:Alfred VR"
+  "alfred-ide:Alfred IDE"
+  "kingdom-vault:Kingdom Vault"
+  "veil-messenger:Veil Messenger"
+  "pulse-social:Pulse Social"
+  "alfred-voice-live:Alfred Voice Live"
+  "chess:Kingdom Chess"
+  "ai-audio:AI Audio Tools"
+  "ai-servers:AI Sovereign Servers"
+  "alfred-chromium:Alfred Chromium"
+  "veil-browser:Veil Browser"
+  "alfred-linux:Alfred Linux Portal"
+  "commander-terminal:Commander Terminal"
+  "quickqr:Quick QR Generator"
+  "voice-ai:Voice AI Engine"
+)
+
+mkdir -p /usr/share/applications || true
+
+for app in "${APPS[@]}"; do
+  ID="${app%%:*}"
+  NAME="${app##*:}"
+  
+  cat > "/usr/share/applications/gositeme-${ID}.desktop" << EOF
+[Desktop Entry]
+Version=1.0
+Name=${NAME}
+Comment=Launch ${NAME} Sovereign App
+Exec=xdg-open https://gositeme.com/${ID}
+Icon=applications-internet
+Terminal=false
+Type=Application
+Categories=Network;WebBrowser;
+EOF
+done
+
+echo "GOSITEME APPS BAKED"
+
+exit 0

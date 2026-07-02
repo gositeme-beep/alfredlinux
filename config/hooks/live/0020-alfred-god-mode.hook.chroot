@@ -1,0 +1,32 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+echo "=========================================="
+echo "==== ALFRED GOD-MODE SHORTCUTS HOOK ======"
+echo "=========================================="
+
+mkdir -p /etc/skel/.config || true
+
+cat > /etc/skel/.config/kglobalshortcutsrc << 'EOF'
+[alfred-bible.desktop]
+_k_friendly_name=Alfred Bible
+_launch=Meta+B,none,Launch Alfred Bible
+
+[alfred-worship.desktop]
+_k_friendly_name=Alfred Worship
+_launch=Meta+W,none,Launch Alfred Worship
+
+[alfred-sanctuary.desktop]
+_k_friendly_name=Sanctuary Focus Mode
+_launch=Meta+S,none,Toggle Sanctuary Mode
+
+[yakuake]
+_k_friendly_name=Yakuake
+toggle-window-state=Meta+Space,F12,Open/Retract Yakuake
+EOF
+
+echo "God-Mode Shortcuts configured."
+
+exit 0

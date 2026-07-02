@@ -1,0 +1,11 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+
+echo "[Security] Scrubbing baked SSH host keys..."
+rm -f /etc/ssh/ssh_host_*
+echo "[Security] SSH host keys will be securely regenerated on first boot by live-config."
+
+exit 0

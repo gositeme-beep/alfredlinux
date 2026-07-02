@@ -1,0 +1,77 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+echo "=========================================="
+echo "==== ALFRED TIME-OF-DAY SHIFTER HOOK ====="
+echo "=========================================="
+
+cat > /usr/local/bin/kingdom-time-sync << 'EOF'
+#!/bin/bash
+# Runs as user
+HOUR=$(date +%H)
+
+# 06:00 to 18:00 (Day)
+if [ "$HOUR" -ge 06 ] && [ "$HOUR" -lt 18 ]; then
+    IMG="/usr/share/wallpapers/Kingdom/eden-garden.png"
+    NIGHT_COLOR_STATE="false"
+else
+    IMG="/usr/share/wallpapers/Kingdom/new-jerusalem.png"
+    NIGHT_COLOR_STATE="true"
+fi
+
+if command -v qdbus >/dev/null 2>&1; then
+    # Change Wallpaper
+    if [ -f "$IMG" ]; then
+        qdbus org.kde.plasmashell /PlasmaShell org.kde.PlasmaShell.evaluateScript "var Desktops = desktops(); for (i=0;i<Desktops.length;i++) { d = Desktops[i]; d.wallpaperPlugin = \"org.kde.image\"; d.currentConfigGroup = Array(\"Wallpaper\", \"org.kde.image\", \"General\"); d.writeConfig(\"Image\", \"file://$IMG\"); }" 2>/dev/null || true
+    fi
+    
+    # Toggle Night Color
+    if command -v kwriteconfig5 >/dev/null 2>&1; then
+        kwriteconfig5 --file kwinrc --group NightColor --key Active "$NIGHT_COLOR_STATE" || true
+        # Reload kwin rules
+        qdbus org.kde.KWin /KWin reconfigure || true
+    fi
+fi
+EOF
+[ -e /usr/local/bin/kingdom-time-sync ] && chmod 0755 /usr/local/bin/kingdom-time-sync || true
+
+mkdir -p /etc/systemd/user || true
+
+cat > /etc/systemd/user/kingdom-time-sync.service << 'EOF'
+[Unit]
+Description=Kingdom Time of Day Sync
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/kingdom-time-sync
+EOF
+
+cat > /etc/systemd/user/kingdom-time-sync.timer << 'EOF'
+[Unit]
+Description=Run Kingdom Time Sync every hour
+
+[Timer]
+OnCalendar=hourly
+Persistent=true
+
+[Install]
+WantedBy=timers.target
+EOF
+
+mkdir -p /etc/systemd/user/timers.target.wants || true
+ln -sf /etc/systemd/user/kingdom-time-sync.timer /etc/systemd/user/timers.target.wants/kingdom-time-sync.timer
+
+mkdir -p /etc/xdg/autostart || true
+cat > /etc/xdg/autostart/kingdom-time-sync.desktop << 'EOF'
+[Desktop Entry]
+Type=Application
+Name=Kingdom Time Sync
+Exec=/usr/local/bin/kingdom-time-sync
+X-GNOME-Autostart-enabled=true
+EOF
+
+echo "Time of Day Shifter configured."
+
+exit 0

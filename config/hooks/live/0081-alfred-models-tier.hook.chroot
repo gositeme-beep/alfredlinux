@@ -1,0 +1,48 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Hook 0258 — Alfred Models Symlinks Setup (models outside squashfs)
+set +e
+
+echo "═══════════════════════════════════════════════════════"
+echo "  ALFRED MODELS — Symlinking to ISO live directory"
+echo "═══════════════════════════════════════════════════════"
+
+mkdir -p /etc/alfred-llm /var/lib/alfred/build-flags || true
+mkdir -p /usr/share/doc/alfred-llm || true
+
+# Explicitly flag this build as a Modelless Release per user mandate
+mkdir -p /etc/alfred || true
+echo "MODE=modelless" > /etc/alfred/modelless.flag
+
+# Setup /opt/alfred-models as a symlink to the live medium
+rm -rf /opt/alfred-models || true
+ln -sf /run/live/medium/live/alfred-models /opt/alfred-models
+
+# Create default active model symlink
+ln -sfn /opt/alfred-models/alfred-haiku.gguf /etc/alfred-llm/active.gguf
+
+# Manifest for first-boot tier auto-selection
+cat > /etc/alfred-llm/models.manifest <<EOF
+# Alfred-LLM model manifest
+# Format: tier|filename|min_ram_gb|min_vram_gb|description
+haiku|alfred-haiku.gguf|6|0|Fast, low-RAM (7B params, ~5GB)
+sonnet|alfred-sonnet.gguf|12|0|Balanced (14B params, ~9GB)
+opus-iq3|alfred-opus-iq3.gguf|16|0|Capable, tight RAM (32B IQ3, ~12GB)
+opus|alfred-opus.gguf|24|0|Most capable (32B Q4, ~19GB)
+EOF
+
+cat > /usr/share/doc/alfred-llm/models-LICENSE.txt <<'LIC'
+Alfred-LLM bundled models
+=========================
+Underlying weights: Qwen2.5-Coder series by Alibaba Cloud, Tongyi Qianwen
+LICENSE AGREEMENT (research and commercial use permitted under license terms).
+https://huggingface.co/Qwen
+Repackaged and rebranded as Alfred-Haiku/Sonnet/Opus for inclusion in Alfred Linux.
+LIC
+
+echo "[MODELS] Symlink setup complete: /opt/alfred-models -> /run/live/medium/live/alfred-models" || true
+ls -lh /opt/alfred-models/ 2>&1 || true
+
+exit 0

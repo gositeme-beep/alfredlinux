@@ -1,0 +1,93 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+echo "[0124] Baking Sovereign DNS Matrix (Handshake + Custom Resolver)..."
+
+# Ensure tor starts on boot for HSD
+systemctl enable tor || true || true 2>/dev/null || true
+
+# Setup Handshake Service
+cat > /etc/systemd/system/alfred-hsd.service << 'SYSTEMD'
+[Unit]
+Description=Alfred Linux Handshake SPV Node
+After=network.target tor.service
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/handshake
+ExecStart=/usr/bin/node /opt/handshake/start-hsd.js
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
+SYSTEMD
+
+# Setup Sovereign DNS Service
+cat > /etc/systemd/system/alfred-sovereign-dns.service << 'SYSTEMD'
+[Unit]
+Description=Alfred Linux Sovereign DNS Resolver
+After=network.target mariadb.service alfred-hsd.service
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/sovereign-dns
+ExecStart=/usr/bin/node /opt/sovereign-dns/sovereign-dns.js
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
+SYSTEMD
+
+systemctl enable alfred-hsd || true || true 2>/dev/null || true
+systemctl enable alfred-sovereign-dns || true || true 2>/dev/null || true
+
+# Install dependencies if missing ( rebuilds native modules for the target OS)
+mkdir -p /opt/handshake /opt/sovereign-dns || true
+[ ! -f /opt/handshake/package.json ] && echo '{"name":"handshake-stub","version":"1.0.0"}' > /opt/handshake/package.json
+[ ! -f /opt/sovereign-dns/package.json ] && echo '{"name":"sovereign-stub","version":"1.0.0"}' > /opt/sovereign-dns/package.json
+cd /opt/handshake &&  install --production --unsafe-perm || true
+cd /opt/sovereign-dns &&  install --production --unsafe-perm || true
+
+# Redirect Local OS DNS (Port 53) to the Sovereign DNS Resolver (Port 5354)
+mkdir -p /etc/nftables.conf.d || true
+cat > /etc/nftables.conf.d/dns-redirect.nft << 'NFT'
+table ip nat {
+    chain output {
+        type nat hook output priority -100; policy accept;
+        udp dport 53 redirect to :5354
+        tcp dport 53 redirect to :5354
+    }
+    chain prerouting {
+        type nat hook prerouting priority -100; policy accept;
+        udp dport 53 redirect to :5354
+        tcp dport 53 redirect to :5354
+    }
+}
+NFT
+
+# Defer local resolver lock to 127.0.0.1 until first boot so we don't sever DNS inside the chroot!
+cat > /etc/systemd/system/alfred-dns-lock.service << 'DNSLOCK'
+[Unit]
+Description=Lock Alfred OS DNS to Sovereign Resolver
+After=network.target alfred-sovereign-dns.service
+
+[Service]
+Type=oneshot
+ExecStart=/bin/bash -c "chattr -i /etc/resolv.conf 2>/dev/null || true; echo 'nameserver 127.0.0.1' > /etc/resolv.conf || true; chattr +i /etc/resolv.conf 2>/dev/null || true"
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
+DNSLOCK
+
+systemctl enable alfred-dns-lock || true || true.service 2>/dev/null || true
+
+echo "[0124] Sovereign DNS Matrix Integrated."
+
+exit 0

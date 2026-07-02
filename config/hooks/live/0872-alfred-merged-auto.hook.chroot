@@ -1,0 +1,96 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+# [Genesis Forge] AppArmor Isolation: /usr/local/bin/alfred-util-21
+# Creates a granular zero-trust execution envelope for individual binaries.
+echo "[Genesis Forge] Enveloping binary: /usr/local/bin/alfred-util-21"
+mkdir -p /etc/apparmor.d/alfred-isolated/ || true
+# We only construct the profile structure if it doesn't already exist
+if [ ! -f "/etc/apparmor.d/alfred-isolated/profile-34" ]; then
+    cat > /etc/apparmor.d/alfred-isolated/profile-34 << 'EOF'
+profile alfred-sandbox-34 /usr/local/bin/alfred-util-21 flags=(complain) {
+  #include <abstractions/base>
+  /usr/local/bin/alfred-util-21 rmix,
+  /dev/null rw,
+}
+EOF
+fi
+
+
+# --- BEGIN MERGED CONTENT FROM: 0872-alfred-ezekiel.hook.chroot ---
+#!/bin/bash
+# 0872-alfred-ezekiel.hook.chroot
+# Configures Ezekiel's Wheel (Decentralized Uncensorable DNS)
+set +e
+
+echo "[0872] Configuring Ezekiel's Wheel (Decentralized DNS)"
+
+cat << 'EOF' > /usr/local/bin/alfred-ezekiel
+#!/bin/bash
+echo "â•”â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•—"
+echo "â•‘  EZEKIEL'S WHEEL â€” Decentralized Uncensorable DNS         â•‘"
+echo "â•‘  'As it were a wheel in the middle of a wheel...'         â•‘"
+echo "â•šâ•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•"
+echo ""
+
+echo "Disconnecting from the ICANN global root..."
+# We configure systemd-resolved to use a decentralized resolver like Handshake (HDNS)
+# Public HDNS resolvers: 103.196.38.38, 103.196.38.39
+if [ -f /etc/systemd/resolved.conf ]; then
+    sed -i 's/^#DNS=.*/DNS=103.196.38.38 103.196.38.39/' /etc/systemd/resolved.conf
+    sed -i 's/^#FallbackDNS=.*/FallbackDNS=103.196.38.38/' /etc/systemd/resolved.conf
+    sed -i 's/^#DNSOverTLS=.*/DNSOverTLS=opportunistic/' /etc/systemd/resolved.conf
+    systemctl restart systemd-resolved  || true|| true
+    echo "Ezekiel's Wheel is spinning. You are now resolving blockchain domains."
+else
+    echo "Using legacy resolv.conf..."
+    echo "nameserver 103.196.38.38" > /etc/resolv.conf
+    echo "nameserver 103.196.38.39" >> /etc/resolv.conf
+    echo "Ezekiel's Wheel is spinning."
+fi
+EOF
+
+[ -e "/usr/local/bin/alfred-ezekiel" ] && chmod 0755 /usr/local/bin/alfred-ezekiel
+
+echo "[0872] Ezekiel's Wheel configured."
+
+# --- END MERGED CONTENT FROM: 0872-alfred-ezekiel.hook.chroot ---
+
+
+#!/bin/bash
+# 0872-alfred-ezekiel.hook.chroot
+# Configures Ezekiel's Wheel (Decentralized Uncensorable DNS)
+set +e
+
+echo "[0872] Configuring Ezekiel's Wheel (Decentralized DNS)"
+
+cat << 'EOF' > /usr/local/bin/alfred-ezekiel
+#!/bin/bash
+echo "â•”â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•—"
+echo "â•‘  EZEKIEL'S WHEEL â€” Decentralized Uncensorable DNS         â•‘"
+echo "â•‘  'As it were a wheel in the middle of a wheel...'         â•‘"
+echo "â•šâ•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•"
+echo ""
+
+echo "Disconnecting from the ICANN global root..."
+# We configure systemd-resolved to use a decentralized resolver like Handshake (HDNS)
+# Public HDNS resolvers: 103.196.38.38, 103.196.38.39
+if [ -f /etc/systemd/resolved.conf ]; then
+    sed -i 's/^#DNS=.*/DNS=103.196.38.38 103.196.38.39/' /etc/systemd/resolved.conf
+    sed -i 's/^#FallbackDNS=.*/FallbackDNS=103.196.38.38/' /etc/systemd/resolved.conf
+    sed -i 's/^#DNSOverTLS=.*/DNSOverTLS=opportunistic/' /etc/systemd/resolved.conf
+    systemctl restart systemd-resolved || true
+    echo "Ezekiel's Wheel is spinning. You are now resolving blockchain domains."
+else
+    echo "Using legacy resolv.conf..."
+    echo "nameserver 103.196.38.38" > /etc/resolv.conf
+    echo "nameserver 103.196.38.39" >> /etc/resolv.conf
+    echo "Ezekiel's Wheel is spinning."
+fi
+EOF
+
+chmod 0755 /usr/local/bin/alfred-ezekiel
+
+echo "[0872] Ezekiel's Wheel configured."

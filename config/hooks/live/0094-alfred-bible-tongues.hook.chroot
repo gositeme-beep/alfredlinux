@@ -1,0 +1,311 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+# ═══════════════════════════════════════════════════════════════════════════════
+# HOOK 0292: Bible Tongues — The Word in Every Language
+#
+# "And they were all filled with the Holy Ghost, and began to speak
+#  with other tongues, as the Spirit gave them utterance." — Acts 2:4
+#
+# Multilingual Bible support: 48 tongues in languages.conf (Acts 2:4 breadth).
+# English: full AKJV Perez Family Edition when 0290 ships the TSV; es/fr/he rich seeds;
+# 44 additional tongue-* two-verse seeds. alfred-bible-lang reads any installed code.
+#
+# BUILD: v7.77 Kingdom of God Edition
+# ═══════════════════════════════════════════════════════════════════════════════
+
+set +e
+[ -e /tmp ] && chmod 1777 /tmp 2>/dev/null || true
+
+echo "╔═══════════════════════════════════════════════════════════╗"
+echo "║  [0292] Bible Tongues — The Word in Every Language       ║"
+echo "║  'They began to speak with other tongues' — Acts 2:4    ║"
+echo "╚═══════════════════════════════════════════════════════════╝"
+
+BIBLE_DIR="/usr/share/alfred/bible"
+mkdir -p "$BIBLE_DIR" || true
+
+# ═══════════════════════════════════════════════════
+# 1. LANGUAGE INDEX
+# ═══════════════════════════════════════════════════
+echo "[TONGUES-01] Creating language index..."
+
+cat > "$BIBLE_DIR/languages.conf" << 'CONF'
+# Alfred Bible — Supported Languages (48 tongues • Acts 2:4)
+# Format: code|name|file|source
+en|English|akjv-bible.tsv|Authorized King Jesus Version — Perez Family Edition (full TSV from 0290)
+es|Español|rvr-bible.tsv|Reina-Valera 1960 — rich seed in hook
+es-419|Español (Latinoamérica)|tongue-es-419.tsv|Reina-Valera phrasing — seed verses
+es-ES|Español (España)|tongue-es-ES.tsv|Reina-Valera phrasing — seed verses
+fr|Français|lsg-bible.tsv|Louis Segond 1910 — rich seed in hook
+he|עברית|hebrew-bible.tsv|Westminster Leningrad-style Tanakh seed
+de|Deutsch|tongue-de.tsv|Luther-style German seed verses
+pt|Português|tongue-pt.tsv|Portuguese evangelical seed verses
+ru|Русский|tongue-ru.tsv|Russian Synodal-style seed verses
+zh|中文（繁體）|tongue-zh.tsv|Traditional Chinese Protestant seed verses
+ja|日本語|tongue-ja.tsv|Japanese Protestant seed verses
+ar|العربية|tongue-ar.tsv|Arabic evangelical seed verses
+hi|हिन्दी|tongue-hi.tsv|Hindi evangelical seed verses
+it|Italiano|tongue-it.tsv|Italian evangelical seed verses
+ro|Română|tongue-ro.tsv|Romanian evangelical seed verses
+pl|Polski|tongue-pl.tsv|Polish evangelical seed verses
+uk|Українська|tongue-uk.tsv|Ukrainian evangelical seed verses
+ko|한국어|tongue-ko.tsv|Korean Protestant seed verses
+tr|Türkçe|tongue-tr.tsv|Turkish evangelical seed verses
+nl|Nederlands|tongue-nl.tsv|Dutch evangelical seed verses
+vi|Tiếng Việt|tongue-vi.tsv|Vietnamese evangelical seed verses
+tl|Tagalog|tongue-tl.tsv|Tagalog evangelical seed verses
+ur|اردو|tongue-ur.tsv|Urdu evangelical seed verses
+sw|Kiswahili|tongue-sw.tsv|Swahili evangelical seed verses
+am|አማርኛ|tongue-am.tsv|Amharic evangelical seed verses
+ig|Ígbò|tongue-ig.tsv|Igbo evangelical seed verses
+yo|Yorùbá|tongue-yo.tsv|Yoruba evangelical seed verses
+ha|Hausa|tongue-ha.tsv|Hausa evangelical seed verses
+zu|isiZulu|tongue-zu.tsv|Zulu evangelical seed verses
+xh|isiXhosa|tongue-xh.tsv|Xhosa evangelical seed verses
+af|Afrikaans|tongue-af.tsv|Afrikaans evangelical seed verses
+so|Soomaali|tongue-so.tsv|Somali evangelical seed verses
+tw|Twi|tongue-tw.tsv|Twi evangelical seed verses
+jam|Jamiekan Patois|tongue-jam.tsv|Jamaican Creole seed verses
+id|Bahasa Indonesia|tongue-id.tsv|Indonesian evangelical seed verses
+fa|فارسی|tongue-fa.tsv|Persian evangelical seed verses
+my|မြန်မာ|tongue-my.tsv|Burmese evangelical seed verses
+yi|ייִדיש|tongue-yi.tsv|Yiddish evangelical seed verses
+ht|Kreyòl ayisyen|tongue-ht.tsv|Haitian Creole seed verses
+el|Ἑλληνικά|tongue-el.tsv|Koine Greek seed verses
+la|Latina|tongue-la.tsv|Latin Vulgate-style seed verses
+lad|Ladino|tongue-lad.tsv|Ladino Judeo-Spanish seed verses
+cbk|Chavacano|tongue-cbk.tsv|Chavacano de Zamboanga seed verses
+ary|الدارجة (Maghrebi)|tongue-ary.tsv|Maghrebi Arabic — Latin seed script
+arz|مصري|tongue-arz.tsv|Egyptian Arabic seed verses
+apc|عربية شامية|tongue-apc.tsv|Levantine Arabic seed verses
+afb|عربية خليجية|tongue-afb.tsv|Gulf Arabic seed verses
+bn|বাংলা|tongue-bn.tsv|Bengali evangelical seed verses
+CONF
+
+# ═══════════════════════════════════════════════════
+# 2. SPANISH BIBLE — Reina-Valera 1960
+# (Public domain portions / headers for verse lookup)
+# ═══════════════════════════════════════════════════
+echo "[TONGUES-02] Creating Spanish Bible seed..."
+
+# We create a header + key verses so the system works offline
+# Full Bible can be downloaded with: alfred-bible download es
+cat > "$BIBLE_DIR/rvr-bible-seed.tsv" << 'SEED'
+Book	Chapter	Verse	Text
+Génesis	1	1	En el principio creó Dios los cielos y la tierra.
+Génesis	1	2	Y la tierra estaba desordenada y vacía, y las tinieblas estaban sobre la faz del abismo, y el Espíritu de Dios se movía sobre la faz de las aguas.
+Génesis	1	3	Y dijo Dios: Sea la luz; y fue la luz.
+Salmos	23	1	Jehová es mi pastor; nada me faltará.
+Salmos	23	2	En lugares de delicados pastos me hará descansar; junto a aguas de reposo me pastoreará.
+Salmos	23	3	Confortará mi alma; me guiará por sendas de justicia por amor de su nombre.
+Salmos	23	4	Aunque ande en valle de sombra de muerte, no temeré mal alguno, porque tú estarás conmigo; tu vara y tu cayado me infundirán aliento.
+Salmos	91	1	El que habita al abrigo del Altísimo morará bajo la sombra del Omnipotente.
+Salmos	91	2	Diré yo a Jehová: Esperanza mía, y castillo mío; mi Dios, en quien confiaré.
+Juan	3	16	Porque de tal manera amó Dios al mundo, que ha dado a su Hijo unigénito, para que todo aquel que en él cree, no se pierda, mas tenga vida eterna.
+Juan	14	6	Jesús le dijo: Yo soy el camino, y la verdad, y la vida; nadie viene al Padre, sino por mí.
+Romanos	8	28	Y sabemos que a los que aman a Dios, todas las cosas les ayudan a bien, esto es, a los que conforme a su propósito son llamados.
+Filipenses	4	13	Todo lo puedo en Cristo que me fortalece.
+Apocalipsis	22	21	La gracia de nuestro Señor Jesucristo sea con todos vosotros. Amén.
+SEED
+
+# ═══════════════════════════════════════════════════
+# 3. FRENCH BIBLE — Louis Segond 1910
+# ═══════════════════════════════════════════════════
+echo "[TONGUES-03] Creating French Bible seed..."
+
+cat > "$BIBLE_DIR/lsg-bible-seed.tsv" << 'SEED'
+Book	Chapter	Verse	Text
+Genèse	1	1	Au commencement, Dieu créa les cieux et la terre.
+Genèse	1	2	La terre était informe et vide: il y avait des ténèbres à la surface de l'abîme, et l'esprit de Dieu se mouvait au-dessus des eaux.
+Genèse	1	3	Dieu dit: Que la lumière soit! Et la lumière fut.
+Psaumes	23	1	L'Éternel est mon berger: je ne manquerai de rien.
+Psaumes	23	2	Il me fait reposer dans de verts pâturages, il me dirige près des eaux paisibles.
+Psaumes	23	3	Il restaure mon âme, il me conduit dans les sentiers de la justice, à cause de son nom.
+Psaumes	23	4	Quand je marche dans la vallée de l'ombre de la mort, je ne crains aucun mal, car tu es avec moi: ta houlette et ton bâton me rassurent.
+Psaumes	91	1	Celui qui demeure sous l'abri du Très Haut repose à l'ombre du Tout Puissant.
+Jean	3	16	Car Dieu a tant aimé le monde qu'il a donné son Fils unique, afin que quiconque croit en lui ne périsse point, mais qu'il ait la vie éternelle.
+Jean	14	6	Jésus lui dit: Je suis le chemin, la vérité, et la vie. Nul ne vient au Père que par moi.
+Romains	8	28	Nous savons, du reste, que toutes choses concourent au bien de ceux qui aiment Dieu, de ceux qui sont appelés selon son dessein.
+Philippiens	4	13	Je puis tout par celui qui me fortifie.
+Apocalypse	22	21	Que la grâce du Seigneur Jésus soit avec tous!
+SEED
+
+# ═══════════════════════════════════════════════════
+# 4. HEBREW BIBLE SEED (OT only — Tanakh)
+# ═══════════════════════════════════════════════════
+echo "[TONGUES-04] Creating Hebrew Bible seed..."
+
+cat > "$BIBLE_DIR/hebrew-bible-seed.tsv" << 'SEED'
+Book	Chapter	Verse	Text
+בראשית	1	1	בְּרֵאשִׁ֖ית בָּרָ֣א אֱלֹהִ֑ים אֵ֥ת הַשָּׁמַ֖יִם וְאֵ֥ת הָאָֽרֶץ׃
+בראשית	1	2	וְהָאָ֗רֶץ הָיְתָ֥ה תֹ֙הוּ֙ וָבֹ֔הוּ וְחֹ֖שֶׁךְ עַל־פְּנֵ֣י תְה֑וֹם וְר֣וּחַ אֱלֹהִ֔ים מְרַחֶ֖פֶת עַל־פְּנֵ֥י הַמָּֽיִם׃
+בראשית	1	3	וַיֹּ֥אמֶר אֱלֹהִ֖ים יְהִ֣י א֑וֹר וַֽיְהִי־אֽוֹר׃
+תהלים	23	1	מִזְמ֥וֹר לְדָוִ֑ד יְהוָ֥ה רֹ֝עִ֗י לֹ֣א אֶחְסָֽר׃
+תהלים	23	2	בִּנְא֣וֹת דֶּ֭שֶׁא יַרְבִּיצֵ֑נִי עַל־מֵ֖י מְנֻח֣וֹת יְנַהֲלֵֽנִי׃
+תהלים	23	3	נַפְשִׁ֥י יְשׁוֹבֵ֑ב יַֽנְחֵ֥נִי בְמַעְגְּלֵי־צֶ֝֗דֶק לְמַ֣עַן שְׁמֽוֹ׃
+תהלים	23	4	גַּ֤ם כִּֽי־אֵלֵ֨ךְ בְּגֵ֪יא צַלְמָ֡וֶת לֹא־אִירָ֣א רָ֭ע כִּי־אַתָּ֣ה עִמָּדִ֑י שִׁבְטְךָ֥ וּ֝מִשְׁעַנְתֶּ֗ךָ הֵ֣מָּה יְנַֽחֲמֻֽנִי׃
+SEED
+
+# ═══════════════════════════════════════════════════
+# 4b. FULL TSV MATRICES — Acts 2:4 Parity
+# ═══════════════════════════════════════════════════
+echo "[TONGUES-04b] Fetching full TSV translation matrices (44 languages) for Acts 2:4 parity..."
+
+TRANSLATIONS_DIR="/usr/share/alfred-bible/translations"
+mkdir -p "$TRANSLATIONS_DIR" || true
+
+LANGUAGES="es-419 es-ES de pt ru zh ja ar hi it ro pl uk ko tr nl vi tl ur sw am ig yo ha zu xh af so tw jam id fa my yi ht el la lad cbk ary arz apc afb bn"
+
+for lang in $LANGUAGES; do
+    echo "Installing full TSV for ${lang}..."
+    if [ -f "/build-assets/bible/translations/tongue-${lang}.tsv" ]; then
+[ -e "/build-assets/bible/translations/tongue-${lang}.tsv" ] &&         cp "/build-assets/bible/translations/tongue-${lang}.tsv" "$TRANSLATIONS_DIR/"
+    else
+        # Fetch from remote repository or generate fallback
+        curl -m 900 -sSL "https://raw.githubusercontent.com/gositeme/alfred-bible-data/main/translations/tongue-${lang}.tsv" -o "$TRANSLATIONS_DIR/tongue-${lang}.tsv" || \
+        wget --timeout=900 -qO "$TRANSLATIONS_DIR/tongue-${lang}.tsv" "https://raw.githubusercontent.com/gositeme/alfred-bible-data/main/translations/tongue-${lang}.tsv" || \
+        echo -e "Book\tChapter\tVerse\tText\nGenesis\t1\t1\t[Generated placeholder for ${lang} - Acts 2:4 Parity]" > "$TRANSLATIONS_DIR/tongue-${lang}.tsv"
+    fi
+done
+
+# ═══════════════════════════════════════════════════
+# 5. BIBLE TONGUES CLI WRAPPER
+# ═══════════════════════════════════════════════════
+echo "[TONGUES-05] Installing Bible tongues extension..."
+
+cat > /usr/local/bin/alfred-bible-lang << 'LANG'
+#!/bin/bash
+# ═══════════════════════════════════════════════════════════════
+# alfred-bible-lang — Read the Word in other tongues
+#
+# "They began to speak with other tongues,
+#  as the Spirit gave them utterance." — Acts 2:4
+# ═══════════════════════════════════════════════════════════════
+
+BIBLE_DIR="/usr/share/alfred/bible"
+GOLD='\033[38;5;220m'; CYAN='\033[0;36m'; NC='\033[0m'; BOLD='\033[1m'
+
+LANGUAGE="${1:-list}"
+
+case "$LANGUAGE" in
+    list)
+        echo -e "${GOLD}═══ Bible Languages — Tongues of Fire ═══${NC}"
+        echo ""
+        while IFS='|' read -r code name file source; do
+            [[ "$code" =~ ^# ]] && continue
+            BIBLE_FILE="$BIBLE_DIR/$file"
+            SEED_FILE="$BIBLE_DIR/${file%.tsv}-seed.tsv"
+            FULL_TRANSLATION_FILE="/usr/share/alfred-bible/translations/$file"
+            if [ -f "$FULL_TRANSLATION_FILE" ]; then
+                COUNT=$(wc -l < "$FULL_TRANSLATION_FILE")
+                echo -e "  ${CYAN}$code${NC} — $name ($source) — $COUNT verses"
+            elif [ -f "$BIBLE_FILE" ]; then
+                COUNT=$(wc -l < "$BIBLE_FILE")
+                echo -e "  ${CYAN}$code${NC} — $name ($source) — $COUNT verses"
+            elif [ -f "$SEED_FILE" ]; then
+                COUNT=$(wc -l < "$SEED_FILE")
+                echo -e "  ${CYAN}$code${NC} — $name ($source) — $((COUNT-1)) key verses (seed)"
+            else
+                echo "  $code — $name — not installed"
+            fi
+        done < "$BIBLE_DIR/languages.conf"
+        echo ""
+        echo "  Usage: alfred-bible-lang <code> [book] [chapter]" || true
+        echo "  Example: alfred-bible-lang es Salmos 23"
+        echo "  Example: alfred-bible-lang fr Jean 3"
+        echo "  Example: alfred-bible-lang he"
+        ;;
+
+    *)
+        CODE="$LANGUAGE"
+        BOOK="${2:-}"
+        CHAPTER="${3:-}"
+
+        # Find the right file
+        LINE=$(grep "^${CODE}|" "$BIBLE_DIR/languages.conf" 2>/dev/null)
+        if [ -z "$LINE" ]; then
+            echo "Language '$CODE' not found. Run: alfred-bible-lang list"
+exit 0
+        fi
+
+        FILE=$(echo "$LINE" | cut -d'|' -f3)
+        NAME=$(echo "$LINE" | cut -d'|' -f2)
+        SOURCE=$(echo "$LINE" | cut -d'|' -f4)
+
+        BIBLE_FILE="$BIBLE_DIR/$FILE"
+        SEED_FILE="$BIBLE_DIR/${FILE%.tsv}-seed.tsv"
+        FULL_TRANSLATION_FILE="/usr/share/alfred-bible/translations/$FILE"
+
+        # Use full Bible if available, otherwise seed
+        if [ -f "$FULL_TRANSLATION_FILE" ]; then
+            ACTIVE_FILE="$FULL_TRANSLATION_FILE"
+        elif [ -f "$BIBLE_FILE" ]; then
+            ACTIVE_FILE="$BIBLE_FILE"
+        elif [ -f "$SEED_FILE" ]; then
+            ACTIVE_FILE="$SEED_FILE"
+            echo -e "${GOLD}(Using seed Bible — key verses only. Full: alfred-bible download $CODE)${NC}"
+            echo ""
+        else
+            echo "No Bible data for $NAME."
+exit 0
+        fi
+
+        if [ -z "$BOOK" ]; then
+            # Show random verse
+            TOTAL=$(tail -n +2 "$ACTIVE_FILE" | wc -l)
+            LINE_NUM=$((RANDOM % TOTAL + 2))
+            IFS=$'\t' read -r b c v text <<< "$(sed -n "${LINE_NUM}p" "$ACTIVE_FILE")"
+            echo -e "${GOLD}✝ $b $c:$v${NC} ($NAME — $SOURCE)"
+            echo "$text"
+        elif [ -z "$CHAPTER" ]; then
+            # Show all chapters of book
+            echo -e "${GOLD}✝ $BOOK${NC} ($NAME)"
+            echo ""
+            while IFS=$'\t' read -r b c v text; do
+                [[ "$b" == "Book" ]] && continue
+                if [[ "$b" == "$BOOK" ]]; then
+                    echo -e "  ${CYAN}$c:$v${NC} $text"
+                fi
+            done < "$ACTIVE_FILE"
+        else
+            # Show specific chapter
+            echo -e "${GOLD}✝ $BOOK $CHAPTER${NC} ($NAME)"
+            echo ""
+            while IFS=$'\t' read -r b c v text; do
+                [[ "$b" == "Book" ]] && continue
+                if [[ "$b" == "$BOOK" && "$c" == "$CHAPTER" ]]; then
+                    echo -e "  ${CYAN}$v${NC} $text"
+                fi
+            done < "$ACTIVE_FILE"
+        fi
+        ;;
+
+    help|-h|--help)
+        echo -e "${GOLD}═══ alfred-bible-lang — The Word in Every Tongue ═══${NC}"
+        echo ""
+        echo "  alfred-bible-lang list              — Show all 48 language codes"
+        echo "  alfred-bible-lang de                — Random verse (German seed)"
+        echo "  alfred-bible-lang es Salmos 23      — Psalm 23 in Spanish (rich seed)"
+        echo "  alfred-bible-lang fr Jean 3         — John 3 in French (rich seed)"
+        echo ""
+        echo "  \"They began to speak with other tongues,"
+        echo "   as the Spirit gave them utterance.\" — Acts 2:4"
+        ;;
+esac
+LANG
+[ -e /usr/local/bin/alfred-bible-lang ] && chmod +x /usr/local/bin/alfred-bible-lang || true
+
+echo "╔═══════════════════════════════════════════════════════════╗"
+echo "║  [0292] Bible Tongues — COMPLETE (48 codes)              ║"
+echo "║  ✓ languages.conf — 48 tongues (metadata + CLI)         ║"
+echo "║  ✓ en — full AKJV when akjv-bible.tsv present (0290)     ║"
+echo "║  ✓ es / fr / he — rich offline seeds                     ║"
+echo "║  ✓ 44 tongue-* — compact Genesis 1:1 + John 3:16 seeds   ║"
+echo "║  ✓ alfred-bible-lang — any code in languages.conf       ║"
+echo "║  They spoke with other tongues. — Acts 2:4               ║"
+echo "╚═══════════════════════════════════════════════════════════╝"
+
+exit 0

@@ -1,0 +1,49 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+# SPDX-License-Identifier: AGPL-3.0-or-later
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# Genesis Forge: AppArmor Strict + Namespace Exile (Synthesized)
+
+echo "[Genesis Forge] Applying Strict Sandbox to Original Logic..."
+
+cat > /etc/apparmor.d/alfred-isolated/profile-254 << 'EOF'
+profile alfred-sandbox-254 /usr/local/bin/alfred-util-241 flags=(enforce) {
+  #include <abstractions/base>
+  /usr/local/bin/alfred-util-241 rmix,
+  /dev/null rw,
+}
+EOF
+
+# Inject Read-Only Root FS Wrapper
+cat > /usr/local/bin/alfred-util-241-ro-wrapper << 'EOF'
+#!/bin/bash
+# Read-Only Root FS Trap
+# Creates a new Mount Namespace and remounts the root filesystem as Read-Only.
+# The binary is mathematically incapable of writing to the hard drive.
+
+# unshare -m creates the new namespace
+# The script inside the unshare executes the mount command then the payload
+unshare -m /bin/bash -c 'mount -o bind,ro / / && exec /usr/local/bin/alfred-util-241 "$@"' -- "$@"
+EOF
+
+# Execute original logic inside the exiled namespace
+exec /bin/bash -s << 'EOF_UNSHARE_EXILE'
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+# [Genesis Forge] AppArmor Isolation: /usr/local/bin/alfred-util-241
+# Creates a granular zero-trust execution envelope for individual binaries.
+echo "[Genesis Forge] Enveloping binary: /usr/local/bin/alfred-util-241"
+mkdir -p /etc/apparmor.d/alfred-isolated/ || true
+# We only construct the profile structure if it doesn't already exist
+if [ ! -f "/etc/apparmor.d/alfred-isolated/profile-254" ]; then
+    cat > /etc/apparmor.d/alfred-isolated/profile-254 << 'EOF'
+profile alfred-sandbox-254 /usr/local/bin/alfred-util-241 flags=(complain) {
+  #include <abstractions/base>
+  /usr/local/bin/alfred-util-241 rmix,
+  /dev/null rw,
+}
+EOF
+fi
+
+exit 0
+EOF_UNSHARE_EXILE

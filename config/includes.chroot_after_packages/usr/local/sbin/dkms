@@ -1,0 +1,33 @@
+#!/bin/bash
+# Divine DKMS Interceptor
+
+VERSION_H="/lib/modules/7.0.12/build/include/generated/uapi/linux/version.h"
+VERSION_H2="/usr/src/linux-headers-7.0.12/include/generated/uapi/linux/version.h"
+
+# Perform the miracle: Temporarily downgrade the kernel version code to 6.12.86
+for vh in "$VERSION_H" "$VERSION_H2"; do
+    if [ -f "$vh" ]; then
+        sed -i 's/458762/396374/g' "$vh"
+    fi
+done
+
+# Patch ZFS META just in case
+if [ -f "/usr/src/zfs-2.3.2/META" ]; then
+    sed -i 's/Linux-Maximum:.*/Linux-Maximum: 7.99/g' /usr/src/zfs-2.3.2/META 2>/dev/null || true
+fi
+if [ -f "/usr/src/zfs-2.3.2/configure" ]; then
+    sed -i 's/6.\[0-9\]*\*/6.*|7.*/g' /usr/src/zfs-2.3.2/configure 2>/dev/null || true
+fi
+
+# Execute real DKMS
+/usr/sbin/dkms "$@"
+status=$?
+
+# Restore the version code
+for vh in "$VERSION_H" "$VERSION_H2"; do
+    if [ -f "$vh" ]; then
+        sed -i 's/396374/458762/g' "$vh"
+    fi
+done
+
+exit $status

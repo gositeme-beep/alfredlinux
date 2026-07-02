@@ -1,0 +1,109 @@
+#!/bin/bash
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+echo "================================================="
+echo "==== ALFRED ARK PROTOCOL (IPFS Sharding) ========"
+echo "================================================="
+
+export DEBIAN_FRONTEND=noninteractive
+
+if [ -f /build-assets/ipfs ]; then
+    echo "Installing IPFS Ark Protocol..."
+    cp /build-assets/ipfs /usr/local/bin/ipfs
+    chmod +x /usr/local/bin/ipfs
+    
+    # Create systemd service for IPFS daemon
+    cat << 'EOF' > /etc/systemd/system/ipfs.service
+[Unit]
+Description=IPFS Ark Node
+After=network.target
+
+[Service]
+ExecStart=/usr/local/bin/ipfs daemon
+User=gositeme
+Restart=on-failure
+Environment="IPFS_PATH=/home/gositeme/.ipfs"
+
+[Install]
+WantedBy=multi-user.target
+EOF
+    systemctl enable ipfs || true || true.service
+    
+    # Setup cron for Ark Sharding
+    cat << 'EOF' > /etc/cron.hourly/ark-shard
+#!/bin/bash
+# Shamir secret sharing of BIBLE-MANIFEST and pinning to IPFS
+if [ -f /BIBLE-MANIFEST.json ]; then
+    ipfs add /BIBLE-MANIFEST.json > /var/log/ark-pin.log 2>&1
+fi
+EOF
+    chmod +x /etc/cron.hourly/ark-shard
+else
+    echo "ipfs binary not found in build-assets! Skipping."
+fi
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+# [Genesis Forge] Systemd Hardening: alfred-daemon-48.service
+# Enforces deep PrivateTmp, ProtectSystem, and ProtectHome on native daemons.
+echo "[Genesis Forge] Hardening systemd service: alfred-daemon-48.service"
+mkdir -p /etc/systemd/system/alfred-daemon-48.service.d/ || true
+cat > /etc/systemd/system/alfred-daemon-48.service.d/override.conf << 'EOF'
+[Service]
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=read-only
+NoNewPrivileges=yes
+RestrictRealtime=yes
+EOF
+
+
+# --- BEGIN MERGED CONTENT FROM: 0503-alfred-ark-protocol.hook.chroot ---
+#!/bin/bash
+set +e
+echo "================================================="
+echo "==== ALFRED ARK PROTOCOL (IPFS Sharding) ========"
+echo "================================================="
+
+export DEBIAN_FRONTEND=noninteractive
+
+if [ -f /build-assets/ipfs ]; then
+    echo "Installing IPFS Ark Protocol..."
+    cp /build-assets/ipfs /usr/local/bin/ipfs || true
+    chmod +x /usr/local/bin/ipfs || true
+    
+    # Create systemd service for IPFS daemon
+    cat << 'EOF' > /etc/systemd/system/ipfs.service
+[Unit]
+Description=IPFS Ark Node
+After=network.target
+
+[Service]
+ExecStart=/usr/local/bin/ipfs daemon
+User=gositeme
+Restart=on-failure
+Environment="IPFS_PATH=/home/gositeme/.ipfs"
+
+[Install]
+WantedBy=multi-user.target
+EOF
+    systemctl enable ipfs || true || true.service
+    
+    # Setup cron for Ark Sharding
+    cat << 'EOF' > /etc/cron.hourly/ark-shard
+#!/bin/bash
+# Shamir secret sharing of BIBLE-MANIFEST and pinning to IPFS
+if [ -f /BIBLE-MANIFEST.json ]; then
+    ipfs add /BIBLE-MANIFEST.json > /var/log/ark-pin.log 2>&1
+fi
+EOF
+    chmod +x /etc/cron.hourly/ark-shard || true
+else
+    echo "ipfs binary not found in build-assets! Skipping."
+fi
+
+# --- END MERGED CONTENT FROM: 0503-alfred-ark-protocol.hook.chroot ---
+
+

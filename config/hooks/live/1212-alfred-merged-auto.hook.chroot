@@ -1,0 +1,237 @@
+#!/bin/sh
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+
+echo "[Alfred Cymatics] Engineering 432Hz Sub-Audible Resonant Node..."
+
+apt-get install -y pipewire pipewire-audio-client-libraries sox || true
+
+mkdir -p /usr/share/alfred/audio/
+mkdir -p /usr/local/bin/
+
+# 1. Create the Cymatics Audio Daemon
+cat > /usr/local/bin/alfred-cymatics-daemon.sh << 'EOF'
+#!/bin/bash
+# Alfred Cymatics Audio Daemon
+# Generates a continuous 432Hz sine wave (Earth resonance) 
+# and pipes it into the system audio mixer at an incredibly low volume.
+
+# Safety constraint: Only run if the user has explicitly started the target
+if ! systemctl is-active --quiet alfred-cymatics.target; then
+
+fi
+
+# We use 'play' from the 'sox' package to generate the pure frequency.
+# Volume is set to 0.01 (1%) by default so it is felt more than heard.
+play -n synth sine 432 vol 0.01
+EOF
+
+chmod +x /usr/local/bin/alfred-cymatics-daemon.sh
+
+# 2. Create the systemd target and service
+cat > /etc/systemd/user/alfred-cymatics.target << 'EOF'
+[Unit]
+Description=Alfred Cymatics Audio State
+EOF
+
+cat > /etc/systemd/user/alfred-cymatics.service << 'EOF'
+[Unit]
+Description=Alfred Cymatics 432Hz Resonance
+PartOf=alfred-cymatics.target
+After=pipewire.service
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/alfred-cymatics-daemon.sh
+Restart=always
+
+[Install]
+WantedBy=alfred-cymatics.target
+EOF
+
+# 3. Create the user-facing toggle script
+cat > /usr/local/bin/alfred-toggle-cymatics.sh << 'EOF'
+#!/bin/bash
+if systemctl --user is-active --quiet alfred-cymatics.target; then
+    echo "Deactivating Cymatics Resonance (432Hz)..."
+    systemctl --user stop alfred-cymatics.target
+else
+    echo "Activating Cymatics Resonance (432Hz)..."
+    systemctl --user start alfred-cymatics.target
+fi
+EOF
+chmod +x /usr/local/bin/alfred-toggle-cymatics.sh
+
+echo "[Alfred Cymatics] Resonance daemon installed (Disabled by default)."
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+
+echo "[Genesis Forge] Engineering BB84 QKD Protocol Simulator Daemon..."
+
+apt-get install -y --fix-broken -y python3 socat || true
+
+mkdir -p /var/log/alfred_ascension || true
+[ -e "/var/log/alfred_ascension" ] && chmod 700 /var/log/alfred_ascension || true
+
+mkdir -p /opt/alfred-qkd-sim || true
+
+# Inject QKD Simulator Python Daemon
+cat > /opt/alfred-qkd-sim/qkd_daemon.py << 'EOF'
+#!/usr/bin/env python3
+import time
+import os
+import secrets
+import hashlib
+import socket
+
+LOG_FILE = "/var/log/alfred_ascension/qkd_sim.log"
+SOCKET_PATH = "/var/run/alfred_qkd.sock"
+
+def log(msg):
+    with open(LOG_FILE, "a") as f:
+        f.write(f"[{time.time()}] {msg}\n")
+
+def simulate_bb84():
+    # Simulate Alice generating random bits and bases
+    alice_bits = [secrets.choice([0, 1]) for _ in range(256)]
+    alice_bases = [secrets.choice(['+', 'x']) for _ in range(256)]
+    
+    # Simulate Bob choosing random bases
+    bob_bases = [secrets.choice(['+', 'x']) for _ in range(256)]
+    
+    # Sifted key
+    sifted_key = []
+    for i in range(256):
+        if alice_bases[i] == bob_bases[i]:
+            sifted_key.append(str(alice_bits[i]))
+            
+    # Cryptographic amplification
+    key_material = "".join(sifted_key)
+    final_key = hashlib.sha3_256(key_material.encode()).hexdigest()
+    return final_key
+
+def run_server():
+    if os.path.exists(SOCKET_PATH):
+        os.remove(SOCKET_PATH)
+        
+    server = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+    server.bind(SOCKET_PATH)
+    os.chmod(SOCKET_PATH, 0o666) # Accessible to other Absolute Zero components
+    server.listen(5)
+    
+    log("BB84 Simulator Daemon listening on UNIX socket.")
+    
+    while True:
+        conn, _ = server.accept()
+        key = simulate_bb84()
+        log(f"Key material negotiated and served.")
+        conn.sendall((key + "\n").encode())
+        conn.close()
+
+if __name__ == "__main__":
+    run_server()
+EOF
+
+[ -e "/opt/alfred-qkd-sim/qkd_daemon.py" ] && chmod +x /opt/alfred-qkd-sim/qkd_daemon.py || true
+
+# Create systemd service for the daemon
+cat > /etc/systemd/system/alfred-qkd-sim.service << 'EOF'
+[Unit]
+Description=Alfred BB84 QKD Protocol Simulator
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/opt/alfred-qkd-sim/qkd_daemon.py
+Restart=on-failure
+RestartSec=10
+User=root
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+systemctl enable alfred-qkd-sim || true || true.service || true
+
+# Original marker functionality
+MARKER_FILE="/var/log/alfred_ascension/hook_1212-alfred-quantum-key-distribution.hook.chroot.marker"
+TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+HASH=$(echo "$TIMESTAMP-1212-alfred-quantum-key-distribution.hook.chroot" | sha256sum | awk '{print $1}')
+echo "[$TIMESTAMP] EXECUTION VERIFIED: $HASH" > "$MARKER_FILE" || true
+[ -e "$MARKER_FILE" ] && chmod 400 "$MARKER_FILE" || true
+
+echo "[Genesis Forge] BB84 QKD Protocol Simulator Daemon Integrated."
+
+
+# --- BEGIN MERGED CONTENT FROM: 1212-alfred-cymatics-audio.hook.chroot ---
+#!/bin/sh
+set +e
+
+echo "[Alfred Cymatics] Engineering 432Hz Sub-Audible Resonant Node..."
+
+apt-get install -y pipewire pipewire-audio-client-libraries sox || true
+
+mkdir -p /usr/share/alfred/audio/
+mkdir -p /usr/local/bin/
+
+# 1. Create the Cymatics Audio Daemon
+cat > /usr/local/bin/alfred-cymatics-daemon.sh << 'EOF'
+#!/bin/bash
+# Alfred Cymatics Audio Daemon
+# Generates a continuous 432Hz sine wave (Earth resonance) 
+# and pipes it into the system audio mixer at an incredibly low volume.
+
+# Safety constraint: Only run if the user has explicitly started the target
+if ! systemctl is-active --quiet alfred-cymatics.target; then
+
+fi
+
+# We use 'play' from the 'sox' package to generate the pure frequency.
+# Volume is set to 0.01 (1%) by default so it is felt more than heard.
+play -n synth sine 432 vol 0.01
+EOF
+
+[ -e "/usr/local/bin/alfred-cymatics-daemon.sh" ] && chmod +x /usr/local/bin/alfred-cymatics-daemon.sh
+
+# 2. Create the systemd target and service
+cat > /etc/systemd/user/alfred-cymatics.target << 'EOF'
+[Unit]
+Description=Alfred Cymatics Audio State
+EOF
+
+cat > /etc/systemd/user/alfred-cymatics.service << 'EOF'
+[Unit]
+Description=Alfred Cymatics 432Hz Resonance
+PartOf=alfred-cymatics.target
+After=pipewire.service
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/alfred-cymatics-daemon.sh
+Restart=always
+
+[Install]
+WantedBy=alfred-cymatics.target
+EOF
+
+# 3. Create the user-facing toggle script
+cat > /usr/local/bin/alfred-toggle-cymatics.sh << 'EOF'
+#!/bin/bash
+if systemctl --user is-active --quiet alfred-cymatics.target; then
+    echo "Deactivating Cymatics Resonance (432Hz)..."
+    systemctl --user stop alfred-cymatics.target
+else
+    echo "Activating Cymatics Resonance (432Hz)..."
+    systemctl --user start alfred-cymatics.target
+fi
+EOF
+[ -e "/usr/local/bin/alfred-toggle-cymatics.sh" ] && chmod +x /usr/local/bin/alfred-toggle-cymatics.sh
+
+echo "[Alfred Cymatics] Resonance daemon installed (Disabled by default)."
+
+# --- END MERGED CONTENT FROM: 1212-alfred-cymatics-audio.hook.chroot ---
+
+

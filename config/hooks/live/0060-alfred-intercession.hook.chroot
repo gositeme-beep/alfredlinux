@@ -1,0 +1,26 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+# 0182-alfred-intercession — names + needs to lift up daily.
+
+echo "[0182-intercession] begin"
+cat >/usr/sbin/alfred-intercession <<"EOS"
+#!/bin/bash
+
+L=${ALFRED_INTERCESSION_LIST:-$HOME/.alfred/intercession.tsv}
+mkdir -p "$(dirname "$L")" || true
+[ -f "$L" ] || printf "added\tname\tneed\n" >"$L"
+case "${1:-}" in
+  add) shift; name="${1:?name}"; shift; printf "%s\t%s\t%s\n" "$(date -Is)" "$name" "$*" >>"$L"; echo "added $name" ;;
+  list) column -t -s$"\t" "$L" 2>/dev/null || cat "$L" ;;
+  pick) tail -n +2 "$L" | shuf -n 1 2>/dev/null || true ;;
+  *) echo "usage: alfred-intercession {add <name> <need>|list|pick}"; exit 0 ;;
+esac
+EOS
+[ -e /usr/sbin/alfred-intercession ] && chmod 0755 /usr/sbin/alfred-intercession || true
+echo "[0182-intercession] done"
+
+
+exit 0

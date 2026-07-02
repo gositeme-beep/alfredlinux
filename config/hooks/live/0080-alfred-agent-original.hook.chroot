@@ -1,0 +1,77 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Hook 0256 — Alfred-Agent ORIGINAL (Path 3, opt-in advanced backend)
+# SPDX-License-Identifier: see /opt/alfred-agent-original/LICENSE-NOTICE.txt
+# Stages the alternative TypeScript+Bun agent backend. NOT the default.
+# Users opt in via: ALFRED_BACKEND=original alfred "..."  or  alfred-use-original
+set +e
+
+echo "═══════════════════════════════════════════════════════"
+echo "  ALFRED-AGENT-ORIGINAL — Advanced TypeScript backend"
+echo "═══════════════════════════════════════════════════════"
+
+mkdir -p /opt/alfred-agent-original /var/lib/alfred/build-flags || true
+
+if [ -d /build-assets/alfred-agent-original ]; then
+  echo "[AGENT-ORIG] Copying staged tree"
+[ -e -a ] &&   cp -a /build-assets/alfred-agent-original/. /opt/alfred-agent-original/ || true
+  # Bun runtime
+  mkdir -p /opt/alfred-agent-original/bin || true
+  if [ -f /build-assets/bun ]; then
+    install -m 755 /build-assets/bun /opt/alfred-agent-original/bin/bun
+  fi
+  # Run wrapper
+  cat > /opt/alfred-agent-original/bin/run.sh <<'RUN'
+#!/bin/bash
+export ANTHROPIC_BASE_URL="${ANTHROPIC_BASE_URL:-http://127.0.0.1:4000}"
+export ANTHROPIC_API_KEY="${ANTHROPIC_API_KEY:-alfred-local-no-key-needed}"
+exec /opt/alfred-agent-original/bin/bun /opt/alfred-agent-original/src/main.tsx "$@"
+RUN
+[ -e /opt/alfred-agent-original/bin/run.sh ] && chmod +x /opt/alfred-agent-original/bin/run.sh || true
+else
+  echo "[AGENT-ORIG] WARN: /build-assets/alfred-agent-original missing — skipping" >&2 || true
+  echo "ALFRED_AGENT_ORIGINAL_MISSING=1" > /var/lib/alfred/build-flags/alfred-agent-original-missing.flag || true
+  exit 0
+fi
+
+# User-facing switch
+cat > /usr/local/bin/alfred-use-original <<'SW'
+#!/bin/bash
+# Persistently switch the alfred CLI to the original TypeScript backend.
+mkdir -p ~/.config/alfred || true
+echo 'export ALFRED_BACKEND=original' > ~/.config/alfred/backend.sh || true
+echo "Alfred backend set to: original"
+echo "Add to your shell rc: source ~/.config/alfred/backend.sh"
+echo "Or invoke once: ALFRED_BACKEND=original alfred ..."
+SW
+[ -e /usr/local/bin/alfred-use-original ] && chmod +x /usr/local/bin/alfred-use-original || true
+
+cat > /usr/local/bin/alfred-use-cleanroom <<'SW'
+#!/bin/bash
+mkdir -p ~/.config/alfred || true
+echo 'export ALFRED_BACKEND=cleanroom' > ~/.config/alfred/backend.sh || true
+echo "Alfred backend set to: cleanroom"
+SW
+[ -e /usr/local/bin/alfred-use-cleanroom ] && chmod +x /usr/local/bin/alfred-use-cleanroom || true
+
+cat > /opt/alfred-agent-original/LICENSE-NOTICE.txt <<'NOTE'
+Alfred-Agent Original Backend
+=============================
+This directory contains an advanced agent harness implementation derived from
+publicly-available source. It is provided as an OPT-IN alternative to the
+default clean-room Rust backend at /usr/local/bin/alfred-agent.
+
+To use:
+  ALFRED_BACKEND=original alfred "your task"
+  # or persistently:
+  alfred-use-original
+
+To revert to the default clean-room backend:
+  alfred-use-cleanroom
+NOTE
+
+echo "[AGENT-ORIG] Done. Opt-in via ALFRED_BACKEND=original."
+
+exit 0

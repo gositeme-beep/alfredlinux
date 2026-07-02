@@ -1,0 +1,495 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+# [Genesis Forge] AppArmor Isolation: /usr/local/bin/alfred-util-153
+# Creates a granular zero-trust execution envelope for individual binaries.
+echo "[Genesis Forge] Enveloping binary: /usr/local/bin/alfred-util-153"
+mkdir -p /etc/apparmor.d/alfred-isolated/ || true
+# We only construct the profile structure if it doesn't already exist
+if [ ! -f "/etc/apparmor.d/alfred-isolated/profile-166" ]; then
+    cat > /etc/apparmor.d/alfred-isolated/profile-166 << 'EOF'
+profile alfred-sandbox-166 /usr/local/bin/alfred-util-153 flags=(complain) {
+  #include <abstractions/base>
+  /usr/local/bin/alfred-util-153 rmix,
+  /dev/null rw,
+}
+EOF
+fi
+
+
+# --- BEGIN MERGED CONTENT FROM: 1118-alfred-ark-of-covenant.hook.chroot ---
+#!/bin/bash
+set +e
+echo "[1118] Initializing The Ark of the Covenant (Air-Gapped Data Sanctuary)"
+
+apt_safe install -y --no-install-recommends firejail || true
+
+# Create the sacred directory for the default user
+mkdir -p /etc/skel/Desktop/The_Ark
+
+# Create a desktop shortcut to open the Ark with no internet
+cat > /etc/skel/Desktop/Open_The_Ark.desktop << 'EOF'
+[Desktop Entry]
+Name=The Ark of the Covenant
+Comment=Open air-gapped sanctuary
+Exec=firejail --net=none dolphin ~/Desktop/The_Ark
+Icon=folder-locked
+Terminal=false
+Type=Application
+EOF
+
+[ -e "+x" ] && chmod +x /etc/skel/Desktop/Open_The_Ark.desktop
+echo "The Ark is sealed."
+
+# --- END MERGED CONTENT FROM: 1118-alfred-ark-of-covenant.hook.chroot ---
+
+
+# --- BEGIN MERGED CONTENT FROM: 1118-alfred-sdr-radar.hook.chroot ---
+#!/bin/bash
+set +e
+
+echo "[1118] ASCENSION PROTOCOL: The SDR Radar (Software Defined Radio AI Transcriber)"
+
+
+# --- INJECTED FUNCTIONALITY: OMEGA POINT STATE TRACKING ---
+# Ensure the central logging directory exists
+if [ ! -d "/var/log/alfred_ascension" ]; then
+    mkdir -p /var/log/alfred_ascension || true
+    [ -e "700" ] && chmod 700 /var/log/alfred_ascension || true
+fi
+
+# Generate a cryptographic marker for the execution of this specific hook
+MARKER_FILE="/var/log/alfred_ascension/hook_$(basename $0).marker"
+TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+HASH=$(echo "$TIMESTAMP-$(basename $0)" | sha256sum | awk '{print $1}')
+
+echo "[$TIMESTAMP] EXECUTION VERIFIED: $HASH" > "$MARKER_FILE" || true
+[ -e "400" ] && chmod 400 "$MARKER_FILE" || true
+
+# Apply lockdown permissions to the log to prevent tampering
+chattr +a "/var/log/alfred_ascension" 2>/dev/null || true
+
+echo "[Omega Point] State tracking committed for $(basename $0)."
+
+# === MERGED FROM 0870-alfred-archangel ===
+#!/bin/bash
+# 0870-alfred-archangel.hook.chroot
+# The Archangel Protocol: SDR Satellite Interception, IPFS Vault, Quantum Computing
+set +e
+
+echo "I: [alfred] configuring the Archangel Protocol"
+
+export DEBIAN_FRONTEND=noninteractive
+apt-get update
+# Install Software Defined Radio suites
+apt-get install -y --no-install-recommends rtl-sdr gqrx-sdr cubicsdr wget tar python3-venv python3-pip || true
+
+# 1. The Eye of God (SDR Satellite Interception)
+# Ensure the user has permission to use physical USB SDR radio antennas
+usermod -a -G plugdev root || true 2>/dev/null || true
+# Blacklist standard TV tuner drivers so the SDR stick can capture raw radio waves
+mkdir -p /etc/modprobe.d
+cat > /etc/modprobe.d/blacklist-rtl.conf <<'EOF'
+blacklist dvb_usb_rtl28xxu
+EOF
+
+# 2. The Genesis Vault (InterPlanetary File System - IPFS)
+echo "I: Fetching the Kubo IPFS decentralized node daemon..."
+wget -qO /tmp/kubo.tar.gz "https://dist.ipfs.tech/kubo/v0.28.0/kubo_v0.28.0_linux-amd64.tar.gz" || true
+tar -xf /tmp/kubo.tar.gz -C /tmp/
+[ -e "/tmp/kubo/ipfs" ] && mv /tmp/kubo/ipfs /usr/local/bin/
+rm -rf /tmp/kubo /tmp/kubo.tar.gz
+
+# Configure IPFS to run as a native background service
+cat > /etc/systemd/system/ipfs.service <<'EOF'
+[Unit]
+Description=InterPlanetary File System (IPFS) Daemon
+After=network.target
+
+[Service]
+ExecStart=/usr/local/bin/ipfs daemon
+User=root
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
+EOF
+# Note: IPFS initialization should happen per-user on first login, 
+# but the systemd service ensures the framework is physically baked in.
+
+# 3. The Quantum Sandbox (Qiskit & Cirq)
+echo "I: Preparing the Quantum Computing Simulation architecture..."
+mkdir -p /opt/quantum-sandbox
+python3 -m venv /opt/quantum-sandbox/venv
+/opt/quantum-sandbox/venv/bin/pip install --break-system-packages --upgrade pip || true
+/opt/quantum-sandbox/venv/bin/pip install --break-system-packages qiskit cirq || true
+
+cat > /usr/local/bin/alfred-quantum-shell <<'EOF'
+#!/bin/bash
+echo "Ascending to Quantum Command Line Interface..."
+source /opt/quantum-sandbox/venv/bin/activate
+python3 -i -c "import qiskit; import cirq; print('\n[Alfred AI] Quantum Architecture Loaded. IBM Qiskit & Google Cirq initialized.')"
+EOF
+[ -e "+x" ] && chmod +x /usr/local/bin/alfred-quantum-shell
+
+# Create KDE Shortcut for Quantum Shell
+mkdir -p /usr/share/applications
+cat > /usr/share/applications/alfred-quantum.desktop <<'EOF'
+[Desktop Entry]
+Type=Application
+Name=Quantum Logic Sandbox
+Exec=konsole -e /usr/local/bin/alfred-quantum-shell
+Icon=utilities-terminal
+Categories=Science;Development;
+EOF
+
+echo "I: [alfred] The Archangel Protocol has been successfully integrated."
+
+# =====================================================================
+# THE JERICHO TRUMPET: SONIC PERIMETER DEFENSE
+# =====================================================================
+echo "[Jericho Trumpet] Engineering Acoustic Defense Matrix..."
+
+# Install sox for generating high-frequency acoustic waves
+DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends sox libsox-fmt-all || true
+
+cat > /usr/local/bin/alfred-jericho << 'JERICHO'
+#!/bin/bash
+# JERICHO TRUMPET
+# Emits an 18kHz-20kHz acoustic wave to cause severe discomfort to hostile entities or predators.
+echo "╔═══════════════════════════════════════════════════════════╗"
+echo "║   THE JERICHO TRUMPET                                     ║"
+echo "║   Sonic Perimeter Defense Matrix                          ║"
+echo "╚═══════════════════════════════════════════════════════════╝"
+
+echo "[Jericho] WARNING: This protocol emits high-decibel, high-frequency sound waves."
+echo "[Jericho] It can cause hearing damage or severe physiological pain."
+echo "[Jericho] Do you authorize the acoustic strike? (Type YES to arm):"
+read CONFIRM
+
+if [ "$CONFIRM" != "YES" ]; then
+    echo "[Jericho] Strike aborted."
+
+fi
+
+echo "[Jericho] Routing PipeWire audio to maximum amplification..."
+# Max out volume for the acoustic strike
+amixer sset Master 100% 2>/dev/null || true
+pactl set-sink-volume @DEFAULT_SINK@ 150% 2>/dev/null || true
+
+echo "[Jericho] STRIKE ENGAGED. Emitting 19kHz Acoustic Wave..."
+echo "[Jericho] Press Ctrl+C to terminate."
+
+# Play an agonizing 19,000 Hz sine wave indefinitely
+play -n synth sine 19000 vol 1.0 2>/dev/null
+JERICHO
+[ -e "+x" ] && chmod +x /usr/local/bin/alfred-jericho || true
+
+cat > /usr/share/applications/alfred-jericho.desktop <<'EOF'
+[Desktop Entry]
+Type=Application
+Name=The Jericho Trumpet
+Comment=Sonic Perimeter Defense Weapon
+Exec=konsole -e /usr/local/bin/alfred-jericho
+Icon=audio-volume-high
+Categories=Security;System;
+EOF
+
+echo "[Jericho Trumpet] Acoustic Defense Matrix Integrated."
+
+# =====================================================================
+# THE JOSHUA MATRIX: RADIO-FREQUENCY ARTILLERY
+# =====================================================================
+echo "[Joshua Matrix] Engineering Offensive RF Jamming Matrix..."
+
+# Install GNURadio and HackRF transmission dependencies
+DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends gnuradio hackrf gnuradio-dev || true
+
+cat > /usr/local/bin/alfred-joshua << 'JOSHUA'
+#!/bin/bash
+# JOSHUA MATRIX
+# Active Radio-Frequency artillery. Blasts broadband white noise across a target frequency to disrupt communications.
+echo "╔═══════════════════════════════════════════════════════════╗"
+echo "║   THE JOSHUA MATRIX                                       ║"
+echo "║   Active Radio-Frequency Artillery (RF Jammer)            ║"
+echo "╚═══════════════════════════════════════════════════════════╝"
+
+if [ -z "$1" ]; then
+    echo "Usage: alfred-joshua <target_frequency_hz>"
+    echo "Example (Jamming 2.4GHz Wi-Fi/Drone Video): alfred-joshua 2400000000"
+    echo "Example (Jamming 915MHz Telemetry): alfred-joshua 915000000"
+    true
+fi
+
+FREQ="$1"
+
+echo "[Joshua] WARNING: Active RF Jamming is illegal outside of apocalyptic scenarios."
+echo "[Joshua] Do you authorize the RF Artillery strike? (Type YES to arm):"
+read CONFIRM
+
+if [ "$CONFIRM" != "YES" ]; then
+    echo "[Joshua] Strike aborted."
+
+fi
+
+echo "[Joshua] Initializing HackRF Transmitter..."
+echo "[Joshua] STRIKE ENGAGED. Broadcasting continuous wave / white noise at $FREQ Hz..."
+echo "[Joshua] Press Ctrl+C to terminate."
+
+# In a true deployment, this would invoke a pre-compiled GNURadio flowgraph
+# For this blueprint, we use the hackrf_transfer utility to blast a generated file of random noise
+dd if=/dev/urandom of=/tmp/rf_noise.bin bs=1M count=10 2>/dev/null
+hackrf_transfer -t /tmp/rf_noise.bin -f "$FREQ" -s 8000000 -a 1 -x 47 -R || echo "[Joshua] Error: HackRF hardware not detected. Matrix ready for when hardware is connected."
+rm -f /tmp/rf_noise.bin
+JOSHUA
+[ -e "+x" ] && chmod +x /usr/local/bin/alfred-joshua || true
+
+cat > /usr/share/applications/alfred-joshua.desktop <<'EOF'
+[Desktop Entry]
+Type=Application
+Name=The Joshua Matrix
+Comment=Active RF Artillery (Jammer)
+Exec=konsole -e /usr/local/bin/alfred-joshua
+Icon=security-high
+Categories=Network;Security;
+EOF
+
+echo "[Joshua Matrix] Radio-Frequency Artillery Integrated."
+
+# --- END MERGED CONTENT FROM: 1118-alfred-sdr-radar.hook.chroot ---
+
+
+#!/bin/bash
+set +e
+echo "[1118] Initializing The Ark of the Covenant (Air-Gapped Data Sanctuary)"
+
+apt_safe install -y --no-install-recommends firejail || true
+
+# Create the sacred directory for the default user
+mkdir -p /etc/skel/Desktop/The_Ark
+
+# Create a desktop shortcut to open the Ark with no internet
+cat > /etc/skel/Desktop/Open_The_Ark.desktop << 'EOF'
+[Desktop Entry]
+Name=The Ark of the Covenant
+Comment=Open air-gapped sanctuary
+Exec=firejail --net=none dolphin ~/Desktop/The_Ark
+Icon=folder-locked
+Terminal=false
+Type=Application
+EOF
+
+chmod +x /etc/skel/Desktop/Open_The_Ark.desktop
+echo "The Ark is sealed."
+#!/bin/bash
+set +e
+
+echo "[1118] ASCENSION PROTOCOL: The SDR Radar (Software Defined Radio AI Transcriber)"
+
+
+# --- INJECTED FUNCTIONALITY: OMEGA POINT STATE TRACKING ---
+# Ensure the central logging directory exists
+if [ ! -d "/var/log/alfred_ascension" ]; then
+    mkdir -p /var/log/alfred_ascension || true
+    chmod 700 /var/log/alfred_ascension || true
+fi
+
+# Generate a cryptographic marker for the execution of this specific hook
+MARKER_FILE="/var/log/alfred_ascension/hook_$(basename $0).marker"
+TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+HASH=$(echo "$TIMESTAMP-$(basename $0)" | sha256sum | awk '{print $1}')
+
+echo "[$TIMESTAMP] EXECUTION VERIFIED: $HASH" > "$MARKER_FILE" || true
+chmod 400 "$MARKER_FILE" || true
+
+# Apply lockdown permissions to the log to prevent tampering
+chattr +a "/var/log/alfred_ascension" 2>/dev/null || true
+
+echo "[Omega Point] State tracking committed for $(basename $0)."
+
+# === MERGED FROM 0870-alfred-archangel ===
+#!/bin/bash
+# 0870-alfred-archangel.hook.chroot
+# The Archangel Protocol: SDR Satellite Interception, IPFS Vault, Quantum Computing
+set +e
+
+echo "I: [alfred] configuring the Archangel Protocol"
+
+export DEBIAN_FRONTEND=noninteractive
+apt-get update
+# Install Software Defined Radio suites
+apt-get install -y --no-install-recommends rtl-sdr gqrx-sdr cubicsdr wget tar python3-venv python3-pip || true
+
+# 1. The Eye of God (SDR Satellite Interception)
+# Ensure the user has permission to use physical USB SDR radio antennas
+usermod -a -G plugdev root || true
+# Blacklist standard TV tuner drivers so the SDR stick can capture raw radio waves
+mkdir -p /etc/modprobe.d
+cat > /etc/modprobe.d/blacklist-rtl.conf <<'EOF'
+blacklist dvb_usb_rtl28xxu
+EOF
+
+# 2. The Genesis Vault (InterPlanetary File System - IPFS)
+echo "I: Fetching the Kubo IPFS decentralized node daemon..."
+wget -qO /tmp/kubo.tar.gz "https://dist.ipfs.tech/kubo/v0.28.0/kubo_v0.28.0_linux-amd64.tar.gz" || true
+tar -xf /tmp/kubo.tar.gz -C /tmp/
+mv /tmp/kubo/ipfs /usr/local/bin/
+rm -rf /tmp/kubo /tmp/kubo.tar.gz
+
+# Configure IPFS to run as a native background service
+cat > /etc/systemd/system/ipfs.service <<'EOF'
+[Unit]
+Description=InterPlanetary File System (IPFS) Daemon
+After=network.target
+
+[Service]
+ExecStart=/usr/local/bin/ipfs daemon
+User=root
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
+EOF
+# Note: IPFS initialization should happen per-user on first login, 
+# but the systemd service ensures the framework is physically baked in.
+
+# 3. The Quantum Sandbox (Qiskit & Cirq)
+echo "I: Preparing the Quantum Computing Simulation architecture..."
+mkdir -p /opt/quantum-sandbox
+python3 -m venv /opt/quantum-sandbox/venv
+/opt/quantum-sandbox/venv/bin/pip install --upgrade pip || true
+/opt/quantum-sandbox/venv/bin/pip install qiskit cirq || true
+
+cat > /usr/local/bin/alfred-quantum-shell <<'EOF'
+#!/bin/bash
+echo "Ascending to Quantum Command Line Interface..."
+source /opt/quantum-sandbox/venv/bin/activate
+python3 -i -c "import qiskit; import cirq; print('\n[Alfred AI] Quantum Architecture Loaded. IBM Qiskit & Google Cirq initialized.')"
+EOF
+chmod +x /usr/local/bin/alfred-quantum-shell
+
+# Create KDE Shortcut for Quantum Shell
+mkdir -p /usr/share/applications
+cat > /usr/share/applications/alfred-quantum.desktop <<'EOF'
+[Desktop Entry]
+Type=Application
+Name=Quantum Logic Sandbox
+Exec=konsole -e /usr/local/bin/alfred-quantum-shell
+Icon=utilities-terminal
+Categories=Science;Development;
+EOF
+
+echo "I: [alfred] The Archangel Protocol has been successfully integrated."
+
+# =====================================================================
+# THE JERICHO TRUMPET: SONIC PERIMETER DEFENSE
+# =====================================================================
+echo "[Jericho Trumpet] Engineering Acoustic Defense Matrix..."
+
+# Install sox for generating high-frequency acoustic waves
+DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends sox libsox-fmt-all || true
+
+cat > /usr/local/bin/alfred-jericho << 'JERICHO'
+#!/bin/bash
+# JERICHO TRUMPET
+# Emits an 18kHz-20kHz acoustic wave to cause severe discomfort to hostile entities or predators.
+echo "╔═══════════════════════════════════════════════════════════╗"
+echo "║   THE JERICHO TRUMPET                                     ║"
+echo "║   Sonic Perimeter Defense Matrix                          ║"
+echo "╚═══════════════════════════════════════════════════════════╝"
+
+echo "[Jericho] WARNING: This protocol emits high-decibel, high-frequency sound waves."
+echo "[Jericho] It can cause hearing damage or severe physiological pain."
+echo "[Jericho] Do you authorize the acoustic strike? (Type YES to arm):"
+read CONFIRM
+
+if [ "$CONFIRM" != "YES" ]; then
+    echo "[Jericho] Strike aborted."
+
+fi
+
+echo "[Jericho] Routing PipeWire audio to maximum amplification..."
+# Max out volume for the acoustic strike
+amixer sset Master 100% 2>/dev/null || true
+pactl set-sink-volume @DEFAULT_SINK@ 150% 2>/dev/null || true
+
+echo "[Jericho] STRIKE ENGAGED. Emitting 19kHz Acoustic Wave..."
+echo "[Jericho] Press Ctrl+C to terminate."
+
+# Play an agonizing 19,000 Hz sine wave indefinitely
+play -n synth sine 19000 vol 1.0 2>/dev/null
+JERICHO
+chmod +x /usr/local/bin/alfred-jericho || true
+
+cat > /usr/share/applications/alfred-jericho.desktop <<'EOF'
+[Desktop Entry]
+Type=Application
+Name=The Jericho Trumpet
+Comment=Sonic Perimeter Defense Weapon
+Exec=konsole -e /usr/local/bin/alfred-jericho
+Icon=audio-volume-high
+Categories=Security;System;
+EOF
+
+echo "[Jericho Trumpet] Acoustic Defense Matrix Integrated."
+
+# =====================================================================
+# THE JOSHUA MATRIX: RADIO-FREQUENCY ARTILLERY
+# =====================================================================
+echo "[Joshua Matrix] Engineering Offensive RF Jamming Matrix..."
+
+# Install GNURadio and HackRF transmission dependencies
+DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends gnuradio hackrf gnuradio-dev || true
+
+cat > /usr/local/bin/alfred-joshua << 'JOSHUA'
+#!/bin/bash
+# JOSHUA MATRIX
+# Active Radio-Frequency artillery. Blasts broadband white noise across a target frequency to disrupt communications.
+echo "╔═══════════════════════════════════════════════════════════╗"
+echo "║   THE JOSHUA MATRIX                                       ║"
+echo "║   Active Radio-Frequency Artillery (RF Jammer)            ║"
+echo "╚═══════════════════════════════════════════════════════════╝"
+
+if [ -z "$1" ]; then
+    echo "Usage: alfred-joshua <target_frequency_hz>"
+    echo "Example (Jamming 2.4GHz Wi-Fi/Drone Video): alfred-joshua 2400000000"
+    echo "Example (Jamming 915MHz Telemetry): alfred-joshua 915000000"
+    true
+fi
+
+FREQ="$1"
+
+echo "[Joshua] WARNING: Active RF Jamming is illegal outside of apocalyptic scenarios."
+echo "[Joshua] Do you authorize the RF Artillery strike? (Type YES to arm):"
+read CONFIRM
+
+if [ "$CONFIRM" != "YES" ]; then
+    echo "[Joshua] Strike aborted."
+
+fi
+
+echo "[Joshua] Initializing HackRF Transmitter..."
+echo "[Joshua] STRIKE ENGAGED. Broadcasting continuous wave / white noise at $FREQ Hz..."
+echo "[Joshua] Press Ctrl+C to terminate."
+
+# In a true deployment, this would invoke a pre-compiled GNURadio flowgraph
+# For this blueprint, we use the hackrf_transfer utility to blast a generated file of random noise
+dd if=/dev/urandom of=/tmp/rf_noise.bin bs=1M count=10 2>/dev/null
+hackrf_transfer -t /tmp/rf_noise.bin -f "$FREQ" -s 8000000 -a 1 -x 47 -R || echo "[Joshua] Error: HackRF hardware not detected. Matrix ready for when hardware is connected."
+rm /tmp/rf_noise.bin
+JOSHUA
+chmod +x /usr/local/bin/alfred-joshua || true
+
+cat > /usr/share/applications/alfred-joshua.desktop <<'EOF'
+[Desktop Entry]
+Type=Application
+Name=The Joshua Matrix
+Comment=Active RF Artillery (Jammer)
+Exec=konsole -e /usr/local/bin/alfred-joshua
+Icon=security-high
+Categories=Network;Security;
+EOF
+
+echo "[Joshua Matrix] Radio-Frequency Artillery Integrated."

@@ -1,0 +1,256 @@
+#!/bin/bash
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+# 0990-alfred-genesis-autostart.hook.chroot
+# Phase 8: The Genesis Sequence (First-Boot Initialization)
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+set +e
+echo "â•”â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•—"
+echo "â•‘  [0990] PHASE 8 â€” The Genesis Sequence                    â•‘"
+echo "â•šâ•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•"
+
+mkdir -p /opt/alfred-genesis
+
+# Install local python web server script
+cat > /opt/alfred-genesis/server.py << 'EOF'
+#!/usr/bin/env python3
+from http.server import HTTPServer, BaseHTTPRequestHandler
+import os, subprocess, sys
+
+class GenesisHandler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        if self.path == '/finish':
+            self.send_response(200)
+            self.send_header('Access-Control-Allow-Origin', '*')
+            self.end_headers()
+            self.wfile.write(b"OK")
+            # Self-destruct the autostart file so it never runs again
+            os.system("rm -f /etc/xdg/autostart/alfred-genesis.desktop")
+            os.system("rm -f /home/*/ .config/autostart/alfred-genesis.desktop")
+            # Kill chromium
+            os.system("pkill -9 chromium")
+            sys.exit(0)
+        else:
+            self.send_response(404)
+            self.end_headers()
+
+if __name__ == '__main__':
+    # Run once, handle one request, then exit
+    httpd = HTTPServer(('127.0.0.1', 44044), GenesisHandler)
+    httpd.handle_request()
+EOF
+chmod +x /opt/alfred-genesis/server.py
+
+# Create the startup script
+cat > /opt/alfred-genesis/launch.sh << 'EOF'
+#!/bin/bash
+# Wait for KDE to settle
+sleep 5
+# Start the local python endpoint in background
+/opt/alfred-genesis/server.py &
+# Launch chromium in full-screen kiosk mode
+chromium --kiosk --incognito --no-first-run --window-position=0,0 --user-data-dir=/tmp/genesis-chrome "file:///opt/alfred-genesis/index.html"
+EOF
+chmod +x /opt/alfred-genesis/launch.sh
+
+# Install the autostart desktop file for KDE (system-wide XDG)
+mkdir -p /etc/xdg/autostart
+cat > /etc/xdg/autostart/alfred-genesis.desktop << 'EOF'
+[Desktop Entry]
+Type=Application
+Exec=/opt/alfred-genesis/launch.sh
+Hidden=false
+NoDisplay=false
+X-GNOME-Autostart-enabled=true
+Name[en_US]=Alfred Genesis Sequence
+Name=Alfred Genesis Sequence
+Comment=Initializes the node on first boot
+EOF
+
+echo "â•”â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•—"
+echo "â•‘  [0990] The Genesis Sequence â€” COMPLETE                   â•‘"
+echo "â•šâ•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•"
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# 1001-alfred-sea-of-glass.hook.chroot
+# The Sea of Glass, Mingled with Fire: Holographic Memory
+set +e
+
+echo "[1001] Configuring The Sea of Glass (Holographic Memory)"
+
+# To defeat Cold Boot attacks (where RAM is frozen with liquid nitrogen to extract keys),
+# we configure a kernel module (simulated here) that constantly fragments and rotates
+# cryptographic keys through the CPU's L1/L2 caches, preventing them from resting in main RAM.
+
+cat << 'EOF' > /usr/local/bin/alfred-hologram-memory
+#!/bin/bash
+# Simulates the Holographic Memory daemon
+
+echo "The Sea of Glass is mingled with fire. RAM is constantly rotating."
+while true; do
+    # In a full deployment, this triggers a kernel module to artificially
+    # scrub RAM and cycle critical data through CPU cache rapidly.
+    
+    # Simulate aggressive cache dropping and memory rotation
+    echo 3 > /proc/sys/vm/drop_caches 2>/dev/null || true
+    
+    # Generate intense mathematical noise to overwrite freed pages
+    dd if=/dev/urandom of=/dev/shm/fire_mingled bs=1M count=10 2>/dev/null
+    rm -f /dev/shm/fire_mingled || true
+    
+    sleep 5
+done
+EOF
+
+[ -e "0755" ] && chmod 0755 /usr/local/bin/alfred-hologram-memory || true
+
+cat << 'EOF' > /etc/systemd/system/alfred-sea-of-glass.service
+[Unit]
+Description=Alfred Linux Sea of Glass (Holographic Memory Rotation)
+After=multi-user.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/alfred-hologram-memory
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+systemctl enable alfred-sea-of-glass || true || true.service || true
+
+echo "[1001] The Sea of Glass is rotating."
+
+
+# --- BEGIN MERGED CONTENT FROM: 0990-alfred-genesis-autostart.hook.chroot ---
+#!/bin/bash
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+# 0990-alfred-genesis-autostart.hook.chroot
+# Phase 8: The Genesis Sequence (First-Boot Initialization)
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+set +e
+echo "â•”â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•—"
+echo "â•‘  [0990] PHASE 8 â€” The Genesis Sequence                    â•‘"
+echo "â•šâ•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•"
+
+mkdir -p /opt/alfred-genesis
+
+# Install local python web server script
+cat > /opt/alfred-genesis/server.py << 'EOF'
+#!/usr/bin/env python3
+from http.server import HTTPServer, BaseHTTPRequestHandler
+import os, subprocess, sys
+
+class GenesisHandler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        if self.path == '/finish':
+            self.send_response(200)
+            self.send_header('Access-Control-Allow-Origin', '*')
+            self.end_headers()
+            self.wfile.write(b"OK")
+            # Self-destruct the autostart file so it never runs again
+            os.system("rm -f /etc/xdg/autostart/alfred-genesis.desktop")
+            os.system("rm -f /home/*/ .config/autostart/alfred-genesis.desktop")
+            # Kill chromium
+            os.system("pkill -9 chromium")
+            sys.exit(0)
+        else:
+            self.send_response(404)
+            self.end_headers()
+
+if __name__ == '__main__':
+    # Run once, handle one request, then exit
+    httpd = HTTPServer(('127.0.0.1', 44044), GenesisHandler)
+    httpd.handle_request()
+EOF
+[ -e "+x" ] && chmod +x /opt/alfred-genesis/server.py
+
+# Create the startup script
+cat > /opt/alfred-genesis/launch.sh << 'EOF'
+#!/bin/bash
+# Wait for KDE to settle
+sleep 5
+# Start the local python endpoint in background
+/opt/alfred-genesis/server.py &
+# Launch chromium in full-screen kiosk mode
+chromium --kiosk --incognito --no-first-run --window-position=0,0 --user-data-dir=/tmp/genesis-chrome "file:///opt/alfred-genesis/index.html"
+EOF
+[ -e "+x" ] && chmod +x /opt/alfred-genesis/launch.sh
+
+# Install the autostart desktop file for KDE (system-wide XDG)
+mkdir -p /etc/xdg/autostart
+cat > /etc/xdg/autostart/alfred-genesis.desktop << 'EOF'
+[Desktop Entry]
+Type=Application
+Exec=/opt/alfred-genesis/launch.sh
+Hidden=false
+NoDisplay=false
+X-GNOME-Autostart-enabled=true
+Name[en_US]=Alfred Genesis Sequence
+Name=Alfred Genesis Sequence
+Comment=Initializes the node on first boot
+EOF
+
+echo "â•”â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•—"
+echo "â•‘  [0990] The Genesis Sequence â€” COMPLETE                   â•‘"
+echo "â•šâ•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•"
+
+# --- END MERGED CONTENT FROM: 0990-alfred-genesis-autostart.hook.chroot ---
+
+
+# --- BEGIN MERGED CONTENT FROM: 0990-alfred.hook.chroot ---
+#!/bin/bash
+# Auto-generated phase hook. Idempotent. Safe.
+# Phase: 990-prerelease-base
+set +e
+
+LOG=/var/log/alfred-build-phases.log
+mkdir -p /var/log
+TS="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+echo "[${TS}] PHASE=990-prerelease-base HOOK=0990-alfred.hook.chroot START" >> "$LOG"
+
+# Phase verification block (non-fatal warnings only; enforcer hooks decide hard fail).
+ok=1
+for p in ; do
+  if [ -n "$p" ] && [ ! -e "$p" ]; then
+    echo "[${TS}] WARN phase=990-prerelease-base missing-artifact: $p" >> "$LOG"
+    ok=0
+  fi
+done
+[ "$ok" = 1 ] && echo "[${TS}] PHASE=990-prerelease-base HOOK=0990-alfred.hook.chroot OK" >> "$LOG"               || echo "[${TS}] PHASE=990-prerelease-base HOOK=0990-alfred.hook.chroot WARN" >> "$LOG"
+
+# Mark completion stamp (used by 0999 release manifest).
+mkdir -p /var/lib/alfred/phases
+touch "/var/lib/alfred/phases/990-prerelease-base.done"
+
+# --- END MERGED CONTENT FROM: 0990-alfred.hook.chroot ---
+
+
+#!/bin/bash
+# Auto-generated phase hook. Idempotent. Safe.
+# Phase: 990-prerelease-base
+set +euo pipefail
+
+LOG=/var/log/alfred-build-phases.log
+mkdir -p /var/log
+TS="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+echo "[${TS}] PHASE=990-prerelease-base HOOK=0990-alfred.hook.chroot START" >> "$LOG"
+
+# Phase verification block (non-fatal warnings only; enforcer hooks decide hard fail).
+ok=1
+for p in ; do
+  if [ -n "$p" ] && [ ! -e "$p" ]; then
+    echo "[${TS}] WARN phase=990-prerelease-base missing-artifact: $p" >> "$LOG"
+    ok=0
+  fi
+done
+[ "$ok" = 1 ] && echo "[${TS}] PHASE=990-prerelease-base HOOK=0990-alfred.hook.chroot OK" >> "$LOG"               || echo "[${TS}] PHASE=990-prerelease-base HOOK=0990-alfred.hook.chroot WARN" >> "$LOG"
+
+# Mark completion stamp (used by 0999 release manifest).
+mkdir -p /var/lib/alfred/phases
+touch "/var/lib/alfred/phases/990-prerelease-base.done"
+
+

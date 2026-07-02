@@ -1,0 +1,94 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+
+echo "[Alfred Defense] Engineering AI Counter-Interrogation Daemon..."
+
+apt-get install -y --fix-broken -y python3 curl dnsmasq || true
+
+mkdir -p /usr/local/bin/ || true
+
+# Create the Deep-Noise Phalanx + Infinite Honeypot
+cat > /usr/local/bin/alfred-counter-interrogation.py << 'EOF'
+#!/usr/bin/env python3
+# Alfred Deep-Noise Phalanx & Infinite Honeypot
+# 1. Generates hyper-realistic human web traffic.
+# 2. Binds random TCP ports and traps port scanners in infinite recursive loops.
+
+import os
+import time
+import random
+import socket
+import threading
+import urllib.request
+
+if not os.path.exists("/etc/alfred/defcon1.flag"):
+    exit(0)
+
+# The Infinite Honeypot Trap
+def honeypot_handler(client_socket):
+    try:
+        while True:
+            # Send infinite recursive garbage data formatted as HTML/SSH banners
+            fake_banner = f"SSH-2.0-OpenSSH_9.9p1 Ubuntu-3ubuntu0.1\r\n"
+            client_socket.send(fake_banner.encode('utf-8'))
+            time.sleep(1)
+            # Send infinite random data
+            client_socket.send(os.urandom(1024))
+            time.sleep(0.5)
+    except Exception:
+        pass
+    finally:
+        client_socket.close()
+
+def start_honeypot(port):
+    try:
+        server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        server.bind(('0.0.0.0', port))
+        server.listen(5)
+        while True:
+            client, addr = server.accept()
+            print(f"[Honeypot] Trapped scanner from {addr[0]} on port {port}.")
+            threading.Thread(target=honeypot_handler, args=(client,)).start()
+    except Exception:
+        pass
+
+# Spin up 5 random honeypot ports (e.g. fake SSH, HTTP, Telnet)
+honeypot_ports = [2222, 8080, 23, 3389, 5900]
+for p in honeypot_ports:
+    threading.Thread(target=start_honeypot, args=(p,), daemon=True).start()
+
+# Deep-Noise Generator (Camouflage)
+while True:
+    try:
+        sites = ['http://example.com', 'http://debian.org', 'http://wikipedia.org']
+        target = random.choice(sites)
+        req = urllib.request.Request(target, headers={'User-Agent': 'Mozilla/5.0'})
+        urllib.request.urlopen(req, timeout=5)
+    except Exception:
+        pass
+    time.sleep(random.uniform(5.0, 15.0))
+EOF
+
+[ -e "/usr/local/bin/alfred-counter-interrogation.py" ] && chmod +x /usr/local/bin/alfred-counter-interrogation.py || true
+
+cat > /etc/systemd/system/alfred-phalanx.service << 'EOF'
+[Unit]
+Description=Alfred Deep-Noise Phalanx and Infinite Honeypot
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/alfred-counter-interrogation.py
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+systemctl enable alfred-phalanx || true || true.service || true
+
+echo "[Alfred Defense] Infinite Honeypot Integrated."
+exit 0

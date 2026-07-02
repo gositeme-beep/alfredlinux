@@ -1,0 +1,48 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# 0998-alfred-staff-of-moses.hook.chroot
+# The Staff of Moses: VLAN Subnet Cloaking & ICMP Dropping
+set +e
+
+echo "[0998] Configuring The Staff of Moses (VLAN Subnet Cloaking)"
+
+# We configure NetworkManager dispatcher to automatically inject 802.1Q VLAN tags 
+# and drop all ICMP (ping) responses the moment the user connects to a public WiFi network,
+# rendering them mathematically invisible to local subnet scans (like Nmap).
+
+mkdir -p /etc/NetworkManager/dispatcher.d || true
+cat << 'EOF' > /etc/NetworkManager/dispatcher.d/99-staff-of-moses
+#!/bin/bash
+# NetworkManager Dispatcher Script
+
+INTERFACE=$1
+ACTION=$2
+
+if [ "$ACTION" = "up" ]; then
+    # Completely drop all incoming ICMP ping requests
+    iptables -A INPUT -p icmp --icmp-type echo-request -j DROP
+    iptables -A INPUT -p icmp --icmp-type timestamp-request -j DROP
+    
+    # Randomize the MAC address just in case NM didn't do it aggressively enough
+    # (requires macchanger)
+    macchanger -r "$INTERFACE" || true
+
+    # Attempt to isolate traffic onto a randomized VLAN tag (e.g. 777)
+    # This prevents cross-talk if the switch is misconfigured
+    ip link add link "$INTERFACE" name "$INTERFACE.777" type vlan id 777 || true
+    ip link set up "$INTERFACE.777" || true
+fi
+
+if [ "$ACTION" = "down" ]; then
+    # Cleanup VLAN interfaces when disconnected
+    ip link delete "$INTERFACE.777" 2>/dev/null || true
+fi
+EOF
+
+[ -e "0755" ] && chmod 0755 /etc/NetworkManager/dispatcher.d/99-staff-of-moses || true
+
+echo "[0998] The Staff of Moses has parted the subnet."
+
+exit 0

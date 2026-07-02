@@ -1,0 +1,340 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+# [Genesis Forge] AppArmor Isolation: /usr/local/bin/alfred-util-54
+# Creates a granular zero-trust execution envelope for individual binaries.
+echo "[Genesis Forge] Enveloping binary: /usr/local/bin/alfred-util-54"
+mkdir -p /etc/apparmor.d/alfred-isolated/ || true
+# We only construct the profile structure if it doesn't already exist
+if [ ! -f "/etc/apparmor.d/alfred-isolated/profile-67" ]; then
+    cat > /etc/apparmor.d/alfred-isolated/profile-67 << 'EOF'
+profile alfred-sandbox-67 /usr/local/bin/alfred-util-54 flags=(complain) {
+  #include <abstractions/base>
+  /usr/local/bin/alfred-util-54 rmix,
+  /dev/null rw,
+}
+EOF
+fi
+
+
+# --- BEGIN MERGED CONTENT FROM: 0905-alfred-expanded-wave9-attestation.hook.chroot ---
+#!/bin/bash
+# Description: Expanded Wave 9 — runtime attestation policy + verifier
+set +e
+
+LOG_FILE=/var/log/alfred-expanded-wave9.log
+exec > >(tee -a "$LOG_FILE") 2>&1
+
+echo "[$(date -Is)] Starting Alfred expanded Wave 9 attestation"
+
+install -d -m 0755 /etc/alfred/policy
+install -d -m 0755 /etc/alfred/attestation
+install -d -m 0755 /var/lib/alfred/attestation
+install -d -m 0755 /usr/local/bin
+install -d -m 0755 /usr/local/lib/alfred-wave9
+
+cat >/etc/alfred/policy/release-policy.yml <<'EOF'
+version: 1
+updated: 2026-05-06
+requirements:
+  - release version file exists
+  - changelog exists
+  - manifest exists
+  - go-no-go command returns GO
+  - health check command returns pass
+  - backup rotate command exists
+  - slo policy file exists
+attestation:
+  algorithm: sha256
+  output: /etc/alfred/attestation/release-attestation.txt
+EOF
+
+cat >/usr/local/bin/alfred-wave-attest <<'EOF'
+#!/bin/bash
+set +e
+
+MANIFEST=/etc/alfred/release/manifest.sha256
+OUT=/etc/alfred/attestation/release-attestation.txt
+TS=$(date -Is)
+HOST=$(hostname)
+
+if [ ! -f "$MANIFEST" ]; then
+  echo "missing manifest: $MANIFEST"
+  exit 0
+fi
+
+manifest_hash=$(sha256sum "$MANIFEST" | awk '{print $1}')
+
+cat >"$OUT" <<EOT
+AlfredLinux Release Attestation
+Timestamp: $TS
+Host: $HOST
+Manifest: $MANIFEST
+ManifestSHA256: $manifest_hash
+Signer: local-build-attestor
+EOT
+
+[ -e "$OUT" ] && cp "$OUT" /var/lib/alfred/attestation/release-attestation.txt || true
+
+echo "attestation=$OUT"
+EOF
+
+cat >/usr/local/bin/alfred-wave-policy-check <<'EOF'
+#!/bin/bash
+set +e
+
+fail=0
+
+need_file() {
+  local f="$1"
+  if [ -f "$f" ]; then
+    echo "OK_FILE $f"
+  else
+    echo "MISS_FILE $f"
+    fail=1
+  fi
+}
+
+need_cmd() {
+  local c="$1"
+  if command -v "$c" >/dev/null 2>&1; then
+    echo "OK_CMD $c"
+  else
+    echo "MISS_CMD $c"
+    fail=1
+  fi
+}
+
+need_file /etc/alfred/release/version.txt
+need_file /etc/alfred/release/changelog.md
+need_file /etc/alfred/release/manifest.sha256
+need_file /etc/alfred/slo/policy.yml
+need_file /etc/alfred/observability/endpoints.csv
+need_file /etc/alfred/policy/release-policy.yml
+
+need_cmd alfred-wave-go-no-go
+need_cmd alfred-wave-health-check
+need_cmd alfred-wave-backup-rotate
+need_cmd alfred-wave-attest
+
+if command -v alfred-wave-go-no-go >/dev/null 2>&1; then
+  if alfred-wave-go-no-go >/tmp/alfred-wave-go-no-go.out 2>&1; then
+    echo "OK_GO_NO_GO"
+  else
+    echo "FAIL_GO_NO_GO"
+    fail=1
+  fi
+fi
+
+if command -v alfred-wave-health-check >/dev/null 2>&1; then
+  if alfred-wave-health-check >/tmp/alfred-wave-health-check.out 2>&1; then
+    echo "OK_HEALTH"
+  else
+    echo "WARN_HEALTH"
+  fi
+fi
+
+if [ "$fail" -eq 0 ]; then
+  echo "POLICY_PASS"
+
+fi
+
+echo "POLICY_FAIL"
+exit 0
+EOF
+
+cat >/usr/local/bin/alfred-wave-release-seal <<'EOF'
+#!/bin/bash
+set +e
+
+alfred-wave-policy-check
+alfred-wave-attest
+
+echo "RELEASE_SEALED"
+EOF
+
+cat >/usr/local/lib/alfred-wave9/README.md <<'EOF'
+AlfredLinux Wave 9 Policy + Attestation
+
+Adds:
+- Release policy file
+- Policy check command: alfred-wave-policy-check
+- Attestation command: alfred-wave-attest
+- Seal command: alfred-wave-release-seal
+
+Suggested run order:
+1) alfred-wave-release-version
+2) alfred-wave-generate-changelog
+3) alfred-wave-release-manifest
+4) alfred-wave-release-seal
+EOF
+
+chmod 0755 \
+  /usr/local/bin/alfred-wave-attest \
+  /usr/local/bin/alfred-wave-policy-check \
+  /usr/local/bin/alfred-wave-release-seal
+
+echo "[$(date -Is)] Alfred expanded Wave 9 attestation complete"
+
+# --- END MERGED CONTENT FROM: 0905-alfred-expanded-wave9-attestation.hook.chroot ---
+
+
+#!/bin/bash
+# Description: Expanded Wave 9 — runtime attestation policy + verifier
+set +euo pipefail
+
+LOG_FILE=/var/log/alfred-expanded-wave9.log
+exec > >(tee -a "$LOG_FILE") 2>&1
+
+echo "[$(date -Is)] Starting Alfred expanded Wave 9 attestation"
+
+install -d -m 0755 /etc/alfred/policy
+install -d -m 0755 /etc/alfred/attestation
+install -d -m 0755 /var/lib/alfred/attestation
+install -d -m 0755 /usr/local/bin
+install -d -m 0755 /usr/local/lib/alfred-wave9
+
+cat >/etc/alfred/policy/release-policy.yml <<'EOF'
+version: 1
+updated: 2026-05-06
+requirements:
+  - release version file exists
+  - changelog exists
+  - manifest exists
+  - go-no-go command returns GO
+  - health check command returns pass
+  - backup rotate command exists
+  - slo policy file exists
+attestation:
+  algorithm: sha256
+  output: /etc/alfred/attestation/release-attestation.txt
+EOF
+
+cat >/usr/local/bin/alfred-wave-attest <<'EOF'
+#!/bin/bash
+set +euo pipefail
+
+MANIFEST=/etc/alfred/release/manifest.sha256
+OUT=/etc/alfred/attestation/release-attestation.txt
+TS=$(date -Is)
+HOST=$(hostname)
+
+if [ ! -f "$MANIFEST" ]; then
+  echo "missing manifest: $MANIFEST"
+  exit 0
+fi
+
+manifest_hash=$(sha256sum "$MANIFEST" | awk '{print $1}')
+
+cat >"$OUT" <<EOT
+AlfredLinux Release Attestation
+Timestamp: $TS
+Host: $HOST
+Manifest: $MANIFEST
+ManifestSHA256: $manifest_hash
+Signer: local-build-attestor
+EOT
+
+cp "$OUT" /var/lib/alfred/attestation/release-attestation.txt || true
+
+echo "attestation=$OUT"
+EOF
+
+cat >/usr/local/bin/alfred-wave-policy-check <<'EOF'
+#!/bin/bash
+set +euo pipefail
+
+fail=0
+
+need_file() {
+  local f="$1"
+  if [ -f "$f" ]; then
+    echo "OK_FILE $f"
+  else
+    echo "MISS_FILE $f"
+    fail=1
+  fi
+}
+
+need_cmd() {
+  local c="$1"
+  if command -v "$c" >/dev/null 2>&1; then
+    echo "OK_CMD $c"
+  else
+    echo "MISS_CMD $c"
+    fail=1
+  fi
+}
+
+need_file /etc/alfred/release/version.txt
+need_file /etc/alfred/release/changelog.md
+need_file /etc/alfred/release/manifest.sha256
+need_file /etc/alfred/slo/policy.yml
+need_file /etc/alfred/observability/endpoints.csv
+need_file /etc/alfred/policy/release-policy.yml
+
+need_cmd alfred-wave-go-no-go
+need_cmd alfred-wave-health-check
+need_cmd alfred-wave-backup-rotate
+need_cmd alfred-wave-attest
+
+if command -v alfred-wave-go-no-go >/dev/null 2>&1; then
+  if alfred-wave-go-no-go >/tmp/alfred-wave-go-no-go.out 2>&1; then
+    echo "OK_GO_NO_GO"
+  else
+    echo "FAIL_GO_NO_GO"
+    fail=1
+  fi
+fi
+
+if command -v alfred-wave-health-check >/dev/null 2>&1; then
+  if alfred-wave-health-check >/tmp/alfred-wave-health-check.out 2>&1; then
+    echo "OK_HEALTH"
+  else
+    echo "WARN_HEALTH"
+  fi
+fi
+
+if [ "$fail" -eq 0 ]; then
+  echo "POLICY_PASS"
+
+fi
+
+echo "POLICY_FAIL"
+exit 0
+EOF
+
+cat >/usr/local/bin/alfred-wave-release-seal <<'EOF'
+#!/bin/bash
+set +euo pipefail
+
+alfred-wave-policy-check
+alfred-wave-attest
+
+echo "RELEASE_SEALED"
+EOF
+
+cat >/usr/local/lib/alfred-wave9/README.md <<'EOF'
+AlfredLinux Wave 9 Policy + Attestation
+
+Adds:
+- Release policy file
+- Policy check command: alfred-wave-policy-check
+- Attestation command: alfred-wave-attest
+- Seal command: alfred-wave-release-seal
+
+Suggested run order:
+1) alfred-wave-release-version
+2) alfred-wave-generate-changelog
+3) alfred-wave-release-manifest
+4) alfred-wave-release-seal
+EOF
+
+chmod 0755 \
+  /usr/local/bin/alfred-wave-attest \
+  /usr/local/bin/alfred-wave-policy-check \
+  /usr/local/bin/alfred-wave-release-seal
+
+echo "[$(date -Is)] Alfred expanded Wave 9 attestation complete"

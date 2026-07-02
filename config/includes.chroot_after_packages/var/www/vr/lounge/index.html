@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GoSiteMe VR Social Lounge</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0a0a14;color:#fff;font-family:'Inter','Segoe UI',system-ui,sans-serif;overflow:hidden}
+#loading{position:fixed;inset:0;background:#0a0a14;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;transition:opacity .8s}
+#loading.hidden{opacity:0;pointer-events:none}
+#loading h1{font-size:2.5rem;margin-bottom:.3rem;background:linear-gradient(135deg,#22c55e,#06b6d4);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.load-ring{width:60px;height:60px;border:3px solid rgba(34,197,94,.2);border-top-color:#22c55e;border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+#hud{position:fixed;top:0;left:0;right:0;padding:1rem 1.5rem;display:flex;align-items:center;justify-content:space-between;z-index:100;background:linear-gradient(180deg,rgba(10,10,20,.95),transparent);pointer-events:none}
+#hud>*{pointer-events:auto}
+.hud-title{font-size:1.2rem;font-weight:700;background:linear-gradient(135deg,#22c55e,#06b6d4);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.hud-btn{padding:.45rem .9rem;border-radius:8px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.06);color:rgba(255,255,255,.7);cursor:pointer;font-size:.78rem;font-weight:600;transition:.2s;backdrop-filter:blur(8px)}
+.hud-btn:hover{background:rgba(34,197,94,.15);color:#22c55e}
+
+#chatPanel{position:fixed;right:1.5rem;bottom:1.5rem;width:320px;max-height:60vh;z-index:100;background:rgba(22,22,54,.9);border:1px solid rgba(34,197,94,.2);border-radius:14px;backdrop-filter:blur(12px);display:flex;flex-direction:column;overflow:hidden}
+#chatHeader{padding:.8rem 1rem;border-bottom:1px solid rgba(255,255,255,.06);font-weight:700;font-size:.85rem;display:flex;justify-content:space-between;align-items:center}
+#chatHeader .online{color:#22c55e;font-size:.7rem;font-weight:400}
+#chatMessages{flex:1;overflow-y:auto;padding:.8rem 1rem;max-height:300px}
+.chat-msg{margin-bottom:.6rem;font-size:.8rem}
+.chat-msg .sender{font-weight:700;margin-right:.3rem}
+.chat-msg .text{color:rgba(255,255,255,.7)}
+.chat-msg.system{color:rgba(255,255,255,.3);font-style:italic;font-size:.72rem}
+#chatInput{display:flex;border-top:1px solid rgba(255,255,255,.06);padding:.5rem}
+#chatInput input{flex:1;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:.4rem .7rem;color:#fff;font-size:.8rem;outline:none}
+#chatInput input:focus{border-color:rgba(34,197,94,.3)}
+#chatInput button{margin-left:.4rem;padding:.4rem .8rem;border-radius:8px;border:none;background:#22c55e;color:#000;font-weight:700;font-size:.78rem;cursor:pointer}
+
+.controls-hint{position:fixed;bottom:1rem;left:1.5rem;z-index:100;font-size:.7rem;color:rgba(255,255,255,.25)}
+#onlineCount{position:fixed;top:5rem;left:1.5rem;z-index:100;background:rgba(22,22,54,.9);border:1px solid rgba(34,197,94,.3);border-radius:10px;padding:.4rem .8rem;font-size:.78rem;color:#22c55e;backdrop-filter:blur(8px)}
+</style>
+<script src="/vr/shared/alfred-csrf.js"></script>
+</head>
+<body>
+<div id="loading"><h1>🛋️ Social Lounge</h1><p>Loading lounge…</p><div class="load-ring"></div></div>
+<div id="hud">
+    <div class="hud-title">🛋️ GoSiteMe Social Lounge</div>
+    <div style="display:flex;gap:.5rem">
+        <button class="hud-btn" onclick="location.href='/vr/hub/'">← Back to Hub</button>
+    </div>
+</div>
+<div id="onlineCount">● 1 online</div>
+<div id="chatPanel">
+    <div id="chatHeader"><span>💬 Lounge Chat</span><span class="online" id="chatOnline">1 online</span></div>
+    <div id="chatMessages"></div>
+    <div id="chatInput">
+        <input type="text" id="msgInput" placeholder="Type a message…" maxlength="200" autocomplete="off">
+        <button onclick="sendChat()">Send</button>
+    </div>
+</div>
+<div class="controls-hint">WASD to move · Mouse to look · Click to start</div>
+<script src="/assets/js/vendor/three.r128.min.js"></script>
+<script src="/vr/shared/gositeme-quality.js"></script>
+<script>
+let scene, camera, renderer, clock;
+let playerPos = {x:0, y:1.6, z:8};
+let playerRot = {x:0, y:0};
+let moveState = {forward:false, backward:false, left:false, right:false};
+let isPointerLocked = false;
+let wsConn = null;
+let myId = 'u_' + Math.random().toString(36).substr(2,8);
+let otherPlayers = new Map();
+let chatMessages = [];
+
+const AGENT_NPCS = [
+    {name:'Alfred', color:0x0074D9, pos:{x:-4,z:-3}, msg:'Welcome to the lounge! How can I help?'},
+    {name:'Nova',   color:0xa855f7, pos:{x:4,z:-3},  msg:'Hey! Check out the art gallery next door.'},
+    {name:'Sage',   color:0x22c55e, pos:{x:-6,z:2},  msg:'The virtual world is growing every day!'},
+    {name:'Pierre', color:0x818cf8, pos:{x:6,z:2},   msg:'Bonjour! Have you tried the chess arena?'},
+];
+
+function init() {
+    scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x080810);
+    scene.fog = new THREE.Fog(0x080810, 15, 40);
+
+    camera = new THREE.PerspectiveCamera(65, innerWidth/innerHeight, 0.1, 60);
+    renderer = new THREE.WebGLRenderer({antialias:true});
+    renderer.setSize(innerWidth, innerHeight);
+    renderer.setPixelRatio(typeof GoSiteMeQuality!=='undefined'?GoSiteMeQuality.dpr:Math.min(devicePixelRatio,2));
+    renderer.shadowMap.enabled = true;
+    document.body.appendChild(renderer.domElement);
+    clock = new THREE.Clock();
+
+    scene.add(new THREE.AmbientLight(0x303050, 0.5));
+
+    // Floor — wood look
+    const floorGeo = new THREE.PlaneGeometry(24, 24);
+    const floorMat = new THREE.MeshStandardMaterial({color:0x1a1520, roughness:0.6, metalness:0.1});
+    const floor = new THREE.Mesh(floorGeo, floorMat);
+    floor.rotation.x = -Math.PI/2; floor.receiveShadow = true;
+    scene.add(floor);
+
+    // Ceiling
+    const ceil = new THREE.Mesh(new THREE.PlaneGeometry(24,24), new THREE.MeshStandardMaterial({color:0x0c0c1e}));
+    ceil.rotation.x = Math.PI/2; ceil.position.y = 4; scene.add(ceil);
+
+    // Walls
+    const wm = new THREE.MeshStandardMaterial({color:0x141430, roughness:0.5});
+    [[-12,0,Math.PI/2],[12,0,-Math.PI/2],[0,-12,0],[0,12,Math.PI]].forEach(([x,z,ry]) => {
+        const w = new THREE.Mesh(new THREE.PlaneGeometry(24,4), wm.clone());
+        w.position.set(x||0, 2, z||0);
+        w.rotation.y = ry;
+        scene.add(w);
+    });
+
+    // Couches (simple boxes)
+    const couchMat = new THREE.MeshStandardMaterial({color:0x22c55e, roughness:0.7, emissive:0x22c55e, emissiveIntensity:0.05});
+    [[-5,0,-6],[5,0,-6],[-5,0,5],[5,0,5]].forEach(([x,y,z]) => {
+        const couch = new THREE.Mesh(new THREE.BoxGeometry(3, 0.6, 1.2), couchMat);
+        couch.position.set(x, 0.4, z); couch.castShadow = true;
+        scene.add(couch);
+        // Backrest
+        const back = new THREE.Mesh(new THREE.BoxGeometry(3, 0.8, 0.3), couchMat);
+        back.position.set(x, 0.9, z - 0.45);
+        scene.add(back);
+    });
+
+    // Coffee table in center
+    const tableMat = new THREE.MeshStandardMaterial({color:0x2a2a4a, metalness:0.3});
+    const table = new THREE.Mesh(new THREE.CylinderGeometry(1.5, 1.5, 0.1, 16), tableMat);
+    table.position.y = 0.5; scene.add(table);
+    const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 0.5, 8), tableMat);
+    leg.position.y = 0.25; scene.add(leg);
+
+    // Ambient lighting — warm spots
+    const colors = [0x22c55e, 0x06b6d4, 0xa855f7, 0xf59e0b];
+    [[-6,3.5,-6],[6,3.5,-6],[-6,3.5,5],[6,3.5,5]].forEach(([x,y,z], i) => {
+        const light = new THREE.PointLight(colors[i], 0.5, 10);
+        light.position.set(x,y,z);
+        scene.add(light);
+    });
+
+    // NPC agents
+    AGENT_NPCS.forEach(npc => {
+        const group = new THREE.Group();
+        const body = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.25, 1, 8),
+            new THREE.MeshStandardMaterial({color:npc.color, emissive:npc.color, emissiveIntensity:0.3}));
+        body.position.y = 0.7; group.add(body);
+        const head = new THREE.Mesh(new THREE.SphereGeometry(0.2, 8, 8),
+            new THREE.MeshStandardMaterial({color:npc.color, emissive:npc.color, emissiveIntensity:0.4}));
+        head.position.y = 1.4; group.add(head);
+        group.position.set(npc.pos.x, 0, npc.pos.z);
+        npc.mesh = group;
+        scene.add(group);
+    });
+
+    setupControls();
+    initChat();
+    initMultiplayer();
+
+    // Add AI chat messages periodically
+    setInterval(() => {
+        const npc = AGENT_NPCS[Math.floor(Math.random()*AGENT_NPCS.length)];
+        const msgs = [npc.msg, 'The weather in the metaverse is always perfect!', 'Anyone up for a chess match?',
+            'New features dropping soon!', 'Have you customized your avatar yet?', 'The racing track is wild!'];
+        addChatMessage(npc.name, msgs[Math.floor(Math.random()*msgs.length)], npc.color);
+    }, 15000);
+}
+
+function setupControls() {
+    renderer.domElement.addEventListener('click', () => renderer.domElement.requestPointerLock());
+    document.addEventListener('pointerlockchange', () => { isPointerLocked = !!document.pointerLockElement; });
+    document.addEventListener('mousemove', e => {
+        if(!isPointerLocked) return;
+        playerRot.y -= e.movementX * 0.002;
+        playerRot.x -= e.movementY * 0.002;
+        playerRot.x = Math.max(-Math.PI/3, Math.min(Math.PI/3, playerRot.x));
+    });
+    document.addEventListener('keydown', e => {
+        if(e.key === 'Enter' && document.activeElement !== document.getElementById('msgInput')) {
+            document.getElementById('msgInput').focus();
+            e.preventDefault();
+            return;
+        }
+        switch(e.key.toLowerCase()){
+            case 'w': moveState.forward=true; break;
+            case 's': moveState.backward=true; break;
+            case 'a': moveState.left=true; break;
+            case 'd': moveState.right=true; break;
+        }
+    });
+    document.addEventListener('keyup', e => {
+        switch(e.key.toLowerCase()){
+            case 'w': moveState.forward=false; break;
+            case 's': moveState.backward=false; break;
+            case 'a': moveState.left=false; break;
+            case 'd': moveState.right=false; break;
+        }
+    });
+    document.getElementById('msgInput').addEventListener('keydown', e => {
+        e.stopPropagation();
+        if(e.key === 'Enter') { sendChat(); e.preventDefault(); }
+    });
+}
+
+function initChat() {
+    addChatMessage(null, 'Welcome to the Social Lounge! Say hi to everyone.', null, true);
+    AGENT_NPCS.forEach(npc => {
+        addChatMessage(npc.name, npc.msg, npc.color);
+    });
+}
+
+function addChatMessage(sender, text, color, isSystem) {
+    const container = document.getElementById('chatMessages');
+    const div = document.createElement('div');
+    div.className = 'chat-msg' + (isSystem ? ' system' : '');
+    if(isSystem) {
+        div.textContent = text;
+    } else {
+        const colorHex = typeof color === 'number' ? '#' + color.toString(16).padStart(6,'0') : (color || '#22c55e');
+        div.innerHTML = `<span class="sender" style="color:${colorHex}">${sender}:</span><span class="text">${escapeHtml(text)}</span>`;
+    }
+    container.appendChild(div);
+    container.scrollTop = container.scrollHeight;
+}
+
+function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+}
+
+function sendChat() {
+    const input = document.getElementById('msgInput');
+    const text = input.value.trim();
+    if(!text) return;
+    input.value = '';
+    addChatMessage('You', text, '#22c55e');
+
+    // Check if the message is directed at Alfred (@ mention or starts with "alfred")
+    const isAlfredMsg = /^@?alfred\b/i.test(text) || /\balfred\b/i.test(text);
+    if (isAlfredMsg) {
+        const cleanMsg = text.replace(/^@?alfred[,:]?\s*/i, '');
+        addChatMessage('Alfred', 'Thinking…', 0x0074D9);
+        const typingEl = document.getElementById('chatMessages').lastChild;
+
+        if (!window._loungeConvId) window._loungeConvId = '';
+        const ctx = 'User is in the GoSiteMe Social Lounge — a 3D multiplayer space with '
+            + (otherPlayers.size + 1) + ' users online. '
+            + 'Player position: x=' + playerPos.x.toFixed(1) + ' z=' + playerPos.z.toFixed(1) + '. '
+            + 'NPCs present: Alfred, Nova, Sage, Pierre. '
+            + 'This is a casual social environment. Be friendly and conversational.';
+
+        fetch('/api/alfred-chat.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'same-origin',
+            body: JSON.stringify({ message: cleanMsg || text, agent: 'alfred', context: ctx, page_url: '/vr/lounge/', conv_id: window._loungeConvId || '', model: 'auto' })
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.conv_id) window._loungeConvId = data.conv_id;
+            if (typingEl) typingEl.remove();
+            const reply = data.response || data.message || 'Hey there! How can I help?';
+            addChatMessage('Alfred', reply, 0x0074D9);
+        })
+        .catch(() => {
+            if (typingEl) typingEl.remove();
+            addChatMessage('Alfred', 'Sorry, lost my connection for a sec. Try again!', 0x0074D9);
+        });
+        return; // Don't broadcast Alfred messages over WebSocket
+    }
+
+    // Broadcast via WebSocket
+    if(wsConn && wsConn.readyState === WebSocket.OPEN) {
+        wsConn.send(JSON.stringify({
+            type:'publish', channel:'vr:lounge',
+            data:{action:'chat', from:myId, name:'Guest', text:text}
+        }));
+    }
+}
+
+function initMultiplayer() {
+    const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
+    try {
+        wsConn = new WebSocket(proto + '//' + location.host + '/ws/?token=' + myId);
+    } catch(e) { return; }
+
+    wsConn.onopen = () => {
+        wsConn.send(JSON.stringify({type:'subscribe', channel:'vr:lounge'}));
+        wsConn.send(JSON.stringify({type:'subscribe', channel:'vr:presence'}));
+    };
+    wsConn.onmessage = evt => {
+        try {
+            const msg = JSON.parse(evt.data);
+            if(msg.type !== 'event') return;
+            const d = msg.data;
+            if(!d || d.from === myId) return;
+
+            if(msg.channel === 'vr:lounge' && d.action === 'chat') {
+                addChatMessage(d.name || 'Guest', d.text, '#00A8FF');
+            }
+            if(msg.channel === 'vr:presence' && d.action === 'move') {
+                updateOtherPlayer(d.from, d.x, d.z);
+            }
+        } catch(e) {}
+    };
+    wsConn.onclose = () => { wsConn = null; };
+}
+
+function updateOtherPlayer(peerId, x, z) {
+    let entry = otherPlayers.get(peerId);
+    if(!entry) {
+        const group = new THREE.Group();
+        const body = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.25, 1, 8),
+            new THREE.MeshStandardMaterial({color:0x00A8FF, emissive:0x0074D9, emissiveIntensity:0.3}));
+        body.position.y = 0.7; group.add(body);
+        const head = new THREE.Mesh(new THREE.SphereGeometry(0.2, 8, 8),
+            new THREE.MeshStandardMaterial({color:0x00A8FF, emissive:0x0074D9, emissiveIntensity:0.4}));
+        head.position.y = 1.4; group.add(head);
+        scene.add(group);
+        entry = {mesh:group, lastUpdate:Date.now()};
+        otherPlayers.set(peerId, entry);
+        updateOnlineCount();
+    }
+    entry.targetX = x; entry.targetZ = z;
+    entry.lastUpdate = Date.now();
+}
+
+function updateOnlineCount() {
+    const count = otherPlayers.size + 1;
+    document.getElementById('onlineCount').textContent = '● ' + count + ' online';
+    document.getElementById('chatOnline').textContent = count + ' online';
+}
+
+function updatePlayer(dt) {
+    if(document.activeElement === document.getElementById('msgInput')) return;
+    const speed = 5 * dt;
+    const dir = new THREE.Vector3();
+    if(moveState.forward) dir.z -= 1;
+    if(moveState.backward) dir.z += 1;
+    if(moveState.left) dir.x -= 1;
+    if(moveState.right) dir.x += 1;
+    if(dir.length() > 0) {
+        dir.normalize();
+        dir.applyAxisAngle(new THREE.Vector3(0,1,0), playerRot.y);
+        playerPos.x = Math.max(-11, Math.min(11, playerPos.x + dir.x * speed));
+        playerPos.z = Math.max(-11, Math.min(11, playerPos.z + dir.z * speed));
+    }
+    camera.position.set(playerPos.x, playerPos.y, playerPos.z);
+    camera.rotation.order = 'YXZ';
+    camera.rotation.y = playerRot.y;
+    camera.rotation.x = playerRot.x;
+
+    // Broadcast position
+    if(wsConn && wsConn.readyState === WebSocket.OPEN) {
+        wsConn.send(JSON.stringify({
+            type:'publish', channel:'vr:presence',
+            data:{action:'move', from:myId, x:playerPos.x, z:playerPos.z}
+        }));
+    }
+}
+
+function animate() {
+    requestAnimationFrame(animate);
+    const dt = Math.min(clock.getDelta(), 0.1);
+    updatePlayer(dt);
+
+    // Lerp other players
+    for(const [id, entry] of otherPlayers) {
+        if(Date.now() - entry.lastUpdate > 10000) {
+            scene.remove(entry.mesh); otherPlayers.delete(id); updateOnlineCount(); continue;
+        }
+        if(entry.targetX !== undefined) {
+            entry.mesh.position.x += (entry.targetX - entry.mesh.position.x) * 5 * dt;
+            entry.mesh.position.z += (entry.targetZ - entry.mesh.position.z) * 5 * dt;
+        }
+    }
+
+    // NPC idle animation
+    const t = clock.elapsedTime;
+    AGENT_NPCS.forEach((npc,i) => {
+        if(npc.mesh) npc.mesh.position.y = Math.sin(t * 0.8 + i) * 0.05;
+    });
+
+    renderer.render(scene, camera);
+}
+
+window.addEventListener('load', () => {
+    init(); animate();
+    setTimeout(() => document.getElementById('loading').classList.add('hidden'), 1000);
+});
+window.addEventListener('resize', () => {
+    camera.aspect = innerWidth/innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(innerWidth, innerHeight);
+});
+window.sendChat = sendChat;
+</script>
+<script src="/vr/shared/heartbeat.js"></script>
+</body>
+</html>

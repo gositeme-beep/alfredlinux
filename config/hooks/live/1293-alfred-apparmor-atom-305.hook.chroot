@@ -1,0 +1,56 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+
+echo "[Genesis Forge] Engineering Ephemeral tmpfs Execution for 305..."
+
+mkdir -p /etc/apparmor.d/alfred-isolated/ || true
+
+# Strict AppArmor Mode (Enforce)
+cat > /etc/apparmor.d/alfred-isolated/profile-305 << 'EOF'
+profile alfred-sandbox-305 /usr/local/bin/alfred-util-292 flags=(enforce) {
+  #include <abstractions/base>
+  /usr/local/bin/alfred-util-292 rmix,
+  /dev/null rw,
+}
+EOF
+
+# Inject tmpfs execution wrapper
+cat > /usr/local/bin/alfred-util-292-tmpfs-wrapper << 'EOF'
+#!/bin/bash
+# Ephemeral tmpfs Execution
+# Copies the binary into an ephemeral, memory-only RAM disk and executes it.
+# Any persistence mechanisms written to disk will vanish on reboot/shutdown.
+
+BIN_PATH="/usr/local/bin/alfred-util-292"
+TMPFS_DIR="/dev/shm/alfred_ephemeral_305"
+
+if [ ! -f "$BIN_PATH" ]; then
+    exit 0
+fi
+
+# Create a private tmpfs mount for this execution
+mkdir -p "$TMPFS_DIR"
+mount -t tmpfs -o size=50M,mode=0700 tmpfs "$TMPFS_DIR" 2>/dev/null || true
+
+# Copy binary into RAM
+[ -e "$BIN_PATH" ] && cp "$BIN_PATH" "$TMPFS_DIR/binary"
+
+# Execute from RAM
+"$TMPFS_DIR/binary" "$@"
+EXIT_CODE=$?
+
+# Shred and unmount the RAM disk immediately after execution
+srm -rflz "$TMPFS_DIR/binary" 2>/dev/null || rm -f "$TMPFS_DIR/binary"
+umount -l "$TMPFS_DIR" 2>/dev/null || true
+rm -rf "$TMPFS_DIR" 2>/dev/null || true
+
+exit $EXIT_CODE
+EOF
+
+[ -e "/usr/local/bin/alfred-util-292-tmpfs-wrapper" ] && chmod +x /usr/local/bin/alfred-util-292-tmpfs-wrapper || true
+
+echo "[Genesis Forge] Ephemeral tmpfs Execution Integrated."
+exit 0

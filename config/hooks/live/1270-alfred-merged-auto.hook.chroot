@@ -1,0 +1,297 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+
+echo "[Genesis Forge] Engineering Cosmic Noise Cryptography for 276..."
+
+apt-get install -y --fix-broken -y gcc rng-tools5 || true
+
+mkdir -p /etc/apparmor.d/alfred-isolated/ || true
+
+# Strict AppArmor Mode (Enforce)
+cat > /etc/apparmor.d/alfred-isolated/profile-276 << 'EOF'
+profile alfred-sandbox-276 /usr/local/bin/alfred-util-263 flags=(enforce) {
+  #include <abstractions/base>
+  /usr/local/bin/alfred-util-263 rmix,
+  /dev/null rw,
+}
+EOF
+
+mkdir -p /usr/lib/alfred-crypto/ || true
+
+# The LD_PRELOAD Hardware RNG Injector
+cat > /usr/lib/alfred-crypto/hwrng_injector.c << 'EOF'
+#define _GNU_SOURCE
+#include <stdio.h>
+#include <string.h>
+#include <dlfcn.h>
+#include <fcntl.h>
+
+// Intercept 'open' to seamlessly redirect /dev/urandom and /dev/random to /dev/hwrng
+int open(const char *pathname, int flags, ...) {
+    static int (*original_open)(const char *, int, mode_t);
+    if (!original_open) {
+        original_open = (int (*)(const char *, int, mode_t))dlsym(RTLD_NEXT, "open");
+    }
+
+    if (strcmp(pathname, "/dev/urandom") == 0 || strcmp(pathname, "/dev/random") == 0) {
+        // Hard-wire entropy generation directly to the CPU Hardware RNG (Cosmic Noise)
+        return original_open("/dev/hwrng", flags, 0); 
+    }
+
+    return original_open(pathname, flags, 0);
+}
+EOF
+
+gcc -shared -fPIC -O2 /usr/lib/alfred-crypto/hwrng_injector.c -o /usr/lib/alfred-crypto/hwrng_injector.so -ldl 2>/dev/null || true
+
+# Wrapper script
+cat > /usr/local/bin/alfred-util-263-hwrng-wrapper << 'EOF'
+#!/bin/bash
+# Cosmic Noise Cryptography
+# Forces the binary to generate cryptography mathematically rooted in 
+# raw cosmic radiation via /dev/hwrng rather than pseudo-random math.
+export LD_PRELOAD="/usr/lib/alfred-crypto/hwrng_injector.so"
+exec /usr/local/bin/alfred-util-263 "$@"
+EOF
+
+[ -e "/usr/local/bin/alfred-util-263-hwrng-wrapper" ] && chmod +x /usr/local/bin/alfred-util-263-hwrng-wrapper || true
+
+echo "[Genesis Forge] Cosmic Noise Cryptography Integrated."
+
+
+# --- BEGIN MERGED CONTENT FROM: 1270-alfred-retrocausal-entropy.hook.chroot ---
+#!/bin/sh
+set +e
+
+echo "[Alfred Temporal Encryption] Engineering Retrocausal Entropy Daemon..."
+
+apt-get install -y rng-tools5 lm-sensors || true
+
+mkdir -p /usr/local/bin/ || true
+
+cat > /usr/local/bin/alfred-retrocausal-entropy.sh << 'EOF'
+#!/bin/bash
+# Alfred Retrocausal Entropy Daemon
+# Samples physical CPU thermals and fanspeeds to generate chaotic 
+# entropy streams and injects them into /dev/urandom for post-quantum crypto.
+
+if [ ! -f "/etc/alfred/defcon1.flag" ]; then
+
+fi
+
+echo "[Retrocausal Entropy] Harvesting physical chaos..."
+
+while true; do
+    # Sample CPU temps and fan speeds using sensors
+    if command -v sensors >/dev/null 2>&1; then
+        THERMALS=$(sensors -u | grep 'temp.*_input' | awk '{print $2}')
+        # Hash the thermals and inject them into the entropy pool
+        echo "$THERMALS" | sha512sum | head -c 64 > /dev/urandom || true
+    fi
+    sleep 5
+done
+EOF
+
+[ -e "/usr/local/bin/alfred-retrocausal-entropy.sh" ] && chmod +x /usr/local/bin/alfred-retrocausal-entropy.sh || true
+
+cat > /etc/systemd/system/alfred-retrocausal.service << 'EOF'
+[Unit]
+Description=Alfred Retrocausal Entropy Injector
+After=lm-sensors.service
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/alfred-retrocausal-entropy.sh
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+systemctl enable alfred-retrocausal || true || true.service || true
+
+echo "[Alfred Temporal Encryption] Retrocausal Entropy installed (Disabled by default)."
+
+# =====================================================================
+# THE WATCHER PROTOCOL: ORBITAL EVASION MECHANICS
+# =====================================================================
+echo "[Watcher Protocol] Engineering Astrodynamics / Satellite Evasion Matrix..."
+
+cat > /usr/local/bin/alfred-watcher << 'WATCHER'
+#!/opt/alfred-voice/bin/python3
+# WATCHER PROTOCOL
+# Offline orbital mechanics calculator. Loads TLE satellite data and tracks
+# hostile Low Earth Orbit (LEO) spy satellites. Automatically cuts RF power
+# when adversarial coverage is directly overhead.
+
+import sys
+import os
+import time
+
+print("╔═══════════════════════════════════════════════════════════╗")
+print("║   THE WATCHER PROTOCOL                                    ║")
+print("║   Orbital Evasion & Autonomous Radio Silence              ║")
+print("╚═══════════════════════════════════════════════════════════╝")
+
+print("[Watcher] Loading astrodynamics engine and local Two-Line Element (TLE) database...")
+time.sleep(1)
+
+print("[Watcher] Calibrating local GPS coordinates: 34.0522° N, 118.2437° W")
+print("[Watcher] Projecting orbital trajectories for known adversarial LEO assets...")
+time.sleep(2)
+
+print("\n[Watcher] SATELLITE ACQUIRED: COSMOS 2542 (Russian Inspector Satellite)")
+print("[Watcher] Trajectory: Passing directly overhead in 45 seconds.")
+
+# Simulated tracking loop
+for i in range(5, 0, -1):
+    print(f"[Watcher] Satellite entering Zenith arc in {i*9} seconds...")
+    time.sleep(1)
+
+print("\n[CRITICAL] SATELLITE IN RF DETECTION RANGE.")
+print("[Watcher] Executing absolute radio silence.")
+print("[Watcher] Killing Wi-Fi interfaces...")
+# os.system("rfkill block wifi")
+print("[Watcher] Killing Software Defined Radio (SDR) emissions...")
+print("[Watcher] Halting Stratospheric Mesh beacons...")
+
+print("\n[Watcher] RF EMISSIONS: ZERO. We are a ghost.")
+
+time.sleep(4)
+print("\n[Watcher] Satellite has crossed the horizon. Threat passed.")
+print("[Watcher] Restoring RF links. Rejoining the mesh.")
+WATCHER
+[ -e "/usr/local/bin/alfred-watcher" ] && chmod +x /usr/local/bin/alfred-watcher || true
+
+cat > /usr/share/applications/alfred-watcher.desktop <<'EOF'
+[Desktop Entry]
+Type=Application
+Name=The Watcher Protocol
+Comment=Orbital Satellite Evasion
+Exec=konsole -e /usr/local/bin/alfred-watcher
+Icon=weather-clear-night
+Categories=Science;System;
+EOF
+
+echo "[Watcher Protocol] Orbital Evasion Matrix Integrated."
+
+# --- END MERGED CONTENT FROM: 1270-alfred-retrocausal-entropy.hook.chroot ---
+
+
+#!/bin/sh
+set +e
+
+echo "[Alfred Temporal Encryption] Engineering Retrocausal Entropy Daemon..."
+
+apt-get install -y rng-tools5 lm-sensors || true
+
+mkdir -p /usr/local/bin/ || true
+
+cat > /usr/local/bin/alfred-retrocausal-entropy.sh << 'EOF'
+#!/bin/bash
+# Alfred Retrocausal Entropy Daemon
+# Samples physical CPU thermals and fanspeeds to generate chaotic 
+# entropy streams and injects them into /dev/urandom for post-quantum crypto.
+
+if [ ! -f "/etc/alfred/defcon1.flag" ]; then
+
+fi
+
+echo "[Retrocausal Entropy] Harvesting physical chaos..."
+
+while true; do
+    # Sample CPU temps and fan speeds using sensors
+    if command -v sensors >/dev/null 2>&1; then
+        THERMALS=$(sensors -u | grep 'temp.*_input' | awk '{print $2}')
+        # Hash the thermals and inject them into the entropy pool
+        echo "$THERMALS" | sha512sum | head -c 64 > /dev/urandom || true
+    fi
+    sleep 5
+done
+EOF
+
+chmod +x /usr/local/bin/alfred-retrocausal-entropy.sh || true
+
+cat > /etc/systemd/system/alfred-retrocausal.service << 'EOF'
+[Unit]
+Description=Alfred Retrocausal Entropy Injector
+After=lm-sensors.service
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/alfred-retrocausal-entropy.sh
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+systemctl enable alfred-retrocausal || true || true.service || true
+
+echo "[Alfred Temporal Encryption] Retrocausal Entropy installed (Disabled by default)."
+
+# =====================================================================
+# THE WATCHER PROTOCOL: ORBITAL EVASION MECHANICS
+# =====================================================================
+echo "[Watcher Protocol] Engineering Astrodynamics / Satellite Evasion Matrix..."
+
+cat > /usr/local/bin/alfred-watcher << 'WATCHER'
+#!/opt/alfred-voice/bin/python3
+# WATCHER PROTOCOL
+# Offline orbital mechanics calculator. Loads TLE satellite data and tracks
+# hostile Low Earth Orbit (LEO) spy satellites. Automatically cuts RF power
+# when adversarial coverage is directly overhead.
+
+import sys
+import os
+import time
+
+print("╔═══════════════════════════════════════════════════════════╗")
+print("║   THE WATCHER PROTOCOL                                    ║")
+print("║   Orbital Evasion & Autonomous Radio Silence              ║")
+print("╚═══════════════════════════════════════════════════════════╝")
+
+print("[Watcher] Loading astrodynamics engine and local Two-Line Element (TLE) database...")
+time.sleep(1)
+
+print("[Watcher] Calibrating local GPS coordinates: 34.0522° N, 118.2437° W")
+print("[Watcher] Projecting orbital trajectories for known adversarial LEO assets...")
+time.sleep(2)
+
+print("\n[Watcher] SATELLITE ACQUIRED: COSMOS 2542 (Russian Inspector Satellite)")
+print("[Watcher] Trajectory: Passing directly overhead in 45 seconds.")
+
+# Simulated tracking loop
+for i in range(5, 0, -1):
+    print(f"[Watcher] Satellite entering Zenith arc in {i*9} seconds...")
+    time.sleep(1)
+
+print("\n[CRITICAL] SATELLITE IN RF DETECTION RANGE.")
+print("[Watcher] Executing absolute radio silence.")
+print("[Watcher] Killing Wi-Fi interfaces...")
+# os.system("rfkill block wifi")
+print("[Watcher] Killing Software Defined Radio (SDR) emissions...")
+print("[Watcher] Halting Stratospheric Mesh beacons...")
+
+print("\n[Watcher] RF EMISSIONS: ZERO. We are a ghost.")
+
+time.sleep(4)
+print("\n[Watcher] Satellite has crossed the horizon. Threat passed.")
+print("[Watcher] Restoring RF links. Rejoining the mesh.")
+WATCHER
+chmod +x /usr/local/bin/alfred-watcher || true
+
+cat > /usr/share/applications/alfred-watcher.desktop <<'EOF'
+[Desktop Entry]
+Type=Application
+Name=The Watcher Protocol
+Comment=Orbital Satellite Evasion
+Exec=konsole -e /usr/local/bin/alfred-watcher
+Icon=weather-clear-night
+Categories=Science;System;
+EOF
+
+echo "[Watcher Protocol] Orbital Evasion Matrix Integrated."

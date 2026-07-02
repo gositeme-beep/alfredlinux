@@ -1,0 +1,146 @@
+#!/bin/bash
+# /etc/update-motd.d/50-kingdom-bread
+# Most advanced MOTD ever shipped on a Linux distro.
+#   - 24-bit truecolor banner (auto-degrades on TERM=linux/dumb)
+#   - Daily Bread verse (rotates by yyyymmdd hash, 365-verse pool)
+#   - Hebrew calendar day + Shabbat countdown (Asia/Jerusalem)
+#   - System pulse: kernel, uptime, load, mem, disk, IPv4, hostname
+#   - Covenant chain head (last witness) if available
+#   - Sabbath-aware: on Shabbat, MOTD switches to a "Rest" mode
+#   - Multi-language greeting (rotates: English / Hebrew / Aramaic /
+#     Greek / Arabic / Spanish / Mandarin / Swahili / Hindi / Russian)
+#   - Self-throttling: never blocks login > 80ms
+# Soli Deo Gloria.
+
+set +e
+export LC_ALL=C.UTF-8
+
+# ── colors (truecolor with safe fallback) ──────────────────────────
+case "${TERM:-dumb}" in
+    xterm-256color|*-256color|tmux*|screen*) C=1 ;;
+    *) C=0 ;;
+esac
+if [ $C -eq 1 ]; then
+    G=$'\e[38;2;255;215;0m'    # gold
+    W=$'\e[38;2;255;255;255m'  # white
+    K=$'\e[38;2;120;120;140m'  # gray
+    L=$'\e[38;2;180;130;255m'  # purple
+    B=$'\e[38;2;100;200;255m'  # cyan
+    R=$'\e[38;2;255;90;90m'    # rose
+    GR=$'\e[38;2;120;220;120m' # green
+    DIM=$'\e[2m'; BOLD=$'\e[1m'; X=$'\e[0m'
+else
+    G=""; W=""; K=""; L=""; B=""; R=""; GR=""; DIM=""; BOLD=""; X=""
+fi
+
+# ── timing budget (don't slow logins) ──────────────────────────────
+START=$(date +%s%N)
+deadline_hit() { [ $(( $(date +%s%N) - START )) -gt 80000000 ] ; }
+
+# ── multilingual greeting (rotates daily) ──────────────────────────
+DOY=$(date +%j); IDX=$(( 10#$DOY % 10 ))
+case $IDX in
+    0) HELLO="Peace be unto you"            ;;
+    1) HELLO="שָׁלוֹם עֲלֵיכֶם — Shalom Aleichem"  ;;
+    2) HELLO="ܫܠܡܐ ܥܠܝܟܘܢ — Shlama Alaykhon" ;;
+    3) HELLO="Εἰρήνη ὑμῖν — Eirene Hymin"    ;;
+    4) HELLO="السلام عليكم — As-Salāmu ʿAlaykum" ;;
+    5) HELLO="La paz sea contigo"            ;;
+    6) HELLO="愿你平安 — Yuàn nǐ píng'ān"     ;;
+    7) HELLO="Amani iwe nawe"                ;;
+    8) HELLO="आप पर शांति हो — Aap par shaanti ho" ;;
+    9) HELLO="Мир вам — Mir vam"             ;;
+esac
+
+# ── verse of the day (deterministic by yyyymmdd) ───────────────────
+VERSE_FILE=/usr/share/alfred/daily-bread/verses.tsv
+if [ -r "$VERSE_FILE" ]; then
+    DAY_HASH=$(date +%Y%m%d | md5sum | head -c 8)
+    LINE_NO=$(( 0x$DAY_HASH % $(wc -l < "$VERSE_FILE") + 1 ))
+    VERSE_LINE=$(sed -n "${LINE_NO}p" "$VERSE_FILE")
+    REF=$(echo "$VERSE_LINE" | cut -f1)
+    TXT=$(echo "$VERSE_LINE" | cut -f2-)
+else
+    REF="John 1:1"
+    TXT="In the beginning was the Word, and the Word was with God, and the Word was God."
+fi
+
+# ── Hebrew date + Shabbat status (Asia/Jerusalem) ──────────────────
+HEB=""
+SHABBAT=""
+if command -v hdate >/dev/null 2>&1 && ! deadline_hit; then
+    HEB=$(TZ=Asia/Jerusalem hdate 2>/dev/null | head -1)
+fi
+DOW_J=$(TZ=Asia/Jerusalem date +%u)   # 5=Fri 6=Sat
+HOUR_J=$(TZ=Asia/Jerusalem date +%H)
+if [ "$DOW_J" = "5" ] && [ "$HOUR_J" -ge 18 ]; then SHABBAT="ENTERING"
+elif [ "$DOW_J" = "6" ] && [ "$HOUR_J" -lt 19 ]; then SHABBAT="HOLY"
+elif [ "$DOW_J" = "5" ]; then
+    REM=$((18 - 10#$HOUR_J))
+    SHABBAT="approaching (~${REM}h)"
+fi
+
+# ── system pulse ───────────────────────────────────────────────────
+HOST=$(hostname)
+KERN=$(uname -r)
+UP=$(uptime -p 2>/dev/null | sed 's/^up //')
+LOAD=$(awk '{print $1", "$2", "$3}' /proc/loadavg)
+MEM=$(free -h --si 2>/dev/null | awk '/^Mem:/{print $3"/"$2}')
+DSK=$(df -h --output=used,size,target / 2>/dev/null | awk 'NR==2{print $1"/"$2}')
+IPV4=$(ip -4 -o addr show scope global 2>/dev/null | awk '{print $4}' | head -1 | cut -d/ -f1)
+[ -z "$IPV4" ] && IPV4="(offline)"
+
+# ── covenant head if present ───────────────────────────────────────
+CHAIN=/var/lib/alfred/covenant/chain.log
+COV_HEAD=""
+if [ -r "$CHAIN" ] && ! deadline_hit; then
+    COV_HEAD=$(tail -1 "$CHAIN" 2>/dev/null | awk -F'|' '{print substr($NF,1,16)}')
+fi
+
+# ── BANNER ─────────────────────────────────────────────────────────
+echo
+echo "${G}╔══════════════════════════════════════════════════════════════════╗${X}"
+echo "${G}║${X}  ${BOLD}${G}✠  A L F R E D   L I N U X   7.77  ✠${X}                          ${G}║${X}"
+echo "${G}║${X}  ${DIM}${W}\"By Him all things consist.\" — Colossians 1:17${X}                ${G}║${X}"
+echo "${G}╚══════════════════════════════════════════════════════════════════╝${X}"
+echo
+echo "  ${L}${HELLO}${X}"
+echo
+
+# ── Sabbath mode short-circuit ─────────────────────────────────────
+if [ "$SHABBAT" = "HOLY" ]; then
+    echo "  ${R}${BOLD}⏸  SHABBAT SHALOM${X}  —  ${DIM}the system rests with you${X}"
+    echo
+    echo "  ${G}\"$TXT\"${X}"
+    echo "  ${K}— $REF${X}"
+    echo
+    [ -n "$HEB" ] && echo "  ${DIM}${HEB}${X}"
+    echo
+    exit 0
+fi
+
+# ── Daily Bread ────────────────────────────────────────────────────
+echo "  ${B}${BOLD}❖ Daily Bread${X}"
+echo "  ${G}\"$TXT\"${X}"
+echo "  ${K}— $REF${X}"
+echo
+
+# ── system pulse table ─────────────────────────────────────────────
+printf "  ${B}❖ Pulse${X}\n"
+printf "    ${K}host${X}    %s\n"          "${W}${HOST}${X}"
+printf "    ${K}kernel${X}  %s\n"          "${W}${KERN}${X}"
+printf "    ${K}uptime${X}  %s\n"          "${W}${UP}${X}"
+printf "    ${K}load${X}    %s\n"          "${W}${LOAD}${X}"
+printf "    ${K}mem${X}     %s\n"          "${W}${MEM}${X}"
+printf "    ${K}disk${X}    %s\n"          "${W}${DSK}${X}"
+printf "    ${K}ipv4${X}    %s\n"          "${W}${IPV4}${X}"
+[ -n "$HEB" ]      && printf "    ${K}hebrew${X}  %s\n" "${W}${HEB}${X}"
+[ -n "$SHABBAT" ]  && printf "    ${K}shabbat${X} %s\n" "${R}${SHABBAT}${X}"
+[ -n "$COV_HEAD" ] && printf "    ${K}cov▸${X}    %s\n" "${GR}${COV_HEAD}…${X}"
+echo
+
+# ── footer ─────────────────────────────────────────────────────────
+echo "  ${DIM}${K}alfred-bible · alfred-sabbath · alfred-witness · alfred-callings${X}"
+echo "  ${DIM}${K}https://alfredlinux.com   ✠   Soli Deo Gloria${X}"
+echo
+exit 0

@@ -1,0 +1,46 @@
+<?php
+// /home/gositeme/domains/gositeme.com/public_html/sw-nuke.html
+// Unregisters all service workers + clears all caches for gositeme.com
+?>
+<!DOCTYPE html>
+<html><head><title>Service Worker Nuke</title></head>
+<body style="font-family:monospace;background:#111;color:#0f0;padding:30px">
+<h1>SW Nuke — Alfred IDE</h1>
+<pre id="log">starting...</pre>
+<script>
+const log = document.getElementById('log');
+function L(s){log.textContent += "\n"+s; console.log(s);}
+(async () => {
+  try {
+    if ('serviceWorker' in navigator) {
+      const regs = await navigator.serviceWorker.getRegistrations();
+      L('found '+regs.length+' service worker registration(s)');
+      for (const r of regs) {
+        L('unregistering: '+r.scope);
+        await r.unregister();
+      }
+    } else { L('no SW support'); }
+    if ('caches' in window) {
+      const keys = await caches.keys();
+      L('found '+keys.length+' cache(s)');
+      for (const k of keys) {
+        L('deleting cache: '+k);
+        await caches.delete(k);
+      }
+    }
+    try {
+      Object.keys(localStorage).forEach(k => {
+        if (/workbench|vscode|code-server|copilot|webview/i.test(k)) {
+          L('clearing localStorage key: '+k);
+          localStorage.removeItem(k);
+        }
+      });
+    } catch(e){ L('localStorage err: '+e); }
+    L('\n=== DONE — redirecting to alfred-ide in 3s ===');
+    setTimeout(()=>{ location.href='/alfred-ide/?folder=/home/gositeme&bust='+Date.now(); }, 3000);
+  } catch(e){
+    L('FATAL: '+e.message);
+  }
+})();
+</script>
+</body></html>

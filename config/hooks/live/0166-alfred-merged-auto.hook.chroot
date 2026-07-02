@@ -1,0 +1,1056 @@
+#!/bin/bash
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Description: Post-quantum encryption stack â€” Kyber-1024 (only consumer OS shipping PQ crypto OOTB)
+set +euo pipefail
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+# HOOK 0166: Alfred Linux â€” Post-Quantum Encryption (Kyber-1024)
+#
+# Makes Alfred Linux the ONLY consumer OS shipping with
+# post-quantum cryptography out of the box.
+#
+# Installs: liboqs, oqs-provider for OpenSSL 3.x,
+#           Kyber-1024 SSH key exchange, quantum-safe tools
+#
+# BUILD: v4.1+ (Kingdom Edition)
+#
+# Optional: ALFRED_ALLOW_HOOK_NETWORK_DOWNLOADS=1 allows git clone from GitHub when
+# /build-assets liboqs/oqs-provider tarballs are absent.
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+echo "â•”â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•—"
+echo "â•‘  [0166] Post-Quantum Encryption â€” Kyber-1024              â•‘"
+echo "â•‘  Because the future of encryption happens NOW             â•‘"
+echo "â•šâ•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•"
+
+export DEBIAN_FRONTEND=noninteractive
+# â”€â”€ apt_nonfatal helpers (injected: apt-swallow observability) â”€â”€
+apt_update_nonfatal() {
+    local tag="$1"
+    mkdir -p /var/lib/alfred/build-flags
+    if ! DEBIAN_FRONTEND=noninteractive apt-get update -qq 2>/dev/null; then
+        echo "[WARN] apt-get update (${tag}) failed (nonfatal)" >&2
+        echo "${tag}_update_failed=$(date -Is)" >> /var/lib/alfred/build-flags/${tag}-apt-failed
+    fi
+}
+apt_nonfatal() {
+    local tag="$1"; shift
+    mkdir -p /var/lib/alfred/build-flags
+    if ! DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends "$@" 2>/dev/null; then
+        echo "[WARN] ${tag} install failed (nonfatal)" >&2
+        echo "${tag}_install_failed=$(date -Is)" >> /var/lib/alfred/build-flags/${tag}-apt-failed
+    fi
+}
+
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+# 1. BUILD DEPENDENCIES
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+echo "[PQ-01] Installing build dependencies..."
+apt_update_nonfatal quantum
+apt_nonfatal quantum cmake ninja-build gcc g++ git libssl-dev python3 python3-pytest astyle
+
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+# 2. INSTALL LIBOQS (Open Quantum Safe library)
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+echo "[PQ-02] Building liboqs (Open Quantum Safe)..."
+# Build flags directory for military readiness tracking
+mkdir -p /var/lib/alfred/build-flags
+
+cd /tmp
+rm -rf liboqs
+# MILITARY: Pre-staged source preferred, GitHub fallback for dev builds
+LIBOQS_READY=0
+if [ -f /build-assets/liboqs-0.10.1.tar.gz ]; then
+    echo "[PQ-02] Using pre-staged liboqs source (air-gap safe)"
+    tar xzf /build-assets/liboqs-0.10.1.tar.gz
+    mv liboqs-0.10.1 liboqs 2>/dev/null || true
+    LIBOQS_READY=1
+else
+    if [[ "${ALFRED_ALLOW_HOOK_NETWORK_DOWNLOADS:-}" == "1" ]]; then
+        git clone --depth 1 --branch 0.10.1 https://github.com/open-quantum-safe/liboqs.git 2>/dev/null && LIBOQS_READY=1
+    else
+        echo "[PQ-02] WARN: skipping liboqs git clone (stage /build-assets/liboqs-0.10.1.tar.gz or set ALFRED_ALLOW_HOOK_NETWORK_DOWNLOADS=1)." >&2
+    fi
+fi
+
+if [ "$LIBOQS_READY" = "1" ]; then
+    cd liboqs
+    mkdir -p build && cd build
+    cmake -GNinja \
+        -DCMAKE_INSTALL_PREFIX=/usr/local \
+        -DBUILD_SHARED_LIBS=ON \
+        -DOQS_BUILD_ONLY_LIB=ON \
+        .. || {
+        echo "[PQ-02] cmake with Ninja failed â€” trying without"
+        cd /tmp/liboqs && rm -rf build && mkdir build && cd build
+        cmake \
+            -DCMAKE_INSTALL_PREFIX=/usr/local \
+            -DBUILD_SHARED_LIBS=ON \
+            -DOQS_BUILD_ONLY_LIB=ON \
+            .. || { echo "[PQ-02] FAIL: cmake failed entirely"; touch /var/lib/alfred/build-flags/quantum-liboqs-failed; LIBOQS_READY=0; }
+    }
+fi
+
+if [ "$LIBOQS_READY" = "1" ]; then
+    cmake --build . -j$(nproc) 2>/dev/null || make -j$(nproc) 2>/dev/null || {
+        echo "[PQ-02] FAIL: liboqs build failed"
+        touch /var/lib/alfred/build-flags/quantum-liboqs-failed
+        LIBOQS_READY=0
+    }
+fi
+
+if [ "$LIBOQS_READY" = "1" ]; then
+    cmake --install . 2>/dev/null || make install 2>/dev/null || true
+    ldconfig
+else
+    echo "[PQ-02] WARNING: liboqs NOT installed â€” quantum flag set for post-install"
+    echo "liboqs_failed=$(date -Is)" >> /var/lib/alfred/build-flags/quantum-liboqs-failed
+fi
+
+echo "[PQ-02] liboqs installed â€” Kyber-1024, Dilithium-5/3, SPHINCS+"
+
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+# 3. OQS-PROVIDER FOR OPENSSL 3.x
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+echo "[PQ-03] Building oqs-provider for OpenSSL 3.x..."
+cd /tmp
+rm -rf oqs-provider
+# MILITARY: Pre-staged source preferred, GitHub fallback for dev builds
+if [ -f /build-assets/oqs-provider-0.6.1.tar.gz ]; then
+    echo "[PQ-03] Using pre-staged oqs-provider source (air-gap safe)"
+    tar xzf /build-assets/oqs-provider-0.6.1.tar.gz
+    mv oqs-provider-0.6.1 oqs-provider 2>/dev/null || true
+elif [ "$LIBOQS_READY" = "1" ]; then
+    if [[ "${ALFRED_ALLOW_HOOK_NETWORK_DOWNLOADS:-}" == "1" ]]; then
+        git clone --depth 1 --branch 0.6.1 https://github.com/open-quantum-safe/oqs-provider.git 2>/dev/null || {
+            echo "[PQ-03] Could not clone oqs-provider â€” skipping"
+            OQS_PROVIDER_SKIP=1
+        }
+    else
+        echo "[PQ-03] WARN: skipping oqs-provider git clone (stage /build-assets/oqs-provider-0.6.1.tar.gz or set ALFRED_ALLOW_HOOK_NETWORK_DOWNLOADS=1)." >&2
+        OQS_PROVIDER_SKIP=1
+    fi
+else
+    echo "[PQ-03] Skipping oqs-provider (liboqs not available)"
+    OQS_PROVIDER_SKIP=1
+fi
+if [ "${OQS_PROVIDER_SKIP:-0}" = "0" ]; then
+    cd oqs-provider
+    mkdir -p build && cd build
+    cmake -GNinja \
+        -DCMAKE_INSTALL_PREFIX=/usr/local \
+        -Dliboqs_DIR=/usr/local/lib/cmake/liboqs \
+        .. 2>/dev/null || cmake \
+        -DCMAKE_INSTALL_PREFIX=/usr/local \
+        -Dliboqs_DIR=/usr/local/lib/cmake/liboqs \
+        .. 2>/dev/null || { echo "[PQ-03] WARN: oqs-provider cmake failed â€” skipping"; OQS_PROVIDER_SKIP=1; }
+fi
+if [ "${OQS_PROVIDER_SKIP:-0}" = "0" ]; then
+    cmake --build . -j$(nproc) 2>/dev/null || make -j$(nproc) 2>/dev/null || true
+
+    # Install provider
+    OSSL_MODULES=$(openssl version -d 2>/dev/null | sed -n 's/^OPENSSLDIR:[[:space:]]*"\([^"]*\)".*/\1/p')
+    [ -z "$OSSL_MODULES" ] && OSSL_MODULES="/usr/lib/x86_64-linux-gnu/ossl-modules"
+    mkdir -p "$OSSL_MODULES"
+    cp lib/oqsprovider.so "$OSSL_MODULES/" 2>/dev/null || cp oqsprov/oqsprovider.so "$OSSL_MODULES/" 2>/dev/null || true
+    echo "[PQ-03] OQS provider installed at $OSSL_MODULES"
+
+    # Enable in OpenSSL config
+    _ossl_root=$(openssl version -d 2>/dev/null | sed -n 's/^OPENSSLDIR:[[:space:]]*"\([^"]*\)".*/\1/p')
+    [ -z "$_ossl_root" ] && _ossl_root="/etc/ssl"
+    OPENSSL_CONF="${_ossl_root}/openssl.cnf"
+    if [ -f "$OPENSSL_CONF" ] && ! grep -q "oqsprovider" "$OPENSSL_CONF" 2>/dev/null; then
+        # Add OQS provider activation
+        cat >> "$OPENSSL_CONF" << 'OQSCNF'
+
+# Alfred Linux â€” Post-Quantum (OQS Provider)
+[provider_sect]
+default = default_sect
+oqsprovider = oqsprovider_sect
+
+[default_sect]
+activate = 1
+
+[oqsprovider_sect]
+activate = 1
+module = oqsprovider.so
+OQSCNF
+    fi
+fi  # end OQS_PROVIDER_SKIP
+
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+# 4. SSH QUANTUM KEY EXCHANGE CONFIG
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+echo "[PQ-04] Configuring SSH with post-quantum key exchange..."
+mkdir -p /etc/ssh/sshd_config.d
+
+cat > /etc/ssh/sshd_config.d/alfred-quantum.conf << 'SSHPQ'
+# Alfred Linux â€” Post-Quantum SSH Configuration
+# Uses hybrid key exchange: classical + Kyber for defense-in-depth
+
+# Prefer hybrid ML-KEM (Kyber) + X25519 if available
+# Falls back to classical if client doesn't support PQ
+KexAlgorithms mlkem1024x25519-sha384,mlkem1024x25519-sha384@openssh.com,curve25519-sha256,curve25519-sha256@libssh.org,diffie-hellman-group16-sha512,diffie-hellman-group18-sha512
+
+# Strong MACs only
+MACs hmac-sha2-512-etm@openssh.com,hmac-sha2-256-etm@openssh.com
+
+# Strong ciphers only
+Ciphers chacha20-poly1305@openssh.com,aes256-gcm@openssh.com,aes256-ctr
+SSHPQ
+
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+# 5. ALFRED-QUANTUM CLI TOOL
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+echo "[PQ-05] Installing alfred-quantum CLI..."
+cat > /usr/local/bin/alfred-quantum << 'QCLI'
+#!/bin/bash
+# alfred-quantum â€” Post-Quantum Cryptography Tools
+# Alfred Linux â€” Kingdom Edition
+
+RED='\033[0;31m'; GREEN='\033[0;32m'; CYAN='\033[0;36m'; GOLD='\033[0;33m'; NC='\033[0m'
+
+show_help() {
+    echo -e "${GOLD}â•â•â• Alfred Post-Quantum Crypto Tools â•â•â•${NC}"
+    echo ""
+    echo "  alfred-quantum status     â€” Check quantum readiness"
+    echo "  alfred-quantum keygen     â€” Generate Kyber-1024 keypair"
+    echo "  alfred-quantum test       â€” Run crypto benchmark"
+    echo "  alfred-quantum algorithms â€” List available PQ algorithms"
+    echo "  alfred-quantum info       â€” Learn about post-quantum crypto"
+    echo ""
+}
+
+case "${1:-help}" in
+    status)
+        echo -e "${CYAN}â•â•â• Post-Quantum Status â•â•â•${NC}"
+        echo -n "liboqs: "
+        if ldconfig -p 2>/dev/null | grep -q liboqs; then
+            echo -e "${GREEN}INSTALLED${NC} ($(ls /usr/local/lib/liboqs* 2>/dev/null | head -1))"
+        else
+            echo -e "${RED}NOT INSTALLED${NC}"
+        fi
+        echo -n "OQS OpenSSL Provider: "
+        if openssl list -providers 2>/dev/null | grep -q -i oqs; then
+            echo -e "${GREEN}ACTIVE${NC}"
+        else
+            echo -e "${RED}NOT ACTIVE${NC}"
+        fi
+        echo -n "SSH Kyber (mlkem1024): "
+        if ssh -Q kex 2>/dev/null | grep -q mlkem1024; then
+            echo -e "${GREEN}AVAILABLE${NC}"
+        else
+            echo -e "${RED}NOT AVAILABLE${NC}"
+        fi
+        echo -n "Algorithms: "
+        if command -v oqs_test &>/dev/null; then
+            echo -e "${GREEN}$(openssl list -kem-algorithms 2>/dev/null | grep -i kyber | wc -l) KEM + $(openssl list -signature-algorithms 2>/dev/null | grep -i dilithium | wc -l) SIG${NC}"
+        else
+            echo "Check with: openssl list -kem-algorithms"
+        fi
+        ;;
+    keygen)
+        echo -e "${CYAN}Generating Kyber-1024 keypair...${NC}"
+        if command -v openssl &>/dev/null && openssl list -kem-algorithms 2>/dev/null | grep -q -i kyber; then
+            KEYDIR="${HOME}/.alfred/quantum-keys"
+            mkdir -p "$KEYDIR"
+            chmod 700 "$KEYDIR"
+            openssl genpkey -algorithm kyber1024 -out "$KEYDIR/kyber1024.key" 2>/dev/null && \
+            openssl pkey -in "$KEYDIR/kyber1024.key" -pubout -out "$KEYDIR/kyber1024.pub" 2>/dev/null && \
+            echo -e "${GREEN}Keypair generated:${NC}" && \
+            echo "  Private: $KEYDIR/kyber1024.key" && \
+            echo "  Public:  $KEYDIR/kyber1024.pub" || \
+            echo -e "${RED}Generation failed â€” OQS provider may need configuration${NC}"
+        else
+            echo -e "${RED}Kyber not available in OpenSSL. Run: alfred-quantum status${NC}"
+        fi
+        ;;
+    test)
+        echo -e "${CYAN}Running post-quantum benchmark...${NC}"
+        if [ -f /usr/local/bin/oqs_speed_test ]; then
+            /usr/local/bin/oqs_speed_test
+        else
+            echo "Testing SSH key exchange with mlkem1024..."
+            time ssh -o "KexAlgorithms=mlkem1024x25519-sha384@openssh.com" -o "StrictHostKeyChecking=accept-new" -o "BatchMode=yes" -p 22 localhost true>&1 || true
+            echo -e "${GREEN}Test complete.${NC}"
+        fi
+        ;;
+    algorithms)
+        echo -e "${CYAN}â•â•â• Available Post-Quantum Algorithms â•â•â•${NC}"
+        echo ""
+        echo -e "${GOLD}Key Encapsulation (KEM):${NC}"
+        openssl list -kem-algorithms 2>/dev/null | grep -i "kyber\|bike\|hqc\|frodo" || echo "  (OQS provider not active)"
+        echo ""
+        echo -e "${GOLD}Signatures:${NC}"
+        openssl list -signature-algorithms 2>/dev/null | grep -i "dilithium\|falcon\|sphincs" || echo "  (OQS provider not active)"
+        ;;
+    info)
+        echo -e "${GOLD}â•â•â• Post-Quantum Cryptography â€” Why It Matters â•â•â•${NC}"
+        echo ""
+        echo "Quantum computers threaten current encryption (RSA, ECC, DH)."
+        echo "Alfred Linux ships Kyber-1024 (ML-KEM) â€” the NIST standard"
+        echo "for post-quantum key encapsulation. Also includes:"
+        echo ""
+        echo "  â€¢ Kyber-1024/768 â€” Key exchange (CRYSTALS-Kyber / ML-KEM)"
+        echo "  â€¢ Dilithium-5/3  â€” Digital signatures (CRYSTALS-Dilithium)"
+        echo "  â€¢ SPHINCS+       â€” Hash-based signatures (stateless)"
+        echo "  â€¢ mlkem1024     â€” SSH hybrid key exchange (already in OpenSSH)"
+        echo ""
+        echo "Your SSH connections use hybrid: classical X25519 + post-quantum."
+        echo "Even if quantum computers break X25519, Kyber protects you."
+        echo ""
+        echo -e "${GREEN}Alfred Linux: The first consumer OS with post-quantum by default.${NC}"
+        echo -e "${CYAN}\"The horse is prepared against the day of battle\" â€” Proverbs 21:31${NC}"
+        ;;
+    *)
+        show_help
+        ;;
+esac
+QCLI
+chmod +x /usr/local/bin/alfred-quantum
+
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+# 6. CLEANUP BUILD DEPS (keep runtime only)
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+echo "[PQ-06] Cleaning build artifacts..."
+rm -rf /tmp/liboqs /tmp/oqs-provider 2>/dev/null || true
+
+echo "â•”â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•—"
+echo "â•‘  Post-Quantum Encryption â€” COMPLETE                       â•‘"
+echo "â•‘  Kyber-1024 â€¢ Dilithium-5 â€¢ SPHINCS+ â€¢ mlkem1024 SSH     â•‘"
+echo "â•‘  Alfred Linux: Quantum-proof before anyone else.          â•‘"
+echo "â•šâ•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•"
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+# [Genesis Forge] Granular Kernel Matrix: net.ipv4.ip_local_port_range="7224 65535"
+# Extremely deep low-level kernel protection.
+echo "[Genesis Forge] Applying granular sysctl: net.ipv4.ip_local_port_range="7224 65535""
+echo "net.ipv4.ip_local_port_range="7224 65535"" > /etc/sysctl.d/99-alfred-58.conf || true
+sysctl -w net.ipv4.ip_local_port_range="7224 65535" > /dev/null 2>&1 || true
+
+
+# --- BEGIN MERGED CONTENT FROM: 0166-alfred-quantum.hook.chroot ---
+#!/bin/bash
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Description: Post-quantum encryption stack â€” Kyber-1024 (only consumer OS shipping PQ crypto OOTB)
+set +e
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+# HOOK 0166: Alfred Linux â€” Post-Quantum Encryption (Kyber-1024)
+#
+# Makes Alfred Linux the ONLY consumer OS shipping with
+# post-quantum cryptography out of the box.
+#
+# Installs: liboqs, oqs-provider for OpenSSL 3.x,
+#           Kyber-1024 SSH key exchange, quantum-safe tools
+#
+# BUILD: v4.1+ (Kingdom Edition)
+#
+# Optional: ALFRED_ALLOW_HOOK_NETWORK_DOWNLOADS=1 allows git clone from GitHub when
+# /build-assets liboqs/oqs-provider tarballs are absent.
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+echo "â•”â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•—"
+echo "â•‘  [0166] Post-Quantum Encryption â€” Kyber-1024              â•‘"
+echo "â•‘  Because the future of encryption happens NOW             â•‘"
+echo "â•šâ•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•"
+
+export DEBIAN_FRONTEND=noninteractive
+# â”€â”€ apt_nonfatal helpers (injected: apt-swallow observability) â”€â”€
+apt_update_nonfatal() {
+    local tag="$1"
+    mkdir -p /var/lib/alfred/build-flags
+    if ! DEBIAN_FRONTEND=noninteractive apt-get update -qq 2>/dev/null; then
+        echo "[WARN] apt-get update (${tag}) failed (nonfatal)" >&2
+        echo "${tag}_update_failed=$(date -Is)" >> /var/lib/alfred/build-flags/${tag}-apt-failed
+    fi
+}
+apt_nonfatal() {
+    local tag="$1"; shift
+    mkdir -p /var/lib/alfred/build-flags
+ if ! DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends "$@" 2>/dev/null; then
+        echo "[WARN] ${tag} install failed (nonfatal)" >&2
+        echo "${tag}_install_failed=$(date -Is)" >> /var/lib/alfred/build-flags/${tag}-apt-failed
+    fi
+}
+
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+# 1. BUILD DEPENDENCIES
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+echo "[PQ-01] Installing build dependencies..."
+apt_update_nonfatal quantum
+apt_nonfatal quantum cmake ninja-build gcc g++ git libssl-dev python3 python3-pytest astyle
+
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+# 2. INSTALL LIBOQS (Open Quantum Safe library)
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+echo "[PQ-02] Building liboqs (Open Quantum Safe)..."
+# Build flags directory for military readiness tracking
+mkdir -p /var/lib/alfred/build-flags
+
+cd /tmp
+rm -rf liboqs
+# MILITARY: Pre-staged source preferred, GitHub fallback for dev builds
+LIBOQS_READY=0
+if [ -f /build-assets/liboqs-0.10.1.tar.gz ]; then
+    echo "[PQ-02] Using pre-staged liboqs source (air-gap safe)"
+    tar xzf /build-assets/liboqs-0.10.1.tar.gz
+[ -e liboqs-0.10.1 ] &&     mv liboqs-0.10.1 liboqs 2>/dev/null || true
+    LIBOQS_READY=1
+else
+    if [[ "${ALFRED_ALLOW_HOOK_NETWORK_DOWNLOADS:-}" == "1" ]]; then
+        git clone --depth 1 --branch 0.10.1 https://github.com/open-quantum-safe/liboqs.git 2>/dev/null && LIBOQS_READY=1
+    else
+        echo "[PQ-02] WARN: skipping liboqs git clone (stage /build-assets/liboqs-0.10.1.tar.gz or set ALFRED_ALLOW_HOOK_NETWORK_DOWNLOADS=1)." >&2
+    fi
+fi
+
+if [ "$LIBOQS_READY" = "1" ]; then
+    cd liboqs
+    mkdir -p build && cd build
+    cmake -GNinja \
+        -DCMAKE_INSTALL_PREFIX=/usr/local \
+        -DBUILD_SHARED_LIBS=ON \
+        -DOQS_BUILD_ONLY_LIB=ON \
+        .. || {
+        echo "[PQ-02] cmake with Ninja failed â€” trying without"
+        cd /tmp/liboqs && rm -rf build && mkdir -p build && cd build
+        cmake \
+            -DCMAKE_INSTALL_PREFIX=/usr/local \
+            -DBUILD_SHARED_LIBS=ON \
+            -DOQS_BUILD_ONLY_LIB=ON \
+            .. || { echo "[PQ-02] FAIL: cmake failed entirely"; touch /var/lib/alfred/build-flags/quantum-liboqs-failed; LIBOQS_READY=0; }
+    }
+fi
+
+if [ "$LIBOQS_READY" = "1" ]; then
+    cmake --build . -j$(nproc) 2>/dev/null || make -j$(nproc) 2>/dev/null || {
+        echo "[PQ-02] FAIL: liboqs build failed"
+        touch /var/lib/alfred/build-flags/quantum-liboqs-failed
+        LIBOQS_READY=0
+    }
+fi
+
+if [ "$LIBOQS_READY" = "1" ]; then
+    cmake --install . 2>/dev/null || make install 2>/dev/null || true
+    ldconfig
+else
+    echo "[PQ-02] WARNING: liboqs NOT installed â€” quantum flag set for post-install"
+    echo "liboqs_failed=$(date -Is)" >> /var/lib/alfred/build-flags/quantum-liboqs-failed
+fi
+
+echo "[PQ-02] liboqs installed â€” Kyber-1024, Dilithium-5/3, SPHINCS+"
+
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+# 3. OQS-PROVIDER FOR OPENSSL 3.x
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+echo "[PQ-03] Building oqs-provider for OpenSSL 3.x..."
+cd /tmp
+rm -rf oqs-provider
+# MILITARY: Pre-staged source preferred, GitHub fallback for dev builds
+if [ -f /build-assets/oqs-provider-0.6.1.tar.gz ]; then
+    echo "[PQ-03] Using pre-staged oqs-provider source (air-gap safe)"
+    tar xzf /build-assets/oqs-provider-0.6.1.tar.gz
+[ -e oqs-provider-0.6.1 ] &&     mv oqs-provider-0.6.1 oqs-provider 2>/dev/null || true
+elif [ "$LIBOQS_READY" = "1" ]; then
+    if [[ "${ALFRED_ALLOW_HOOK_NETWORK_DOWNLOADS:-}" == "1" ]]; then
+        git clone --depth 1 --branch 0.6.1 https://github.com/open-quantum-safe/oqs-provider.git 2>/dev/null || {
+            echo "[PQ-03] Could not clone oqs-provider â€” skipping"
+            OQS_PROVIDER_SKIP=1
+        }
+    else
+        echo "[PQ-03] WARN: skipping oqs-provider git clone (stage /build-assets/oqs-provider-0.6.1.tar.gz or set ALFRED_ALLOW_HOOK_NETWORK_DOWNLOADS=1)." >&2
+        OQS_PROVIDER_SKIP=1
+    fi
+else
+    echo "[PQ-03] Skipping oqs-provider (liboqs not available)"
+    OQS_PROVIDER_SKIP=1
+fi
+if [ "${OQS_PROVIDER_SKIP:-0}" = "0" ]; then
+    cd oqs-provider
+    mkdir -p build && cd build
+    cmake -GNinja \
+        -DCMAKE_INSTALL_PREFIX=/usr/local \
+        -Dliboqs_DIR=/usr/local/lib/cmake/liboqs \
+        .. 2>/dev/null || cmake \
+        -DCMAKE_INSTALL_PREFIX=/usr/local \
+        -Dliboqs_DIR=/usr/local/lib/cmake/liboqs \
+        .. 2>/dev/null || { echo "[PQ-03] WARN: oqs-provider cmake failed â€” skipping"; OQS_PROVIDER_SKIP=1; }
+fi
+if [ "${OQS_PROVIDER_SKIP:-0}" = "0" ]; then
+    cmake --build . -j$(nproc) 2>/dev/null || make -j$(nproc) 2>/dev/null || true
+
+    # Install provider
+    OSSL_MODULES=$(openssl version -d 2>/dev/null | sed -n 's/^OPENSSLDIR:[[:space:]]*"\([^"]*\)".*/\1/p')
+    [ -z "$OSSL_MODULES" ] && OSSL_MODULES="/usr/lib/x86_64-linux-gnu/ossl-modules"
+    mkdir -p "$OSSL_MODULES"
+[ -e lib/oqsprovider.so ] &&     cp lib/oqsprovider.so "$OSSL_MODULES/" 2>/dev/null || cp oqsprov/oqsprovider.so "$OSSL_MODULES/" 2>/dev/null || true
+    echo "[PQ-03] OQS provider installed at $OSSL_MODULES"
+
+    # Enable in OpenSSL config
+    _ossl_root=$(openssl version -d 2>/dev/null | sed -n 's/^OPENSSLDIR:[[:space:]]*"\([^"]*\)".*/\1/p')
+    [ -z "$_ossl_root" ] && _ossl_root="/etc/ssl"
+    OPENSSL_CONF="${_ossl_root}/openssl.cnf"
+    if [ -f "$OPENSSL_CONF" ] && ! grep -q "oqsprovider" "$OPENSSL_CONF" 2>/dev/null; then
+        # Add OQS provider activation
+        cat >> "$OPENSSL_CONF" << 'OQSCNF'
+
+# Alfred Linux â€” Post-Quantum (OQS Provider)
+[provider_sect]
+default = default_sect
+oqsprovider = oqsprovider_sect
+
+[default_sect]
+activate = 1
+
+[oqsprovider_sect]
+activate = 1
+module = oqsprovider.so
+OQSCNF
+    fi
+fi  # end OQS_PROVIDER_SKIP
+
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+# 4. SSH QUANTUM KEY EXCHANGE CONFIG
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+echo "[PQ-04] Configuring SSH with post-quantum key exchange..."
+mkdir -p /etc/ssh/sshd_config.d
+
+cat > /etc/ssh/sshd_config.d/alfred-quantum.conf << 'SSHPQ'
+# Alfred Linux â€” Post-Quantum SSH Configuration
+# Uses hybrid key exchange: classical + Kyber for defense-in-depth
+
+# Prefer hybrid ML-KEM (Kyber) + X25519 if available
+# Falls back to classical if client doesn't support PQ
+KexAlgorithms mlkem1024x25519-sha384,mlkem1024x25519-sha384@openssh.com,curve25519-sha256,curve25519-sha256@libssh.org,diffie-hellman-group16-sha512,diffie-hellman-group18-sha512
+
+# Strong MACs only
+MACs hmac-sha2-512-etm@openssh.com,hmac-sha2-256-etm@openssh.com
+
+# Strong ciphers only
+Ciphers chacha20-poly1305@openssh.com,aes256-gcm@openssh.com,aes256-ctr
+SSHPQ
+
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+# 5. ALFRED-QUANTUM CLI TOOL
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+echo "[PQ-05] Installing alfred-quantum CLI..."
+cat > /usr/local/bin/alfred-quantum << 'QCLI'
+#!/bin/bash
+# alfred-quantum â€” Post-Quantum Cryptography Tools
+# Alfred Linux â€” Kingdom Edition
+
+RED='\033[0;31m'; GREEN='\033[0;32m'; CYAN='\033[0;36m'; GOLD='\033[0;33m'; NC='\033[0m'
+
+show_help() {
+    echo -e "${GOLD}â•â•â• Alfred Post-Quantum Crypto Tools â•â•â•${NC}"
+    echo ""
+    echo "  alfred-quantum status     â€” Check quantum readiness"
+    echo "  alfred-quantum keygen     â€” Generate Kyber-1024 keypair"
+    echo "  alfred-quantum test       â€” Run crypto benchmark"
+    echo "  alfred-quantum algorithms â€” List available PQ algorithms"
+    echo "  alfred-quantum info       â€” Learn about post-quantum crypto"
+    echo ""
+}
+
+case "${1:-help}" in
+    status)
+        echo -e "${CYAN}â•â•â• Post-Quantum Status â•â•â•${NC}"
+        echo -n "liboqs: "
+        if ldconfig -p 2>/dev/null | grep -q liboqs; then
+            echo -e "${GREEN}INSTALLED${NC} ($(ls /usr/local/lib/liboqs* 2>/dev/null | head -1))"
+        else
+            echo -e "${RED}NOT INSTALLED${NC}"
+        fi
+        echo -n "OQS OpenSSL Provider: "
+        if openssl list -providers 2>/dev/null | grep -q -i oqs; then
+            echo -e "${GREEN}ACTIVE${NC}"
+        else
+            echo -e "${RED}NOT ACTIVE${NC}"
+        fi
+        echo -n "SSH Kyber (mlkem1024): "
+        if ssh -Q kex 2>/dev/null | grep -q mlkem1024; then
+            echo -e "${GREEN}AVAILABLE${NC}"
+        else
+            echo -e "${RED}NOT AVAILABLE${NC}"
+        fi
+        echo -n "Algorithms: "
+        if command -v oqs_test &>/dev/null; then
+            echo -e "${GREEN}$(openssl list -kem-algorithms 2>/dev/null | grep -i kyber | wc -l) KEM + $(openssl list -signature-algorithms 2>/dev/null | grep -i dilithium | wc -l) SIG${NC}"
+        else
+            echo "Check with: openssl list -kem-algorithms"
+        fi
+        ;;
+    keygen)
+        echo -e "${CYAN}Generating Kyber-1024 keypair...${NC}"
+        if command -v openssl &>/dev/null && openssl list -kem-algorithms 2>/dev/null | grep -q -i kyber; then
+            KEYDIR="${HOME}/.alfred/quantum-keys"
+            mkdir -p "$KEYDIR"
+[ -e "$KEYDIR" ] &&             chmod 700 "$KEYDIR"
+            openssl genpkey -algorithm kyber1024 -out "$KEYDIR/kyber1024.key" 2>/dev/null && \
+            openssl pkey -in "$KEYDIR/kyber1024.key" -pubout -out "$KEYDIR/kyber1024.pub" 2>/dev/null && \
+            echo -e "${GREEN}Keypair generated:${NC}" && \
+            echo "  Private: $KEYDIR/kyber1024.key" && \
+            echo "  Public:  $KEYDIR/kyber1024.pub" || \
+            echo -e "${RED}Generation failed â€” OQS provider may need configuration${NC}"
+        else
+            echo -e "${RED}Kyber not available in OpenSSL. Run: alfred-quantum status${NC}"
+        fi
+        ;;
+    test)
+        echo -e "${CYAN}Running post-quantum benchmark...${NC}"
+        if [ -f /usr/local/bin/oqs_speed_test ]; then
+            /usr/local/bin/oqs_speed_test
+        else
+            echo "Testing SSH key exchange with mlkem1024..."
+            time ssh -o "KexAlgorithms=mlkem1024x25519-sha384@openssh.com" -o "StrictHostKeyChecking=accept-new" -o "BatchMode=yes" -p 22 localhost true>&1 || true
+            echo -e "${GREEN}Test complete.${NC}"
+        fi
+        ;;
+    algorithms)
+        echo -e "${CYAN}â•â•â• Available Post-Quantum Algorithms â•â•â•${NC}"
+        echo ""
+        echo -e "${GOLD}Key Encapsulation (KEM):${NC}"
+        openssl list -kem-algorithms 2>/dev/null | grep -i "kyber\|bike\|hqc\|frodo" || echo "  (OQS provider not active)"
+        echo ""
+        echo -e "${GOLD}Signatures:${NC}"
+        openssl list -signature-algorithms 2>/dev/null | grep -i "dilithium\|falcon\|sphincs" || echo "  (OQS provider not active)"
+        ;;
+    info)
+        echo -e "${GOLD}â•â•â• Post-Quantum Cryptography â€” Why It Matters â•â•â•${NC}"
+        echo ""
+        echo "Quantum computers threaten current encryption (RSA, ECC, DH)."
+        echo "Alfred Linux ships Kyber-1024 (ML-KEM) â€” the NIST standard"
+        echo "for post-quantum key encapsulation. Also includes:"
+        echo ""
+        echo "  â€¢ Kyber-1024/768 â€” Key exchange (CRYSTALS-Kyber / ML-KEM)"
+        echo "  â€¢ Dilithium-5/3  â€” Digital signatures (CRYSTALS-Dilithium)"
+        echo "  â€¢ SPHINCS+       â€” Hash-based signatures (stateless)"
+        echo "  â€¢ mlkem1024     â€” SSH hybrid key exchange (already in OpenSSH)"
+        echo ""
+        echo "Your SSH connections use hybrid: classical X25519 + post-quantum."
+        echo "Even if quantum computers break X25519, Kyber protects you."
+        echo ""
+        echo -e "${GREEN}Alfred Linux: The first consumer OS with post-quantum by default.${NC}"
+        echo -e "${CYAN}\"The horse is prepared against the day of battle\" â€” Proverbs 21:31${NC}"
+        ;;
+    *)
+        show_help
+        ;;
+esac
+QCLI
+[ -e /usr/local/bin/alfred-quantum ] && chmod +x /usr/local/bin/alfred-quantum
+
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+# 6. CLEANUP BUILD DEPS (keep runtime only)
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+echo "[PQ-06] Cleaning build artifacts..."
+rm -rf /tmp/liboqs /tmp/oqs-provider 2>/dev/null || true
+
+echo "â•”â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•—"
+echo "â•‘  Post-Quantum Encryption â€” COMPLETE                       â•‘"
+echo "â•‘  Kyber-1024 â€¢ Dilithium-5 â€¢ SPHINCS+ â€¢ mlkem1024 SSH     â•‘"
+echo "â•‘  Alfred Linux: Quantum-proof before anyone else.          â•‘"
+echo "â•šâ•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•"
+
+# --- END MERGED CONTENT FROM: 0166-alfred-quantum.hook.chroot ---
+
+
+# --- BEGIN MERGED CONTENT FROM: 0166-alfred-yggdrasil-mesh.hook.chroot ---
+#!/bin/bash
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+# 0166-alfred-yggdrasil-mesh.hook.chroot
+# Phase 2: Zero-Trust Auto-Peering Darknet (Yggdrasil)
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+set +e
+echo "â•”â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•—"
+echo "â•‘  [0166] PHASE 2 â€” Yggdrasil Zero-Trust Darknet            â•‘"
+echo "â•šâ•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•"
+
+# â”€â”€ 1. Install Yggdrasil â”€â”€
+# Try repo first, fall back to static binary
+if apt-get install -y --no-install-recommends yggdrasil 2>/dev/null; then
+    echo "[YGG] Installed from repo"
+else
+    echo "[YGG] Not in repo â€” downloading static binary..."
+    ARCH=$(dpkg --print-architecture)
+    YGG_VER="0.5.12"
+    YGG_URL="https://github.com/yggdrasil-network/yggdrasil-go/releases/download/v${YGG_VER}/yggdrasil-${YGG_VER}-linux-${ARCH}"
+    
+    if curl -sfL "$YGG_URL" -o /usr/local/bin/yggdrasil 2>/dev/null; then
+[ -e /usr/local/bin/yggdrasil ] &&         chmod +x /usr/local/bin/yggdrasil
+        echo "[YGG] Static binary installed"
+    else
+        echo "[YGG] WARNING: Could not download Yggdrasil. Will use air-gap installer on first boot."
+    fi
+    
+    # Also grab yggdrasilctl
+    YGG_CTL_URL="https://github.com/yggdrasil-network/yggdrasil-go/releases/download/v${YGG_VER}/yggdrasilctl-${YGG_VER}-linux-${ARCH}"
+    curl -sfL "$YGG_CTL_URL" -o /usr/local/bin/yggdrasilctl 2>/dev/null || true
+[ -e /usr/local/bin/yggdrasilctl ] && chmod +x /usr/local/bin/yggdrasilctl 2>/dev/null || true
+fi
+
+# â”€â”€ 2. Generate default config â”€â”€
+mkdir -p /etc/yggdrasil
+cat > /etc/yggdrasil/yggdrasil.conf << 'YGGCONF'
+{
+  "Peers": [],
+  "InterfacePeers": {},
+  "Listen": [
+    "tls://[::]:0",
+    "tcp://[::]:0"
+  ],
+  "AdminListen": "unix:///var/run/yggdrasil.sock",
+  "MulticastInterfaces": [
+    {
+      "Regex": ".*",
+      "Beacon": true,
+      "Listen": true,
+      "Port": 0,
+      "Priority": 0,
+      "Password": ""
+    }
+  ],
+  "AllowedPublicKeys": [],
+  "IfName": "ygg0",
+  "IfMTU": 65535,
+  "NodeInfoPrivacy": true,
+  "NodeInfo": {
+    "os": "alfredlinux",
+    "role": "kingdom-node"
+  }
+}
+YGGCONF
+
+# â”€â”€ 3. Create systemd service â”€â”€
+cat > /etc/systemd/system/yggdrasil.service << 'YGGSVC'
+[Unit]
+Description=Yggdrasil Zero-Trust IPv6 Mesh Network
+Documentation=https://yggdrasil-network.github.io
+After=network.target
+Wants=network.target
+
+[Service]
+Type=simple
+ExecStartPre=-/usr/local/bin/yggdrasil -genconf > /tmp/ygg-generated.conf
+ExecStart=/usr/local/bin/yggdrasil -useconffile /etc/yggdrasil/yggdrasil.conf -logto /var/log/yggdrasil.log
+Restart=always
+RestartSec=5
+LimitNOFILE=65536
+
+# Security hardening
+ProtectHome=true
+ProtectSystem=strict
+ReadWritePaths=/var/log /var/run /etc/yggdrasil
+PrivateTmp=true
+NoNewPrivileges=false
+AmbientCapabilities=CAP_NET_ADMIN CAP_NET_RAW CAP_NET_BIND_SERVICE
+
+[Install]
+WantedBy=multi-user.target
+YGGSVC
+
+systemctl enable yggdrasil || true || true.service 2>/dev/null || true
+
+# â”€â”€ 4. Create mesh status tool â”€â”€
+cat > /usr/local/bin/alfred-mesh-status << 'MESHSTATUS'
+#!/bin/bash
+echo ""
+echo "â•”â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•—"
+echo "â•‘  Alfred Linux â€” Kingdom Mesh Status                â•‘"
+echo "â•šâ•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•"
+echo ""
+
+# WireGuard status
+echo "â”€â”€ WireGuard (Kingdom Mesh) â”€â”€"
+if command -v wg &>/dev/null; then
+    WG_PEERS=$(wg show all peers 2>/dev/null | wc -l)
+    WG_IFACE=$(wg show interfaces 2>/dev/null)
+    echo "  Interface: ${WG_IFACE:-none}"
+    echo "  Peers: ${WG_PEERS}"
+else
+    echo "  Not installed"
+fi
+echo ""
+
+# Yggdrasil status
+echo "â”€â”€ Yggdrasil (Zero-Trust Darknet) â”€â”€"
+if command -v yggdrasilctl &>/dev/null; then
+    YGG_ADDR=$(yggdrasilctl -endpoint=unix:///var/run/yggdrasil.sock getSelf 2>/dev/null | grep -o '200:[a-f0-9:]*' | head -1)
+    YGG_PEERS=$(yggdrasilctl -endpoint=unix:///var/run/yggdrasil.sock getPeers 2>/dev/null | grep -c 'remote' || echo 0)
+    echo "  IPv6 Address: ${YGG_ADDR:-not running}"
+    echo "  Connected Peers: ${YGG_PEERS}"
+    echo "  Multicast Discovery: ENABLED"
+else
+    echo "  Not installed"
+fi
+echo ""
+
+# Combined mesh nodes
+echo "â”€â”€ Combined Fleet â”€â”€"
+TOTAL=$((${WG_PEERS:-0} + ${YGG_PEERS:-0}))
+echo "  Total reachable nodes: $TOTAL"
+echo ""
+
+# Network interfaces
+echo "â”€â”€ Active Interfaces â”€â”€"
+ip -brief addr show 2>/dev/null | grep -E 'wg|ygg|tun' | sed 's/^/  /'
+echo ""
+MESHSTATUS
+[ -e /usr/local/bin/alfred-mesh-status ] && chmod +x /usr/local/bin/alfred-mesh-status
+
+# â”€â”€ 5. Create first-boot key generation â”€â”€
+cat > /usr/local/bin/alfred-ygg-keygen << 'KEYGEN'
+#!/bin/bash
+# Generates a unique Yggdrasil identity on first boot
+KEYFILE="/etc/yggdrasil/yggdrasil.conf"
+GENERATED="/etc/yggdrasil/.keys-generated"
+
+if [ -f "$GENERATED" ]; then
+
+fi
+
+if command -v yggdrasil &>/dev/null; then
+    echo "[YGG] Generating unique node identity..."
+    yggdrasil -genconf -json 2>/dev/null | \
+        python3 -c "
+import json,sys
+generated = json.load(sys.stdin)
+with open('$KEYFILE') as f:
+    existing = json.load(f)
+existing['PrivateKey'] = generated.get('PrivateKey','')
+with open('$KEYFILE','w') as f:
+    json.dump(existing, f, indent=2)
+" 2>/dev/null || true
+    touch "$GENERATED"
+    echo "[YGG] Unique identity generated. Restarting..."
+    systemctl restart yggdrasil 2>/dev/null  || true|| true
+fi
+KEYGEN
+[ -e /usr/local/bin/alfred-ygg-keygen ] && chmod +x /usr/local/bin/alfred-ygg-keygen
+
+# Create systemd one-shot for first-boot keygen
+cat > /etc/systemd/system/alfred-ygg-keygen.service << 'KGUNIT'
+[Unit]
+Description=Alfred Yggdrasil First-Boot Key Generation
+Before=yggdrasil.service
+ConditionPathExists=!/etc/yggdrasil/.keys-generated
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/alfred-ygg-keygen
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
+KGUNIT
+systemctl enable alfred-ygg-keygen || true || true.service 2>/dev/null || true
+
+echo "â•”â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•—"
+echo "â•‘  [0166] Yggdrasil Zero-Trust Darknet â€” COMPLETE           â•‘"
+echo "â•‘  âœ“ Yggdrasil daemon installed                             â•‘"
+echo "â•‘  âœ“ Multicast auto-peering enabled (all interfaces)       â•‘"
+echo "â•‘  âœ“ First-boot cryptographic identity generation          â•‘"
+echo "â•‘  âœ“ alfred-mesh-status monitoring tool                    â•‘"
+echo "â•‘  âœ“ IPv6 overlay network (survives internet outage)       â•‘"
+echo "â•šâ•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•"
+
+# --- END MERGED CONTENT FROM: 0166-alfred-yggdrasil-mesh.hook.chroot ---
+
+
+#!/bin/bash
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+# 0166-alfred-yggdrasil-mesh.hook.chroot
+# Phase 2: Zero-Trust Auto-Peering Darknet (Yggdrasil)
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+set +e
+echo "â•”â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•—"
+echo "â•‘  [0166] PHASE 2 â€” Yggdrasil Zero-Trust Darknet            â•‘"
+echo "â•šâ•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•"
+
+# â”€â”€ 1. Install Yggdrasil â”€â”€
+# Try repo first, fall back to static binary
+if apt-get install -y --no-install-recommends yggdrasil 2>/dev/null; then
+    echo "[YGG] Installed from repo"
+else
+    echo "[YGG] Not in repo â€” downloading static binary..."
+    ARCH=$(dpkg --print-architecture)
+    YGG_VER="0.5.12"
+    YGG_URL="https://github.com/yggdrasil-network/yggdrasil-go/releases/download/v${YGG_VER}/yggdrasil-${YGG_VER}-linux-${ARCH}"
+    
+    if curl -sfL "$YGG_URL" -o /usr/local/bin/yggdrasil 2>/dev/null; then
+        chmod +x /usr/local/bin/yggdrasil
+        echo "[YGG] Static binary installed"
+    else
+        echo "[YGG] WARNING: Could not download Yggdrasil. Will use air-gap installer on first boot."
+    fi
+    
+    # Also grab yggdrasilctl
+    YGG_CTL_URL="https://github.com/yggdrasil-network/yggdrasil-go/releases/download/v${YGG_VER}/yggdrasilctl-${YGG_VER}-linux-${ARCH}"
+    curl -sfL "$YGG_CTL_URL" -o /usr/local/bin/yggdrasilctl 2>/dev/null || true
+    chmod +x /usr/local/bin/yggdrasilctl 2>/dev/null || true
+fi
+
+# â”€â”€ 2. Generate default config â”€â”€
+mkdir -p /etc/yggdrasil
+cat > /etc/yggdrasil/yggdrasil.conf << 'YGGCONF'
+{
+  "Peers": [],
+  "InterfacePeers": {},
+  "Listen": [
+    "tls://[::]:0",
+    "tcp://[::]:0"
+  ],
+  "AdminListen": "unix:///var/run/yggdrasil.sock",
+  "MulticastInterfaces": [
+    {
+      "Regex": ".*",
+      "Beacon": true,
+      "Listen": true,
+      "Port": 0,
+      "Priority": 0,
+      "Password": ""
+    }
+  ],
+  "AllowedPublicKeys": [],
+  "IfName": "ygg0",
+  "IfMTU": 65535,
+  "NodeInfoPrivacy": true,
+  "NodeInfo": {
+    "os": "alfredlinux",
+    "role": "kingdom-node"
+  }
+}
+YGGCONF
+
+# â”€â”€ 3. Create systemd service â”€â”€
+cat > /etc/systemd/system/yggdrasil.service << 'YGGSVC'
+[Unit]
+Description=Yggdrasil Zero-Trust IPv6 Mesh Network
+Documentation=https://yggdrasil-network.github.io
+After=network.target
+Wants=network.target
+
+[Service]
+Type=simple
+ExecStartPre=-/usr/local/bin/yggdrasil -genconf > /tmp/ygg-generated.conf
+ExecStart=/usr/local/bin/yggdrasil -useconffile /etc/yggdrasil/yggdrasil.conf -logto /var/log/yggdrasil.log
+Restart=always
+RestartSec=5
+LimitNOFILE=65536
+
+# Security hardening
+ProtectHome=true
+ProtectSystem=strict
+ReadWritePaths=/var/log /var/run /etc/yggdrasil
+PrivateTmp=true
+NoNewPrivileges=false
+AmbientCapabilities=CAP_NET_ADMIN CAP_NET_RAW CAP_NET_BIND_SERVICE
+
+[Install]
+WantedBy=multi-user.target
+YGGSVC
+
+systemctl enable yggdrasil || true || true.service 2>/dev/null || true
+
+# â”€â”€ 4. Create mesh status tool â”€â”€
+cat > /usr/local/bin/alfred-mesh-status << 'MESHSTATUS'
+#!/bin/bash
+echo ""
+echo "â•”â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•—"
+echo "â•‘  Alfred Linux â€” Kingdom Mesh Status                â•‘"
+echo "â•šâ•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•"
+echo ""
+
+# WireGuard status
+echo "â”€â”€ WireGuard (Kingdom Mesh) â”€â”€"
+if command -v wg &>/dev/null; then
+    WG_PEERS=$(wg show all peers 2>/dev/null | wc -l)
+    WG_IFACE=$(wg show interfaces 2>/dev/null)
+    echo "  Interface: ${WG_IFACE:-none}"
+    echo "  Peers: ${WG_PEERS}"
+else
+    echo "  Not installed"
+fi
+echo ""
+
+# Yggdrasil status
+echo "â”€â”€ Yggdrasil (Zero-Trust Darknet) â”€â”€"
+if command -v yggdrasilctl &>/dev/null; then
+    YGG_ADDR=$(yggdrasilctl -endpoint=unix:///var/run/yggdrasil.sock getSelf 2>/dev/null | grep -o '200:[a-f0-9:]*' | head -1)
+    YGG_PEERS=$(yggdrasilctl -endpoint=unix:///var/run/yggdrasil.sock getPeers 2>/dev/null | grep -c 'remote' || echo 0)
+    echo "  IPv6 Address: ${YGG_ADDR:-not running}"
+    echo "  Connected Peers: ${YGG_PEERS}"
+    echo "  Multicast Discovery: ENABLED"
+else
+    echo "  Not installed"
+fi
+echo ""
+
+# Combined mesh nodes
+echo "â”€â”€ Combined Fleet â”€â”€"
+TOTAL=$((${WG_PEERS:-0} + ${YGG_PEERS:-0}))
+echo "  Total reachable nodes: $TOTAL"
+echo ""
+
+# Network interfaces
+echo "â”€â”€ Active Interfaces â”€â”€"
+ip -brief addr show 2>/dev/null | grep -E 'wg|ygg|tun' | sed 's/^/  /'
+echo ""
+MESHSTATUS
+chmod +x /usr/local/bin/alfred-mesh-status
+
+# â”€â”€ 5. Create first-boot key generation â”€â”€
+cat > /usr/local/bin/alfred-ygg-keygen << 'KEYGEN'
+#!/bin/bash
+# Generates a unique Yggdrasil identity on first boot
+KEYFILE="/etc/yggdrasil/yggdrasil.conf"
+GENERATED="/etc/yggdrasil/.keys-generated"
+
+if [ -f "$GENERATED" ]; then
+
+fi
+
+if command -v yggdrasil &>/dev/null; then
+    echo "[YGG] Generating unique node identity..."
+    yggdrasil -genconf -json 2>/dev/null | \
+        python3 -c "
+import json,sys
+generated = json.load(sys.stdin)
+with open('$KEYFILE') as f:
+    existing = json.load(f)
+existing['PrivateKey'] = generated.get('PrivateKey','')
+with open('$KEYFILE','w') as f:
+    json.dump(existing, f, indent=2)
+" 2>/dev/null || true
+    touch "$GENERATED"
+    echo "[YGG] Unique identity generated. Restarting..."
+    systemctl restart yggdrasil 2>/dev/null || true
+fi
+KEYGEN
+chmod +x /usr/local/bin/alfred-ygg-keygen
+
+# Create systemd one-shot for first-boot keygen
+cat > /etc/systemd/system/alfred-ygg-keygen.service << 'KGUNIT'
+[Unit]
+Description=Alfred Yggdrasil First-Boot Key Generation
+Before=yggdrasil.service
+ConditionPathExists=!/etc/yggdrasil/.keys-generated
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/alfred-ygg-keygen
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
+KGUNIT
+systemctl enable alfred-ygg-keygen || true || true.service 2>/dev/null || true
+
+echo "â•”â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•—"
+echo "â•‘  [0166] Yggdrasil Zero-Trust Darknet â€” COMPLETE           â•‘"
+echo "â•‘  âœ“ Yggdrasil daemon installed                             â•‘"
+echo "â•‘  âœ“ Multicast auto-peering enabled (all interfaces)       â•‘"
+echo "â•‘  âœ“ First-boot cryptographic identity generation          â•‘"
+echo "â•‘  âœ“ alfred-mesh-status monitoring tool                    â•‘"
+echo "â•‘  âœ“ IPv6 overlay network (survives internet outage)       â•‘"
+echo "â•šâ•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•"

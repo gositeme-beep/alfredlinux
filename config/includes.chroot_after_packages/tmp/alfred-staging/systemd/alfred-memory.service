@@ -1,0 +1,26 @@
+[Unit]
+Description=Alfred Memory — sovereign persistent recall
+Documentation=man:alfred(1)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=alfred
+Group=alfred
+Environment=CLAUDE_MEM_HOME=/var/lib/alfred/memory
+Environment=CLAUDE_MEM_PORT=37777
+Environment=ALFRED_BRAND=Alfred
+ExecStart=/usr/bin/alfred-memory worker --port 37777
+Restart=on-failure
+RestartSec=5
+
+# Hardening
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+ReadWritePaths=/var/lib/alfred
+
+[Install]
+WantedBy=multi-user.target

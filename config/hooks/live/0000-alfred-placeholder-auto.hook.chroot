@@ -1,0 +1,8 @@
+#!/bin/bash
+# SPDX-License-Identifier: AGPL-3.0-or-later
+export DEBIAN_FRONTEND=noninteractive
+export NEEDRESTART_MODE=a
+export NEEDRESTART_SUSPEND=1
+apt-get remove -y needrestart || true
+apt-get purge -y needrestart || true
+echo '[*] needrestart proactively purged.'

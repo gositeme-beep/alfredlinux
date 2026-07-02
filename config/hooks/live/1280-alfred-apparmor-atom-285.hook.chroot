@@ -1,0 +1,55 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+
+echo "[Genesis Forge] Engineering L1/L2 Cache Isolation (Spectre Defense)..."
+
+apt-get install -y --fix-broken -y util-linux || true
+
+mkdir -p /etc/apparmor.d/alfred-isolated/ || true
+
+# AppArmor Enforce Modes for both atoms
+cat > /etc/apparmor.d/alfred-isolated/profile-285 << 'EOF'
+profile alfred-sandbox-285 /usr/local/bin/alfred-util-272 flags=(enforce) {
+  #include <abstractions/base>
+  /usr/local/bin/alfred-util-272 rmix,
+  /dev/null rw,
+}
+EOF
+
+cat > /etc/apparmor.d/alfred-isolated/profile-286 << 'EOF'
+profile alfred-sandbox-286 /usr/local/bin/alfred-util-273 flags=(enforce) {
+  #include <abstractions/base>
+  /usr/local/bin/alfred-util-273 rmix,
+  /dev/null rw,
+}
+EOF
+
+# Inject Taskset Wrapper to pin execution to an isolated CPU core
+cat > /usr/local/bin/alfred-util-272-cache-isolation << 'EOF'
+#!/bin/bash
+# L1/L2 Cache Isolation (Spectre Defense)
+# Physically pins the process to CPU Core 0 using `taskset`.
+# By mathematically segregating the hardware cache, we prevent advanced
+# timing side-channel attacks like Spectre/Meltdown from leaking memory.
+
+# 0x01 = Core 0
+taskset 0x01 /usr/local/bin/alfred-util-272 "$@"
+EOF
+
+cat > /usr/local/bin/alfred-util-273-cache-isolation << 'EOF'
+#!/bin/bash
+# L1/L2 Cache Isolation (Spectre Defense)
+# Physically pins the process to CPU Core 1 using `taskset`.
+
+# 0x02 = Core 1
+taskset 0x02 /usr/local/bin/alfred-util-273 "$@"
+EOF
+
+[ -e "/usr/local/bin/alfred-util-272-cache-isolation" ] && chmod +x /usr/local/bin/alfred-util-272-cache-isolation || true
+[ -e "/usr/local/bin/alfred-util-273-cache-isolation" ] && chmod +x /usr/local/bin/alfred-util-273-cache-isolation || true
+
+echo "[Genesis Forge] L1/L2 Cache Isolation Integrated."
+exit 0

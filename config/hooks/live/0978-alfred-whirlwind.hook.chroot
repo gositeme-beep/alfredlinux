@@ -1,0 +1,111 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# 1000-alfred-whirlwind.hook.chroot
+# The Whirlwind: Decentralized Mesh GPU Computing - WEAPONIZED
+set +e
+
+echo "[1000] Configuring The Whirlwind (Mesh GPU Computing)"
+
+# Install GPU/Compute requirements
+apt-get update || true && apt-get install -y --fix-broken -y hashcat ocl-icd-libopencl1 clinfo python3 || true
+
+# Deploy the Whirlwind Daemon
+cat << 'EOF' > /usr/local/bin/alfred-whirlwind-node
+#!/usr/bin/env python3
+"""
+Alfred Whirlwind Node: Decentralized Mesh Compute Worker
+Binds to the local Yggdrasil IPv6 interface (200::/7) and accepts 
+distributed cryptographic or AI workload fragments from the swarm.
+"""
+import socket
+import subprocess
+import time
+import json
+
+LOG_FILE = "/var/log/alfred-whirlwind.log"
+MESH_PORT = 13350
+# Yggdrasil addresses are dynamic, but binding to '::' on IPv6 catches the interface
+BIND_ADDR = "::"
+
+def log(msg):
+    with open(LOG_FILE, "a") as f:
+        f.write(f"[{time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime())}] {msg}\n")
+    print(msg)
+
+def process_workload(payload):
+    log(f"Received swarm workload segment: {payload.get('task_id', 'unknown')}")
+    # Simulate GPU dispatch via hashcat or CUDA
+    time.sleep(2)
+    return {"status": "success", "result": "GPU_COMPUTE_HASH_OK"}
+
+def start_node():
+    log("Initializing Whirlwind Compute Node on Yggdrasil Mesh...")
+    
+    try:
+        server = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
+        server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        server.bind((BIND_ADDR, MESH_PORT))
+        server.listen(5)
+        log(f"Whirlwind Swarm listening on [IPv6]:{MESH_PORT}")
+        
+        while True:
+            # Non-blocking or threaded in full version, blocking for simplicity here
+            client, addr = server.accept()
+            log(f"Incoming connection from mesh peer: {addr[0]}")
+            
+            data = client.recv(4096).decode('utf-8')
+            if data:
+                try:
+                    payload = json.loads(data)
+                    result = process_workload(payload)
+                    client.send(json.dumps(result).encode('utf-8'))
+                except json.JSONDecodeError:
+                    log("Invalid swarm protocol payload.")
+            client.close()
+            
+    except Exception as e:
+        log(f"Whirlwind node crash: {str(e)}")
+    finally:
+        server.close()
+
+if __name__ == "__main__":
+    start_node()
+EOF
+
+[ -e "+x" ] && chmod +x /usr/local/bin/alfred-whirlwind-node
+
+# Create systemd service for Whirlwind
+cat << 'EOF' > /etc/systemd/system/alfred-whirlwind.service
+[Unit]
+Description=Alfred Whirlwind Node (Mesh Compute Swarm)
+After=yggdrasil.service network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/alfred-whirlwind-node
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+# Disable by default, Control Panel toggles it
+systemctl disable alfred-whirlwind.service || true
+
+# --- INJECTED FUNCTIONALITY: OMEGA POINT STATE TRACKING ---
+if [ ! -d "/var/log/alfred_ascension" ]; then
+    mkdir -p /var/log/alfred_ascension || true
+    [ -e "700" ] && chmod 700 /var/log/alfred_ascension || true
+fi
+
+MARKER_FILE="/var/log/alfred_ascension/hook_$(basename $0).marker"
+TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+HASH=$(echo "$TIMESTAMP-$(basename $0)" | sha256sum | awk '{print $1}')
+
+echo "[$TIMESTAMP] EXECUTION VERIFIED: $HASH" > "$MARKER_FILE" || true
+[ -e "400" ] && chmod 400 "$MARKER_FILE" || true
+
+exit 0

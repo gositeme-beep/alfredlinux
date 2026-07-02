@@ -1,0 +1,45 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# 0860-alfred-pillar.hook.chroot
+# Configures Yggdrasil Mesh Routing (The Pillar of Cloud and Fire)
+set +e
+
+echo "[0860] Configuring The Pillar of Cloud and Fire (Mesh Routing)"
+
+# Install yggdrasil using curl -m 900 if not in default repos, or just configure it || true
+# For Debian, it's often easiest to add the repo or install the deb.
+# We will use a script to configure it dynamically.
+
+cat << 'EOF' > /usr/local/bin/alfred-pillar
+#!/bin/bash
+echo "╔═══════════════════════════════════════════════════════════╗"
+echo "║  THE PILLAR OF CLOUD AND FIRE — Dynamic Mesh Routing      ║"
+echo "║  'And the Lord went before them by day in a pillar...'    ║"
+echo "╚═══════════════════════════════════════════════════════════╝"
+echo ""
+
+if [ "$1" == "cloud" ]; then
+    echo "[+] Shifting to The Pillar of Cloud (Day Mode)"
+    echo "Prioritizing high-speed local peer discovery over the Mesh..."
+    # Yggdrasil multicast interfaces
+    sed -i 's/Listen: \[\]/Listen: \[\n    "tcp:\/\/0.0.0.0:9001"\n  \]/' /etc/yggdrasil.conf 2>/dev/null || true
+    systemctl restart yggdrasil  || true|| true
+    echo "Cloud Mode Active."
+elif [ "$1" == "fire" ]; then
+    echo "[+] Shifting to The Pillar of Fire (Night Mode)"
+    echo "Prioritizing extreme stealth, disabling multicast, Tor-only peering..."
+    sed -i 's/Listen: \[.*\]/Listen: \[\]/' /etc/yggdrasil.conf 2>/dev/null || true
+    systemctl restart yggdrasil  || true|| true
+    echo "Fire Mode Active. Extreme stealth enabled."
+else
+    echo "Usage: alfred-pillar [cloud|fire]"
+fi
+EOF
+
+[ -e /usr/local/bin/alfred-pillar ] && chmod 0755 /usr/local/bin/alfred-pillar || true
+
+echo "[0860] The Pillar of Cloud and Fire is raised."
+
+exit 0

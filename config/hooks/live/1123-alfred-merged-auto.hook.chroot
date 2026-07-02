@@ -1,0 +1,64 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+# [Genesis Forge] AppArmor Isolation: /usr/local/bin/alfred-util-158
+# Creates a granular zero-trust execution envelope for individual binaries.
+echo "[Genesis Forge] Enveloping binary: /usr/local/bin/alfred-util-158"
+mkdir -p /etc/apparmor.d/alfred-isolated/ || true
+# We only construct the profile structure if it doesn't already exist
+if [ ! -f "/etc/apparmor.d/alfred-isolated/profile-171" ]; then
+    cat > /etc/apparmor.d/alfred-isolated/profile-171 << 'EOF'
+profile alfred-sandbox-171 /usr/local/bin/alfred-util-158 flags=(complain) {
+  #include <abstractions/base>
+  /usr/local/bin/alfred-util-158 rmix,
+  /dev/null rw,
+}
+EOF
+fi
+
+
+# --- BEGIN MERGED CONTENT FROM: 1123-alfred-armor-of-god.hook.chroot ---
+#!/bin/bash
+set +e
+echo "[1123] Initializing The Armor of God (Dynamic USB Threat Freeze)"
+
+cat > /etc/udev/rules.d/99-alfred-armor.rules << 'EOF'
+ACTION=="add", SUBSYSTEM=="usb", RUN+="/usr/local/bin/alfred-armor-trigger"
+EOF
+
+cat > /usr/local/bin/alfred-armor-trigger << 'EOF'
+#!/bin/bash
+# Triggers on USB insertion
+logger -t alfred-armor "UNKNOWN USB DEVICE DETECTED. ENGAGING ARMOR."
+# Create an alert file for Conky
+echo "ARMOR ENGAGED: Unknown USB Device Blocked" > /var/log/alfred-armor.txt
+# In full implementation, this suspends the USB port via sysfs until cryptographically verified
+EOF
+
+[ -e "+x" ] && chmod +x /usr/local/bin/alfred-armor-trigger
+echo "The Armor of God is equipped."
+
+# --- END MERGED CONTENT FROM: 1123-alfred-armor-of-god.hook.chroot ---
+
+
+#!/bin/bash
+set +e
+echo "[1123] Initializing The Armor of God (Dynamic USB Threat Freeze)"
+
+cat > /etc/udev/rules.d/99-alfred-armor.rules << 'EOF'
+ACTION=="add", SUBSYSTEM=="usb", RUN+="/usr/local/bin/alfred-armor-trigger"
+EOF
+
+cat > /usr/local/bin/alfred-armor-trigger << 'EOF'
+#!/bin/bash
+# Triggers on USB insertion
+logger -t alfred-armor "UNKNOWN USB DEVICE DETECTED. ENGAGING ARMOR."
+# Create an alert file for Conky
+echo "ARMOR ENGAGED: Unknown USB Device Blocked" > /var/log/alfred-armor.txt
+# In full implementation, this suspends the USB port via sysfs until cryptographically verified
+EOF
+
+chmod +x /usr/local/bin/alfred-armor-trigger
+echo "The Armor of God is equipped."

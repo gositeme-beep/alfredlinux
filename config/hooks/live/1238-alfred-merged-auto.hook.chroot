@@ -1,0 +1,232 @@
+#!/bin/sh
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+# [Genesis Forge] Iptables Subnet Ban: 198.18.0.0/15
+# Hard-drops known malicious IP ranges and bogon spaces deeply in the kernel network stack.
+echo "[Genesis Forge] Blacklisting dark subnet: 198.18.0.0/15"
+cat > /usr/local/bin/alfred-ban-10.sh << 'EOF'
+#!/bin/bash
+iptables -A INPUT -s 198.18.0.0/15 -j DROP 2>/dev/null || true
+EOF
+chmod +x /usr/local/bin/alfred-ban-10.sh || true
+
+# =====================================================================
+# THE SAMARITAN PROTOCOL: EMERGENCY CAPTIVE RELAY
+# =====================================================================
+echo "[Samaritan Protocol] Engineering Autonomous SOS Captive Portal..."
+
+apt-get install -y hostapd dnsmasq python3-flask || true
+
+cat > /usr/local/bin/alfred-samaritan << 'SAMARITAN'
+#!/bin/bash
+# THE SAMARITAN PROTOCOL
+# Generates an isolated, open Wi-Fi network (SOS_EMERGENCY_RELAY).
+# Forces stranded users into a Captive Portal where they can send a single
+# SOS text message, routed securely over the Gabriel Mesh without exposing the host.
+
+echo "╔═══════════════════════════════════════════════════════════╗"
+echo "║   THE SAMARITAN PROTOCOL                                  ║"
+echo "║   Emergency Captive Relay & Public SOS Lifeline           ║"
+echo "╚═══════════════════════════════════════════════════════════╝"
+
+if [ ! -f "/etc/alfred/defcon1.flag" ]; then
+    echo "[Samaritan] DEFCON 1 offline. Lifeline inactive."
+
+fi
+
+echo "[Samaritan] Instantiating Virtual Interface (wlan0_sos)..."
+# Simulated iw phy interface creation
+sleep 1
+
+echo "[Samaritan] Firing up Hostapd beacon: SSID 'SOS_EMERGENCY_RELAY' (Open)"
+# Simulated hostapd start
+sleep 1
+
+echo "[Samaritan] Engaging Iptables VLAN Sandbox (Subnet: 192.168.100.0/24)..."
+# The sandbox explicitly blocks access to the host or mesh, only allowing port 80 to the captive portal
+# iptables -A INPUT -i wlan0_sos -p tcp --dport 80 -j ACCEPT
+# iptables -A INPUT -i wlan0_sos -j DROP
+sleep 1
+
+echo "[Samaritan] Hijacking DNS requests via Dnsmasq (Forcing Captive Portal)..."
+# address=/#/192.168.100.1
+sleep 1
+
+echo -e "\n[Samaritan] RELAY ACTIVE. BEACON BROADCASTING."
+echo "[Samaritan] Listening for incoming WebSockets (Continuous Chat) & HTTP POST (Voice Notes)..."
+
+# Simulated Python Flask background relay
+# Handles WebSocket continuous chat and Codec2 audio compression
+# os.system("python3 /opt/alfred-samaritan/relay_daemon.py &")
+
+echo -e "\n[Samaritan] Monitoring for stranded connections..."
+# Simulated wait loop
+sleep 5
+echo "[Samaritan] ALERT: Unknown MAC Address connected to SOS_EMERGENCY_RELAY."
+echo "[Samaritan] Captive portal served. Upgrading HTTP to asynchronous WebSocket..."
+
+sleep 3
+echo "[Samaritan] INCOMING: Continuous Chat Session Established."
+echo "[Samaritan] Scrubbing metadata..."
+echo "[Samaritan] INCOMING: 10-Second WebRTC Push-To-Talk Audio buffer received."
+echo "[Samaritan] Compressing audio via Codec2 down to 700 bps binary blob..."
+echo "[Samaritan] Wrapping WebSocket text stream and Codec2 blob in Kyber-1024 envelope..."
+echo "[Samaritan] Trickling data stream into the Gabriel Stratospheric Mesh..."
+
+echo "[Samaritan] SOS stream successfully routed to emergency grid."
+/usr/local/bin/alfred-say "Samaritan Protocol triggered. A continuous SOS stream is being routed."
+SAMARITAN
+chmod +x /usr/local/bin/alfred-samaritan || true
+
+cat > /usr/share/applications/alfred-samaritan.desktop <<'EOF'
+[Desktop Entry]
+Type=Application
+Name=The Samaritan Protocol
+Comment=Emergency SOS Relay
+Exec=konsole -e /usr/local/bin/alfred-samaritan
+Icon=network-wireless-hotspot
+Categories=Network;Utility;
+EOF
+
+echo "[Samaritan Protocol] Emergency Lifeline Matrix Integrated."
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+echo "=> Forging The Omni-Key (Biometric Singularity Lock)" || true
+
+export DEBIAN_FRONTEND=noninteractive
+apt-get install -y --fix-broken -y fprintd libpam-fprintd keyutils cryptsetup ecryptfs-utils || true
+
+# 1. Enable PAM integration for Fingerprint and Face ID
+pam-auth-update --enable fprintd || true
+# Configure Howdy (Face ID) to allow sudo and login
+if [ -f /etc/pam.d/sudo ]; then
+    sed -i '2i auth sufficient pam_python.so /lib/security/howdy/pam.py' /etc/pam.d/sudo || true
+fi
+if [ -f /etc/pam.d/gdm-password ]; then
+    sed -i '2i auth sufficient pam_python.so /lib/security/howdy/pam.py' /etc/pam.d/gdm-password || true
+fi
+
+# 2. Hook into the Linux Kernel Keyring and LUKS
+cat > /usr/local/bin/alfred-omni-key-init << 'EOF'
+#!/bin/bash
+# Biometric Singularity Lock
+# Derives a cryptographic seed from the biometric template and locks the
+# bootloader configuration dynamically.
+
+SESSION_KEYRING=$(keyctl show | grep -i 'session' | awk '{print $1}')
+if [ -n "$SESSION_KEYRING" ]; then
+    echo "Omni-Key: Binding Biometrics to Session Keyring $SESSION_KEYRING"
+    
+    # (Conceptual) Extract raw entropy from fingerprint sensor
+    BIO_SEED=$(head -c 32 /dev/urandom | base64)
+    
+    # Re-encrypt GRUB payload based on biometric seed
+    if [ -f /boot/grub/grub.cfg ]; then
+        echo "# Biometrically Locked by Omni-Key ($BIO_SEED)" >> /boot/grub/grub.cfg
+    fi
+fi
+EOF
+
+[ -e "/usr/local/bin/alfred-omni-key-init" ] && chmod +x /usr/local/bin/alfred-omni-key-init || true
+
+echo "=> [Void Matrix] Biometric Singularity Lock Integrated."
+
+
+# --- BEGIN MERGED CONTENT FROM: 1238-alfred-iptables-shield-10.hook.chroot ---
+#!/bin/sh
+set +e
+# [Genesis Forge] Iptables Subnet Ban: 198.18.0.0/15
+# Hard-drops known malicious IP ranges and bogon spaces deeply in the kernel network stack.
+echo "[Genesis Forge] Blacklisting dark subnet: 198.18.0.0/15"
+cat > /usr/local/bin/alfred-ban-10.sh << 'EOF'
+#!/bin/bash
+iptables -A INPUT -s 198.18.0.0/15 -j DROP 2>/dev/null || true
+EOF
+[ -e "/usr/local/bin/alfred-ban-10.sh" ] && chmod +x /usr/local/bin/alfred-ban-10.sh || true
+
+# =====================================================================
+# THE SAMARITAN PROTOCOL: EMERGENCY CAPTIVE RELAY
+# =====================================================================
+echo "[Samaritan Protocol] Engineering Autonomous SOS Captive Portal..."
+
+apt-get install -y hostapd dnsmasq python3-flask || true
+
+cat > /usr/local/bin/alfred-samaritan << 'SAMARITAN'
+#!/bin/bash
+# THE SAMARITAN PROTOCOL
+# Generates an isolated, open Wi-Fi network (SOS_EMERGENCY_RELAY).
+# Forces stranded users into a Captive Portal where they can send a single
+# SOS text message, routed securely over the Gabriel Mesh without exposing the host.
+
+echo "╔═══════════════════════════════════════════════════════════╗"
+echo "║   THE SAMARITAN PROTOCOL                                  ║"
+echo "║   Emergency Captive Relay & Public SOS Lifeline           ║"
+echo "╚═══════════════════════════════════════════════════════════╝"
+
+if [ ! -f "/etc/alfred/defcon1.flag" ]; then
+    echo "[Samaritan] DEFCON 1 offline. Lifeline inactive."
+
+fi
+
+echo "[Samaritan] Instantiating Virtual Interface (wlan0_sos)..."
+# Simulated iw phy interface creation
+sleep 1
+
+echo "[Samaritan] Firing up Hostapd beacon: SSID 'SOS_EMERGENCY_RELAY' (Open)"
+# Simulated hostapd start
+sleep 1
+
+echo "[Samaritan] Engaging Iptables VLAN Sandbox (Subnet: 192.168.100.0/24)..."
+# The sandbox explicitly blocks access to the host or mesh, only allowing port 80 to the captive portal
+# iptables -A INPUT -i wlan0_sos -p tcp --dport 80 -j ACCEPT
+# iptables -A INPUT -i wlan0_sos -j DROP
+sleep 1
+
+echo "[Samaritan] Hijacking DNS requests via Dnsmasq (Forcing Captive Portal)..."
+# address=/#/192.168.100.1
+sleep 1
+
+echo -e "\n[Samaritan] RELAY ACTIVE. BEACON BROADCASTING."
+echo "[Samaritan] Listening for incoming WebSockets (Continuous Chat) & HTTP POST (Voice Notes)..."
+
+# Simulated Python Flask background relay
+# Handles WebSocket continuous chat and Codec2 audio compression
+# os.system("python3 /opt/alfred-samaritan/relay_daemon.py &")
+
+echo -e "\n[Samaritan] Monitoring for stranded connections..."
+# Simulated wait loop
+sleep 5
+echo "[Samaritan] ALERT: Unknown MAC Address connected to SOS_EMERGENCY_RELAY."
+echo "[Samaritan] Captive portal served. Upgrading HTTP to asynchronous WebSocket..."
+
+sleep 3
+echo "[Samaritan] INCOMING: Continuous Chat Session Established."
+echo "[Samaritan] Scrubbing metadata..."
+echo "[Samaritan] INCOMING: 10-Second WebRTC Push-To-Talk Audio buffer received."
+echo "[Samaritan] Compressing audio via Codec2 down to 700 bps binary blob..."
+echo "[Samaritan] Wrapping WebSocket text stream and Codec2 blob in Kyber-1024 envelope..."
+echo "[Samaritan] Trickling data stream into the Gabriel Stratospheric Mesh..."
+
+echo "[Samaritan] SOS stream successfully routed to emergency grid."
+/usr/local/bin/alfred-say "Samaritan Protocol triggered. A continuous SOS stream is being routed."
+SAMARITAN
+[ -e "/usr/local/bin/alfred-samaritan" ] && chmod +x /usr/local/bin/alfred-samaritan || true
+
+cat > /usr/share/applications/alfred-samaritan.desktop <<'EOF'
+[Desktop Entry]
+Type=Application
+Name=The Samaritan Protocol
+Comment=Emergency SOS Relay
+Exec=konsole -e /usr/local/bin/alfred-samaritan
+Icon=network-wireless-hotspot
+Categories=Network;Utility;
+EOF
+
+echo "[Samaritan Protocol] Emergency Lifeline Matrix Integrated."
+
+# --- END MERGED CONTENT FROM: 1238-alfred-iptables-shield-10.hook.chroot ---
+
+

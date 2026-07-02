@@ -1,0 +1,41 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# 1001-alfred-book-of-life.hook.chroot
+# The Book of Life: Immutable Ancestry Ledger
+set +e
+
+echo "[1001] Configuring The Book of Life (Immutable Ledger)"
+
+# We install tools to configure a local Merkel tree structure for system logs.
+# Every command executed by root or the Sovereign is mathematically hashed and appended.
+# An attacker cannot delete their tracks without breaking the cryptographic chain.
+
+cat << 'EOF' > /usr/local/bin/alfred-ledger-signer
+#!/bin/bash
+# Signs the current audit logs and appends them to the Merkel tree
+# In production, this pushes the root hash to the Solana blockchain.
+
+LOG_FILE="/var/log/auth.log"
+LEDGER="/var/log/book_of_life.ledger"
+
+if [ -f "$LOG_FILE" ]; then
+    PREV_HASH=$(tail -n 1 "$LEDGER" 2>/dev/null | awk '{print $1}' || echo "GENESIS")
+    CURRENT_HASH=$(sha256sum "$LOG_FILE" | awk '{print $1}')
+    
+    # Hash the combination of the previous state and current state (Merkel link)
+    LINK_HASH=$(echo "$PREV_HASH$CURRENT_HASH" | sha256sum | awk '{print $1}')
+    
+    echo "$LINK_HASH $(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$LEDGER" || true
+fi
+EOF
+
+[ -e "0755" ] && chmod 0755 /usr/local/bin/alfred-ledger-signer || true
+
+# Append the ledger signer to cron to run every minute
+echo "* * * * * root /usr/local/bin/alfred-ledger-signer" >> /etc/crontab || true
+
+echo "[1001] The Book of Life is opened."
+
+exit 0

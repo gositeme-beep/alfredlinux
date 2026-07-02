@@ -1,0 +1,30 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+echo "================================================="
+echo "==== ALFRED GHOST BOOT (Plausible Deniability) =="
+echo "================================================="
+
+export DEBIAN_FRONTEND=noninteractive
+
+# Create a decoy user
+if ! id "guest" &>/dev/null; then
+    useradd -m -s /bin/bash guest || true 2>/dev/null || true
+    echo "guest:guest" | chpasswd
+fi
+
+# Hidden GRUB entry logic (we would typically modify /etc/grub.d/40_custom)
+cat << 'EOF' >> /etc/grub.d/40_custom
+menuentry "Ghost Environment" --hotkey=f11 {
+    set root='(hd0,1)'
+    linux /vmlinuz root=/dev/mapper/system-root ro quiet splash
+    initrd /initrd.img
+}
+EOF
+chmod +x /etc/grub.d/40_custom || true
+
+echo "Ghost Boot prep completed."
+
+exit 0

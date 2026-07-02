@@ -1,0 +1,48 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+
+echo "[Genesis Forge] Engineering Cgroup CPU Starvation Collar for 211..."
+
+apt-get install -y --fix-broken -y cgroup-tools || true
+
+mkdir -p /etc/apparmor.d/alfred-isolated/ || true
+
+# Strict AppArmor Mode (Enforce)
+cat > /etc/apparmor.d/alfred-isolated/profile-211 << 'EOF'
+profile alfred-sandbox-211 /usr/local/bin/alfred-util-198 flags=(enforce) {
+  #include <abstractions/base>
+  /usr/local/bin/alfred-util-198 rmix,
+  /dev/null rw,
+}
+EOF
+
+# Inject CPU Starvation Wrapper
+cat > /usr/local/bin/alfred-util-198-cpu-wrapper << 'EOF'
+#!/bin/bash
+# CPU Starvation Collar
+# Locks the process to 5% of a single CPU core.
+# Defeats crypto-miners and brute-force payloads by physically starving them of compute.
+
+CGROUP_NAME="alfred_cpu_$$"
+cgcreate -g cpu:/$CGROUP_NAME
+
+# CPU quota: 5000us per 100000us period (5%)
+cgset -r cpu.cfs_quota_us=5000 /$CGROUP_NAME 2>/dev/null || true
+
+# Execute the utility inside the locked cgroup
+cgexec -g cpu:/$CGROUP_NAME /usr/local/bin/alfred-util-198 "$@"
+EXIT_CODE=$?
+
+# Cleanup
+cgdelete cpu:/$CGROUP_NAME 2>/dev/null || true
+
+exit $EXIT_CODE
+EOF
+
+[ -e "+x" ] && chmod +x /usr/local/bin/alfred-util-198-cpu-wrapper || true
+
+echo "[Genesis Forge] Cgroup CPU Starvation Collar Integrated."
+exit 0

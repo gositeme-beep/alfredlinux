@@ -1,0 +1,24 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+# 0414-alfred-tribe-zebulun — ⛵ zebulun — commerce-and-passage
+
+echo "[0414-tribe-zebulun] begin"
+install -d /etc/alfred/tribes /usr/share/alfred/tribes
+cat >/etc/alfred/tribes/zebulun.flag <<EOS
+TRIBE=zebulun
+EMOJI=⛵
+GIFT=commerce-and-passage
+VERSE="Genesis 49:13 — dwell at the haven of the sea."
+EOS
+cat >/usr/share/alfred/tribes/zebulun.txt <<EOS
+⛵  Tribe of zebulun
+Genesis 49:13 — dwell at the haven of the sea.
+Gift: commerce-and-passage
+EOS
+echo "[0414-tribe-zebulun] done"
+
+
+exit 0

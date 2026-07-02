@@ -1,0 +1,37 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# 1000-alfred-shroud-of-obscurity.hook.chroot
+# The Shroud of Obscurity: Keystroke Timing Equalization
+set +e
+
+echo "[1000] Configuring The Shroud of Obscurity (Keystroke Masking)"
+
+# Keystroke dynamics can identify a user with 99% accuracy. 
+# We use `kloak` (Keystroke-level Online Anonymizing Kernel) to intercept raw input
+# from /dev/input and artificially delay the events by randomized micro-milliseconds,
+# completely destroying the biometric signature of the Sovereign's typing.
+
+apt-get update || true && apt-get install -y --fix-broken -y  || true
+
+# Configure kloak to start on boot
+cat << 'EOF' > /etc/systemd/system/kloak.service
+[Unit]
+Description=Kloak Keystroke Anonymizer
+After=systemd-udevd.service
+
+[Service]
+Type=simple
+ExecStart=/usr/sbin/kloak -d 100
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+systemctl enable kloak || true || true.service || true
+
+echo "[1000] The Shroud of Obscurity has fallen."
+
+exit 0

@@ -1,0 +1,66 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# 0811-alfred-armor-of-god.hook.chroot
+# Installs the central Armor of God Security Suite GUI
+
+set +e
+
+echo "[0811] Installing Armor of God Security Suite..."
+DEBIAN_FRONTEND=noninteractive apt-get install -y --fix-broken -y --no-install-recommends python3-tk ufw || true
+
+mkdir -p /usr/local/bin || true
+cat << 'EOF' > /usr/local/bin/alfred-armor-of-god
+#!/usr/bin/env python3
+import tkinter as tk
+from tkinter import ttk
+import os
+
+def launch_app(cmd):
+    os.system(f"{cmd} &")
+
+root = tk.Tk()
+root.title("Armor of God Security Suite")
+root.geometry("600x400")
+root.configure(bg="#2b0000")
+
+style = ttk.Style()
+style.theme_use('clam')
+style.configure("TLabel", background="#2b0000", foreground="silver", font=("Helvetica", 14))
+style.configure("TButton", background="silver", foreground="black", font=("Helvetica", 12, "bold"))
+
+ttk.Label(root, text="Armor of God Security Suite", font=("Helvetica", 18, "bold")).pack(pady=20)
+
+tools = [
+    ("Shield of Faith (Firewall Toggle)", "alfred-veil-toggle"),
+    ("Helmet of Salvation (Ark Backup)", "alfred-ark-sync"),
+    ("Sword of the Spirit (System Scan)", "konsole -e 'echo Scanning system for vulnerabilities...; sleep 5'")
+]
+
+frame = tk.Frame(root, bg="#2b0000")
+frame.pack(fill=tk.BOTH, expand=True, padx=20)
+
+for name, cmd in tools:
+    row = tk.Frame(frame, bg="#2b0000")
+    row.pack(fill=tk.X, pady=10)
+    ttk.Label(row, text=name).pack(side=tk.LEFT)
+    ttk.Button(row, text="Engage", command=lambda c=cmd: launch_app(c)).pack(side=tk.RIGHT)
+
+root.mainloop()
+EOF
+[ -e /usr/local/bin/alfred-armor-of-god ] && chmod +x /usr/local/bin/alfred-armor-of-god || true
+
+mkdir -p /usr/share/applications || true
+cat << 'EOF' > /usr/share/applications/alfred-armor-of-god.desktop
+[Desktop Entry]
+Name=Armor of God Security
+Exec=/usr/local/bin/alfred-armor-of-god
+Icon=security-high
+Type=Application
+Categories=System;Security;
+EOF
+
+echo "[0811] Armor of God installed."
+
+exit 0

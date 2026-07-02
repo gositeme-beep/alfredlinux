@@ -1,0 +1,26 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+# 0181-alfred-confession — private journal (1 John 1:9). Local-only, mode 0600.
+
+echo "[0181-confession] begin"
+cat >/usr/sbin/alfred-confession <<"EOS"
+#!/bin/bash
+
+J=${ALFRED_CONFESSION_JOURNAL:-$HOME/.alfred/confession.journal}
+mkdir -p "$(dirname "$J")" || true
+touch "$J"; chmod 0600 "$J"
+case "${1:-}" in
+  add) shift; { echo "── $(date -Is) ──"; echo "$*"; echo; } >>"$J"; echo "1 John 1:9 — He is faithful and just to forgive." ;;
+  show) less "$J" 2>/dev/null || cat "$J" ;;
+  count) grep -c "^── " "$J" 2>/dev/null || echo 0 ;;
+  *) echo "usage: alfred-confession {add <text>|show|count}"; exit 0 ;;
+esac
+EOS
+[ -e /usr/sbin/alfred-confession ] && chmod 0755 /usr/sbin/alfred-confession || true
+echo "[0181-confession] done"
+
+
+exit 0

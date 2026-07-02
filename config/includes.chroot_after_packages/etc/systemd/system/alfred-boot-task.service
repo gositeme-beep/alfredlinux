@@ -1,0 +1,14 @@
+[Unit]
+Description=Alfred boot-time task dispatcher
+After=getty.target
+ConditionKernelCommandLine=alfred.task
+
+[Service]
+Type=oneshot
+ExecStart=/usr/sbin/alfred-boot-task
+StandardInput=tty
+StandardOutput=tty
+TTYPath=/dev/tty1
+
+[Install]
+WantedBy=multi-user.target

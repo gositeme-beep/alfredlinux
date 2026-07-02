@@ -1,0 +1,51 @@
+#!/bin/sh
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+
+echo "[alfred] Initializing God-Tier Offline Meta-Dome Launcher..."
+
+# Create the Offline UE 5.8 Launcher on the Desktop
+mkdir -p /etc/skel/Desktop
+cat << 'LAUNCHER' > /etc/skel/Desktop/Enter-Meta-Dome.desktop
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Enter Meta-Dome (UE 5.8)
+Comment=Ignite the offline 100GB Unreal Engine 5.8 Payload
+Exec=/usr/local/bin/meta-dome-launcher
+Icon=applications-games
+Terminal=true
+LAUNCHER
+
+chmod +x /etc/skel/Desktop/Enter-Meta-Dome.desktop
+
+# Create the core IPFS/Solana bridging logic
+cat << 'SCRIPT' > /usr/local/bin/meta-dome-launcher
+#!/bin/bash
+echo "=================================================="
+echo "      ALFRED LINUX : META-DOME OFFLINE ARK        "
+echo "=================================================="
+
+echo "Verifying Solana Mesh-Identity for Land Acquisition..."
+if [ ! -f ~/.config/solana/id.json ]; then
+    echo "Generating new local Solana wallet for Meta-Dome Land Ledger..."
+    solana-keygen new --no-passphrase --silent || true
+fi
+SOL_ADDR=$(solana address)
+echo "Identity Locked: $SOL_ADDR"
+
+echo ""
+echo "Verifying Offline 100GB UE 5.8 Payload..."
+if [ ! -d "/opt/unreal-engine/Engine/Binaries/Linux" ]; then
+    echo "CRITICAL ERROR: Unreal Engine 5.8 payload was not baked into this ISO."
+    echo "This USB drive does not contain the 100GB Meta-Dome Ark."
+    true
+fi
+
+echo "Igniting Unreal Engine 5.8 Offline Core..."
+/opt/unreal-engine/Engine/Binaries/Linux/UnrealEditor -MetaDome -SolanaIdentity=$SOL_ADDR
+SCRIPT
+
+chmod +x /usr/local/bin/meta-dome-launcher
+
+echo "[alfred] Offline Meta-Dome Ark successfully locked into OS."

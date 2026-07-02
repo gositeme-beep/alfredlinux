@@ -1,0 +1,27 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+
+echo "=== Alfred Linux: Setting Up Plasma Desktop Shortcuts ==="
+
+SKEL_DESKTOP="/etc/skel/Desktop"
+mkdir -p "$SKEL_DESKTOP"
+
+# Copy all the Alfred and GoSiteMe desktop files to the skel desktop
+# EXCLUDES private tools like Ops Hub
+[ -e /usr/share/applications/gositeme-ide.desktop ] && cp /usr/share/applications/gositeme-ide.desktop "$SKEL_DESKTOP/" 2>/dev/null || true
+[ -e /usr/share/applications/alfred-browser.desktop ] && cp /usr/share/applications/alfred-browser.desktop "$SKEL_DESKTOP/" 2>/dev/null || true
+[ -e /usr/share/applications/alfred-ide.desktop ] && cp /usr/share/applications/alfred-ide.desktop "$SKEL_DESKTOP/" 2>/dev/null || true
+[ -e /usr/share/applications/alfred-brain.desktop ] && cp /usr/share/applications/alfred-brain.desktop "$SKEL_DESKTOP/" 2>/dev/null || true
+[ -e /usr/share/applications/alfred-tribe.desktop ] && cp /usr/share/applications/alfred-tribe.desktop "$SKEL_DESKTOP/" 2>/dev/null || true
+[ -e /usr/share/applications/alfred-veil.desktop ] && cp /usr/share/applications/alfred-veil.desktop "$SKEL_DESKTOP/" 2>/dev/null || true
+[ -e /usr/share/applications/alfred-watchers.desktop ] && cp /usr/share/applications/alfred-watchers.desktop "$SKEL_DESKTOP/" 2>/dev/null || true
+
+# Make them executable so Plasma doesn't complain about untrusted launchers
+[ -e "$SKEL_DESKTOP"/*.desktop ] && chmod +x "$SKEL_DESKTOP"/*.desktop || true
+
+echo "=== Plasma Desktop Shortcuts Configured ==="
+
+exit 0

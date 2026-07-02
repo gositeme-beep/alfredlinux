@@ -1,0 +1,101 @@
+#!/bin/bash
+# /usr/local/bin/alfred-welcome
+# Renders /usr/share/alfred/welcome/welcome.xml in a 24-bit terminal.
+# Auto-detects user's locale → opens the matching panel first, then offers
+# all others. Always ends at the same Door.
+
+set +e
+export LC_ALL=C.UTF-8
+W=/usr/share/alfred/welcome/welcome.xml
+[ -r "$W" ] || { echo "alfred-welcome: $W missing"; exit 1; }
+
+# colors
+G=$'\e[38;2;255;215;0m'; X=$'\e[0m'; DIM=$'\e[2m'; BOLD=$'\e[1m'
+B=$'\e[38;2;100;200;255m'; L=$'\e[38;2;180;130;255m'
+R=$'\e[38;2;255;90;90m'; GR=$'\e[38;2;120;220;120m'
+
+# pick first panel by locale
+case "${LANG:-en}" in
+    he*) FIRST=messianic-jewish ;;
+    ar*) FIRST=muslim ;;
+    es*|it*|pt*|fr*|pl*) FIRST=catholic-orthodox ;;
+    hi*|sa*|ta*|bn*) FIRST=hindu-buddhist-seeker ;;
+    *)   FIRST=protestant-evangelical ;;
+esac
+[ -n "$1" ] && FIRST="$1"
+
+xq() {  # tiny xpath: extract <tag>…</tag> from a panel id
+    local PANEL="$1" TAG="$2"
+    awk -v p="$PANEL" -v t="$TAG" '
+        $0 ~ "<panel id=\""p"\"" {inp=1}
+        inp && $0 ~ "<"t {
+            sub(".*<"t"[^>]*>","");
+            sub("</"t">.*","");
+            print; exit
+        }
+        inp && /<\/panel>/ {exit}
+    ' "$W"
+}
+
+panel() {
+    local id=$1
+    local greet=$(xq "$id" greeting)
+    local open=$(xq "$id" opening)
+    local bridge=$(xq "$id" bridge)
+    local invite=$(xq "$id" invitation)
+    echo
+    echo "${G}╔══════════════════════════════════════════════════════════════════╗${X}"
+    echo "${G}║${X}  ${BOLD}${L}${greet}${X}"
+    echo "${G}╚══════════════════════════════════════════════════════════════════╝${X}"
+    echo
+    echo "${open}" | fold -s -w 64 | sed "s/^/  /"
+    echo
+    echo "  ${B}${BOLD}❖ The Bridge${X}"
+    echo "${bridge}" | fold -s -w 64 | sed "s/^/    /"
+    echo
+    echo "  ${GR}${BOLD}❖ The Invitation${X}"
+    echo "${invite}" | fold -s -w 64 | sed "s/^/    /"
+    echo
+}
+
+# Banner
+clear 2>/dev/null
+echo "${G}"
+cat <<'EOF'
+       ✠  A L F R E D   L I N U X   7.77  ✠
+       The Welcome of All Welcomes
+EOF
+echo "${X}"
+echo "${DIM}\"And whosoever shall call upon the name of the Lord shall be saved.\""
+echo "                                              — Romans 10:13${X}"
+echo
+
+panel "$FIRST"
+
+echo "${DIM}── Other voices, same Door ──${X}"
+echo
+ALL="messianic-jewish muslim catholic-orthodox protestant-evangelical hindu-buddhist-seeker agnostic-atheist wounded-by-religion"
+i=1
+for id in $ALL; do
+    [ "$id" = "$FIRST" ] && continue
+    g=$(xq "$id" greeting)
+    printf "  ${B}[%d]${X} %-22s  %s\n" "$i" "$id" "${DIM}${g}${X}"
+    i=$((i+1))
+done
+echo
+echo "  ${G}[B]${X} Read John 3:16     ${G}[P]${X} Pray the prayer of faith"
+echo "  ${G}[S]${X} Sign the Book      ${G}[Q]${X} Quit"
+echo
+echo -n "${BOLD}Choose:${X} "
+read CHOICE
+case "$CHOICE" in
+    1|2|3|4|5|6) n=0; for id in $ALL; do
+            [ "$id" = "$FIRST" ] && continue
+            n=$((n+1))
+            [ "$n" = "$CHOICE" ] && exec "$0" "$id"
+        done ;;
+    B|b) exec alfred-bible read john 3:16-17 ;;
+    P|p) exec alfred-bible read romans 10:9-10 ;;
+    S|s) exec alfred-witness sign ;;
+    *)   echo; echo "  ${G}Shalom. The Door remains open.${X}"; echo ;;
+esac

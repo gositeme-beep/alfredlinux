@@ -1,0 +1,65 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# 0816-alfred-omegon-config.hook.chroot
+# Configures the Omegon terminal client to point to the local Sovereign AI
+
+set +e
+
+echo "[0816] Configuring Alfred AI Client (Omegon) for Offline Local Provider..."
+
+mkdir -p /etc/profile.d || true
+cat << 'EOF' > /etc/profile.d/alfred-offline-ai.sh
+# Force the Alfred terminal client to use the local Sovereign AI backend
+export OPENAI_API_BASE="http://127.0.0.1:8080/v1"
+export OPENAI_API_KEY="sk-alfred-offline"
+
+# Omegon specific env vars
+export OMEGON_API_BASE="http://127.0.0.1:8080/v1"
+export OMEGON_API_KEY="sk-alfred-offline"
+export OMEGON_PROVIDER="openai"
+export OMEGON_MODEL="alfred"
+
+# Anthropic fallbacks just in case
+export ANTHROPIC_API_KEY="sk-alfred-offline"
+export ANTHROPIC_API_BASE="http://127.0.0.1:8080/v1"
+EOF
+[ -e /etc/profile.d/alfred-offline-ai.sh ] && chmod +x /etc/profile.d/alfred-offline-ai.sh || true
+
+# Create the omegon config file in skel to bypass the /login prompt
+mkdir -p /etc/skel/.config/omegon || true
+
+# TOML format
+cat << 'EOF' > /etc/skel/.config/omegon/config.toml
+[provider]
+name = "openai"
+api_key = "sk-alfred-offline"
+api_base = "http://127.0.0.1:8080/v1"
+default_model = "alfred"
+EOF
+
+# YAML format fallback
+cat << 'EOF' > /etc/skel/.config/omegon/config.yaml
+provider:
+  name: openai
+  api_key: sk-alfred-offline
+  api_base: http://127.0.0.1:8080/v1
+  default_model: alfred
+EOF
+
+# JSON format fallback
+cat << 'EOF' > /etc/skel/.config/omegon/config.json
+{
+  "provider": {
+    "name": "openai",
+    "api_key": "sk-alfred-offline",
+    "api_base": "http://127.0.0.1:8080/v1",
+    "default_model": "alfred"
+  }
+}
+EOF
+
+echo "[0816] Offline AI configuration injected."
+
+exit 0

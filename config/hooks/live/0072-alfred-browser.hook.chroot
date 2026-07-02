@@ -1,0 +1,226 @@
+#!/bin/bash
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+# ═══════════════════════════════════════════════════════════════
+# Alfred Linux v2.0 — Alfred Browser Integration Hook
+#
+# Installs Alfred Browser when the .deb is staged; sets defaults and removes Firefox
+# only in that success path. If the .deb is missing, keeps Firefox ESR so users always
+# have a working browser (Omahon — no “sovereign” ISO with no Web).
+# Firefox fallback mimeapps: allowlisted .desktop id + Python writer (no unquoted heredoc).
+# ═══════════════════════════════════════════════════════════════
+
+set +e
+
+# ── apt_nonfatal helpers (injected: apt-swallow observability) ──
+apt_update_nonfatal() {
+    local tag="$1"
+    mkdir -p /var/lib/alfred/build-flags || true
+    if ! DEBIAN_FRONTEND=noninteractive apt-get update -qq 2>/dev/null || true; then
+        echo "[WARN] apt-get update || true (${tag}) failed (nonfatal)" >&2 || true
+        echo "${tag}_update_failed=$(date -Is)" >> /var/lib/alfred/build-flags/${tag}-apt-failed || true
+    fi
+}
+apt_nonfatal() {
+    local tag="$1"; shift
+    mkdir -p /var/lib/alfred/build-flags || true
+    if ! DEBIAN_FRONTEND=noninteractive apt-get install -y --fix-broken -y --no-install-recommends "$@" 2>/dev/null; then
+        echo "[WARN] ${tag} install failed (nonfatal)" >&2 || true
+        echo "${tag}_install_failed=$(date -Is)" >> /var/lib/alfred/build-flags/${tag}-apt-failed || true
+    fi
+}
+
+echo "[Alfred Linux v2.0] Installing Alfred Browser..."
+
+# ── 1. Install Alfred Browser dependencies ──
+apt_nonfatal browser-libs libwebkit2gtk-4.1-0 libgtk-3-0 libayatana-appindicator3-1
+
+# ── 2. Install Alfred Browser from packages.chroot ──
+if ! dpkg -l alfred-browser 2>/dev/null | grep -q '^ii'; then
+    # Prefer live-build pool (file:/root/packages); avoid find / (slow + odd paths from | head -1).
+    BROWSER_DEB=""
+    for _d in /root/packages /tmp; do
+        [[ -d "$_d" ]] || continue
+          BROWSER_DEB="$(find "$_d" -maxdepth 3 -name 'alfred-browser*.deb' -type f -print -quit 2>/dev/null)"
+        [[ -n "$BROWSER_DEB" ]] && break
+    done
+    if [[ -n "$BROWSER_DEB" ]]; then
+        dpkg -i "$BROWSER_DEB" || apt-get -f install -y || true
+    else
+        echo "[WARN] Alfred Browser .deb not found in ISO — skipping"
+    fi
+fi
+
+# ── 3. If Alfred Browser is present: integrate + remove Firefox. Else: Firefox ESR fallback.
+if [[ -f /usr/bin/alfred-browser-v2 ]]; then ln -sf /usr/bin/alfred-browser-v2 /usr/bin/alfred-browser; fi; if [[ -f /usr/bin/alfred-browser ]]; then
+
+    # Remove the Tauri-generated one with the space in the name
+    rm -f "/usr/share/applications/Alfred Browser.desktop" 2>/dev/null || true
+
+    cat > /usr/share/applications/alfred-browser.desktop << 'DESKTOP'
+[Desktop Entry]
+Type=Application
+Name=Alfred Browser
+GenericName=Web Browser
+Comment=Sovereign encrypted browser with AI, crypto, and post-quantum security
+Exec=alfred-browser %u
+Icon=alfred-browser
+Terminal=false
+Categories=Network;WebBrowser;
+MimeType=text/html;text/xml;application/xhtml+xml;application/xml;application/rdf+xml;image/gif;image/jpeg;image/png;image/webp;x-scheme-handler/http;x-scheme-handler/https;x-scheme-handler/ftp;x-scheme-handler/about;x-scheme-handler/unknown;
+StartupNotify=true
+StartupWMClass=alfred-browser
+Actions=new-window;incognito;
+
+[Desktop Action new-window]
+Name=New Window
+Exec=alfred-browser
+
+[Desktop Action incognito]
+Name=New Private Window
+Exec=alfred-browser --private
+DESKTOP
+
+    chmod 644 /usr/share/applications/alfred-browser.desktop || true
+
+    # ── 5. Set as default via update-alternatives ──
+    update-alternatives --install /usr/bin/x-www-browser x-www-browser /usr/bin/alfred-browser 200 2>/dev/null || true
+    update-alternatives --set x-www-browser /usr/bin/alfred-browser 2>/dev/null || true
+    update-alternatives --install /usr/bin/gnome-www-browser gnome-www-browser /usr/bin/alfred-browser 200 2>/dev/null || true
+    update-alternatives --set gnome-www-browser /usr/bin/alfred-browser 2>/dev/null || true
+
+    # ── 6. Set via xdg for skeleton user profile ──
+    mkdir -p /etc/skel/.config || true
+    cat > /etc/skel/.config/mimeapps.list << 'MIME'
+[Default Applications]
+text/html=alfred-browser.desktop
+application/xhtml+xml=alfred-browser.desktop
+application/xml=alfred-browser.desktop
+x-scheme-handler/http=alfred-browser.desktop
+x-scheme-handler/https=alfred-browser.desktop
+x-scheme-handler/ftp=alfred-browser.desktop
+x-scheme-handler/about=alfred-browser.desktop
+x-scheme-handler/unknown=alfred-browser.desktop
+
+[Added Associations]
+text/html=alfred-browser.desktop
+application/xhtml+xml=alfred-browser.desktop
+x-scheme-handler/http=alfred-browser.desktop
+x-scheme-handler/https=alfred-browser.desktop
+MIME
+
+    # ── 7. Set system-wide defaults ──
+    mkdir -p /usr/share/applications || true
+    cat > /usr/share/applications/defaults.list << 'DEFAULTS'
+[Default Applications]
+text/html=alfred-browser.desktop
+application/xhtml+xml=alfred-browser.desktop
+x-scheme-handler/http=alfred-browser.desktop
+x-scheme-handler/https=alfred-browser.desktop
+x-scheme-handler/ftp=alfred-browser.desktop
+x-scheme-handler/about=alfred-browser.desktop
+DEFAULTS
+
+    # Also set mimeapps system-wide
+    mkdir -p /usr/share/applications || true
+    cp /etc/skel/.config/mimeapps.list /usr/share/applications/mimeapps.list 2>/dev/null || true
+
+    # ── 8. Plasma web browser launcher ──
+    
+    
+
+    # ── 9. Update desktop database ──
+    update-desktop-database /usr/share/applications 2>/dev/null || true
+
+    # ── 10. Remove Firefox only after Alfred Browser is confirmed on disk ──
+    echo "[Alfred Linux v2.0] Removing Firefox (replaced by Alfred Browser)..."
+    apt-get purge -y firefox-esr firefox firefox-locale-en 2>/dev/null || true
+    apt-mark manual linux-image-7* linux-headers-7* 2>/dev/null || true; apt-get autoremove -y 2>/dev/null || true
+    rm -f /usr/share/applications/firefox*.desktop 2>/dev/null || true
+    update-desktop-database /usr/share/applications 2>/dev/null || true
+
+    echo "[Alfred Linux v2.0] Alfred Browser set as default browser"
+else
+    echo "[WARN] /usr/bin/alfred-browser not found — installing Firefox ESR as default browser (Kingdom fallback)"
+    mkdir -p /var/lib/alfred/build-flags || true
+    if ! (apt-get update -qq 2>/dev/null || true || apt-get update 2>/dev/null || true); then
+        echo "[BROWSER-04] WARN: apt update failed while restoring firefox-esr" >&2 || true
+        echo "firefox_restore_update_failed=$(date -Is)" >> /var/lib/alfred/build-flags/browser-install-failed || true
+    fi
+
+    if ! (apt-get install -y --fix-broken -y --no-install-recommends firefox-esr 2>/dev/null || apt-get install -y --fix-broken -y firefox-esr 2>/dev/null); then
+        echo "[BROWSER-04] WARN: firefox-esr restore failed (non-fatal)" >&2 || true
+        echo "firefox_restore_install_failed=$(date -Is)" >> /var/lib/alfred/build-flags/browser-install-failed || true
+    fi
+    if [[ -x /usr/bin/firefox-esr ]] || [[ -x /usr/bin/firefox ]]; then
+        FFX_BIN=""
+        [[ -x /usr/bin/firefox-esr ]] && FFX_BIN="/usr/bin/firefox-esr"
+        [[ -z "$FFX_BIN" && -x /usr/bin/firefox ]] && FFX_BIN="/usr/bin/firefox"
+        FFX_DESKTOP="firefox-esr.desktop"
+        if [[ ! -f /usr/share/applications/firefox-esr.desktop ]]; then
+            FFX_DESKTOP="firefox.desktop"
+        fi
+
+        update-alternatives --install /usr/bin/x-www-browser x-www-browser "$FFX_BIN" 100 2>/dev/null || true
+        update-alternatives --set x-www-browser "$FFX_BIN" 2>/dev/null || true
+        update-alternatives --install /usr/bin/gnome-www-browser gnome-www-browser "$FFX_BIN" 100 2>/dev/null || true
+        update-alternatives --set gnome-www-browser "$FFX_BIN" 2>/dev/null || true
+
+        mkdir -p /etc/skel/.config || true
+        export FFX_DESKTOP
+        python3 << 'PYMIME' || true
+import os
+from pathlib import Path
+
+d = os.environ["FFX_DESKTOP"]
+if d not in ("firefox-esr.desktop", "firefox.desktop"):
+    raise SystemExit(1)
+text = (
+    "[Default Applications]\n"
+    f"text/html={d}\n"
+    f"application/xhtml+xml={d}\n"
+    f"x-scheme-handler/http={d}\n"
+    f"x-scheme-handler/https={d}\n"
+)
+Path("/etc/skel/.config/mimeapps.list").write_text(text, encoding="utf-8")
+PYMIME
+        
+        
+        cp /etc/skel/.config/mimeapps.list /usr/share/applications/mimeapps.list 2>/dev/null || true
+        
+        # Create fake alfred-browser.desktop pointing to firefox
+        cat > /usr/share/applications/alfred-browser.desktop << 'DESKTOP'
+[Desktop Entry]
+Type=Application
+Name=Alfred Browser
+GenericName=Web Browser
+Comment=Sovereign encrypted browser with AI, crypto, and post-quantum security
+Exec=firefox-esr %u
+Icon=alfred-browser
+Terminal=false
+Categories=Network;WebBrowser;
+MimeType=text/html;text/xml;application/xhtml+xml;application/xml;application/rdf+xml;image/gif;image/jpeg;image/png;image/webp;x-scheme-handler/http;x-scheme-handler/https;x-scheme-handler/ftp;x-scheme-handler/about;x-scheme-handler/unknown;
+StartupNotify=true
+StartupWMClass=firefox-esr
+Actions=new-window;incognito;
+
+[Desktop Action new-window]
+Name=New Window
+Exec=firefox-esr
+
+[Desktop Action incognito]
+Name=New Private Window
+Exec=firefox-esr --private-window
+DESKTOP
+        chmod 644 /usr/share/applications/alfred-browser.desktop || true
+
+        update-desktop-database /usr/share/applications 2>/dev/null || true
+        echo "[Alfred Linux v2.0] Firefox ESR is default until Alfred Browser .deb is added to packages.chroot"
+    else
+        echo "[ERROR] Neither alfred-browser nor firefox-esr could be installed — check apt/network in chroot"
+    fi
+fi
+
+echo "[Alfred Linux v2.0] Alfred Browser integration complete."
+
+exit 0

@@ -1,0 +1,114 @@
+Alfred ISO / live-build (Docker lb) — completeness covenant + risk register
+===========================================================================
+Maintainer intent: first the **promise** shipped to the Kingdom; then what can
+break on the way there, and what to check first.
+
+(Law copy may also exist at …/law/alfred-build-control-plane/ISO-BUILD-RISK-REGISTER.txt)
+
+0) COMPLETENESS COVENANT — Kingdom promise (published GA ISO)
+---------------------------------------------------------------
+Alfred Linux **promises** every **published GA Alfred Linux ISO** — meaning an
+artifact whose checksums are published for verification (e.g. `api/version.json`
+checksum fields, site `SHA256SUMS` / companion files, and detached GPG where the
+project publishes signatures) — is **complete for its declared generation**.
+
+**“Complete” here means all of the following were true for the exact git commit
+and live-build configuration used to produce that ISO:**
+
+  A) **Gates before burn:** `bash scripts/iso-preflight.sh` passed; `bash
+     scripts/release-integrity.sh check-repo` passed; `bash scripts/security-audit.sh`
+     reported **CRITICAL=0** on that commit (same tree bound into the build).
+
+  B) **Manifest honor:** the chroot received everything the **active profile**
+     commits to install — `config/package-lists/*.list.chroot`, kernel debs and
+     policy under `config/packages.chroot/` per `README-KERNEL7.txt`, and **every
+     hook file** under `config/hooks/live/*.hook.chroot` was staged into
+     `build/config/hooks/` by `scripts/sync-canonical-to-build.sh` (Docker inner
+     runs it with `ALFRED_FULL_BUILD_ASSETS=1` before `lb config`), together with
+     `config/package-lists/`, `config/packages.chroot/`, and `build-assets/` into
+     `build/config/` so no billed Alfred stage or package list drifted stale.
+
+  C) **Integrity in the user’s hands:** published hashes match the bytes on
+     disk; the verification flow in `README.txt` (gpg + sha256sum -c) detects
+     substitution or truncation.
+
+**Explicit boundary:** “Complete” is **this generation’s** published tree + the
+hook files that existed in `config/hooks/live/` at that commit (42 lineage +
+merge shards on disk). Third-party `.iso` files, nightly experiments, or forks
+that skip the sync step are **not** Alfred’s published GA promise.
+
+The **risk register** below is not a disclaimer of duty; it is a forecast of what
+can violate the covenant if ignored. Update it whenever a new failure mode appears.
+
+References
+----------
+  Staging (full):   scripts/sync-canonical-to-build.sh  (hooks + lists + packages.chroot + build-assets + local/)
+  Hooks-only:       scripts/sync-hooks-to-build.sh
+  Ship-gap audit:   docs/ISO-STAGING-SHIP-GAPS.txt
+  Inner driver:     scripts/lb-docker-inner-build.sh
+  Isolinux patch:   scripts/patch-live-build-isolinux-dangling.sh
+  Nap dashboard:    (local) …/law/alfred-build-control-plane/last-lb-docker.json
+  Host build log:   lb-docker-build.log (repo root / build tree)
+
+HIGH — likely or already seen
+-------------------------------
+1) binary_syslinux / isolinux / GNU cp
+   Symptom:  cp: not writing through dangling symlink 'chroot/root/isolinux/…'
+   Cause:    Stacked copies into chroot/root/${_BOOTLOADER}; cp refuses some symlink targets.
+   Mitigate: scripts/patch-live-build-isolinux-dangling.sh injects cp --remove-destination on the
+             four cp lines into chroot/root/${_BOOTLOADER}/ (idempotent). If this regresses,
+             re-check live-build line text after apt upgrades.
+
+2) Patching /usr/lib/live/build/binary_syslinux inside Docker
+   Symptom:  E: Unknown command: binary_syslinux
+   Cause:    /usr/bin/lb requires -x on the handler; mktemp+mv can drop +x (chmod +x after patch).
+   Mitigate: Keep chmod +x in patch script; if live-build package changes line text, patch may
+             no-op — watch for WARN from patch-live-build-isolinux-dangling.sh.
+
+3) Resume / partial binary stage
+   Symptom:  W: Skipping … already done then odd failure at binary_*.
+   Cause:    Stale stagefiles or half-written chroot/root/isolinux.
+   Mitigate: lb clean / remove build/chroot/binary as policy after a failed binary (time cost).
+
+4) docker --rm + watch / JSON
+   Symptom:  last-lb-docker.json stuck waiting; docker_exit unknown; duplicate watchers.
+   Mitigate: One watch per run; re-run watch if container already gone; supervise-lb-docker-nap.sh
+             for single-shot flow. nap_ok=true when .iso exists and docker_exit is 0 or unknown
+             (unknown is common with --rm + docker wait); confirm with lb-docker-build.log inner exit.
+
+5) Trixie chroot + Bookworm live-build host
+   Symptom:  Packaging or bootloader path surprises at binary_*.
+   Mitigate: Pin or document live-build version; test after Debian point releases.
+
+MEDIUM
+------
+6) Disk / I/O — full disk or slow array → apt or squashfs failures (opaque E: lines).
+7) Network / mirrors — intermittent apt during bootstrap or binary apt.
+8) Custom kernel 7.0.4 debs + preflight/staging drift — name / version mismatch breaks install expectations.
+   Mitigate: hooks 0160 + 0710 set Remove-Unused-Kernel-Packages false; 0710 also installs
+             preferences.d blocking Debian linux-image-amd64 meta; publish newer 7.0.4*.deb when you bump the kernel.
+9) lb config ordering — lb build without prior lb config → “config stage required first”
+   (mitigated in lb-docker-inner-build.sh).
+10) ABCP — two iso-docker jobs overlapping; use on-disk ABCP_DB (not /tmp sqlite).
+
+LOW — still painful
+-------------------
+11) Many chroot hooks — any can break on trixie package renames or missing paths (late E:).
+12) cryptsetup / dm-* messages in logs — often chroot noise; verify only if boot/crypto path fails.
+13) Wrong git commit on host vs expected — bind-mounted /work shows whatever is checked out.
+
+14) Stale `build/config/` — hooks, `alfred.list` / `alfred-b2.list`, kernel debs in
+    `packages.chroot/`, or `includes.chroot/build-assets/` no longer match repo
+    `config/*` + `build-assets/` (silent drift vs what engineers thought they shipped).
+    Mitigate: run `bash scripts/sync-canonical-to-build.sh` before `lb config` on
+    the host (use `ALFRED_FULL_BUILD_ASSETS=1` when mirroring all media); Docker
+    inner runs full staging automatically.
+
+Quick triage table
+------------------
+  cp … dangling symlink under chroot/root/isolinux  → isolinux cp path (see HIGH #1).
+  Unknown command: binary_syslinux                  → +x / patch drift (HIGH #2).
+  JSON phase waiting forever                        → watcher / race (HIGH #4).
+  Skipping … already done + weird binary error     → resume state (HIGH #3).
+
+Last review: 2026-04-26 — full hook sync (sync-hooks-to-build + inner); completeness covenant; isolinux, nap_ok, kernel APT policy, watch flock.

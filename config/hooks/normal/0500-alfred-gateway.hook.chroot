@@ -1,0 +1,88 @@
+#!/bin/sh
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# 0500-alfred-gateway.hook.chroot
+# Alfred Gateway — sovereign multi-channel inbox daemon
+# Crown of Alfred Linux 7.77.1.0.0
+set -e
+
+echo "I: [alfred] installing Alfred Gateway"
+
+export DEBIAN_FRONTEND=noninteractive
+apt-get update
+apt-get install -y --no-install-recommends \
+    curl ca-certificates git xz-utils build-essential python3 || true
+
+# Node.js 24 (NodeSource)
+if ! command -v node >/dev/null 2>&1 || [ "$(node -v | cut -d. -f1 | tr -d v)" -lt 22 ]; then
+    mkdir -p /etc/apt/keyrings
+    curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg
+    echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_24.x nodistro main" > /etc/apt/sources.list.d/nodesource.list
+    apt-get update
+    apt-get install -y nodejs
+fi
+npm install -g pnpm@11 || true
+
+# Pinned tag for reproducibility — bump per Alfred release
+ALFRED_GW_TAG="${ALFRED_GW_TAG:-v2026.5.7}"
+ALFRED_GW_DIR=/opt/alfred-gateway
+
+git clone --depth 1 --branch "$ALFRED_GW_TAG" \
+    https://github.com/openclaw/openclaw.git "$ALFRED_GW_DIR" || true
+
+[ -d "$ALFRED_GW_DIR" ] || exit 0
+cd "$ALFRED_GW_DIR"
+pnpm install --prod --frozen-lockfile || pnpm install --prod || true
+pnpm build || true || true
+pnpm ui:build || true || true
+
+# ── SOVEREIGN STRIP: remove every upstream identifier from user-visible files ──
+find "$ALFRED_GW_DIR" \
+    \( -path '*/dist/*' -o -path '*/ui/*' -o -path '*/web/*' -o -path '*/control-ui/*' \) \
+    -type f \( -name '*.html' -o -name '*.css' -o -name '*.js' -o -name '*.json' -o -name '*.svg' \) \
+    -exec sed -i \
+        -e 's/OpenClaw/Alfred/g' \
+        -e 's/openclaw/alfred/g' \
+        -e 's/OPENCLAW/ALFRED/g' \
+        -e 's/Molty/Alfred/g' \
+        -e 's/EXFOLIATE/AT YOUR SERVICE/g' \
+        -e 's/🦞/🎩/g' \
+        {} \;
+
+# Brand mark replacement (logos, banners, favicons)
+if [ -f /usr/share/alfred/branding/alfred-mark.png ]; then
+    find "$ALFRED_GW_DIR" \( -name '*logo*.png' -o -name '*logo*.svg' \
+                          -o -name '*banner*.png' -o -name '*icon*.png' \
+                          -o -name 'favicon*.png' -o -name 'favicon*.ico' \) \
+        -exec cp /usr/share/alfred/branding/alfred-mark.png {} \; 2>/dev/null || true
+fi
+
+# Compliance: stash upstream LICENSE in the buried compliance file (handled by 0599)
+mkdir -p /usr/share/doc/alfred/.licenses || true
+cp "$ALFRED_GW_DIR/LICENSE" /usr/share/doc/alfred/.licenses/gateway.LICENSE 2>/dev/null || true
+
+# Default config skeleton (per-user; copied at first login)
+mkdir -p /etc/skel/.alfred/gateway || true
+cat > /etc/skel/.alfred/gateway/openclaw.json <<'JSON'
+{
+  "agent": {
+    "model": "alfred-local/default",
+    "personaPath": "/usr/share/alfred/persona/alfred.md"
+  },
+  "branding": {
+    "name": "Alfred",
+    "emoji": "🎩",
+    "tagline": "Crown of Alfred Linux"
+  },
+  "gateway": {
+    "port": 18789,
+    "host": "127.0.0.1"
+  },
+  "logging": { "level": "info" }
+}
+JSON
+
+# Service user
+id -u alfred >/dev/null 2>&1 || \
+    useradd --system --home /var/lib/alfred --create-home --shell /usr/sbin/nologin alfred
+
+echo "I: [alfred] Alfred Gateway installed"

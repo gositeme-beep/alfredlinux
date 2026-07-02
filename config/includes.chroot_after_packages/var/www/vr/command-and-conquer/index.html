@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Alfred Command — VR Command & Conquer</title>
+    <meta name="description" content="Command 50 million agents. Conquer real territories. Be all that you can be.">
+    <meta name="theme-color" content="#0a0e1a">
+    <link rel="manifest" href="manifest.json">
+
+    <!-- Babylon.js 7.x CDN -->
+    <script src="https://cdn.babylonjs.com/babylon.js"></script>
+    <script src="https://cdn.babylonjs.com/loaders/babylonjs.loaders.min.js"></script>
+    <script src="https://cdn.babylonjs.com/gui/babylon.gui.min.js"></script>
+    <script src="https://cdn.babylonjs.com/materialsLibrary/babylonjs.materials.min.js"></script>
+
+    <link rel="stylesheet" href="css/game.css">
+</head>
+<body>
+    <!-- Loading Screen -->
+    <div id="loadingScreen">
+        <div class="loading-content">
+            <div class="loading-logo">
+                <div class="logo-hex"></div>
+                <h1>ALFRED COMMAND</h1>
+                <p class="tagline">Command 50 Million Agents. Conquer Real Territories.</p>
+            </div>
+            <div class="loading-bar-container">
+                <div class="loading-bar" id="loadingBar"></div>
+            </div>
+            <p class="loading-status" id="loadingStatus">Initializing systems...</p>
+        </div>
+    </div>
+
+    <!-- Pre-game Menu -->
+    <div id="menuScreen" style="display:none;">
+        <div class="menu-content">
+            <div class="menu-header">
+                <h1>ALFRED COMMAND</h1>
+                <p id="menuRankBadge" class="rank-badge">E-1 Recruit</p>
+                <p id="menuXP" class="xp-display">XP: 0</p>
+            </div>
+            <div class="menu-grid">
+                <button class="menu-btn campaign" onclick="AlfredCommand.startGame('campaign')">
+                    <span class="btn-icon">⚔️</span>
+                    <span class="btn-title">Campaign</span>
+                    <span class="btn-desc">Operation Genesis — 7 Chapters</span>
+                </button>
+                <button class="menu-btn persistent" onclick="AlfredCommand.startGame('persistent')">
+                    <span class="btn-icon">🌐</span>
+                    <span class="btn-title">Persistent World</span>
+                    <span class="btn-desc">The Dome — Always On</span>
+                </button>
+                <button class="menu-btn skirmish" onclick="AlfredCommand.startGame('skirmish')">
+                    <span class="btn-icon">🎯</span>
+                    <span class="btn-title">Skirmish</span>
+                    <span class="btn-desc">War Games — PvP/PvE</span>
+                </button>
+                <button class="menu-btn humanitarian" onclick="AlfredCommand.startGame('humanitarian')">
+                    <span class="btn-icon">🕊️</span>
+                    <span class="btn-title">Angel Corps</span>
+                    <span class="btn-desc">Humanitarian Missions</span>
+                </button>
+                <button class="menu-btn sandbox" onclick="AlfredCommand.startGame('sandbox')">
+                    <span class="btn-icon">🏗️</span>
+                    <span class="btn-title">Architect</span>
+                    <span class="btn-desc">Build & Design</span>
+                </button>
+                <button class="menu-btn stats-btn" onclick="AlfredCommand.showStats()">
+                    <span class="btn-icon">📊</span>
+                    <span class="btn-title">Service Record</span>
+                    <span class="btn-desc">Stats, Rank, Achievements</span>
+                </button>
+            </div>
+            <div class="menu-footer">
+                <p>50,125,001 agents standing by for orders</p>
+                <p class="vr-status" id="vrStatus">Detecting VR headset...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats Panel (overlay) -->
+    <div id="statsPanel" style="display:none;">
+        <div class="stats-content">
+            <button class="close-btn" onclick="AlfredCommand.hideStats()">✕</button>
+            <h2>SERVICE RECORD</h2>
+            <div id="statsBody"></div>
+        </div>
+    </div>
+
+    <!-- Main VR Canvas -->
+    <canvas id="renderCanvas"></canvas>
+
+    <!-- 2D HUD Overlay (shows on top of 3D) -->
+    <div id="gameHUD" style="display:none;">
+        <div class="hud-top">
+            <div class="hud-rank" id="hudRank">E-1</div>
+            <div class="hud-xp">
+                <span id="hudXPLabel">0 XP</span>
+                <div class="hud-xp-bar"><div class="hud-xp-fill" id="hudXPFill"></div></div>
+            </div>
+            <div class="hud-session" id="hudSession">Session: --</div>
+        </div>
+        <div class="hud-resources" id="hudResources"></div>
+        <div class="hud-bottom">
+            <button class="hud-btn" onclick="AlfredCommand.openMissions()" title="Missions">📋</button>
+            <button class="hud-btn" onclick="AlfredCommand.openTerritories()" title="Territories">🗺️</button>
+            <button class="hud-btn" onclick="AlfredCommand.openAgents()" title="Agents">👥</button>
+            <button class="hud-btn" onclick="AlfredCommand.openSupply()" title="Supply">📦</button>
+            <button class="hud-btn" onclick="AlfredCommand.openComms()" title="Comms">📡</button>
+            <button class="hud-btn" onclick="AlfredCommand.openBuild()" title="Build">🏗️</button>
+            <button class="hud-btn vr-toggle" id="vrButton" onclick="AlfredCommand.toggleVR()" title="Enter VR">🥽</button>
+        </div>
+        <div class="hud-deployed" id="hudDeployed">Deployed: 0 agents</div>
+    </div>
+
+    <!-- Side Panel (missions, agents, territories, etc.) -->
+    <div id="sidePanel" style="display:none;">
+        <div class="side-content">
+            <div class="side-header">
+                <h3 id="sidePanelTitle">Panel</h3>
+                <button class="close-btn" onclick="AlfredCommand.closeSidePanel()">✕</button>
+            </div>
+            <div class="side-body" id="sidePanelBody"></div>
+        </div>
+    </div>
+
+    <!-- Notification Toast -->
+    <div id="toast" class="toast"></div>
+
+    <!-- Game Scripts -->
+    <script src="js/api.js"></script>
+    <script src="js/game-engine.js"></script>
+    <script src="js/environments.js"></script>
+    <script src="js/command-table.js"></script>
+    <script src="js/hud.js"></script>
+    <script src="js/missions.js"></script>
+    <script src="js/territory.js"></script>
+    <script src="js/agents.js"></script>
+    <script src="js/resources.js"></script>
+    <script src="js/comms.js"></script>
+    <script src="js/main.js"></script>
+<script src="/vr/shared/heartbeat.js"></script>
+</body>
+</html>

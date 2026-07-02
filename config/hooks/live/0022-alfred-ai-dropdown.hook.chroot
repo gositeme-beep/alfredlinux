@@ -1,0 +1,56 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+echo "=========================================="
+echo "==== ALFRED AI DROPDOWN COUNSELOR HOOK ==="
+echo "=========================================="
+
+# 1. The Counselor Script
+cat > /usr/local/bin/alfred-counselor << 'EOF'
+#!/bin/bash
+clear
+echo "========================================================="
+echo "  ✝ ALFRED LOCAL AI COUNSELOR"
+echo "  Sovereign computing. Zero cloud tracking."
+echo "========================================================="
+echo ""
+echo "Ask your theological questions or prayer requests below."
+echo "(Type /bye to exit)"
+echo ""
+
+if command -v alfred-ai &>/dev/null; then
+    exec alfred-ai
+else
+    echo "AI Stack not installed properly. Missing alfred-ai."
+fi
+EOF
+[ -e /usr/local/bin/alfred-counselor ] && chmod 0755 /usr/local/bin/alfred-counselor || true
+
+# 2. Autostart Yakuake (so Meta+Space always works immediately)
+mkdir -p /etc/skel/.config/autostart || true
+cat > /etc/skel/.config/autostart/org.kde.yakuake.desktop << 'EOF'
+[Desktop Entry]
+Exec=yakuake
+Name=Yakuake Dropdown Terminal
+Type=Application
+X-KDE-StartupNotify=false
+X-KDE-autostart-phase=1
+EOF
+
+# 3. Basic Yakuake Config for aesthetics
+cat > /etc/skel/.config/yakuakerc << 'EOF'
+[Appearance]
+BackgroundColorOpacity=85
+Skin=breeze-dark
+Translucency=true
+
+[Window]
+Height=60
+Width=80
+EOF
+
+echo "AI Dropdown Counselor configured."
+
+exit 0

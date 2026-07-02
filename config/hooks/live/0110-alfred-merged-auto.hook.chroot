@@ -1,0 +1,129 @@
+#!/bin/bash
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Hook 0110: Alfred Sovereign Control Panel Injection
+set +e
+
+echo "[Alfred Polish] Installing PyQt5 and configuring the Sovereign Control Panel..."
+
+# Install the Python UI dependencies
+apt-get install -y --no-install-recommends python3-pyqt5 || true
+
+# Ensure the control panel script is executable
+[ -e /usr/local/bin/alfred-control-panel ] && chmod +x /usr/local/bin/alfred-control-panel || true
+
+echo "[Alfred Polish] Sovereign Control Panel successfully integrated!"
+#!/bin/bash
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+
+echo "[NET CORE] Enforcing DNS-over-HTTPS and Ghost Protocol MAC Spoofing..."
+
+apt-get install -y --no-install-recommends dnscrypt-proxy macchanger || true
+
+# Configure DNSCrypt
+mkdir -p /etc/dnscrypt-proxy
+cat > /etc/dnscrypt-proxy/dnscrypt-proxy.toml << 'EOF'
+server_names = ['cloudflare', 'google']
+listen_addresses = ['127.0.2.1:53']
+ipv4_servers = true
+ipv6_servers = false
+dnscrypt_servers = true
+doh_servers = true
+require_dnssec = true
+EOF
+
+systemctl enable dnscrypt-proxy || true || true 2>/dev/null || true
+
+# Configure Systemd-Resolved to use DNSCrypt
+mkdir -p /etc/systemd/resolved.conf.d
+cat > /etc/systemd/resolved.conf.d/dns_servers.conf << 'EOF'
+[Resolve]
+DNS=127.0.2.1
+Domains=~.
+EOF
+
+# Configure MAC Spoofing for NetworkManager
+mkdir -p /etc/NetworkManager/conf.d
+cat > /etc/NetworkManager/conf.d/00-macrandomize.conf << 'EOF'
+[device]
+wifi.scan-rand-mac-address=yes
+
+[connection]
+wifi.cloned-mac-address=random
+ethernet.cloned-mac-address=random
+EOF
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+# [Genesis Forge] Granular Kernel Matrix: kernel.perf_event_paranoid=3
+# Extremely deep low-level kernel protection.
+echo "[Genesis Forge] Applying granular sysctl: kernel.perf_event_paranoid=3"
+echo "kernel.perf_event_paranoid=3" > /etc/sysctl.d/99-alfred-10.conf || true
+sysctl -w kernel.perf_event_paranoid=3 > /dev/null 2>&1 || true
+
+
+# --- BEGIN MERGED CONTENT FROM: 0110-alfred-control-panel.hook.chroot ---
+#!/bin/bash
+# Hook 0110: Alfred Sovereign Control Panel Injection
+set +e
+
+echo "[Alfred Polish] Installing PyQt5 and configuring the Sovereign Control Panel..."
+
+# Install the Python UI dependencies
+apt-get install -y --no-install-recommends python3-pyqt5 || true
+
+# Ensure the control panel script is executable
+[ -e /usr/local/bin/alfred-control-panel ] && [ -e /usr/local/bin/alfred-control-panel ] && chmod +x /usr/local/bin/alfred-control-panel || true
+
+echo "[Alfred Polish] Sovereign Control Panel successfully integrated!"
+
+# --- END MERGED CONTENT FROM: 0110-alfred-control-panel.hook.chroot ---
+
+
+# --- BEGIN MERGED CONTENT FROM: 0110-alfred-networking-core.hook.chroot ---
+#!/bin/bash
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+
+echo "[NET CORE] Enforcing DNS-over-HTTPS and Ghost Protocol MAC Spoofing..."
+
+apt-get install -y --no-install-recommends dnscrypt-proxy macchanger || true
+
+# Configure DNSCrypt
+mkdir -p /etc/dnscrypt-proxy
+cat > /etc/dnscrypt-proxy/dnscrypt-proxy.toml << 'EOF'
+server_names = ['cloudflare', 'google']
+listen_addresses = ['127.0.2.1:53']
+ipv4_servers = true
+ipv6_servers = false
+dnscrypt_servers = true
+doh_servers = true
+require_dnssec = true
+EOF
+
+systemctl enable dnscrypt-proxy || true || true 2>/dev/null || true
+
+# Configure Systemd-Resolved to use DNSCrypt
+mkdir -p /etc/systemd/resolved.conf.d
+cat > /etc/systemd/resolved.conf.d/dns_servers.conf << 'EOF'
+[Resolve]
+DNS=127.0.2.1
+Domains=~.
+EOF
+
+# Configure MAC Spoofing for NetworkManager
+mkdir -p /etc/NetworkManager/conf.d
+cat > /etc/NetworkManager/conf.d/00-macrandomize.conf << 'EOF'
+[device]
+wifi.scan-rand-mac-address=yes
+
+[connection]
+wifi.cloned-mac-address=random
+ethernet.cloned-mac-address=random
+EOF
+
+# --- END MERGED CONTENT FROM: 0110-alfred-networking-core.hook.chroot ---
+
+

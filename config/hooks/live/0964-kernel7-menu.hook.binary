@@ -1,0 +1,62 @@
+#!/bin/bash
+# Description: Generate GRUB + isolinux menu entries for the kernel-7 boot images
+set +e
+
+if [ -d binary/live ]; then
+  LIVE_DIR="binary/live"
+  GRUB_CFG="binary/boot/grub/grub.cfg"
+  ISO_CFG="binary/isolinux/live.cfg"
+elif [ -d build/binary/live ]; then
+  LIVE_DIR="build/binary/live"
+  GRUB_CFG="build/binary/boot/grub/grub.cfg"
+  ISO_CFG="build/binary/isolinux/live.cfg"
+else
+  echo "[0999] ERROR: cannot locate binary/live directory" >&2
+  exit 1
+fi
+
+echo "[0999] Sanitizing ISO boot menus/files for kernel 7 only..."
+if [ -e "$LIVE_DIR/vmlinuz" ] && ! ls -1 "$LIVE_DIR"/vmlinuz-7* >/dev/null 2>&1; then
+  if [ ! -r "$LIVE_DIR/vmlinuz" ]; then
+    echo "[0999] ERROR: $LIVE_DIR/vmlinuz is not readable" >&2
+    exit 1
+  fi
+  cp -fL "$LIVE_DIR/vmlinuz" "$LIVE_DIR/vmlinuz-7-fallback"
+
+  if [ -e "$LIVE_DIR/initrd.img" ]; then
+    if [ ! -r "$LIVE_DIR/initrd.img" ]; then
+      echo "[0999] ERROR: $LIVE_DIR/initrd.img is not readable" >&2
+      exit 1
+    fi
+    cp -fL "$LIVE_DIR/initrd.img" "$LIVE_DIR/initrd.img-7-fallback"
+  fi
+fi
+kimg="$(ls -1 "$LIVE_DIR"/vmlinuz-7* 2>/dev/null | sort -V | tail -1 || true)"
+if [ -z "$kimg" ]; then
+  echo "[0999] ERROR: no vmlinuz-7* in $LIVE_DIR" >&2
+  exit 1
+fi
+kfile="$(basename "$kimg")"
+kver="${kfile#vmlinuz-}"
+
+if [ ! -f "$LIVE_DIR/initrd.img-$kver" ]; then
+  echo "[0999] ERROR: missing $LIVE_DIR/initrd.img-$kver" >&2
+  exit 1
+fi
+
+rm -f "$LIVE_DIR"/vmlinuz-6* "$LIVE_DIR"/initrd.img-6* || true
+ln -sf "$kfile" "$LIVE_DIR/vmlinuz"
+ln -sf "initrd.img-$kver" "$LIVE_DIR/initrd.img"
+
+if [ -f "$GRUB_CFG" ]; then
+  sed -i '/^menuentry "Live system, kernel 6\./,/^}/d' "$GRUB_CFG" || true
+  sed -i '/^menuentry "Live system \(amd64\)"/,/^}/d' "$GRUB_CFG" || true
+  sed -i '/^menuentry "Live system \(amd64 fail-safe mode\)"/,/^}/d' "$GRUB_CFG" || true
+  sed -i "s|/live/vmlinuz-[^ ]*|/live/vmlinuz-$kver|g; s|/live/initrd.img-[^ ]*|/live/initrd.img-$kver|g" "$GRUB_CFG"
+fi
+
+if [ -f "$ISO_CFG" ]; then
+  perl -0777 -i -pe 's/\nlabel live-amd64\n\s*menu label \^Live system \(amd64\).*?(?=\nlabel live-amd64-failsafe|\z)//s; s/\nlabel live-amd64-failsafe\n\s*menu label Live system \(amd64 fail-safe mode\).*?(?=\nlabel|\z)//s' "$ISO_CFG" || true
+fi
+
+echo "[0999] Boot menu sanitized for kernel $kver"

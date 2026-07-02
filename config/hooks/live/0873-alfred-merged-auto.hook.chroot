@@ -1,0 +1,112 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+# [Genesis Forge] AppArmor Isolation: /usr/local/bin/alfred-util-22
+# Creates a granular zero-trust execution envelope for individual binaries.
+echo "[Genesis Forge] Enveloping binary: /usr/local/bin/alfred-util-22"
+mkdir -p /etc/apparmor.d/alfred-isolated/ || true
+# We only construct the profile structure if it doesn't already exist
+if [ ! -f "/etc/apparmor.d/alfred-isolated/profile-35" ]; then
+    cat > /etc/apparmor.d/alfred-isolated/profile-35 << 'EOF'
+profile alfred-sandbox-35 /usr/local/bin/alfred-util-22 flags=(complain) {
+  #include <abstractions/base>
+  /usr/local/bin/alfred-util-22 rmix,
+  /dev/null rw,
+}
+EOF
+fi
+
+
+# --- BEGIN MERGED CONTENT FROM: 0873-alfred-new-jerusalem.hook.chroot ---
+#!/bin/bash
+# 0873-alfred-new-jerusalem.hook.chroot
+# Configures The New Jerusalem (Steganography & Hidden Volumes)
+set +e
+
+echo "[0873] Configuring The New Jerusalem (Steganography & Vaults)"
+
+cat << 'EOF' > /usr/local/bin/alfred-jerusalem
+#!/bin/bash
+echo "â•”â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•—"
+echo "â•‘  THE NEW JERUSALEM â€” Plausibly Deniable Vault             â•‘"
+echo "â•‘  'And I John saw the holy city, new Jerusalem...'         â•‘"
+echo "â•šâ•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•"
+echo ""
+
+if [ "$1" == "hide" ] && [ -n "$2" ] && [ -n "$3" ]; then
+    if command -v steghide &>/dev/null; then
+        echo "Descending The New Jerusalem into $3..."
+        steghide embed -cf "$3" -ef "$2"
+        echo "The file is now hidden. The holy city is invisible to the adversary."
+    else
+        echo "steghide is not installed."
+    fi
+elif [ "$1" == "seek" ] && [ -n "$2" ]; then
+    if command -v steghide &>/dev/null; then
+        echo "Revealing The New Jerusalem from $2..."
+        steghide extract -sf "$2"
+        echo "The holy city is revealed."
+    else
+        echo "steghide is not installed."
+    fi
+else
+    echo "Usage:"
+    echo "  alfred-jerusalem hide <secret-file> <cover-image.jpg>"
+    echo "  alfred-jerusalem seek <cover-image.jpg>"
+    echo ""
+    echo "This utilizes advanced steganography to make the Kingdom's data physically invisible."
+fi
+EOF
+
+[ -e "/usr/local/bin/alfred-jerusalem" ] && chmod 0755 /usr/local/bin/alfred-jerusalem
+
+echo "[0873] New Jerusalem configured."
+
+# --- END MERGED CONTENT FROM: 0873-alfred-new-jerusalem.hook.chroot ---
+
+
+#!/bin/bash
+# 0873-alfred-new-jerusalem.hook.chroot
+# Configures The New Jerusalem (Steganography & Hidden Volumes)
+set +e
+
+echo "[0873] Configuring The New Jerusalem (Steganography & Vaults)"
+
+cat << 'EOF' > /usr/local/bin/alfred-jerusalem
+#!/bin/bash
+echo "â•”â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•—"
+echo "â•‘  THE NEW JERUSALEM â€” Plausibly Deniable Vault             â•‘"
+echo "â•‘  'And I John saw the holy city, new Jerusalem...'         â•‘"
+echo "â•šâ•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•"
+echo ""
+
+if [ "$1" == "hide" ] && [ -n "$2" ] && [ -n "$3" ]; then
+    if command -v steghide &>/dev/null; then
+        echo "Descending The New Jerusalem into $3..."
+        steghide embed -cf "$3" -ef "$2"
+        echo "The file is now hidden. The holy city is invisible to the adversary."
+    else
+        echo "steghide is not installed."
+    fi
+elif [ "$1" == "seek" ] && [ -n "$2" ]; then
+    if command -v steghide &>/dev/null; then
+        echo "Revealing The New Jerusalem from $2..."
+        steghide extract -sf "$2"
+        echo "The holy city is revealed."
+    else
+        echo "steghide is not installed."
+    fi
+else
+    echo "Usage:"
+    echo "  alfred-jerusalem hide <secret-file> <cover-image.jpg>"
+    echo "  alfred-jerusalem seek <cover-image.jpg>"
+    echo ""
+    echo "This utilizes advanced steganography to make the Kingdom's data physically invisible."
+fi
+EOF
+
+chmod 0755 /usr/local/bin/alfred-jerusalem
+
+echo "[0873] New Jerusalem configured."

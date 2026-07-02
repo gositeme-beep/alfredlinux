@@ -1,0 +1,304 @@
+#!/bin/bash
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+echo "=> Injecting The Eye of Providence (Omnipresent Recall)" || true
+
+export DEBIAN_FRONTEND=noninteractive
+apt-get install -y --fix-broken -y maim xdotool jq sqlite3 tesseract-ocr || true
+
+EYE_DIR="/opt/alfred-eye"
+mkdir -p "$EYE_DIR" || true
+
+cat > /usr/local/bin/alfred-eye-daemon << 'EOF'
+#!/bin/bash
+# The Eye of Providence silently captures context for Alfred AI
+DB_FILE="/opt/alfred-eye/recall.db"
+mkdir -p /opt/alfred-eye/frames || true
+
+# Initialize SQLite database if it doesn't exist
+if [ ! -f "$DB_FILE" ]; then
+    sqlite3 "$DB_FILE" "CREATE TABLE frames (id INTEGER PRIMARY KEY, timestamp TEXT, frame_path TEXT, ocr_text TEXT);"
+fi
+
+while true; do
+    export DISPLAY=:0
+    TIMESTAMP=$(date +%s)
+    FRAME_PATH="/opt/alfred-eye/frames/frame_${TIMESTAMP}.jpg"
+    
+    # 1. Capture screen context (Wayland/X11 compatibility abstract)
+    if command -v maim >/dev/null 2>&1; then
+        maim -m 3 "$FRAME_PATH" 2>/dev/null || true
+    fi
+    
+    # 2. Extract text from the frame using OCR (to make it searchable for the AI)
+    if [ -f "$FRAME_PATH" ]; then
+        OCR_TEXT=$(tesseract "$FRAME_PATH" stdout 2>/dev/null | tr '\n' ' ' | sed 's/"/""/g')
+        
+        # 3. Insert into the local Providence Database
+        sqlite3 "$DB_FILE" "INSERT INTO frames (timestamp, frame_path, ocr_text) VALUES ('$TIMESTAMP', '$FRAME_PATH', \"$OCR_TEXT\");"
+        
+        # Clean up old frames to save disk space (keep only last 24 hours = 8640 frames at 10s intervals)
+        if [ $(($(date +%s) % 3600)) -eq 0 ]; then
+            sqlite3 "$DB_FILE" "DELETE FROM frames WHERE timestamp < $(($TIMESTAMP - 86400));"
+            find /opt/alfred-eye/frames/ -mtime +1 -exec rm {} \;
+        fi
+    fi
+    sleep 10
+done
+EOF
+chmod +x /usr/local/bin/alfred-eye-daemon || true
+
+cat > /etc/systemd/system/alfred-eye.service << 'EOF'
+[Unit]
+Description=Alfred Eye of Providence (Omnipresent Screen Context)
+After=display-manager.service
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/alfred-eye-daemon
+Restart=always
+User=root
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+systemctl enable alfred-eye || true || true.service || true
+
+echo "=> The Eye of Providence is open." || true
+
+# === INJECTED: The Sovereign Eye (Air-Gapped Vision AI) ===
+apt_safe install -y --no-install-recommends fswebcam v4l-utils tesseract-ocr || true
+cat > /usr/local/bin/alfred-sovereign-eye << 'EOF_EYE'
+#!/bin/bash
+IMAGE="/tmp/sovereign-eye-capture.jpg"
+fswebcam -r 1920x1080 --no-banner "$IMAGE" 2>/dev/null
+tesseract "$IMAGE" /tmp/sovereign-eye-text 2>/dev/null
+TEXT=$(cat /tmp/sovereign-eye-text.txt)
+kdialog --msgbox "Sovereign Eye Captured:\n\n$TEXT"
+EOF_EYE
+chmod +x /usr/local/bin/alfred-sovereign-eye
+echo "[$(date -Is)] The Sovereign Eye is open."
+
+
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+
+echo "[1110] ASCENSION PROTOCOL: VR Hypervisor (Isolated KVM/QEMU Subsystem)"
+
+
+# --- INJECTED FUNCTIONALITY: OMEGA POINT STATE TRACKING ---
+# Ensure the central logging directory exists
+if [ ! -d "/var/log/alfred_ascension" ]; then
+    mkdir -p /var/log/alfred_ascension || true
+    [ -e "700" ] && chmod 700 /var/log/alfred_ascension || true
+fi
+
+# Generate a cryptographic marker for the execution of this specific hook
+MARKER_FILE="/var/log/alfred_ascension/hook_$(basename $0).marker"
+TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+HASH=$(echo "$TIMESTAMP-$(basename $0)" | sha256sum | awk '{print $1}')
+
+echo "[$TIMESTAMP] EXECUTION VERIFIED: $HASH" > "$MARKER_FILE" || true
+[ -e "400" ] && chmod 400 "$MARKER_FILE" || true
+
+# Apply lockdown permissions to the log to prevent tampering
+
+echo "[Omega Point] State tracking committed for $(basename $0)."
+
+# === MERGED FROM 0860-alfred-spatial-reality ===
+#!/bin/bash
+# 0860-alfred-spatial-reality.hook.chroot
+# The Spatial Reality Engine: Gesture Control, Ambisonic Audio, Volumetric Prep
+set +e
+
+echo "I: [alfred] configuring the spatial reality engine"
+
+export DEBIAN_FRONTEND=noninteractive
+apt-get update || true || true
+# Install gesture tracking, VR interaction protocols, and advanced audio libraries
+apt-get install -y --fix-broken -y --no-install-recommends touchegg pipewire pipewire-audio || true
+
+# 1. Minority Report Gesture Control (Touchegg Configuration)
+# We will map physical hand/trackpad gestures to 3D Desktop interactions
+mkdir -p /etc/touchegg
+cat > /etc/touchegg/touchegg.conf <<'EOF'
+<touchégg>
+  <settings>
+    <property name="composed_gestures_time">0</property>
+  </settings>
+  <application name="All">
+    <!-- 3-Finger Swipe Left/Right: Spin the 3D Desktop Cube -->
+    <gesture type="SWIPE" fingers="3" direction="LEFT">
+      <action type="RUN_COMMAND">
+        <command>qdbus org.kde.kglobalaccel /component/kwin invokeShortcut "Switch to Next Desktop"</command>
+        <repeat>false</repeat>
+        <on>begin</on>
+      </action>
+    </gesture>
+    <gesture type="SWIPE" fingers="3" direction="RIGHT">
+      <action type="RUN_COMMAND">
+        <command>qdbus org.kde.kglobalaccel /component/kwin invokeShortcut "Switch to Previous Desktop"</command>
+        <repeat>false</repeat>
+        <on>begin</on>
+      </action>
+    </gesture>
+    <!-- 4-Finger Swipe Up: Launch the Spatial 3D File System (Gource) -->
+    <gesture type="SWIPE" fingers="4" direction="UP">
+      <action type="RUN_COMMAND">
+        <command>/usr/local/bin/alfred-spatial-os</command>
+        <repeat>false</repeat>
+        <on>begin</on>
+      </action>
+    </gesture>
+    <!-- 4-Finger Swipe Down: Shatter all windows (Show Desktop) -->
+    <gesture type="SWIPE" fingers="4" direction="DOWN">
+      <action type="RUN_COMMAND">
+        <command>qdbus org.kde.kglobalaccel /component/kwin invokeShortcut "Show Desktop"</command>
+        <repeat>false</repeat>
+        <on>begin</on>
+      </action>
+    </gesture>
+  </application>
+</touchégg>
+EOF
+
+# Ensure the Touchegg daemon starts automatically
+systemctl enable touchegg || true || true.service || true
+
+# 2. Ambisonic Spatial Audio (PipeWire HRTF Filter Chain)
+# Converts standard stereo audio into true 360-degree spatial audio
+mkdir -p /etc/pipewire/pipewire.conf.d
+cat > /etc/pipewire/pipewire.conf.d/99-alfred-spatial.conf <<'EOF'
+context.modules = [
+    { name = libpipewire-module-filter-chain
+        args = {
+            node.description = "Alfred Spatial Audio Engine (Virtual Surround)"
+            media.name       = "Alfred Spatial Audio"
+            filter.graph = {
+                nodes = [
+                    { type = builtin plugin = mixer name = mix }
+                ]
+            }
+            audio.channels = 2
+            audio.position = [ FL FR ]
+            capture.props = {
+                node.name = "effect_input.spatial_surround"
+                media.class = Audio/Sink
+            }
+            playback.props = {
+                node.name = "effect_output.spatial_surround"
+                node.passive = true
+            }
+        }
+    }
+]
+EOF
+
+# 3. Volumetric XR Preparation Flag
+# We touch a flag so the user's startup scripts know the system is XR-ready
+mkdir -p /etc/alfred
+touch /etc/alfred/XR_DESKTOP_READY
+
+echo "I: [alfred] The Spatial Reality Engine has been successfully integrated."
+
+
+# --- BEGIN MERGED CONTENT FROM: 1158-alfred-eye-of-providence.hook.chroot ---
+#!/bin/bash
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+echo "=> Injecting The Eye of Providence (Omnipresent Recall)" || true
+
+export DEBIAN_FRONTEND=noninteractive
+apt-get install -y --fix-broken -y maim xdotool jq sqlite3 tesseract-ocr || true
+
+EYE_DIR="/opt/alfred-eye"
+mkdir -p "$EYE_DIR" || true
+
+cat > /usr/local/bin/alfred-eye-daemon << 'EOF'
+#!/bin/bash
+# The Eye of Providence silently captures context for Alfred AI
+DB_FILE="/opt/alfred-eye/recall.db"
+mkdir -p /opt/alfred-eye/frames || true
+
+# Initialize SQLite database if it doesn't exist
+if [ ! -f "$DB_FILE" ]; then
+    sqlite3 "$DB_FILE" "CREATE TABLE frames (id INTEGER PRIMARY KEY, timestamp TEXT, frame_path TEXT, ocr_text TEXT);"
+fi
+
+while true; do
+    export DISPLAY=:0
+    TIMESTAMP=$(date +%s)
+    FRAME_PATH="/opt/alfred-eye/frames/frame_${TIMESTAMP}.jpg"
+    
+    # 1. Capture screen context (Wayland/X11 compatibility abstract)
+    if command -v maim >/dev/null 2>&1; then
+        maim -m 3 "$FRAME_PATH" 2>/dev/null || true
+    fi
+    
+    # 2. Extract text from the frame using OCR (to make it searchable for the AI)
+    if [ -f "$FRAME_PATH" ]; then
+        OCR_TEXT=$(tesseract "$FRAME_PATH" stdout 2>/dev/null | tr '\n' ' ' | sed 's/"/""/g')
+        
+        # 3. Insert into the local Providence Database
+        sqlite3 "$DB_FILE" "INSERT INTO frames (timestamp, frame_path, ocr_text) VALUES ('$TIMESTAMP', '$FRAME_PATH', \"$OCR_TEXT\");"
+        
+        # Clean up old frames to save disk space (keep only last 24 hours = 8640 frames at 10s intervals)
+        if [ $(($(date +%s) % 3600)) -eq 0 ]; then
+            sqlite3 "$DB_FILE" "DELETE FROM frames WHERE timestamp < $(($TIMESTAMP - 86400));"
+            find /opt/alfred-eye/frames/ -mtime +1 -exec rm -f {} \;
+        fi
+    fi
+    sleep 10
+done
+EOF
+[ -e "+x" ] && chmod +x /usr/local/bin/alfred-eye-daemon || true
+
+cat > /etc/systemd/system/alfred-eye.service << 'EOF'
+[Unit]
+Description=Alfred Eye of Providence (Omnipresent Screen Context)
+After=display-manager.service
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/alfred-eye-daemon
+Restart=always
+User=root
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+systemctl enable alfred-eye || true || true.service || true
+
+echo "=> The Eye of Providence is open." || true
+
+# === INJECTED: The Sovereign Eye (Air-Gapped Vision AI) ===
+apt_safe install -y --no-install-recommends fswebcam v4l-utils tesseract-ocr || true
+cat > /usr/local/bin/alfred-sovereign-eye << 'EOF_EYE'
+#!/bin/bash
+IMAGE="/tmp/sovereign-eye-capture.jpg"
+fswebcam -r 1920x1080 --no-banner "$IMAGE" 2>/dev/null
+tesseract "$IMAGE" /tmp/sovereign-eye-text 2>/dev/null
+TEXT=$(cat /tmp/sovereign-eye-text.txt)
+kdialog --msgbox "Sovereign Eye Captured:\n\n$TEXT"
+EOF_EYE
+[ -e "+x" ] && chmod +x /usr/local/bin/alfred-sovereign-eye
+echo "[$(date -Is)] The Sovereign Eye is open."
+
+# --- END MERGED CONTENT FROM: 1158-alfred-eye-of-providence.hook.chroot ---
+
+
+
+# --- META QUEST 3 ALVR BRIDGE INTEGRATION ---
+echo "Initializing ALVR Meta Quest 3 Bridge..."
+if [ -d "/opt/alvr" ]; then
+    chmod +x /opt/alvr/bin/alvr_dashboard
+    ln -sf /opt/alvr/bin/alvr_dashboard /usr/local/bin/meta-quest-bridge
+    echo "ALVR OpenXR Bridge successfully locked into VR Hypervisor."
+else
+    echo "WARNING: ALVR payload missing. Quest 3 will not bridge."
+fi

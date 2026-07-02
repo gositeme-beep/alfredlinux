@@ -1,0 +1,200 @@
+#!/bin/sh
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+
+echo "[Alfred Holographic] Engineering Holographic Principle 3D UI..."
+
+apt-get install -y picom || true
+
+mkdir -p /usr/share/alfred/hologram/ || true
+mkdir -p /usr/local/bin/ || true
+
+# We write a custom picom configuration that enforces extreme shadow offsets
+# to create a faux-3D parallax effect on standard 2D windows.
+cat > /usr/share/alfred/hologram/picom-hologram.conf << 'EOF'
+shadow = true;
+shadow-radius = 60;
+shadow-offset-x = -40;
+shadow-offset-y = -40;
+shadow-opacity = 0.8;
+
+corner-radius = 12;
+
+blur-background = true;
+blur-method = "dual_kawase";
+blur-strength = 8;
+
+fading = true;
+fade-delta = 4;
+
+# Make inactive windows highly transparent to push them into the "background" Z-plane
+inactive-opacity = 0.5;
+active-opacity = 1.0;
+EOF
+
+cat > /usr/local/bin/alfred-toggle-hologram.sh << 'EOF'
+#!/bin/bash
+# Toggles the 3D Holographic UI projection mode.
+
+if [ ! -f "/etc/alfred/defcon1.flag" ]; then
+    echo "[Holographic Principle] DEFCON 1 offline. Aborting."
+
+fi
+
+if pgrep -x "picom" > /dev/null; then
+    # If picom is running with our config, kill it.
+    if ps aux | grep picom | grep -q "picom-hologram.conf"; then
+        echo "Disabling Holographic Projection..."
+        pkill picom
+        # Restart standard picom
+        picom -b 2>/dev/null || true
+    else
+        echo "Activating Holographic Projection (Z-Axis Expansion)..."
+        pkill picom
+        picom --config /usr/share/alfred/hologram/picom-hologram.conf -b
+    fi
+else
+    echo "Activating Holographic Projection (Z-Axis Expansion)..."
+    picom --config /usr/share/alfred/hologram/picom-hologram.conf -b
+fi
+EOF
+
+chmod +x /usr/local/bin/alfred-toggle-hologram.sh || true
+
+echo "[Alfred Holographic] Holographic Principle 3D UI installed (Requires Defcon1 toggle)."
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+
+echo "[Alfred Temporal Encryption] Engineering Time Dilation Sync (NTS Stratum-1)..."
+
+apt-get install -y --fix-broken -y chrony util-linux || true
+
+mkdir -p /etc/alfred/ || true
+mkdir -p /usr/local/bin/ || true
+
+cat > /etc/alfred/chrony-nts.conf << 'EOF'
+# Alfred Time Dilation Sync (NTS Strict Mode)
+server time.cloudflare.com iburst nts
+server nts.netnod.se iburst nts
+ntsdumpdir /var/lib/chrony
+ntsrefresh 64
+EOF
+
+cat > /usr/local/bin/alfred-time-dilation.sh << 'EOF'
+#!/bin/bash
+# Alfred Time Dilation Sync
+# Forces Network Time Security and fuses it physically into the hardware clock.
+# If spoofing is detected, it locks down the system.
+
+echo "[Time Dilation] Synchronizing with Stratum-1 NTS..."
+
+# Stop chronyd temporarily to force a manual sync
+systemctl stop chrony 2>/dev/null  || true|| true
+
+# Force a manual sync with NTS
+if chronyd -q -f /etc/alfred/chrony-nts.conf; then
+    echo "[Time Dilation] NTS Crypto-Sync successful. Applying Temporal Hardware Lock."
+    # Fuse the time into the motherboard
+    hwclock --systohc
+    logger -p auth.info "[Time Dilation] Temporal Hardware Lock Engaged."
+else
+    echo "[Time Dilation] CRITICAL: NTS SYNC FAILED! POSSIBLE TEMPORAL SPOOFING/REPLAY ATTACK!"
+    logger -p auth.emerg "[Time Dilation] Temporal spoofing detected. Waking Michael Archangel."
+    touch /etc/alfred/michael.awake
+fi
+
+systemctl start chrony 2>/dev/null  || true|| true
+EOF
+
+[ -e "/usr/local/bin/alfred-time-dilation.sh" ] && chmod +x /usr/local/bin/alfred-time-dilation.sh || true
+
+cat > /etc/systemd/system/alfred-time-dilation.service << 'EOF'
+[Unit]
+Description=Alfred Temporal Hardware Time Lock
+After=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/alfred-time-dilation.sh
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+systemctl enable alfred-time-dilation || true || true.service || true
+
+echo "[Alfred Temporal Encryption] Temporal Hardware Lock Integrated."
+
+
+# --- BEGIN MERGED CONTENT FROM: 1320-alfred-holographic-principle.hook.chroot ---
+#!/bin/sh
+set +e
+
+echo "[Alfred Holographic] Engineering Holographic Principle 3D UI..."
+
+apt-get install -y picom || true
+
+mkdir -p /usr/share/alfred/hologram/ || true
+mkdir -p /usr/local/bin/ || true
+
+# We write a custom picom configuration that enforces extreme shadow offsets
+# to create a faux-3D parallax effect on standard 2D windows.
+cat > /usr/share/alfred/hologram/picom-hologram.conf << 'EOF'
+shadow = true;
+shadow-radius = 60;
+shadow-offset-x = -40;
+shadow-offset-y = -40;
+shadow-opacity = 0.8;
+
+corner-radius = 12;
+
+blur-background = true;
+blur-method = "dual_kawase";
+blur-strength = 8;
+
+fading = true;
+fade-delta = 4;
+
+# Make inactive windows highly transparent to push them into the "background" Z-plane
+inactive-opacity = 0.5;
+active-opacity = 1.0;
+EOF
+
+cat > /usr/local/bin/alfred-toggle-hologram.sh << 'EOF'
+#!/bin/bash
+# Toggles the 3D Holographic UI projection mode.
+
+if [ ! -f "/etc/alfred/defcon1.flag" ]; then
+    echo "[Holographic Principle] DEFCON 1 offline. Aborting."
+
+fi
+
+if pgrep -x "picom" > /dev/null; then
+    # If picom is running with our config, kill it.
+    if ps aux | grep picom | grep -q "picom-hologram.conf"; then
+        echo "Disabling Holographic Projection..."
+        pkill picom
+        # Restart standard picom
+        picom -b 2>/dev/null || true
+    else
+        echo "Activating Holographic Projection (Z-Axis Expansion)..."
+        pkill picom
+        picom --config /usr/share/alfred/hologram/picom-hologram.conf -b
+    fi
+else
+    echo "Activating Holographic Projection (Z-Axis Expansion)..."
+    picom --config /usr/share/alfred/hologram/picom-hologram.conf -b
+fi
+EOF
+
+[ -e "/usr/local/bin/alfred-toggle-hologram.sh" ] && chmod +x /usr/local/bin/alfred-toggle-hologram.sh || true
+
+echo "[Alfred Holographic] Holographic Principle 3D UI installed (Requires Defcon1 toggle)."
+
+# --- END MERGED CONTENT FROM: 1320-alfred-holographic-principle.hook.chroot ---
+
+

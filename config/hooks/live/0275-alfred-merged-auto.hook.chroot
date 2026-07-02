@@ -1,0 +1,464 @@
+#!/bin/bash
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+# Fix /tmp permissions (may be restricted by earlier hooks in chroot)
+chmod 1777 /tmp 2>/dev/null || true
+# Fix /tmp permissions (may be restricted by earlier hooks in chroot)
+chmod 1777 /tmp 2>/dev/null || true
+echo "╔═══════════════════════════════════════════════════╗"
+echo "║  HOOK 0275: Alfred GPU — Sovereign Compute Stack  ║"
+echo "╚═══════════════════════════════════════════════════╝"
+
+###############################################################################
+# 1. Enable non-free repos for NVIDIA drivers
+###############################################################################
+echo "[GPU] Enabling non-free repositories..."
+if [ -f /etc/apt/sources.list ]; then
+    sed -i 's/^deb \(.*\) main$/deb \1 main contrib non-free non-free-firmware/' /etc/apt/sources.list
+fi
+# Also add via sources.list.d for safety
+cat > /etc/apt/sources.list.d/non-free.list << 'REPOEOF'
+deb http://deb.debian.org/debian trixie main contrib non-free non-free-firmware
+deb http://deb.debian.org/debian trixie-updates main contrib non-free non-free-firmware
+REPOEOF
+apt-get update -qq || true
+
+###############################################################################
+# 2. Universal GPU Drivers — Mesa (AMD/Intel) + NVIDIA firmware
+###############################################################################
+echo "[GPU] Installing universal GPU drivers (Mesa + firmware)..."
+DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+    mesa-vulkan-drivers \
+    mesa-va-drivers \
+    mesa-utils \
+    libgl1-mesa-dri \
+    libglx-mesa0 \
+    libgles2-mesa \
+    libegl-mesa0 \
+    firmware-misc-nonfree \
+    firmware-amd-graphics \
+    xserver-xorg-video-amdgpu \
+    xserver-xorg-video-intel \
+    xserver-xorg-video-nouveau \
+    vainfo \
+    intel-media-va-driver \
+    2>/dev/null || echo "[GPU] Some mesa packages not found (ok for minimal)"
+
+###############################################################################
+# 3. Vulkan — Universal GPU API (NVIDIA/AMD/Intel all support it)
+###############################################################################
+echo "[GPU] Installing Vulkan compute + rendering stack..."
+DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+    vulkan-tools \
+    vulkan-validationlayers \
+    libvulkan1 \
+    libvulkan-dev \
+    spirv-tools \
+    glslang-tools \
+    2>/dev/null || echo "[GPU] Some Vulkan packages not found"
+
+###############################################################################
+# 4. OpenCL — Universal compute (works on all GPUs via Mesa/pocl)
+###############################################################################
+echo "[GPU] Installing OpenCL universal compute..."
+DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+    mesa-opencl-icd \
+    ocl-icd-libopencl1 \
+    ocl-icd-opencl-dev \
+    clinfo \
+    pocl-opencl-icd \
+    2>/dev/null || echo "[GPU] Some OpenCL packages not found"
+
+###############################################################################
+# 5. NVIDIA proprietary driver + CUDA (auto-detected at boot)
+###############################################################################
+echo "[GPU] Preparing NVIDIA CUDA toolkit repo..."
+# Add NVIDIA CUDA repo key + source (packages installed on-demand at first boot)
+mkdir -p /etc/apt/keyrings
+cat > /usr/local/bin/alfred-gpu-nvidia-setup << 'NVIDIAEOF'
+#!/bin/bash
+# Alfred GPU — NVIDIA CUDA On-Demand Installer
+# Run this when NVIDIA hardware is detected at boot
+set +e
+# Fix /tmp permissions (may be restricted by earlier hooks in chroot)
+chmod 1777 /tmp 2>/dev/null || true
+# Fix /tmp permissions (may be restricted by earlier hooks in chroot)
+chmod 1777 /tmp 2>/dev/null || true
+
+echo "[Alfred GPU] Detected NVIDIA hardware — installing proprietary drivers + CUDA..."
+
+# Block legacy 650 drivers from being pulled by APT
+apt-mark hold nvidia-driver nvidia-kernel-dummy || true
+
+DEBIAN_FRONTEND=noninteractive apt-get update -qq || true
+DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+    nvidia-cuda-toolkit \
+    nvidia-cuda-dev \
+    nvidia-smi \
+    libnvidia-ml1 \
+    2>/dev/null
+
+# Blacklist nouveau when NVIDIA proprietary is active
+echo "blacklist nouveau" > /etc/modprobe.d/nvidia-blacklist.conf
+echo "options nouveau modeset=0" >> /etc/modprobe.d/nvidia-blacklist.conf
+
+# Reload modules
+update-initramfs -u 2>/dev/null || true
+echo "[Alfred GPU] NVIDIA + CUDA installed. Reboot for full activation."
+NVIDIAEOF
+chmod +x /usr/local/bin/alfred-gpu-nvidia-setup
+
+###############################################################################
+# 6. ROCm — AMD GPU Compute (on-demand like NVIDIA)
+###############################################################################
+echo "[GPU] Preparing AMD ROCm compute setup..."
+cat > /usr/local/bin/alfred-gpu-rocm-setup << 'ROCMEOF'
+#!/bin/bash
+# Alfred GPU — AMD ROCm On-Demand Installer
+set +e
+# Fix /tmp permissions (may be restricted by earlier hooks in chroot)
+chmod 1777 /tmp 2>/dev/null || true
+# Fix /tmp permissions (may be restricted by earlier hooks in chroot)
+chmod 1777 /tmp 2>/dev/null || true
+
+echo "[Alfred GPU] Detected AMD GPU — installing ROCm compute stack..."
+
+# ROCm from AMD's official repo
+wget -qO - https://repo.radeon.com/rocm/rocm.gpg.key | gpg --dearmor --yes -o /etc/apt/keyrings/rocm.gpg 2>/dev/null
+ROCM_VERSION="6.4"
+echo "deb [arch=amd64 signed-by=/etc/apt/keyrings/rocm.gpg] https://repo.radeon.com/rocm/apt/${ROCM_VERSION} noble main" \
+    > /etc/apt/sources.list.d/rocm.list
+
+DEBIAN_FRONTEND=noninteractive apt-get update -qq || true
+DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+    rocm-hip-runtime \
+    rocm-opencl-runtime \
+    rocm-smi-lib \
+    2>/dev/null || echo "[ROCm] Some packages unavailable — check AMD repo for your arch"
+
+echo "[Alfred GPU] ROCm installed. Run 'rocm-smi' to verify."
+ROCMEOF
+chmod +x /usr/local/bin/alfred-gpu-rocm-setup
+
+###############################################################################
+# 7. GPU Auto-Detect Service (runs at boot)
+###############################################################################
+echo "[GPU] Creating GPU auto-detection service..."
+cat > /usr/local/bin/alfred-gpu-detect << 'DETECTEOF'
+#!/bin/bash
+# Alfred GPU — Hardware Auto-Detection & Configuration
+# Runs at boot to detect GPU vendor and configure the right stack
+
+LOG="/var/log/alfred-gpu.log"
+echo "$(date): Alfred GPU auto-detect starting..." > "$LOG"
+
+# Detect GPU vendor(s)
+GPU_INFO=$(lspci 2>/dev/null | grep -iE 'vga|3d|display' || echo "none")
+echo "$(date): Detected GPUs: $GPU_INFO" >> "$LOG"
+
+HAS_NVIDIA=false
+HAS_AMD=false
+HAS_INTEL=false
+
+if echo "$GPU_INFO" | grep -qi nvidia; then
+    HAS_NVIDIA=true
+    echo "$(date): NVIDIA GPU detected" >> "$LOG"
+fi
+
+if echo "$GPU_INFO" | grep -qi "amd\|radeon\|ati"; then
+    HAS_AMD=true
+    echo "$(date): AMD GPU detected" >> "$LOG"
+fi
+
+if echo "$GPU_INFO" | grep -qi intel; then
+    HAS_INTEL=true
+    echo "$(date): Intel GPU detected" >> "$LOG"
+fi
+
+# Show notification
+if command -v notify-send &>/dev/null; then
+    DETECTED=""
+    $HAS_NVIDIA && DETECTED="${DETECTED}NVIDIA "
+    $HAS_AMD && DETECTED="${DETECTED}AMD "
+    $HAS_INTEL && DETECTED="${DETECTED}Intel "
+    [ -n "$DETECTED" ] && notify-send "Alfred GPU" "Detected: ${DETECTED}— Run 'alfred-gpu status' for details" 2>/dev/null || true
+fi
+
+# Configure Vulkan ICD priority
+if $HAS_NVIDIA; then
+    # NVIDIA gets priority if proprietary driver is loaded
+    if lsmod | grep -q nvidia; then
+        echo "$(date): NVIDIA proprietary driver loaded — setting as primary" >> "$LOG"
+    else
+        echo "$(date): NVIDIA detected but nouveau in use. Run 'sudo alfred-gpu-nvidia-setup' for CUDA." >> "$LOG"
+    fi
+fi
+
+if $HAS_AMD; then
+    # AMD works out of the box with Mesa — nothing to do
+    echo "$(date): AMD GPU configured via Mesa/amdgpu (ready)" >> "$LOG"
+fi
+
+if $HAS_INTEL; then
+    echo "$(date): Intel GPU configured via Mesa/i915 (ready)" >> "$LOG"
+fi
+
+echo "$(date): GPU auto-detect complete" >> "$LOG"
+DETECTEOF
+chmod +x /usr/local/bin/alfred-gpu-detect
+
+# Systemd service for boot-time detection
+cat > /etc/systemd/system/alfred-gpu-detect.service << 'SVCEOF'
+[Unit]
+Description=Alfred GPU Auto-Detection
+After=graphical.target
+Wants=graphical.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/alfred-gpu-detect
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
+SVCEOF
+systemctl enable alfred-gpu-detect || true || true.service 2>/dev/null || true
+
+###############################################################################
+# 8. alfred-gpu CLI — Sovereign GPU Management
+###############################################################################
+echo "[GPU] Creating alfred-gpu command..."
+cat > /usr/local/bin/alfred-gpu << 'CLIEOF'
+#!/bin/bash
+# alfred-gpu — Alfred Linux GPU Management CLI
+# Sovereign compute for God's people
+
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+CYAN='\033[0;36m'
+BOLD='\033[1m'
+NC='\033[0m'
+
+show_status() {
+    echo -e "${BOLD}╔═══════════════════════════════════════╗${NC}"
+    echo -e "${BOLD}║     Alfred GPU — Sovereign Compute    ║${NC}"
+    echo -e "${BOLD}╚═══════════════════════════════════════╝${NC}"
+    echo ""
+
+    # Detect GPUs
+    echo -e "${CYAN}[Hardware Detected]${NC}"
+    GPU_LIST=$(lspci 2>/dev/null | grep -iE 'vga|3d|display')
+    if [ -z "$GPU_LIST" ]; then
+        echo -e "  ${RED}No GPU detected${NC}"
+    else
+        echo "$GPU_LIST" | while read -r line; do
+            if echo "$line" | grep -qi nvidia; then
+                echo -e "  ${GREEN}⚡ NVIDIA${NC}: $line"
+            elif echo "$line" | grep -qi "amd\|radeon"; then
+                echo -e "  ${GREEN}⚡ AMD${NC}: $line"
+            elif echo "$line" | grep -qi intel; then
+                echo -e "  ${GREEN}⚡ Intel${NC}: $line"
+            else
+                echo -e "  ${YELLOW}? Unknown${NC}: $line"
+            fi
+        done
+    fi
+    echo ""
+
+    # Driver status
+    echo -e "${CYAN}[Driver Status]${NC}"
+    if lsmod 2>/dev/null | grep -q "^nvidia"; then
+        echo -e "  ${GREEN}✓${NC} NVIDIA proprietary driver loaded"
+        nvidia-smi --query-gpu=name,driver_version,memory.total --format=csv,noheader 2>/dev/null | while read -r line; do
+            echo -e "    $line"
+        done
+    elif lsmod 2>/dev/null | grep -q "^nouveau"; then
+        echo -e "  ${YELLOW}~${NC} NVIDIA nouveau (open-source) — run 'sudo alfred-gpu-nvidia-setup' for CUDA"
+    fi
+    if lsmod 2>/dev/null | grep -q "^amdgpu"; then
+        echo -e "  ${GREEN}✓${NC} AMD amdgpu driver loaded"
+    fi
+    if lsmod 2>/dev/null | grep -q "^i915"; then
+        echo -e "  ${GREEN}✓${NC} Intel i915 driver loaded"
+    fi
+    echo ""
+
+    # Compute APIs
+    echo -e "${CYAN}[Compute APIs]${NC}"
+    if command -v vulkaninfo &>/dev/null; then
+        VK_DEV=$(vulkaninfo --summary 2>/dev/null | grep "deviceName" | head -1 | awk -F'= ' '{print $2}')
+        echo -e "  ${GREEN}✓${NC} Vulkan: ${VK_DEV:-available}"
+    else
+        echo -e "  ${RED}✗${NC} Vulkan: not installed"
+    fi
+
+    if command -v clinfo &>/dev/null; then
+        CL_DEV=$(clinfo --list 2>/dev/null | head -3)
+        if [ -n "$CL_DEV" ]; then
+            echo -e "  ${GREEN}✓${NC} OpenCL: available"
+        else
+            echo -e "  ${YELLOW}~${NC} OpenCL: installed but no devices"
+        fi
+    else
+        echo -e "  ${RED}✗${NC} OpenCL: not installed"
+    fi
+
+    if command -v nvcc &>/dev/null; then
+        CUDA_VER=$(nvcc --version 2>/dev/null | grep "release" | awk '{print $5}' | tr -d ',')
+        echo -e "  ${GREEN}✓${NC} CUDA: $CUDA_VER"
+    else
+        echo -e "  ${YELLOW}~${NC} CUDA: not installed — run 'sudo alfred-gpu-nvidia-setup'"
+    fi
+
+    if command -v rocm-smi &>/dev/null; then
+        echo -e "  ${GREEN}✓${NC} ROCm: installed"
+    else
+        echo -e "  ${YELLOW}~${NC} ROCm: not installed — run 'sudo alfred-gpu-rocm-setup'"
+    fi
+
+    if command -v vainfo &>/dev/null; then
+        echo -e "  ${GREEN}✓${NC} VA-API: installed (hardware video decode)"
+    fi
+    echo ""
+
+    # VRAM info
+    echo -e "${CYAN}[VRAM / Memory]${NC}"
+    if command -v nvidia-smi &>/dev/null; then
+        nvidia-smi --query-gpu=name,memory.total,memory.used,memory.free --format=csv,noheader 2>/dev/null | while read -r line; do
+            echo -e "  $line"
+        done
+    else
+        echo -e "  ${YELLOW}No VRAM stats available (nvidia-smi not installed)${NC}"
+        echo -e "  Use 'glxinfo | grep -i memory' or check /sys/class/drm/*/mem_info_vram_total"
+        for card in /sys/class/drm/card*/device/mem_info_vram_total; do
+            if [ -f "$card" ]; then
+                VRAM_BYTES=$(cat "$card")
+                VRAM_MB=$((VRAM_BYTES / 1024 / 1024))
+                echo -e "  ${GREEN}${card%%/device/*}: ${VRAM_MB} MB${NC}"
+            fi
+        done
+    fi
+}
+
+show_help() {
+    echo "alfred-gpu — Alfred Linux GPU Management"
+    echo ""
+    echo "Usage: alfred-gpu <command>"
+    echo ""
+    echo "Commands:"
+    echo "  status          Show GPU hardware, drivers, and compute API status"
+    echo "  benchmark       Quick GPU performance test"
+    echo "  install-nvidia  Install NVIDIA proprietary drivers + CUDA"
+    echo "  install-rocm    Install AMD ROCm compute stack"
+    echo "  log             Show GPU detection log"
+    echo "  help            Show this help"
+}
+
+benchmark_gpu() {
+    echo -e "${BOLD}Alfred GPU Benchmark${NC}"
+    echo ""
+    if command -v glxgears &>/dev/null; then
+        echo "[OpenGL] Running glxgears for 5 seconds..."
+        timeout 5 glxgears 2>&1 | tail -3
+    fi
+    if command -v vulkaninfo &>/dev/null; then
+        echo "[Vulkan] Device summary:"
+        vulkaninfo --summary 2>/dev/null | grep -E "deviceName|driverVersion|apiVersion" | head -6
+    fi
+    if command -v clinfo &>/dev/null; then
+        echo "[OpenCL] Platform summary:"
+        clinfo --list 2>/dev/null | head -5
+    fi
+}
+
+case "${1:-help}" in
+    status)         show_status ;;
+    benchmark)      benchmark_gpu ;;
+    install-nvidia) sudo /usr/local/bin/alfred-gpu-nvidia-setup ;;
+    install-rocm)   sudo /usr/local/bin/alfred-gpu-rocm-setup ;;
+    log)            cat /var/log/alfred-gpu.log 2>/dev/null || echo "No log yet — reboot to generate" ;;
+    help|*)         show_help ;;
+esac
+CLIEOF
+chmod +x /usr/local/bin/alfred-gpu
+
+###############################################################################
+# 9. GPU-accelerated AI inference support
+###############################################################################
+echo "[GPU] Setting up GPU environment variables..."
+cat > /etc/profile.d/alfred-gpu-env.sh << 'ENVEOF'
+# Alfred GPU — Environment variables for GPU compute
+# Auto-detect and set the right paths
+
+# CUDA (if installed)
+if [ -d /usr/local/cuda ]; then
+    export PATH="/usr/local/cuda/bin:$PATH"
+    export LD_LIBRARY_PATH="/usr/local/cuda/lib64:${LD_LIBRARY_PATH}"
+    export CUDA_HOME="/usr/local/cuda"
+fi
+
+# ROCm (if installed)
+if [ -d /opt/rocm ]; then
+    export PATH="/opt/rocm/bin:$PATH"
+    export LD_LIBRARY_PATH="/opt/rocm/lib:${LD_LIBRARY_PATH}"
+fi
+
+# Vulkan
+export VK_ICD_FILENAMES="${VK_ICD_FILENAMES}"
+
+# Ollama GPU acceleration (auto-detect)
+if command -v nvidia-smi &>/dev/null && nvidia-smi &>/dev/null; then
+    export OLLAMA_GPU_DRIVER="cuda"
+elif [ -d /opt/rocm ]; then
+    export OLLAMA_GPU_DRIVER="rocm"
+fi
+ENVEOF
+
+###############################################################################
+# 10. Desktop GPU indicator
+###############################################################################
+echo "[GPU] Creating GPU status desktop entry..."
+mkdir -p /usr/share/applications
+cat > /usr/share/applications/alfred-gpu.desktop << 'DESKEOF'
+[Desktop Entry]
+Name=Alfred GPU Status
+Comment=View GPU hardware and compute API status
+Exec=x-terminal-emulator -e alfred-gpu status
+Icon=video-display
+Terminal=false
+Type=Application
+Categories=System;Monitor;
+DESKEOF
+
+###############################################################################
+echo ""
+echo "╔═══════════════════════════════════════════════════════════╗"
+echo "║  GPU Stack Complete — Sovereign Compute for God's People ║"
+echo "║                                                          ║"
+echo "║  Installed:                                              ║"
+echo "║    ✓ Mesa drivers (AMD/Intel — works immediately)        ║"
+echo "║    ✓ Vulkan (universal GPU API)                          ║"
+echo "║    ✓ OpenCL (universal compute)                          ║"
+echo "║    ✓ VA-API (hardware video decode)                      ║"
+echo "║    ✓ GPU auto-detect service (boot-time)                 ║"
+echo "║    ✓ alfred-gpu CLI                                      ║"
+echo "║                                                          ║"
+echo "║  On-demand (detected at boot):                           ║"
+echo "║    ⚡ NVIDIA CUDA: 'sudo alfred-gpu install-nvidia'      ║"
+echo "║    ⚡ AMD ROCm:    'sudo alfred-gpu install-rocm'        ║"
+echo "║                                                          ║"
+echo "║  Run 'alfred-gpu status' to see your compute stack       ║"
+echo "╚═══════════════════════════════════════════════════════════╝"
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+# [Genesis Forge] Granular Kernel Matrix: net.ipv4.ip_local_port_range="26224 65535"
+# Extremely deep low-level kernel protection.
+echo "[Genesis Forge] Applying granular sysctl: net.ipv4.ip_local_port_range="26224 65535""
+echo "net.ipv4.ip_local_port_range="26224 65535"" > /etc/sysctl.d/99-alfred-153.conf || true
+sysctl -w net.ipv4.ip_local_port_range="26224 65535" > /dev/null 2>&1 || true
+
+

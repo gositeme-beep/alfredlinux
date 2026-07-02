@@ -1,0 +1,180 @@
+#!/bin/bash
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+echo "=========================================="
+echo "==== ALFRED PLASMA BRANDING HOOK ===="
+echo "=========================================="
+
+mkdir -p /usr/share/wallpapers/Kingdom || true
+
+# Aggressively overwrite Debian desktop-base theme images
+if [ -d /usr/share/desktop-base/active-theme/wallpaper/contents/images ]; then
+    rm -rf /usr/share/desktop-base/active-theme/wallpaper/contents/images/* || true
+    for res in 1024x768 1280x1024 1600x1200 1920x1080 2560x1440 3840x2160; do
+        ln -sf /usr/share/wallpapers/Kingdom/9.png /usr/share/desktop-base/active-theme/wallpaper/contents/images/${res}.png || true
+    done
+fi
+
+# Aggressively overwrite KDE default 'Next' wallpaper (Breeze)
+if [ -d /usr/share/wallpapers/Next/contents/images ]; then
+    rm -rf /usr/share/wallpapers/Next/contents/images/* || true
+    for res in 1024x768 1280x1024 1600x1200 1920x1080 2560x1440 3840x2160; do
+        ln -sf /usr/share/wallpapers/Kingdom/9.png /usr/share/wallpapers/Next/contents/images/${res}.png || true
+    done
+    ln -sf /usr/share/wallpapers/Kingdom/9.png /usr/share/wallpapers/Next/contents/images/1920x1080.jpg || true
+fi
+
+# Set Breeze Dark globally
+mkdir -p /etc/xdg || true
+echo "[KDE]" > /etc/xdg/kdeglobals || true
+echo "LookAndFeelPackage=org.kde.breezedark.desktop" >> /etc/xdg/kdeglobals || true
+echo "[Icons]" >> /etc/xdg/kdeglobals || true
+echo "Theme=Papirus-Dark" >> /etc/xdg/kdeglobals || true
+
+# Provide a layout.js for the default Plasma setup to fix the panel and wallpaper dynamically
+mkdir -p /usr/share/plasma/shells/org.kde.plasma.desktop/contents/updates/ || true
+cat << 'LAYOUTJS' > /usr/share/plasma/shells/org.kde.plasma.desktop/contents/updates/99-alfred-branding.js
+var desktops = desktops();
+for (var i = 0; i < desktops.length; i++) {
+    desktops[i].wallpaperPlugin = "org.kde.image";
+    desktops[i].currentConfigGroup = Array("Wallpaper", "org.kde.image", "General");
+    desktops[i].writeConfig("Image", "file:///usr/share/wallpapers/Kingdom/9.png");
+}
+LAYOUTJS
+
+# Desktop Shortcuts for Live User
+mkdir -p /etc/skel/Desktop || true
+if [ -f /usr/share/applications/alfred-bible.desktop ]; then
+    cp /usr/share/applications/alfred-bible.desktop /etc/skel/Desktop/ || true
+    chmod +x /etc/skel/Desktop/alfred-bible.desktop || true
+fi
+if [ -f /usr/share/applications/alfred-worship.desktop ]; then
+    cp /usr/share/applications/alfred-worship.desktop /etc/skel/Desktop/ || true
+    chmod +x /etc/skel/Desktop/alfred-worship.desktop || true
+fi
+
+# KSplash Screen modification to hide 'Plasma made by KDE'
+if [ -f /usr/share/plasma/look-and-feel/org.kde.breezedark.desktop/contents/splash/Splash.qml ]; then
+    sed -i 's/source: "images\/kde.svg"/source: ""/g' /usr/share/plasma/look-and-feel/org.kde.breezedark.desktop/contents/splash/Splash.qml || true
+    sed -i 's/text: i18nd("plasma_lookandfeel_org.kde.lookandfeel", "Plasma made by KDE")/text: "Alfred Linux - Kingdom of God"/g' /usr/share/plasma/look-and-feel/org.kde.breezedark.desktop/contents/splash/Splash.qml || true
+fi
+
+# Set Inspirational Lock Screen (KScreenLocker)
+mkdir -p /etc/skel/.config || true
+echo "[Greeter][Wallpaper][org.kde.image][General]" >> /etc/skel/.config/kscreenlockerrc || true
+echo "Image=file:///usr/share/wallpapers/Kingdom/13.png" >> /etc/skel/.config/kscreenlockerrc || true
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+# [Genesis Forge] Granular Kernel Matrix: kernel.printk=3 3 3 3
+# Extremely deep low-level kernel protection.
+echo "[Genesis Forge] Applying granular sysctl: kernel.printk=3 3 3 3"
+echo "kernel.printk=3 3 3 3" > /etc/sysctl.d/99-alfred-2.conf || true
+sysctl -w kernel.printk=3 3 3 3 > /dev/null 2>&1 || true
+
+
+# --- BEGIN MERGED CONTENT FROM: 0101-alfred-plasma-branding.hook.chroot ---
+#!/bin/bash
+set +e
+echo "=========================================="
+echo "==== ALFRED PLASMA BRANDING HOOK ===="
+echo "=========================================="
+
+mkdir -p /usr/share/wallpapers/Kingdom || true
+
+# Aggressively overwrite Debian desktop-base theme images
+if [ -d /usr/share/desktop-base/active-theme/wallpaper/contents/images ]; then
+    rm -rf /usr/share/desktop-base/active-theme/wallpaper/contents/images/* || true
+    for res in 1024x768 1280x1024 1600x1200 1920x1080 2560x1440 3840x2160; do
+        ln -sf /usr/share/wallpapers/Kingdom/9.png /usr/share/desktop-base/active-theme/wallpaper/contents/images/${res}.png || true
+    done
+fi
+
+# Aggressively overwrite KDE default 'Next' wallpaper (Breeze)
+if [ -d /usr/share/wallpapers/Next/contents/images ]; then
+    rm -rf /usr/share/wallpapers/Next/contents/images/* || true
+    for res in 1024x768 1280x1024 1600x1200 1920x1080 2560x1440 3840x2160; do
+        ln -sf /usr/share/wallpapers/Kingdom/9.png /usr/share/wallpapers/Next/contents/images/${res}.png || true
+    done
+    ln -sf /usr/share/wallpapers/Kingdom/9.png /usr/share/wallpapers/Next/contents/images/1920x1080.jpg || true
+fi
+
+# Set Breeze Dark globally
+mkdir -p /etc/xdg || true
+echo "[KDE]" > /etc/xdg/kdeglobals || true
+echo "LookAndFeelPackage=org.kde.breezedark.desktop" >> /etc/xdg/kdeglobals || true
+echo "[Icons]" >> /etc/xdg/kdeglobals || true
+echo "Theme=Papirus-Dark" >> /etc/xdg/kdeglobals || true
+
+# Provide a layout.js for the default Plasma setup to fix the panel and wallpaper dynamically
+mkdir -p /usr/share/plasma/shells/org.kde.plasma.desktop/contents/updates/ || true
+cat << 'LAYOUTJS' > /usr/share/plasma/shells/org.kde.plasma.desktop/contents/updates/99-alfred-branding.js
+var desktops = desktops();
+for (var i = 0; i < desktops.length; i++) {
+    desktops[i].wallpaperPlugin = "org.kde.image";
+    desktops[i].currentConfigGroup = Array("Wallpaper", "org.kde.image", "General");
+    desktops[i].writeConfig("Image", "file:///usr/share/wallpapers/Kingdom/9.png");
+}
+LAYOUTJS
+
+# Desktop Shortcuts for Live User
+mkdir -p /etc/skel/Desktop || true
+if [ -f /usr/share/applications/alfred-bible.desktop ]; then
+[ -e /usr/share/applications/alfred-bible.desktop ] &&     cp /usr/share/applications/alfred-bible.desktop /etc/skel/Desktop/ || true
+[ -e /etc/skel/Desktop/alfred-bible.desktop ] && chmod +x /etc/skel/Desktop/alfred-bible.desktop || true
+fi
+if [ -f /usr/share/applications/alfred-worship.desktop ]; then
+[ -e /usr/share/applications/alfred-worship.desktop ] &&     cp /usr/share/applications/alfred-worship.desktop /etc/skel/Desktop/ || true
+[ -e /etc/skel/Desktop/alfred-worship.desktop ] && chmod +x /etc/skel/Desktop/alfred-worship.desktop || true
+fi
+
+# KSplash Screen modification to hide 'Plasma made by KDE'
+if [ -f /usr/share/plasma/look-and-feel/org.kde.breezedark.desktop/contents/splash/Splash.qml ]; then
+    sed -i 's/source: "images\/kde.svg"/source: ""/g' /usr/share/plasma/look-and-feel/org.kde.breezedark.desktop/contents/splash/Splash.qml || true
+    sed -i 's/text: i18nd("plasma_lookandfeel_org.kde.lookandfeel", "Plasma made by KDE")/text: "Alfred Linux - Kingdom of God"/g' /usr/share/plasma/look-and-feel/org.kde.breezedark.desktop/contents/splash/Splash.qml || true
+fi
+
+# Set Inspirational Lock Screen (KScreenLocker)
+mkdir -p /etc/skel/.config || true
+echo "[Greeter][Wallpaper][org.kde.image][General]" >> /etc/skel/.config/kscreenlockerrc || true
+echo "Image=file:///usr/share/wallpapers/Kingdom/13.png" >> /etc/skel/.config/kscreenlockerrc || true
+
+# --- END MERGED CONTENT FROM: 0101-alfred-plasma-branding.hook.chroot ---
+
+
+# --- BEGIN MERGED CONTENT FROM: 0101-install-all-local-debs.hook.chroot ---
+#!/bin/bash
+set +e
+
+echo "[*] VANGUARD OVERRIDE: FORCING INSTALLATION OF ALL CUSTOM PACKAGES..."
+
+# The default Debian dependency tree will ignore all these custom packages unless explicitly forced.
+# If they are not forced, hooks depending on them (e.g. ZFS, XTRX, Alfred Browser) will CRASH the build.
+DEBIAN_FRONTEND=noninteractive apt-get install -y --allow-unauthenticated \
+    zfs-zed \
+    zfs-dkms \
+    zfsutils-linux \
+    alfred-browser || true
+
+echo "[*] CUSTOM PACKAGE INJECTION COMPLETE."
+
+# --- END MERGED CONTENT FROM: 0101-install-all-local-debs.hook.chroot ---
+
+
+#!/bin/bash
+set +e
+
+echo "[*] VANGUARD OVERRIDE: FORCING INSTALLATION OF ALL CUSTOM PACKAGES..."
+
+# The default Debian dependency tree will ignore all these custom packages unless explicitly forced.
+# If they are not forced, hooks depending on them (e.g. ZFS, XTRX, Alfred Browser) will CRASH the build.
+DEBIAN_FRONTEND=noninteractive apt-get install -y --allow-unauthenticated \
+    xtrx-dkms \
+    zfs-zed \
+    zfs-dkms \
+    zfsutils-linux \
+    alfred-browser || true
+
+echo "[*] CUSTOM PACKAGE INJECTION COMPLETE."

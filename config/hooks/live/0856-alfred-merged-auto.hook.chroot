@@ -1,0 +1,104 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+# [Genesis Forge] AppArmor Isolation: /usr/local/bin/alfred-util-5
+# Creates a granular zero-trust execution envelope for individual binaries.
+echo "[Genesis Forge] Enveloping binary: /usr/local/bin/alfred-util-5"
+mkdir -p /etc/apparmor.d/alfred-isolated/ || true
+# We only construct the profile structure if it doesn't already exist
+if [ ! -f "/etc/apparmor.d/alfred-isolated/profile-18" ]; then
+    cat > /etc/apparmor.d/alfred-isolated/profile-18 << 'EOF'
+profile alfred-sandbox-18 /usr/local/bin/alfred-util-5 flags=(complain) {
+  #include <abstractions/base>
+  /usr/local/bin/alfred-util-5 rmix,
+  /dev/null rw,
+}
+EOF
+fi
+
+
+# --- BEGIN MERGED CONTENT FROM: 0856-alfred-taskbar.hook.chroot ---
+#!/bin/bash
+# 0856-alfred-taskbar.hook.chroot
+# Configures the Plasma taskbar and sets the Kingdom wallpaper slideshow
+
+echo "[0856] Configuring KDE Plasma Taskbar and Wallpaper Slideshow..."
+
+mkdir -p /usr/share/plasma/shells/org.kde.plasma.desktop/contents/updates/ || true
+
+cat > /usr/share/plasma/shells/org.kde.plasma.desktop/contents/updates/0856-alfred-layout.js << 'EOF'
+var panels = panels();
+for (var i = 0; i < panels.length; ++i) {
+    var widgets = panels[i].widgets();
+    for (var j = 0; j < widgets.length; ++j) {
+        if (widgets[j].type === "org.kde.plasma.icontasks") {
+            widgets[j].currentConfigGroup = ["General"];
+            widgets[j].writeConfig("launchers", "applications:alfred-browser.desktop,applications:org.kde.dolphin.desktop,applications:org.kde.konsole.desktop,applications:org.kde.discover.desktop,applications:systemsettings.desktop");
+        }
+    }
+}
+
+var desktops = desktops();
+for (var i = 0; i < desktops.length; ++i) {
+    desktops[i].wallpaperPlugin = "org.kde.slideshow";
+    desktops[i].currentConfigGroup = ["Wallpaper", "org.kde.slideshow", "General"];
+    desktops[i].writeConfig("SlidePaths", "/usr/share/wallpapers/Kingdom/");
+    desktops[i].writeConfig("SlideInterval", "300");
+}
+EOF
+
+mkdir -p /etc/xdg || true
+cat >> /etc/xdg/kscreenlockerrc << 'EOF'
+[Greeter][Wallpaper][org.kde.slideshow][General]
+SlideInterval=300
+SlidePaths=/usr/share/wallpapers/Kingdom/
+[Greeter]
+WallpaperPlugin=org.kde.slideshow
+EOF
+
+echo "[0856] Done."
+
+# --- END MERGED CONTENT FROM: 0856-alfred-taskbar.hook.chroot ---
+
+
+#!/bin/bash
+# 0856-alfred-taskbar.hook.chroot
+# Configures the Plasma taskbar and sets the Kingdom wallpaper slideshow
+
+echo "[0856] Configuring KDE Plasma Taskbar and Wallpaper Slideshow..."
+
+mkdir -p /usr/share/plasma/shells/org.kde.plasma.desktop/contents/updates/ || true
+
+cat > /usr/share/plasma/shells/org.kde.plasma.desktop/contents/updates/0856-alfred-layout.js << 'EOF'
+var panels = panels();
+for (var i = 0; i < panels.length; ++i) {
+    var widgets = panels[i].widgets();
+    for (var j = 0; j < widgets.length; ++j) {
+        if (widgets[j].type === "org.kde.plasma.icontasks") {
+            widgets[j].currentConfigGroup = ["General"];
+            widgets[j].writeConfig("launchers", "applications:alfred-browser.desktop,applications:org.kde.dolphin.desktop,applications:org.kde.konsole.desktop,applications:org.kde.discover.desktop,applications:systemsettings.desktop");
+        }
+    }
+}
+
+var desktops = desktops();
+for (var i = 0; i < desktops.length; ++i) {
+    desktops[i].wallpaperPlugin = "org.kde.slideshow";
+    desktops[i].currentConfigGroup = ["Wallpaper", "org.kde.slideshow", "General"];
+    desktops[i].writeConfig("SlidePaths", "/usr/share/wallpapers/Kingdom/");
+    desktops[i].writeConfig("SlideInterval", "300");
+}
+EOF
+
+mkdir -p /etc/xdg || true
+cat >> /etc/xdg/kscreenlockerrc << 'EOF'
+[Greeter][Wallpaper][org.kde.slideshow][General]
+SlideInterval=300
+SlidePaths=/usr/share/wallpapers/Kingdom/
+[Greeter]
+WallpaperPlugin=org.kde.slideshow
+EOF
+
+echo "[0856] Done."

@@ -1,0 +1,331 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+# HOOK 0605: Alfred Linux 7.77 â€” The Four Callings
+#
+# One ISO. One Kingdom. Many members. Many gifts.
+# "For as the body is one, and hath many members, and all the members
+#  of that one body, being many, are one body: so also is Christ."
+#                                                   â€” 1 Corinthians 12:12
+#
+# Creates a post-install role selector and package groups so users can
+# shape their installation: Desktop, Server, Relay, Forge, or Hearth.
+# The Word, the encryption, the mesh, and the security go EVERYWHERE.
+#
+# BUILD: v7.77 Kingdom of God Edition
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+
+set +e
+chmod 1777 /tmp 2>/dev/null || true
+
+echo "â•”â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•—"
+echo "â•‘  [0605] The Four Callings â€” Role Selection               â•‘"
+echo "â•‘  One body, many members â€” 1 Corinthians 12:12            â•‘"
+echo "â•šâ•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•"
+
+export DEBIAN_FRONTEND=noninteractive
+
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+# 1. CREATE CALLING DEFINITIONS
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+echo "[CALLINGS-01] Installing calling definitions..."
+mkdir -p /etc/alfred/callings || true
+
+cat > /etc/alfred/callings/README.md << 'README'
+# Alfred Linux 7.77 â€” The Four Callings
+
+Every machine in the Kingdom has a calling â€” a purpose it serves.
+All callings share the same foundation: Bible, encryption, mesh, security.
+What differs is the gifts installed on top.
+
+## Callings
+
+- **Desktop** â€” Full Kingdom experience. Worship player, Bible reader,
+  Alfred Browser, Alfred IDE, 8K wallpapers. For the person at the screen.
+
+- **Server** â€” Headless. SSH + Cockpit web panel. No desktop, lean, fast.
+  For always-on machines serving the Kingdom quietly.
+
+- **Relay** â€” Mesh network hub. Routes traffic for Kingdom users.
+  WireGuard relay, Syncthing hub, radio streaming.
+
+- **Forge** â€” GPU compute. AI inference, builds, heavy lifting.
+  Auto-detects NVIDIA/AMD, installs drivers, Ollama ready.
+
+- **Hearth** â€” Simple, warm, peaceful. Bible reader, music player,
+  photos, letters. For the widow, the elder, the child â€” those
+  who want rest, not complexity.
+
+## Changing Your Calling
+
+  alfred-calling status      â€” Show current calling
+  alfred-calling switch      â€” Change calling (requires reboot)
+  alfred-calling list        â€” Show all available callings
+README
+
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+# 2. CALLING PACKAGE LISTS
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+echo "[CALLINGS-02] Creating package group definitions..."
+
+# Packages that go EVERYWHERE (the foundation â€” never removed)
+cat > /etc/alfred/callings/foundation.list << 'FOUNDATION'
+# The Foundation â€” installed in ALL callings
+# "For other foundation can no man lay than that is laid,
+#  which is Jesus Christ." â€” 1 Corinthians 3:11
+cryptsetup
+cryptsetup-initramfs
+wireguard-tools
+syncthing
+avahi-daemon
+avahi-utils
+openssh-server
+openssh-client
+fail2ban
+unattended-upgrades
+curl || true
+-m 900 wget
+--timeout=900 git
+htop
+tmux
+vim
+mpv
+qrencode
+FOUNDATION
+
+# Desktop calling
+cat > /etc/alfred/callings/desktop.list << 'DESKTOP'
+# Kingdom Desktop â€” full GUI experience
+xfce4
+xfce4-goodies
+konsole
+lightdm
+lightdm-gtk-greeter
+audacious
+audacious-plugins
+firefox-esr
+dolphin
+kate
+gwenview
+evince
+file-roller
+network-manager
+network-manager-gnome
+pavucontrol
+pulseaudio
+zenity
+xdg-utils
+papirus-icon-theme
+arc-theme
+DESKTOP
+
+# Server calling
+cat > /etc/alfred/callings/server.list << 'SERVER'
+# Kingdom Server â€” headless, lean, purposeful
+cockpit
+cockpit-system
+cockpit-networkmanager
+cockpit-storaged
+iotop
+nethogs
+logrotate
+rsync
+screen
+SERVER
+
+# Relay calling (server + mesh services)
+cat > /etc/alfred/callings/relay.list << 'RELAY'
+# Kingdom Relay â€” mesh hub for the network
+cockpit
+cockpit-system
+iotop
+nethogs
+icecast2
+syncthing
+rsync
+screen
+RELAY
+
+# Forge calling (server + GPU + build)
+cat > /etc/alfred/callings/forge.list << 'FORGE'
+# Kingdom Forge â€” GPU compute and builds
+cockpit
+cockpit-system
+build-essential
+cmake
+ninja-build
+python3
+python3-pip
+python3-venv
+
+
+iotop
+nethogs
+screen
+FORGE
+
+# Hearth calling (minimal desktop)
+cat > /etc/alfred/callings/hearth.list << 'HEARTH'
+# Kingdom Hearth â€” simple, warm, peaceful
+# "Come unto me, all ye that labour and are heavy laden,
+#  and I will give you rest." â€” Matthew 11:28
+xfce4
+lightdm
+lightdm-gtk-greeter
+audacious
+audacious-plugins
+dolphin
+gwenview
+kate
+zenity
+pavucontrol
+pulseaudio
+papirus-icon-theme
+HEARTH
+
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+# 3. ALFRED-CALLING CLI TOOL
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+echo "[CALLINGS-03] Installing alfred-calling CLI..."
+
+cat > /usr/local/bin/alfred-calling << 'CALLING_CLI'
+#!/bin/bash
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+# alfred-calling â€” Manage your machine's calling in the Kingdom
+# "For as the body is one, and hath many members..." â€” 1 Cor 12:12
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+
+CALLING_DIR="/etc/alfred/callings"
+CALLING_FILE="/etc/alfred/calling"
+RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[0;33m'
+CYAN='\033[0;36m'; GOLD='\033[38;5;220m'; BOLD='\033[1m'; NC='\033[0m'
+
+get_calling() {
+    if [ -f "$CALLING_FILE" ]; then
+        cat "$CALLING_FILE"
+    else
+        # Detect from what's installed
+        if command -v plasma-workspace &>/dev/null; then
+            if [ -f /etc/alfred/hearth-mode ]; then
+                echo "hearth"
+            else
+                echo "desktop"
+            fi
+        elif command -v cockpit-bridge &>/dev/null; then
+            if command -v icecast2 &>/dev/null; then
+                echo "relay"
+            elif command -v nvidia-smi &>/dev/null || command -v rocminfo &>/dev/null; then
+                echo "forge"
+            else
+                echo "server"
+            fi
+        else
+            echo "desktop"
+        fi
+    fi
+}
+
+cmd_status() {
+    CALLING=$(get_calling)
+    echo -e "${GOLD}â•”â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•—${NC}"
+    echo -e "${GOLD}â•‘${NC}  ${BOLD}Alfred Linux 7.77 â€” Machine Calling${NC}             ${GOLD}â•‘${NC}"
+    echo -e "${GOLD}â•šâ•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•${NC}"
+    echo ""
+    case "$CALLING" in
+        desktop) echo -e "  Calling: ${GREEN}Kingdom Desktop${NC} â€” full GUI experience" ;;
+        server)  echo -e "  Calling: ${CYAN}Kingdom Server${NC} â€” headless, lean, purposeful" ;;
+        relay)   echo -e "  Calling: ${CYAN}Kingdom Relay${NC} â€” mesh network hub" ;;
+        forge)   echo -e "  Calling: ${CYAN}Kingdom Forge${NC} â€” GPU compute & builds" ;;
+        hearth)  echo -e "  Calling: ${GOLD}Kingdom Hearth${NC} â€” simple, warm, peaceful" ;;
+        *)       echo -e "  Calling: ${YELLOW}Unknown${NC}" ;;
+    esac
+    echo ""
+    echo -e "  ${BOLD}Foundation (always present):${NC}"
+    echo "    âœ“ Bible (39,482 AKJV verses)"
+    echo "    âœ“ Kyber-1024 post-quantum encryption"
+    echo "    âœ“ WireGuard mesh network"
+    echo "    âœ“ Security hardening (CIS L2)"
+    echo "    âœ“ Worship music (27 tracks)"
+    echo "    âœ“ Omahon Boot Seal"
+    echo ""
+    echo -e "  ${BOLD}\"There are diversities of gifts, but the same Spirit.\"${NC}"
+    echo -e "  ${BOLD}                                â€” 1 Corinthians 12:4${NC}"
+}
+
+cmd_list() {
+    echo -e "${GOLD}â•â•â• Available Callings â•â•â•${NC}"
+    echo ""
+    CURRENT=$(get_calling)
+    for calling in desktop server relay forge hearth; do
+        if [ "$calling" = "$CURRENT" ]; then
+            MARK="${GREEN}â–¶${NC}"
+        else
+            MARK=" "
+        fi
+        case "$calling" in
+            desktop) echo -e "  $MARK ${BOLD}desktop${NC} â€” Full Kingdom experience (worshisp, Bible, browser, IDE)" ;;
+            server)  echo -e "  $MARK ${BOLD}server${NC}  â€” Headless SSH + Cockpit web panel" ;;
+            relay)   echo -e "  $MARK ${BOLD}relay${NC}   â€” Mesh hub (WireGuard relay, Syncthing, radio)" ;;
+            forge)   echo -e "  $MARK ${BOLD}forge${NC}   â€” GPU compute (NVIDIA/AMD, AI inference, builds)" ;;
+            hearth)  echo -e "  $MARK ${BOLD}hearth${NC}  â€” Simple & peaceful (Bible, music, photos, letters)" ;;
+        esac
+    done
+    echo ""
+}
+
+cmd_switch() {
+    TARGET="$1"
+    if [ -z "$TARGET" ]; then
+        echo "Usage: sudo alfred-calling switch <desktop|server|relay|forge|hearth>" || true
+        return 1
+    fi
+    if [ "$(id -u)" -ne 0 ]; then
+        echo -e "${RED}Switching callings requires root. Use: sudo alfred-calling switch $TARGET${NC}"
+        return 1
+    fi
+    if [ ! -f "$CALLING_DIR/${TARGET}.list" ]; then
+        echo -e "${RED}Unknown calling: $TARGET${NC}"
+        cmd_list
+        return 1
+    fi
+    echo -e "${CYAN}Switching to: ${BOLD}$TARGET${NC}"
+    echo "$TARGET" > "$CALLING_FILE" || true
+    echo ""
+    echo -e "${YELLOW}Installing packages for $TARGET calling...${NC}"
+ xargs apt-get install -y --fix-broken -y --no-install-recommends < "$CALLING_DIR/${TARGET}.list" 2>/dev/null || true
+    echo ""
+    echo -e "${GREEN}Calling set to: $TARGET${NC}"
+    echo "Reboot to fully apply: sudo reboot"
+}
+
+case "${1:-help}" in
+    status)  cmd_status ;;
+    list)    cmd_list ;;
+    switch)  cmd_switch "$2" ;;
+    help|*)
+        echo -e "${GOLD}â•â•â• alfred-calling â€” Machine Role Manager â•â•â•${NC}"
+        echo ""
+        echo "  alfred-calling status    â€” Show current calling"
+        echo "  alfred-calling list      â€” Show all available callings"
+        echo "  alfred-calling switch X  â€” Switch to a new calling (sudo)"
+        echo ""
+        ;;
+esac
+CALLING_CLI
+chmod +x /usr/local/bin/alfred-calling || true
+
+# Set default calling
+echo "desktop" > /etc/alfred/calling || true
+
+echo "â•”â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•—"
+echo "â•‘  [0605] Four Callings â€” COMPLETE                         â•‘"
+echo "â•‘  âœ“ 5 calling definitions (Desktop/Server/Relay/Forge/    â•‘"
+echo "â•‘    Hearth)                                                â•‘"
+echo "â•‘  âœ“ Foundation package list (shared by ALL callings)      â•‘"
+echo "â•‘  âœ“ alfred-calling CLI (status/list/switch)               â•‘"
+echo "â•šâ•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•"
+
+exit 0

@@ -1,0 +1,46 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+
+echo "[Genesis Forge] Engineering Mount Namespace Read-Only Lock for 228..."
+
+apt-get install -y --fix-broken -y util-linux || true
+
+mkdir -p /etc/apparmor.d/alfred-isolated/ || true
+
+# Strict AppArmor Mode (Enforce)
+cat > /etc/apparmor.d/alfred-isolated/profile-228 << 'EOF'
+profile alfred-sandbox-228 /usr/local/bin/alfred-util-215 flags=(enforce) {
+  #include <abstractions/base>
+  /usr/local/bin/alfred-util-215 rmix,
+  /dev/null rw,
+}
+EOF
+
+# Inject Mount Namespace Wrapper
+cat > /usr/local/bin/alfred-util-215-mount-wrapper << 'EOF'
+#!/bin/bash
+# Mount Namespace Read-Only Lock
+# Executes binary in a new mount namespace with EVERYTHING remounted Read-Only
+
+unshare -m -f -- /bin/bash -c '
+    # Bind mount and enforce Read-Only recursively
+    mount --bind / / 2>/dev/null || true
+    mount -o remount,ro,bind / 2>/dev/null || true
+    
+    mount --bind /tmp /tmp 2>/dev/null || true
+    mount -o remount,ro,bind /tmp 2>/dev/null || true
+    
+    mount --bind /var /var 2>/dev/null || true
+    mount -o remount,ro,bind /var 2>/dev/null || true
+
+    exec /usr/local/bin/alfred-util-215 "$@"
+' -- "$@"
+EOF
+
+[ -e "/usr/local/bin/alfred-util-215-mount-wrapper" ] && chmod +x /usr/local/bin/alfred-util-215-mount-wrapper || true
+
+echo "[Genesis Forge] Mount Namespace Read-Only Lock Integrated."
+exit 0

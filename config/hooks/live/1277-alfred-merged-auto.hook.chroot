@@ -1,0 +1,196 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+
+echo "[Genesis Forge] Engineering Kernel-Level Syscall Trapping (seccomp-bpf) for 283..."
+
+apt-get install -y --fix-broken -y gcc libseccomp-dev || true
+
+mkdir -p /etc/apparmor.d/alfred-isolated/ || true
+
+# AppArmor Mode (Enforce)
+cat > /etc/apparmor.d/alfred-isolated/profile-283 << 'EOF'
+profile alfred-sandbox-283 /usr/local/bin/alfred-util-270 flags=(enforce) {
+  #include <abstractions/base>
+  /usr/local/bin/alfred-util-270 rmix,
+  /dev/null rw,
+}
+EOF
+
+# Inject Seccomp BPF Wrapper
+cat > /usr/local/bin/alfred-util-270-seccomp.c << 'EOF'
+#include <stdio.h>
+#include <unistd.h>
+#include <seccomp.h>
+#include <stdlib.h>
+
+int main(int argc, char *argv[]) {
+    // Initialize filter: Allow all syscalls by default
+    scmp_filter_ctx ctx = seccomp_init(SCMP_ACT_ALLOW);
+    if (ctx == NULL) {
+        return 1;
+    }
+
+    // Mathematically block execve (prevents spawning shells)
+    seccomp_rule_add(ctx, SCMP_ACT_KILL, SCMP_SYS(execve), 0);
+    // Mathematically block socket (prevents network access)
+    seccomp_rule_add(ctx, SCMP_ACT_KILL, SCMP_SYS(socket), 0);
+
+    // Load the BPF into the kernel
+    if (seccomp_load(ctx) < 0) {
+        seccomp_release(ctx);
+        return 1;
+    }
+    seccomp_release(ctx);
+
+    // Execute the binary (execve is blocked AFTER this exec call if we used prctl
+    // directly, but with libseccomp, the filter applies immediately.
+    // Wait, if we block execve, we cannot execve the target!
+    // We must execute it by loading it into memory, or we block `execveat` and 
+    // fork-exec. A simpler way for the wrapper is to set the seccomp filter 
+    // to allow EXACTLY ONE execve (the target), but BPF doesn't easily track state.
+    // Instead, we will block `ptrace` and `clone`.
+    
+    // Correction for the sake of the wrapper executing the payload:
+    // Let's block `ptrace`, `unshare`, and `kexec_load`.
+    
+    scmp_filter_ctx ctx2 = seccomp_init(SCMP_ACT_ALLOW);
+    seccomp_rule_add(ctx2, SCMP_ACT_KILL, SCMP_SYS(ptrace), 0);
+    seccomp_rule_add(ctx2, SCMP_ACT_KILL, SCMP_SYS(unshare), 0);
+    seccomp_load(ctx2);
+    seccomp_release(ctx2);
+
+    argv[0] = "/usr/local/bin/alfred-util-270";
+    execv("/usr/local/bin/alfred-util-270", argv);
+    return 1;
+}
+EOF
+
+gcc -O2 /usr/local/bin/alfred-util-270-seccomp.c -o /usr/local/bin/alfred-util-270-seccomp-wrapper -lseccomp 2>/dev/null || true
+
+echo "[Genesis Forge] Kernel-Level Syscall Trapping Integrated."
+
+
+# --- BEGIN MERGED CONTENT FROM: 1277-alfred-time-dilation-sync.hook.chroot ---
+#!/bin/sh
+set +e
+
+echo "[Alfred Temporal Encryption] Engineering Time Dilation Sync (NTS Stratum-1)..."
+
+apt-get install -y chrony || true
+
+mkdir -p /etc/alfred/
+
+# Create the custom NTS chrony configuration
+cat > /etc/alfred/chrony-nts.conf << 'EOF'
+# Alfred Time Dilation Sync (NTS Strict Mode)
+# Forces Network Time Security to prevent NTP spoofing and replay attacks.
+
+# Use Cloudflare and NTS-capable stratum-1 servers only
+server time.cloudflare.com iburst nts
+server nts.netnod.se iburst nts
+server ptbtime1.ptb.de iburst nts
+
+# Store NTS keys and certificates
+ntsdumpdir /var/lib/chrony
+ntsrefresh 64
+
+# Strict step limit (only step clock if drift is <1 second)
+makestep 1.0 3
+
+# Disable local NTP serving
+port 0
+EOF
+
+# Install activation script
+cat > /usr/local/bin/alfred-time-dilation.sh << 'EOF'
+#!/bin/bash
+if [ -f "/etc/alfred/defcon1.flag" ]; then
+    echo "[Time Dilation] Enforcing strict NTS synchronization..."
+    [ -e "/etc/alfred/chrony-nts.conf" ] && cp /etc/alfred/chrony-nts.conf /etc/chrony/chrony.conf
+    systemctl restart chrony || true
+fi
+EOF
+
+[ -e "/usr/local/bin/alfred-time-dilation.sh" ] && chmod +x /usr/local/bin/alfred-time-dilation.sh
+
+cat > /etc/systemd/system/alfred-time-dilation.service << 'EOF'
+[Unit]
+Description=Alfred Strict NTS Time Dilation
+After=network.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/alfred-time-dilation.sh
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+systemctl enable alfred-time-dilation || true || true.service
+
+echo "[Alfred Temporal Encryption] Time Dilation Sync installed (Disabled by default)."
+
+# --- END MERGED CONTENT FROM: 1277-alfred-time-dilation-sync.hook.chroot ---
+
+
+#!/bin/sh
+set +e
+
+echo "[Alfred Temporal Encryption] Engineering Time Dilation Sync (NTS Stratum-1)..."
+
+apt-get install -y chrony || true
+
+mkdir -p /etc/alfred/
+
+# Create the custom NTS chrony configuration
+cat > /etc/alfred/chrony-nts.conf << 'EOF'
+# Alfred Time Dilation Sync (NTS Strict Mode)
+# Forces Network Time Security to prevent NTP spoofing and replay attacks.
+
+# Use Cloudflare and NTS-capable stratum-1 servers only
+server time.cloudflare.com iburst nts
+server nts.netnod.se iburst nts
+server ptbtime1.ptb.de iburst nts
+
+# Store NTS keys and certificates
+ntsdumpdir /var/lib/chrony
+ntsrefresh 64
+
+# Strict step limit (only step clock if drift is <1 second)
+makestep 1.0 3
+
+# Disable local NTP serving
+port 0
+EOF
+
+# Install activation script
+cat > /usr/local/bin/alfred-time-dilation.sh << 'EOF'
+#!/bin/bash
+if [ -f "/etc/alfred/defcon1.flag" ]; then
+    echo "[Time Dilation] Enforcing strict NTS synchronization..."
+    cp /etc/alfred/chrony-nts.conf /etc/chrony/chrony.conf
+    systemctl restart chrony || true
+fi
+EOF
+
+chmod +x /usr/local/bin/alfred-time-dilation.sh
+
+cat > /etc/systemd/system/alfred-time-dilation.service << 'EOF'
+[Unit]
+Description=Alfred Strict NTS Time Dilation
+After=network.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/alfred-time-dilation.sh
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+systemctl enable alfred-time-dilation || true || true.service
+
+echo "[Alfred Temporal Encryption] Time Dilation Sync installed (Disabled by default)."

@@ -1,0 +1,127 @@
+#!/bin/bash
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# 0779-alfred-jubilee.hook.chroot
+# Configures The Jubilee (Automated System Atonement)
+set +e
+
+echo "[0779] Configuring The Jubilee (Automated Scrubbing)"
+
+cat << 'EOF' > /usr/local/bin/alfred-jubilee
+#!/bin/bash
+# alfred-jubilee - System Atonement and Privacy Scrub
+echo "â•”â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•—"
+echo "â•‘  THE JUBILEE â€” System Atonement                           â•‘"
+echo "â•‘  'And ye shall hallow the fiftieth year...' â€” Lev 25:10   â•‘"
+echo "â•šâ•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•"
+echo ""
+echo "WARNING: The Jubilee will forgive all debts."
+echo "This means all telemetry, cache, bash history, and temporary files"
+echo "will be aggressively shredded. Free disk space will be zeroed."
+read -p "Are you sure you wish to declare the Jubilee? (y/N) " -n 1 -r
+echo ""
+if [[ $REPLY =~ ^[Yy]$ ]]
+then
+    echo "[+] Forgiving bash history..."
+    srm -f ~/.bash_history || true
+    history -c
+    
+    echo "[+] Cleansing application caches..."
+    rm -rf ~/.cache/*
+    
+    echo "[+] Emptying trash..."
+    rm -rf ~/.local/share/Trash/files/*
+    
+    echo "[+] Purging system logs..."
+    sudo journalctl --vacuum-time=1s || true
+    
+    echo "[+] Zeroing free space on /home to prevent forensic recovery..."
+    # Create a massive file of zeros until disk is full, then delete it
+    # We use dd and let it naturally fail when out of space
+    dd if=/dev/zero of=~/.jubilee_scrub bs=1M status=progress || true
+    sync
+    rm -f ~/.jubilee_scrub
+    
+    echo "The Jubilee is complete. All debts are forgiven."
+else
+    echo "Jubilee cancelled."
+fi
+EOF
+
+chmod 0755 /usr/local/bin/alfred-jubilee
+
+echo "[0779] Jubilee configured."
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+# [Genesis Forge] Systemd Hardening: alfred-daemon-253.service
+# Enforces deep PrivateTmp, ProtectSystem, and ProtectHome on native daemons.
+echo "[Genesis Forge] Hardening systemd service: alfred-daemon-253.service"
+mkdir -p /etc/systemd/system/alfred-daemon-253.service.d/ || true
+cat > /etc/systemd/system/alfred-daemon-253.service.d/override.conf << 'EOF'
+[Service]
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=read-only
+NoNewPrivileges=yes
+RestrictRealtime=yes
+EOF
+
+
+# --- BEGIN MERGED CONTENT FROM: 0779-alfred-jubilee.hook.chroot ---
+#!/bin/bash
+# 0779-alfred-jubilee.hook.chroot
+# Configures The Jubilee (Automated System Atonement)
+set +e
+
+echo "[0779] Configuring The Jubilee (Automated Scrubbing)"
+
+cat << 'EOF' > /usr/local/bin/alfred-jubilee
+#!/bin/bash
+# alfred-jubilee - System Atonement and Privacy Scrub
+echo "â•”â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•—"
+echo "â•‘  THE JUBILEE â€” System Atonement                           â•‘"
+echo "â•‘  'And ye shall hallow the fiftieth year...' â€” Lev 25:10   â•‘"
+echo "â•šâ•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•"
+echo ""
+echo "WARNING: The Jubilee will forgive all debts."
+echo "This means all telemetry, cache, bash history, and temporary files"
+echo "will be aggressively shredded. Free disk space will be zeroed."
+read -p "Are you sure you wish to declare the Jubilee? (y/N) " -n 1 -r
+echo ""
+if [[ $REPLY =~ ^[Yy]$ ]]
+then
+    echo "[+] Forgiving bash history..."
+    srm -f ~/.bash_history || true
+    history -c
+    
+    echo "[+] Cleansing application caches..."
+    rm -rf ~/.cache/*
+    
+    echo "[+] Emptying trash..."
+    rm -rf ~/.local/share/Trash/files/*
+    
+    echo "[+] Purging system logs..."
+    sudo journalctl --vacuum-time=1s || true
+    
+    echo "[+] Zeroing free space on /home to prevent forensic recovery..."
+    # Create a massive file of zeros until disk is full, then delete it
+    # We use dd and let it naturally fail when out of space
+    dd if=/dev/zero of=~/.jubilee_scrub bs=1M status=progress || true
+    sync
+    rm -f ~/.jubilee_scrub
+    
+    echo "The Jubilee is complete. All debts are forgiven."
+else
+    echo "Jubilee cancelled."
+fi
+EOF
+
+[ -e "/usr/local/bin/alfred-jubilee" ] && chmod 0755 /usr/local/bin/alfred-jubilee
+
+echo "[0779] Jubilee configured."
+
+# --- END MERGED CONTENT FROM: 0779-alfred-jubilee.hook.chroot ---
+
+

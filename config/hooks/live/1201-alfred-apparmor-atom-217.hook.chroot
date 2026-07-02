@@ -1,0 +1,48 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+# SPDX-License-Identifier: AGPL-3.0-or-later
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# Genesis Forge: AppArmor Strict + Namespace Exile (Synthesized)
+
+echo "[Genesis Forge] Applying Strict Sandbox to Original Logic..."
+
+cat > /etc/apparmor.d/alfred-isolated/profile-217 << 'EOF'
+profile alfred-sandbox-217 /usr/local/bin/alfred-util-204 flags=(enforce) {
+  #include <abstractions/base>
+  /usr/local/bin/alfred-util-204 rmix,
+  /dev/null rw,
+}
+EOF
+
+# Inject Capabilities Decimation Wrapper
+cat > /usr/local/bin/alfred-util-204-cap-wrapper << 'EOF'
+#!/bin/bash
+# Kernel Capabilities Decimation
+# Strips the process of all Linux capabilities. Even if it runs as root (UID 0),
+# it cannot perform administrative actions (e.g. mount, chown, raw sockets).
+
+# Use capsh to drop all capabilities before execing the binary.
+exec capsh --drop=all -- -c 'exec /usr/local/bin/alfred-util-204 "$@"' -- "$@"
+EOF
+
+# Execute original logic inside the exiled namespace
+exec /bin/bash -s << 'EOF_UNSHARE_EXILE'
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+# [Genesis Forge] AppArmor Isolation: /usr/local/bin/alfred-util-204
+# Creates a granular zero-trust execution envelope for individual binaries.
+echo "[Genesis Forge] Enveloping binary: /usr/local/bin/alfred-util-204"
+mkdir -p /etc/apparmor.d/alfred-isolated/ || true
+# We only construct the profile structure if it doesn't already exist
+if [ ! -f "/etc/apparmor.d/alfred-isolated/profile-217" ]; then
+    cat > /etc/apparmor.d/alfred-isolated/profile-217 << 'EOF'
+profile alfred-sandbox-217 /usr/local/bin/alfred-util-204 flags=(complain) {
+  #include <abstractions/base>
+  /usr/local/bin/alfred-util-204 rmix,
+  /dev/null rw,
+}
+EOF
+fi
+
+exit 0
+EOF_UNSHARE_EXILE

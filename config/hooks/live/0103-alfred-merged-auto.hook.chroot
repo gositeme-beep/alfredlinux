@@ -1,0 +1,298 @@
+#!/bin/bash
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+echo "[INFO] Running 0103-alfred-bootloader-theme..."
+
+BOOT_IMG="/usr/share/wallpapers/Kingdom/omahon-seal.png"
+THEMEDIR="/usr/share/plymouth/themes/alfred"
+
+# 1. GRUB injection
+if [ -d /boot/grub/themes/alfred ]; then
+    [ -f "$BOOT_IMG" ] && cp "$BOOT_IMG" /boot/grub/themes/alfred/background.png || true
+    sed -i 's/^desktop-color.*/desktop-image: "background.png"/' /boot/grub/themes/alfred/theme.txt
+    echo "[INFO] GRUB background updated."
+fi
+
+# 2. Plymouth God-Tier 3D Parallax Animation
+mkdir -p "$THEMEDIR"
+
+cat > "$THEMEDIR/alfred.script" << 'EOF'
+Window.SetBackgroundTopColor(0.0, 0.0, 0.0);
+Window.SetBackgroundBottomColor(0.0, 0.0, 0.0);
+
+# --- 1. Background Parallax Layer (Slow moving stars/dust) ---
+# We use a base image tiled or stretched, moving slowly
+bg_image = Image("bg_parallax.png");
+if (bg_image) {
+    bg_sprite1 = Sprite(bg_image);
+    bg_sprite2 = Sprite(bg_image);
+    bg_sprite1.SetZ(-10);
+    bg_sprite2.SetZ(-10);
+    bg_width = bg_image.GetWidth();
+    bg_offset = 0;
+}
+
+# --- 2. Foreground 3D Holographic Array (60 frames) ---
+# We attempt to load frame_1.png to frame_60.png
+anim_frames = [];
+frame_count = 60;
+for (i = 1; i <= frame_count; i++) {
+    img = Image("frame_" + i + ".png");
+    if (img) {
+        anim_frames[i-1] = img;
+    }
+}
+
+# Fallback to static 2D if no 3D frames exist
+if (anim_frames.length == 0) {
+    fallback_img = Image("omahon-seal.png");
+    if (fallback_img) {
+        anim_frames[0] = fallback_img;
+    }
+}
+
+if (anim_frames.length > 0) {
+    logo_sprite = Sprite(anim_frames[0]);
+    # Center the logo
+    logo_sprite.SetX(Window.GetWidth() / 2 - anim_frames[0].GetWidth() / 2);
+    logo_sprite.SetY(Window.GetHeight() / 2 - anim_frames[0].GetHeight() / 2);
+    logo_sprite.SetZ(10);
+}
+
+progress = 0;
+
+fun refresh_callback () {
+    progress++;
+
+    # 1. Handle Parallax Background Movement
+    if (bg_image) {
+        bg_offset -= 1; # Move left by 1 pixel per tick
+        if (bg_offset <= -bg_width) {
+            bg_offset = 0;
+        }
+        bg_sprite1.SetX(bg_offset);
+        bg_sprite1.SetY(Window.GetHeight() / 2 - bg_image.GetHeight() / 2);
+        
+        bg_sprite2.SetX(bg_offset + bg_width);
+        bg_sprite2.SetY(Window.GetHeight() / 2 - bg_image.GetHeight() / 2);
+    }
+
+    # 2. Handle 3D Sprite Animation Loop
+    if (anim_frames.length > 1) {
+        # Loop through the array at 60fps
+        current_frame = progress % anim_frames.length;
+        logo_sprite.SetImage(anim_frames[current_frame]);
+    } else if (anim_frames.length == 1) {
+        # If fallback static image, use the glowing Math.sin() logic
+        opacity_angle = progress * 0.05;
+        logo_sprite.SetOpacity(0.7 + 0.3 * Math.sin(opacity_angle));
+    }
+}
+
+Plymouth.SetRefreshFunction (refresh_callback);
+EOF
+
+# Copy the fallback static image in case the 3D frames aren't ready yet
+if [ -f "$BOOT_IMG" ]; then
+    [ -f "$BOOT_IMG" ] && cp "$BOOT_IMG" "$THEMEDIR/omahon-seal.png" || true
+fi
+
+echo "[INFO] Plymouth Holographic 3D Parallax script injected."
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+# [Genesis Forge] Granular Kernel Matrix: net.core.bpf_jit_harden=2
+# Extremely deep low-level kernel protection.
+echo "[Genesis Forge] Applying granular sysctl: net.core.bpf_jit_harden=2"
+echo "net.core.bpf_jit_harden=2" > /etc/sysctl.d/99-alfred-4.conf || true
+sysctl -w net.core.bpf_jit_harden=2 > /dev/null 2>&1 || true
+
+
+# --- BEGIN MERGED CONTENT FROM: 0103-alfred-bootloader-theme.hook.chroot ---
+#!/bin/bash
+set +e
+echo "[INFO] Running 0103-alfred-bootloader-theme..."
+
+BOOT_IMG="/usr/share/wallpapers/Kingdom/omahon-seal.png"
+THEMEDIR="/usr/share/plymouth/themes/alfred"
+
+# 1. GRUB injection
+if [ -d /boot/grub/themes/alfred ]; then
+    if [ -f "$BOOT_IMG" ]; then
+[ -e "$BOOT_IMG" ] &&         [ -f "$BOOT_IMG" ] && cp "$BOOT_IMG" /boot/grub/themes/alfred/background.png || true
+        sed -i 's/^desktop-color.*/desktop-image: "background.png"/' /boot/grub/themes/alfred/theme.txt
+        echo "[INFO] GRUB background updated."
+    else
+        echo "[WARN] No omahon-seal.png found. Skipping GRUB background injection."
+    fi
+fi
+
+# 2. Plymouth Custom Glowing Animation
+mkdir -p "$THEMEDIR"
+if [ -f "$BOOT_IMG" ]; then
+[ -e "$BOOT_IMG" ] &&     [ -f "$BOOT_IMG" ] && cp "$BOOT_IMG" "$THEMEDIR/omahon-seal.png" || true
+    
+    cat > "$THEMEDIR/alfred.script" << 'EOF'
+Window.SetBackgroundTopColor(0.0, 0.0, 0.0);
+Window.SetBackgroundBottomColor(0.0, 0.0, 0.0);
+
+logo.image = Image("omahon-seal.png");
+logo.sprite = Sprite(logo.image);
+
+logo.sprite.SetX(Window.GetWidth() / 2 - logo.image.GetWidth() / 2);
+logo.sprite.SetY(Window.GetHeight() / 2 - logo.image.GetHeight() / 2);
+
+logo.opacity_angle = 0;
+
+fun refresh_callback () {
+  logo.opacity_angle += 0.05;
+  # Oscillation between 0.4 and 1.0
+  logo.sprite.SetOpacity(0.7 + 0.3 * Math.sin(logo.opacity_angle));
+}
+
+Plymouth.SetRefreshFunction (refresh_callback);
+EOF
+
+    echo "[INFO] Plymouth custom glowing animation injected."
+else
+    echo "[WARN] No omahon-seal.png found. Skipping custom Plymouth animation."
+fi
+
+# --- END MERGED CONTENT FROM: 0103-alfred-bootloader-theme.hook.chroot ---
+
+
+# --- BEGIN MERGED CONTENT FROM: 0103-heavenly-sounds.hook.chroot ---
+#!/bin/bash
+set +e
+echo "=========================================="
+echo "==== ALFRED HEAVENLY SOUNDS HOOK ===="
+echo "=========================================="
+
+mkdir -p /usr/share/sounds/alfred
+
+# Write a tiny Python script to generate a majestic, heavenly chord (Cmaj9)
+cat > /tmp/generate_heavenly_sound.py <<'EOF'
+import wave, math, struct
+
+sample_rate = 44100
+duration = 4.0
+volume = 16000
+
+# Cmaj9 frequencies: C4, E4, G4, B4, D5
+frequencies = [261.63, 329.63, 392.00, 493.88, 587.33]
+
+with wave.open('/usr/share/sounds/alfred/startup.wav', 'w') as wav_file:
+    wav_file.setnchannels(2) # Stereo
+    wav_file.setsampwidth(2) # 2 bytes per sample
+    wav_file.setframerate(sample_rate)
+
+    for i in range(int(sample_rate * duration)):
+        t = float(i) / sample_rate
+        # Fade out envelope
+        envelope = math.exp(-t * 1.5)
+        
+        sample = 0
+        for idx, freq in enumerate(frequencies):
+            # Arpeggiate slightly
+            delay = idx * 0.15
+            if t > delay:
+                # Add some chorusing/detuning for a heavenly "shimmer"
+                val = math.sin(2.0 * math.pi * freq * (t - delay))
+                val += 0.5 * math.sin(2.0 * math.pi * (freq * 1.005) * (t - delay))
+                sample += val * (envelope if t - delay < 2.0 else math.exp(-(t - delay) * 1.5))
+        
+        sample = int(sample / len(frequencies) * volume)
+        # Prevent clipping
+        sample = max(-32768, min(32767, sample))
+        
+        wav_file.writeframes(struct.pack('<h', sample))
+        wav_file.writeframes(struct.pack('<h', sample))
+EOF
+
+python3 /tmp/generate_heavenly_sound.py
+rm -f /tmp/generate_heavenly_sound.py
+
+# Configure Plasma to play it on login
+mkdir -p /etc/skel/.config/autostart
+cat > /etc/skel/.config/autostart/heavenly-sound.desktop <<'EOF'
+[Desktop Entry]
+Type=Application
+Exec=paplay /usr/share/sounds/alfred/startup.wav
+Hidden=false
+NoDisplay=false
+X-GNOME-Autostart-enabled=true
+Name=Heavenly Startup Sound
+Comment=Plays a majestic chord on login
+EOF
+
+echo "Heavenly sound generated and configured."
+
+# --- END MERGED CONTENT FROM: 0103-heavenly-sounds.hook.chroot ---
+
+
+#!/bin/bash
+set +e
+echo "=========================================="
+echo "==== ALFRED HEAVENLY SOUNDS HOOK ===="
+echo "=========================================="
+
+mkdir -p /usr/share/sounds/alfred
+
+# Write a tiny Python script to generate a majestic, heavenly chord (Cmaj9)
+cat > /tmp/generate_heavenly_sound.py <<'EOF'
+import wave, math, struct
+
+sample_rate = 44100
+duration = 4.0
+volume = 16000
+
+# Cmaj9 frequencies: C4, E4, G4, B4, D5
+frequencies = [261.63, 329.63, 392.00, 493.88, 587.33]
+
+with wave.open('/usr/share/sounds/alfred/startup.wav', 'w') as wav_file:
+    wav_file.setnchannels(2) # Stereo
+    wav_file.setsampwidth(2) # 2 bytes per sample
+    wav_file.setframerate(sample_rate)
+
+    for i in range(int(sample_rate * duration)):
+        t = float(i) / sample_rate
+        # Fade out envelope
+        envelope = math.exp(-t * 1.5)
+        
+        sample = 0
+        for idx, freq in enumerate(frequencies):
+            # Arpeggiate slightly
+            delay = idx * 0.15
+            if t > delay:
+                # Add some chorusing/detuning for a heavenly "shimmer"
+                val = math.sin(2.0 * math.pi * freq * (t - delay))
+                val += 0.5 * math.sin(2.0 * math.pi * (freq * 1.005) * (t - delay))
+                sample += val * (envelope if t - delay < 2.0 else math.exp(-(t - delay) * 1.5))
+        
+        sample = int(sample / len(frequencies) * volume)
+        # Prevent clipping
+        sample = max(-32768, min(32767, sample))
+        
+        wav_file.writeframes(struct.pack('<h', sample))
+        wav_file.writeframes(struct.pack('<h', sample))
+EOF
+
+python3 /tmp/generate_heavenly_sound.py
+rm /tmp/generate_heavenly_sound.py
+
+# Configure Plasma to play it on login
+mkdir -p /etc/skel/.config/autostart
+cat > /etc/skel/.config/autostart/heavenly-sound.desktop <<'EOF'
+[Desktop Entry]
+Type=Application
+Exec=paplay /usr/share/sounds/alfred/startup.wav
+Hidden=false
+NoDisplay=false
+X-GNOME-Autostart-enabled=true
+Name=Heavenly Startup Sound
+Comment=Plays a majestic chord on login
+EOF
+
+echo "Heavenly sound generated and configured."

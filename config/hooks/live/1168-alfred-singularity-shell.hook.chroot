@@ -1,0 +1,103 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+
+echo "[Singularity] Forging The Singularity Agentic Shell (Hook 1115)"
+
+# Ensure python3 and required packages are installed
+apt-get install -y --fix-broken -y python3-pip python3-venv libasound2-dev || true
+
+# Create the agentic shell directory
+mkdir -p /opt/alfred-singularity || true
+cd /opt/alfred-singularity || true
+
+# Create a virtual environment for the shell dependencies
+python3 -m venv venv || true
+. venv/bin/activate
+
+# Install dependencies for openWakeWord and REPL
+pip install --break-system-packages openwakeword pyaudio requests colorama prompt_toolkit || true
+
+# Create the Singularity Python REPL
+cat > /opt/alfred-singularity/singularity.py << 'EOF'
+#!/usr/bin/env python3
+import os
+import sys
+import requests
+import json
+import subprocess
+from prompt_toolkit import PromptSession
+from prompt_toolkit.styles import Style
+from prompt_toolkit.formatted_text import HTML
+
+style = Style.from_dict({
+    'prompt': 'bold #facc15',
+})
+
+print("\033[1;36m==================================================================\033[0m")
+print("\033[1;36m       THE SINGULARITY AGENTIC SHELL - OMEGON HARNESS ONLINE      \033[0m")
+print("\033[1;36m==================================================================\033[0m")
+print("\033[0;33m Speak your intent, or type naturally. The OS is listening. \033[0m\n")
+
+session = PromptSession()
+
+def execute_intent(intent):
+    # In a full deployment, this would contact the local GGUF model via Omahon Cloud
+    # For now, we mock the Omegon JSON Tool-Calling Parity.
+    print(f"\033[1;35m[Omegon Harness] Analyzing intent:\033[0m {intent}")
+    
+    # Very basic fallback parser for demonstration
+    if "open port" in intent.lower() or "allow port" in intent.lower():
+        words = intent.split()
+        port = next((word for word in words if word.isdigit()), "80")
+        cmd = f"ufw allow {port}"
+        print(f"\033[1;32m[Agent] Executing:\033[0m {cmd}")
+        subprocess.run(cmd, shell=True)
+    elif "update" in intent.lower() or "upgrade" in intent.lower():
+        cmd = "apt-get update || true && apt-get upgrade -y"
+        print(f"\033[1;32m[Agent] Executing:\033[0m {cmd}")
+        subprocess.run(cmd, shell=True)
+    elif "clear" in intent.lower():
+        os.system('clear')
+    elif "exit" in intent.lower():
+        sys.exit(0)
+    else:
+        # Fallback to standard bash execution if it looks like a bash command
+        print(f"\033[1;33m[Agent] Falling back to standard shell execution.\033[0m")
+        subprocess.run(intent, shell=True)
+
+while True:
+    try:
+        user_input = session.prompt(HTML('<prompt>Alfred ❯ </prompt>'), style=style)
+        if not user_input.strip():
+            continue
+        execute_intent(user_input)
+    except KeyboardInterrupt:
+        continue
+    except EOFError:
+        break
+EOF
+
+[ -e "+x" ] && chmod +x /opt/alfred-singularity/singularity.py || true
+
+# Create the wrapper script
+cat > /usr/bin/alfred-shell << 'EOF'
+#!/bin/bash
+source /opt/alfred-singularity/venv/bin/activate
+exec python3 /opt/alfred-singularity/singularity.py
+EOF
+[ -e "+x" ] && chmod +x /usr/bin/alfred-shell || true
+
+# Register it as a valid shell
+if ! grep -q "/usr/bin/alfred-shell" /etc/shells; then
+    echo "/usr/bin/alfred-shell" >> /etc/shells || true
+fi
+
+# Set it as the default shell for the root user (and later live user)
+chsh -s /usr/bin/alfred-shell root
+
+echo "[Singularity] Agentic Shell installed and registered as the primary shell."
+
+exit 0

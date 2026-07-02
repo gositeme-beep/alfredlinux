@@ -1,0 +1,71 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Hook 0253 — llama.cpp install + build (CPU + multi-backend)
+# Layered ABOVE existing 0250-ollama and 0251-bitnet to add the OpenAI-compat
+# /v1/chat/completions HTTP server that LiteLLM bridges to.
+set +e
+
+echo "═══════════════════════════════════════════════════════"
+echo "  ALFRED-LLM RUNTIME — llama.cpp HTTP server"
+echo "═══════════════════════════════════════════════════════"
+
+mkdir -p /usr/share/doc/alfred-llm /var/lib/alfred/build-flags || true
+
+# Prefer pre-staged binary (air-gap safe). Fallback: build from source if allowed.
+if [ -f /build-assets/llama-server ]; then
+  echo "[LLAMA] Installing pre-staged llama-server binary"
+  install -m 755 /build-assets/llama-server /usr/local/bin/llama-server
+  install -m 755 /build-assets/llama-cli /usr/local/bin/llama-cli 2>/dev/null || true
+elif [ -d /build-assets/llama.cpp-src ]; then
+  echo "[LLAMA] Building llama.cpp from staged source"
+  cd /build-assets/llama.cpp-src || true
+ apt-get install -y --fix-broken -y --no-install-recommends build-essential cmake git || true
+  cmake -B build -DLLAMA_NATIVE=OFF -DGGML_NATIVE=OFF \
+        -DLLAMA_CURL=OFF -DGGML_AVX2=ON -DGGML_F16C=ON \
+        -DCMAKE_BUILD_TYPE=Release
+  cmake --build build --config Release -j$(nproc) --target llama-server llama-cli
+  install -m 755 build/bin/llama-server /usr/local/bin/llama-server
+  install -m 755 build/bin/llama-cli /usr/local/bin/llama-cli
+else
+  echo "[LLAMA] WARN: no /build-assets/llama-server or llama.cpp-src" >&2 || true
+  echo "LLAMA_CPP_MISSING=1" > /var/lib/alfred/build-flags/llama-cpp-missing.flag || true
+fi
+
+# CUDA/ROCm/Vulkan variants — pre-staged only, don't build inside chroot
+for variant in cuda rocm vulkan; do
+  if [ -f /build-assets/llama-server-${variant} ]; then
+    install -m 755 /build-assets/llama-server-${variant} /usr/local/bin/llama-server-${variant}
+    echo "[LLAMA] Installed llama-server-${variant}"
+  fi
+done
+
+# Auto-select wrapper: detects GPU at runtime and execs the right binary
+cat > /usr/local/bin/llama-server-auto <<'WRAPPER'
+#!/bin/bash
+# Auto-select llama-server backend based on detected hardware
+if command -v nvidia-smi >/dev/null 2>&1 && nvidia-smi -L 2>/dev/null | grep -q GPU; then
+  [ -x /usr/local/bin/llama-server-cuda ] && exec /usr/local/bin/llama-server-cuda "$@"
+fi
+if command -v rocm-smi >/dev/null 2>&1; then
+  [ -x /usr/local/bin/llama-server-rocm ] && exec /usr/local/bin/llama-server-rocm "$@"
+fi
+if command -v vulkaninfo >/dev/null 2>&1 && vulkaninfo --summary 2>/dev/null | grep -q deviceName; then
+  [ -x /usr/local/bin/llama-server-vulkan ] && exec /usr/local/bin/llama-server-vulkan "$@"
+fi
+exec /usr/local/bin/llama-server "$@"
+WRAPPER
+[ -e /usr/local/bin/llama-server-auto ] && chmod +x /usr/local/bin/llama-server-auto || true
+
+# License notice
+cat > /usr/share/doc/alfred-llm/llama-cpp-LICENSE.txt <<'LIC'
+llama.cpp by Georgi Gerganov and contributors. MIT License.
+https://github.com/ggerganov/llama.cpp
+Bundled with Alfred Linux as the local inference runtime for Alfred-LLM.
+LIC
+
+echo "[LLAMA] Done. Binaries:"
+ls -la /usr/local/bin/llama-* 2>&1 | head -20
+
+exit 0

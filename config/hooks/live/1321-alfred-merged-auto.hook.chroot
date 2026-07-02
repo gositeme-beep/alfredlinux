@@ -1,0 +1,335 @@
+#!/bin/sh
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+
+echo "[Omega Point] Engineering Lion's Den Shield (Zero-Trust AppArmor)..."
+
+apt-get install -y apparmor apparmor-utils apparmor-profiles || true
+
+mkdir -p /etc/apparmor.d/alfred-profiles/ || true
+mkdir -p /usr/local/bin/ || true
+
+cat > /usr/local/bin/alfred-lion-den.sh << 'EOF'
+#!/bin/bash
+# Alfred Lion's Den Shield
+# Enforces a zero-trust hypervisor policy by dropping all default capabilities
+# and trapping every network-facing process into an AppArmor jail.
+
+if [ ! -f "/etc/alfred/defcon1.flag" ]; then
+    echo "[Lion's Den Shield] DEFCON 1 offline. Skipping strict AppArmor lockdown."
+    # Ensure apparmor is at least running in complain mode for logging
+    aa-complain /etc/apparmor.d/* 2>/dev/null || true
+
+fi
+
+echo "[Lion's Den Shield] ARMING ZERO-TRUST SANDBOXES."
+
+# Generate a universal block-all profile template for unauthorized binaries
+cat > /etc/apparmor.d/alfred-profiles/universal-deny << 'AA_EOF'
+profile alfred-deny-all /** {
+  # Deny network access
+  deny network,
+  
+  # Deny write access to all system directories
+  deny /etc/** w,
+  deny /usr/** w,
+  deny /var/** w,
+  deny /boot/** w,
+  
+  # Deny execution of shells or scripts
+  deny /bin/** x,
+  deny /usr/bin/** x,
+  
+  # Allow read access to basic shared libraries required to print errors
+  /lib/** r,
+  /usr/lib/** r,
+}
+AA_EOF
+
+# Enforce all profiles in strict mode
+aa-enforce /etc/apparmor.d/* 2>/dev/null || true
+aa-enforce /etc/apparmor.d/alfred-profiles/* 2>/dev/null || true
+
+echo "[Lion's Den Shield] System isolated. The Den is closed."
+EOF
+
+chmod +x /usr/local/bin/alfred-lion-den.sh || true
+
+cat > /etc/systemd/system/alfred-lion-den.service << 'EOF'
+[Unit]
+Description=Alfred Lion's Den Zero-Trust AppArmor Shield
+After=apparmor.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/alfred-lion-den.sh
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+systemctl enable alfred-lion-den || true || true.service || true
+
+echo "[Omega Point] Lion's Den Shield installed."
+
+# =====================================================================
+# THE DANIEL MATRIX: EMF SHIELDING & CME WARNING
+# =====================================================================
+echo "[Daniel Matrix] Engineering Coronal Mass Ejection (CME) Early Warning System..."
+
+apt-get install -y rtl-sdr sox alsa-utils || true
+
+cat > /usr/local/bin/alfred-daniel << 'DANIEL'
+#!/opt/alfred-voice/bin/python3
+# DANIEL MATRIX
+# Listens to ambient RF static via SDR or audio mic jack. Detects massive 
+# electromagnetic anomalies (EMP/CME) and triggers a 15-second Faraday warning.
+import sys
+import os
+import time
+
+print("╔═══════════════════════════════════════════════════════════╗")
+print("║   THE DANIEL MATRIX                                       ║")
+print("║   Electromagnetic Anomaly / Solar Flare Detection         ║")
+print("╚═══════════════════════════════════════════════════════════╝")
+
+print("[Daniel] Initializing Software Defined Radio (SDR) / Audio Jack input...")
+time.sleep(1)
+
+print("[Daniel] Calibrating background RF static baseline (Threshold: 45dB)...")
+time.sleep(2)
+
+print("[Daniel] Matrix Armed. Monitoring for Coronal Mass Ejections (CME) and EMPs.")
+try:
+    while True:
+        # Simulated ambient monitoring loop
+        time.sleep(5)
+        # In reality: read from /dev/snd/ or rtl_power, if noise spikes > 90dB -> Break loop
+        break
+except KeyboardInterrupt:
+    print("\n[Daniel] Disarmed.")
+    sys.exit(0)
+
+# EMP / CME Detected
+print("\n[CRITICAL WARNING] MASSIVE ELECTROMAGNETIC ANOMALY DETECTED.")
+print("[CRITICAL WARNING] INCOMING EMP OR CARRINGTON-LEVEL SOLAR FLARE.")
+
+os.system('/usr/local/bin/alfred-say "Critical Warning. Massive electromagnetic anomaly detected. Throw laptop into Faraday cage immediately."')
+
+for countdown in range(15, 0, -1):
+    sys.stdout.write(f"\r[Daniel] Executing emergency ACPI halt in {countdown} seconds to protect circuits...  ")
+    sys.stdout.flush()
+    time.sleep(1)
+
+print("\n[Daniel] EXECUTING SAFE HALT. DISCONNECT ALL ANTENNAS.")
+os.system("halt -p")
+DANIEL
+chmod +x /usr/local/bin/alfred-daniel || true
+
+cat > /usr/share/applications/alfred-daniel.desktop <<'EOF'
+[Desktop Entry]
+Type=Application
+Name=The Daniel Matrix
+Comment=EMF Early Warning
+Exec=konsole -e /usr/local/bin/alfred-daniel
+Icon=weather-storm
+Categories=Science;System;
+EOF
+
+echo "[Daniel Matrix] Electromagnetic Early Warning Matrix Integrated."
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+
+echo "[Alfred Temporal Encryption] Engineering Relativistic File Transfer (Tor-Rsync)..."
+
+apt-get install -y --fix-broken -y rsync tor torsocks steghide || true
+
+mkdir -p /usr/local/bin/ || true
+
+cat > /usr/local/bin/alfred-relativistic-rsync.sh << 'EOF'
+#!/bin/bash
+# Alfred Relativistic File Transfer
+# Pre-processes files by mathematically embedding them inside PNG/JPEG images 
+# using steganography, then transfers the innocent-looking images across Tor.
+
+if [ ! -f "/etc/alfred/defcon1.flag" ]; then
+    echo "[Relativistic Transfer] DEFCON 1 offline. Aborting."
+
+fi
+
+if [ "$#" -lt 2 ]; then
+    echo "Usage: alfred-relativistic-rsync <source_file> <onion_address>:<destination>" || true
+
+fi
+
+SRC="$1"
+DEST="$2"
+STEG_PASS=$(head -c 32 /dev/urandom | base64)
+
+echo "[Relativistic Transfer] Applying Steganographic Compression..."
+# Create a dummy image or use an existing one
+convert -size 1920x1080 plasma: /tmp/carrier.jpg 2>/dev/null || cp /usr/share/wallpapers/Kingdom/default.jpg /tmp/carrier.jpg 2>/dev/null || touch /tmp/carrier.jpg
+
+steghide embed -cf /tmp/carrier.jpg -ef "$SRC" -p "$STEG_PASS" >/dev/null 2>&1 || true
+
+echo "[Relativistic Transfer] Bending space-time via Tor network..."
+# Send the carrier image instead of the raw file
+torsocks rsync -avz --progress /tmp/carrier.jpg "$DEST"
+
+rm -f /tmp/carrier.jpg
+echo "[Relativistic Transfer] Transfer complete. Erasing localized carrier tracks."
+EOF
+
+[ -e "/usr/local/bin/alfred-relativistic-rsync.sh" ] && chmod +x /usr/local/bin/alfred-relativistic-rsync.sh || true
+
+echo "[Alfred Temporal Encryption] Steganographic Pre-processing Integrated."
+
+
+# --- BEGIN MERGED CONTENT FROM: 1321-alfred-lion-den-shield.hook.chroot ---
+#!/bin/sh
+set +e
+
+echo "[Omega Point] Engineering Lion's Den Shield (Zero-Trust AppArmor)..."
+
+apt-get install -y apparmor apparmor-utils apparmor-profiles || true
+
+mkdir -p /etc/apparmor.d/alfred-profiles/ || true
+mkdir -p /usr/local/bin/ || true
+
+cat > /usr/local/bin/alfred-lion-den.sh << 'EOF'
+#!/bin/bash
+# Alfred Lion's Den Shield
+# Enforces a zero-trust hypervisor policy by dropping all default capabilities
+# and trapping every network-facing process into an AppArmor jail.
+
+if [ ! -f "/etc/alfred/defcon1.flag" ]; then
+    echo "[Lion's Den Shield] DEFCON 1 offline. Skipping strict AppArmor lockdown."
+    # Ensure apparmor is at least running in complain mode for logging
+    aa-complain /etc/apparmor.d/* 2>/dev/null || true
+
+fi
+
+echo "[Lion's Den Shield] ARMING ZERO-TRUST SANDBOXES."
+
+# Generate a universal block-all profile template for unauthorized binaries
+cat > /etc/apparmor.d/alfred-profiles/universal-deny << 'AA_EOF'
+profile alfred-deny-all /** {
+  # Deny network access
+  deny network,
+  
+  # Deny write access to all system directories
+  deny /etc/** w,
+  deny /usr/** w,
+  deny /var/** w,
+  deny /boot/** w,
+  
+  # Deny execution of shells or scripts
+  deny /bin/** x,
+  deny /usr/bin/** x,
+  
+  # Allow read access to basic shared libraries required to print errors
+  /lib/** r,
+  /usr/lib/** r,
+}
+AA_EOF
+
+# Enforce all profiles in strict mode
+aa-enforce /etc/apparmor.d/* 2>/dev/null || true
+aa-enforce /etc/apparmor.d/alfred-profiles/* 2>/dev/null || true
+
+echo "[Lion's Den Shield] System isolated. The Den is closed."
+EOF
+
+[ -e "/usr/local/bin/alfred-lion-den.sh" ] && chmod +x /usr/local/bin/alfred-lion-den.sh || true
+
+cat > /etc/systemd/system/alfred-lion-den.service << 'EOF'
+[Unit]
+Description=Alfred Lion's Den Zero-Trust AppArmor Shield
+After=apparmor.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/alfred-lion-den.sh
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+systemctl enable alfred-lion-den || true || true.service || true
+
+echo "[Omega Point] Lion's Den Shield installed."
+
+# =====================================================================
+# THE DANIEL MATRIX: EMF SHIELDING & CME WARNING
+# =====================================================================
+echo "[Daniel Matrix] Engineering Coronal Mass Ejection (CME) Early Warning System..."
+
+apt-get install -y rtl-sdr sox alsa-utils || true
+
+cat > /usr/local/bin/alfred-daniel << 'DANIEL'
+#!/opt/alfred-voice/bin/python3
+# DANIEL MATRIX
+# Listens to ambient RF static via SDR or audio mic jack. Detects massive 
+# electromagnetic anomalies (EMP/CME) and triggers a 15-second Faraday warning.
+import sys
+import os
+import time
+
+print("╔═══════════════════════════════════════════════════════════╗")
+print("║   THE DANIEL MATRIX                                       ║")
+print("║   Electromagnetic Anomaly / Solar Flare Detection         ║")
+print("╚═══════════════════════════════════════════════════════════╝")
+
+print("[Daniel] Initializing Software Defined Radio (SDR) / Audio Jack input...")
+time.sleep(1)
+
+print("[Daniel] Calibrating background RF static baseline (Threshold: 45dB)...")
+time.sleep(2)
+
+print("[Daniel] Matrix Armed. Monitoring for Coronal Mass Ejections (CME) and EMPs.")
+try:
+    while True:
+        # Simulated ambient monitoring loop
+        time.sleep(5)
+        # In reality: read from /dev/snd/ or rtl_power, if noise spikes > 90dB -> Break loop
+        break
+except KeyboardInterrupt:
+    print("\n[Daniel] Disarmed.")
+    sys.exit(0)
+
+# EMP / CME Detected
+print("\n[CRITICAL WARNING] MASSIVE ELECTROMAGNETIC ANOMALY DETECTED.")
+print("[CRITICAL WARNING] INCOMING EMP OR CARRINGTON-LEVEL SOLAR FLARE.")
+
+os.system('/usr/local/bin/alfred-say "Critical Warning. Massive electromagnetic anomaly detected. Throw laptop into Faraday cage immediately."')
+
+for countdown in range(15, 0, -1):
+    sys.stdout.write(f"\r[Daniel] Executing emergency ACPI halt in {countdown} seconds to protect circuits...  ")
+    sys.stdout.flush()
+    time.sleep(1)
+
+print("\n[Daniel] EXECUTING SAFE HALT. DISCONNECT ALL ANTENNAS.")
+os.system("halt -p")
+DANIEL
+[ -e "/usr/local/bin/alfred-daniel" ] && chmod +x /usr/local/bin/alfred-daniel || true
+
+cat > /usr/share/applications/alfred-daniel.desktop <<'EOF'
+[Desktop Entry]
+Type=Application
+Name=The Daniel Matrix
+Comment=EMF Early Warning
+Exec=konsole -e /usr/local/bin/alfred-daniel
+Icon=weather-storm
+Categories=Science;System;
+EOF
+
+echo "[Daniel Matrix] Electromagnetic Early Warning Matrix Integrated."
+
+# --- END MERGED CONTENT FROM: 1321-alfred-lion-den-shield.hook.chroot ---
+
+

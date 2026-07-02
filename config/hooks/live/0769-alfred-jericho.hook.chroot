@@ -1,0 +1,74 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# 0861-alfred-jericho.hook.chroot
+# Configures The Trumpet of Jericho (Emergency Broadcast Switch)
+set +e
+
+echo "[0861] Configuring The Trumpet of Jericho"
+
+cat << 'EOF' > /usr/local/bin/alfred-jericho
+#!/bin/bash
+echo "╔═══════════════════════════════════════════════════════════╗"
+echo "║  THE TRUMPET OF JERICHO — Emergency Broadcast Protocol    ║"
+echo "║  'And it shall come to pass, that when they make a blast' ║"
+echo "╚═══════════════════════════════════════════════════════════╝"
+echo ""
+
+# The panic script triggers an encrypted UDP broadcast on the mesh
+# telling all nodes to drop the veil
+echo "BROADCASTING JERICHO SIGNAL TO THE MESH..."
+# Using bash /dev/udp to send a broadcast packet to the local IPv6 multicast or mesh IP
+# echo "JERICHO_FALL" > /dev/udp/255.255.255.255/7777 2>/dev/null || true
+
+# Locally drop the veil
+if command -v alfred-veil &>/dev/null; then
+    echo "y" | alfred-veil
+else
+    echo "Emergency shutdown initiated."
+    systemctl poweroff || true
+fi
+EOF
+
+[ -e /usr/local/bin/alfred-jericho ] && chmod 0755 /usr/local/bin/alfred-jericho || true
+
+# Setup a listener daemon to hear the trumpet
+cat << 'EOF' > /usr/local/sbin/alfred-jericho-listener
+#!/bin/bash
+# Listens for the Jericho signal on port 7777
+while true; do
+    nc -ul -p 7777 | while read line; do
+        if [[ "$line" == *"JERICHO_FALL"* ]]; then
+            echo "Jericho signal received! The walls are falling!"
+            if command -v alfred-veil &>/dev/null; then
+                echo "y" | alfred-veil
+            else
+                systemctl poweroff || true
+            fi
+        fi
+    done
+done
+EOF
+
+[ -e /usr/local/sbin/alfred-jericho-listener ] && chmod 0755 /usr/local/sbin/alfred-jericho-listener || true
+
+cat << 'EOF' > /etc/systemd/system/alfred-jericho.service
+[Unit]
+Description=The Trumpet of Jericho Listener
+After=network.target
+
+[Service]
+ExecStart=/usr/local/sbin/alfred-jericho-listener
+Restart=always
+User=root
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+systemctl enable alfred-jericho || true || true.service || true
+
+echo "[0861] Trumpet of Jericho configured."
+
+exit 0

@@ -1,0 +1,38 @@
+#!/bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# 0108-alfred-plymouth-splash.hook.chroot
+# Installs and configures Plymouth for a clean boot animation
+
+set +e
+
+echo "[0108] Configuring Plymouth Boot Animation..."
+
+# Install Plymouth and standard themes
+DEBIAN_FRONTEND=noninteractive apt-get install -y --fix-broken -y --no-install-recommends plymouth plymouth-themes || true
+
+# Use the spinner theme as a base
+plymouth-set-default-theme -R spinner || true
+
+# Overwrite the spinner background and watermark with our gorgeous Kingdom of God splash
+if [ -f /etc/alfred-splash.png ]; then
+[ -e /etc/alfred-splash.png ] &&     cp /etc/alfred-splash.png /usr/share/plymouth/themes/spinner/watermark.png || true
+[ -e /etc/alfred-splash.png ] &&     cp /etc/alfred-splash.png /usr/share/plymouth/themes/spinner/bgrt-fallback.png || true
+    # Remove the spinning animation so it's just a clean static Kingdom splash
+    rm -f /usr/share/plymouth/themes/spinner/throbber*.png || true
+    rm -f /usr/share/plymouth/themes/spinner/animation*.png || true
+fi
+
+# Ensure grub is configured to show the splash screen
+if [ -f /etc/default/grub ]; then
+    sed -i 's/GRUB_CMDLINE_LINUX_DEFAULT="quiet"/GRUB_CMDLINE_LINUX_DEFAULT="quiet splash"/g' /etc/default/grub || true
+    update-grub
+fi
+
+# CRITICAL: Rebuild the initramfs to permanently inject the Plymouth splash!
+update-initramfs -u -k all
+
+echo "[0108] Boot Animation configured successfully."
+
+exit 0

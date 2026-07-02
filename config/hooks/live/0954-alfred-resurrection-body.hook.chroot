@@ -1,0 +1,42 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# 0999-alfred-resurrection-body.hook.chroot
+# The Resurrection Body: Stateless Ephemeral Rootfs Configuration
+set +e
+
+echo "[0999] Configuring The Resurrection Body (Stateless Ephemeral Rootfs)"
+
+# We forcefully configure the initramfs to mount the root filesystem entirely in RAM (tmpfs).
+# The OS will not touch the physical disk for its root layer. 
+# Every shutdown obliviates the OS mathematically.
+
+# Modify initramfs to aggressively force toram logic for the entire live environment
+echo "export TORAM=Yes" >> /etc/initramfs-tools/conf.d/live || true
+echo "export OVERLAY=tmpfs" >> /etc/initramfs-tools/conf.d/live || true
+
+# Force aggressive memory wiping on shutdown so the ghost leaves no trace
+cat << 'EOF' > /etc/systemd/system/alfred-resurrection-wipe.service
+[Unit]
+Description=Alfred Linux Resurrection Body (RAM Obliteration)
+DefaultDependencies=no
+Before=shutdown.target
+ConditionPathExists=/proc/sysrq-trigger
+
+[Service]
+Type=oneshot
+# Drop caches to clear pagecache
+ExecStart=/bin/sh -c 'echo 3 > /proc/sys/vm/drop_caches'
+# Trigger the kernel OOM killer to start slaying user processes to clear heap
+ExecStart=/bin/sh -c 'echo f > /proc/sysrq-trigger'
+
+[Install]
+WantedBy=shutdown.target
+EOF
+
+systemctl enable alfred-resurrection-wipe || true || true.service || true
+
+echo "[0999] The Resurrection Body is prepared."
+
+exit 0

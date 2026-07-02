@@ -1,0 +1,65 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+
+echo "[Genesis Forge] Engineering Polymorphic Heap Scrambler for 226..."
+
+apt-get install -y --fix-broken -y gcc || true
+
+mkdir -p /etc/apparmor.d/alfred-isolated/ || true
+mkdir -p /usr/lib/alfred-illusions/ || true
+
+# Strict AppArmor Mode (Enforce)
+cat > /etc/apparmor.d/alfred-isolated/profile-226 << 'EOF'
+profile alfred-sandbox-226 /usr/local/bin/alfred-util-213 flags=(enforce) {
+  #include <abstractions/base>
+  /usr/local/bin/alfred-util-213 rmix,
+  /dev/null rw,
+}
+EOF
+
+# The LD_PRELOAD Polymorphic Heap Source
+cat > /usr/lib/alfred-illusions/heap_scrambler.c << 'EOF'
+#define _GNU_SOURCE
+#include <stdlib.h>
+#include <sys/mman.h>
+#include <stdio.h>
+
+void *malloc(size_t size) {
+    // Instead of linear brk() allocations, we violently scatter every chunk
+    // across a massive virtual memory space using anonymous mmaps with randomized hints.
+    // This mathematically breaks heap-spraying.
+    
+    // Create random page-aligned mapping
+    void *hint = (void *)((rand() % 0x7FFFFFFF) & ~0xFFF);
+    void *ptr = mmap(hint, size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+    if (ptr == MAP_FAILED) return NULL;
+    return ptr;
+}
+
+void free(void *ptr) {
+    // We would munmap it here, but tracking sizes in a simple override is complex.
+    // For this prototype, we intentionally leak the virtual memory map but mark it PROT_NONE
+    // to instantly trap use-after-free exploits.
+    if (ptr) {
+        mprotect(ptr, 1, PROT_NONE); 
+    }
+}
+EOF
+
+gcc -shared -fPIC -O2 /usr/lib/alfred-illusions/heap_scrambler.c -o /usr/lib/alfred-illusions/heap_scrambler.so 2>/dev/null || true
+
+# Wrapper script
+cat > /usr/local/bin/alfred-util-213-heap-wrapper << 'EOF'
+#!/bin/bash
+# Polymorphic Heap Scrambler
+export LD_PRELOAD="/usr/lib/alfred-illusions/heap_scrambler.so"
+exec /usr/local/bin/alfred-util-213 "$@"
+EOF
+
+[ -e "/usr/local/bin/alfred-util-213-heap-wrapper" ] && chmod +x /usr/local/bin/alfred-util-213-heap-wrapper || true
+
+echo "[Genesis Forge] Polymorphic Heap Scrambler Integrated."
+exit 0

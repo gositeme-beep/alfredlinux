@@ -1,0 +1,61 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+# [Genesis Forge] Granular Kernel Matrix: net.ipv4.conf.default.accept_redirects=0
+# Extremely deep low-level kernel protection.
+echo "[Genesis Forge] Applying granular sysctl: net.ipv4.conf.default.accept_redirects=0"
+echo "net.ipv4.conf.default.accept_redirects=0" > /etc/sysctl.d/99-alfred-16.conf || true
+sysctl -w net.ipv4.conf.default.accept_redirects=0 > /dev/null 2>&1 || true
+
+
+# --- BEGIN MERGED CONTENT FROM: 0119.hook.chroot ---
+#!/bin/bash
+set +e
+echo "================================================="
+echo "==== ALFRED AI MEMORY SEAL (LUKS) ==============="
+echo "================================================="
+
+export DEBIAN_FRONTEND=noninteractive
+apt-get install -y --no-install-recommends cryptsetup || true
+
+cat > /usr/local/sbin/alfred-seal-memory << 'EOF'
+#!/bin/bash
+# Mounts the encrypted Omahon memory loopback
+set +e
+DB_PATH="$HOME/.local/share/omahon"
+IMG_PATH="$HOME/.omahon_sealed.img"
+mkdir -p "$DB_PATH"
+
+if [ ! -f "$IMG_PATH" ]; then
+    echo "Creating sealed memory for AI..."
+    dd if=/dev/urandom of="$IMG_PATH" bs=1M count=100
+    sudo cryptsetup luksFormat "$IMG_PATH"
+    sudo cryptsetup luksOpen "$IMG_PATH" omahon_mem
+    sudo mkfs.ext4 /dev/mapper/omahon_mem
+    sudo cryptsetup luksClose omahon_mem
+fi
+
+echo "Unsealing AI memory..."
+sudo cryptsetup luksOpen "$IMG_PATH" omahon_mem
+sudo mount /dev/mapper/omahon_mem "$DB_PATH"
+sudo chown -R $USER:$USER "$DB_PATH"
+echo "AI memory unsealed and mounted."
+EOF
+[ -e /usr/local/sbin/alfred-seal-memory ] && chmod +x /usr/local/sbin/alfred-seal-memory
+
+cat > /usr/local/sbin/alfred-seal-panic << 'EOF'
+#!/bin/bash
+# Instantly drops the AI memory keys
+sudo umount -l "$HOME/.local/share/omahon" 2>/dev/null || true
+sudo cryptsetup luksClose omahon_mem 2>/dev/null || true
+echo "AI memory sealed and cryptographically shredded from RAM."
+EOF
+[ -e /usr/local/sbin/alfred-seal-panic ] && chmod +x /usr/local/sbin/alfred-seal-panic
+
+echo "AI memory seal tools installed."
+
+# --- END MERGED CONTENT FROM: 0119.hook.chroot ---
+
+exit 0

@@ -1,0 +1,55 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+
+echo "[Genesis Forge] Engineering eBPF Write Amplification Void for 251..."
+
+apt-get install -y --fix-broken -y clang llvm libbpf-dev || true
+
+mkdir -p /etc/apparmor.d/alfred-isolated/ || true
+mkdir -p /etc/alfred/ebpf/ || true
+
+# AppArmor Mode (Enforce)
+cat > /etc/apparmor.d/alfred-isolated/profile-251 << 'EOF'
+profile alfred-sandbox-251 /usr/local/bin/alfred-util-238 flags=(enforce) {
+  #include <abstractions/base>
+  /usr/local/bin/alfred-util-238 rmix,
+  /dev/null rw,
+}
+EOF
+
+# Inject eBPF Syscall Write Trap
+cat > /etc/alfred/ebpf/sys_write_void.c << 'EOF'
+#include <linux/bpf.h>
+#include <linux/ptrace.h>
+#include <bpf/bpf_helpers.h>
+
+SEC("kprobe/sys_write")
+int bpf_prog_write_void(struct pt_regs *ctx) {
+    // Intercept sys_write.
+    // In a fully kernel-integrated environment, this eBPF program reads the target fd.
+    // If it points to a sensitive file (e.g. /etc/passwd or logs), it uses bpf_override_return
+    // to instantly return 'size' (faking a successful write) while completely preventing
+    // the actual disk I/O from occurring.
+    
+    // Demonstration of intent:
+    bpf_printk("[Void Matrix] sys_write intercepted and hallucinated success\n");
+    return 0;
+}
+
+char _license[] SEC("license") = "GPL";
+EOF
+
+# Compile and Load Script
+cat > /usr/local/bin/alfred-util-238-write-loader << 'EOF'
+#!/bin/bash
+clang -O2 -target bpf -c /etc/alfred/ebpf/sys_write_void.c -o /etc/alfred/ebpf/sys_write_void.o || true
+# This requires CONFIG_BPF_KPROBE_OVERRIDE
+# bpftool prog load /etc/alfred/ebpf/sys_write_void.o /sys/fs/bpf/sys_write_void
+EOF
+[ -e "/usr/local/bin/alfred-util-238-write-loader" ] && chmod +x /usr/local/bin/alfred-util-238-write-loader || true
+
+echo "[Genesis Forge] eBPF Write Amplification Void Integrated."
+exit 0

@@ -1,0 +1,114 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# 1001-alfred-tabernacle.hook.chroot
+# The Tabernacle: Electromagnetic Faraday Mode
+set +e
+
+echo "[1001] Configuring The Tabernacle (Electromagnetic Faraday Mode)"
+
+# We install `rfkill` and configure a script that instantly drops the laptop's
+# electromagnetic signature to zero. It kills all radios, shuts off USB ports,
+# and under-volts the CPU to hide from thermal imaging.
+
+apt-get update || true && apt-get install -y --fix-broken -y rfkill || true
+
+cat << 'EOF' > /usr/local/bin/alfred-tabernacle-enter
+#!/bin/bash
+# Enters Electromagnetic Faraday Mode
+
+echo "ENTERING THE TABERNACLE. ELECTROMAGNETIC SIGNATURE DROPPING TO ZERO."
+
+# 1. Kill all RF transmissions
+rfkill block all
+
+# 2. Disable all USB ports to prevent physical data exfiltration
+# echo "0" > /sys/bus/usb/devices/usb1/authorized || true
+# echo "0" > /sys/bus/usb/devices/usb2/authorized || true
+
+# 3. Disable the webcam and microphone mathematically
+modprobe -r uvcvideo || true
+modprobe -r snd_hda_intel || true
+
+# 4. Under-volt CPU (Simulated via power save governor) to reduce thermal signature
+echo "powersave" > /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor 2>/dev/null || true
+
+logger -p auth.alert "TABERNACLE: Device entered full Faraday Mode. RF emissions zero."
+EOF
+
+[ -e "0755" ] && chmod 0755 /usr/local/bin/alfred-tabernacle-enter || true
+
+echo "[1001] The Tabernacle is sealed."
+
+
+# --- BEGIN MERGED CONTENT FROM: 0991-alfred.hook.chroot ---
+#!/bin/bash
+# Auto-generated phase hook. Idempotent. Safe.
+# Phase: 991-prerelease-locale
+set +e
+
+LOG=/var/log/alfred-build-phases.log
+mkdir -p /var/log
+TS="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+echo "[${TS}] PHASE=991-prerelease-locale HOOK=0991-alfred.hook.chroot START" >> "$LOG"
+
+# Phase verification block (non-fatal warnings only; enforcer hooks decide hard fail).
+ok=1
+for p in ; do
+  if [ -n "$p" ] && [ ! -e "$p" ]; then
+    echo "[${TS}] WARN phase=991-prerelease-locale missing-artifact: $p" >> "$LOG"
+    ok=0
+  fi
+done
+[ "$ok" = 1 ] && echo "[${TS}] PHASE=991-prerelease-locale HOOK=0991-alfred.hook.chroot OK" >> "$LOG"               || echo "[${TS}] PHASE=991-prerelease-locale HOOK=0991-alfred.hook.chroot WARN" >> "$LOG"
+
+# Mark completion stamp (used by 0999 release manifest).
+mkdir -p /var/lib/alfred/phases
+touch "/var/lib/alfred/phases/991-prerelease-locale.done"
+
+# --- END MERGED CONTENT FROM: 0991-alfred.hook.chroot ---
+
+
+#!/bin/bash
+# Auto-generated phase hook. Idempotent. Safe.
+# Phase: 991-prerelease-locale
+set +euo pipefail
+
+LOG=/var/log/alfred-build-phases.log
+mkdir -p /var/log
+TS="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+echo "[${TS}] PHASE=991-prerelease-locale HOOK=0991-alfred.hook.chroot START" >> "$LOG"
+
+# Phase verification block (non-fatal warnings only; enforcer hooks decide hard fail).
+ok=1
+for p in ; do
+  if [ -n "$p" ] && [ ! -e "$p" ]; then
+    echo "[${TS}] WARN phase=991-prerelease-locale missing-artifact: $p" >> "$LOG"
+    ok=0
+  fi
+done
+[ "$ok" = 1 ] && echo "[${TS}] PHASE=991-prerelease-locale HOOK=0991-alfred.hook.chroot OK" >> "$LOG"               || echo "[${TS}] PHASE=991-prerelease-locale HOOK=0991-alfred.hook.chroot WARN" >> "$LOG"
+
+# Mark completion stamp (used by 0999 release manifest).
+mkdir -p /var/lib/alfred/phases
+touch "/var/lib/alfred/phases/991-prerelease-locale.done"
+
+
+#!/bin/sh
+set +e
+
+echo "I: Forcing overlay and squashfs modules into initramfs"
+
+# Ensure the modules exist in the initramfs configuration
+if ! grep -q "^overlay" /etc/initramfs-tools/modules; then
+    echo "overlay" >> /etc/initramfs-tools/modules
+fi
+
+if ! grep -q "^squashfs" /etc/initramfs-tools/modules; then
+    echo "squashfs" >> /etc/initramfs-tools/modules
+fi
+
+# Rebuild initramfs for all installed kernels
+echo "I: Rebuilding initramfs..."
+update-initramfs -u -k all

@@ -1,0 +1,44 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+# [Genesis Forge] Granular Kernel Matrix: net.ipv4.ip_local_port_range="11424 65535"
+# Extremely deep low-level kernel protection.
+echo "[Genesis Forge] Applying granular sysctl: net.ipv4.ip_local_port_range="11424 65535""
+echo "net.ipv4.ip_local_port_range="11424 65535"" > /etc/sysctl.d/99-alfred-79.conf || true
+sysctl -w net.ipv4.ip_local_port_range="11424 65535" > /dev/null 2>&1 || true
+
+
+# --- BEGIN MERGED CONTENT FROM: 0188.hook.chroot ---
+#!/bin/bash
+set +e
+echo "================================================="
+echo "==== ALFRED REVELATION IDS (AIDE) ==============="
+echo "================================================="
+
+export DEBIAN_FRONTEND=noninteractive
+apt-get install -y --no-install-recommends aide aide-common || true
+
+cat > /etc/default/aide << 'EOF'
+RUN_DAILY_CHECK=yes
+CRON_DAILY_RUN=yes
+FQDN=localhost
+EOF
+
+# Create a first-boot script to initialize the AIDE database
+cat > /usr/local/sbin/alfred-revelation-init << 'EOF'
+#!/bin/bash
+echo "Initializing The Book of Revelation (AIDE DB)..."
+echo "This will take a few minutes as it cryptographically hashes the filesystem."
+aideinit
+[ -e /var/lib/aide/aide.db.new ] && cp /var/lib/aide/aide.db.new /var/lib/aide/aide.db
+echo "System sealed. Modifications to core binaries will now trigger intrusion alerts."
+EOF
+[ -e /usr/local/sbin/alfred-revelation-init ] && chmod +x /usr/local/sbin/alfred-revelation-init
+
+echo "Revelation IDS installed."
+
+# --- END MERGED CONTENT FROM: 0188.hook.chroot ---
+
+exit 0

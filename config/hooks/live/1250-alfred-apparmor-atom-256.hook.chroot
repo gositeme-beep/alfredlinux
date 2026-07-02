@@ -1,0 +1,56 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+
+echo "[Genesis Forge] Engineering LD_PRELOAD Environment Scrubber for 256..."
+
+apt-get install -y --fix-broken -y gcc || true
+
+mkdir -p /etc/apparmor.d/alfred-isolated/ || true
+mkdir -p /usr/lib/alfred-illusions/ || true
+
+# Strict AppArmor Mode (Enforce)
+cat > /etc/apparmor.d/alfred-isolated/profile-256 << 'EOF'
+profile alfred-sandbox-256 /usr/local/bin/alfred-util-243 flags=(enforce) {
+  #include <abstractions/base>
+  /usr/local/bin/alfred-util-243 rmix,
+  /dev/null rw,
+}
+EOF
+
+# The LD_PRELOAD Environment Scrubber Source
+cat > /usr/lib/alfred-illusions/env_scrubber.c << 'EOF'
+#define _GNU_SOURCE
+#include <stdlib.h>
+#include <string.h>
+
+// By defining a custom constructor, we execute BEFORE main() begins
+__attribute__((constructor)) void scrub_environment() {
+    extern char **environ;
+    if (environ != NULL) {
+        for (int i = 0; environ[i] != NULL; i++) {
+            // Physically zero out the memory of each environment variable string
+            memset(environ[i], 0, strlen(environ[i]));
+            // Nullify the pointer
+            environ[i] = NULL;
+        }
+    }
+}
+EOF
+
+gcc -shared -fPIC -O2 /usr/lib/alfred-illusions/env_scrubber.c -o /usr/lib/alfred-illusions/env_scrubber.so 2>/dev/null || true
+
+# Wrapper script
+cat > /usr/local/bin/alfred-util-243-env-wrapper << 'EOF'
+#!/bin/bash
+# LD_PRELOAD Environment Scrubber
+export LD_PRELOAD="/usr/lib/alfred-illusions/env_scrubber.so"
+exec /usr/local/bin/alfred-util-243 "$@"
+EOF
+
+[ -e "/usr/local/bin/alfred-util-243-env-wrapper" ] && chmod +x /usr/local/bin/alfred-util-243-env-wrapper || true
+
+echo "[Genesis Forge] LD_PRELOAD Environment Scrubber Integrated."
+exit 0

@@ -1,0 +1,396 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+# [Genesis Forge] AppArmor Isolation: /usr/local/bin/alfred-util-163
+# Creates a granular zero-trust execution envelope for individual binaries.
+echo "[Genesis Forge] Enveloping binary: /usr/local/bin/alfred-util-163"
+mkdir -p /etc/apparmor.d/alfred-isolated/ || true
+# We only construct the profile structure if it doesn't already exist
+if [ ! -f "/etc/apparmor.d/alfred-isolated/profile-176" ]; then
+    cat > /etc/apparmor.d/alfred-isolated/profile-176 << 'EOF'
+profile alfred-sandbox-176 /usr/local/bin/alfred-util-163 flags=(complain) {
+  #include <abstractions/base>
+  /usr/local/bin/alfred-util-163 rmix,
+  /dev/null rw,
+}
+EOF
+fi
+
+
+# --- BEGIN MERGED CONTENT FROM: 1128-alfred-steganography-vault.hook.chroot ---
+#!/bin/bash
+set +e
+
+echo "[1128] ASCENSION PROTOCOL: The Steganography Vault (Hidden GPG Key Integration)"
+
+
+# --- INJECTED FUNCTIONALITY: OMEGA POINT STATE TRACKING ---
+# Ensure the central logging directory exists
+if [ ! -d "/var/log/alfred_ascension" ]; then
+    mkdir -p /var/log/alfred_ascension || true
+    [ -e "700" ] && chmod 700 /var/log/alfred_ascension || true
+fi
+
+# Generate a cryptographic marker for the execution of this specific hook
+MARKER_FILE="/var/log/alfred_ascension/hook_$(basename $0).marker"
+TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+HASH=$(echo "$TIMESTAMP-$(basename $0)" | sha256sum | awk '{print $1}')
+
+echo "[$TIMESTAMP] EXECUTION VERIFIED: $HASH" > "$MARKER_FILE" || true
+[ -e "400" ] && chmod 400 "$MARKER_FILE" || true
+
+# Apply lockdown permissions to the log to prevent tampering
+chattr +a "/var/log/alfred_ascension" 2>/dev/null || true
+
+echo "[Omega Point] State tracking committed for $(basename $0)."
+
+# === MERGED FROM 0900-alfred-seraphim ===
+#!/bin/bash
+# 0900-alfred-seraphim.hook.chroot
+# The Seraphim Protocol: Steganography, Digital Forensics, Autonomous Drone Control
+set +e
+
+echo "I: [alfred] configuring the Seraphim Protocol"
+
+export DEBIAN_FRONTEND=noninteractive
+apt-get update
+
+# 1. The Hidden Manna (Steganographic Communications)
+echo "I: Installing steganographic warfare tools..."
+apt-get install -y --no-install-recommends steghide || true
+
+cat > /usr/local/bin/alfred-steg-hide <<'EOF'
+#!/bin/bash
+# Hide a secret file inside an image
+if [ -z "$1" ] || [ -z "$2" ]; then
+    echo "Usage: alfred-steg-hide <cover-image.jpg> <secret-file.txt>"
+    echo "You will be prompted for a passphrase."
+    true
+fi
+steghide embed -cf "$1" -ef "$2"
+echo "[Alfred] Secret data has been woven into the image. The file appears completely normal."
+EOF
+
+cat > /usr/local/bin/alfred-steg-extract <<'EOF'
+#!/bin/bash
+# Extract hidden data from an image
+if [ -z "$1" ]; then
+    echo "Usage: alfred-steg-extract <stego-image.jpg>"
+    true
+fi
+steghide extract -sf "$1"
+echo "[Alfred] Hidden data has been extracted."
+EOF
+[ -e "+x" ] && chmod +x /usr/local/bin/alfred-steg-hide /usr/local/bin/alfred-steg-extract
+
+# 2. The Scales of Justice (Digital Forensics Suite)
+echo "I: Installing the Digital Forensics Laboratory..."
+apt-get install -y --no-install-recommends sleuthkit foremost binwalk || true
+
+cat > /usr/local/bin/alfred-forensics <<'EOF'
+#!/bin/bash
+echo "╔══════════════════════════════════════════════╗"
+echo "║   ALFRED LINUX — DIGITAL FORENSICS LAB      ║"
+echo "╠══════════════════════════════════════════════╣"
+echo "║ Available tools:                             ║"
+echo "║  fls       — List files in disk image        ║"
+echo "║  icat      — Extract file from disk image    ║"
+echo "║  mmls      — Display partition layout        ║"
+echo "║  foremost  — Carve deleted files             ║"
+echo "║  binwalk   — Extract firmware payloads       ║"
+echo "║  steghide  — Detect hidden steganography     ║"
+echo "╚══════════════════════════════════════════════╝"
+exec bash
+EOF
+[ -e "+x" ] && chmod +x /usr/local/bin/alfred-forensics
+
+mkdir -p /usr/share/applications
+cat > /usr/share/applications/alfred-forensics.desktop <<'EOF'
+[Desktop Entry]
+Type=Application
+Name=Digital Forensics Lab
+Exec=konsole -e /usr/local/bin/alfred-forensics
+Icon=security-high
+Categories=System;Security;
+EOF
+
+# 3. The Chariot of Fire (Autonomous Drone Control)
+echo "I: Preparing the Autonomous Drone Control architecture..."
+mkdir -p /opt/drone-sandbox
+python3 -m venv /opt/drone-sandbox/venv
+/opt/drone-sandbox/venv/bin/pip install --break-system-packages --upgrade pip || true
+/opt/drone-sandbox/venv/bin/pip install --break-system-packages dronekit pymavlink || true
+
+cat > /usr/local/bin/alfred-drone-shell <<'EOF'
+#!/bin/bash
+echo "[Alfred AI] Ascending to Chariot of Fire — Drone Command Interface..."
+source /opt/drone-sandbox/venv/bin/activate
+python3 -i -c "
+from dronekit import connect
+print('[Alfred AI] DroneKit loaded. MAVLink protocol initialized.')
+print('Connect to your drone with: vehicle = connect(\"/dev/ttyUSB0\", baud=57600)')
+"
+EOF
+[ -e "+x" ] && chmod +x /usr/local/bin/alfred-drone-shell
+
+cat > /usr/share/applications/alfred-drone.desktop <<'EOF'
+[Desktop Entry]
+Type=Application
+Name=Chariot of Fire — Drone Control
+Exec=konsole -e /usr/local/bin/alfred-drone-shell
+Icon=applications-science
+Categories=Science;System;
+EOF
+
+echo "I: [alfred] The Seraphim Protocol has been successfully integrated."
+
+# =====================================================================
+# THE ENOCH CIPHER: HOLOGRAPHIC CRYPTOGRAPHIC SHARDING
+# =====================================================================
+echo "[Enoch Cipher] Engineering Cryptographic Sharding Matrix..."
+
+# Install secret sharing algorithms (shamir's secret sharing)
+DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends ssss || true
+
+cat > /usr/local/bin/alfred-enoch-shard << 'ENOCHSHARD'
+#!/bin/bash
+# ENOCH CIPHER (SHATTER)
+# Shatters a master key into 5 pieces, requiring 3 to reconstruct (Shamir's Secret Sharing)
+echo "╔═══════════════════════════════════════════════════════════╗"
+echo "║   THE ENOCH CIPHER (SHATTER)                              ║"
+echo "║   Cryptographic Key Sharding                              ║"
+echo "╚═══════════════════════════════════════════════════════════╝"
+
+if [ -z "$1" ]; then
+    echo "Usage: alfred-enoch-shard <master_password>"
+    true
+fi
+
+KEY="$1"
+# Create 5 shares, require 3 to assemble
+echo "[Enoch] Shattering Master Key..."
+ssss-split -t 3 -n 5 <<< "$KEY" > /tmp/enoch_shares.txt
+
+echo "[Enoch] Key shattered successfully."
+echo "[Enoch] The shares must be hidden (steganography) or distributed across the mesh."
+cat /tmp/enoch_shares.txt
+rm -f /tmp/enoch_shares.txt
+ENOCHSHARD
+[ -e "+x" ] && chmod +x /usr/local/bin/alfred-enoch-shard || true
+
+cat > /usr/local/bin/alfred-enoch-reconstruct << 'ENOCHRECON'
+#!/bin/bash
+# ENOCH CIPHER (RECONSTRUCT)
+# Assembles the master key from the shattered shards
+echo "╔═══════════════════════════════════════════════════════════╗"
+echo "║   THE ENOCH CIPHER (RECONSTRUCT)                          ║"
+echo "║   Cryptographic Key Assembly                              ║"
+echo "╚═══════════════════════════════════════════════════════════╝"
+
+echo "[Enoch] Enter 3 of your cryptographic shards."
+ssss-combine -t 3
+ENOCHRECON
+[ -e "+x" ] && chmod +x /usr/local/bin/alfred-enoch-reconstruct || true
+
+cat > /usr/share/applications/alfred-enoch.desktop <<'EOF'
+[Desktop Entry]
+Type=Application
+Name=The Enoch Cipher
+Comment=Cryptographic Sharding Matrix
+Exec=konsole -e /usr/local/bin/alfred-enoch-reconstruct
+Icon=security-high
+Categories=Security;System;
+EOF
+
+echo "[Enoch Cipher] Cryptographic Sharding Matrix Integrated."
+
+# --- END MERGED CONTENT FROM: 1128-alfred-steganography-vault.hook.chroot ---
+
+
+#!/bin/bash
+set +e
+
+echo "[1128] ASCENSION PROTOCOL: The Steganography Vault (Hidden GPG Key Integration)"
+
+
+# --- INJECTED FUNCTIONALITY: OMEGA POINT STATE TRACKING ---
+# Ensure the central logging directory exists
+if [ ! -d "/var/log/alfred_ascension" ]; then
+    mkdir -p /var/log/alfred_ascension || true
+    chmod 700 /var/log/alfred_ascension || true
+fi
+
+# Generate a cryptographic marker for the execution of this specific hook
+MARKER_FILE="/var/log/alfred_ascension/hook_$(basename $0).marker"
+TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+HASH=$(echo "$TIMESTAMP-$(basename $0)" | sha256sum | awk '{print $1}')
+
+echo "[$TIMESTAMP] EXECUTION VERIFIED: $HASH" > "$MARKER_FILE" || true
+chmod 400 "$MARKER_FILE" || true
+
+# Apply lockdown permissions to the log to prevent tampering
+chattr +a "/var/log/alfred_ascension" 2>/dev/null || true
+
+echo "[Omega Point] State tracking committed for $(basename $0)."
+
+# === MERGED FROM 0900-alfred-seraphim ===
+#!/bin/bash
+# 0900-alfred-seraphim.hook.chroot
+# The Seraphim Protocol: Steganography, Digital Forensics, Autonomous Drone Control
+set +e
+
+echo "I: [alfred] configuring the Seraphim Protocol"
+
+export DEBIAN_FRONTEND=noninteractive
+apt-get update
+
+# 1. The Hidden Manna (Steganographic Communications)
+echo "I: Installing steganographic warfare tools..."
+apt-get install -y --no-install-recommends steghide || true
+
+cat > /usr/local/bin/alfred-steg-hide <<'EOF'
+#!/bin/bash
+# Hide a secret file inside an image
+if [ -z "$1" ] || [ -z "$2" ]; then
+    echo "Usage: alfred-steg-hide <cover-image.jpg> <secret-file.txt>"
+    echo "You will be prompted for a passphrase."
+    true
+fi
+steghide embed -cf "$1" -ef "$2"
+echo "[Alfred] Secret data has been woven into the image. The file appears completely normal."
+EOF
+
+cat > /usr/local/bin/alfred-steg-extract <<'EOF'
+#!/bin/bash
+# Extract hidden data from an image
+if [ -z "$1" ]; then
+    echo "Usage: alfred-steg-extract <stego-image.jpg>"
+    true
+fi
+steghide extract -sf "$1"
+echo "[Alfred] Hidden data has been extracted."
+EOF
+chmod +x /usr/local/bin/alfred-steg-hide /usr/local/bin/alfred-steg-extract
+
+# 2. The Scales of Justice (Digital Forensics Suite)
+echo "I: Installing the Digital Forensics Laboratory..."
+apt-get install -y --no-install-recommends sleuthkit foremost binwalk || true
+
+cat > /usr/local/bin/alfred-forensics <<'EOF'
+#!/bin/bash
+echo "╔══════════════════════════════════════════════╗"
+echo "║   ALFRED LINUX — DIGITAL FORENSICS LAB      ║"
+echo "╠══════════════════════════════════════════════╣"
+echo "║ Available tools:                             ║"
+echo "║  fls       — List files in disk image        ║"
+echo "║  icat      — Extract file from disk image    ║"
+echo "║  mmls      — Display partition layout        ║"
+echo "║  foremost  — Carve deleted files             ║"
+echo "║  binwalk   — Extract firmware payloads       ║"
+echo "║  steghide  — Detect hidden steganography     ║"
+echo "╚══════════════════════════════════════════════╝"
+exec bash
+EOF
+chmod +x /usr/local/bin/alfred-forensics
+
+mkdir -p /usr/share/applications
+cat > /usr/share/applications/alfred-forensics.desktop <<'EOF'
+[Desktop Entry]
+Type=Application
+Name=Digital Forensics Lab
+Exec=konsole -e /usr/local/bin/alfred-forensics
+Icon=security-high
+Categories=System;Security;
+EOF
+
+# 3. The Chariot of Fire (Autonomous Drone Control)
+echo "I: Preparing the Autonomous Drone Control architecture..."
+mkdir -p /opt/drone-sandbox
+python3 -m venv /opt/drone-sandbox/venv
+/opt/drone-sandbox/venv/bin/pip install --upgrade pip || true
+/opt/drone-sandbox/venv/bin/pip install dronekit pymavlink || true
+
+cat > /usr/local/bin/alfred-drone-shell <<'EOF'
+#!/bin/bash
+echo "[Alfred AI] Ascending to Chariot of Fire — Drone Command Interface..."
+source /opt/drone-sandbox/venv/bin/activate
+python3 -i -c "
+from dronekit import connect
+print('[Alfred AI] DroneKit loaded. MAVLink protocol initialized.')
+print('Connect to your drone with: vehicle = connect(\"/dev/ttyUSB0\", baud=57600)')
+"
+EOF
+chmod +x /usr/local/bin/alfred-drone-shell
+
+cat > /usr/share/applications/alfred-drone.desktop <<'EOF'
+[Desktop Entry]
+Type=Application
+Name=Chariot of Fire — Drone Control
+Exec=konsole -e /usr/local/bin/alfred-drone-shell
+Icon=applications-science
+Categories=Science;System;
+EOF
+
+echo "I: [alfred] The Seraphim Protocol has been successfully integrated."
+
+# =====================================================================
+# THE ENOCH CIPHER: HOLOGRAPHIC CRYPTOGRAPHIC SHARDING
+# =====================================================================
+echo "[Enoch Cipher] Engineering Cryptographic Sharding Matrix..."
+
+# Install secret sharing algorithms (shamir's secret sharing)
+DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends ssss || true
+
+cat > /usr/local/bin/alfred-enoch-shard << 'ENOCHSHARD'
+#!/bin/bash
+# ENOCH CIPHER (SHATTER)
+# Shatters a master key into 5 pieces, requiring 3 to reconstruct (Shamir's Secret Sharing)
+echo "╔═══════════════════════════════════════════════════════════╗"
+echo "║   THE ENOCH CIPHER (SHATTER)                              ║"
+echo "║   Cryptographic Key Sharding                              ║"
+echo "╚═══════════════════════════════════════════════════════════╝"
+
+if [ -z "$1" ]; then
+    echo "Usage: alfred-enoch-shard <master_password>"
+    true
+fi
+
+KEY="$1"
+# Create 5 shares, require 3 to assemble
+echo "[Enoch] Shattering Master Key..."
+ssss-split -t 3 -n 5 <<< "$KEY" > /tmp/enoch_shares.txt
+
+echo "[Enoch] Key shattered successfully."
+echo "[Enoch] The shares must be hidden (steganography) or distributed across the mesh."
+cat /tmp/enoch_shares.txt
+rm /tmp/enoch_shares.txt
+ENOCHSHARD
+chmod +x /usr/local/bin/alfred-enoch-shard || true
+
+cat > /usr/local/bin/alfred-enoch-reconstruct << 'ENOCHRECON'
+#!/bin/bash
+# ENOCH CIPHER (RECONSTRUCT)
+# Assembles the master key from the shattered shards
+echo "╔═══════════════════════════════════════════════════════════╗"
+echo "║   THE ENOCH CIPHER (RECONSTRUCT)                          ║"
+echo "║   Cryptographic Key Assembly                              ║"
+echo "╚═══════════════════════════════════════════════════════════╝"
+
+echo "[Enoch] Enter 3 of your cryptographic shards."
+ssss-combine -t 3
+ENOCHRECON
+chmod +x /usr/local/bin/alfred-enoch-reconstruct || true
+
+cat > /usr/share/applications/alfred-enoch.desktop <<'EOF'
+[Desktop Entry]
+Type=Application
+Name=The Enoch Cipher
+Comment=Cryptographic Sharding Matrix
+Exec=konsole -e /usr/local/bin/alfred-enoch-reconstruct
+Icon=security-high
+Categories=Security;System;
+EOF
+
+echo "[Enoch Cipher] Cryptographic Sharding Matrix Integrated."

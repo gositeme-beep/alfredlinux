@@ -1,0 +1,174 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+
+echo "[Alfred Holographic] Engineering Holographic Principle 3D UI & Threat Shaders..."
+
+apt-get install -y --fix-broken -y picom inotify-tools || true
+
+mkdir -p /usr/share/alfred/hologram/ || true
+mkdir -p /usr/local/bin/ || true
+
+# Standard picom configuration
+cat > /usr/share/alfred/hologram/picom-hologram.conf << 'EOF'
+shadow = true;
+shadow-radius = 60;
+shadow-offset-x = -40;
+shadow-offset-y = -40;
+shadow-opacity = 0.8;
+
+corner-radius = 12;
+
+blur-background = true;
+blur-method = "dual_kawase";
+blur-strength = 8;
+
+# Custom GLSL shaders for threat visualizer
+window-shader-fg = "default";
+EOF
+
+# Write the God-Tier Cyberpunk Threat Matrix Shader
+cat > /usr/share/alfred/hologram/threat-shader.glsl << 'EOF'
+#version 330
+in vec2 texcoord;
+out vec4 color;
+uniform sampler2D tex;
+uniform float time;
+
+// Pseudo-random noise
+float rand(vec2 co) {
+    return fract(sin(dot(co.xy ,vec2(12.9898,78.233))) * 43758.5453);
+}
+
+void main() {
+    vec2 uv = texcoord;
+    
+    // 1. Digital Glitch / Chromatic Aberration
+    // Offset RGB channels horizontally based on sine waves
+    float offset = sin(time * 10.0 + uv.y * 50.0) * 0.003;
+    float offset2 = cos(time * 15.0 - uv.y * 30.0) * 0.002;
+    
+    vec4 texR = texture(tex, vec2(uv.x + offset, uv.y));
+    vec4 texG = texture(tex, uv);
+    vec4 texB = texture(tex, vec2(uv.x - offset2, uv.y));
+    
+    vec4 c = vec4(texR.r, texG.g, texB.b, texG.a);
+    
+    // 2. Scanlines (CRT Matrix effect)
+    float scanline = sin(uv.y * 800.0) * 0.04;
+    c.rgb -= scanline;
+    
+    // 3. Crimson Bleed & Pulse
+    // A heartbeat-like pulse in deep crimson
+    float pulse = (sin(time * 4.0) + 1.0) / 2.0;
+    float beat = pow(sin(time * 6.0), 4.0); // sharp heartbeat spike
+    
+    vec3 crimson = vec3(0.9, 0.05, 0.05);
+    vec3 matrix_grid = vec3(0.2, 0.0, 0.0) * rand(uv + time);
+    
+    // 4. Combine effects
+    // Make the UI bleed red but retain original color contrast
+    vec3 final_rgb = mix(c.rgb, crimson, 0.3 * pulse + 0.2 * beat);
+    final_rgb += matrix_grid; // add red digital noise
+
+    // Apply intense red vignette around the screen edges
+    float vignette = uv.x * uv.y * (1.0 - uv.x) * (1.0 - uv.y);
+    vignette = clamp(pow(16.0 * vignette, 0.25), 0.0, 1.0);
+    final_rgb = mix(crimson * 0.5, final_rgb, vignette);
+    
+    color = vec4(final_rgb, c.a);
+}
+EOF
+
+# Daemon to dynamically swap shaders when Defcon 1 is engaged
+cat > /usr/local/bin/alfred-hologram-daemon.sh << 'EOF'
+#!/bin/bash
+# Hologram Threat Visualizer Daemon
+# Swaps picom shaders dynamically when Archangel detects a rootkit.
+
+PICOM_CONF="/usr/share/alfred/hologram/picom-hologram.conf"
+THREAT_SHADER="/usr/share/alfred/hologram/threat-shader.glsl"
+
+while true; do
+    if [ -f "/etc/alfred/defcon1.flag" ]; then
+        if ! grep -q "threat-shader" "$PICOM_CONF"; then
+            sed -i "s|window-shader-fg = .*|window-shader-fg = \"$THREAT_SHADER\";|g" "$PICOM_CONF"
+            # Restart picom for the user session to apply shader
+            killall picom 2>/dev/null || true
+            su - gositeme -c "picom --config $PICOM_CONF -b" 2>/dev/null || true
+            echo "[Hologram] THREAT SHADER ENGAGED. UI BLEEDING."
+        fi
+    else
+        if grep -q "threat-shader" "$PICOM_CONF"; then
+            sed -i 's|window-shader-fg = .*|window-shader-fg = "default";|g' "$PICOM_CONF"
+            killall picom 2>/dev/null || true
+            su - gositeme -c "picom --config $PICOM_CONF -b" 2>/dev/null || true
+            echo "[Hologram] Threat clear. Restoring default 3D UI."
+        fi
+    fi
+    sleep 5
+done
+EOF
+
+[ -e "/usr/local/bin/alfred-hologram-daemon.sh" ] && chmod +x /usr/local/bin/alfred-hologram-daemon.sh || true
+
+cat > /etc/systemd/system/alfred-hologram.service << 'EOF'
+[Unit]
+Description=Alfred Holographic Threat Visualizer
+After=display-manager.service
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/alfred-hologram-daemon.sh
+Restart=always
+
+[Install]
+WantedBy=graphical.target
+EOF
+
+systemctl enable alfred-hologram || true || true.service || true
+
+echo "[Alfred Holographic] 3D UI Threat Shaders Integrated."
+
+
+# --- BEGIN MERGED CONTENT FROM: 1328-alfred-mercy-of-data.hook.chroot ---
+#!/bin/sh
+set +e
+echo "[Mercy of Data] Installing safe-rm -f to prevent catastrophic data loss..."
+apt-get install -y safe-rm -f || true
+cat >> /etc/safe-rm.conf << 'EOF'
+/
+/etc
+/usr
+/usr/lib
+/var
+/var/log
+/var/lib
+/boot
+/bin
+/sbin
+EOF
+echo "[Mercy of Data] The filesystem is now forgiven and protected."
+
+# --- END MERGED CONTENT FROM: 1328-alfred-mercy-of-data.hook.chroot ---
+
+
+#!/bin/sh
+set +e
+echo "[Mercy of Data] Installing safe-rm to prevent catastrophic data loss..."
+apt-get install -y safe-rm || true
+cat >> /etc/safe-rm.conf << 'EOF'
+/
+/etc
+/usr
+/usr/lib
+/var
+/var/log
+/var/lib
+/boot
+/bin
+/sbin
+EOF
+echo "[Mercy of Data] The filesystem is now forgiven and protected."

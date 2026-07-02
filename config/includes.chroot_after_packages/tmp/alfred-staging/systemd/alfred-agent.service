@@ -1,0 +1,27 @@
+[Unit]
+Description=Alfred — sovereign assistant of Alfred Linux
+Documentation=man:alfred(1)
+After=network-online.target alfred-memory.service
+Wants=network-online.target alfred-memory.service
+
+[Service]
+Type=simple
+User=alfred
+Group=alfred
+Environment=HERMES_HOME=/var/lib/alfred/agent
+Environment=HERMES_PERSONA_FILE=/usr/share/alfred/persona/alfred.md
+Environment=ALFRED_BRAND=Alfred
+Environment=ALFRED_MEMORY_URL=http://127.0.0.1:37777
+ExecStart=/usr/bin/alfred-agent-daemon
+Restart=on-failure
+RestartSec=5
+
+# Hardening
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+ReadWritePaths=/var/lib/alfred
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,33 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+
+echo "=========================================="
+echo "==== ALFRED PLASMA WALLPAPERS HOOK ===="
+echo "=========================================="
+
+BG_DIR="/usr/share/wallpapers/Kingdom"
+
+# If the user included build-assets/wallpapers in the source
+if [ -d "/build-assets/wallpapers/Kingdom" ]; then
+    echo "Wiring Kingdom wallpapers..."
+    cp -a /build-assets/wallpapers/Kingdom/* "$BG_DIR/Kingdom/" 2>/dev/null || true
+    # Also drop them in the main 8k folder for easier access by KDE dialogs
+    cp -a /build-assets/wallpapers/Kingdom/* "$BG_DIR/" 2>/dev/null || true
+fi
+
+# Ensure omahon-seal.png is explicitly available in the root of 8k folder
+if [ -f "/build-assets/wallpapers/Kingdom/omahon-seal.png" ]; then
+    cp -a "/build-assets/wallpapers/Kingdom/omahon-seal.png" "$BG_DIR/omahon-seal.png" 2>/dev/null || true
+fi
+
+echo "Wallpapers wired successfully."
+
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+
+# [Genesis Forge] Granular Kernel Matrix: kernel.unprivileged_bpf_disabled=1
+# Extremely deep low-level kernel protection.
+echo "[Genesis Forge] Applying granular sysctl: kernel.unprivileged_bpf_disabled=1"
+echo "kernel.unprivileged_bpf_disabled=1" > /etc/sysctl.d/99-alfred-3.conf || true
+sysctl -w kernel.unprivileged_bpf_disabled=1 > /dev/null 2>&1 || true

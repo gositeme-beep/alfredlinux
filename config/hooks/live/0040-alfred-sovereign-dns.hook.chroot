@@ -1,0 +1,114 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+echo "================================================="
+echo "==== ALFRED SOVEREIGN DNS (HARDCODED HOSTS) ====="
+echo "================================================="
+
+# 1. Update systemd-resolved to use the Sovereign DNS as primary
+mkdir -p /etc/systemd/resolved.conf.d/ || true
+cat > /etc/systemd/resolved.conf.d/alfred-sovereign-dns.conf << 'DNS'
+[Resolve]
+DNS=15.235.50.60
+FallbackDNS=9.9.9.9
+DNSOverTLS=opportunistic
+DNSSEC=allow-downgrade
+Cache=yes
+DNSStubListener=yes
+DNS
+
+# 2. Hardcode all Sovereign Domains directly into /etc/hosts
+# This bypasses ICANN and guarantees access even if global DNS fails.
+echo "" >> /etc/hosts || true
+echo "### ALFRED SOVEREIGN DOMAINS ###" >> /etc/hosts || true
+echo "15.235.50.60 gositeme.com www.gositeme.com" >> /etc/hosts || true
+echo "15.235.50.60 admin.gositeme.com" >> /etc/hosts || true
+echo "15.235.50.60 ai-audio.gositeme.com" >> /etc/hosts || true
+echo "15.235.50.60 ai-images.gositeme.com" >> /etc/hosts || true
+echo "15.235.50.60 ai-servers.gositeme.com" >> /etc/hosts || true
+echo "15.235.50.60 alfred-blueprints.gositeme.com" >> /etc/hosts || true
+echo "15.235.50.60 alfred-chromium.gositeme.com" >> /etc/hosts || true
+echo "15.235.50.60 alfred-ide-assets.gositeme.com" >> /etc/hosts || true
+echo "15.235.50.60 alfred-linux.gositeme.com" >> /etc/hosts || true
+echo "15.235.50.60 alfred-voice-live.gositeme.com" >> /etc/hosts || true
+echo "15.235.50.60 alfred-workspace.gositeme.com" >> /etc/hosts || true
+echo "15.235.50.60 android.gositeme.com" >> /etc/hosts || true
+echo "15.235.50.60 android-alfred.gositeme.com" >> /etc/hosts || true
+echo "15.235.50.60 android-pulse.gositeme.com" >> /etc/hosts || true
+echo "15.235.50.60 anthropic.gositeme.com" >> /etc/hosts || true
+echo "15.235.50.60 api.gositeme.com" >> /etc/hosts || true
+echo "15.235.50.60 articles.gositeme.com" >> /etc/hosts || true
+echo "15.235.50.60 assets.gositeme.com" >> /etc/hosts || true
+echo "15.235.50.60 audio.gositeme.com" >> /etc/hosts || true
+echo "15.235.50.60 backgammon.gositeme.com" >> /etc/hosts || true
+echo "15.235.50.60 backups.gositeme.com" >> /etc/hosts || true
+echo "15.235.50.60 brand.gositeme.com" >> /etc/hosts || true
+echo "15.235.50.60 cache.gositeme.com" >> /etc/hosts || true
+echo "15.235.50.60 call-center.gositeme.com" >> /etc/hosts || true
+echo "15.235.50.60 chess.gositeme.com" >> /etc/hosts || true
+echo "15.235.50.60 commander-archive.gositeme.com" >> /etc/hosts || true
+echo "15.235.50.60 commander-vault.gositeme.com" >> /etc/hosts || true
+echo "15.235.50.60 comms.gositeme.com" >> /etc/hosts || true
+echo "15.235.50.60 compare.gositeme.com" >> /etc/hosts || true
+echo "15.235.50.60 config.gositeme.com" >> /etc/hosts || true
+echo "15.235.50.60 control.gositeme.com" >> /etc/hosts || true
+echo "15.235.50.60 data.gositeme.com" >> /etc/hosts || true
+echo "15.235.50.60 demo.gositeme.com" >> /etc/hosts || true
+echo "15.235.50.60 desktop-app.gositeme.com" >> /etc/hosts || true
+echo "15.235.50.60 developers.gositeme.com" >> /etc/hosts || true
+echo "15.235.50.60 docs.gositeme.com" >> /etc/hosts || true
+echo "15.235.50.60 domains.gositeme.com" >> /etc/hosts || true
+echo "15.235.50.60 downloads.gositeme.com" >> /etc/hosts || true
+echo "15.235.50.60 dumps.gositeme.com" >> /etc/hosts || true
+echo "15.235.50.60 editor.gositeme.com" >> /etc/hosts || true
+echo "15.235.50.60 extensions.gositeme.com" >> /etc/hosts || true
+echo "15.235.50.60 feed.gositeme.com" >> /etc/hosts || true
+echo "15.235.50.60 gocodeme.gositeme.com" >> /etc/hosts || true
+echo "15.235.50.60 gocodeme-editor.gositeme.com" >> /etc/hosts || true
+echo "15.235.50.60 gohostme.gositeme.com" >> /etc/hosts || true
+echo "15.235.50.60 hosting.gositeme.com" >> /etc/hosts || true
+echo "15.235.50.60 ide.gositeme.com" >> /etc/hosts || true
+echo "15.235.50.60 images.gositeme.com" >> /etc/hosts || true
+echo "15.235.50.60 includes.gositeme.com" >> /etc/hosts || true
+echo "15.235.50.60 kingdom-vault.gositeme.com" >> /etc/hosts || true
+echo "15.235.50.60 legal.gositeme.com" >> /etc/hosts || true
+echo "15.235.50.60 logs.gositeme.com" >> /etc/hosts || true
+echo "15.235.50.60 middleware.gositeme.com" >> /etc/hosts || true
+echo "15.235.50.60 novnc.gositeme.com" >> /etc/hosts || true
+echo "15.235.50.60 novnc_test.gositeme.com" >> /etc/hosts || true
+echo "15.235.50.60 office.gositeme.com" >> /etc/hosts || true
+echo "15.235.50.60 og.gositeme.com" >> /etc/hosts || true
+echo "15.235.50.60 open-source.gositeme.com" >> /etc/hosts || true
+echo "15.235.50.60 pay.gositeme.com" >> /etc/hosts || true
+echo "15.235.50.60 presser.gositeme.com" >> /etc/hosts || true
+echo "15.235.50.60 privacy-policy.gositeme.com" >> /etc/hosts || true
+echo "15.235.50.60 programs.gositeme.com" >> /etc/hosts || true
+echo "15.235.50.60 pulse-social.gositeme.com" >> /etc/hosts || true
+echo "15.235.50.60 quickqr.gositeme.com" >> /etc/hosts || true
+echo "15.235.50.60 sanctuary.gositeme.com" >> /etc/hosts || true
+echo "15.235.50.60 scripts.gositeme.com" >> /etc/hosts || true
+echo "15.235.50.60 sdks.gositeme.com" >> /etc/hosts || true
+echo "15.235.50.60 snapshots.gositeme.com" >> /etc/hosts || true
+echo "15.235.50.60 speed-dating.gositeme.com" >> /etc/hosts || true
+echo "15.235.50.60 storage.gositeme.com" >> /etc/hosts || true
+echo "15.235.50.60 templates.gositeme.com" >> /etc/hosts || true
+echo "15.235.50.60 tests.gositeme.com" >> /etc/hosts || true
+echo "15.235.50.60 tools.gositeme.com" >> /etc/hosts || true
+echo "15.235.50.60 transparency.gositeme.com" >> /etc/hosts || true
+echo "15.235.50.60 uploads.gositeme.com" >> /etc/hosts || true
+echo "15.235.50.60 use-cases.gositeme.com" >> /etc/hosts || true
+echo "15.235.50.60 veil.gositeme.com" >> /etc/hosts || true
+echo "15.235.50.60 veil-browser.gositeme.com" >> /etc/hosts || true
+echo "15.235.50.60 veil-messenger.gositeme.com" >> /etc/hosts || true
+echo "15.235.50.60 vendor.gositeme.com" >> /etc/hosts || true
+echo "15.235.50.60 voice.gositeme.com" >> /etc/hosts || true
+echo "15.235.50.60 voice-ai.gositeme.com" >> /etc/hosts || true
+echo "15.235.50.60 vr.gositeme.com" >> /etc/hosts || true
+echo "15.235.50.60 websocket.gositeme.com" >> /etc/hosts || true
+echo "15.235.50.60 whmcs.gositeme.com" >> /etc/hosts || true
+echo "15.235.50.60 wp-content.gositeme.com" >> /etc/hosts || true
+echo "Sovereign DNS and Hosts injected."
+
+exit 0

@@ -1,0 +1,94 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+# [Genesis Forge] AppArmor Isolation: /usr/local/bin/alfred-util-149
+# Creates a granular zero-trust execution envelope for individual binaries.
+echo "[Genesis Forge] Enveloping binary: /usr/local/bin/alfred-util-149"
+mkdir -p /etc/apparmor.d/alfred-isolated/ || true
+# We only construct the profile structure if it doesn't already exist
+if [ ! -f "/etc/apparmor.d/alfred-isolated/profile-162" ]; then
+    cat > /etc/apparmor.d/alfred-isolated/profile-162 << 'EOF'
+profile alfred-sandbox-162 /usr/local/bin/alfred-util-149 flags=(complain) {
+  #include <abstractions/base>
+  /usr/local/bin/alfred-util-149 rmix,
+  /dev/null rw,
+}
+EOF
+fi
+
+
+# --- BEGIN MERGED CONTENT FROM: 1114-alfred-breath-of-life.hook.chroot ---
+#!/bin/bash
+set +e
+echo "[1114] Initializing The Breath of Life (Ambient AI Kernel Translation)"
+
+cat > /usr/local/bin/alfred-breath << 'EOF'
+#!/bin/bash
+# Tail the kernel ring buffer for critical errors
+dmesg -w --level=err,crit,alert,emerg | while read -r line; do
+    if echo "$line" | grep -q -i "error"; then
+        # In a full implementation, send this to alfred-llm
+        echo "The machine aches: $line" > /var/log/alfred-breath.txt
+        logger -t alfred-breath "Kernel pain detected: $line"
+    fi
+done
+EOF
+
+[ -e "+x" ] && chmod +x /usr/local/bin/alfred-breath
+
+cat > /etc/systemd/system/alfred-breath.service << 'EOF'
+[Unit]
+Description=The Breath of Life (Kernel Translator)
+After=systemd-journald.socket
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/alfred-breath
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+systemctl enable alfred-breath || true || true.service 2>/dev/null || true
+echo "The Breath of Life infused."
+
+# --- END MERGED CONTENT FROM: 1114-alfred-breath-of-life.hook.chroot ---
+
+
+#!/bin/bash
+set +e
+echo "[1114] Initializing The Breath of Life (Ambient AI Kernel Translation)"
+
+cat > /usr/local/bin/alfred-breath << 'EOF'
+#!/bin/bash
+# Tail the kernel ring buffer for critical errors
+dmesg -w --level=err,crit,alert,emerg | while read -r line; do
+    if echo "$line" | grep -q -i "error"; then
+        # In a full implementation, send this to alfred-llm
+        echo "The machine aches: $line" > /var/log/alfred-breath.txt
+        logger -t alfred-breath "Kernel pain detected: $line"
+    fi
+done
+EOF
+
+chmod +x /usr/local/bin/alfred-breath
+
+cat > /etc/systemd/system/alfred-breath.service << 'EOF'
+[Unit]
+Description=The Breath of Life (Kernel Translator)
+After=systemd-journald.socket
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/alfred-breath
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+systemctl enable alfred-breath || true || true.service 2>/dev/null || true
+echo "The Breath of Life infused."

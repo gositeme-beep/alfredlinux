@@ -1,0 +1,19 @@
+Upstream security signals (for Alfred / GoSiteMe operators)
+============================================================
+Use major distro and upstream **advisories** for components you actually ship
+(kernel, OpenSSL, OpenSSH, systemd, browser if bundled), not raw package
+changelogs for “feature envy.”
+
+Suggested bookmarks (replace with your preferred mirrors):
+  • Debian Security Advisories — https://www.debian.org/security/
+  • Ubuntu USN — https://ubuntu.com/security/notices
+  • kernel.org lists — follow stable branch you track
+  • NIST NVD / CVE feeds for pinned versions you build from
+
+Process (lightweight):
+  1. Quarterly: list Alfred ISO / hook versions for the above components.
+  2. For each CRITICAL/HIGH advisory, open upstream fix + backport notes.
+  3. File a ticket if Alfred pin or hook must change; run security-audit.sh
+     and repo-health after changes.
+
+Related in-tree: scripts/SECURITY-WAVES.txt — docs/MEGA-PLAN-L1-L9.txt (pillar 2).

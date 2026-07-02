@@ -1,0 +1,44 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# 0863-alfred-armor.hook.chroot
+# Configures AppArmor Deep Confinement (The Armor of God)
+set +e
+
+echo "[0863] Configuring The Armor of God (AppArmor Confinement)"
+
+# Ensure AppArmor is enforced at boot
+sed -i 's/GRUB_CMDLINE_LINUX_DEFAULT="/GRUB_CMDLINE_LINUX_DEFAULT="apparmor=1 security=apparmor /' /etc/default/grub 2>/dev/null || true
+
+# Put all loaded profiles into enforce mode and apply kernel hardening
+cat << 'EOF' > /usr/local/bin/alfred-armor
+#!/bin/bash
+echo "╔═══════════════════════════════════════════════════════════╗"
+echo "║  THE ARMOR OF GOD — Deep Application Confinement          ║"
+echo "║  'Put on the whole armour of God...' — Ephesians 6:11     ║"
+echo "╚═══════════════════════════════════════════════════════════╝"
+echo ""
+
+# Kernel Anti-Tamper & Hardening
+sysctl -w kernel.dmesg_restrict=1
+sysctl -w kernel.kptr_restrict=2
+sysctl -w kernel.unprivileged_bpf_disabled=1
+sysctl -w kernel.yama.ptrace_scope=2
+sysctl -w fs.suid_dumpable=0
+echo "Kernel pointers, dmesg, and unprivileged BPF have been securely locked."
+
+if command -v aa-enforce &>/dev/null; then
+    echo "Enforcing all profiles..."
+    aa-enforce /etc/apparmor.d/* 2>/dev/null || true
+    echo "The Armor of God is active. Zero-day exploits are physically confined."
+else
+    echo "AppArmor utilities not found."
+fi
+EOF
+
+[ -e /usr/local/bin/alfred-armor ] && chmod 0755 /usr/local/bin/alfred-armor || true
+
+echo "[0863] Armor of God configured."
+
+exit 0

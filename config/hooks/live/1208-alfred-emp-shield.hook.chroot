@@ -1,0 +1,75 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+
+echo "[Genesis Forge] Engineering USB Blackout Lockdown (EMP Shield)..."
+
+mkdir -p /var/log/alfred_ascension || true
+[ -e "/var/log/alfred_ascension" ] && chmod 700 /var/log/alfred_ascension || true
+
+mkdir -p /opt/alfred-emp-shield || true
+
+# Inject EMP Shield Daemon
+cat > /opt/alfred-emp-shield/emp_daemon.sh << 'EOF'
+#!/bin/bash
+# The EMP Shield
+# Creates a physical air-gap by dynamically unbinding USB mass storage devices
+# and preventing new USB device authorization.
+
+LOG_FILE="/var/log/alfred_ascension/emp_shield.log"
+
+echo "[$(date -u +"%Y-%m-%dT%H:%M:%SZ")] EMP Shield Activated. Initiating USB Blackout..." >> "$LOG_FILE"
+
+# 1. Disable authorization of NEW USB devices by default
+for bus in /sys/bus/usb/devices/usb*; do
+    if [ -f "$bus/authorized_default" ]; then
+        echo 0 > "$bus/authorized_default" 2>/dev/null || true
+        echo "[EMP] Locked USB Bus: $bus" >> "$LOG_FILE"
+    fi
+done
+
+# 2. Unbind existing USB mass storage devices dynamically
+while true; do
+    for device in /sys/bus/usb/drivers/usb-storage/*; do
+        if [ -d "$device" ] && [[ "$(basename "$device")" != "module" ]] && [[ "$(basename "$device")" != "bind" ]] && [[ "$(basename "$device")" != "unbind" ]] && [[ "$(basename "$device")" != "new_id" ]] && [[ "$(basename "$device")" != "remove_id" ]] && [[ "$(basename "$device")" != "uevent" ]]; then
+            dev_name=$(basename "$device")
+            echo "$dev_name" > /sys/bus/usb/drivers/usb-storage/unbind 2>/dev/null || true
+            echo "[EMP] Unbound USB Mass Storage Device: $dev_name" >> "$LOG_FILE"
+        fi
+    done
+    sleep 5
+done
+EOF
+
+[ -e "/opt/alfred-emp-shield/emp_daemon.sh" ] && chmod +x /opt/alfred-emp-shield/emp_daemon.sh || true
+
+# Create systemd service for the daemon
+cat > /etc/systemd/system/alfred-emp-shield.service << 'EOF'
+[Unit]
+Description=Alfred EMP Shield USB Blackout
+After=sysinit.target
+
+[Service]
+Type=simple
+ExecStart=/opt/alfred-emp-shield/emp_daemon.sh
+Restart=always
+RestartSec=10
+User=root
+
+[Install]
+WantedBy=sysinit.target
+EOF
+
+systemctl enable alfred-emp-shield || true || true.service || true
+
+# Original marker functionality
+MARKER_FILE="/var/log/alfred_ascension/hook_1208-alfred-emp-shield.hook.chroot.marker"
+TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+HASH=$(echo "$TIMESTAMP-1208-alfred-emp-shield.hook.chroot" | sha256sum | awk '{print $1}')
+echo "[$TIMESTAMP] EXECUTION VERIFIED: $HASH" > "$MARKER_FILE" || true
+[ -e "$MARKER_FILE" ] && chmod 400 "$MARKER_FILE" || true
+
+echo "[Genesis Forge] USB Blackout Lockdown Integrated."
+exit 0

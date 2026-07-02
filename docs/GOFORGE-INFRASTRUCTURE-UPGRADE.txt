@@ -1,0 +1,183 @@
+Alfred Linux / GoForge — infrastructure upgrade runbook (beat SaaS on merit)
+=============================================================================
+Last updated: 2026-04-27  
+Audience: operators hosting **GoForge** (the Forge — Alfred Linux sovereign forge) for Alfred Linux
+and related repos. This is **not** a theme pack: it is **runners + pipelines +
+artifacts** so CI can do real work (including optional **kernel-tree** jobs).
+
+──────────────────────────────────────────────────────────────────────────────
+0) What “upgrade” must mean
+──────────────────────────────────────────────────────────────────────────────
+  • **UI-only** forge upgrades do **not** replace workflows that **unpack Linux**
+    and run scanners. See docs/KERNEL-7.0.4-SUPPLY-CHAIN-AUDIT.txt (“bigger picture”).
+
+  • **Infrastructure upgrade** = capacity and ergonomics for **CI you define**:
+    - **act_runner** (or Woodpecker/Drone agents) with honest **disk / RAM / CPU**
+    - **Actions** (GoForge Actions) enabled and **version-pinned**
+    - **Artifact storage** (built-in or S3/MinIO-compatible) with retention policy
+    - Optional **Git LFS** if you mirror large sources in git form
+    - Optional **second repository** for kernel-heavy jobs so Alfred stays fast
+
+  • **Competitive bar:** GitHub parity for **kernel-sized** and **release-integrity**
+    workloads is proven in **job logs + artifact hashes**, not slogans.
+
+──────────────────────────────────────────────────────────────────────────────
+1) Forge application — minimum feature / version posture
+──────────────────────────────────────────────────────────────────────────────
+  • Run a **supported** GoForge release; track **security advisories**
+    for your exact minor version (upstream Forgejo compatibility notes apply where you use them).
+
+  • Enable **Actions** (or your chosen CI engine) in server config only after you
+    have **runner registration** and **network egress policy** decided (fork PRs,
+    outbound curl, secret scopes).
+
+  • Prefer **TLS everywhere**; separate **runner** network from public web if you
+    can (runner pulls from internal registry / git mirror).
+
+──────────────────────────────────────────────────────────────────────────────
+2) Runners (act_runner) — sizing for Alfred vs kernel
+──────────────────────────────────────────────────────────────────────────────
+  **Alfred integration repo (this tree)** — “lite” CI (default in repo):
+    • `scripts/security-audit.sh` + `sync-canonical-to-build.sh` checks
+    • Typical **ubuntu** VM: 2 vCPU, 4–8 GiB RAM, **10+ GiB** free disk after image
+    • Label e.g. `ubuntu-latest` mapped to your docker/VM runner
+
+  **Kernel mirror / heavy repo** (separate repo or manual dispatch only):
+    • Full `linux-7.0.4` tree extract + ccache: plan **≥ 40–60 GiB** free disk,
+      **8–16+ GiB** RAM for parallel `make` smoke jobs (team-dependent)
+    • Use a **dedicated runner pool** label, e.g. `kernel-heavy`, so Alfred PRs
+      never queue behind a kernel job
+
+  **Registration hygiene:** one runner identity per machine; rotate **runner tokens**
+    on compromise; do not reuse the same registration token across untrusted tenants.
+
+──────────────────────────────────────────────────────────────────────────────
+3) Workflows shipped in Alfred Linux (GoForge-native path)
+──────────────────────────────────────────────────────────────────────────────
+  • **GitHub:** `.github/workflows/security-audit.yml` (push/PR to main|master).
+
+  • **GoForge Actions:** `.gitea/workflows/security-audit.yml` — same job graph as GitHub;
+    the `.gitea/workflows/` path is what the Actions engine expects on disk — enable Actions on the server and ensure `act_runner` picks up jobs.
+
+  • **Forgejo-only path:** `.forgejo/workflows/security-audit.yml` — **duplicate**
+    of the same workflow; some installs only dispatch from one tree — keep both
+    files identical when you change steps.
+
+  See also: `.gitea/workflows/README.txt`
+
+  **Manual workflow_dispatch:** optional input **repo_health_json**=`1` runs
+  `alfred-repo-health.sh` in JSON mode with `set -o pipefail` and a Python
+  assert on `status: ok` (re-runs integrity + audit + law gate — for wrapper
+  validation, not every push). Inputs **law_root** and **shellcheck_all** apply
+  as documented in `scripts/SECURITY-WAVES.txt`.
+
+  **Keep duplicates identical:** after changing `.gitea/workflows/security-audit.yml`,
+  run `bash scripts/sync-forgejo-actions-yaml.sh` so `.forgejo/workflows/` stays in sync.
+  **CI enforces this:** the first job step after checkout runs that script and
+  `git diff --exit-code` on `.forgejo/workflows/security-audit.yml` (GitHub + GoForge YAML).
+
+──────────────────────────────────────────────────────────────────────────────
+4) Artifacts, caches, and release linkage
+──────────────────────────────────────────────────────────────────────────────
+  • Publish **SARIF / logs / SBOM** as workflow **artifacts** on kernel jobs; link
+    **artifact digest** or checksum file in **release notes** next to ISO hashes.
+
+  • Configure **retention** so disks do not fill (kernel logs are large).
+
+  • Optional: **object storage** for Actions artifacts (S3-compatible) so web nodes
+    stay thin.
+
+──────────────────────────────────────────────────────────────────────────────
+5) Repository layout (recommended)
+──────────────────────────────────────────────────────────────────────────────
+  • **commander/alfredlinux.com** (or `alfred-linux-v2`) — hooks, live-build policy,
+    download-verify scripts, **lite CI** (this repo).
+
+  • **`linux-alfred-7.0`** (example name) — tag/branch of tree you build; **heavy CI**
+    only here; **no** silent replacement of the signed GA `.deb` without human policy.
+
+  • Release pipeline: build host (Option A) remains **signing authority** unless you
+    deliberately move signing into a controlled HSM + CI gate.
+
+──────────────────────────────────────────────────────────────────────────────
+6) Security knobs (short list)
+──────────────────────────────────────────────────────────────────────────────
+  • Restrict **fork PR** workflows to **read-only** secrets; use **environments**
+    for anything that can touch signing.
+
+  • Pin third-party actions to **commit SHA** when mirroring from GitHub.
+
+  • Audit **curl** egress from CI; kernel download job should only hit **cdn.kernel.org**
+    (or your internal mirror).
+
+──────────────────────────────────────────────────────────────────────────────
+7) Verify after upgrade
+──────────────────────────────────────────────────────────────────────────────
+  • Open a trivial PR → lite workflow **green** on GoForge.
+
+  • Manually dispatch a **kernel-heavy** workflow (when you add one) on a
+    `kernel-heavy` runner → artifact appears; disk headroom unchanged post-cleanup.
+
+  • Public transparency page: https://alfredlinux.com/security-kernel
+    (also linked from /download checksum section, /releases, /roadmap, /verify, /security,
+    /docs, /developers.)
+
+──────────────────────────────────────────────────────────────────────────────
+8) Related Alfred docs
+──────────────────────────────────────────────────────────────────────────────
+  • docs/KERNEL-7.0.4-SUPPLY-CHAIN-AUDIT.txt
+  • docs/KERNEL-7.0.4-SUPPLY-CHAIN-AUDIT.txt
+  • scripts/SECURITY-WAVES.txt (Wave 2 CI pointers)
+
+──────────────────────────────────────────────────────────────────────────────
+9) Server config sketch — Actions + runner (verify against your forge version)
+──────────────────────────────────────────────────────────────────────────────
+  **Always read upstream Forgejo / GoForge engine docs for your exact release.** Keys and
+  defaults move between minors. The sketch below is a **starting checklist**.
+
+  **A) Enable Actions** (forge app.ini or equivalent; restart forge after edit):
+
+    [actions]
+    ENABLED = true
+
+  Optional (when you outgrow local disk for logs/artifacts): set STORAGE_TYPE and
+  MinIO (or S3-compatible) keys per upstream documentation — do not guess bucket ACLs.
+
+  **B) Register act_runner** (on the runner host — not on the forge DB server):
+
+    • In the forge UI: Site administration → Actions → Runners (path varies),
+      create a runner and copy the **registration token** (short-lived).
+
+    • Example (adjust binary path and URL):
+
+        ./act_runner register --no-interactive \
+          --instance https://alfredlinux.com/forge/ \
+          --token RUNNER_REGISTRATION_TOKEN_FROM_UI
+
+        ./act_runner daemon
+
+    • Ensure the runner image can run **ubuntu-latest** jobs (or edit YAML labels).
+
+  **C) Labels:** Alfred lite workflow uses runs-on: ubuntu-latest. Your runner must
+  advertise that label **or** edit the GoForge canonical `.gitea/workflows/security-audit.yml` once.
+
+──────────────────────────────────────────────────────────────────────────────
+10) Appendix — kernel-heavy job shape (separate repo; template only)
+──────────────────────────────────────────────────────────────────────────────
+  Do **not** enable as default push CI in the Alfred repo unless you have a
+  kernel-heavy runner pool. Prefer a **dedicated mirror repo** plus workflow_dispatch
+  or schedule when ready.
+
+  Sketch: job runs-on kernel-heavy; steps run scripts/kernel-download-7.0.4.sh with
+  KERNEL_WORK under the job temp dir; tar xf linux-7.0.4.tar.xz; apply patch-7.0.4.xz;
+  then extend with sparse, checkstack, checkpatch, or your distro checklist; upload
+  logs/SARIF as workflow artifacts with retention limits.
+
+──────────────────────────────────────────────────────────────────────────────
+11) Maintainer hygiene — staging the public_html site repo
+──────────────────────────────────────────────────────────────────────────────
+  Large PHP pages (download.php, index.php, …) often carry **multiple unrelated**
+  local edits. Before `git commit`, prefer **`git add -p`** (patch staging) or your
+  editor’s “stage selection” so a single commit does not accidentally merge a full
+  page refresh with a four-line cross-link. This keeps `git bisect` and rollbacks
+  honest when production needs a surgical revert.

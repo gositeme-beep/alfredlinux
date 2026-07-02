@@ -1,0 +1,12 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# 0186-alfred-boot-task — enable boot-time task dispatcher
+set +e
+if [ -f /etc/systemd/system/alfred-boot-task.service ]; then
+    systemctl enable alfred-boot-task || true || true.service || true
+    echo "alfred-boot-task: enabled"
+fi
+
+exit 0

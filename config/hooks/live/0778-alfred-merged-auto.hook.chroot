@@ -1,0 +1,130 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+# [Genesis Forge] Systemd Hardening: alfred-daemon-252.service
+# Enforces deep PrivateTmp, ProtectSystem, and ProtectHome on native daemons.
+echo "[Genesis Forge] Hardening systemd service: alfred-daemon-252.service"
+mkdir -p /etc/systemd/system/alfred-daemon-252.service.d/ || true
+cat > /etc/systemd/system/alfred-daemon-252.service.d/override.conf << 'EOF'
+[Service]
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=read-only
+NoNewPrivileges=yes
+RestrictRealtime=yes
+EOF
+
+
+# --- BEGIN MERGED CONTENT FROM: 0778-alfred-watchman.hook.chroot ---
+#!/bin/bash
+# 0778-alfred-watchman.hook.chroot
+# Configures the "Watchmen on the Wall" Intrusion Detection System
+set +e
+
+echo "[0778] Configuring Watchmen on the Wall (fail2ban/auditd)"
+
+# Configure fail2ban to be highly aggressive
+cat << 'EOF' > /etc/fail2ban/jail.d/alfred-watchman.local
+[DEFAULT]
+bantime  = 86400
+findtime  = 600
+maxretry = 3
+banaction = ufw
+
+[sshd]
+enabled = true
+port    = ssh
+filter  = sshd
+logpath = /var/log/auth.log
+maxretry = 3
+EOF
+
+# Create the alfred-watchman CLI
+cat << 'EOF' > /usr/local/bin/alfred-watchman
+#!/bin/bash
+# alfred-watchman - View the ledger of banned IPs
+echo "â•”â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•—"
+echo "â•‘  WATCHMEN ON THE WALL                                     â•‘"
+echo "â•‘  'I have set watchmen upon thy walls' â€” Isaiah 62:6       â•‘"
+echo "â•šâ•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•"
+echo ""
+
+if command -v fail2ban-client &>/dev/null; then
+    fail2ban-client status sshd
+else
+    echo "Watchman daemon (fail2ban) is not running."
+fi
+EOF
+
+[ -e "/usr/local/bin/alfred-watchman" ] && chmod 0755 /usr/local/bin/alfred-watchman
+
+# Enable auditd for tracking execve and unauthorized accesses
+cat << 'EOF' > /etc/audit/rules.d/alfred-watchman.rules
+-w /etc/shadow -p wa -k shadow_access
+-w /etc/passwd -p wa -k passwd_access
+-w /var/log/auth.log -p wa -k auth_log_tamper
+EOF
+
+systemctl enable fail2ban || true || true || true
+systemctl enable auditd || true || true || true
+
+echo "[0778] Watchmen stationed on the walls."
+
+# --- END MERGED CONTENT FROM: 0778-alfred-watchman.hook.chroot ---
+
+
+#!/bin/bash
+# 0778-alfred-watchman.hook.chroot
+# Configures the "Watchmen on the Wall" Intrusion Detection System
+set +e
+
+echo "[0778] Configuring Watchmen on the Wall (fail2ban/auditd)"
+
+# Configure fail2ban to be highly aggressive
+cat << 'EOF' > /etc/fail2ban/jail.d/alfred-watchman.local
+[DEFAULT]
+bantime  = 86400
+findtime  = 600
+maxretry = 3
+banaction = ufw
+
+[sshd]
+enabled = true
+port    = ssh
+filter  = sshd
+logpath = /var/log/auth.log
+maxretry = 3
+EOF
+
+# Create the alfred-watchman CLI
+cat << 'EOF' > /usr/local/bin/alfred-watchman
+#!/bin/bash
+# alfred-watchman - View the ledger of banned IPs
+echo "â•”â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•—"
+echo "â•‘  WATCHMEN ON THE WALL                                     â•‘"
+echo "â•‘  'I have set watchmen upon thy walls' â€” Isaiah 62:6       â•‘"
+echo "â•šâ•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•"
+echo ""
+
+if command -v fail2ban-client &>/dev/null; then
+    fail2ban-client status sshd
+else
+    echo "Watchman daemon (fail2ban) is not running."
+fi
+EOF
+
+chmod 0755 /usr/local/bin/alfred-watchman
+
+# Enable auditd for tracking execve and unauthorized accesses
+cat << 'EOF' > /etc/audit/rules.d/alfred-watchman.rules
+-w /etc/shadow -p wa -k shadow_access
+-w /etc/passwd -p wa -k passwd_access
+-w /var/log/auth.log -p wa -k auth_log_tamper
+EOF
+
+systemctl enable fail2ban || true || true || true
+systemctl enable auditd || true || true || true
+
+echo "[0778] Watchmen stationed on the walls."

@@ -1,0 +1,29 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+echo "================================================="
+echo "==== ALFRED TRUMPET (Hostile Lockdown) =========="
+echo "================================================="
+
+export DEBIAN_FRONTEND=noninteractive
+
+if [ -f /build-assets/build-kingdom-video.sh ]; then
+    cp /build-assets/build-kingdom-video.sh /usr/local/bin/trumpet-warning.sh || true
+    chmod +x /usr/local/bin/trumpet-warning.sh || true
+    
+    # Tie into the watchman/sword panic protocol
+    cat << 'EOF' > /usr/local/bin/trumpet-panic.sh
+#!/bin/bash
+# Maximizes volume and plays warning before halt
+amixer set Master 100% || true
+/usr/local/bin/trumpet-warning.sh &
+sleep 5
+echo "TRUMPET SOUNDED. HALTING." > /dev/kmsg || true
+echo c > /proc/sysrq-trigger || true
+EOF
+    chmod +x /usr/local/bin/trumpet-panic.sh || true
+fi
+
+exit 0

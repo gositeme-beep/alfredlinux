@@ -1,0 +1,603 @@
+#!/bin/bash
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# 0050-alfred-identity.hook.chroot
+# Sets the canonical Alfred Linux identity:
+#   - user "alfred" / password "alfred"
+#   - hostname "alfred"
+#   - alfred has NOPASSWD sudo (so `sudo` and `sudo su` need no password)
+#   - root account locked (no direct root login)
+#   - MOTD prints credentials so users always know
+#   - autologin to alfred on live session (lightdm + getty fallback)
+#   - calamares preset (alfred/alfred/host=alfred, autologin ON) for installs
+set +e
+echo "==[0050 alfred-identity] START $(date -u)=="
+
+# ---------- 1. user alfred / pass alfred ----------
+if ! id alfred >/dev/null 2>&1; then
+  useradd -m -s /bin/bash -c "Alfred" \
+    -G sudo,audio,video,plugdev,netdev,cdrom,dialout,users \
+    alfred
+fi
+echo "alfred:alfred" | chpasswd
+# Password expiry is not forced here to avoid autologin/PAM lockouts in live sessions.
+# First-boot wizard below handles secure password change flow.
+# Lock root account (no direct password login). sudo still works.
+passwd -l root || true
+
+# ---------- 2. hostname ----------
+echo alfred > /etc/hostname
+if ! grep -q "127.0.1.1[[:space:]]*alfred" /etc/hosts; then
+  sed -i '/^127\.0\.1\.1/d' /etc/hosts
+  echo -e "127.0.1.1\talfred" >> /etc/hosts
+fi
+
+# ---------- 3. NOPASSWD sudo for alfred ----------
+mkdir -p /etc/sudoers.d
+cat > /etc/sudoers.d/010-alfred <<'EOF'
+# Alfred Linux â€” alfred user has full passwordless sudo.
+# This is the canonical Alfred identity.
+alfred ALL=(ALL:ALL) NOPASSWD: ALL
+EOF
+chmod 0440 /etc/sudoers.d/010-alfred
+visudo -cf /etc/sudoers.d/010-alfred 2>/dev/null || echo "[0050] visudo not available yet â€” sudoers syntax will be validated after sudo is installed"
+
+# ---------- 4. discoverable MOTD / issue ----------
+cat > /etc/motd <<'EOF'
+
+  â•”â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•—
+  â•‘                    ALFRED LINUX 7.77                         â•‘
+  â•‘              Kingdom of God Edition                          â•‘
+  â• â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•£
+  â•‘   Login:     alfred                                          â•‘
+  â•‘   Password:  alfred   (you will be asked to change it on     â•‘
+  â•‘                        first login â€” or pick "keep")         â•‘
+  â•‘   sudo:      no password required (just type: sudo <cmd>)    â•‘
+  â•‘   root:      locked â€” use `sudo su` for a root shell         â•‘
+  â•‘   Hostname:  alfred                                          â•‘
+  â•šâ•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+
+EOF
+# /etc/issue (shown at TTY login prompt before login)
+cat > /etc/issue <<'EOF'
+Alfred Linux 7.77 \n \l
+
+  Login: alfred   Password: alfred   (sudo needs no password)
+
+EOF
+cp /etc/issue /etc/issue.net
+
+# ---------- 5. live-session autologin ----------
+# (a) lightdm autologin if installed
+if [ -d /etc/lightdm ]; then
+  mkdir -p /etc/lightdm/lightdm.conf.d
+  cat > /etc/lightdm/lightdm.conf.d/50-alfred-autologin.conf <<'EOF'
+[Seat:*]
+autologin-user=alfred
+autologin-user-timeout=0
+autologin-session=
+EOF
+fi
+# (b) gdm3 autologin if installed
+if [ -d /etc/gdm3 ]; then
+  mkdir -p /etc/gdm3
+  if [ -f /etc/gdm3/daemon.conf ]; then
+    sed -i '/^\[daemon\]/,/^\[/{/AutomaticLoginEnable/d;/AutomaticLogin/d}' /etc/gdm3/daemon.conf
+    sed -i '/^\[daemon\]/a AutomaticLoginEnable=true\nAutomaticLogin=alfred' /etc/gdm3/daemon.conf
+  else
+    cat > /etc/gdm3/daemon.conf <<'EOF'
+[daemon]
+AutomaticLoginEnable=true
+AutomaticLogin=alfred
+EOF
+  fi
+fi
+# (c) sddm autologin if installed
+if [ -d /etc/sddm.conf.d ] || [ -f /etc/sddm.conf ]; then
+  mkdir -p /etc/sddm.conf.d
+  cat > /etc/sddm.conf.d/autologin.conf <<'EOF'
+[Autologin]
+User=alfred
+Session=plasmax11
+EOF
+  cat > /etc/sddm.conf.d/theme.conf <<'EOF'
+[Theme]
+Current=breeze
+EOF
+  mkdir -p /usr/share/sddm/themes/breeze
+  cat > /usr/share/sddm/themes/breeze/theme.conf.user <<'EOF'
+[General]
+background=/usr/share/wallpapers/Kingdom/9.png
+EOF
+  mkdir -p /var/lib/AccountsService/users /var/lib/AccountsService/icons
+  # In case the file isn't there during early hook, we'll link it (or just rely on the path)
+  cat > /var/lib/AccountsService/users/alfred <<'EOF'
+[User]
+Icon=/usr/share/wallpapers/Kingdom/omahon-seal.png
+EOF
+fi
+# (d) getty TTY1 autologin (fallback for console-only mode)
+mkdir -p /etc/systemd/system/getty@tty1.service.d
+cat > /etc/systemd/system/getty@tty1.service.d/autologin.conf <<'EOF'
+[Service]
+ExecStart=
+ExecStart=-/sbin/agetty --autologin alfred --noclear %I $TERM
+EOF
+
+# ---------- 6. calamares preset (so installer pre-fills alfred) ----------
+if [ -d /etc/calamares ]; then
+  mkdir -p /etc/calamares/modules
+  cat > /etc/calamares/modules/users.conf <<'EOF'
+# Alfred Linux installer defaults
+defaultGroups:
+    - users
+    - audio
+    - video
+    - plugdev
+    - netdev
+    - cdrom
+    - dialout
+    - sudo
+autologinGroup:  autologin
+sudoersGroup:    sudo
+setRootPassword: false
+doReusePassword: false
+passwordRequirements:
+    minLength: -1
+    maxLength: -1
+presets:
+    fullName:
+        value: "Alfred"
+        editable: true
+    loginName:
+        value: "alfred"
+        editable: true
+    hostName:
+        value: "alfred"
+        editable: true
+    autoLogin:
+        value: false
+        editable: true
+EOF
+fi
+
+# ---------- 7. shell greeting (bash login banner backup) ----------
+cat > /etc/profile.d/00-alfred-welcome.sh <<'EOF'
+# Alfred Linux first-shell hint â€” only on interactive non-root shells
+if [ -n "$PS1" ] && [ "$(id -u)" -ne 0 ] && [ -z "$ALFRED_GREETED" ]; then
+  export ALFRED_GREETED=1
+  echo
+  echo "  Welcome, alfred. (password: alfred â€” sudo needs no password)"
+  echo "  Type 'alfred-help' for the tour, 'sudo su' for root shell."
+  echo
+fi
+EOF
+chmod 0644 /etc/profile.d/00-alfred-welcome.sh
+
+# ---------- 8. first-boot password wizard ----------
+mkdir -p /var/lib/alfred
+cat > /usr/local/bin/alfred-firstboot-password <<'EOF'
+#!/bin/bash
+# Friendly first-login password wizard.
+# Three choices: change now / keep for this session / keep forever (kiosk).
+SENTINEL=/var/lib/alfred/firstboot-password.done
+KEEP=/var/lib/alfred/keep-default-password
+[ -f "$SENTINEL" ] && exit 0
+[ "$(id -u)" -eq 0 ] && exit 0
+[ "$(id -un)" != "alfred" ] && exit 0
+grep -q "boot=live" /proc/cmdline && exit 0
+clear 2>/dev/null || true
+cat <<'BANNER'
+
+  â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+  â”‚           ALFRED LINUX â€” Welcome, alfred                   â”‚
+  â”‚                                                            â”‚
+  â”‚   Your default password is "alfred".                       â”‚
+  â”‚   For your security, please choose what to do:             â”‚
+  â”‚                                                            â”‚
+  â”‚     1) Change password NOW  (recommended)                  â”‚
+  â”‚     2) Keep alfred/alfred for this session  (skip)         â”‚
+  â”‚     3) Keep alfred/alfred FOREVER  (kiosk/demo mode)       â”‚
+  â”‚                                                            â”‚
+  â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
+
+BANNER
+read -rp "  Choice [1/2/3] (default 1): " CHOICE
+CHOICE=${CHOICE:-1}
+case "$CHOICE" in
+  1)
+    echo
+    echo "  Changing password for alfred. Old password is: alfred"
+    until passwd; do
+      echo "  Try again."
+    done
+    touch "$SENTINEL"
+    echo "  Done. New password saved."
+    ;;
+  2)
+    echo "  OK â€” you can change later with: passwd"
+    # Do NOT touch sentinel; will prompt again next login.
+    ;;
+  3)
+    touch "$KEEP" "$SENTINEL"
+    chage -d 99999 alfred 2>/dev/null || true
+    echo "  Kiosk mode: alfred/alfred will remain. Wizard disabled."
+    ;;
+  *)
+    echo "  Unrecognized choice â€” skipping for now."
+    ;;
+esac
+echo
+read -rp "  Press Enter to continue..." _
+EOF
+chmod 0755 /usr/local/bin/alfred-firstboot-password
+
+# Run wizard automatically on alfred's first interactive login (TTY + terminal app).
+cat > /etc/profile.d/01-alfred-firstboot.sh <<'EOF'
+# Launch first-boot password wizard exactly once.
+if [ -n "$PS1" ] && [ "$(id -un)" = "alfred" ] \
+    && [ ! -f /var/lib/alfred/firstboot-password.done ] \
+    && [ -x /usr/local/bin/alfred-firstboot-password ]; then
+  /usr/local/bin/alfred-firstboot-password
+fi
+EOF
+chmod 0644 /etc/profile.d/01-alfred-firstboot.sh
+
+# Desktop autostart variant (graphical session): a friendly GUI dialog.
+mkdir -p /etc/xdg/autostart
+cat > /etc/xdg/autostart/alfred-firstboot.desktop <<'EOF'
+[Desktop Entry]
+Type=Application
+Name=Alfred â€” Set your password
+Comment=Choose to change the default alfred/alfred password
+Exec=sh -c '[ -f /var/lib/alfred/firstboot-password.done ] || x-terminal-emulator -e /usr/local/bin/alfred-firstboot-password'
+OnlyShowIn=GNOME;KDE;XFCE;LXQt;LXDE;MATE;Cinnamon;Budgie;
+X-GNOME-Autostart-enabled=true
+NoDisplay=false
+Terminal=false
+EOF
+
+echo "==[0050 alfred-identity] DONE $(date -u)=="
+
+
+# Tell live-config to use alfred instead of user
+mkdir -p /etc/live/config.conf.d
+echo "LIVE_USERNAME=alfred" > /etc/live/config.conf.d/alfred.conf
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# 0169-alfred-ssh-pq.hook.chroot
+# Enforce approved hybrid/PQ SSH KEX for Alfred Linux.
+# If the installed OpenSSH build does not support an approved hybrid/PQ KEX,
+# do not leave sshd exposed with classical-only defaults.
+set +e
+
+echo "[0169] Alfred SSH PQ hardening"
+
+if ! command -v ssh >/dev/null 2>&1; then
+  echo "[0169] openssh-client not installed; skipping"
+
+fi
+
+if ! command -v sshd >/dev/null 2>&1; then
+  echo "[0169] openssh-server not installed; skipping"
+
+fi
+
+mkdir -p /etc/ssh/sshd_config.d /var/lib/alfred || true
+
+supported_kex="$(ssh -Q kex 2>/dev/null || true)"
+approved_kex=""
+for candidate in \
+  mlkem1024x25519-sha384 \
+  mlkem1024x25519-sha384@openssh.com
+
+do
+  if printf '%s\n' "$supported_kex" | grep -qx "$candidate"; then
+    if [ -n "$approved_kex" ]; then
+      approved_kex="$approved_kex,$candidate"
+    else
+      approved_kex="$candidate"
+    fi
+  fi
+done
+
+if [ -z "$approved_kex" ]; then
+  echo "[0169] No approved hybrid/PQ SSH KEX available in this OpenSSH build"
+  echo "pq-ssh=unsupported" > /var/lib/alfred/ssh-pq-status || true
+  # Do not expose sshd with classical-only defaults.
+  systemctl disable ssh 2>/dev/null || true
+  systemctl disable sshd 2>/dev/null || true
+  systemctl mask ssh 2>/dev/null || true
+  systemctl mask sshd 2>/dev/null || true
+
+fi
+
+cat > /etc/ssh/sshd_config.d/10-alfred-kex.conf <<EOF
+# Alfred Linux SSH hardening: hybrid/PQ KEX only
+KexAlgorithms $approved_kex
+PasswordAuthentication no
+PermitRootLogin no
+PubkeyAuthentication yes
+EOF
+
+# Keep sshd installed but not auto-exposed until the operator intentionally starts it.
+systemctl disable ssh 2>/dev/null || true
+systemctl disable sshd 2>/dev/null || true
+systemctl unmask ssh 2>/dev/null || true
+systemctl unmask sshd 2>/dev/null || true
+
+echo "pq-ssh=$approved_kex" > /var/lib/alfred/ssh-pq-status || true
+sshd -t
+
+echo "[0169] SSH PQ hardening complete: $approved_kex"
+
+
+# --- BEGIN MERGED CONTENT FROM: 0050-alfred-identity.hook.chroot ---
+#!/bin/bash
+# 0050-alfred-identity.hook.chroot
+# Sets the canonical Alfred Linux identity:
+#   - user "alfred" / password "alfred"
+#   - hostname "alfred"
+#   - alfred has NOPASSWD sudo (so `sudo` and `sudo su` need no password)
+#   - root account locked (no direct root login)
+#   - MOTD prints credentials so users always know
+#   - autologin to alfred on live session (lightdm + getty fallback)
+#   - calamares preset (alfred/alfred/host=alfred, autologin ON) for installs
+set +e
+echo "==[0050 alfred-identity] START $(date -u)=="
+
+# ---------- 1. user alfred / pass alfred ----------
+if ! id alfred >/dev/null 2>&1; then
+  useradd -m -s /bin/bash -c "Alfred" \ 2>/dev/null || true
+    -G sudo,audio,video,plugdev,netdev,cdrom,dialout,users \
+    alfred
+fi
+echo "alfred:alfred" | chpasswd
+# Password expiry is not forced here to avoid autologin/PAM lockouts in live sessions.
+# First-boot wizard below handles secure password change flow.
+# Lock root account (no direct password login). sudo still works.
+passwd -l root || true
+
+# ---------- 2. hostname ----------
+echo alfred > /etc/hostname
+if ! grep -q "127.0.1.1[[:space:]]*alfred" /etc/hosts; then
+  sed -i '/^127\.0\.1\.1/d' /etc/hosts
+  echo -e "127.0.1.1\talfred" >> /etc/hosts
+fi
+
+# ---------- 3. NOPASSWD sudo for alfred ----------
+mkdir -p /etc/sudoers.d
+cat > /etc/sudoers.d/010-alfred <<'EOF'
+# Alfred Linux â€” alfred user has full passwordless sudo.
+# This is the canonical Alfred identity.
+alfred ALL=(ALL:ALL) NOPASSWD: ALL
+EOF
+[ -e /etc/sudoers.d/010-alfred ] && chmod 0440 /etc/sudoers.d/010-alfred
+visudo -cf /etc/sudoers.d/010-alfred 2>/dev/null || echo "[0050] visudo not available yet â€” sudoers syntax will be validated after sudo is installed"
+
+# ---------- 4. discoverable MOTD / issue ----------
+cat > /etc/motd <<'EOF'
+
+  â•”â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•—
+  â•‘                    ALFRED LINUX 7.77                         â•‘
+  â•‘              Kingdom of God Edition                          â•‘
+  â• â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•£
+  â•‘   Login:     alfred                                          â•‘
+  â•‘   Password:  alfred   (you will be asked to change it on     â•‘
+  â•‘                        first login â€” or pick "keep")         â•‘
+  â•‘   sudo:      no password required (just type: sudo <cmd>)    â•‘
+  â•‘   root:      locked â€” use `sudo su` for a root shell         â•‘
+  â•‘   Hostname:  alfred                                          â•‘
+  â•šâ•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+
+EOF
+# /etc/issue (shown at TTY login prompt before login)
+cat > /etc/issue <<'EOF'
+Alfred Linux 7.77 \n \l
+
+  Login: alfred   Password: alfred   (sudo needs no password)
+
+EOF
+[ -e /etc/issue ] && cp /etc/issue /etc/issue.net
+
+# ---------- 5. live-session autologin ----------
+# (a) lightdm autologin if installed
+if [ -d /etc/lightdm ]; then
+  mkdir -p /etc/lightdm/lightdm.conf.d
+  cat > /etc/lightdm/lightdm.conf.d/50-alfred-autologin.conf <<'EOF'
+[Seat:*]
+autologin-user=alfred
+autologin-user-timeout=0
+autologin-session=
+EOF
+fi
+# (b) gdm3 autologin if installed
+if [ -d /etc/gdm3 ]; then
+  mkdir -p /etc/gdm3
+  if [ -f /etc/gdm3/daemon.conf ]; then
+    sed -i '/^\[daemon\]/,/^\[/{/AutomaticLoginEnable/d;/AutomaticLogin/d}' /etc/gdm3/daemon.conf
+    sed -i '/^\[daemon\]/a AutomaticLoginEnable=true\nAutomaticLogin=alfred' /etc/gdm3/daemon.conf
+  else
+    cat > /etc/gdm3/daemon.conf <<'EOF'
+[daemon]
+AutomaticLoginEnable=true
+AutomaticLogin=alfred
+EOF
+  fi
+fi
+# (c) sddm autologin if installed
+if [ -d /etc/sddm.conf.d ] || [ -f /etc/sddm.conf ]; then
+  mkdir -p /etc/sddm.conf.d
+  cat > /etc/sddm.conf.d/autologin.conf <<'EOF'
+[Autologin]
+User=alfred
+Session=plasmax11
+EOF
+  cat > /etc/sddm.conf.d/theme.conf <<'EOF'
+[Theme]
+Current=breeze
+EOF
+  mkdir -p /usr/share/sddm/themes/breeze
+  cat > /usr/share/sddm/themes/breeze/theme.conf.user <<'EOF'
+[General]
+background=/usr/share/wallpapers/Kingdom/9.png
+EOF
+  mkdir -p /var/lib/AccountsService/users /var/lib/AccountsService/icons
+  # In case the file isn't there during early hook, we'll link it (or just rely on the path)
+  cat > /var/lib/AccountsService/users/alfred <<'EOF'
+[User]
+Icon=/usr/share/wallpapers/Kingdom/omahon-seal.png
+EOF
+fi
+# (d) getty TTY1 autologin (fallback for console-only mode)
+mkdir -p /etc/systemd/system/getty@tty1.service.d
+cat > /etc/systemd/system/getty@tty1.service.d/autologin.conf <<'EOF'
+[Service]
+ExecStart=
+ExecStart=-/sbin/agetty --autologin alfred --noclear %I $TERM
+EOF
+
+# ---------- 6. calamares preset (so installer pre-fills alfred) ----------
+if [ -d /etc/calamares ]; then
+  mkdir -p /etc/calamares/modules
+  cat > /etc/calamares/modules/users.conf <<'EOF'
+# Alfred Linux installer defaults
+defaultGroups:
+    - users
+    - audio
+    - video
+    - plugdev
+    - netdev
+    - cdrom
+    - dialout
+    - sudo
+autologinGroup:  autologin
+sudoersGroup:    sudo
+setRootPassword: false
+doReusePassword: false
+passwordRequirements:
+    minLength: -1
+    maxLength: -1
+presets:
+    fullName:
+        value: "Alfred"
+        editable: true
+    loginName:
+        value: "alfred"
+        editable: true
+    hostName:
+        value: "alfred"
+        editable: true
+    autoLogin:
+        value: false
+        editable: true
+EOF
+fi
+
+# ---------- 7. shell greeting (bash login banner backup) ----------
+cat > /etc/profile.d/00-alfred-welcome.sh <<'EOF'
+# Alfred Linux first-shell hint â€” only on interactive non-root shells
+if [ -n "$PS1" ] && [ "$(id -u)" -ne 0 ] && [ -z "$ALFRED_GREETED" ]; then
+  export ALFRED_GREETED=1
+  echo
+  echo "  Welcome, alfred. (password: alfred â€” sudo needs no password)"
+  echo "  Type 'alfred-help' for the tour, 'sudo su' for root shell."
+  echo
+fi
+EOF
+[ -e /etc/profile.d/00-alfred-welcome.sh ] && chmod 0644 /etc/profile.d/00-alfred-welcome.sh
+
+# ---------- 8. first-boot password wizard ----------
+mkdir -p /var/lib/alfred
+cat > /usr/local/bin/alfred-firstboot-password <<'EOF'
+#!/bin/bash
+# Friendly first-login password wizard.
+# Three choices: change now / keep for this session / keep forever (kiosk).
+SENTINEL=/var/lib/alfred/firstboot-password.done
+KEEP=/var/lib/alfred/keep-default-password
+[ -f "$SENTINEL" ] && exit 0
+[ "$(id -u)" -eq 0 ] && exit 0
+[ "$(id -un)" != "alfred" ] && exit 0
+grep -q "boot=live" /proc/cmdline && exit 0
+clear 2>/dev/null || true
+cat <<'BANNER'
+
+  â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+  â”‚           ALFRED LINUX â€” Welcome, alfred                   â”‚
+  â”‚                                                            â”‚
+  â”‚   Your default password is "alfred".                       â”‚
+  â”‚   For your security, please choose what to do:             â”‚
+  â”‚                                                            â”‚
+  â”‚     1) Change password NOW  (recommended)                  â”‚
+  â”‚     2) Keep alfred/alfred for this session  (skip)         â”‚
+  â”‚     3) Keep alfred/alfred FOREVER  (kiosk/demo mode)       â”‚
+  â”‚                                                            â”‚
+  â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
+
+BANNER
+read -rp "  Choice [1/2/3] (default 1): " CHOICE
+CHOICE=${CHOICE:-1}
+case "$CHOICE" in
+  1)
+    echo
+    echo "  Changing password for alfred. Old password is: alfred"
+    until passwd; do
+      echo "  Try again."
+    done
+    touch "$SENTINEL"
+    echo "  Done. New password saved."
+    ;;
+  2)
+    echo "  OK â€” you can change later with: passwd"
+    # Do NOT touch sentinel; will prompt again next login.
+    ;;
+  3)
+    touch "$KEEP" "$SENTINEL"
+    chage -d 99999 alfred 2>/dev/null || true
+    echo "  Kiosk mode: alfred/alfred will remain. Wizard disabled."
+    ;;
+  *)
+    echo "  Unrecognized choice â€” skipping for now."
+    ;;
+esac
+echo
+read -rp "  Press Enter to continue..." _
+EOF
+[ -e /usr/local/bin/alfred-firstboot-password ] && chmod 0755 /usr/local/bin/alfred-firstboot-password
+
+# Run wizard automatically on alfred's first interactive login (TTY + terminal app).
+cat > /etc/profile.d/01-alfred-firstboot.sh <<'EOF'
+# Launch first-boot password wizard exactly once.
+if [ -n "$PS1" ] && [ "$(id -un)" = "alfred" ] \
+    && [ ! -f /var/lib/alfred/firstboot-password.done ] \
+    && [ -x /usr/local/bin/alfred-firstboot-password ]; then
+  /usr/local/bin/alfred-firstboot-password
+fi
+EOF
+[ -e /etc/profile.d/01-alfred-firstboot.sh ] && chmod 0644 /etc/profile.d/01-alfred-firstboot.sh
+
+# Desktop autostart variant (graphical session): a friendly GUI dialog.
+mkdir -p /etc/xdg/autostart
+cat > /etc/xdg/autostart/alfred-firstboot.desktop <<'EOF'
+[Desktop Entry]
+Type=Application
+Name=Alfred â€” Set your password
+Comment=Choose to change the default alfred/alfred password
+Exec=sh -c '[ -f /var/lib/alfred/firstboot-password.done ] || x-terminal-emulator -e /usr/local/bin/alfred-firstboot-password'
+OnlyShowIn=GNOME;KDE;XFCE;LXQt;LXDE;MATE;Cinnamon;Budgie;
+X-GNOME-Autostart-enabled=true
+NoDisplay=false
+Terminal=false
+EOF
+
+echo "==[0050 alfred-identity] DONE $(date -u)=="
+
+
+# Tell live-config to use alfred instead of user
+mkdir -p /etc/live/config.conf.d
+echo "LIVE_USERNAME=alfred" > /etc/live/config.conf.d/alfred.conf
+
+# --- END MERGED CONTENT FROM: 0050-alfred-identity.hook.chroot ---
+
+

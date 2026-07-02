@@ -1,0 +1,24 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+# 0405-alfred-tribe-reuben — 🌊 reuben — honour-of-the-firstborn
+
+echo "[0405-tribe-reuben] begin"
+install -d /etc/alfred/tribes /usr/share/alfred/tribes
+cat >/etc/alfred/tribes/reuben.flag <<EOS
+TRIBE=reuben
+EMOJI=🌊
+GIFT=honour-of-the-firstborn
+VERSE="Genesis 49:3 — my firstborn, my might."
+EOS
+cat >/usr/share/alfred/tribes/reuben.txt <<EOS
+🌊  Tribe of reuben
+Genesis 49:3 — my firstborn, my might.
+Gift: honour-of-the-firstborn
+EOS
+echo "[0405-tribe-reuben] done"
+
+
+exit 0

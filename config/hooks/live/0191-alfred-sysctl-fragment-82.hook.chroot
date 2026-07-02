@@ -1,0 +1,12 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+# [Genesis Forge] Granular Kernel Matrix: net.ipv4.ip_local_port_range="12024 65535"
+# Extremely deep low-level kernel protection.
+echo "[Genesis Forge] Applying granular sysctl: net.ipv4.ip_local_port_range="12024 65535""
+echo "net.ipv4.ip_local_port_range="12024 65535"" > /etc/sysctl.d/99-alfred-82.conf || true
+sysctl -w net.ipv4.ip_local_port_range="12024 65535" > /dev/null 2>&1 || true
+
+exit 0

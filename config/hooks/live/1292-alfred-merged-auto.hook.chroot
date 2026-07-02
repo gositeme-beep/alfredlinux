@@ -1,0 +1,249 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+# SPDX-License-Identifier: AGPL-3.0-or-later
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# Genesis Forge: AppArmor Strict + Namespace Exile (Synthesized)
+
+echo "[Genesis Forge] Applying Strict Sandbox to Original Logic..."
+
+cat > /etc/apparmor.d/alfred-isolated/profile-304 << 'EOF'
+profile alfred-sandbox-304 /usr/local/bin/alfred-util-291 flags=(enforce) {
+  #include <abstractions/base>
+  /usr/local/bin/alfred-util-291 rmix,
+  /dev/null rw,
+}
+EOF
+
+# Inject the prlimit wrapper
+cat > /usr/local/bin/alfred-util-291-prlimit-wrapper << 'EOF'
+#!/bin/bash
+# Syscall Rate-Limiting & Resource Throttling
+# Mathematically limits the execution priority and caps the number of files
+# and processes the utility can spawn to neutralize fork bombs instantly.
+
+# prlimit parameters:
+# --nproc=10 : Max 10 processes/threads
+# --nofile=20 : Max 20 open file descriptors
+# --fsize=1048576 : Max 1MB file size written
+
+prlimit --nproc=10 --nofile=20 --fsize=1048576 \
+    nice -n 19 \
+    /usr/local/bin/alfred-util-291 "$@"
+EOF
+
+# Execute original logic inside the exiled namespace
+exec /bin/bash -s << 'EOF_UNSHARE_EXILE'
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+# [Genesis Forge] AppArmor Isolation: /usr/local/bin/alfred-util-291
+# Creates a granular zero-trust execution envelope for individual binaries.
+echo "[Genesis Forge] Enveloping binary: /usr/local/bin/alfred-util-291"
+mkdir -p /etc/apparmor.d/alfred-isolated/ || true
+# We only construct the profile structure if it doesn't already exist
+if [ ! -f "/etc/apparmor.d/alfred-isolated/profile-304" ]; then
+    cat > /etc/apparmor.d/alfred-isolated/profile-304 << 'EOF'
+profile alfred-sandbox-304 /usr/local/bin/alfred-util-291 flags=(complain) {
+  #include <abstractions/base>
+  /usr/local/bin/alfred-util-291 rmix,
+  /dev/null rw,
+}
+EOF
+fi
+
+
+EOF_UNSHARE_EXILE
+
+
+# --- BEGIN MERGED CONTENT FROM: 1292-alfred-global-defcon-sync.hook.chroot ---
+#!/bin/sh
+set +e
+
+echo "[Alfred Defcon] Engineering Global Commander Sync Daemon..."
+
+apt-get install -y curl jq || true
+
+mkdir -p /usr/local/bin/
+
+cat > /usr/local/bin/alfred-defcon-sync.sh << 'EOF'
+#!/bin/bash
+# Alfred Global DEFCON Sync
+# Polls the Commander dashboard at gositeme.com/api/defcon.php
+# Dynamically arms and disarms the Planetary Defense Matrix and Temporal Encryption.
+
+DEFCON_API="https://gositeme.com/api/defcon.php"
+FLAG_FILE="/etc/alfred/defcon1.flag"
+
+echo "[Defcon Sync] Establishing uplink to GoSiteMe Commander..."
+
+while true; do
+    # Fetch the global DEFCON state
+    RESPONSE=$(curl -s "$DEFCON_API" || echo "")
+    
+    if [ -n "$RESPONSE" ]; then
+        LEVEL=$(echo "$RESPONSE" | jq -r '.level' 2>/dev/null)
+        
+        if [ "$LEVEL" = "1" ]; then
+            if [ ! -f "$FLAG_FILE" ]; then
+                echo "[Defcon Sync] CRITICAL: DEFCON 1 AUTHORIZED. Arming Defense Matrix..."
+                touch "$FLAG_FILE"
+                
+                # Restart defense services to pull them online immediately
+                systemctl start alfred-orbital.service  || true|| true
+                systemctl start alfred-kinetic.service  || true|| true
+                systemctl start alfred-counter-intel.service  || true|| true
+                systemctl start alfred-crypto.service  || true|| true
+                systemctl start alfred-retrocausal.service  || true|| true
+                systemctl start alfred-time-dilation.service  || true|| true
+                systemctl start alfred-tesseract.service  || true|| true
+                systemctl start alfred-entanglement.service  || true|| true
+                systemctl start alfred-dark-matter.service  || true|| true
+            fi
+        else
+            if [ -f "$FLAG_FILE" ]; then
+                echo "[Defcon Sync] DEFCON $LEVEL: Standing down Defense Matrix..."
+                rm -f "$FLAG_FILE"
+                
+                # Stop defense services to restore normal operation
+                systemctl stop alfred-orbital.service  || true|| true
+                systemctl stop alfred-kinetic.service  || true|| true
+                systemctl stop alfred-counter-intel.service  || true|| true
+                systemctl stop alfred-retrocausal.service  || true|| true
+                systemctl stop alfred-time-dilation.service  || true|| true
+                systemctl stop alfred-tesseract.service  || true|| true
+                systemctl stop alfred-entanglement.service  || true|| true
+                systemctl stop alfred-dark-matter.service  || true|| true
+                
+                # Revert thermonuclear crypto
+                if [ -f "/etc/ssl/openssl.cnf.backup" ]; then
+                    [ -e "/etc/ssl/openssl.cnf.backup" ] && cp /etc/ssl/openssl.cnf.backup /etc/ssl/openssl.cnf 2>/dev/null || true
+                fi
+                rm -f /etc/ssh/sshd_config.d/99-thermonuclear.conf
+                systemctl restart sshd  || true|| true
+            fi
+        fi
+    fi
+    
+    # Poll every 60 seconds
+    sleep 60
+done
+EOF
+
+[ -e "/usr/local/bin/alfred-defcon-sync.sh" ] && chmod +x /usr/local/bin/alfred-defcon-sync.sh
+
+cat > /etc/systemd/system/alfred-defcon-sync.service << 'EOF'
+[Unit]
+Description=Alfred Global DEFCON Commander Sync
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/alfred-defcon-sync.sh
+Restart=always
+RestartSec=30
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+systemctl enable alfred-defcon-sync || true || true.service
+
+echo "[Alfred Defcon] Sync Daemon installed and armed."
+
+# --- END MERGED CONTENT FROM: 1292-alfred-global-defcon-sync.hook.chroot ---
+
+
+#!/bin/sh
+set +e
+
+echo "[Alfred Defcon] Engineering Global Commander Sync Daemon..."
+
+apt-get install -y curl jq || true
+
+mkdir -p /usr/local/bin/
+
+cat > /usr/local/bin/alfred-defcon-sync.sh << 'EOF'
+#!/bin/bash
+# Alfred Global DEFCON Sync
+# Polls the Commander dashboard at gositeme.com/api/defcon.php
+# Dynamically arms and disarms the Planetary Defense Matrix and Temporal Encryption.
+
+DEFCON_API="https://gositeme.com/api/defcon.php"
+FLAG_FILE="/etc/alfred/defcon1.flag"
+
+echo "[Defcon Sync] Establishing uplink to GoSiteMe Commander..."
+
+while true; do
+    # Fetch the global DEFCON state
+    RESPONSE=$(curl -s "$DEFCON_API" || echo "")
+    
+    if [ -n "$RESPONSE" ]; then
+        LEVEL=$(echo "$RESPONSE" | jq -r '.level' 2>/dev/null)
+        
+        if [ "$LEVEL" = "1" ]; then
+            if [ ! -f "$FLAG_FILE" ]; then
+                echo "[Defcon Sync] CRITICAL: DEFCON 1 AUTHORIZED. Arming Defense Matrix..."
+                touch "$FLAG_FILE"
+                
+                # Restart defense services to pull them online immediately
+                systemctl start alfred-orbital.service || true
+                systemctl start alfred-kinetic.service || true
+                systemctl start alfred-counter-intel.service || true
+                systemctl start alfred-crypto.service || true
+                systemctl start alfred-retrocausal.service || true
+                systemctl start alfred-time-dilation.service || true
+                systemctl start alfred-tesseract.service || true
+                systemctl start alfred-entanglement.service || true
+                systemctl start alfred-dark-matter.service || true
+            fi
+        else
+            if [ -f "$FLAG_FILE" ]; then
+                echo "[Defcon Sync] DEFCON $LEVEL: Standing down Defense Matrix..."
+                rm -f "$FLAG_FILE"
+                
+                # Stop defense services to restore normal operation
+                systemctl stop alfred-orbital.service || true
+                systemctl stop alfred-kinetic.service || true
+                systemctl stop alfred-counter-intel.service || true
+                systemctl stop alfred-retrocausal.service || true
+                systemctl stop alfred-time-dilation.service || true
+                systemctl stop alfred-tesseract.service || true
+                systemctl stop alfred-entanglement.service || true
+                systemctl stop alfred-dark-matter.service || true
+                
+                # Revert thermonuclear crypto
+                if [ -f "/etc/ssl/openssl.cnf.backup" ]; then
+                    cp /etc/ssl/openssl.cnf.backup /etc/ssl/openssl.cnf 2>/dev/null || true
+                fi
+                rm -f /etc/ssh/sshd_config.d/99-thermonuclear.conf
+                systemctl restart sshd || true
+            fi
+        fi
+    fi
+    
+    # Poll every 60 seconds
+    sleep 60
+done
+EOF
+
+chmod +x /usr/local/bin/alfred-defcon-sync.sh
+
+cat > /etc/systemd/system/alfred-defcon-sync.service << 'EOF'
+[Unit]
+Description=Alfred Global DEFCON Commander Sync
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/alfred-defcon-sync.sh
+Restart=always
+RestartSec=30
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+systemctl enable alfred-defcon-sync || true || true.service
+
+echo "[Alfred Defcon] Sync Daemon installed and armed."

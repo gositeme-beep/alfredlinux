@@ -1,0 +1,674 @@
+#!/bin/bash
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+# HOOK 0725: The Assembly â€” Mesh-Synchronized Group Worship
+#
+# "For where two or three are gathered together in my name,
+#  there am I in the midst of them." â€” Matthew 18:20
+#
+# alfred-worship assembly â€” One person starts worship, all mesh nodes
+# get a notification. Same track and Scripture synchronized across
+# machines. The Body of Christ, connected through the mesh.
+#
+# BUILD: v7.77 Kingdom of God Edition
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+
+set +e
+chmod 1777 /tmp 2>/dev/null || true
+
+echo "â•”â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•—"
+echo "â•‘  [0725] The Assembly â€” Mesh-Synchronized Worship         â•‘"
+echo "â•‘  'Where two or three are gathered' â€” Matthew 18:20      â•‘"
+echo "â•šâ•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•"
+
+mkdir -p /usr/share/alfred/assembly
+
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+# 1. ASSEMBLY PROTOCOL DEFINITION
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+echo "[ASSEMBLY-01] Creating assembly protocol..."
+
+cat > /usr/share/alfred/assembly/protocol.conf << 'PROTO'
+# The Assembly Protocol â€” Mesh Worship Synchronization
+#
+# When one node starts an Assembly session:
+# 1. A worship-invite file is written to ~/Kingdom/ (Syncthing shared folder)
+# 2. All mesh peers see the file appear via Syncthing
+# 3. A watcher on each peer reads the invite and shows a notification
+# 4. Accepting the invite starts the same track at the same timestamp
+# 5. Scripture reference is included so all read the same passage
+#
+# File format: assembly-invite-{timestamp}.json
+# Written at runtime via Python json.dumps (quoted heredoc in CLI) so paths
+# and hostnames cannot break JSON structure.
+# {
+#   "type": "worship-assembly",
+#   "host": "hostname",
+#   "track": "track-name.mp3",
+#   "scripture": "Psalm 95:1-6",
+#   "started": "ISO-timestamp",
+#   "message": "Come, let us worship together."
+# }
+PROTO
+
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+# 2. ALFRED-ASSEMBLY CLI
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+echo "[ASSEMBLY-02] Installing alfred-assembly CLI..."
+
+cat > /usr/local/bin/alfred-assembly << 'ASSEMBLY'
+#!/bin/bash
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+# alfred-assembly â€” Mesh-Synchronized Group Worship
+#
+# "For where two or three are gathered together in my name,
+#  there am I in the midst of them." â€” Matthew 18:20
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+
+GOLD='\033[38;5;220m'; GREEN='\033[0;32m'; CYAN='\033[0;36m'
+RED='\033[0;31m'; BOLD='\033[1m'; DIM='\033[2m'; NC='\033[0m'
+
+KINGDOM_DIR="$HOME/Kingdom"
+MUSIC_DIR="/usr/share/alfred/music"
+ASSEMBLY_DIR="$KINGDOM_DIR/.assembly"
+HOSTNAME=$(hostname)
+TIMESTAMP=$(date -Is)
+
+# Read invite JSON fields without grep -P (portable python3).
+_asm_json_get() {
+    python3 -c 'import json,sys
+try:
+    print(json.load(open(sys.argv[1],encoding="utf-8",errors="replace")).get(sys.argv[2],""))
+except Exception:
+    pass' "$1" "$2" 2>/dev/null
+}
+
+# Newest assembly-invite-*.json by mtime (no ls -t | head â€” odd filenames safe).
+_asm_latest_invite() {
+    local LATEST="" _f
+    shopt -s nullglob
+    for _f in "$ASSEMBLY_DIR"/assembly-invite-*.json; do
+        [[ -f "$_f" ]] || continue
+        if [[ -z "$LATEST" ]] || [[ "$_f" -nt "$LATEST" ]]; then LATEST="$_f"; fi
+    done
+    shopt -u nullglob
+    printf '%s\n' "$LATEST"
+}
+
+case "${1:-help}" in
+    start|gather)
+        if [ ! -d "$KINGDOM_DIR" ]; then
+            echo -e "${RED}Kingdom mesh folder not found.${NC}"
+            echo "Connect to the mesh first: alfred-mesh connect-kingdom"
+            true
+        fi
+
+        mkdir -p "$ASSEMBLY_DIR"
+
+        # Pick a track
+        if [ -n "$2" ]; then
+            TRACK="$2"
+        else
+            TRACK=""
+            _tracks=()
+            while IFS= read -r -d '' f; do _tracks+=("$f"); done < <(find "$MUSIC_DIR" -type f -name '*.mp3' -print0 2>/dev/null)
+            if ((${#_tracks[@]} > 0)); then TRACK="${_tracks[RANDOM % ${#_tracks[@]}]}"; fi
+        fi
+
+        if [ -z "$TRACK" ]; then
+            echo "No worship tracks found."
+            true
+        fi
+
+        TRACK_NAME=$(basename "$TRACK")
+
+        # Pick a Scripture
+        SCRIPTURES=(
+            "Psalm 95:1-6|O come, let us sing unto the LORD"
+            "Psalm 100:1-5|Make a joyful noise unto the LORD"
+            "Psalm 150|Let every thing that hath breath praise the LORD"
+            "Psalm 96:1-4|O sing unto the LORD a new song"
+            "Psalm 134|Behold, bless ye the LORD"
+            "Psalm 33:1-5|Rejoice in the LORD, O ye righteous"
+            "Revelation 5:12|Worthy is the Lamb that was slain"
+            "Colossians 3:16|Let the word of Christ dwell in you richly"
+        )
+        SELECTED="${SCRIPTURES[$((RANDOM % ${#SCRIPTURES[@]}))]}"
+        SCRIPTURE_REF=$(echo "$SELECTED" | cut -d'|' -f1)
+        SCRIPTURE_TEXT=$(echo "$SELECTED" | cut -d'|' -f2)
+
+        # Write assembly invite to Kingdom folder
+        INVITE_FILE="$ASSEMBLY_DIR/assembly-invite-$(date +%s).json"
+        export INVITE_HOST="$HOSTNAME"
+        export INVITE_TRACK="$TRACK_NAME"
+        export INVITE_TRACK_PATH="$TRACK"
+        export INVITE_SCRIPTURE="$SCRIPTURE_REF"
+        export INVITE_SCRIPTURE_TEXT="$SCRIPTURE_TEXT"
+        export INVITE_STARTED="$TIMESTAMP"
+        python3 << 'PYINV' >"$INVITE_FILE"
+import json
+import os
+
+data = {
+    "type": "worship-assembly",
+    "host": os.environ["INVITE_HOST"],
+    "track": os.environ["INVITE_TRACK"],
+    "track_path": os.environ["INVITE_TRACK_PATH"],
+    "scripture": os.environ["INVITE_SCRIPTURE"],
+    "scripture_text": os.environ["INVITE_SCRIPTURE_TEXT"],
+    "started": os.environ["INVITE_STARTED"],
+    "message": "Come, let us worship together.",
+}
+print(json.dumps(data, indent=2, ensure_ascii=False))
+PYINV
+
+        echo -e "${GOLD}"
+        echo "  â•”â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•—"
+        echo "  â•‘                                                   â•‘"
+        echo "  â•‘         âœ  THE ASSEMBLY  âœ                      â•‘"
+        echo "  â•‘                                                   â•‘"
+        echo "  â•‘  You have gathered the Body.                      â•‘"
+        echo "  â•‘  An invitation has been sent to all mesh peers.   â•‘"
+        echo "  â•‘                                                   â•‘"
+        echo "  â•šâ•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•"
+        echo -e "${NC}"
+
+        echo -e "  Track: ${CYAN}$TRACK_NAME${NC}"
+        echo -e "  Scripture: ${CYAN}$SCRIPTURE_REF${NC}"
+        echo -e "  ${DIM}\"$SCRIPTURE_TEXT\"${NC}"
+        echo ""
+
+        # Start playing
+        if command -v mpg123 &>/dev/null; then
+            echo -e "  ${GREEN}â™ª Worship has begun.${NC}"
+            mpg123 -q "$TRACK" 2>/dev/null &
+        elif command -v audacious &>/dev/null; then
+            audacious "$TRACK" 2>/dev/null &
+        fi
+
+        echo ""
+        echo -e "  ${GOLD}\"For where two or three are gathered together${NC}"
+        echo -e "  ${GOLD} in my name, there am I in the midst of them.\"${NC}"
+        echo -e "  ${GOLD}                              â€” Matthew 18:20${NC}"
+        ;;
+
+    watch)
+        if [ ! -d "$KINGDOM_DIR" ]; then
+            echo -e "${RED}Kingdom mesh folder not found.${NC}"
+            true
+        fi
+
+        mkdir -p "$ASSEMBLY_DIR"
+        echo -e "${GOLD}â•â•â• Watching for assembly invitations... â•â•â•${NC}"
+        echo -e "${DIM}Press Ctrl+C to stop watching.${NC}"
+        echo ""
+
+        LAST_SEEN=""
+        while true; do
+            LATEST="$(_asm_latest_invite)"
+            if [ -n "$LATEST" ] && [ "$LATEST" != "$LAST_SEEN" ]; then
+                LAST_SEEN="$LATEST"
+                HOST=$(_asm_json_get "$LATEST" host)
+                TRACK=$(_asm_json_get "$LATEST" track)
+                SCRIPTURE=$(_asm_json_get "$LATEST" scripture)
+                MESSAGE=$(_asm_json_get "$LATEST" message)
+
+                echo -e "  ${GOLD}âœ ASSEMBLY INVITATION${NC}"
+                echo -e "  From: ${CYAN}$HOST${NC}"
+                echo -e "  Track: ${CYAN}$TRACK${NC}"
+                echo -e "  Scripture: ${CYAN}$SCRIPTURE${NC}"
+                echo -e "  ${DIM}$MESSAGE${NC}"
+                echo ""
+
+                # Show desktop notification
+                if command -v notify-send &>/dev/null; then
+                    notify-send "âœ The Assembly" "$HOST has called for worship.\n$SCRIPTURE" \
+                        --icon=multimedia-audio-player 2>/dev/null
+                fi
+
+                # Auto-play if track exists locally
+                TRACK_PATH=$(_asm_json_get "$LATEST" track_path)
+                LOCAL_TRACK="$MUSIC_DIR/$TRACK"
+                if [ -f "$LOCAL_TRACK" ] && command -v mpg123 &>/dev/null; then
+                    echo -e "  ${GREEN}â™ª Joining worship...${NC}"
+                    mpg123 -q "$LOCAL_TRACK" 2>/dev/null &
+                elif [ -f "$TRACK_PATH" ] && command -v mpg123 &>/dev/null; then
+                    echo -e "  ${GREEN}â™ª Joining worship...${NC}"
+                    mpg123 -q "$TRACK_PATH" 2>/dev/null &
+                fi
+            fi
+            sleep 5
+        done
+        ;;
+
+    status)
+        echo -e "${GOLD}â•â•â• Assembly Status â•â•â•${NC}"
+        echo ""
+        if [ ! -d "$KINGDOM_DIR" ]; then
+            echo "  Kingdom mesh: NOT CONNECTED"
+            echo "  Connect with: alfred-mesh connect-kingdom"
+        else
+            echo -e "  Kingdom mesh: ${GREEN}CONNECTED${NC}"
+            if [ -d "$ASSEMBLY_DIR" ]; then
+                COUNT=$(find "$ASSEMBLY_DIR" -maxdepth 1 -name 'assembly-invite-*.json' -type f 2>/dev/null | wc -l)
+                echo -e "  Assembly invitations (total): ${CYAN}$COUNT${NC}"
+                LATEST="$(_asm_latest_invite)"
+                if [ -n "$LATEST" ]; then
+                    HOST=$(_asm_json_get "$LATEST" host)
+                    STARTED=$(_asm_json_get "$LATEST" started)
+                    echo -e "  Last assembly: ${CYAN}$HOST${NC} at $STARTED"
+                fi
+            fi
+        fi
+        echo ""
+        ;;
+
+    help|*)
+        echo -e "${GOLD}â•â•â• alfred-assembly â€” The Body Gathers â•â•â•${NC}"
+        echo ""
+        echo "  alfred-assembly start [track]  â€” Start assembly (notify mesh)"
+        echo "  alfred-assembly watch           â€” Watch for assembly invitations"
+        echo "  alfred-assembly status          â€” Check assembly connection"
+        echo ""
+        echo "  The Assembly uses the Kingdom mesh (Syncthing) to synchronize"
+        echo "  worship across all connected machines. When one gathers,"
+        echo "  all are invited."
+        echo ""
+        echo "  \"For where two or three are gathered together in my name,"
+        echo "   there am I in the midst of them.\" â€” Matthew 18:20"
+        ;;
+esac
+ASSEMBLY
+chmod +x /usr/local/bin/alfred-assembly
+
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+# 3. WATCH SERVICE (autostart)
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+echo "[ASSEMBLY-03] Setting up assembly watcher autostart..."
+
+cat > /etc/skel/.config/autostart/alfred-assembly-watcher.desktop << 'AUTOSTART'
+[Desktop Entry]
+Type=Application
+Name=Assembly Watcher
+Exec=sh -c "sleep 60 && [ -d ~/Kingdom ] && alfred-assembly watch &"
+Hidden=false
+NoDisplay=true
+X-GNOME-Autostart-enabled=true
+Comment=Watches for mesh worship assembly invitations
+AUTOSTART
+
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+# 4. DESKTOP LAUNCHER
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+cat > /usr/share/applications/alfred-assembly.desktop << 'DESKTOP'
+[Desktop Entry]
+Type=Application
+Name=The Assembly
+GenericName=Group Worship
+Comment=Mesh-synchronized group worship â€” gather the Body
+Exec=konsole -e "alfred-assembly start"
+Icon=system-users
+Terminal=false
+Categories=Alfred;
+Keywords=worship;assembly;mesh;group;church;
+DESKTOP
+
+echo "â•”â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•—"
+echo "â•‘  [0725] The Assembly â€” COMPLETE                          â•‘"
+echo "â•‘  âœ“ Assembly start â†’ sends invite to all mesh peers       â•‘"
+echo "â•‘  âœ“ Assembly watch â†’ listens for invitations              â•‘"
+echo "â•‘  âœ“ Same track + Scripture synchronized                   â•‘"
+echo "â•‘  âœ“ Desktop notifications for incoming invitations        â•‘"
+echo "â•‘  âœ“ Auto-play when local track matches                    â•‘"
+echo "â•‘  âœ“ Kingdom mesh folder (.assembly/) for sync             â•‘"
+echo "â•‘  Where two or three are gathered. â€” Matthew 18:20        â•‘"
+echo "â•šâ•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•"
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+# [Genesis Forge] Systemd Hardening: alfred-daemon-212.service
+# Enforces deep PrivateTmp, ProtectSystem, and ProtectHome on native daemons.
+echo "[Genesis Forge] Hardening systemd service: alfred-daemon-212.service"
+mkdir -p /etc/systemd/system/alfred-daemon-212.service.d/ || true
+cat > /etc/systemd/system/alfred-daemon-212.service.d/override.conf << 'EOF'
+[Service]
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=read-only
+NoNewPrivileges=yes
+RestrictRealtime=yes
+EOF
+
+
+# --- BEGIN MERGED CONTENT FROM: 0725-alfred-assembly.hook.chroot ---
+#!/bin/bash
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+# HOOK 0725: The Assembly â€” Mesh-Synchronized Group Worship
+#
+# "For where two or three are gathered together in my name,
+#  there am I in the midst of them." â€” Matthew 18:20
+#
+# alfred-worship assembly â€” One person starts worship, all mesh nodes
+# get a notification. Same track and Scripture synchronized across
+# machines. The Body of Christ, connected through the mesh.
+#
+# BUILD: v7.77 Kingdom of God Edition
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+
+set +e
+[ -e /tmp ] && chmod 1777 /tmp 2>/dev/null || true
+
+echo "â•”â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•—"
+echo "â•‘  [0725] The Assembly â€” Mesh-Synchronized Worship         â•‘"
+echo "â•‘  'Where two or three are gathered' â€” Matthew 18:20      â•‘"
+echo "â•šâ•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•"
+
+mkdir -p /usr/share/alfred/assembly
+
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+# 1. ASSEMBLY PROTOCOL DEFINITION
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+echo "[ASSEMBLY-01] Creating assembly protocol..."
+
+cat > /usr/share/alfred/assembly/protocol.conf << 'PROTO'
+# The Assembly Protocol â€” Mesh Worship Synchronization
+#
+# When one node starts an Assembly session:
+# 1. A worship-invite file is written to ~/Kingdom/ (Syncthing shared folder)
+# 2. All mesh peers see the file appear via Syncthing
+# 3. A watcher on each peer reads the invite and shows a notification
+# 4. Accepting the invite starts the same track at the same timestamp
+# 5. Scripture reference is included so all read the same passage
+#
+# File format: assembly-invite-{timestamp}.json
+# Written at runtime via Python json.dumps (quoted heredoc in CLI) so paths
+# and hostnames cannot break JSON structure.
+# {
+#   "type": "worship-assembly",
+#   "host": "hostname",
+#   "track": "track-name.mp3",
+#   "scripture": "Psalm 95:1-6",
+#   "started": "ISO-timestamp",
+#   "message": "Come, let us worship together."
+# }
+PROTO
+
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+# 2. ALFRED-ASSEMBLY CLI
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+echo "[ASSEMBLY-02] Installing alfred-assembly CLI..."
+
+cat > /usr/local/bin/alfred-assembly << 'ASSEMBLY'
+#!/bin/bash
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+# alfred-assembly â€” Mesh-Synchronized Group Worship
+#
+# "For where two or three are gathered together in my name,
+#  there am I in the midst of them." â€” Matthew 18:20
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+
+GOLD='\033[38;5;220m'; GREEN='\033[0;32m'; CYAN='\033[0;36m'
+RED='\033[0;31m'; BOLD='\033[1m'; DIM='\033[2m'; NC='\033[0m'
+
+KINGDOM_DIR="$HOME/Kingdom"
+MUSIC_DIR="/usr/share/alfred/music"
+ASSEMBLY_DIR="$KINGDOM_DIR/.assembly"
+HOSTNAME=$(hostname)
+TIMESTAMP=$(date -Is)
+
+# Read invite JSON fields without grep -P (portable python3).
+_asm_json_get() {
+    python3 -c 'import json,sys
+try:
+    print(json.load(open(sys.argv[1],encoding="utf-8",errors="replace")).get(sys.argv[2],""))
+except Exception:
+    pass' "$1" "$2" 2>/dev/null
+}
+
+# Newest assembly-invite-*.json by mtime (no ls -t | head â€” odd filenames safe).
+_asm_latest_invite() {
+    local LATEST="" _f
+    shopt -s nullglob
+    for _f in "$ASSEMBLY_DIR"/assembly-invite-*.json; do
+        [[ -f "$_f" ]] || continue
+        if [[ -z "$LATEST" ]] || [[ "$_f" -nt "$LATEST" ]]; then LATEST="$_f"; fi
+    done
+    shopt -u nullglob
+    printf '%s\n' "$LATEST"
+}
+
+case "${1:-help}" in
+    start|gather)
+        if [ ! -d "$KINGDOM_DIR" ]; then
+            echo -e "${RED}Kingdom mesh folder not found.${NC}"
+            echo "Connect to the mesh first: alfred-mesh connect-kingdom"
+            true
+        fi
+
+        mkdir -p "$ASSEMBLY_DIR"
+
+        # Pick a track
+        if [ -n "$2" ]; then
+            TRACK="$2"
+        else
+            TRACK=""
+            _tracks=()
+            while IFS= read -r -d '' f; do _tracks+=("$f"); done < <(find "$MUSIC_DIR" -type f -name '*.mp3' -print0 2>/dev/null)
+            if ((${#_tracks[@]} > 0)); then TRACK="${_tracks[RANDOM % ${#_tracks[@]}]}"; fi
+        fi
+
+        if [ -z "$TRACK" ]; then
+            echo "No worship tracks found."
+            true
+        fi
+
+        TRACK_NAME=$(basename "$TRACK")
+
+        # Pick a Scripture
+        SCRIPTURES=(
+            "Psalm 95:1-6|O come, let us sing unto the LORD"
+            "Psalm 100:1-5|Make a joyful noise unto the LORD"
+            "Psalm 150|Let every thing that hath breath praise the LORD"
+            "Psalm 96:1-4|O sing unto the LORD a new song"
+            "Psalm 134|Behold, bless ye the LORD"
+            "Psalm 33:1-5|Rejoice in the LORD, O ye righteous"
+            "Revelation 5:12|Worthy is the Lamb that was slain"
+            "Colossians 3:16|Let the word of Christ dwell in you richly"
+        )
+        SELECTED="${SCRIPTURES[$((RANDOM % ${#SCRIPTURES[@]}))]}"
+        SCRIPTURE_REF=$(echo "$SELECTED" | cut -d'|' -f1)
+        SCRIPTURE_TEXT=$(echo "$SELECTED" | cut -d'|' -f2)
+
+        # Write assembly invite to Kingdom folder
+        INVITE_FILE="$ASSEMBLY_DIR/assembly-invite-$(date +%s).json"
+        export INVITE_HOST="$HOSTNAME"
+        export INVITE_TRACK="$TRACK_NAME"
+        export INVITE_TRACK_PATH="$TRACK"
+        export INVITE_SCRIPTURE="$SCRIPTURE_REF"
+        export INVITE_SCRIPTURE_TEXT="$SCRIPTURE_TEXT"
+        export INVITE_STARTED="$TIMESTAMP"
+        python3 << 'PYINV' >"$INVITE_FILE"
+import json
+import os
+
+data = {
+    "type": "worship-assembly",
+    "host": os.environ["INVITE_HOST"],
+    "track": os.environ["INVITE_TRACK"],
+    "track_path": os.environ["INVITE_TRACK_PATH"],
+    "scripture": os.environ["INVITE_SCRIPTURE"],
+    "scripture_text": os.environ["INVITE_SCRIPTURE_TEXT"],
+    "started": os.environ["INVITE_STARTED"],
+    "message": "Come, let us worship together.",
+}
+print(json.dumps(data, indent=2, ensure_ascii=False))
+PYINV
+
+        echo -e "${GOLD}"
+        echo "  â•”â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•—"
+        echo "  â•‘                                                   â•‘"
+        echo "  â•‘         âœ  THE ASSEMBLY  âœ                      â•‘"
+        echo "  â•‘                                                   â•‘"
+        echo "  â•‘  You have gathered the Body.                      â•‘"
+        echo "  â•‘  An invitation has been sent to all mesh peers.   â•‘"
+        echo "  â•‘                                                   â•‘"
+        echo "  â•šâ•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•"
+        echo -e "${NC}"
+
+        echo -e "  Track: ${CYAN}$TRACK_NAME${NC}"
+        echo -e "  Scripture: ${CYAN}$SCRIPTURE_REF${NC}"
+        echo -e "  ${DIM}\"$SCRIPTURE_TEXT\"${NC}"
+        echo ""
+
+        # Start playing
+        if command -v mpg123 &>/dev/null; then
+            echo -e "  ${GREEN}â™ª Worship has begun.${NC}"
+            mpg123 -q "$TRACK" 2>/dev/null &
+        elif command -v audacious &>/dev/null; then
+            audacious "$TRACK" 2>/dev/null &
+        fi
+
+        echo ""
+        echo -e "  ${GOLD}\"For where two or three are gathered together${NC}"
+        echo -e "  ${GOLD} in my name, there am I in the midst of them.\"${NC}"
+        echo -e "  ${GOLD}                              â€” Matthew 18:20${NC}"
+        ;;
+
+    watch)
+        if [ ! -d "$KINGDOM_DIR" ]; then
+            echo -e "${RED}Kingdom mesh folder not found.${NC}"
+            true
+        fi
+
+        mkdir -p "$ASSEMBLY_DIR"
+        echo -e "${GOLD}â•â•â• Watching for assembly invitations... â•â•â•${NC}"
+        echo -e "${DIM}Press Ctrl+C to stop watching.${NC}"
+        echo ""
+
+        LAST_SEEN=""
+        while true; do
+            LATEST="$(_asm_latest_invite)"
+            if [ -n "$LATEST" ] && [ "$LATEST" != "$LAST_SEEN" ]; then
+                LAST_SEEN="$LATEST"
+                HOST=$(_asm_json_get "$LATEST" host)
+                TRACK=$(_asm_json_get "$LATEST" track)
+                SCRIPTURE=$(_asm_json_get "$LATEST" scripture)
+                MESSAGE=$(_asm_json_get "$LATEST" message)
+
+                echo -e "  ${GOLD}âœ ASSEMBLY INVITATION${NC}"
+                echo -e "  From: ${CYAN}$HOST${NC}"
+                echo -e "  Track: ${CYAN}$TRACK${NC}"
+                echo -e "  Scripture: ${CYAN}$SCRIPTURE${NC}"
+                echo -e "  ${DIM}$MESSAGE${NC}"
+                echo ""
+
+                # Show desktop notification
+                if command -v notify-send &>/dev/null; then
+                    notify-send "âœ The Assembly" "$HOST has called for worship.\n$SCRIPTURE" \
+                        --icon=multimedia-audio-player 2>/dev/null
+                fi
+
+                # Auto-play if track exists locally
+                TRACK_PATH=$(_asm_json_get "$LATEST" track_path)
+                LOCAL_TRACK="$MUSIC_DIR/$TRACK"
+                if [ -f "$LOCAL_TRACK" ] && command -v mpg123 &>/dev/null; then
+                    echo -e "  ${GREEN}â™ª Joining worship...${NC}"
+                    mpg123 -q "$LOCAL_TRACK" 2>/dev/null &
+                elif [ -f "$TRACK_PATH" ] && command -v mpg123 &>/dev/null; then
+                    echo -e "  ${GREEN}â™ª Joining worship...${NC}"
+                    mpg123 -q "$TRACK_PATH" 2>/dev/null &
+                fi
+            fi
+            sleep 5
+        done
+        ;;
+
+    status)
+        echo -e "${GOLD}â•â•â• Assembly Status â•â•â•${NC}"
+        echo ""
+        if [ ! -d "$KINGDOM_DIR" ]; then
+            echo "  Kingdom mesh: NOT CONNECTED"
+            echo "  Connect with: alfred-mesh connect-kingdom"
+        else
+            echo -e "  Kingdom mesh: ${GREEN}CONNECTED${NC}"
+            if [ -d "$ASSEMBLY_DIR" ]; then
+                COUNT=$(find "$ASSEMBLY_DIR" -maxdepth 1 -name 'assembly-invite-*.json' -type f 2>/dev/null | wc -l)
+                echo -e "  Assembly invitations (total): ${CYAN}$COUNT${NC}"
+                LATEST="$(_asm_latest_invite)"
+                if [ -n "$LATEST" ]; then
+                    HOST=$(_asm_json_get "$LATEST" host)
+                    STARTED=$(_asm_json_get "$LATEST" started)
+                    echo -e "  Last assembly: ${CYAN}$HOST${NC} at $STARTED"
+                fi
+            fi
+        fi
+        echo ""
+        ;;
+
+    help|*)
+        echo -e "${GOLD}â•â•â• alfred-assembly â€” The Body Gathers â•â•â•${NC}"
+        echo ""
+        echo "  alfred-assembly start [track]  â€” Start assembly (notify mesh)"
+        echo "  alfred-assembly watch           â€” Watch for assembly invitations"
+        echo "  alfred-assembly status          â€” Check assembly connection"
+        echo ""
+        echo "  The Assembly uses the Kingdom mesh (Syncthing) to synchronize"
+        echo "  worship across all connected machines. When one gathers,"
+        echo "  all are invited."
+        echo ""
+        echo "  \"For where two or three are gathered together in my name,"
+        echo "   there am I in the midst of them.\" â€” Matthew 18:20"
+        ;;
+esac
+ASSEMBLY
+[ -e "/usr/local/bin/alfred-assembly" ] && chmod +x /usr/local/bin/alfred-assembly
+
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+# 3. WATCH SERVICE (autostart)
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+echo "[ASSEMBLY-03] Setting up assembly watcher autostart..."
+
+cat > /etc/skel/.config/autostart/alfred-assembly-watcher.desktop << 'AUTOSTART'
+[Desktop Entry]
+Type=Application
+Name=Assembly Watcher
+Exec=sh -c "sleep 60 && [ -d ~/Kingdom ] && alfred-assembly watch &"
+Hidden=false
+NoDisplay=true
+X-GNOME-Autostart-enabled=true
+Comment=Watches for mesh worship assembly invitations
+AUTOSTART
+
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+# 4. DESKTOP LAUNCHER
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+cat > /usr/share/applications/alfred-assembly.desktop << 'DESKTOP'
+[Desktop Entry]
+Type=Application
+Name=The Assembly
+GenericName=Group Worship
+Comment=Mesh-synchronized group worship â€” gather the Body
+Exec=konsole -e "alfred-assembly start"
+Icon=system-users
+Terminal=false
+Categories=Alfred;
+Keywords=worship;assembly;mesh;group;church;
+DESKTOP
+
+echo "â•”â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•—"
+echo "â•‘  [0725] The Assembly â€” COMPLETE                          â•‘"
+echo "â•‘  âœ“ Assembly start â†’ sends invite to all mesh peers       â•‘"
+echo "â•‘  âœ“ Assembly watch â†’ listens for invitations              â•‘"
+echo "â•‘  âœ“ Same track + Scripture synchronized                   â•‘"
+echo "â•‘  âœ“ Desktop notifications for incoming invitations        â•‘"
+echo "â•‘  âœ“ Auto-play when local track matches                    â•‘"
+echo "â•‘  âœ“ Kingdom mesh folder (.assembly/) for sync             â•‘"
+echo "â•‘  Where two or three are gathered. â€” Matthew 18:20        â•‘"
+echo "â•šâ•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•"
+
+# --- END MERGED CONTENT FROM: 0725-alfred-assembly.hook.chroot ---
+
+

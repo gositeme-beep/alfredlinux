@@ -1,0 +1,88 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+# [Genesis Forge] AppArmor Isolation: /usr/local/bin/alfred-util-160
+# Creates a granular zero-trust execution envelope for individual binaries.
+echo "[Genesis Forge] Enveloping binary: /usr/local/bin/alfred-util-160"
+mkdir -p /etc/apparmor.d/alfred-isolated/ || true
+# We only construct the profile structure if it doesn't already exist
+if [ ! -f "/etc/apparmor.d/alfred-isolated/profile-173" ]; then
+    cat > /etc/apparmor.d/alfred-isolated/profile-173 << 'EOF'
+profile alfred-sandbox-173 /usr/local/bin/alfred-util-160 flags=(complain) {
+  #include <abstractions/base>
+  /usr/local/bin/alfred-util-160 rmix,
+  /dev/null rw,
+}
+EOF
+fi
+
+
+# --- BEGIN MERGED CONTENT FROM: 1125-alfred-logos-bridge.hook.chroot ---
+#!/bin/bash
+set +e
+echo "[1125] Initializing The Logos Bridge (Swarm AI Inference)"
+
+cat > /usr/local/bin/alfred-logos-bridge << 'EOF'
+#!/bin/bash
+# Detects sibling nodes on the local network via mDNS/Avahi
+# and initializes an RPC connection for distributed LLM inference
+logger -t alfred-logos "Searching for brother nodes to form the Swarm Mind..."
+# Start llama.cpp rpc server in background
+# llama-server --rpc-server -H 0.0.0.0 -p 50052 &
+EOF
+
+[ -e "+x" ] && chmod +x /usr/local/bin/alfred-logos-bridge
+
+cat > /etc/systemd/system/alfred-logos-bridge.service << 'EOF'
+[Unit]
+Description=The Logos Bridge (Swarm AI)
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/alfred-logos-bridge
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+systemctl enable alfred-logos-bridge || true || true.service 2>/dev/null || true
+echo "The Logos Bridge is connected."
+
+# --- END MERGED CONTENT FROM: 1125-alfred-logos-bridge.hook.chroot ---
+
+
+#!/bin/bash
+set +e
+echo "[1125] Initializing The Logos Bridge (Swarm AI Inference)"
+
+cat > /usr/local/bin/alfred-logos-bridge << 'EOF'
+#!/bin/bash
+# Detects sibling nodes on the local network via mDNS/Avahi
+# and initializes an RPC connection for distributed LLM inference
+logger -t alfred-logos "Searching for brother nodes to form the Swarm Mind..."
+# Start llama.cpp rpc server in background
+# llama-server --rpc-server -H 0.0.0.0 -p 50052 &
+EOF
+
+chmod +x /usr/local/bin/alfred-logos-bridge
+
+cat > /etc/systemd/system/alfred-logos-bridge.service << 'EOF'
+[Unit]
+Description=The Logos Bridge (Swarm AI)
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/alfred-logos-bridge
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+systemctl enable alfred-logos-bridge || true || true.service 2>/dev/null || true
+echo "The Logos Bridge is connected."

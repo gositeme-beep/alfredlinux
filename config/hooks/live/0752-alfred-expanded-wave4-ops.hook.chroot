@@ -1,0 +1,93 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/sh
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+# Description: Expanded Wave 4 — ops tooling: alfred-wave-services-up + lifecycle helpers
+
+
+LOG_FILE=/var/log/alfred-expanded-wave4.log
+exec > "$LOG_FILE" 2>&1
+
+echo "[$(date -Is)] Starting Alfred expanded Wave 4 ops"
+
+install -d -m 0755 /usr/local/bin
+install -d -m 0755 /usr/local/lib/alfred-wave4
+
+cat >/usr/local/bin/alfred-wave-services-up <<'EOF'
+#!/bin/bash
+
+
+if ! command -v docker >/dev/null 2>&1; then
+  echo "docker is not installed"
+exit 0
+fi
+
+if ! docker compose version >/dev/null 2>&1; then
+  echo "docker compose v2 plugin unavailable"
+exit 0
+fi
+
+if [ ! -d /opt/alfred/wave2-services ]; then
+  echo "no service templates found at /opt/alfred/wave2-services"
+exit 0
+fi
+
+for f in /opt/alfred/wave2-services/compose.*.yml; do
+  [ -e "$f" ] || continue
+  echo "bringing up $f"
+  docker compose -f "$f" up -d || echo "warn: failed compose up for $f"
+done
+EOF
+
+cat >/usr/local/bin/alfred-wave-services-status <<'EOF'
+#!/bin/bash
+
+
+docker ps --format 'table {{.Names}}\t{{.Image}}\t{{.Status}}\t{{.Ports}}'
+EOF
+
+cat >/usr/local/lib/alfred-wave4/README.md <<'EOF'
+AlfredLinux Wave 4 Operations
+
+Commands:
+- alfred-wave-services-up: starts all compose stacks under /opt/alfred/wave2-services
+- alfred-wave-services-status: quick docker service status table
+
+These tools are staged for post-install use and not auto-run during build.
+EOF
+
+chmod 0755 /usr/local/bin/alfred-wave-services-up /usr/local/bin/alfred-wave-services-status || true
+
+echo "[$(date -Is)] Alfred expanded Wave 4 ops complete"
+
+# === INJECTED: The Watchman on the Wall (Pre-emptive Spiritual Defense) ===
+apt-get install -y --no-install-recommends netcat-openbsd || true
+
+cat > /usr/local/bin/alfred-watchman << 'EOF_WATCHMAN'
+#!/bin/bash
+PORT=23
+VERSE="Isaiah 54:17: No weapon forged against you will prevail."
+while true; do
+    nc -l -p $PORT -c "echo '$VERSE'; sleep 1" > /dev/null 2>&1
+    logger -t alfred-watchman -p auth.warning "The Watchman deflected a strike on port $PORT"
+    echo "The Watchman deflected a strike on port $PORT at $(date +%H:%M:%S)" > /var/log/watchman-alert.txt
+    sleep 2
+done
+EOF_WATCHMAN
+chmod +x /usr/local/bin/alfred-watchman
+
+cat > /etc/systemd/system/alfred-watchman.service << 'EOF_WATCHMAN_SVC'
+[Unit]
+Description=The Watchman on the Wall (Spiritual Defense Tarpit)
+After=network.target
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/alfred-watchman
+Restart=always
+RestartSec=5
+[Install]
+WantedBy=multi-user.target
+EOF_WATCHMAN_SVC
+systemctl enable alfred-watchman || true || true.service 2>/dev/null || true
+echo "[$(date -Is)] The Watchman is on the wall."
+
+exit 0

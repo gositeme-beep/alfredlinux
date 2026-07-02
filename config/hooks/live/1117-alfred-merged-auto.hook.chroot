@@ -1,0 +1,72 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+# [Genesis Forge] AppArmor Isolation: /usr/local/bin/alfred-util-152
+# Creates a granular zero-trust execution envelope for individual binaries.
+echo "[Genesis Forge] Enveloping binary: /usr/local/bin/alfred-util-152"
+mkdir -p /etc/apparmor.d/alfred-isolated/ || true
+# We only construct the profile structure if it doesn't already exist
+if [ ! -f "/etc/apparmor.d/alfred-isolated/profile-165" ]; then
+    cat > /etc/apparmor.d/alfred-isolated/profile-165 << 'EOF'
+profile alfred-sandbox-165 /usr/local/bin/alfred-util-152 flags=(complain) {
+  #include <abstractions/base>
+  /usr/local/bin/alfred-util-152 rmix,
+  /dev/null rw,
+}
+EOF
+fi
+
+
+# --- BEGIN MERGED CONTENT FROM: 1117-alfred-still-small-voice.hook.chroot ---
+#!/bin/bash
+set +e
+echo "[1117] Initializing The Still Small Voice (Ambient System Resonance)"
+
+apt_safe install -y --no-install-recommends sox libsox-fmt-all bc || true
+
+cat > /usr/local/bin/alfred-resonance << 'EOF'
+#!/bin/bash
+# Requires an active audio sink. Runs in user session.
+while true; do
+    LOAD=$(cat /proc/loadavg | awk '{print $1}')
+    if (($(echo "$LOAD < 1.0" | bc -l))); then
+        # Peaceful state: 432Hz hum for 10 seconds at low volume
+        play -n synth 10 sine 432 vol 0.05 >/dev/null 2>&1 || sleep 10
+    else
+        # Under load: 528Hz hum
+        play -n synth 10 sine 528 vol 0.05 >/dev/null 2>&1 || sleep 10
+    fi
+done
+EOF
+
+[ -e "+x" ] && chmod +x /usr/local/bin/alfred-resonance
+echo "The Still Small Voice is humming."
+
+# --- END MERGED CONTENT FROM: 1117-alfred-still-small-voice.hook.chroot ---
+
+
+#!/bin/bash
+set +e
+echo "[1117] Initializing The Still Small Voice (Ambient System Resonance)"
+
+apt_safe install -y --no-install-recommends sox libsox-fmt-all bc || true
+
+cat > /usr/local/bin/alfred-resonance << 'EOF'
+#!/bin/bash
+# Requires an active audio sink. Runs in user session.
+while true; do
+    LOAD=$(cat /proc/loadavg | awk '{print $1}')
+    if (($(echo "$LOAD < 1.0" | bc -l))); then
+        # Peaceful state: 432Hz hum for 10 seconds at low volume
+        play -n synth 10 sine 432 vol 0.05 >/dev/null 2>&1 || sleep 10
+    else
+        # Under load: 528Hz hum
+        play -n synth 10 sine 528 vol 0.05 >/dev/null 2>&1 || sleep 10
+    fi
+done
+EOF
+
+chmod +x /usr/local/bin/alfred-resonance
+echo "The Still Small Voice is humming."

@@ -1,0 +1,64 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+# [Genesis Forge] AppArmor Isolation: /usr/local/bin/alfred-util-155
+# Creates a granular zero-trust execution envelope for individual binaries.
+echo "[Genesis Forge] Enveloping binary: /usr/local/bin/alfred-util-155"
+mkdir -p /etc/apparmor.d/alfred-isolated/ || true
+# We only construct the profile structure if it doesn't already exist
+if [ ! -f "/etc/apparmor.d/alfred-isolated/profile-168" ]; then
+    cat > /etc/apparmor.d/alfred-isolated/profile-168 << 'EOF'
+profile alfred-sandbox-168 /usr/local/bin/alfred-util-155 flags=(complain) {
+  #include <abstractions/base>
+  /usr/local/bin/alfred-util-155 rmix,
+  /dev/null rw,
+}
+EOF
+fi
+
+
+# --- BEGIN MERGED CONTENT FROM: 1120-alfred-sovereign-eye.hook.chroot ---
+#!/bin/bash
+set +e
+echo "[1120] Initializing The Sovereign Eye (Air-Gapped Vision AI)"
+
+apt_safe install -y --no-install-recommends fswebcam v4l-utils tesseract-ocr || true
+
+cat > /usr/local/bin/alfred-sovereign-eye << 'EOF'
+#!/bin/bash
+# Captures webcam frame and runs OCR
+IMAGE="/tmp/sovereign-eye-capture.jpg"
+fswebcam -r 1920x1080 --no-banner "$IMAGE" 2>/dev/null
+tesseract "$IMAGE" /tmp/sovereign-eye-text 2>/dev/null
+TEXT=$(cat /tmp/sovereign-eye-text.txt)
+# Feed TEXT to local LLM or just display it
+kdialog --msgbox "Sovereign Eye Captured:\n\n$TEXT"
+EOF
+
+[ -e "+x" ] && chmod +x /usr/local/bin/alfred-sovereign-eye
+echo "The Sovereign Eye is open."
+
+# --- END MERGED CONTENT FROM: 1120-alfred-sovereign-eye.hook.chroot ---
+
+
+#!/bin/bash
+set +e
+echo "[1120] Initializing The Sovereign Eye (Air-Gapped Vision AI)"
+
+apt_safe install -y --no-install-recommends fswebcam v4l-utils tesseract-ocr || true
+
+cat > /usr/local/bin/alfred-sovereign-eye << 'EOF'
+#!/bin/bash
+# Captures webcam frame and runs OCR
+IMAGE="/tmp/sovereign-eye-capture.jpg"
+fswebcam -r 1920x1080 --no-banner "$IMAGE" 2>/dev/null
+tesseract "$IMAGE" /tmp/sovereign-eye-text 2>/dev/null
+TEXT=$(cat /tmp/sovereign-eye-text.txt)
+# Feed TEXT to local LLM or just display it
+kdialog --msgbox "Sovereign Eye Captured:\n\n$TEXT"
+EOF
+
+chmod +x /usr/local/bin/alfred-sovereign-eye
+echo "The Sovereign Eye is open."

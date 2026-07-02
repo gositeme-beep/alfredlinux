@@ -1,0 +1,70 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# 0815-alfred-sddm-splash.hook.chroot
+# Configures the SDDM Login Screen and disables the KDE Plasma splash
+
+set +e
+
+echo "[0815] Configuring SDDM Login Screen and disabling KSplash..."
+
+# 1. Disable KSplash globally for all users
+mkdir -p /etc/xdg || true
+cat << 'EOF' > /etc/xdg/ksplashrc
+[KSplash]
+Engine=none
+Theme=None
+EOF
+
+# Ensure skeleton directory also has it disabled just in case
+mkdir -p /etc/skel/.config || true
+cat << 'EOF' > /etc/skel/.config/ksplashrc
+[KSplash]
+Engine=none
+Theme=None
+EOF
+
+# 2. Configure SDDM Background
+# Find the first available wallpaper from build-assets
+WP=$(find /build-assets/wallpapers/ -type f \( -name "*.jpg" -o -name "*.png" \) 2>/dev/null | head -n 1)
+
+if [ -n "$WP" ]; then
+    echo "Found wallpaper $WP, configuring SDDM..."
+    
+    # Copy the wallpaper to a safe location inside the breeze theme directory
+    mkdir -p /usr/share/sddm/themes/breeze/ || true
+    
+    if [[ "$WP" == *.png ]]; then
+        [ -e "$WP" ] && cp "$WP" /usr/share/sddm/themes/breeze/kingdom-sddm-bg.png || true
+        BG_FILE="kingdom-sddm-bg.png"
+    else
+        [ -e "$WP" ] && cp "$WP" /usr/share/sddm/themes/breeze/kingdom-sddm-bg.jpg || true
+        BG_FILE="kingdom-sddm-bg.jpg"
+    fi
+    
+    # Overwrite the breeze theme config to use our background
+    if [ -f /usr/share/sddm/themes/breeze/theme.conf ]; then
+        sed -i "s|^background=.*|background=$BG_FILE|" /usr/share/sddm/themes/breeze/theme.conf || true
+    else
+        # If it doesn't exist yet, create a basic one
+        cat << EOF > /usr/share/sddm/themes/breeze/theme.conf
+[General]
+background=$BG_FILE
+type=image
+EOF
+    fi
+    
+    # Explicitly configure sddm to use breeze
+    mkdir -p /etc/sddm.conf.d || true
+    cat << 'EOF' > /etc/sddm.conf.d/theme.conf
+[Theme]
+Current=breeze
+EOF
+
+    echo "[0815] Custom SDDM background installed successfully."
+else
+    echo "[0815] No wallpapers found in /build-assets/wallpapers/. Skipping SDDM background injection."
+fi
+
+exit 0

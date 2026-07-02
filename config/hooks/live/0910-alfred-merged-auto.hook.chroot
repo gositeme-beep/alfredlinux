@@ -1,0 +1,377 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+# [Genesis Forge] AppArmor Isolation: /usr/local/bin/alfred-util-59
+# Creates a granular zero-trust execution envelope for individual binaries.
+echo "[Genesis Forge] Enveloping binary: /usr/local/bin/alfred-util-59"
+mkdir -p /etc/apparmor.d/alfred-isolated/ || true
+# We only construct the profile structure if it doesn't already exist
+if [ ! -f "/etc/apparmor.d/alfred-isolated/profile-72" ]; then
+    cat > /etc/apparmor.d/alfred-isolated/profile-72 << 'EOF'
+profile alfred-sandbox-72 /usr/local/bin/alfred-util-59 flags=(complain) {
+  #include <abstractions/base>
+  /usr/local/bin/alfred-util-59 rmix,
+  /dev/null rw,
+}
+EOF
+fi
+
+
+# --- BEGIN MERGED CONTENT FROM: 0910-alfred-behemoth.hook.chroot ---
+#!/bin/bash
+# 0910-alfred-behemoth.hook.chroot
+# The Behemoth Protocol: HAM Radio, Astronomy, Weather Station, Seismograph
+set +e
+
+echo "I: [alfred] configuring the Behemoth Protocol"
+
+export DEBIAN_FRONTEND=noninteractive
+apt-get update
+
+# 1. The Tower of Babel (HAM Radio Digital Modes)
+echo "I: Installing HAM Radio digital communications..."
+apt-get install -y --no-install-recommends fldigi wsjtx js8call direwolf || true
+
+mkdir -p /usr/share/applications
+cat > /usr/share/applications/alfred-ham.desktop <<'EOF'
+[Desktop Entry]
+Type=Application
+Name=Tower of Babel — HAM Radio Suite
+Exec=fldigi
+Icon=network-wireless
+Categories=Network;HamRadio;
+EOF
+
+# 2. The Firmament (Offline Astronomy & Celestial Navigation)
+echo "I: Installing the Celestial Navigation Engine..."
+apt-get install -y --no-install-recommends stellarium kstars || true
+
+# 3. The Weather Prophecy (Offline Weather Station)
+echo "I: Installing local atmospheric monitoring..."
+apt-get install -y --no-install-recommends weewx || true
+
+cat > /usr/local/bin/alfred-weather <<'EOF'
+#!/bin/bash
+echo "╔══════════════════════════════════════════════╗"
+echo "║   ALFRED LINUX — WEATHER PROPHECY ENGINE     ║"
+echo "╠══════════════════════════════════════════════╣"
+echo "║ Modules:                                     ║"
+echo "║  weewx       — Local weather station daemon  ║"
+echo "║  rtl_433     — Wireless sensor interception  ║"
+echo "║  gpredict    — Satellite weather imagery     ║"
+echo "╚══════════════════════════════════════════════╝"
+exec bash
+EOF
+[ -e "+x" ] && chmod +x /usr/local/bin/alfred-weather
+
+# 4. The Earthquake Prophet (Seismographic Monitoring)
+echo "I: Installing seismographic analysis tools..."
+apt-get install -y --no-install-recommends python3-obspy || true
+
+cat > /usr/local/bin/alfred-seismograph <<'EOF'
+#!/bin/bash
+echo "[Alfred AI] Ascending to Seismographic Analysis Engine..."
+python3 -c "
+import obspy
+print('[Alfred AI] ObsPy Seismological Toolkit loaded.')
+print('Access global earthquake data: from obspy.clients.fdsn import Client')
+print('Analyze waveforms: st = obspy.read(\"seismogram.mseed\")')
+" 2>/dev/null || echo "[Alfred] ObsPy available via: python3 -c 'import obspy'"
+exec bash
+EOF
+[ -e "+x" ] && chmod +x /usr/local/bin/alfred-seismograph
+
+cat > /usr/share/applications/alfred-seismograph.desktop <<'EOF'
+[Desktop Entry]
+Type=Application
+Name=Earthquake Prophet — Seismograph
+Exec=konsole -e /usr/local/bin/alfred-seismograph
+Icon=utilities-system-monitor
+Categories=Science;System;
+EOF
+
+echo "I: [alfred] The Behemoth Protocol has been successfully integrated."
+
+# --- END MERGED CONTENT FROM: 0910-alfred-behemoth.hook.chroot ---
+
+
+# --- BEGIN MERGED CONTENT FROM: 0910-alfred-watchers.hook.chroot ---
+#!/bin/bash
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+# 0910-alfred-watchers.hook.chroot
+# Phase 4: The Arsenal â€” Autonomous Threat Watchers
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+set +e
+echo "â•”â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•—"
+echo "â•‘  [0910] PHASE 4 â€” The Watchers (Threat Aggregator)        â•‘"
+echo "â•šâ•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•"
+
+apt-get install -y --no-install-recommends python3 python3-requests 2>/dev/null || true
+
+# â”€â”€ 1. Create the Watcher Python Daemon â”€â”€
+cat > /usr/local/bin/alfred-watcher.py << 'WATCHER'
+#!/usr/bin/env python3
+import time, os, re, json, requests
+
+# Threat Intel API (resolves locally via Hologram DNS)
+API_URL = "http://api.gositeme.com/api/threat-intel.php?action=report_threat"
+LOG_FILE = "/var/log/auth.log"
+STATE_FILE = "/var/lib/alfred-hologram/watcher.state"
+
+def report_threat(ip, user, reason):
+    payload = {
+        "title": f"Brute Force Attempt: {user}",
+        "description": reason,
+        "threat_type": "brute_force",
+        "severity": "high",
+        "source_ip": ip,
+        "attack_vector": "ssh",
+        "target_resource": "os_layer",
+        "source_type": "autonomous_watcher"
+    }
+    try:
+        r = requests.post(API_URL, json=payload, timeout=5)
+        print(f"[WATCHER] Threat logged: {ip} -> {r.status_code}")
+    except Exception as e:
+        print(f"[WATCHER] API Offline: {e}")
+
+def parse_logs():
+    if not os.path.exists(LOG_FILE): return
+    
+    last_pos = 0
+    if os.path.exists(STATE_FILE):
+        with open(STATE_FILE, "r") as sf:
+            last_pos = int(sf.read().strip())
+
+    current_size = os.path.getsize(LOG_FILE)
+    if current_size < last_pos: last_pos = 0  # Log rotated
+
+    with open(LOG_FILE, "r") as f:
+        f.seek(last_pos)
+        lines = f.readlines()
+        last_pos = f.tell()
+
+    with open(STATE_FILE, "w") as sf:
+        sf.write(str(last_pos))
+
+    # Regex for failed SSH attempts
+    fail_re = re.compile(r"Failed password for (invalid user )?(?P<user>\S+) from (?P<ip>\S+) port")
+    
+    for line in lines:
+        match = fail_re.search(line)
+        if match:
+            ip = match.group("ip")
+            user = match.group("user")
+            report_threat(ip, user, f"Detected continuous failed auth from {ip}")
+
+if __name__ == "__main__":
+    os.makedirs("/var/lib/alfred-hologram", exist_ok=True)
+    print("Alfred Linux Watcher Daemon Started.")
+    while True:
+        parse_logs()
+        time.sleep(5)
+WATCHER
+[ -e "+x" ] && chmod +x /usr/local/bin/alfred-watcher.py
+
+# â”€â”€ 2. Create systemd service â”€â”€
+cat > /etc/systemd/system/alfred-watcher.service << 'WSVC'
+[Unit]
+Description=Alfred Linux Autonomous Watcher
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/alfred-watcher.py
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
+WSVC
+
+systemctl enable alfred-watcher || true || true.service 2>/dev/null || true
+
+echo "â•”â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•—"
+echo "â•‘  [0910] Watcher Daemon â€” COMPLETE                         â•‘"
+echo "â•‘  âœ“ Python log parser installed                            â•‘"
+echo "â•‘  âœ“ Automated POST to Threat Intel API integrated          â•‘"
+echo "â•šâ•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•"
+
+# --- END MERGED CONTENT FROM: 0910-alfred-watchers.hook.chroot ---
+
+
+#!/bin/bash
+# 0910-alfred-behemoth.hook.chroot
+# The Behemoth Protocol: HAM Radio, Astronomy, Weather Station, Seismograph
+set +e
+
+echo "I: [alfred] configuring the Behemoth Protocol"
+
+export DEBIAN_FRONTEND=noninteractive
+apt-get update
+
+# 1. The Tower of Babel (HAM Radio Digital Modes)
+echo "I: Installing HAM Radio digital communications..."
+apt-get install -y --no-install-recommends fldigi wsjtx js8call direwolf || true
+
+mkdir -p /usr/share/applications
+cat > /usr/share/applications/alfred-ham.desktop <<'EOF'
+[Desktop Entry]
+Type=Application
+Name=Tower of Babel — HAM Radio Suite
+Exec=fldigi
+Icon=network-wireless
+Categories=Network;HamRadio;
+EOF
+
+# 2. The Firmament (Offline Astronomy & Celestial Navigation)
+echo "I: Installing the Celestial Navigation Engine..."
+apt-get install -y --no-install-recommends stellarium kstars || true
+
+# 3. The Weather Prophecy (Offline Weather Station)
+echo "I: Installing local atmospheric monitoring..."
+apt-get install -y --no-install-recommends weewx || true
+
+cat > /usr/local/bin/alfred-weather <<'EOF'
+#!/bin/bash
+echo "╔══════════════════════════════════════════════╗"
+echo "║   ALFRED LINUX — WEATHER PROPHECY ENGINE     ║"
+echo "╠══════════════════════════════════════════════╣"
+echo "║ Modules:                                     ║"
+echo "║  weewx       — Local weather station daemon  ║"
+echo "║  rtl_433     — Wireless sensor interception  ║"
+echo "║  gpredict    — Satellite weather imagery     ║"
+echo "╚══════════════════════════════════════════════╝"
+exec bash
+EOF
+chmod +x /usr/local/bin/alfred-weather
+
+# 4. The Earthquake Prophet (Seismographic Monitoring)
+echo "I: Installing seismographic analysis tools..."
+apt-get install -y --no-install-recommends python3-obspy || true
+
+cat > /usr/local/bin/alfred-seismograph <<'EOF'
+#!/bin/bash
+echo "[Alfred AI] Ascending to Seismographic Analysis Engine..."
+python3 -c "
+import obspy
+print('[Alfred AI] ObsPy Seismological Toolkit loaded.')
+print('Access global earthquake data: from obspy.clients.fdsn import Client')
+print('Analyze waveforms: st = obspy.read(\"seismogram.mseed\")')
+" 2>/dev/null || echo "[Alfred] ObsPy available via: python3 -c 'import obspy'"
+exec bash
+EOF
+chmod +x /usr/local/bin/alfred-seismograph
+
+cat > /usr/share/applications/alfred-seismograph.desktop <<'EOF'
+[Desktop Entry]
+Type=Application
+Name=Earthquake Prophet — Seismograph
+Exec=konsole -e /usr/local/bin/alfred-seismograph
+Icon=utilities-system-monitor
+Categories=Science;System;
+EOF
+
+echo "I: [alfred] The Behemoth Protocol has been successfully integrated."
+#!/bin/bash
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+# 0910-alfred-watchers.hook.chroot
+# Phase 4: The Arsenal â€” Autonomous Threat Watchers
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+set +e
+echo "â•”â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•—"
+echo "â•‘  [0910] PHASE 4 â€” The Watchers (Threat Aggregator)        â•‘"
+echo "â•šâ•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•"
+
+apt-get install -y --no-install-recommends python3 python3-requests 2>/dev/null || true
+
+# â”€â”€ 1. Create the Watcher Python Daemon â”€â”€
+cat > /usr/local/bin/alfred-watcher.py << 'WATCHER'
+#!/usr/bin/env python3
+import time, os, re, json, requests
+
+# Threat Intel API (resolves locally via Hologram DNS)
+API_URL = "http://api.gositeme.com/api/threat-intel.php?action=report_threat"
+LOG_FILE = "/var/log/auth.log"
+STATE_FILE = "/var/lib/alfred-hologram/watcher.state"
+
+def report_threat(ip, user, reason):
+    payload = {
+        "title": f"Brute Force Attempt: {user}",
+        "description": reason,
+        "threat_type": "brute_force",
+        "severity": "high",
+        "source_ip": ip,
+        "attack_vector": "ssh",
+        "target_resource": "os_layer",
+        "source_type": "autonomous_watcher"
+    }
+    try:
+        r = requests.post(API_URL, json=payload, timeout=5)
+        print(f"[WATCHER] Threat logged: {ip} -> {r.status_code}")
+    except Exception as e:
+        print(f"[WATCHER] API Offline: {e}")
+
+def parse_logs():
+    if not os.path.exists(LOG_FILE): return
+    
+    last_pos = 0
+    if os.path.exists(STATE_FILE):
+        with open(STATE_FILE, "r") as sf:
+            last_pos = int(sf.read().strip())
+
+    current_size = os.path.getsize(LOG_FILE)
+    if current_size < last_pos: last_pos = 0  # Log rotated
+
+    with open(LOG_FILE, "r") as f:
+        f.seek(last_pos)
+        lines = f.readlines()
+        last_pos = f.tell()
+
+    with open(STATE_FILE, "w") as sf:
+        sf.write(str(last_pos))
+
+    # Regex for failed SSH attempts
+    fail_re = re.compile(r"Failed password for (invalid user )?(?P<user>\S+) from (?P<ip>\S+) port")
+    
+    for line in lines:
+        match = fail_re.search(line)
+        if match:
+            ip = match.group("ip")
+            user = match.group("user")
+            report_threat(ip, user, f"Detected continuous failed auth from {ip}")
+
+if __name__ == "__main__":
+    os.makedirs("/var/lib/alfred-hologram", exist_ok=True)
+    print("Alfred Linux Watcher Daemon Started.")
+    while True:
+        parse_logs()
+        time.sleep(5)
+WATCHER
+chmod +x /usr/local/bin/alfred-watcher.py
+
+# â”€â”€ 2. Create systemd service â”€â”€
+cat > /etc/systemd/system/alfred-watcher.service << 'WSVC'
+[Unit]
+Description=Alfred Linux Autonomous Watcher
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/alfred-watcher.py
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
+WSVC
+
+systemctl enable alfred-watcher || true || true.service 2>/dev/null || true
+
+echo "â•”â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•—"
+echo "â•‘  [0910] Watcher Daemon â€” COMPLETE                         â•‘"
+echo "â•‘  âœ“ Python log parser installed                            â•‘"
+echo "â•‘  âœ“ Automated POST to Threat Intel API integrated          â•‘"
+echo "â•šâ•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•"

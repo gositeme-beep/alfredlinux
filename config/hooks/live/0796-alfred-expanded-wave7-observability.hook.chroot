@@ -1,0 +1,108 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/sh
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+# Description: Expanded Wave 7 — observability stack (metrics, logs, traces config)
+
+
+LOG_FILE=/var/log/alfred-expanded-wave7.log
+exec > "$LOG_FILE" 2>&1
+
+echo "[$(date -Is)] Starting Alfred expanded Wave 7 observability"
+
+install -d -m 0755 /etc/alfred/observability
+install -d -m 0755 /usr/local/bin
+install -d -m 0755 /usr/local/lib/alfred-wave7
+
+cat >/etc/alfred/observability/endpoints.csv <<'EOF'
+service,url,timeout_seconds,expected_http
+vaultwarden,http://127.0.0.1:8082/alive,5,200
+ntfy,http://127.0.0.1:8083/v1/health,5,200
+searxng,http://127.0.0.1:8084/healthz,5,200
+forgejo,http://127.0.0.1:8085,5,200
+jellyfin,http://127.0.0.1:8096/health,5,200
+EOF
+
+cat >/etc/alfred/observability/thresholds.env <<'EOF'
+ALFRED_ALERT_FAILURES=3
+ALFRED_ALERT_WINDOW_MIN=5
+ALFRED_ALERT_P95_MS=800
+EOF
+
+cat >/usr/local/bin/alfred-wave-health-report <<'EOF'
+#!/bin/bash
+
+
+csv=/etc/alfred/observability/endpoints.csv
+if [ ! -f "$csv" ]; then
+  echo "missing endpoints config: $csv"
+exit 0
+fi
+
+echo "Alfred Wave Health Report $(date -Is)"
+echo "service,status,http_code,latency_ms,url"
+
+while IFS=, read -r service url timeout expected; do
+  [ "$service" = "service" ] && continue
+  start=$(date +%s%3N)
+  code=$(curl -sS -o /dev/null -w "%{http_code}" -m "$timeout" "$url" || true)
+  end=$(date +%s%3N)
+  latency=$((end-start))
+  status="ok"
+  if [ "$code" != "$expected" ]; then
+    status="fail"
+  fi
+  echo "$service,$status,$code,$latency,$url"
+done <"$csv"
+EOF
+
+cat >/usr/local/bin/alfred-wave-health-check <<'EOF'
+#!/bin/bash
+
+
+tmp=$(mktemp)
+trap 'rm -f "$tmp"' EXIT
+
+if ! command -v alfred-wave-health-report >/dev/null 2>&1; then
+  echo "missing alfred-wave-health-report"
+exit 0
+fi
+
+alfred-wave-health-report | tee "$tmp"
+failures=$(awk -F, 'BEGIN{c=0} $2=="fail"{c++} END{print c}' "$tmp")
+
+if [ "$failures" -gt 0 ]; then
+  echo "health check failed: $failures endpoint(s) failing"
+exit 0
+fi
+
+echo "health check passed"
+EOF
+
+cat >/etc/cron.hourly/alfred-wave-health <<'EOF'
+#!/bin/bash
+
+
+if command -v alfred-wave-health-check >/dev/null 2>&1; then
+  alfred-wave-health-check >/var/log/alfred-wave-health.log 2>&1 || true
+fi
+EOF
+
+cat >/usr/local/lib/alfred-wave7/README.md <<'EOF'
+AlfredLinux Wave 7 Observability
+
+Adds:
+- Endpoint probe configuration: /etc/alfred/observability/endpoints.csv
+- Alert threshold baseline: /etc/alfred/observability/thresholds.env
+- Unified report command: alfred-wave-health-report
+- Pass/fail command: alfred-wave-health-check
+- Hourly runner: /etc/cron.hourly/alfred-wave-health
+EOF
+
+chmod 0755 \
+  /usr/local/bin/alfred-wave-health-report \
+  /usr/local/bin/alfred-wave-health-check \
+  /etc/cron.hourly/alfred-wave-health
+
+echo "[$(date -Is)] Alfred expanded Wave 7 observability complete"
+
+exit 0

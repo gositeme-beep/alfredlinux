@@ -1,0 +1,45 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+echo "================================================="
+echo "==== ALFRED PROPHET (Offline RAG Oracle) ========"
+echo "================================================="
+
+export DEBIAN_FRONTEND=noninteractive
+
+if [ -f /build-assets/meilisearch ]; then
+    cp /build-assets/meilisearch /usr/local/bin/ || true
+    chmod +x /usr/local/bin/meilisearch || true
+
+    cat << 'EOF' > /etc/systemd/system/meilisearch.service
+[Unit]
+Description=Meilisearch Prophet RAG Node
+After=network.target
+
+[Service]
+ExecStart=/usr/local/bin/meilisearch --env production
+Restart=on-failure
+User=gositeme
+
+[Install]
+WantedBy=multi-user.target
+EOF
+    systemctl enable meilisearch || true || true.service || true
+    
+    # Auto-index the bible directory on boot if not indexed
+    cat << 'EOF' > /usr/local/bin/prophet-index.sh
+#!/bin/bash
+sleep 10
+if [ -d /build-assets/bible ]; then
+    # Pseudo-code for adding texts to meilisearch
+    curl -m 900 -X POST 'http://127.0.0.1:7700/indexes/bible/documents' \
+      -H 'Content-Type: application/json' \
+      --data-binary @/build-assets/bible/index.json || true
+fi
+EOF
+    chmod +x /usr/local/bin/prophet-index.sh || true
+fi
+
+exit 0

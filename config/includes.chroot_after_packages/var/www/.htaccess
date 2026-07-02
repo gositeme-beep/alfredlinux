@@ -1,0 +1,548 @@
+# GoSiteMe.com - Enhanced Security Configuration
+# Last Updated: 2026-03-04
+
+# ============================================
+# MIME TYPES
+# ============================================
+<IfModule mod_mime.c>
+    AddType application/wasm .wasm
+</IfModule>
+
+# ============================================
+# ENVIRONMENT VARIABLES — MOVED TO SECURE LOCATION
+# ============================================
+# All secrets migrated to /home/gositeme/domains/gositeme.com/.env.php (above web root, mode 0600)
+# Loaded via db-config.inc.php → .env.php on every request
+# SetEnv directives removed 2026-03-12 — secrets no longer exposed in .htaccess
+
+# ============================================
+# SECURITY HEADERS
+# ============================================
+<IfModule mod_headers.c>
+    # HSTS - Enforce HTTPS
+    Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+    
+    # Prevent MIME type sniffing
+    Header set X-Content-Type-Options "nosniff"
+    
+    # Prevent clickjacking
+    Header set X-Frame-Options "SAMEORIGIN"
+    
+    # Enable XSS filtering
+    Header set X-XSS-Protection "1; mode=block"
+    
+    # Referrer policy
+    Header set Referrer-Policy "strict-origin-when-cross-origin"
+    
+    # Permissions policy — camera allowed for self (speed-dating), geolocation off
+    Header set Permissions-Policy "geolocation=(), camera=(self)"
+    
+    # Alfred IDE CSP exemption — code-server needs unsafe-eval, blob:, ws: etc.
+    SetEnvIf Request_URI "^/alfred-ide(/|$)" ALFRED_IDE
+    RequestHeader set Host "gositeme.com" env=ALFRED_IDE
+    RequestHeader set X-Forwarded-Host "gositeme.com" env=ALFRED_IDE
+    RequestHeader set X-Forwarded-Proto "https" env=ALFRED_IDE
+    RequestHeader set X-Forwarded-Port "443" env=ALFRED_IDE
+    RequestHeader set X-Forwarded-Prefix "/alfred-ide" env=ALFRED_IDE
+    
+    # Content Security Policy — Sovereignty Mode (all assets self-hosted)
+    # Only external domains kept: Google OAuth, Facebook OAuth, Stripe payments
+    Header set Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://connect.facebook.net https://accounts.google.com https://apis.google.com https://js.stripe.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://accounts.google.com https://fonts.googleapis.com https://cdn.jsdelivr.net; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' wss://gositeme.com wss://gositeme.com:6090 https://gositeme.com https://accounts.google.com https://graph.facebook.com https://api.stripe.com; frame-src 'self' https://accounts.google.com https://www.facebook.com https://js.stripe.com; frame-ancestors 'self'; base-uri 'self'; form-action 'self' https://gositeme.com https://checkout.stripe.com" env=!ALFRED_IDE
+    
+    # Alfred IDE CSP — permissive for code-server workbench
+    Header set Content-Security-Policy "default-src 'self' 'unsafe-inline' 'unsafe-eval'; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob:; worker-src 'self' blob:; style-src 'self' 'unsafe-inline'; font-src 'self' data: blob: https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' ws: wss: https:; child-src 'self' blob:; frame-src 'self' blob: https:; frame-ancestors 'self'; base-uri 'self'; form-action 'self' https://gositeme.com" env=ALFRED_IDE
+    
+    # Cache control for static assets
+    <FilesMatch "\.(ico|pdf|flv|jpg|jpeg|png|gif|webp|svg|js|css|woff|woff2)$">
+        Header set Cache-Control "public, max-age=31536000, immutable"
+    </FilesMatch>
+    
+    # No cache for HTML and PHP
+    <FilesMatch "\.(html|php)$">
+        Header set Cache-Control "no-cache, no-store, must-revalidate"
+        Header set Pragma "no-cache"
+        Header set Expires "0"
+    </FilesMatch>
+</IfModule>
+
+# Allow microphone on voice.php and alfred-voice-live
+<Files "voice.php">
+    <IfModule mod_headers.c>
+        Header set Permissions-Policy "microphone=(*), camera=()"
+    </IfModule>
+</Files>
+<FilesMatch "alfred-voice-live">
+    <IfModule mod_headers.c>
+        Header set Permissions-Policy "microphone=(*), camera=()"
+    </IfModule>
+</FilesMatch>
+
+# ============================================
+# REQUEST SIZE LIMITS — Block oversized payloads
+# ============================================
+LimitRequestBody 2097152
+# 2MB max request body (protects against buffer floods)
+# File uploads handled separately via PHP post_max_size
+
+# ============================================
+# HTTPS ENFORCEMENT
+# ============================================
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteBase /
+
+    # Block direct access to hidden files and VCS metadata (except ACME challenge)
+    RewriteRule (^|/)\.(?!well-known/) - [F,L]
+    
+    # Redirect old voice URL to alfred-voice-live
+    RewriteRule ^voice\.php$ /alfred-voice-live/ [R=301,L]
+    
+    # WebSocket Proxies (High Priority)
+    # --------------------------------
+    
+    # noVNC WebSocket proxy → port 6090
+    RewriteCond %{HTTP:Upgrade} websocket [NC]
+    RewriteCond %{HTTP:Connection} upgrade [NC]
+    RewriteRule ^novnc-ws/?(.*)$ ws://127.0.0.1:6090/$1 [P,L]
+    # Alfred ISO Test VM WebSocket proxy → port 6091
+    RewriteCond %{HTTP:Upgrade} websocket [NC]
+    RewriteCond %{HTTP:Connection} upgrade [NC]
+    RewriteRule ^iso-test-ws/?(.*)$ ws://127.0.0.1:6091/$1 [P,L]
+    # /websockify/ direct WS proxy → port 6090 (compatibility)
+    RewriteCond %{HTTP:Upgrade} websocket [NC]
+    RewriteRule ^websockify/?(.*)$ ws://127.0.0.1:6090/$1 [P,L]
+    RewriteCond %{HTTP:Upgrade} !=websocket [NC]
+    RewriteRule ^websockify/?$ /novnc_test/ [R=302,L]
+
+    # Commander Terminal WebSocket proxy → port 3022
+    RewriteCond %{HTTP:Upgrade} websocket [NC]
+    RewriteCond %{HTTP:Connection} upgrade [NC]
+    RewriteRule ^ws-terminal/?(.*)$ ws://127.0.0.1:3022/$1 [P,L]
+
+    # noVNC static files proxy → port 6080 (fallback for non-WS)
+# /novnc/ served as static files (no proxy)
+    
+    # GoHostMe: /gohostme without slash → add trailing slash
+    RewriteRule ^gohostme$ /gohostme/ [R=301,L]
+    
+    # Hosting admin shortcuts (ops convenience)
+    RewriteRule ^hosting-admin/?$ /pay/account/ [R=302,L]
+    RewriteRule ^hosting-dashboard/?$ /pay/account/ [R=302,L]
+
+    # Discord billing page
+    RewriteRule ^discord-billing$ /discord-billing.php [QSA,L]
+    
+    # Livestream control panel
+    RewriteRule ^livestream$ /livestream-control.php [QSA,L]
+    
+    # TikTok integration
+    RewriteRule ^tiktok-integration$ /tiktok-integration.php [QSA,L]
+    RewriteRule ^tiktok-callback$ /tiktok-integration.php?action=callback [QSA,L]
+
+    # Privacy policy — serve PHP directly (prevents DirectorySlash 301)
+    RewriteRule ^privacy-policy$ /privacy-policy.php [QSA,L]
+
+    # Military HQ
+    RewriteRule ^military-hq$ /military-hq.php [QSA,L]
+
+    # Veil / Black Vault — extensionless PHP
+    RewriteRule ^veil/black-vault$ /veil/black-vault.php [QSA,L]
+    RewriteRule ^veil/project-genesis$ /veil/project-genesis.php [QSA,L]
+
+    # Alfred updates / articles
+    RewriteRule ^alfred-updates$ /alfred-updates.php [QSA,L]
+    RewriteRule ^alfred-updates/([a-z0-9-]+)$ /alfred-updates.php?article=$1 [QSA,L]
+
+    # AKJV Bible — mission dashboard + reader + prophecies
+    RewriteRule ^bible$ /bible.php [QSA,L]
+    RewriteRule ^bible/prophecies$ /bible-prophecies.php [QSA,L]
+    RewriteRule ^bible/read$ /bible-read.php [QSA,L]
+    RewriteRule ^bible/read/(.+)$ /bible-read.php [QSA,L]
+
+    # Redirect HTTP to HTTPS (except for Let's Encrypt validation)
+    RewriteCond %{HTTPS} off
+    RewriteCond %{REQUEST_URI} !^/?\.well-known/acme-challenge/
+    RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+</IfModule>
+# ============================================
+# VOICE WEBSOCKET PROXY
+# Route wss://gositeme.com/voice-ws to WS server on port 3010
+# ============================================
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteBase /
+
+    # Voice WebSocket proxy → port 3010 (same WS server as general /ws)
+
+    # Voice WebSocket proxy → port 3010 (same WS server as general /ws)
+    RewriteCond %{HTTP:Upgrade} websocket [NC]
+    RewriteCond %{HTTP:Connection} upgrade [NC]
+    RewriteRule ^voice-ws$ ws://127.0.0.1:3010/voice-ws [P,L]
+
+    # Alfred WebSocket proxy — multiplayer presence for VR games (port 3010)
+    RewriteCond %{HTTP:Upgrade} websocket [NC]
+    RewriteCond %{HTTP:Connection} upgrade [NC]
+    RewriteRule ^ws/?(.*)$ ws://127.0.0.1:3010/$1 [P,L]
+
+        # Alfred IDE — canonicalize bare path so the scoped auth cookie is sent
+            # Canonical extension-less URL: /alfred-ide-dashboard → alfred-ide-dashboard.php
+    RewriteRule ^alfred-ide-dashboard/?$ /alfred-ide-dashboard.php [L]
+    RewriteRule ^alfred-ide$ /alfred-ide/ [R=302,L]
+
+    # Alfred IDE — no scoped IDE cookie → IDE auth (PIN + token). Not /login alone:
+    # logged-in billing users were bounced to /account and never received alfred_ide_token.
+    RewriteCond %{REQUEST_URI} ^/alfred-ide(/|$) [NC]
+    RewriteCond %{REQUEST_URI} !^/alfred-ide-auth [NC]
+    RewriteCond %{REQUEST_URI} !^/alfred-ide-gate [NC]
+    RewriteCond %{HTTP_COOKIE} !alfred_ide_token= [NC]
+    RewriteRule ^alfred-ide(/.*)?$ /alfred-ide-auth.php [R=302,L]
+
+    # Alfred IDE — mobile devices with valid cookie → mobile chat interface
+    RewriteCond %{REQUEST_URI} ^/alfred-ide(/|$) [NC]
+    RewriteCond %{HTTP_COOKIE} alfred_ide_token= [NC]
+    RewriteCond %{HTTP_USER_AGENT} (Android|iPhone|iPad|iPod|Mobile|webOS) [NC]
+    RewriteCond %{QUERY_STRING} !desktop=1
+    RewriteRule ^alfred-ide(/.*)?$ /alfred-ide-mobile.php [R=302,L]
+
+    # Alfred IDE (code-server) proxy → port 8443 (localhost only)
+    # WebSocket upgrade — cookie existence verified above, proxy to code-server
+    RewriteCond %{HTTP:Upgrade} websocket [NC]
+    RewriteCond %{HTTP:Connection} upgrade [NC]
+    RewriteRule ^alfred-ide/?$ ws://127.0.0.1:8443/ [P,L]
+
+    RewriteCond %{HTTP:Upgrade} websocket [NC]
+    RewriteCond %{HTTP:Connection} upgrade [NC]
+    RewriteRule ^alfred-ide/(.*)$ ws://127.0.0.1:8443/$1 [P,L]
+    # HTTP requests: validate token in PHP gate (DB check), then gate proxies to code-server
+    RewriteCond %{REQUEST_URI} !^/alfred-ide-auth [NC]
+    RewriteCond %{REQUEST_URI} !^/alfred-ide-gate [NC]
+    RewriteRule ^alfred-ide/?$ /alfred-ide-gate.php [QSA,L]
+    RewriteRule ^alfred-ide/(.*)$ /alfred-ide-gate.php?__path=$1 [QSA,L]
+
+    # LiveKit WebSocket proxy → port 7880 (conference room signaling)
+    RewriteCond %{HTTP:Upgrade} websocket [NC]
+    RewriteCond %{HTTP:Connection} upgrade [NC]
+    RewriteRule ^livekit-ws/?(.*)$ ws://127.0.0.1:7880/$1 [P,L]
+</IfModule>
+
+# ============================================
+# GOCODEME MIDDLEWARE PROXY
+# Route /middleware/* to Node.js middleware on port 3001
+# ============================================
+# NOTE: /middleware/ directory exists with proxy.php (PHP curl-based reverse proxy)
+# which handles all HTTP requests. mod_proxy_http is not available (DirectAdmin).
+# WebSocket upgrade attempts fail gracefully — socket.io falls back to polling.
+# The /middleware/.htaccess routes all requests to proxy.php.
+# ============================================
+
+# ============================================
+# RATE LIMITING & DDoS PROTECTION
+# ============================================
+# DISABLED 2026-05-25 — mod_evasive20 causes 500 errors (directives not allowed in .htaccess context)
+# <IfModule mod_evasive20.c>
+#     DOSHashTableSize 3097
+#     DOSPageCount 10000
+#     DOSSiteCount 50000
+#     DOSPageInterval 1
+#     DOSSiteInterval 1
+#     DOSBlockingPeriod 10
+# </IfModule>
+
+# ============================================
+# SECURITY - BLOCK SENSITIVE FILES
+# ============================================
+<FilesMatch "^(\.htaccess|\.env|\.git|composer\.(json|lock)|web\.config|\.DS_Store)$">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# Block .env.php from ever being served (secrets file)
+<Files ".env.php">
+    Order allow,deny
+    Deny from all
+</Files>
+
+# Block Redis dumps and database files
+<FilesMatch "\.(rdb|sql|sqlite|db)$">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# ============================================
+# WAF - WEB APPLICATION FIREWALL
+# ============================================
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteBase /
+    
+    # SQL INJECTION PATTERNS
+    # Block common SQL injection attempts
+    RewriteCond %{QUERY_STRING} (\||%7C) [NC,OR]
+    RewriteCond %{QUERY_STRING} (&#x27;)|(&#39;)|(%27) [NC,OR]
+    RewriteCond %{QUERY_STRING} (--|%2D%2D) [NC,OR]
+    RewriteCond %{QUERY_STRING} (#|%23) [NC,OR]
+    RewriteCond %{QUERY_STRING} (;|%3B)(\s|%20)*(union|select|insert|update|delete|drop|create) [NC,OR]
+    RewriteCond %{QUERY_STRING} (\b(and|or)\b)(\s|%20)+(1|0)(\s|%20)*= [NC,OR]
+    RewriteCond %{QUERY_STRING} (\bor\b)(\s|%20)+(\d+)(\s|%20)*= [NC,OR]
+    RewriteCond %{QUERY_STRING} (\d+)(\s|%20)+(and|or)(\s|%20)+(\d+) [NC,OR]
+    RewriteCond %{QUERY_STRING} (union.*select|select.*from|insert.*into|delete.*from|drop.*table) [NC]
+    RewriteRule ^.*$ - [F,L]
+    
+    # Directory traversal attempts
+    RewriteCond %{REQUEST_URI} \.\.|\.\./ [NC]
+    RewriteRule ^.*$ - [F,L]
+    
+    # Cross-Site Scripting (XSS) patterns in query string
+    RewriteCond %{QUERY_STRING} (<|%3C).*?(script|img|svg|iframe|object|embed) [NC,OR]
+    RewriteCond %{QUERY_STRING} (javascript|onerror|onload|onclick):.*\( [NC,OR]
+    RewriteCond %{QUERY_STRING} (%3Cscript|%3CSCRIPT) [NC]
+    RewriteRule ^.*$ - [F,L]
+    
+    # Remote Code Execution attempts
+    RewriteCond %{QUERY_STRING} (cmd|exec|system|passthru|system|proc_open|popen|shell_exec)\s*\( [NC,OR]
+    RewriteCond %{QUERY_STRING} (\$_(GET|POST|REQUEST|COOKIE)) [NC]
+    RewriteRule ^.*$ - [F,L]
+    
+    # Null byte injection
+    RewriteCond %{REQUEST_URI} %00 [NC]
+    RewriteRule ^.*$ - [F,L]
+</IfModule>
+
+# ============================================
+# BLOCK DIRECTORIES FROM WEB ACCESS
+# ============================================
+<IfModule mod_rewrite.c>
+    # Block sensitive source/config directories from direct web access
+    RewriteRule ^gocodeme/(middleware|mcp-server|theia-fork|openhands-fork|scripts|openclaw)/ - [F,L]
+    RewriteRule ^gocodeme-editor/\.git/ - [F,L]
+    RewriteRule ^\.git/ - [F,L]
+    RewriteRule ^(config|includes|logs|cache)/ - [F,L]
+    RewriteRule ^pay/(includes|vendor)/ - [F,L]
+    RewriteRule ^editor/(includes|install|storage)/ - [F,L]
+    RewriteRule ^gocodeme/logs/ - [F,L]
+    RewriteRule ^gocodeme/middleware/\.env - [F,L]
+    RewriteRule ^gocodeme/middleware/src/ - [F,L]
+    RewriteRule ^gocodeme/middleware/node_modules/ - [F,L]
+    # Block ALL sensitive files in gocodeme root (docker-compose.env, .yml, .md, .sh, etc.)
+    RewriteRule ^gocodeme/[^/]+\.(env|yml|yaml|md|sh|conf|cfg|bak|sql|log)$ - [F,L]
+    RewriteRule ^gocodeme/docker-compose - [F,L]
+    RewriteRule ^gocodeme/dump\.rdb - [F,L]
+    RewriteRule ^gocodeme/\.env - [F,L]
+    # Block all .env files anywhere
+    RewriteRule \.env$ - [F,L]
+</IfModule>
+
+# ============================================
+# COMPRESSION & PERFORMANCE
+# ============================================
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/html text/plain text/xml text/css text/javascript application/javascript application/json application/xml image/svg+xml
+</IfModule>
+
+# Disable ETags (entity tags) — rely on Cache-Control / Expires instead
+<IfModule mod_headers.c>
+    Header unset ETag
+</IfModule>
+FileETag None
+
+# Keep-Alive for persistent connections
+<IfModule mod_headers.c>
+    Header set Connection keep-alive
+    # Remove server info leaks
+    Header always unset X-Powered-By
+    Header always unset Server
+</IfModule>
+
+# ============================================
+# CACHING - STATIC ASSETS
+# ============================================
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresByType image/jpg "access plus 1 year"
+    ExpiresByType image/jpeg "access plus 1 year"
+    ExpiresByType image/gif "access plus 1 year"
+    ExpiresByType image/png "access plus 1 year"
+    ExpiresByType image/webp "access plus 1 year"
+    ExpiresByType image/svg+xml "access plus 1 year"
+    ExpiresByType image/x-icon "access plus 1 year"
+    ExpiresByType text/css "access plus 1 month"
+    ExpiresByType application/javascript "access plus 1 month"
+    ExpiresByType font/woff "access plus 1 year"
+    ExpiresByType font/woff2 "access plus 1 year"
+    ExpiresByType application/wasm "access plus 1 year"
+    ExpiresByType application/json "access plus 1 hour"
+    ExpiresByType application/manifest+json "access plus 1 day"
+    ExpiresByType text/xml "access plus 1 hour"
+</IfModule>
+
+# ============================================
+# ERROR HANDLING
+# ============================================
+ErrorDocument 404 /404.php
+
+DirectoryIndex index.php index.html
+
+# ============================================
+# URL ROUTING & REWRITES
+# ============================================
+# Disable DirectorySlash for pages that have both a .php file and directory
+<IfModule mod_dir.c>
+    DirectorySlash Off
+</IfModule>
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteBase /
+    
+    # Direct rewrite: /gocodeme → gocodeme.php (must be before directory slash rule)
+    RewriteRule ^gocodeme$ /gocodeme.php [QSA,L]
+    
+    # Re-add trailing slash for directories that need it (except sdks)
+    RewriteCond %{REQUEST_FILENAME} -d
+    RewriteCond %{REQUEST_URI} !^/sdks
+    RewriteCond %{REQUEST_URI} !/$
+    RewriteRule ^(.+)$ /$1/ [R=301,L]
+    
+    # Pages that conflict with directories — must be FIRST
+    RewriteRule ^gocodeme/$ /gocodeme.php [QSA,L]
+    RewriteRule ^sdks$ /sdks.php [QSA,L]
+    RewriteRule ^sdks/$ /sdks.php [QSA,L]
+    RewriteRule ^integrations$ /integrations.php [QSA,L]
+    RewriteRule ^integrations/$ /integrations.php [QSA,L]
+    RewriteRule ^domains$ /pay/domains.php [QSA,L]
+    RewriteRule ^domains/$ /pay/domains.php [QSA,L]
+    
+    # ── Billing Portal Clean URLs ────────────────────────────────────────────
+    # Professional clean URLs that route to /pay/ billing portal.
+    
+    # Authentication
+    RewriteRule ^login/?$ /pay/login.php [QSA,L]
+    RewriteRule ^account/login/?$ /pay/login.php [QSA,L]
+    RewriteRule ^register/?$ /pay/register.php [QSA,L]
+    RewriteRule ^account/register/?$ /pay/register.php [QSA,L]
+    RewriteRule ^account/forgot-password/?$ /pay/forgot-password.php [QSA,L]
+    RewriteRule ^forgot-password/?$ /pay/forgot-password.php [QSA,L]
+    RewriteRule ^account/?$ /pay/index.php [QSA,L]
+    RewriteRule ^logout/?$ /pay/logout.php [QSA,L]
+    
+    # Shopping & orders
+    RewriteRule ^cart/?$ /pay/cart.php [QSA,L]
+    RewriteRule ^store/?$ /pay/store.php [QSA,L]
+    RewriteRule ^store/(.+)$ /pay/store.php?group=$1 [QSA,L]
+    
+    # Services & domains — consolidated into dashboard
+    RewriteRule ^services/?$ /dashboard#services [R=301,NE,L]
+    RewriteRule ^account/service/?$ /pay/account/service.php [QSA,L]
+    RewriteRule ^account/cancel-service/?$ /pay/account/cancel-service.php [QSA,L]
+    RewriteRule ^account/logins/?$ /pay/account/logins.php [QSA,L]
+    RewriteRule ^domains/?$ /pay/domains.php [QSA,L]
+    RewriteRule ^account/domain/([0-9]+)/?$ /pay/account/domain.php?id=$1 [QSA,L]
+    RewriteRule ^register-domain/?$ /pay/domain-register.php [QSA,L]
+    RewriteRule ^domain-search/?$ /pay/domain-register.php [QSA,L]
+    
+    # Hosting management (DA clone)
+    RewriteRule ^account/email/?$ /pay/account/email.php [QSA,L]
+    RewriteRule ^account/dns/?$ /pay/account/dns.php [QSA,L]
+    RewriteRule ^account/databases/?$ /pay/account/databases.php [QSA,L]
+    RewriteRule ^account/ftp/?$ /pay/account/ftp.php [QSA,L]
+    RewriteRule ^account/subdomains/?$ /pay/account/subdomains.php [QSA,L]
+    RewriteRule ^account/ssl/?$ /pay/account/ssl.php [QSA,L]
+    RewriteRule ^account/cron/?$ /pay/account/cron.php [QSA,L]
+    RewriteRule ^account/files/?$ /pay/account/files.php [QSA,L]
+    RewriteRule ^account/addon-domains/?$ /pay/account/addon-domains.php [QSA,L]
+    RewriteRule ^account/domain-pointers/?$ /pay/account/domain-pointers.php [QSA,L]
+    RewriteRule ^account/redirects/?$ /pay/account/redirects.php [QSA,L]
+    RewriteRule ^account/backups/?$ /pay/account/backups.php [QSA,L]
+    RewriteRule ^account/stats/?$ /pay/account/stats.php [QSA,L]
+    RewriteRule ^account/apps/?$ /pay/account/apps.php [QSA,L]
+    RewriteRule ^account/onboarding/?$ /pay/account/onboarding.php [QSA,L]
+    RewriteRule ^account/support-chat/?$ /pay/account/support-chat.php [QSA,L]
+    RewriteRule ^account/agents/?$ /pay/account/agents.php [QSA,L]
+    RewriteRule ^account/email-health/?$ /pay/account/email-health.php [QSA,L]
+    RewriteRule ^account/uptime/?$ /pay/account/uptime.php [QSA,L]
+    RewriteRule ^account/site-doctor/?$ /pay/account/site-doctor.php [QSA,L]
+    RewriteRule ^account/staging/?$ /pay/account/staging.php [QSA,L]
+    RewriteRule ^account/webhooks/?$ /pay/account/webhooks.php [QSA,L]
+    RewriteRule ^account/autopilot/?$ /pay/account/autopilot.php [QSA,L]
+    RewriteRule ^account/reseller/?$ /pay/account/reseller.php [QSA,L]
+    RewriteRule ^account/voice-hosting/?$ /pay/account/voice-hosting.php [QSA,L]
+    RewriteRule ^account/contacts/?$ /pay/account/contacts.php [QSA,L]
+    RewriteRule ^account/voice-games/?$ /pay/account/voice-games.php [QSA,L]
+    RewriteRule ^account/alfred-report/?$ /pay/account/alfred-report.php [QSA,L]
+    RewriteRule ^account/website-editor/?$ /pay/account/website-editor.php [QSA,L]
+    RewriteRule ^account/website-builder/?$ /pay/account/website-builder.php [QSA,L]
+    RewriteRule ^account/vr-world/?$ /pay/account/vr-world.php [QSA,L]
+    RewriteRule ^account/marketplace/?$ /pay/account/marketplace.php [QSA,L]
+    RewriteRule ^account/image-generator/?$ /pay/account/image-generator.php [QSA,L]
+    RewriteRule ^account/analytics/?$ /pay/account/analytics.php [QSA,L]
+    RewriteRule ^account/affiliates/?$ /pay/account/affiliates.php [QSA,L]
+    RewriteRule ^account/deploy/?$ /pay/account/deploy.php [QSA,L]
+    RewriteRule ^account/collab/?$ /pay/account/collab.php [QSA,L]
+    RewriteRule ^account/crypto/?$ /pay/account/crypto.php [QSA,L]
+    RewriteRule ^account/gsm-token/?$ /pay/account/gsm-token.php [QSA,L]
+    RewriteRule ^account/api-docs/?$ /pay/account/api-docs.php [QSA,L]
+    RewriteRule ^account/tech-support/?$ /pay/account/tech-support.php [QSA,L]
+    RewriteRule ^account/crypto-reports/?$ /pay/account/crypto-reports.php [QSA,L]
+    RewriteRule ^account/gsm-marketplace/?$ /pay/account/gsm-marketplace.php [QSA,L]
+    RewriteRule ^account/knowledge-base/?$ /pay/account/knowledge-base.php [QSA,L]
+    RewriteRule ^account/whitelabel/?$ /pay/account/whitelabel.php [QSA,L]
+    RewriteRule ^account/backups/?$ /pay/account/backups.php [QSA,L]
+    RewriteRule ^account/admin/?$ /pay/account/admin.php [QSA,L]
+    
+    # Invoices & billing
+    RewriteRule ^invoices/?$ /pay/invoices.php [QSA,L]
+    RewriteRule ^view-invoice/?$ /pay/invoices.php [QSA,L]
+    RewriteRule ^account/invoice/([0-9]+)/?$ /pay/account/invoice.php?id=$1 [QSA,L]
+    RewriteRule ^account/invoice-pdf/([0-9]+)/?$ /pay/account/invoice-pdf.php?id=$1 [QSA,L]
+    RewriteRule ^account/upgrade/?$ /pay/upgrade.php [QSA,L]
+    
+    # Support & contact
+    RewriteRule ^contact/?$ /contact.php [QSA,L]
+    RewriteRule ^blog/?$ /blog.php [QSA,L]
+    RewriteRule ^support/?$ /pay/tickets.php [QSA,L]
+    RewriteRule ^tickets/?$ /pay/tickets.php [QSA,L]
+    RewriteRule ^submit-ticket/?$ /pay/tickets.php?action=new [QSA,L]
+    RewriteRule ^support-tickets/?$ /pay/tickets.php [QSA,L]
+    
+    # Account management
+    RewriteRule ^profile/?$ /pay/profile.php [QSA,L]
+    
+    # Content & resources
+    RewriteRule ^knowledgebase/?$ /pay/knowledgebase.php [QSA,L]
+    RewriteRule ^knowledgebase/(.+)$ /pay/knowledgebase.php?slug=$1 [QSA,L]
+    RewriteRule ^announcements/?$ /pay/announcements.php [QSA,L]
+    RewriteRule ^announcements/(.+)$ /pay/announcements.php?id=$1 [QSA,L]
+    
+    # Affiliates
+    RewriteRule ^affiliates/?$ /pay/affiliates.php [QSA,L]
+    # ─────────────────────────────────────────────────────────────────────────
+    
+    # Skip rewriting for actual files and directories
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    
+    # Redirect old privacy policy URL to canonical
+    RewriteRule ^privacy-policy\.php$ /privacy-policy/ [R=301,L]
+    
+    # Dashboard routing (skip if in /middleware/ - that's handled by middleware/.htaccess)
+    RewriteCond %{REQUEST_URI} !^/middleware/
+    RewriteRule ^dashboard/?$ /dashboard.php [QSA,L]
+    
+    # API endpoints
+    RewriteRule ^api/(.*)$ /api/$1 [QSA,L]
+    
+    # Clean URLs — serve .php files without extension
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{REQUEST_FILENAME}.php -f
+    RewriteRule ^(.+)$ $1.php [QSA,L]
+</IfModule>
+
+# == BEGIN forge-shortcut ==
+RewriteRule ^forge/?$ /forge.php [L]
+# == END forge-shortcut ==
+# EMERGENCY_DDOS_BLOCK_SECURITY_UNLOCK
+# Allow page access, but block unlock form abuse via POST floods
+RewriteCond %{REQUEST_URI} ^/security-unlock(\.php)?$ [NC]
+RewriteCond %{REQUEST_METHOD} POST [NC]
+RewriteRule ^ - [F,L]

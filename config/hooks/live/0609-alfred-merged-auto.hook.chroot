@@ -1,0 +1,62 @@
+#!/bin/bash
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+echo "================================================="
+echo "==== ALFRED PILLAR (Transparent Proxy) =========="
+echo "================================================="
+
+export DEBIAN_FRONTEND=noninteractive
+apt-get update
+apt-get install -y tor privoxy || true
+
+cat << 'EOF' >> /etc/privoxy/config
+forward-socks5t / 127.0.0.1:9050 .
+EOF
+
+cat << 'EOF' > /etc/apt/apt.conf.d/99tor
+Acquire::http::Proxy "http://127.0.0.1:8118";
+EOF
+
+systemctl enable tor || true || true privoxy
+echo "APT updates now routed through Tor (Pillar of Fire)."
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+# [Genesis Forge] Systemd Hardening: alfred-daemon-135.service
+# Enforces deep PrivateTmp, ProtectSystem, and ProtectHome on native daemons.
+echo "[Genesis Forge] Hardening systemd service: alfred-daemon-135.service"
+mkdir -p /etc/systemd/system/alfred-daemon-135.service.d/ || true
+cat > /etc/systemd/system/alfred-daemon-135.service.d/override.conf << 'EOF'
+[Service]
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=read-only
+NoNewPrivileges=yes
+RestrictRealtime=yes
+EOF
+
+
+# --- BEGIN MERGED CONTENT FROM: 0609-alfred-pillar-proxy.hook.chroot ---
+#!/bin/bash
+set +e
+echo "================================================="
+echo "==== ALFRED PILLAR (Transparent Proxy) =========="
+echo "================================================="
+
+export DEBIAN_FRONTEND=noninteractive
+apt-get update
+apt-get install -y tor privoxy || true
+
+cat << 'EOF' >> /etc/privoxy/config
+forward-socks5t / 127.0.0.1:9050 .
+EOF
+
+
+systemctl enable tor || true || true privoxy
+echo "APT updates now routed through Tor (Pillar of Fire)."
+
+# --- END MERGED CONTENT FROM: 0609-alfred-pillar-proxy.hook.chroot ---
+
+

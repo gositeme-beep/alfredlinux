@@ -1,0 +1,35 @@
+#!/bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# 0162-alfred-plymouth-default.hook.chroot
+# Set Alfred as the default Plymouth boot theme and rebuild initramfs.
+set +eu
+
+THEME=alfred
+THEMEDIR=/usr/share/plymouth/themes/$THEME
+
+if [ ! -f "$THEMEDIR/$THEME.plymouth" ]; then
+  echo "[0162] WARN: $THEMEDIR/$THEME.plymouth missing — skipping"
+  exit 0
+fi
+
+if command -v plymouth-set-default-theme >/dev/null 2>&1; then
+  plymouth-set-default-theme -R "$THEME" \
+    || plymouth-set-default-theme "$THEME" \
+    || true
+  echo "[0162] Plymouth default set to: $(plymouth-set-default-theme 2>/dev/null || echo $THEME)"
+else
+  # Fallback: write the alternatives + config directly
+  if [ -x /usr/bin/update-alternatives ]; then
+    update-alternatives --install /usr/share/plymouth/themes/default.plymouth \
+      default.plymouth "$THEMEDIR/$THEME.plymouth" 200 || true
+    update-alternatives --set default.plymouth "$THEMEDIR/$THEME.plymouth" || true
+  fi
+  if command -v update-initramfs >/dev/null 2>&1; then
+    update-initramfs -u || true
+  fi
+  echo "[0162] Plymouth default forced via fallback to $THEME"
+fi
+
+exit 0

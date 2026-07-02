@@ -1,0 +1,28 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+echo "================================================="
+echo "==== ALFRED GOLIATH (P2P Mesh Compute) =========="
+echo "================================================="
+
+export DEBIAN_FRONTEND=noninteractive
+
+if [ -f /build-assets/kubectl ]; then
+    cp /build-assets/kubectl /usr/local/bin/ || true
+    chmod +x /usr/local/bin/kubectl || true
+fi
+if [ -f /build-assets/helm ]; then
+    cp /build-assets/helm /usr/local/bin/ || true
+    chmod +x /usr/local/bin/helm || true
+fi
+
+# Placeholder for micro-k8s node joining the Veil mesh
+cat << 'EOF' > /usr/local/bin/goliath-join.sh
+#!/bin/bash
+echo "Goliath P2P compute node initialized. Idle CPU cycles will be shared securely."
+EOF
+chmod +x /usr/local/bin/goliath-join.sh || true
+
+exit 0

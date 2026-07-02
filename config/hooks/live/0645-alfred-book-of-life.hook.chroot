@@ -1,0 +1,110 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# 0780-alfred-book-of-life.hook.chroot
+# Configures The Book of Life (Append-Only Cryptographic Ledger)
+# Upgraded: Each entry is now SHA-256 hashed and signed with the Kingdom MOK key.
+# set +e  # disabled: git commands may fail in chroot context
+
+echo "[0780] Configuring The Book of Life (Cryptographic Append-Only Ledger)"
+
+# Set up local bare git repository as the ledger
+mkdir -p /var/log/book-of-life || true
+cd /var/log/book-of-life || true
+if [ ! -d .git ]; then
+    git init
+    git config core.logallrefupdates true || true
+    git config receive.denyNonFastForwards true || true
+    git config user.name "The Scribe" || true
+    git config user.email "scribe@kingdom" || true
+fi
+
+# Create a daemon to periodically commit + cryptographically sign audit logs
+cat << 'EOF' > /usr/local/sbin/alfred-book-of-life-scribe
+#!/bin/bash
+# The Scribe: Commits and cryptographically signs new log entries
+# into the Book of Life. Each entry is SHA-256 hashed for tamper detection.
+
+MOK_KEY="/var/lib/alfred/mok/MOK.priv"
+LEDGER="/var/log/book-of-life"
+WORK="/tmp/ledger-work"
+
+mkdir -p "$WORK" || true
+export GIT_WORK_TREE="$WORK"
+export GIT_DIR="$LEDGER"
+
+# Copy current critical logs
+[ -e "/var/log/auth.log" ] && cp /var/log/auth.log "$WORK/auth.log" 2>/dev/null || true
+[ -e "/var/log/audit/audit.log" ] && cp /var/log/audit/audit.log "$WORK/audit.log" 2>/dev/null || true
+[ -e "/var/log/syslog" ] && cp /var/log/syslog "$WORK/syslog" 2>/dev/null || true
+[ -e "/var/log/kern.log" ] && cp /var/log/kern.log "$WORK/kern.log" 2>/dev/null || true
+
+# Generate SHA-256 manifest of all collected logs
+cd "$WORK" || true
+sha256sum *.log 2>/dev/null > "$WORK/manifest.sha256"
+
+# Sign the manifest with the Kingdom MOK key if available
+if [ -f "$MOK_KEY" ]; then
+    openssl dgst -sha256 -sign "$MOK_KEY" -out "$WORK/manifest.sig" "$WORK/manifest.sha256" 2>/dev/null
+    echo "SIGNED: $(date -Is)" >> "$WORK/manifest.sha256" || true
+else
+    echo "UNSIGNED: $(date -Is) (MOK key not found)" >> "$WORK/manifest.sha256" || true
+fi
+
+# Commit them
+git add .
+git commit -m "Scribe entry: $(date -Is) | SHA-256 sealed" --author="The Scribe <scribe@kingdom>" || true
+EOF
+
+[ -e /usr/local/sbin/alfred-book-of-life-scribe ] && chmod 0755 /usr/local/sbin/alfred-book-of-life-scribe || true
+
+# Verification tool
+cat << 'EOF' > /usr/local/sbin/alfred-book-verify
+#!/bin/bash
+# Verify the integrity of the Book of Life
+LEDGER="/var/log/book-of-life"
+MOK_CERT="/var/lib/alfred/mok/MOK.pem"
+
+echo "=== Book of Life — Integrity Verification ==="
+echo ""
+
+# Check git log integrity
+cd "$LEDGER" 2>/dev/null || { echo "FAIL: Ledger not found"; true; }
+ENTRIES=$(git rev-list --count HEAD 2>/dev/null || echo "0")
+echo "Total entries: $ENTRIES"
+
+# Check latest signature
+LATEST_SIG=$(git show HEAD:manifest.sig 2>/dev/null)
+LATEST_HASH=$(git show HEAD:manifest.sha256 2>/dev/null)
+
+if [ -n "$LATEST_SIG" ] && [ -f "$MOK_CERT" ]; then
+    git show HEAD:manifest.sha256 > /tmp/verify_manifest.sha256
+    git show HEAD:manifest.sig > /tmp/verify_manifest.sig
+    if openssl dgst -sha256 -verify <(openssl x509 -in "$MOK_CERT" -pubkey -noout) \
+        -signature /tmp/verify_manifest.sig /tmp/verify_manifest.sha256 2>/dev/null; then
+        echo "Signature: VALID (Kingdom MOK verified)"
+    else
+        echo "Signature: INVALID — POSSIBLE TAMPERING"
+    fi
+    rm -f /tmp/verify_manifest.sha256 /tmp/verify_manifest.sig || true
+else
+    echo "Signature: Not available (unsigned entry or no MOK cert)"
+fi
+
+echo ""
+echo "Last 5 entries:"
+git log --oneline -5 2>/dev/null || echo "(empty ledger)"
+EOF
+[ -e /usr/local/sbin/alfred-book-verify ] && chmod 0755 /usr/local/sbin/alfred-book-verify || true
+
+# Create a cron job
+cat << 'EOF' > /etc/cron.hourly/alfred-scribe
+#!/bin/sh
+/usr/local/sbin/alfred-book-of-life-scribe
+EOF
+[ -e /etc/cron.hourly/alfred-scribe ] && chmod 0755 /etc/cron.hourly/alfred-scribe || true
+
+echo "[0780] The Book of Life is opened. Entries are now cryptographically sealed."
+
+exit 0

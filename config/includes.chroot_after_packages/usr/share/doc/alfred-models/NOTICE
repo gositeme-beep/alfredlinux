@@ -1,0 +1,49 @@
+Alfred Linux — Bundled AI Models — NOTICE
+==========================================
+
+This distribution of Alfred Linux includes large language model weights
+that are derivative works of upstream open-weight models. Per the Apache
+License 2.0 §4(d), the following attribution notices are required to
+accompany the redistribution.
+
+------------------------------------------------------------------------
+1. Qwen2.5-Coder-Instruct (7B / 14B / 32B)
+   Copyright 2024 Alibaba Cloud / Qwen Team
+   Licensed under the Apache License, Version 2.0
+   Upstream: https://huggingface.co/Qwen
+   Paper:    https://arxiv.org/abs/2409.12186
+
+   The following Alfred-tier model files are GGUF-quantized derivatives
+   of the above models, produced by the GGUF community
+   (huggingface.co/bartowski) and re-bundled here under the same
+   Apache 2.0 license:
+
+     alfred-haiku.gguf       <- Qwen2.5-Coder-7B-Instruct  (Q4_K_M)
+     alfred-sonnet.gguf      <- Qwen2.5-Coder-14B-Instruct (Q4_K_M)
+     alfred-opus.gguf        <- Qwen2.5-Coder-32B-Instruct (Q4_K_M)
+     alfred-opus-iq3.gguf    <- Qwen2.5-Coder-32B-Instruct (IQ3_XS)
+
+   The names "alfred-haiku", "alfred-sonnet", and "alfred-opus" are
+   Alfred Linux internal tier identifiers and refer to Alfred's
+   bundled model tiers. They are not produced by, endorsed by, or
+   affiliated with any third-party AI vendor.
+
+------------------------------------------------------------------------
+2. llama.cpp
+   Copyright (c) 2023-2026 The ggml authors
+   Licensed under the MIT License
+   Upstream: https://github.com/ggml-org/llama.cpp
+
+------------------------------------------------------------------------
+3. LiteLLM (Anthropic/OpenAI-format compatibility bridge)
+   Copyright (c) 2023-2026 BerriAI
+   Licensed under the MIT License
+   Upstream: https://github.com/BerriAI/litellm
+
+------------------------------------------------------------------------
+Alfred Linux integration code, orchestrator, dashboard, ops-hub,
+alfred-brain extension, systemd units, hooks, and Plymouth theme:
+   Copyright (c) 2024-2026 Alfred Linux Project
+   All Alfred-original components are licensed as published in
+   /usr/share/doc/alfred-linux/LICENSE within this distribution.
+------------------------------------------------------------------------

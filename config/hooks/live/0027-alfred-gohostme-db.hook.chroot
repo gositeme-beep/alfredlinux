@@ -1,0 +1,44 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+echo "[0119] Baking GoHostMe Local Database Seeder..."
+
+cat > /usr/local/bin/alfred-db-init << 'SCRIPT'
+#!/bin/bash
+until mysqladmin ping -h localhost --silent; do sleep 2; done
+
+echo "Initializing Sovereign Local Databases..."
+PASSWORD=$(openssl rand -hex 16)
+echo "$PASSWORD" > /etc/alfred-gohostme-db-password
+[ -e /etc/alfred-gohostme-db-password ] && chmod 600 /etc/alfred-gohostme-db-password
+mysql -e "CREATE DATABASE IF NOT EXISTS gohostme;"
+mysql -e "CREATE USER IF NOT EXISTS 'gohostme'@'localhost' IDENTIFIED BY '${PASSWORD}';"
+mysql -e "GRANT ALL PRIVILEGES ON gohostme.* TO 'gohostme'@'localhost';"
+mysql -e "FLUSH PRIVILEGES;"
+
+# We will ONLY import proprietary GoHostMe schemas, no third-party WHMCS crap.
+
+systemctl disable alfred-db-init || true
+SCRIPT
+[ -e /usr/local/bin/alfred-db-init ] && chmod +x /usr/local/bin/alfred-db-init || true
+
+cat > /etc/systemd/system/alfred-db-init.service << 'SYSTEMD'
+[Unit]
+Description=Alfred Linux Database Initializer
+After=mariadb.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/alfred-db-init
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
+SYSTEMD
+
+systemctl enable alfred-db-init || true || true 2>/dev/null || true
+echo "[0119] Database seeder configured safely."
+
+exit 0

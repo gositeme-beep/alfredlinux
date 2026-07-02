@@ -1,0 +1,83 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+
+echo "[Alfred Defense] Engineering Kinetic Feedback SSH Tarpit..."
+
+apt-get install -y --fix-broken -y python3 || true
+
+mkdir -p /usr/local/bin/ || true
+
+# Create the active strike tarpit
+cat > /usr/local/bin/alfred-kinetic-tarpit.py << 'EOF'
+#!/usr/bin/env python3
+import socket
+import time
+import random
+import threading
+import sys
+import os
+
+if not os.path.exists("/etc/alfred/defcon1.flag"):
+    sys.exit(0)
+
+# Payload designed to crash vulnerable C-based botnet scanners via buffer overflow
+REVERSE_STRIKE_PAYLOAD = b"A" * 65535 + b"\r\n"
+
+def handle_connection(client_socket, address):
+    print(f"[Kinetic Feedback] Trapping bot from {address}")
+    try:
+        # Phase 1: The Tarpit (Waste their time)
+        for i in range(10):
+            banner = f"SSH-2.0-OpenSSH_9.9p1 Ubuntu-3ubuntu0.1\r\n"
+            client_socket.send(banner.encode('utf-8'))
+            time.sleep(random.uniform(1.0, 5.0))
+        
+        # Phase 2: Reverse-Kinetic Strike (Crash their scanner)
+        print(f"[Kinetic Feedback] Launching strike payload against {address}")
+        client_socket.send(REVERSE_STRIKE_PAYLOAD)
+        
+    except Exception:
+        pass
+    finally:
+        client_socket.close()
+
+def main():
+    try:
+        server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        server.bind(('0.0.0.0', 2222)) # Listen on alternative SSH port
+        server.listen(100)
+        
+        while True:
+            client_sock, address = server.accept()
+            threading.Thread(target=handle_connection, args=(client_sock, address)).start()
+    except Exception:
+        pass
+
+if __name__ == "__main__":
+    main()
+EOF
+
+[ -e "/usr/local/bin/alfred-kinetic-tarpit.py" ] && chmod +x /usr/local/bin/alfred-kinetic-tarpit.py || true
+
+cat > /etc/systemd/system/alfred-kinetic-tarpit.service << 'EOF'
+[Unit]
+Description=Alfred Reverse-Kinetic SSH Tarpit
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/alfred-kinetic-tarpit.py
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+systemctl enable alfred-kinetic-tarpit || true || true.service || true
+
+echo "[Alfred Defense] Reverse-Kinetic Strike Integrated."
+exit 0

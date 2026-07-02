@@ -1,0 +1,24 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+# 0411-alfred-tribe-gad — 🛡 gad — resilience-after-loss
+
+echo "[0411-tribe-gad] begin"
+install -d /etc/alfred/tribes /usr/share/alfred/tribes
+cat >/etc/alfred/tribes/gad.flag <<EOS
+TRIBE=gad
+EMOJI=🛡
+GIFT=resilience-after-loss
+VERSE="Genesis 49:19 — a troop shall overcome."
+EOS
+cat >/usr/share/alfred/tribes/gad.txt <<EOS
+🛡  Tribe of gad
+Genesis 49:19 — a troop shall overcome.
+Gift: resilience-after-loss
+EOS
+echo "[0411-tribe-gad] done"
+
+
+exit 0

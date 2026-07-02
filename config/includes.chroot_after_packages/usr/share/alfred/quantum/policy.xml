@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  /usr/share/alfred/quantum/policy.xml — POST-QUANTUM POLICY · Alfred Linux 7.77
+  Authoritative: KYBER / ML-KEM 1024 only.  768 and 512 are FORBIDDEN.
+  Read by: alfred-encrypt-quantum, alfred-encrypt-status, oqs-provider config.
+-->
+<quantum-policy version="7.77" effective="2026-04-23">
+
+  <kem allowed="ML-KEM-1024">
+    <forbid>ML-KEM-512</forbid>
+    <forbid>ML-KEM-768</forbid>
+    <forbid>Kyber512</forbid>
+    <forbid>Kyber768</forbid>
+    <rationale>NIST FIPS 203 Category-5 only.  Maximum classical-equivalent
+      strength (256-bit).  Future-proof against CRQC.  Galatians 5:22-23 —
+      "self-control" applied to cryptographic strength.</rationale>
+  </kem>
+
+  <signature allowed="ML-DSA-87">
+    <forbid>ML-DSA-44</forbid>
+    <forbid>ML-DSA-65</forbid>
+    <forbid>Dilithium2</forbid>
+    <forbid>Dilithium3</forbid>
+  </signature>
+
+  <hash allowed="SHA3-512 SHAKE256 BLAKE3"/>
+
+  <hybrid>
+    <!-- TLS hybrid groups: classical + ML-KEM-1024 only -->
+    <group>x25519_mlkem1024</group>
+    <group>p384_mlkem1024</group>
+    <group>p521_mlkem1024</group>
+  </hybrid>
+
+  <enforcement>
+    <openssl-config>/etc/ssl/oqs-policy.cnf</openssl-config>
+    <ssh-config>/etc/ssh/sshd_config.d/99-pq.conf</ssh-config>
+    <systemd-unit>alfred-quantum-policy.service</systemd-unit>
+    <verify-cmd>alfred-encrypt-status --strict</verify-cmd>
+    <ci-test>test/quantum/no-768.sh</ci-test>
+  </enforcement>
+
+  <covenant>
+    <verse ref="2 Timothy 1:7">For God hath not given us the spirit of fear;
+      but of power, and of love, and of a sound mind.</verse>
+    <verse ref="Proverbs 25:2">It is the glory of God to conceal a thing:
+      but the honour of kings is to search out a matter.</verse>
+  </covenant>
+
+</quantum-policy>

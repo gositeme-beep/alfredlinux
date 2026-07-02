@@ -1,0 +1,49 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# 0999-alfred-dividing-of-the-waters.hook.chroot
+# The Dividing of the Waters: Hardware NIC Splitter
+set +e
+
+echo "[0999] Configuring The Dividing of the Waters (NIC Splitter)"
+
+# We install a NetworkManager dispatcher that automatically splits any active physical
+# network interface (eth0/wlan0) into multiple virtual macvlan interfaces, each with
+# randomized MAC addresses. Traffic is routed randomly across them to confuse sniffers.
+
+cat << 'EOF' > /etc/NetworkManager/dispatcher.d/99-dividing-of-the-waters
+#!/bin/bash
+INTERFACE=$1
+ACTION=$2
+
+if [ "$ACTION" = "up" ]; then
+    # Ignore if this is already a virtual interface or loopback
+    if [[ "$INTERFACE" == veth* ]] || [[ "$INTERFACE" == lo ]] || [[ "$INTERFACE" == macvlan* ]]; then
+        exit 0
+    fi
+
+    echo "Dividing interface $INTERFACE..."
+    
+    # Create 3 virtual macvlan interfaces bound to the physical card
+    for i in 1 2 3; do
+        V_IFACE="macvlan${i}"
+        ip link add link "$INTERFACE" name "$V_IFACE" type macvlan mode bridge || true
+        # Randomize the MAC for the virtual interface
+        macchanger -r "$V_IFACE" || true
+        ip link set dev "$V_IFACE" up || true
+    done
+fi
+
+if [ "$ACTION" = "down" ]; then
+    for i in 1 2 3; do
+        ip link delete "macvlan${i}" 2>/dev/null || true
+    done
+fi
+EOF
+
+[ -e "0755" ] && chmod 0755 /etc/NetworkManager/dispatcher.d/99-dividing-of-the-waters || true
+
+echo "[0999] The Waters are divided."
+
+exit 0

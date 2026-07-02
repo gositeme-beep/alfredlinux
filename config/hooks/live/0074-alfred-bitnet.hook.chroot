@@ -1,0 +1,148 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# 0251-alfred-bitnet.hook.chroot
+# BitNet.cpp bridge + ask routing.
+set +e
+
+echo "[BITNET] Installing BitNet.cpp bridge..."
+mkdir -p /usr/share/bitnet/models /usr/share/doc/alfred-ai /var/lib/alfred/build-flags || true
+
+BITNET_BIN_INSTALLED=0
+if [ -f /build-assets/bitnet.cpp ]; then
+  install -m 755 /build-assets/bitnet.cpp /usr/local/bin/bitnet.cpp
+  BITNET_BIN_INSTALLED=1
+elif [ -f /build-assets/bitnet ]; then
+  install -m 755 /build-assets/bitnet /usr/local/bin/bitnet.cpp
+  BITNET_BIN_INSTALLED=1
+elif [ -f /build-assets/bitnet-cli ]; then
+  install -m 755 /build-assets/bitnet-cli /usr/local/bin/bitnet.cpp
+  BITNET_BIN_INSTALLED=1
+else
+  echo "[BITNET] WARN: staged binary missing under /build-assets/{bitnet.cpp|bitnet|bitnet-cli}." >&2 || true
+  echo "BITNET_BINARY_MISSING=1" > /var/lib/alfred/build-flags/bitnet-binary-missing.flag || true
+fi
+
+BITNET_MODEL_INSTALLED=0
+if [ -f /build-assets/bitnet-default.gguf ]; then
+  install -m 644 /build-assets/bitnet-default.gguf /usr/share/bitnet/models/default.gguf
+  BITNET_MODEL_INSTALLED=1
+else
+  echo "[BITNET] WARN: staged model missing at /build-assets/bitnet-default.gguf." >&2 || true
+  echo "BITNET_MODEL_MISSING=1" > /var/lib/alfred/build-flags/bitnet-model-missing.flag || true
+fi
+
+# License and notice files are required when shipping bundled binary/model.
+for src in /build-assets/bitnet-LICENSE /build-assets/bitnet-NOTICE /build-assets/bitnet-model-LICENSE /build-assets/bitnet-model-NOTICE; do
+  if [ -f "$src" ]; then
+    install -m 644 "$src" "/usr/share/doc/alfred-ai/$(basename "$src")"
+  fi
+done
+
+if [ "$BITNET_BIN_INSTALLED" -eq 1 ] && [ ! -f /usr/share/doc/alfred-ai/bitnet-LICENSE ]; then
+  echo "[BITNET] WARN: bitnet-LICENSE missing in build-assets." >&2 || true
+fi
+if [ "$BITNET_MODEL_INSTALLED" -eq 1 ] && [ ! -f /usr/share/doc/alfred-ai/bitnet-model-LICENSE ]; then
+  echo "[BITNET] WARN: bitnet-model-LICENSE missing in build-assets." >&2 || true
+fi
+
+cat > /usr/share/doc/alfred-ai/bitnet-model-policy.txt <<'BITPOL'
+Alfred BitNet.cpp model policy
+
+1. Keep one small default model in image: /usr/share/bitnet/models/default.gguf
+2. Ship larger model packs out-of-band post-install.
+3. Runtime model override: ALFRED_BITNET_MODEL=/path/to/model.gguf
+4. Ask backend override: ALFRED_ASK_BACKEND=bitnet|ai|ollama|auto
+5. When bundling binary/model, include matching LICENSE/NOTICE files under /build-assets.
+BITPOL
+
+cat > /usr/local/bin/alfred-ask <<'ASK'
+#!/bin/bash
+set +e
+BACKEND="${ALFRED_ASK_BACKEND:-auto}"
+BITNET_BIN="${ALFRED_BITNET_BIN:-/usr/local/bin/bitnet.cpp}"
+BITNET_MODEL="${ALFRED_BITNET_MODEL:-/usr/share/bitnet/models/default.gguf}"
+PROMPT="$*"
+
+if [ -z "$PROMPT" ]; then
+  echo "Usage: alfred-ask <prompt>" || true
+exit 0
+fi
+
+run_bitnet() {
+  if [ ! -x "$BITNET_BIN" ]; then
+    return 1
+  fi
+
+  if [ -n "${ALFRED_BITNET_RUN:-}" ]; then
+    cmd="${ALFRED_BITNET_RUN//\{model\}/$BITNET_MODEL}"
+    cmd="${cmd//\{prompt\}/$PROMPT}"
+    bash -lc "$cmd"
+    return $?
+  fi
+
+  if [ -f "$BITNET_MODEL" ]; then
+    if "$BITNET_BIN" -m "$BITNET_MODEL" -p "$PROMPT"; then
+      return 0
+    fi
+    if "$BITNET_BIN" --model "$BITNET_MODEL" --prompt "$PROMPT"; then
+      return 0
+    fi
+  fi
+
+  if "$BITNET_BIN" "$PROMPT"; then
+    return 0
+  fi
+  return 1
+}
+
+case "$BACKEND" in
+  bitnet)
+    run_bitnet || { echo "alfred-ask: BitNet backend failed." >&2; true; }
+    ;;
+  ai)
+    exec alfred-ai "$PROMPT"
+    ;;
+  ollama)
+    exec ollama run phi3:mini "$PROMPT"
+    ;;
+  auto|*)
+    if run_bitnet; then
+      exit 0
+    fi
+    if command -v alfred-ai >/dev/null 2>&1; then
+      exec alfred-ai "$PROMPT"
+    fi
+    if command -v ollama >/dev/null 2>&1; then
+      exec ollama run phi3:mini "$PROMPT"
+    fi
+    echo "alfred-ask: no available backend (bitnet/alfred-ai/ollama)." >&2 || true
+exit 0
+    ;;
+esac
+ASK
+[ -e /usr/local/bin/alfred-ask ] && chmod +x /usr/local/bin/alfred-ask || true
+
+if [ ! -e /usr/local/bin/alfred ]; then
+cat > /usr/local/bin/alfred <<'ALFRED'
+#!/bin/bash
+set +e
+sub="${1:-}"
+if [ -n "$sub" ]; then
+  shift
+fi
+
+case "$sub" in
+  ask) exec /usr/local/bin/alfred-ask "$@" ;;
+  ai) exec /usr/local/bin/alfred-ai "$@" ;;
+  say) exec /usr/local/bin/alfred-say "$@" ;;
+  *) echo "Usage: alfred ask <prompt> | alfred ai [args] | alfred say <text>" >&2; true ;;
+esac
+ALFRED
+[ -e /usr/local/bin/alfred ] && chmod +x /usr/local/bin/alfred || true
+fi
+
+echo "[BITNET] Ready: alfred ask <prompt>" || true
+
+exit 0

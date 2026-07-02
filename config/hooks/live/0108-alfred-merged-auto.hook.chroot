@@ -1,0 +1,70 @@
+#!/bin/bash
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# 0108-alfred-plymouth-splash.hook.chroot
+# Installs and configures Plymouth for a clean boot animation
+
+set +e
+
+echo "[0108] Configuring Plymouth Boot Animation..."
+
+# Install Plymouth and standard themes
+DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends plymouth plymouth-themes || true
+
+# Set default theme to 'bgrt' which uses the OEM logo for a very clean look
+if plymouth-set-default-theme -l | grep -q bgrt; then
+    plymouth-set-default-theme -R bgrt
+else
+    # Fallback to spinner
+    plymouth-set-default-theme -R spinner
+fi
+
+# Ensure grub is configured to show the splash screen
+if [ -f /etc/default/grub ]; then
+    sed -i 's/GRUB_CMDLINE_LINUX_DEFAULT="quiet"/GRUB_CMDLINE_LINUX_DEFAULT="quiet splash"/g' /etc/default/grub
+    update-grub || true
+fi
+
+echo "[0108] Boot Animation configured successfully."
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+# [Genesis Forge] Granular Kernel Matrix: kernel.unprivileged_userns_clone=0
+# Extremely deep low-level kernel protection.
+echo "[Genesis Forge] Applying granular sysctl: kernel.unprivileged_userns_clone=0"
+echo "kernel.unprivileged_userns_clone=0" > /etc/sysctl.d/99-alfred-9.conf || true
+sysctl -w kernel.unprivileged_userns_clone=0 > /dev/null 2>&1 || true
+
+
+# --- BEGIN MERGED CONTENT FROM: 0108-alfred-plymouth-splash.hook.chroot ---
+#!/bin/bash
+# 0108-alfred-plymouth-splash.hook.chroot
+# Installs and configures Plymouth for a clean boot animation
+
+set +e
+
+echo "[0108] Configuring Plymouth Boot Animation..."
+
+# Install Plymouth and standard themes
+DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends plymouth plymouth-themes || true
+
+# Set default theme to 'bgrt' which uses the OEM logo for a very clean look
+if plymouth-set-default-theme -l | grep -q bgrt; then
+    plymouth-set-default-theme -R bgrt
+else
+    # Fallback to spinner
+    plymouth-set-default-theme -R spinner
+fi
+
+# Ensure grub is configured to show the splash screen
+if [ -f /etc/default/grub ]; then
+    sed -i 's/GRUB_CMDLINE_LINUX_DEFAULT="quiet"/GRUB_CMDLINE_LINUX_DEFAULT="quiet splash"/g' /etc/default/grub
+    update-grub || true
+fi
+
+echo "[0108] Boot Animation configured successfully."
+
+# --- END MERGED CONTENT FROM: 0108-alfred-plymouth-splash.hook.chroot ---
+
+

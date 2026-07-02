@@ -1,0 +1,411 @@
+#!/bin/bash
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Hook 0259 — first-boot tier auto-detect + greeting
+# Detects RAM/GPU on first boot and upgrades active tier from haiku → sonnet → opus
+set +e
+
+echo "═══════════════════════════════════════════════════════"
+echo "  ALFRED-BRAIN first-boot — auto tier upgrade + greeting"
+echo "═══════════════════════════════════════════════════════"
+
+mkdir -p /usr/local/sbin /etc/profile.d /etc/alfred-llm || true
+
+# Tier detector: chooses largest model that fits available RAM (and VRAM if GPU)
+cat > /usr/local/sbin/alfred-detect-tier <<'DETECT'
+#!/bin/bash
+# Returns the best alfred-llm tier name for this machine.
+set +e
+
+# Available RAM in GB (round down)
+RAM_GB=$(awk '/MemAvailable/ {printf "%d", $2/1024/1024}' /proc/meminfo)
+
+# GPU VRAM (NVIDIA)
+VRAM_GB=0
+if command -v nvidia-smi >/dev/null 2>&1; then
+  VRAM_MB=$(nvidia-smi --query-gpu=memory.total --format=csv,noheader,nounits 2>/dev/null | head -1 || echo 0)
+  VRAM_GB=$((VRAM_MB / 1024))
+fi
+
+# Effective budget = max(RAM, RAM+VRAM_offload). Be generous if GPU present.
+BUDGET_GB=$RAM_GB
+[ "$VRAM_GB" -gt 0 ] && BUDGET_GB=$((RAM_GB + VRAM_GB))
+
+choose() {
+  if [ "$BUDGET_GB" -ge 24 ] && [ -f /opt/alfred-models/alfred-opus.gguf ]; then
+    echo opus
+  elif [ "$BUDGET_GB" -ge 16 ] && [ -f /opt/alfred-models/alfred-opus-iq3.gguf ]; then
+    echo opus-iq3
+  elif [ "$BUDGET_GB" -ge 12 ] && [ -f /opt/alfred-models/alfred-sonnet.gguf ]; then
+    echo sonnet
+  elif [ -f /opt/alfred-models/alfred-haiku.gguf ]; then
+    echo haiku
+  else
+    echo none
+  fi
+}
+choose
+DETECT
+chmod +x /usr/local/sbin/alfred-detect-tier || true
+
+# First-boot service: runs once, picks tier, swaps active.gguf, enables right unit
+cat > /etc/systemd/system/alfred-brain-firstboot.service <<'UNIT'
+[Unit]
+Description=Alfred-Brain — first-boot tier auto-selection
+ConditionPathExists=!/var/lib/alfred/firstboot-done
+Before=alfred-llm@haiku.service alfred-llm@sonnet.service alfred-llm@opus.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/alfred-firstboot
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
+UNIT
+
+cat > /usr/local/sbin/alfred-firstboot <<'FIRST'
+#!/bin/bash
+set +e
+mkdir -p /var/lib/alfred || true
+
+# Intercept Modelless Release
+if [ -f /etc/alfred/modelless.flag ]; then
+  echo "[alfred-firstboot] Modelless flag detected. Bypassing AI backend initialization."
+  touch /var/lib/alfred/firstboot-done
+
+fi
+
+TIER=$(/usr/local/sbin/alfred-detect-tier)
+echo "[alfred-firstboot] selected tier: $TIER"
+
+if [ "$TIER" = "none" ]; then
+  echo "[alfred-firstboot] no models present, leaving defaults"
+  touch /var/lib/alfred/firstboot-done
+
+fi
+
+# Stop any pre-enabled tier units so we activate the right one
+for t in haiku sonnet opus opus-iq3; do
+  systemctl disable alfred-llm@${t}.service 2>/dev/null || true
+  systemctl stop    alfred-llm@${t}.service 2>/dev/null || true
+done
+
+# Swap active model symlink + enable+start the right tier
+ln -sfn /opt/alfred-models/alfred-${TIER}.gguf /etc/alfred-llm/active.gguf
+systemctl enable --now || true || true alfred-llm@${TIER}.service || true
+systemctl restart alfred-bridge.service 2>/dev/null || true
+
+echo "ALFRED_TIER=${TIER}" > /var/lib/alfred/active-tier.env || true
+touch /var/lib/alfred/firstboot-done
+FIRST
+chmod +x /usr/local/sbin/alfred-firstboot || true
+
+systemctl enable alfred-brain-firstboot || true || true.service 2>/dev/null || true
+
+# Login greeting — only once, dismissable
+cat > /etc/profile.d/alfred-brain-greeting.sh <<'GREET'
+# Alfred-Brain login greeting (first time per user)
+[ -n "$ALFRED_BRAIN_GREETED" ] && return 0
+[ -f "$HOME/.alfred-brain-greeted" ] && return 0
+ACTIVE_TIER=$(cat /var/lib/alfred/active-tier.env 2>/dev/null | cut -d= -f2)
+[ -z "$ACTIVE_TIER" ] && ACTIVE_TIER=haiku
+cat <<BANNER
+
+  ╔═══════════════════════════════════════════════════════╗
+  ║  🧠  ALFRED-BRAIN ready  —  tier: alfred-${ACTIVE_TIER}
+  ║                                                       ║
+  ║  Your local AI. Yours forever. Zero API calls.        ║
+  ║                                                       ║
+  ║   alfred "explain how the kernel boots"               ║
+  ║   alfred-shell      # interactive REPL                ║
+  ║   commit            # auto git commit message         ║
+  ║                                                       ║
+  ║  Switch tier:  sudo alfred-tier sonnet|opus|haiku     ║
+  ║  Backend:      alfred-use-cleanroom | alfred-use-original
+  ╚═══════════════════════════════════════════════════════╝
+
+BANNER
+touch "$HOME/.alfred-brain-greeted" 2>/dev/null || true
+export ALFRED_BRAIN_GREETED=1
+GREET
+chmod +x /etc/profile.d/alfred-brain-greeting.sh || true
+
+# Manual tier-switch helper
+cat > /usr/local/sbin/alfred-tier <<'TIER'
+#!/bin/bash
+# Manually change the active Alfred-LLM tier
+set +e
+TIER="${1:-}"
+case "$TIER" in
+  haiku|sonnet|opus|opus-iq3) ;;
+  *) echo "Usage: alfred-tier {haiku|sonnet|opus|opus-iq3}"; true ;;
+esac
+[ -f /opt/alfred-models/alfred-${TIER}.gguf ] || { echo "Model alfred-${TIER}.gguf not installed"; true; }
+for t in haiku sonnet opus opus-iq3; do
+  systemctl stop alfred-llm@${t}.service 2>/dev/null || true
+  systemctl disable alfred-llm@${t}.service 2>/dev/null || true
+done
+ln -sfn /opt/alfred-models/alfred-${TIER}.gguf /etc/alfred-llm/active.gguf
+systemctl enable --now || true || true alfred-llm@${TIER}.service || true
+systemctl restart alfred-bridge.service || true
+echo "ALFRED_TIER=${TIER}" > /var/lib/alfred/active-tier.env || true
+echo "[alfred-tier] switched to: ${TIER}"
+TIER
+chmod +x /usr/local/sbin/alfred-tier || true
+
+# Quality-of-life shell aliases
+cat > /etc/profile.d/alfred-aliases.sh <<'ALI'
+# Alfred-Agent shell helpers
+alias explain='alfred --quick'
+commit() {
+  local msg
+  msg=$(git diff --staged --no-color | alfred --quick "Write a concise conventional commit message for this diff. Output only the message, no fences." 2>/dev/null)
+  [ -z "$msg" ] && { echo "alfred-commit: empty response, aborting" >&2; return 1; }
+  git commit -m "$msg" "$@"
+}
+alfred-shell() { alfred --interactive "$@"; }
+ALI
+chmod +x /etc/profile.d/alfred-aliases.sh || true
+
+echo "[FIRSTBOOT] hooks + greeting + tier-switcher installed"
+
+# === INJECTED: The Breath of Life (Kernel Translator) ===
+cat > /usr/local/bin/alfred-breath << 'EOF_BREATH'
+#!/bin/bash
+dmesg -w --level=err,crit,alert,emerg | while read -r line; do
+    if echo "$line" | grep -q -i "error"; then
+        echo "The machine aches: $line" > /var/log/alfred-breath.txt
+        logger -t alfred-breath "Kernel pain detected: $line"
+    fi
+done
+EOF_BREATH
+chmod +x /usr/local/bin/alfred-breath
+
+cat > /etc/systemd/system/alfred-breath.service << 'EOF_BREATH_SVC'
+[Unit]
+Description=The Breath of Life (Kernel Translator)
+After=systemd-journald.socket
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/alfred-breath
+Restart=always
+[Install]
+WantedBy=multi-user.target
+EOF_BREATH_SVC
+systemctl enable alfred-breath || true || true.service 2>/dev/null || true
+echo "[$(date -Is)] The Breath of Life is infused."
+
+
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+# [Genesis Forge] Granular Kernel Matrix: net.ipv4.ip_local_port_range="23424 65535"
+# Extremely deep low-level kernel protection.
+echo "[Genesis Forge] Applying granular sysctl: net.ipv4.ip_local_port_range="23424 65535""
+echo "net.ipv4.ip_local_port_range="23424 65535"" > /etc/sysctl.d/99-alfred-139.conf || true
+sysctl -w net.ipv4.ip_local_port_range="23424 65535" > /dev/null 2>&1 || true
+
+
+# --- BEGIN MERGED CONTENT FROM: 0261-alfred-brain-firstboot.hook.chroot ---
+#!/bin/bash
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Hook 0259 — first-boot tier auto-detect + greeting
+# Detects RAM/GPU on first boot and upgrades active tier from haiku → sonnet → opus
+set +e
+
+echo "═══════════════════════════════════════════════════════"
+echo "  ALFRED-BRAIN first-boot — auto tier upgrade + greeting"
+echo "═══════════════════════════════════════════════════════"
+
+mkdir -p /usr/local/sbin /etc/profile.d /etc/alfred-llm || true
+
+# Tier detector: chooses largest model that fits available RAM (and VRAM if GPU)
+cat > /usr/local/sbin/alfred-detect-tier <<'DETECT'
+#!/bin/bash
+# Returns the best alfred-llm tier name for this machine.
+set +e
+
+# Available RAM in GB (round down)
+RAM_GB=$(awk '/MemAvailable/ {printf "%d", $2/1024/1024}' /proc/meminfo)
+
+# GPU VRAM (NVIDIA)
+VRAM_GB=0
+if command -v nvidia-smi >/dev/null 2>&1; then
+  VRAM_MB=$(nvidia-smi --query-gpu=memory.total --format=csv,noheader,nounits 2>/dev/null | head -1 || echo 0)
+  VRAM_GB=$((VRAM_MB / 1024))
+fi
+
+# Effective budget = max(RAM, RAM+VRAM_offload). Be generous if GPU present.
+BUDGET_GB=$RAM_GB
+[ "$VRAM_GB" -gt 0 ] && BUDGET_GB=$((RAM_GB + VRAM_GB))
+
+choose() {
+  if [ "$BUDGET_GB" -ge 24 ] && [ -f /opt/alfred-models/alfred-opus.gguf ]; then
+    echo opus
+  elif [ "$BUDGET_GB" -ge 16 ] && [ -f /opt/alfred-models/alfred-opus-iq3.gguf ]; then
+    echo opus-iq3
+  elif [ "$BUDGET_GB" -ge 12 ] && [ -f /opt/alfred-models/alfred-sonnet.gguf ]; then
+    echo sonnet
+  elif [ -f /opt/alfred-models/alfred-haiku.gguf ]; then
+    echo haiku
+  else
+    echo none
+  fi
+}
+choose
+DETECT
+[ -e /usr/local/sbin/alfred-detect-tier ] && chmod +x /usr/local/sbin/alfred-detect-tier || true
+
+# First-boot service: runs once, picks tier, swaps active.gguf, enables right unit
+cat > /etc/systemd/system/alfred-brain-firstboot.service <<'UNIT'
+[Unit]
+Description=Alfred-Brain — first-boot tier auto-selection
+ConditionPathExists=!/var/lib/alfred/firstboot-done
+Before=alfred-llm@haiku.service alfred-llm@sonnet.service alfred-llm@opus.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/alfred-firstboot
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
+UNIT
+
+cat > /usr/local/sbin/alfred-firstboot <<'FIRST'
+#!/bin/bash
+set +e
+mkdir -p /var/lib/alfred || true
+
+# Intercept Modelless Release
+if [ -f /etc/alfred/modelless.flag ]; then
+  echo "[alfred-firstboot] Modelless flag detected. Bypassing AI backend initialization."
+  touch /var/lib/alfred/firstboot-done
+
+fi
+
+TIER=$(/usr/local/sbin/alfred-detect-tier)
+echo "[alfred-firstboot] selected tier: $TIER"
+
+if [ "$TIER" = "none" ]; then
+  echo "[alfred-firstboot] no models present, leaving defaults"
+  touch /var/lib/alfred/firstboot-done
+
+fi
+
+# Stop any pre-enabled tier units so we activate the right one
+for t in haiku sonnet opus opus-iq3; do
+  systemctl disable alfred-llm@${t}.service 2>/dev/null || true
+  systemctl stop    alfred-llm@${t}.service 2>/dev/null  || true|| true
+done
+
+# Swap active model symlink + enable+start the right tier
+ln -sfn /opt/alfred-models/alfred-${TIER}.gguf /etc/alfred-llm/active.gguf
+systemctl enable --now || true || true alfred-llm@${TIER}.service || true
+systemctl restart alfred-bridge.service 2>/dev/null  || true|| true
+
+echo "ALFRED_TIER=${TIER}" > /var/lib/alfred/active-tier.env || true
+touch /var/lib/alfred/firstboot-done
+FIRST
+[ -e /usr/local/sbin/alfred-firstboot ] && chmod +x /usr/local/sbin/alfred-firstboot || true
+
+systemctl enable alfred-brain-firstboot || true || true.service 2>/dev/null || true
+
+# Login greeting — only once, dismissable
+cat > /etc/profile.d/alfred-brain-greeting.sh <<'GREET'
+# Alfred-Brain login greeting (first time per user)
+[ -n "$ALFRED_BRAIN_GREETED" ] && return 0
+[ -f "$HOME/.alfred-brain-greeted" ] && return 0
+ACTIVE_TIER=$(cat /var/lib/alfred/active-tier.env 2>/dev/null | cut -d= -f2)
+[ -z "$ACTIVE_TIER" ] && ACTIVE_TIER=haiku
+cat <<BANNER
+
+  ╔═══════════════════════════════════════════════════════╗
+  ║  🧠  ALFRED-BRAIN ready  —  tier: alfred-${ACTIVE_TIER}
+  ║                                                       ║
+  ║  Your local AI. Yours forever. Zero API calls.        ║
+  ║                                                       ║
+  ║   alfred "explain how the kernel boots"               ║
+  ║   alfred-shell      # interactive REPL                ║
+  ║   commit            # auto git commit message         ║
+  ║                                                       ║
+  ║  Switch tier:  sudo alfred-tier sonnet|opus|haiku     ║
+  ║  Backend:      alfred-use-cleanroom | alfred-use-original
+  ╚═══════════════════════════════════════════════════════╝
+
+BANNER
+touch "$HOME/.alfred-brain-greeted" 2>/dev/null || true
+export ALFRED_BRAIN_GREETED=1
+GREET
+[ -e /etc/profile.d/alfred-brain-greeting.sh ] && chmod +x /etc/profile.d/alfred-brain-greeting.sh || true
+
+# Manual tier-switch helper
+cat > /usr/local/sbin/alfred-tier <<'TIER'
+#!/bin/bash
+# Manually change the active Alfred-LLM tier
+set +e
+TIER="${1:-}"
+case "$TIER" in
+  haiku|sonnet|opus|opus-iq3) ;;
+  *) echo "Usage: alfred-tier {haiku|sonnet|opus|opus-iq3}"; true ;;
+esac
+[ -f /opt/alfred-models/alfred-${TIER}.gguf ] || { echo "Model alfred-${TIER}.gguf not installed"; true; }
+for t in haiku sonnet opus opus-iq3; do
+  systemctl stop alfred-llm@${t}.service 2>/dev/null  || true|| true
+  systemctl disable alfred-llm@${t}.service 2>/dev/null || true
+done
+ln -sfn /opt/alfred-models/alfred-${TIER}.gguf /etc/alfred-llm/active.gguf
+systemctl enable --now || true || true alfred-llm@${TIER}.service || true
+systemctl restart alfred-bridge.service  || true|| true
+echo "ALFRED_TIER=${TIER}" > /var/lib/alfred/active-tier.env || true
+echo "[alfred-tier] switched to: ${TIER}"
+TIER
+[ -e /usr/local/sbin/alfred-tier ] && chmod +x /usr/local/sbin/alfred-tier || true
+
+# Quality-of-life shell aliases
+cat > /etc/profile.d/alfred-aliases.sh <<'ALI'
+# Alfred-Agent shell helpers
+alias explain='alfred --quick'
+commit() {
+  local msg
+  msg=$(git diff --staged --no-color | alfred --quick "Write a concise conventional commit message for this diff. Output only the message, no fences." 2>/dev/null)
+  [ -z "$msg" ] && { echo "alfred-commit: empty response, aborting" >&2; return 1; }
+  git commit -m "$msg" "$@"
+}
+alfred-shell() { alfred --interactive "$@"; }
+ALI
+[ -e /etc/profile.d/alfred-aliases.sh ] && chmod +x /etc/profile.d/alfred-aliases.sh || true
+
+echo "[FIRSTBOOT] hooks + greeting + tier-switcher installed"
+
+# === INJECTED: The Breath of Life (Kernel Translator) ===
+cat > /usr/local/bin/alfred-breath << 'EOF_BREATH'
+#!/bin/bash
+dmesg -w --level=err,crit,alert,emerg | while read -r line; do
+    if echo "$line" | grep -q -i "error"; then
+        echo "The machine aches: $line" > /var/log/alfred-breath.txt
+        logger -t alfred-breath "Kernel pain detected: $line"
+    fi
+done
+EOF_BREATH
+[ -e /usr/local/bin/alfred-breath ] && chmod +x /usr/local/bin/alfred-breath
+
+cat > /etc/systemd/system/alfred-breath.service << 'EOF_BREATH_SVC'
+[Unit]
+Description=The Breath of Life (Kernel Translator)
+After=systemd-journald.socket
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/alfred-breath
+Restart=always
+[Install]
+WantedBy=multi-user.target
+EOF_BREATH_SVC
+systemctl enable alfred-breath || true || true.service 2>/dev/null || true
+echo "[$(date -Is)] The Breath of Life is infused."
+
+# --- END MERGED CONTENT FROM: 0261-alfred-brain-firstboot.hook.chroot ---
+
+

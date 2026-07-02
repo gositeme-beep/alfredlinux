@@ -1,0 +1,21 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+echo "[0801] Building GoHostMe Desktop Launcher..."
+
+mkdir -p /usr/share/applications || true
+cat > /usr/share/applications/alfred-gohostme.desktop << 'DESKTOP'
+[Desktop Entry]
+Version=1.0
+Name=GoHostMe Native Panel
+Comment=Manage your Local Sovereign Server
+Exec=xdg-open http://localhost:2222
+Icon=server
+Terminal=false
+Type=Application
+Categories=System;Network;
+DESKTOP
+
+exit 0

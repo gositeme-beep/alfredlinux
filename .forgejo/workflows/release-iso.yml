@@ -1,0 +1,47 @@
+name: Alfred Linux Golden Master Build
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build-and-release:
+    runs-on: self-hosted
+    steps:
+      - name: Checkout Codebase
+        uses: actions/checkout@v3
+
+      - name: Ensure Pristine Environment
+        run: |
+          sudo lb clean
+          sudo rm -f binary.iso
+
+      - name: Launch Containerized Golden Master Build
+        run: |
+          sudo bash scripts/lb-docker-build.sh
+
+      - name: Generate Release Assets
+        run: |
+          sudo sha256sum binary.iso > binary.iso.sha256
+
+      - name: Create Forgejo Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            binary.iso
+            binary.iso.sha256
+          name: "Alfred Linux v7.77 (Omega Point)"
+          tag_name: "v7.77"
+          draft: false
+          prerelease: false
+          body: |
+            **Alfred Linux v7.77 (Golden Master)**
+            - **1335 Absolute Hooks:** Perfectly architected ecosystem.
+            - **Creator Stack:** OpenCut powered.
+            - **God-Tier Models:** Alfred-Opus, Whisper Large Turbo, XTTS-v2.
+            - **Cyber Warfare:** Full C4ISR suite.
+            - **Kernel:** 7.0.12 with Universal DKMS Auto-Heal & AI Hardening.
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

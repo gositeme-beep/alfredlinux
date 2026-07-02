@@ -1,0 +1,2227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GoSiteMe 3D Pool</title>
+<meta name="description" content="Play 3D 8-Ball Pool in your browser. Realistic physics, AI opponents, multiplayer PvP — no downloads required.">
+<link rel="icon" href="/assets/favicon.ico">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0a0a14;color:#fff;font-family:'Inter','Segoe UI',system-ui,sans-serif;overflow:hidden;-webkit-font-smoothing:antialiased}
+#loading{position:fixed;inset:0;background:#0a0a14;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;transition:opacity .6s}
+#loading.hidden{opacity:0;pointer-events:none}
+#loading h1{font-size:2rem;margin-bottom:.5rem;background:linear-gradient(135deg,#00D4FF,#10b981);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+#loading p{color:rgba(255,255,255,.5);font-size:.9rem;margin-bottom:1.5rem}
+.load-bar{width:200px;height:4px;background:rgba(255,255,255,.1);border-radius:2px;overflow:hidden}
+.load-bar-fill{height:100%;background:linear-gradient(90deg,#00D4FF,#10b981);border-radius:2px;animation:loadPulse 1.5s ease-in-out infinite;width:60%}
+@keyframes loadPulse{0%,100%{transform:translateX(-100%)}50%{transform:translateX(100%)}}
+canvas#gameCanvas{display:block;width:100vw;height:100vh}
+
+/* HUD */
+#hud{position:fixed;top:0;left:0;right:0;padding:1rem 1.5rem;display:flex;align-items:center;justify-content:space-between;z-index:100;background:linear-gradient(180deg,rgba(10,10,20,.9),transparent);pointer-events:none}
+#hud>*{pointer-events:auto}
+.hud-left,.hud-right{display:flex;align-items:center;gap:.75rem}
+.hud-title{font-size:1.1rem;font-weight:700;background:linear-gradient(135deg,#00D4FF,#10b981);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.hud-btn{padding:.4rem .8rem;border-radius:8px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.06);color:rgba(255,255,255,.7);cursor:pointer;font-size:.75rem;font-weight:600;transition:.2s;backdrop-filter:blur(8px)}
+.hud-btn:hover{background:rgba(0,212,255,.15);color:#00D4FF;border-color:rgba(0,212,255,.3)}
+.hud-btn.active{background:rgba(0,212,255,.25);color:#00D4FF;border-color:rgba(0,212,255,.4)}
+
+/* Player Info */
+#playerInfo{position:fixed;left:1.5rem;top:50%;transform:translateY(-50%);z-index:100;width:210px}
+.info-card{background:rgba(22,22,54,.85);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:1rem;backdrop-filter:blur(12px);margin-bottom:.75rem}
+.info-card h4{font-size:.65rem;text-transform:uppercase;letter-spacing:1px;color:rgba(255,255,255,.4);margin-bottom:.5rem}
+.player-row{display:flex;align-items:center;gap:.5rem;padding:.4rem 0}
+.player-dot{width:12px;height:12px;border-radius:50%;flex-shrink:0;border:2px solid rgba(255,255,255,.2)}
+.player-dot.solids{background:linear-gradient(135deg,#3b82f6,#1d4ed8)}
+.player-dot.stripes{background:repeating-linear-gradient(45deg,#f59e0b,#f59e0b 3px,#fff 3px,#fff 6px);background-size:8px 8px}
+.player-name{font-size:.82rem;font-weight:600;flex:1}
+.player-type{font-size:.7rem;color:rgba(255,255,255,.35)}
+.turn-badge{display:inline-block;padding:2px 8px;border-radius:6px;font-size:.65rem;font-weight:700;background:rgba(16,185,129,.2);color:#10b981;margin-left:auto}
+
+/* Power Meter */
+#powerMeter{position:fixed;right:1.5rem;top:50%;transform:translateY(-50%);z-index:100;width:40px;height:250px}
+.power-track{width:100%;height:100%;background:rgba(22,22,54,.85);border:1px solid rgba(255,255,255,.08);border-radius:20px;backdrop-filter:blur(12px);position:relative;overflow:hidden}
+.power-fill{position:absolute;bottom:0;left:0;right:0;background:linear-gradient(0deg,#10b981,#fbbf24,#ef4444);border-radius:0 0 20px 20px;transition:height .05s}
+.power-label{position:absolute;top:-24px;left:50%;transform:translateX(-50%);font-size:.65rem;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:1px;white-space:nowrap}
+
+/* Ball Tray - pocketed balls */
+#ballTray{position:fixed;left:1.5rem;bottom:1.5rem;z-index:100;width:210px}
+.tray-card{background:rgba(22,22,54,.85);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:.75rem;backdrop-filter:blur(12px)}
+.tray-card h4{font-size:.6rem;text-transform:uppercase;letter-spacing:1px;color:rgba(255,255,255,.3);margin-bottom:.4rem}
+.tray-row{display:flex;gap:4px;flex-wrap:wrap;min-height:22px}
+.tray-ball{width:20px;height:20px;border-radius:50%;display:inline-block;border:1px solid rgba(255,255,255,.1)}
+
+/* Bottom Bar */
+#bottomBar{position:fixed;bottom:1.5rem;left:50%;transform:translateX(-50%);z-index:100;display:flex;gap:.5rem;background:rgba(22,22,54,.85);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:.5rem;backdrop-filter:blur(12px)}
+
+/* Status Toast */
+#statusToast{position:fixed;bottom:5rem;left:50%;transform:translateX(-50%);z-index:200;padding:.6rem 1.2rem;border-radius:10px;background:rgba(22,22,54,.95);border:1px solid rgba(0,212,255,.3);color:#00D4FF;font-size:.8rem;font-weight:600;backdrop-filter:blur(12px);opacity:0;transition:opacity .3s;pointer-events:none}
+#statusToast.visible{opacity:1}
+
+/* Aim Guide */
+#aimGuide{position:fixed;bottom:5.5rem;left:50%;transform:translateX(-50%);z-index:100;font-size:.75rem;color:rgba(255,255,255,.4);text-align:center;pointer-events:none;display:none}
+
+/* Mode Select */
+#modeModal{position:fixed;inset:0;background:rgba(10,10,20,.92);z-index:500;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(8px)}
+#modeModal.hidden{display:none}
+.mode-panel{background:rgba(22,22,54,.95);border:1px solid rgba(255,255,255,.1);border-radius:20px;padding:2.5rem;max-width:520px;width:90%;text-align:center}
+.mode-panel h2{font-size:1.5rem;margin-bottom:.5rem;background:linear-gradient(135deg,#00D4FF,#10b981);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.mode-panel>p{color:rgba(255,255,255,.5);font-size:.85rem;margin-bottom:2rem}
+.mode-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem}
+.mode-card{padding:1.5rem 1rem;border-radius:14px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.03);cursor:pointer;transition:.2s;text-decoration:none;color:#fff}
+.mode-card:hover{border-color:rgba(0,212,255,.3);background:rgba(0,212,255,.06);transform:translateY(-2px)}
+.mode-card .icon{font-size:2rem;margin-bottom:.5rem}
+.mode-card h3{font-size:.95rem;margin-bottom:.3rem}
+.mode-card p{font-size:.72rem;color:rgba(255,255,255,.4);margin:0}
+
+/* Game Over Overlay */
+#gameOver{position:fixed;inset:0;background:rgba(10,10,20,.85);z-index:600;display:none;align-items:center;justify-content:center;backdrop-filter:blur(6px)}
+#gameOver.show{display:flex}
+.gameover-card{background:rgba(22,22,54,.95);border:1px solid rgba(255,255,255,.12);border-radius:24px;padding:3rem;text-align:center;max-width:420px;width:90%}
+.gameover-card h2{font-size:1.8rem;margin-bottom:.5rem}
+.gameover-card h2.win{color:#10b981}.gameover-card h2.lose{color:#ef4444}
+.gameover-card p{color:rgba(255,255,255,.5);margin-bottom:1.5rem}
+.gameover-btn{display:inline-block;padding:.7rem 1.5rem;border-radius:10px;border:none;cursor:pointer;font-size:.85rem;font-weight:700;margin:.25rem;transition:.2s;text-decoration:none;color:#fff}
+.gameover-btn.primary{background:linear-gradient(135deg,#00D4FF,#10b981)}
+.gameover-btn.secondary{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12)}
+
+/* Cue line */
+.screen-flash{position:fixed;inset:0;z-index:800;pointer-events:none;opacity:0;transition:opacity .15s}
+
+/* Settings */
+#settingsPanel{position:fixed;right:1.5rem;bottom:5rem;width:260px;z-index:300;background:rgba(22,22,54,.95);border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:1.25rem;backdrop-filter:blur(16px);display:none}
+#settingsPanel.open{display:block}
+#settingsPanel h4{font-size:.7rem;text-transform:uppercase;letter-spacing:1px;color:rgba(255,255,255,.3);margin-bottom:.75rem}
+.setting-row{display:flex;align-items:center;justify-content:space-between;padding:.5rem 0;border-bottom:1px solid rgba(255,255,255,.04)}
+.setting-row:last-child{border:none}
+.setting-label{font-size:.8rem;color:rgba(255,255,255,.6)}
+.setting-select{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:6px;color:#fff;padding:4px 8px;font-size:.75rem;cursor:pointer}
+.setting-select option{background:#1a1a2e}
+
+/* Wager System */
+#wagerModal{position:fixed;inset:0;background:rgba(10,10,20,.94);z-index:550;display:none;align-items:center;justify-content:center;backdrop-filter:blur(8px)}
+#wagerModal.show{display:flex}
+.wager-panel{background:rgba(22,22,54,.95);border:1px solid rgba(0,212,255,.2);border-radius:20px;padding:2rem;max-width:400px;width:90%;text-align:center}
+.wager-panel h2{font-size:1.3rem;margin-bottom:.5rem;background:linear-gradient(135deg,#00D4FF,#10b981);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.wager-panel p{color:rgba(255,255,255,.5);font-size:.82rem;margin-bottom:1.5rem}
+.wager-amounts{display:flex;gap:.75rem;justify-content:center;margin-bottom:1.5rem}
+.wager-btn{padding:.8rem 1.5rem;border-radius:12px;border:2px solid rgba(0,212,255,.3);background:rgba(0,212,255,.08);color:#00D4FF;cursor:pointer;font-size:1.1rem;font-weight:700;transition:.2s;min-width:80px}
+.wager-btn:hover{background:rgba(0,212,255,.2);border-color:#00D4FF;transform:scale(1.05)}
+.wager-btn.selected{background:rgba(0,212,255,.3);border-color:#00D4FF;box-shadow:0 0 20px rgba(0,212,255,.3)}
+.wager-free{padding:.5rem 1.2rem;border-radius:8px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.05);color:rgba(255,255,255,.5);cursor:pointer;font-size:.78rem;margin-top:.5rem;transition:.2s}
+.wager-free:hover{color:#fff;background:rgba(255,255,255,.1)}
+.wager-opponent{display:flex;align-items:center;gap:.6rem;justify-content:center;margin:1rem 0;padding:.6rem;border-radius:10px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06)}
+.wager-opponent .opp-dot{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.9rem}
+.wager-opponent .opp-name{font-size:.9rem;font-weight:600}
+.wager-opponent .opp-elo{font-size:.7rem;color:rgba(255,255,255,.4)}
+
+/* Agent Profile Card */
+#agentProfileOverlay{position:fixed;inset:0;background:rgba(10,10,20,.94);z-index:560;display:none;align-items:center;justify-content:center;backdrop-filter:blur(8px)}
+#agentProfileOverlay.show{display:flex}
+.agent-profile-card{background:rgba(22,22,54,.95);border:1px solid rgba(0,212,255,.2);border-radius:20px;padding:2rem;max-width:420px;width:90%;text-align:center}
+.agent-profile-card .ap-avatar{width:64px;height:64px;border-radius:50%;margin:0 auto .75rem;display:flex;align-items:center;justify-content:center;font-size:2rem}
+.agent-profile-card .ap-name{font-size:1.2rem;font-weight:700}
+.agent-profile-card .ap-title{font-size:.72rem;color:rgba(255,255,255,.4);margin:.2rem 0 .8rem}
+.ap-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:.5rem;margin:1rem 0}
+.ap-stat{padding:.5rem;border-radius:10px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06)}
+.ap-stat .val{font-size:1.1rem;font-weight:700;color:#00D4FF}
+.ap-stat .lbl{font-size:.6rem;text-transform:uppercase;letter-spacing:1px;color:rgba(255,255,255,.3);margin-top:.2rem}
+.ap-wallet{display:inline-flex;align-items:center;gap:.4rem;padding:.4rem 1rem;border-radius:10px;background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.2);color:#22c55e;font-weight:700;font-size:.9rem;margin:.8rem 0}
+.ap-close{padding:.5rem 1.5rem;border-radius:10px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.05);color:rgba(255,255,255,.6);cursor:pointer;font-size:.78rem;margin-top:.8rem;transition:.2s}
+.ap-close:hover{background:rgba(255,255,255,.1);color:#fff}
+
+/* Ecosystem HUD Badge */
+.eco-badge{position:fixed;top:4.5rem;right:1.5rem;z-index:100;display:flex;gap:.5rem;align-items:center}
+.eco-badge .eco-stat{padding:.3rem .7rem;border-radius:8px;background:rgba(22,22,54,.85);border:1px solid rgba(255,255,255,.08);backdrop-filter:blur(8px);font-size:.7rem;font-weight:600;cursor:pointer;transition:.2s}
+.eco-badge .eco-stat:hover{border-color:rgba(0,212,255,.3)}
+.eco-badge .eco-val{color:#00D4FF}
+
+/* Active Wager HUD */
+#activeWagerBadge{position:fixed;top:4.5rem;left:1.5rem;z-index:100;display:none;padding:.4rem .8rem;border-radius:10px;background:rgba(0,212,255,.15);border:1px solid rgba(0,212,255,.3);color:#00D4FF;font-size:.78rem;font-weight:700;backdrop-filter:blur(8px);animation:wagerPulse 2s ease-in-out infinite}
+@keyframes wagerPulse{0%,100%{box-shadow:0 0 8px rgba(0,212,255,.2)}50%{box-shadow:0 0 16px rgba(0,212,255,.4)}}
+
+/* Mode card wager variant */
+.mode-card.wager{border-color:rgba(0,212,255,.2);background:rgba(0,212,255,.04)}
+.mode-card.wager:hover{border-color:rgba(0,212,255,.4);background:rgba(0,212,255,.1)}
+
+@media(max-width:768px){
+  #playerInfo,#powerMeter,#ballTray{display:none}
+  #hud{padding:.75rem 1rem}
+  .mode-grid{grid-template-columns:1fr}
+  #settingsPanel{width:240px;right:.75rem}
+  .eco-badge{display:none}
+}
+</style>
+<script src="/vr/shared/alfred-csrf.js"></script>
+</head>
+<body>
+
+<!-- Loading Screen -->
+<div id="loading">
+    <h1>3D Pool</h1>
+    <p>Loading physics engine...</p>
+    <div class="load-bar"><div class="load-bar-fill"></div></div>
+</div>
+
+<!-- Mode Select -->
+<div id="modeModal">
+    <div class="mode-panel">
+        <h2>🎱 3D Pool</h2>
+        <p>8-Ball — Pocket all your balls, then sink the 8-ball to win</p>
+        <div class="mode-grid">
+            <div class="mode-card" onclick="startGame('easy')">
+                <div class="icon">🟢</div>
+                <h3>Easy AI</h3>
+                <p>Casual game — AI misses often</p>
+            </div>
+            <div class="mode-card" onclick="startGame('medium')">
+                <div class="icon">🟡</div>
+                <h3>Medium AI</h3>
+                <p>Balanced opponent — decent accuracy</p>
+            </div>
+            <div class="mode-card" onclick="startGame('hard')">
+                <div class="icon">🔴</div>
+                <h3>Hard AI</h3>
+                <p>Skilled — rarely misses straight shots</p>
+            </div>
+            <div class="mode-card" onclick="startGame('practice')">
+                <div class="icon">🎯</div>
+                <h3>Practice</h3>
+                <p>Free shot mode — no opponent</p>
+            </div>
+            <div class="mode-card" onclick="startSpectator()">
+                <div class="icon">👀</div>
+                <h3>Spectate AI vs AI</h3>
+                <p>Watch two agents play 8-ball</p>
+            </div>
+            <div class="mode-card wager" onclick="openWagerModal()">
+                <div class="icon">💰</div>
+                <h3>Wager Match</h3>
+                <p>Bet $1, $3, or $5 vs an agent</p>
+            </div>
+            <div class="mode-card" onclick="showAgentProfiles()">
+                <div class="icon">🤖</div>
+                <h3>Agent Profiles</h3>
+                <p>View cross-game agent stats</p>
+            </div>
+        </div>
+        <div style="margin-top:1.5rem">
+            <a href="/games.php" style="color:rgba(255,255,255,.4);font-size:.8rem;text-decoration:none">&larr; Back to Games</a>
+        </div>
+    </div>
+</div>
+
+<!-- HUD -->
+<div id="hud" style="display:none">
+    <div class="hud-left">
+        <span class="hud-title">3D Pool</span>
+        <span id="gameMode" style="font-size:.7rem;color:rgba(255,255,255,.35)">8-Ball</span>
+    </div>
+    <div class="hud-right">
+        <button class="hud-btn" onclick="toggleTopView()" title="Top View" id="topViewBtn"><i>📐</i></button>
+        <button class="hud-btn" id="micBtn" onclick="toggleVoice()" title="Voice Commands"><i>🎙️</i></button>
+        <button class="hud-btn" id="alfredBtn" onclick="toggleAlfred()" title="Ask Alfred"><i>🤖</i></button>
+        <button class="hud-btn" id="soundBtn" onclick="toggleSound()" title="Sound"><i>🔊</i></button>
+        <button class="hud-btn" onclick="toggleSettings()" title="Settings"><i>⚙️</i></button>
+        <button class="hud-btn" onclick="newGame()" title="New Game"><i>🔄</i></button>
+        <a href="/games.php" class="hud-btn" style="text-decoration:none"><i>🏠</i></a>
+    </div>
+</div>
+
+<!-- Player Info -->
+<div id="playerInfo" style="display:none">
+    <div class="info-card">
+        <h4>Players</h4>
+        <div class="player-row" id="p1row">
+            <span class="player-dot" id="p1dot"></span>
+            <span class="player-name" id="p1name">You</span>
+            <span class="player-type" id="p1type">—</span>
+            <span class="turn-badge" id="p1turn" style="display:none">Your Turn</span>
+        </div>
+        <div class="player-row" id="p2row">
+            <span class="player-dot" id="p2dot"></span>
+            <span class="player-name" id="p2name">AI</span>
+            <span class="player-type" id="p2type">—</span>
+            <span class="turn-badge" id="p2turn" style="display:none">AI Turn</span>
+        </div>
+    </div>
+    <div class="info-card">
+        <h4>Status</h4>
+        <div id="statusText" style="font-size:.82rem;color:#00D4FF">Break shot</div>
+    </div>
+</div>
+
+<!-- Power Meter -->
+<div id="powerMeter" style="display:none">
+    <div class="power-label">Power</div>
+    <div class="power-track">
+        <div class="power-fill" id="powerFill" style="height:0%"></div>
+    </div>
+</div>
+
+<!-- Ball Tray -->
+<div id="ballTray" style="display:none">
+    <div class="tray-card">
+        <h4>Pocketed</h4>
+        <div class="tray-row" id="pocketedBalls"></div>
+    </div>
+</div>
+
+<!-- Bottom Bar -->
+<div id="bottomBar" style="display:none">
+    <button class="hud-btn" onclick="placeCueBall()" id="placeCueBtn" style="display:none">📍 Place Cue Ball</button>
+</div>
+
+<!-- Aim Guide -->
+<div id="aimGuide">Click and drag to aim. Pull back for power. Release to shoot.</div>
+
+<!-- Status Toast -->
+<div id="statusToast"></div>
+
+<!-- Settings -->
+<div id="settingsPanel">
+    <h4>Settings</h4>
+    <div class="setting-row">
+        <span class="setting-label">Table Felt</span>
+        <select class="setting-select" id="feltSelect" onchange="changeFelt(this.value)">
+            <option value="green">Classic Green</option>
+            <option value="blue">Tournament Blue</option>
+            <option value="red">Red Velvet</option>
+            <option value="purple">Purple Royal</option>
+        </select>
+    </div>
+    <div class="setting-row">
+        <span class="setting-label">Guide Line</span>
+        <select class="setting-select" onchange="setGuideLine(this.value)">
+            <option value="on">On</option>
+            <option value="off">Off</option>
+        </select>
+    </div>
+</div>
+
+<!-- Game Over -->
+<div id="gameOver">
+    <div class="gameover-card">
+        <h2 id="goTitle">Game Over</h2>
+        <p id="goMessage"></p>
+        <button class="gameover-btn primary" onclick="newGame()">Play Again</button>
+        <button id="disputeBtn" class="gameover-btn secondary" onclick="openDispute()" style="display:none">⚖️ Dispute</button>
+        <a href="/games.php" class="gameover-btn secondary">Back to Games</a>
+    </div>
+</div>
+
+<!-- Dispute Modal -->
+<div id="disputeModal" style="position:fixed;inset:0;background:rgba(10,10,20,.9);z-index:700;display:none;align-items:center;justify-content:center;backdrop-filter:blur(8px)">
+    <div style="background:rgba(22,22,54,.97);border:1px solid rgba(255,255,255,.12);border-radius:20px;padding:2rem;max-width:500px;width:90%;text-align:center">
+        <h2 style="font-size:1.3rem;margin-bottom:.8rem;background:linear-gradient(135deg,#f59e0b,#ef4444);-webkit-background-clip:text;-webkit-text-fill-color:transparent">⚖️ Dispute Game Result</h2>
+        <p style="color:rgba(255,255,255,.5);font-size:.8rem;margin-bottom:1rem">Alfred AI will review the game evidence and issue a ruling.</p>
+        <textarea id="disputeReason" placeholder="Why are you disputing this result? (e.g., game glitch, unfair AI behavior)" style="width:100%;height:80px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:.8rem;color:#fff;font-size:.8rem;resize:none;margin-bottom:1rem"></textarea>
+        <div id="disputeResult" style="display:none;margin-bottom:1rem;padding:1rem;border-radius:12px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);text-align:left;font-size:.8rem;color:rgba(255,255,255,.7);max-height:200px;overflow-y:auto"></div>
+        <button id="submitDisputeBtn" class="gameover-btn primary" onclick="submitDispute()" style="margin-right:.5rem">Submit to Alfred</button>
+        <button class="gameover-btn secondary" onclick="closeDispute()">Close</button>
+    </div>
+</div>
+
+<!-- Wager Modal -->
+<div id="wagerModal">
+    <div class="wager-panel">
+        <h2>💰 Wager Match</h2>
+        <p>Place a wager and play to win</p>
+        <div class="wager-opponent" id="wagerOpponent">
+            <div class="opp-dot" style="background:#0074D9">🤖</div>
+            <div><div class="opp-name" id="wagerOppName">Alfred</div><div class="opp-elo" id="wagerOppElo">ELO 1400 · Positional</div></div>
+        </div>
+        <div class="wager-amounts">
+            <button class="wager-btn" onclick="selectWager(100)">$1</button>
+            <button class="wager-btn" onclick="selectWager(300)">$3</button>
+            <button class="wager-btn" onclick="selectWager(500)">$5</button>
+        </div>
+        <button class="wager-btn" id="wagerStartBtn" onclick="startWagerGame()" style="width:100%;background:linear-gradient(135deg,rgba(0,212,255,.3),rgba(16,185,129,.3));border-color:rgba(0,212,255,.4);margin-top:.5rem;display:none">Start Wager Match</button>
+        <br>
+        <button class="wager-free" onclick="closeWagerModal()">Cancel</button>
+    </div>
+</div>
+
+<!-- Agent Profile Overlay -->
+<div id="agentProfileOverlay">
+    <div class="agent-profile-card" id="agentProfileCard">
+        <h2>🤖 Agent Roster</h2>
+        <p style="color:rgba(255,255,255,.4)">Loading…</p>
+    </div>
+</div>
+
+<!-- Active Wager Badge -->
+<div id="activeWagerBadge">💰 Wager: <span id="wagerAmountDisplay">$0</span></div>
+
+<!-- Ecosystem Badge -->
+<div class="eco-badge" id="ecoBadge" style="display:none">
+    <div class="eco-stat">🔥 Streak: <span class="eco-val" id="ecoStreak">0</span></div>
+    <div class="eco-stat">🎮 Games: <span class="eco-val" id="ecoGames">0</span></div>
+    <div class="eco-stat" onclick="showAgentProfiles()">🤖 Agents: <span class="eco-val" id="ecoAgents">8</span></div>
+</div>
+
+<div class="screen-flash" id="screenFlash"></div>
+<canvas id="gameCanvas"></canvas>
+
+<script src="/assets/js/vendor/three.r128.min.js"></script>
+<script src="/vr/shared/gositeme-quality.js"></script>
+<script>
+/* ══════════════════════════════════════════════════════════════════
+   GoSiteMe 3D Pool — Full 8-Ball with Physics
+   ══════════════════════════════════════════════════════════════════ */
+(function(){
+'use strict';
+
+// ── Table Dimensions (standard 9-ft table scaled) ──
+var TABLE_W = 4.5;   // half-width (x)
+var TABLE_H = 2.25;  // half-height (z)
+var RAIL_H = 0.15;   // rail height
+var BALL_R = 0.057;   // ball radius
+var POCKET_R = 0.12;  // pocket radius
+var FRICTION = 0.985; // per-frame velocity decay
+var CUSHION_RESTITUTION = 0.7;
+var BALL_RESTITUTION = 0.92;
+var MIN_VEL = 0.001;
+var CUE_MAX_POWER = 0.35;
+var SPIN_DECAY = 0.99;
+
+// ── Ball Colors (standard 8-ball set) ──
+var BALL_COLORS = [
+    0xffffff, // 0 = cue ball (white)
+    0xfdd835, // 1 yellow
+    0x1565c0, // 2 blue
+    0xd32f2f, // 3 red
+    0x6a1b9a, // 4 purple
+    0xff6f00, // 5 orange
+    0x2e7d32, // 6 green
+    0x8d6e63, // 7 maroon
+    0x212121, // 8 black
+    0xfdd835, // 9 yellow stripe
+    0x1565c0, // 10 blue stripe
+    0xd32f2f, // 11 red stripe
+    0x6a1b9a, // 12 purple stripe
+    0xff6f00, // 13 orange stripe
+    0x2e7d32, // 14 green stripe
+    0x8d6e63  // 15 maroon stripe
+];
+
+var SOLIDS = [1,2,3,4,5,6,7];
+var STRIPES = [9,10,11,12,13,14,15];
+
+// ── Pocket positions ──
+var POCKETS = [
+    { x: -TABLE_W - 0.03, z: -TABLE_H - 0.03 },
+    { x: 0, z: -TABLE_H - 0.05 },
+    { x: TABLE_W + 0.03, z: -TABLE_H - 0.03 },
+    { x: -TABLE_W - 0.03, z: TABLE_H + 0.03 },
+    { x: 0, z: TABLE_H + 0.05 },
+    { x: TABLE_W + 0.03, z: TABLE_H + 0.03 }
+];
+
+// ── Game State ──
+var balls = []; // {id, x, z, vx, vz, pocketed, mesh}
+var gameActive = false;
+var currentPlayer = 1; // 1 = human, 2 = AI
+var player1Type = null; // 'solids' or 'stripes' or null (undecided)
+var player2Type = null;
+var isBreak = true;
+var ballsMoving = false;
+var pocketedThisTurn = [];
+var foulThisTurn = false;
+var aiDifficulty = 'medium';
+var isPractice = false;
+var spectatorMode = false;
+var spectatorAgent1 = null;
+var _shotCount = 0; // anti-cheat: total shots fired this game
+var spectatorAgent2 = null;
+var spectatorPaused = false;
+var soundEnabled = true;
+var showGuide = true;
+var topView = false;
+
+// ── Shooting state ──
+var isAiming = false;
+var aimStart = { x: 0, y: 0 };
+var aimCurrent = { x: 0, y: 0 };
+var shotPower = 0;
+var shotAngle = 0;
+var cueBallInHand = false;
+
+// ── Three.js ──
+var scene, camera, renderer, raycaster, mouse;
+var tableGroup, ballGroup, cueGroup, guideGroup;
+var clock = new THREE.Clock();
+var cameraAngle = 0;
+var cameraRadius = 5;
+var cameraHeight = 4;
+var targetCameraAngle = -Math.PI / 2;
+var cueLine = null;
+
+// ── Felt colors ──
+var feltColors = {
+    green: 0x1a6b37,
+    blue: 0x1a4b8b,
+    red: 0x8b1a1a,
+    purple: 0x4a1a6b
+};
+var currentFelt = 'green';
+
+// ── Audio ──
+var audioCtx;
+function getAudio() {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    return audioCtx;
+}
+function playSound(type) {
+    if (!soundEnabled) return;
+    try {
+        var ctx = getAudio();
+        var osc = ctx.createOscillator();
+        var gain = ctx.createGain();
+        osc.connect(gain); gain.connect(ctx.destination);
+        gain.gain.value = 0.12;
+        
+        if (type === 'hit') {
+            osc.frequency.value = 220; osc.type = 'triangle';
+            gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.1);
+            osc.start(); osc.stop(ctx.currentTime + 0.1);
+        } else if (type === 'collide') {
+            osc.frequency.value = 800; osc.type = 'sine';
+            gain.gain.value = 0.06;
+            gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.05);
+            osc.start(); osc.stop(ctx.currentTime + 0.05);
+        } else if (type === 'pocket') {
+            osc.frequency.value = 150; osc.type = 'sine';
+            gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
+            osc.start(); osc.stop(ctx.currentTime + 0.3);
+        } else if (type === 'cushion') {
+            osc.frequency.value = 500; osc.type = 'square';
+            gain.gain.value = 0.04;
+            gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.06);
+            osc.start(); osc.stop(ctx.currentTime + 0.06);
+        } else if (type === 'win') {
+            [523,659,784,1047].forEach(function(f,i){
+                var o=ctx.createOscillator(),g=ctx.createGain();
+                o.connect(g);g.connect(ctx.destination);
+                o.frequency.value=f;o.type='sine';g.gain.value=0.1;
+                g.gain.exponentialRampToValueAtTime(0.01,ctx.currentTime+i*0.2+0.3);
+                o.start(ctx.currentTime+i*0.2);o.stop(ctx.currentTime+i*0.2+0.3);
+            });
+        } else if (type === 'foul') {
+            osc.frequency.value = 180; osc.type = 'sawtooth';
+            gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.4);
+            osc.start(); osc.stop(ctx.currentTime + 0.4);
+        }
+    } catch(e) {}
+}
+
+// ═══ PHYSICS ENGINE ═══
+
+function initBalls() {
+    balls = [];
+    
+    // Cue ball
+    balls.push({ id: 0, x: -TABLE_W * 0.55, z: 0, vx: 0, vz: 0, pocketed: false });
+    
+    // Triangle rack
+    var startX = TABLE_W * 0.35;
+    var row = 0;
+    var rackOrder = [1, 2, 3, 8, 4, 5, 6, 7, 9, 10, 11, 12, 13, 14, 15];
+    var idx = 0;
+    for (var rr = 0; rr < 5; rr++) {
+        for (var cc = 0; cc <= rr; cc++) {
+            var bx = startX + rr * BALL_R * 1.75;
+            var bz = (cc - rr / 2) * BALL_R * 2.05;
+            if (idx < rackOrder.length) {
+                balls.push({ id: rackOrder[idx], x: bx, z: bz, vx: 0, vz: 0, pocketed: false });
+                idx++;
+            }
+        }
+    }
+}
+
+function stepPhysics() {
+    var moving = false;
+    
+    for (var i = 0; i < balls.length; i++) {
+        var b = balls[i];
+        if (b.pocketed) continue;
+        
+        // Apply velocity
+        b.x += b.vx;
+        b.z += b.vz;
+        
+        // Friction
+        b.vx *= FRICTION;
+        b.vz *= FRICTION;
+        
+        // Stop very slow balls
+        if (Math.abs(b.vx) < MIN_VEL && Math.abs(b.vz) < MIN_VEL) {
+            b.vx = 0;
+            b.vz = 0;
+        } else {
+            moving = true;
+        }
+        
+        // Cushion collision
+        if (b.x - BALL_R < -TABLE_W) {
+            b.x = -TABLE_W + BALL_R;
+            b.vx = Math.abs(b.vx) * CUSHION_RESTITUTION;
+            playSound('cushion');
+        }
+        if (b.x + BALL_R > TABLE_W) {
+            b.x = TABLE_W - BALL_R;
+            b.vx = -Math.abs(b.vx) * CUSHION_RESTITUTION;
+            playSound('cushion');
+        }
+        if (b.z - BALL_R < -TABLE_H) {
+            b.z = -TABLE_H + BALL_R;
+            b.vz = Math.abs(b.vz) * CUSHION_RESTITUTION;
+            playSound('cushion');
+        }
+        if (b.z + BALL_R > TABLE_H) {
+            b.z = TABLE_H - BALL_R;
+            b.vz = -Math.abs(b.vz) * CUSHION_RESTITUTION;
+            playSound('cushion');
+        }
+        
+        // Pocket detection
+        for (var p = 0; p < POCKETS.length; p++) {
+            var dx2 = b.x - POCKETS[p].x;
+            var dz2 = b.z - POCKETS[p].z;
+            var dist = Math.sqrt(dx2 * dx2 + dz2 * dz2);
+            if (dist < POCKET_R) {
+                b.pocketed = true;
+                b.vx = 0;
+                b.vz = 0;
+                pocketedThisTurn.push(b.id);
+                playSound('pocket');
+                
+                if (b.id === 0) {
+                    // Cue ball pocketed = foul
+                    foulThisTurn = true;
+                }
+                break;
+            }
+        }
+    }
+    
+    // Ball-ball collisions
+    for (var a = 0; a < balls.length; a++) {
+        if (balls[a].pocketed) continue;
+        for (var bb = a + 1; bb < balls.length; bb++) {
+            if (balls[bb].pocketed) continue;
+            var dx = balls[bb].x - balls[a].x;
+            var dz = balls[bb].z - balls[a].z;
+            var dist2 = dx * dx + dz * dz;
+            var minDist = BALL_R * 2;
+            
+            if (dist2 < minDist * minDist) {
+                var d = Math.sqrt(dist2);
+                if (d < 0.001) d = 0.001;
+                
+                // Normal vector
+                var nx = dx / d;
+                var nz = dz / d;
+                
+                // Relative velocity
+                var dvx = balls[a].vx - balls[bb].vx;
+                var dvz = balls[a].vz - balls[bb].vz;
+                var dvn = dvx * nx + dvz * nz;
+                
+                if (dvn > 0) {
+                    var impulse = dvn * BALL_RESTITUTION;
+                    balls[a].vx -= impulse * nx;
+                    balls[a].vz -= impulse * nz;
+                    balls[bb].vx += impulse * nx;
+                    balls[bb].vz += impulse * nz;
+                    
+                    // Separate balls
+                    var overlap = minDist - d;
+                    balls[a].x -= overlap * nx * 0.5;
+                    balls[a].z -= overlap * nz * 0.5;
+                    balls[bb].x += overlap * nx * 0.5;
+                    balls[bb].z += overlap * nz * 0.5;
+                    
+                    playSound('collide');
+                }
+            }
+        }
+    }
+    
+    return moving;
+}
+
+// ═══ THREE.JS SETUP ═══
+
+function initThree() {
+    scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x0a0a14);
+    scene.fog = new THREE.FogExp2(0x0a0a14, 0.06);
+    
+    camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 100);
+    
+    renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('gameCanvas'), antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(typeof GoSiteMeQuality!=='undefined'?GoSiteMeQuality.dpr:Math.min(window.devicePixelRatio,2));
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.3;
+    
+    raycaster = new THREE.Raycaster();
+    mouse = new THREE.Vector2();
+    
+    tableGroup = new THREE.Group();
+    ballGroup = new THREE.Group();
+    cueGroup = new THREE.Group();
+    guideGroup = new THREE.Group();
+    scene.add(tableGroup, ballGroup, cueGroup, guideGroup);
+    
+    // Lighting
+    scene.add(new THREE.AmbientLight(0x404060, 0.5));
+    
+    // Table lamp (pool hall overhead light)
+    var lampLight = new THREE.SpotLight(0xfff5e6, 1.5, 15, Math.PI / 3, 0.5, 1);
+    lampLight.position.set(0, 5, 0);
+    lampLight.castShadow = true;
+    lampLight.shadow.mapSize.set(2048, 2048);
+    scene.add(lampLight);
+    scene.add(lampLight.target);
+    
+    var lampLight2 = new THREE.PointLight(0xfff0d4, 0.5, 10);
+    lampLight2.position.set(0, 4, 0);
+    scene.add(lampLight2);
+    
+    // Rim lights
+    var rim1 = new THREE.DirectionalLight(0x00D4FF, 0.2);
+    rim1.position.set(-5, 3, -3);
+    scene.add(rim1);
+    var rim2 = new THREE.DirectionalLight(0x10b981, 0.15);
+    rim2.position.set(5, 3, 3);
+    scene.add(rim2);
+    
+    // Lamp shade mesh
+    var shadeGeo = new THREE.CylinderGeometry(0.8, 1.2, 0.3, 32, 1, true);
+    var shadeMat = new THREE.MeshStandardMaterial({ color: 0x1a4b1a, side: THREE.DoubleSide, metalness: 0.3, roughness: 0.6 });
+    var shade = new THREE.Mesh(shadeGeo, shadeMat);
+    shade.position.set(0, 3.5, 0);
+    scene.add(shade);
+    
+    // Lamp chain
+    var chainGeo = new THREE.CylinderGeometry(0.02, 0.02, 2);
+    var chainMat = new THREE.MeshStandardMaterial({ color: 0x8b7355, metalness: 0.8 });
+    var chain = new THREE.Mesh(chainGeo, chainMat);
+    chain.position.set(0, 4.6, 0);
+    scene.add(chain);
+    
+    // Floor
+    var floorGeo = new THREE.PlaneGeometry(20, 20);
+    var floorMat = new THREE.MeshStandardMaterial({ color: 0x0a0a14, roughness: 0.9 });
+    var floor = new THREE.Mesh(floorGeo, floorMat);
+    floor.rotation.x = -Math.PI / 2;
+    floor.position.y = -0.05;
+    floor.receiveShadow = true;
+    scene.add(floor);
+    
+    buildTable();
+    
+    // Events
+    window.addEventListener('resize', onResize);
+    renderer.domElement.addEventListener('mousedown', onMouseDown);
+    renderer.domElement.addEventListener('mousemove', onMouseMoveHandler);
+    renderer.domElement.addEventListener('mouseup', onMouseUp);
+    renderer.domElement.addEventListener('contextmenu', function(e) { e.preventDefault(); });
+    renderer.domElement.addEventListener('wheel', function(e) {
+        cameraRadius = Math.max(3, Math.min(10, cameraRadius + e.deltaY * 0.005));
+    });
+    
+    // Right-click orbit
+    var isDragging = false, lastX = 0;
+    renderer.domElement.addEventListener('mousedown', function(e) { if (e.button === 2) { isDragging = true; lastX = e.clientX; } });
+    renderer.domElement.addEventListener('mousemove', function(e) { if (isDragging) { targetCameraAngle += (e.clientX - lastX) * 0.005; lastX = e.clientX; } });
+    renderer.domElement.addEventListener('mouseup', function(e) { if (e.button === 2) isDragging = false; });
+    
+    // Touch support
+    renderer.domElement.addEventListener('touchstart', onTouchStart, { passive: false });
+    renderer.domElement.addEventListener('touchmove', onTouchMove, { passive: false });
+    renderer.domElement.addEventListener('touchend', onTouchEnd);
+}
+
+function buildTable() {
+    while (tableGroup.children.length) tableGroup.remove(tableGroup.children[0]);
+    
+    var feltColor = feltColors[currentFelt];
+    
+    // Table bed (playing surface)
+    var bedGeo = new THREE.BoxGeometry(TABLE_W * 2 + 0.2, 0.06, TABLE_H * 2 + 0.2);
+    var bedMat = new THREE.MeshStandardMaterial({ color: feltColor, roughness: 0.9, metalness: 0 });
+    var bed = new THREE.Mesh(bedGeo, bedMat);
+    bed.position.y = 0;
+    bed.receiveShadow = true;
+    tableGroup.add(bed);
+    
+    // Rails
+    var railMat = new THREE.MeshStandardMaterial({ color: 0x5c3317, roughness: 0.4, metalness: 0.2 });
+    
+    // Top rail
+    var topRail = new THREE.Mesh(new THREE.BoxGeometry(TABLE_W * 2 + 0.6, RAIL_H, 0.15), railMat);
+    topRail.position.set(0, RAIL_H / 2, -TABLE_H - 0.075);
+    topRail.castShadow = true;
+    tableGroup.add(topRail);
+    
+    // Bottom rail
+    var botRail = new THREE.Mesh(new THREE.BoxGeometry(TABLE_W * 2 + 0.6, RAIL_H, 0.15), railMat);
+    botRail.position.set(0, RAIL_H / 2, TABLE_H + 0.075);
+    botRail.castShadow = true;
+    tableGroup.add(botRail);
+    
+    // Left rail
+    var leftRail = new THREE.Mesh(new THREE.BoxGeometry(0.15, RAIL_H, TABLE_H * 2 + 0.6), railMat);
+    leftRail.position.set(-TABLE_W - 0.075, RAIL_H / 2, 0);
+    leftRail.castShadow = true;
+    tableGroup.add(leftRail);
+    
+    // Right rail
+    var rightRail = new THREE.Mesh(new THREE.BoxGeometry(0.15, RAIL_H, TABLE_H * 2 + 0.6), railMat);
+    rightRail.position.set(TABLE_W + 0.075, RAIL_H / 2, 0);
+    rightRail.castShadow = true;
+    tableGroup.add(rightRail);
+    
+    // Table legs
+    var legGeo = new THREE.CylinderGeometry(0.06, 0.08, 1.2, 16);
+    var legMat = new THREE.MeshStandardMaterial({ color: 0x3d2817, roughness: 0.5, metalness: 0.1 });
+    var legPositions = [
+        [-TABLE_W - 0.05, -TABLE_H - 0.05],
+        [TABLE_W + 0.05, -TABLE_H - 0.05],
+        [-TABLE_W - 0.05, TABLE_H + 0.05],
+        [TABLE_W + 0.05, TABLE_H + 0.05]
+    ];
+    legPositions.forEach(function(lp) {
+        var leg = new THREE.Mesh(legGeo, legMat);
+        leg.position.set(lp[0], -0.63, lp[1]);
+        leg.castShadow = true;
+        tableGroup.add(leg);
+    });
+    
+    // Pockets (dark holes)
+    var pocketGeo = new THREE.CircleGeometry(POCKET_R, 32);
+    var pocketMat = new THREE.MeshBasicMaterial({ color: 0x000000 });
+    POCKETS.forEach(function(pk) {
+        var pocket = new THREE.Mesh(pocketGeo, pocketMat);
+        pocket.rotation.x = -Math.PI / 2;
+        pocket.position.set(pk.x, 0.04, pk.z);
+        tableGroup.add(pocket);
+        
+        // Pocket rim
+        var rimGeo = new THREE.TorusGeometry(POCKET_R, 0.02, 8, 32);
+        var rimMat = new THREE.MeshStandardMaterial({ color: 0x8b7355, metalness: 0.8, roughness: 0.2 });
+        var rim = new THREE.Mesh(rimGeo, rimMat);
+        rim.rotation.x = Math.PI / 2;
+        rim.position.set(pk.x, 0.05, pk.z);
+        tableGroup.add(rim);
+    });
+    
+    // Spots on table
+    var spotGeo = new THREE.CircleGeometry(0.015, 16);
+    var spotMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+    // Foot spot
+    var footSpot = new THREE.Mesh(spotGeo, spotMat);
+    footSpot.rotation.x = -Math.PI / 2;
+    footSpot.position.set(TABLE_W * 0.35, 0.04, 0);
+    tableGroup.add(footSpot);
+    // Head spot (cue ball position)
+    var headSpot = new THREE.Mesh(spotGeo, spotMat);
+    headSpot.rotation.x = -Math.PI / 2;
+    headSpot.position.set(-TABLE_W * 0.55, 0.04, 0);
+    tableGroup.add(headSpot);
+}
+
+function createBallMesh(ball) {
+    var geo = new THREE.SphereGeometry(BALL_R, 32, 32);
+    var color = BALL_COLORS[ball.id];
+    var isStripe = ball.id >= 9;
+    var isCue = ball.id === 0;
+    var isEight = ball.id === 8;
+    
+    var mat = new THREE.MeshStandardMaterial({
+        color: isCue ? 0xf0f0f0 : color,
+        roughness: isCue ? 0.1 : 0.25,
+        metalness: isCue ? 0.05 : 0.1,
+        emissive: isEight ? 0x000000 : (isCue ? 0x111111 : color),
+        emissiveIntensity: isEight ? 0 : 0.05
+    });
+    
+    var mesh = new THREE.Mesh(geo, mat);
+    mesh.castShadow = true;
+    mesh.receiveShadow = true;
+    
+    // Number dot on top
+    if (ball.id > 0) {
+        var dotGeo = new THREE.CircleGeometry(BALL_R * 0.35, 16);
+        var dotMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+        var dot = new THREE.Mesh(dotGeo, dotMat);
+        dot.position.y = BALL_R + 0.001;
+        dot.rotation.x = -Math.PI / 2;
+        mesh.add(dot);
+    }
+    
+    // Stripe band
+    if (isStripe) {
+        var bandGeo = new THREE.TorusGeometry(BALL_R * 0.9, BALL_R * 0.15, 8, 32);
+        var bandMat = new THREE.MeshStandardMaterial({ color: 0xf5f5f5, roughness: 0.2 });
+        var band = new THREE.Mesh(bandGeo, bandMat);
+        mesh.add(band);
+    }
+    
+    // Glow underneath for cue ball
+    if (isCue) {
+        var glowGeo = new THREE.SphereGeometry(BALL_R * 1.5, 16, 16);
+        var glowMat = new THREE.MeshBasicMaterial({ color: 0x00D4FF, transparent: true, opacity: 0.08 });
+        var glow = new THREE.Mesh(glowGeo, glowMat);
+        glow.scale.y = 0.3;
+        glow.position.y = -BALL_R * 0.5;
+        mesh.add(glow);
+    }
+    
+    return mesh;
+}
+
+function renderBalls() {
+    while (ballGroup.children.length) ballGroup.remove(ballGroup.children[0]);
+    
+    balls.forEach(function(b) {
+        if (b.pocketed) return;
+        var mesh = createBallMesh(b);
+        mesh.position.set(b.x, BALL_R + 0.03, b.z);
+        mesh.userData = { ballId: b.id };
+        ballGroup.add(mesh);
+        b.mesh = mesh;
+    });
+}
+
+function syncBallPositions() {
+    balls.forEach(function(b) {
+        if (b.pocketed || !b.mesh) return;
+        b.mesh.position.x = b.x;
+        b.mesh.position.z = b.z;
+        // Roll rotation
+        if (Math.abs(b.vx) > MIN_VEL || Math.abs(b.vz) > MIN_VEL) {
+            var speed = Math.sqrt(b.vx * b.vx + b.vz * b.vz);
+            b.mesh.rotation.z -= b.vx * 2;
+            b.mesh.rotation.x += b.vz * 2;
+        }
+    });
+    
+    // Remove pocketed balls with animation
+    for (var i = ballGroup.children.length - 1; i >= 0; i--) {
+        var child = ballGroup.children[i];
+        var bid = child.userData.ballId;
+        var bdata = balls.find(function(bb) { return bb.id === bid; });
+        if (bdata && bdata.pocketed) {
+            child.position.y -= 0.05;
+            child.scale.multiplyScalar(0.9);
+            if (child.scale.x < 0.1) {
+                ballGroup.remove(child);
+            }
+        }
+    }
+}
+
+// ═══ SHOOTING ═══
+
+function getCueBall() {
+    return balls.find(function(b) { return b.id === 0; });
+}
+
+function shoot(angle, power) {
+    var cue = getCueBall();
+    if (!cue || cue.pocketed) return;
+    
+    cue.vx = Math.cos(angle) * power;
+    cue.vz = Math.sin(angle) * power;
+    
+    _shotCount++;
+    playSound('hit');
+    pocketedThisTurn = [];
+    foulThisTurn = false;
+    ballsMoving = true;
+    
+    document.getElementById('aimGuide').style.display = 'none';
+}
+
+function drawGuideLine() {
+    while (guideGroup.children.length) guideGroup.remove(guideGroup.children[0]);
+    
+    if (!isAiming || !showGuide) return;
+    
+    var cue = getCueBall();
+    if (!cue || cue.pocketed) return;
+    
+    var lineLen = 3;
+    var dirX = Math.cos(shotAngle);
+    var dirZ = Math.sin(shotAngle);
+
+    // Find first ball the cue will hit along the aim line
+    var hitBall = null, hitDist = Infinity;
+    for (var bi = 0; bi < balls.length; bi++) {
+        var b = balls[bi];
+        if (b.pocketed || b.id === 0) continue;
+        // Ray-circle intersection: project ball center onto aim line
+        var dx = b.x - cue.x, dz = b.z - cue.z;
+        var proj = dx * dirX + dz * dirZ;
+        if (proj < 0) continue; // behind cue
+        var perpX = dx - proj * dirX;
+        var perpZ = dz - proj * dirZ;
+        var perpDist = Math.sqrt(perpX * perpX + perpZ * perpZ);
+        if (perpDist < BALL_R * 2 && proj < hitDist) {
+            hitDist = proj;
+            hitBall = b;
+        }
+    }
+
+    if (hitBall) {
+        // Contact point: where cue ball center will be at collision
+        var contactDist = hitDist - BALL_R * 0.2; // slight adjustment for visual
+        var cx = cue.x + dirX * contactDist;
+        var cz = cue.z + dirZ * contactDist;
+
+        // Line from cue to contact point
+        var toContactPts = [
+            new THREE.Vector3(cue.x, BALL_R + 0.04, cue.z),
+            new THREE.Vector3(cx, BALL_R + 0.04, cz)
+        ];
+        var tcGeo = new THREE.BufferGeometry().setFromPoints(toContactPts);
+        guideGroup.add(new THREE.Line(tcGeo, new THREE.LineBasicMaterial({ color: 0x00D4FF, transparent: true, opacity: 0.5 })));
+
+        // Ghost ball at contact
+        var ghostGeo = new THREE.SphereGeometry(BALL_R, 16, 16);
+        var ghostMat = new THREE.MeshBasicMaterial({ color: 0x00D4FF, transparent: true, opacity: 0.15, wireframe: true });
+        var ghost = new THREE.Mesh(ghostGeo, ghostMat);
+        ghost.position.set(cx, BALL_R, cz);
+        guideGroup.add(ghost);
+
+        // Predict target ball direction after hit
+        var tbDx = hitBall.x - cx, tbDz = hitBall.z - cz;
+        var tbLen = Math.sqrt(tbDx * tbDx + tbDz * tbDz) || 1;
+        tbDx /= tbLen; tbDz /= tbLen;
+        var tbLine = [
+            new THREE.Vector3(hitBall.x, BALL_R + 0.04, hitBall.z),
+            new THREE.Vector3(hitBall.x + tbDx * 1.8, BALL_R + 0.04, hitBall.z + tbDz * 1.8)
+        ];
+        var tbGeo = new THREE.BufferGeometry().setFromPoints(tbLine);
+        guideGroup.add(new THREE.Line(tbGeo, new THREE.LineBasicMaterial({ color: 0xf59e0b, transparent: true, opacity: 0.35 })));
+
+        // Predict cue ball deflection direction
+        var deflX = dirX - tbDx * (dirX * tbDx + dirZ * tbDz);
+        var deflZ = dirZ - tbDz * (dirX * tbDx + dirZ * tbDz);
+        var deflLen = Math.sqrt(deflX * deflX + deflZ * deflZ);
+        if (deflLen > 0.05) {
+            deflX /= deflLen; deflZ /= deflLen;
+            var deflLine = [
+                new THREE.Vector3(cx, BALL_R + 0.04, cz),
+                new THREE.Vector3(cx + deflX * 1.2, BALL_R + 0.04, cz + deflZ * 1.2)
+            ];
+            var deflGeo = new THREE.BufferGeometry().setFromPoints(deflLine);
+            guideGroup.add(new THREE.Line(deflGeo, new THREE.LineBasicMaterial({ color: 0x00D4FF, transparent: true, opacity: 0.2 })));
+        }
+    } else {
+        // No target hit — just draw straight guide line
+        var points = [
+            new THREE.Vector3(cue.x, BALL_R + 0.04, cue.z),
+            new THREE.Vector3(cue.x + dirX * lineLen, BALL_R + 0.04, cue.z + dirZ * lineLen)
+        ];
+        var lineGeo = new THREE.BufferGeometry().setFromPoints(points);
+        guideGroup.add(new THREE.Line(lineGeo, new THREE.LineBasicMaterial({ color: 0x00D4FF, transparent: true, opacity: 0.4 })));
+    }
+    
+    // Power indicator - dot at shot distance
+    var dotGeo = new THREE.SphereGeometry(0.02, 8, 8);
+    var dotMat = new THREE.MeshBasicMaterial({ color: shotPower > 0.7 ? 0xef4444 : (shotPower > 0.4 ? 0xfbbf24 : 0x10b981) });
+    var dot = new THREE.Mesh(dotGeo, dotMat);
+    dot.position.set(
+        cue.x + Math.cos(shotAngle) * shotPower * 3,
+        BALL_R + 0.04,
+        cue.z + Math.sin(shotAngle) * shotPower * 3
+    );
+    guideGroup.add(dot);
+    
+    // Cue stick visual
+    while (cueGroup.children.length) cueGroup.remove(cueGroup.children[0]);
+    
+    var cueLen = 2;
+    var cueOffset = BALL_R + 0.02 + shotPower * 0.5; // Pull back with power
+    var cueStart = new THREE.Vector3(
+        cue.x - Math.cos(shotAngle) * cueOffset,
+        BALL_R + 0.04,
+        cue.z - Math.sin(shotAngle) * cueOffset
+    );
+    var cueEnd = new THREE.Vector3(
+        cue.x - Math.cos(shotAngle) * (cueOffset + cueLen),
+        BALL_R + 0.04,
+        cue.z - Math.sin(shotAngle) * (cueOffset + cueLen)
+    );
+    
+    var cueGeo = new THREE.CylinderGeometry(0.012, 0.018, cueLen, 8);
+    var cueMat = new THREE.MeshStandardMaterial({ color: 0xdeb887, roughness: 0.3, metalness: 0.1 });
+    var cueMesh = new THREE.Mesh(cueGeo, cueMat);
+    
+    var midX = (cueStart.x + cueEnd.x) / 2;
+    var midZ = (cueStart.z + cueEnd.z) / 2;
+    cueMesh.position.set(midX, BALL_R + 0.04, midZ);
+    cueMesh.rotation.z = Math.PI / 2;
+    cueMesh.rotation.y = -shotAngle;
+    cueGroup.add(cueMesh);
+}
+
+// ═══ INPUT HANDLING ═══
+
+function onMouseDown(e) {
+    if (e.button !== 0 || !gameActive || ballsMoving || currentPlayer !== 1) return;
+    if (spectatorMode) return;
+    if (isPractice && currentPlayer !== 1) return;
+    
+    var cue = getCueBall();
+    if (!cue || cue.pocketed) return;
+    
+    isAiming = true;
+    aimStart.x = e.clientX;
+    aimStart.y = e.clientY;
+    aimCurrent.x = e.clientX;
+    aimCurrent.y = e.clientY;
+    
+    // Calculate angle from camera perspective to cue ball
+    mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+    mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+    raycaster.setFromCamera(mouse, camera);
+    
+    var tablePlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), -BALL_R);
+    var intersect = new THREE.Vector3();
+    raycaster.ray.intersectPlane(tablePlane, intersect);
+    
+    if (intersect) {
+        shotAngle = Math.atan2(intersect.z - cue.z, intersect.x - cue.x);
+    }
+    
+    document.getElementById('aimGuide').style.display = 'block';
+}
+
+function onMouseMoveHandler(e) {
+    if (!isAiming) return;
+    
+    aimCurrent.x = e.clientX;
+    aimCurrent.y = e.clientY;
+    
+    var cue = getCueBall();
+    if (!cue) return;
+    
+    // Update aim angle based on mouse position
+    mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+    mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+    raycaster.setFromCamera(mouse, camera);
+    
+    var tablePlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), -BALL_R);
+    var intersect = new THREE.Vector3();
+    raycaster.ray.intersectPlane(tablePlane, intersect);
+    
+    if (intersect) {
+        shotAngle = Math.atan2(intersect.z - cue.z, intersect.x - cue.x);
+    }
+    
+    // Power from drag distance
+    var dx = aimCurrent.x - aimStart.x;
+    var dy = aimCurrent.y - aimStart.y;
+    var dragDist = Math.sqrt(dx * dx + dy * dy);
+    shotPower = Math.min(1, dragDist / 200);
+    
+    document.getElementById('powerFill').style.height = (shotPower * 100) + '%';
+    drawGuideLine();
+}
+
+function onMouseUp(e) {
+    if (e.button !== 0 || !isAiming) return;
+    
+    isAiming = false;
+    
+    if (shotPower > 0.02) {
+        shoot(shotAngle, shotPower * CUE_MAX_POWER);
+    }
+    
+    shotPower = 0;
+    document.getElementById('powerFill').style.height = '0%';
+    while (guideGroup.children.length) guideGroup.remove(guideGroup.children[0]);
+    while (cueGroup.children.length) cueGroup.remove(cueGroup.children[0]);
+}
+
+// Touch support
+function onTouchStart(e) {
+    e.preventDefault();
+    if (e.touches.length === 1) {
+        onMouseDown({ button: 0, clientX: e.touches[0].clientX, clientY: e.touches[0].clientY });
+    }
+}
+function onTouchMove(e) {
+    e.preventDefault();
+    if (e.touches.length === 1) {
+        onMouseMoveHandler({ clientX: e.touches[0].clientX, clientY: e.touches[0].clientY });
+    }
+}
+function onTouchEnd(e) {
+    onMouseUp({ button: 0 });
+}
+
+// ═══ AI ═══
+
+function doAITurn() {
+    if (!gameActive || ballsMoving) return;
+    if (!spectatorMode && currentPlayer !== 2) return;
+    
+    var turnLabel = spectatorMode ? (currentPlayer === 1 ? spectatorAgent1.name : spectatorAgent2.name) : 'AI';
+    updateStatus(turnLabel + ' aiming...');
+    
+    setTimeout(function() {
+        var cue = getCueBall();
+        if (!cue || cue.pocketed) {
+            // Respawn cue ball
+            cue = balls.find(function(b) { return b.id === 0; });
+            cue.pocketed = false;
+            cue.x = -TABLE_W * 0.55;
+            cue.z = 0;
+            renderBalls();
+        }
+        
+        // Find target balls
+        var targetBalls = balls.filter(function(b) {
+            if (b.pocketed || b.id === 0) return false;
+            if (!player2Type) return b.id !== 8; // Before assignment, go for any ball
+            if (player2Type === 'solids') return SOLIDS.indexOf(b.id) >= 0;
+            if (player2Type === 'stripes') return STRIPES.indexOf(b.id) >= 0;
+            return false;
+        });
+        
+        // If all own balls sunk, target 8-ball
+        if (targetBalls.length === 0 && player2Type) {
+            targetBalls = balls.filter(function(b) { return b.id === 8 && !b.pocketed; });
+        }
+        
+        if (targetBalls.length === 0) {
+            // Just hit randomly
+            var angle = Math.random() * Math.PI * 2;
+            shoot(angle, 0.15);
+            return;
+        }
+        
+        // Find best shot
+        var bestAngle = 0;
+        var bestScore = -Infinity;
+        
+        for (var t = 0; t < targetBalls.length; t++) {
+            var target = targetBalls[t];
+            
+            for (var p = 0; p < POCKETS.length; p++) {
+                var pocket = POCKETS[p];
+                
+                // Angle from target to pocket
+                var tpAngle = Math.atan2(pocket.z - target.z, pocket.x - target.x);
+                
+                // Position behind ball (opposite of pocket direction)
+                var hitX = target.x - Math.cos(tpAngle) * BALL_R * 2;
+                var hitZ = target.z - Math.sin(tpAngle) * BALL_R * 2;
+                
+                // Angle from cue to hit position
+                var shotA = Math.atan2(hitZ - cue.z, hitX - cue.x);
+                
+                // Distance cue to target
+                var distCT = Math.sqrt(Math.pow(target.x - cue.x, 2) + Math.pow(target.z - cue.z, 2));
+                // Distance target to pocket
+                var distTP = Math.sqrt(Math.pow(pocket.x - target.x, 2) + Math.pow(pocket.z - target.z, 2));
+                
+                // Alignment score (how straight is the shot)
+                var cueToTarget = Math.atan2(target.z - cue.z, target.x - cue.x);
+                var angleDiff = Math.abs(tpAngle - cueToTarget);
+                if (angleDiff > Math.PI) angleDiff = 2 * Math.PI - angleDiff;
+                var alignment = 1 - angleDiff / Math.PI;
+                
+                var score = alignment * 10 - distCT * 0.5 - distTP * 0.3;
+                
+                if (score > bestScore) {
+                    bestScore = score;
+                    bestAngle = shotA;
+                }
+            }
+        }
+        
+        // Add inaccuracy based on difficulty
+        var inaccuracy = { easy: 0.25, medium: 0.12, hard: 0.04, practice: 0 };
+        bestAngle += (Math.random() - 0.5) * (inaccuracy[aiDifficulty] || 0.12);
+        
+        var power = Math.min(0.3, 0.1 + Math.random() * 0.15);
+        shoot(bestAngle, power);
+        
+    }, 800 + Math.random() * 600);
+}
+
+// ═══ GAME LOGIC ═══
+
+function processTurnEnd() {
+    // Respawn cue ball if pocketed
+    var cue = getCueBall();
+    if (cue && cue.pocketed) {
+        cue.pocketed = false;
+        cue.x = -TABLE_W * 0.55;
+        cue.z = 0;
+        cue.vx = 0;
+        cue.vz = 0;
+        foulThisTurn = true;
+        showToast('⚠️ Cue ball pocketed — foul!');
+        playSound('foul');
+    }
+    
+    // Type assignment on break
+    if (isBreak && pocketedThisTurn.length > 0) {
+        isBreak = false;
+        var firstPocketed = pocketedThisTurn.find(function(id) { return id !== 0 && id !== 8; });
+        if (firstPocketed) {
+            if (SOLIDS.indexOf(firstPocketed) >= 0) {
+                player1Type = currentPlayer === 1 ? 'solids' : 'stripes';
+                player2Type = currentPlayer === 1 ? 'stripes' : 'solids';
+            } else {
+                player1Type = currentPlayer === 1 ? 'stripes' : 'solids';
+                player2Type = currentPlayer === 1 ? 'solids' : 'stripes';
+            }
+            showToast('Player 1: ' + player1Type.charAt(0).toUpperCase() + player1Type.slice(1) + ' | AI: ' + player2Type.charAt(0).toUpperCase() + player2Type.slice(1));
+        }
+    }
+    
+    // Check if 8-ball was sunk
+    var eightBall = balls.find(function(b) { return b.id === 8; });
+    if (eightBall && eightBall.pocketed) {
+        // Check if current player's other balls are all sunk
+        var myType = currentPlayer === 1 ? player1Type : player2Type;
+        var myBalls = myType === 'solids' ? SOLIDS : STRIPES;
+        var remaining = balls.filter(function(b) { return myBalls.indexOf(b.id) >= 0 && !b.pocketed; });
+        
+        if (remaining.length === 0 && !foulThisTurn) {
+            endGame(currentPlayer === 1 ? 'You' : 'AI', true);
+        } else {
+            endGame(currentPlayer === 1 ? 'AI' : 'You', false);
+        }
+        return;
+    }
+    
+    // Determine if player sank their ball
+    var madeOwnBall = false;
+    if (!foulThisTurn && pocketedThisTurn.length > 0) {
+        var myType2 = currentPlayer === 1 ? player1Type : player2Type;
+        if (myType2) {
+            var myBalls2 = myType2 === 'solids' ? SOLIDS : STRIPES;
+            madeOwnBall = pocketedThisTurn.some(function(id) { return myBalls2.indexOf(id) >= 0; });
+        } else {
+            madeOwnBall = pocketedThisTurn.some(function(id) { return id !== 0 && id !== 8; });
+        }
+    }
+    
+    // Switch turns if foul or didn't pocket own ball
+    if (foulThisTurn || !madeOwnBall) {
+        if (!isPractice) {
+            currentPlayer = currentPlayer === 1 ? 2 : 1;
+        }
+    } else {
+        showToast('Nice shot! Go again.');
+    }
+    
+    pocketedThisTurn = [];
+    foulThisTurn = false;
+    
+    renderBalls();
+    updateHUD();
+    updateBallTray();
+    
+    // AI turn
+    if (!isPractice && gameActive) {
+        if (spectatorMode || currentPlayer === 2) {
+            setTimeout(doAITurn, 800);
+        } else if (gameActive) {
+            document.getElementById('aimGuide').style.display = 'block';
+        }
+    } else if (gameActive) {
+        document.getElementById('aimGuide').style.display = 'block';
+    }
+}
+
+function endGame(winner, legitimate) {
+    gameActive = false;
+    var goTitle = document.getElementById('goTitle');
+    var goMessage = document.getElementById('goMessage');
+    
+    if (winner === 'You') {
+        goTitle.textContent = '🎉 You Win!';
+        goTitle.className = 'win';
+        goMessage.textContent = legitimate ? 'You sank the 8-ball for the win!' : 'Your opponent fouled on the 8-ball!';
+        playSound('win');
+    } else {
+        goTitle.textContent = '😔 ' + winner + ' Wins';
+        goTitle.className = 'lose';
+        goMessage.textContent = legitimate ? winner + ' sank the 8-ball.' : 'Foul on the 8-ball!';
+    }
+    
+    document.getElementById('gameOver').classList.add('show');
+}
+
+// ═══ UI ═══
+
+function updateHUD() {
+    var p1turn = document.getElementById('p1turn');
+    var p2turn = document.getElementById('p2turn');
+    p1turn.style.display = currentPlayer === 1 ? '' : 'none';
+    p2turn.style.display = currentPlayer === 2 ? '' : 'none';
+    
+    document.getElementById('p1type').textContent = player1Type ? (player1Type === 'solids' ? 'Solids (1-7)' : 'Stripes (9-15)') : '—';
+    document.getElementById('p2type').textContent = player2Type ? (player2Type === 'solids' ? 'Solids (1-7)' : 'Stripes (9-15)') : '—';
+    
+    var p1dot = document.getElementById('p1dot');
+    var p2dot = document.getElementById('p2dot');
+    p1dot.className = 'player-dot' + (player1Type === 'solids' ? ' solids' : (player1Type === 'stripes' ? ' stripes' : ''));
+    p2dot.className = 'player-dot' + (player2Type === 'solids' ? ' solids' : (player2Type === 'stripes' ? ' stripes' : ''));
+    
+    updateStatus(currentPlayer === 1 ? 'Your turn — click and drag to aim' : 'AI thinking...');
+}
+
+function updateStatus(text) {
+    document.getElementById('statusText').textContent = text;
+}
+
+function updateBallTray() {
+    var tray = document.getElementById('pocketedBalls');
+    tray.innerHTML = '';
+    balls.forEach(function(b) {
+        if (!b.pocketed || b.id === 0) return;
+        var span = document.createElement('span');
+        span.className = 'tray-ball';
+        span.style.background = '#' + BALL_COLORS[b.id].toString(16).padStart(6, '0');
+        if (b.id >= 9) span.style.border = '2px solid #f5f5f5';
+        span.title = 'Ball ' + b.id;
+        tray.appendChild(span);
+    });
+}
+
+function showToast(msg) {
+    var toast = document.getElementById('statusToast');
+    toast.textContent = msg;
+    toast.classList.add('visible');
+    setTimeout(function() { toast.classList.remove('visible'); }, 2500);
+}
+
+// ═══ CONTROLS ═══
+
+window.toggleSound = function() {
+    soundEnabled = !soundEnabled;
+    document.getElementById('soundBtn').querySelector('i').textContent = soundEnabled ? '🔊' : '🔇';
+};
+
+window.toggleSettings = function() {
+    document.getElementById('settingsPanel').classList.toggle('open');
+};
+
+window.changeFelt = function(color) {
+    currentFelt = color;
+    buildTable();
+};
+
+window.setGuideLine = function(val) {
+    showGuide = val === 'on';
+};
+
+window.toggleTopView = function() {
+    topView = !topView;
+    document.getElementById('topViewBtn').classList.toggle('active', topView);
+    if (topView) {
+        cameraHeight = 9;
+        cameraRadius = 0.5;
+    } else {
+        cameraHeight = 4;
+        cameraRadius = 5;
+    }
+};
+
+window.placeCueBall = function() {
+    cueBallInHand = true;
+    showToast('Click on the table to place the cue ball');
+};
+
+window.newGame = function() {
+    document.getElementById('gameOver').classList.remove('show');
+    document.getElementById('modeModal').classList.remove('hidden');
+    document.getElementById('modeModal').style.display = 'flex';
+    gameActive = false;
+};
+
+window.startGame = function(difficulty) {
+    aiDifficulty = difficulty;
+    isPractice = difficulty === 'practice';
+    spectatorMode = false;
+    spectatorPaused = false;
+    _shotCount = 0; // reset anti-cheat counter
+    
+    initBalls();
+    renderBalls();
+    
+    currentPlayer = 1;
+    player1Type = null;
+    player2Type = null;
+    isBreak = true;
+    ballsMoving = false;
+    pocketedThisTurn = [];
+    foulThisTurn = false;
+    gameActive = true;
+    
+    document.getElementById('modeModal').classList.add('hidden');
+    document.getElementById('hud').style.display = '';
+    document.getElementById('playerInfo').style.display = '';
+    document.getElementById('powerMeter').style.display = '';
+    document.getElementById('ballTray').style.display = '';
+    document.getElementById('bottomBar').style.display = '';
+    document.getElementById('aimGuide').style.display = 'block';
+    
+    document.getElementById('p2name').textContent = isPractice ? '—' : 'AI (' + difficulty + ')';
+    var specBadge = document.getElementById('spectatorBadge');
+    if (specBadge) specBadge.style.display = 'none';
+    
+    updateHUD();
+    updateBallTray();
+    showToast('Break shot! Click and drag to aim, release to shoot.');
+};
+
+window.startSpectator = function() {
+    var agents = POOL_AGENTS.slice();
+    agents.sort(function() { return Math.random() - 0.5; });
+    spectatorAgent1 = agents[0];
+    spectatorAgent2 = agents[1];
+    spectatorMode = true;
+    spectatorPaused = false;
+    aiDifficulty = 'medium';
+    isPractice = false;
+    
+    initBalls();
+    renderBalls();
+    
+    currentPlayer = 1;
+    player1Type = null;
+    player2Type = null;
+    isBreak = true;
+    ballsMoving = false;
+    pocketedThisTurn = [];
+    foulThisTurn = false;
+    gameActive = true;
+    
+    document.getElementById('modeModal').classList.add('hidden');
+    document.getElementById('hud').style.display = '';
+    document.getElementById('playerInfo').style.display = '';
+    document.getElementById('powerMeter').style.display = 'none';
+    document.getElementById('ballTray').style.display = '';
+    document.getElementById('bottomBar').style.display = '';
+    document.getElementById('aimGuide').style.display = 'none';
+    
+    document.getElementById('p1name').textContent = spectatorAgent1.emoji + ' ' + spectatorAgent1.name;
+    document.getElementById('p2name').textContent = spectatorAgent2.emoji + ' ' + spectatorAgent2.name;
+    
+    // Show spectator badge
+    var badge = document.getElementById('spectatorBadge');
+    if (!badge) {
+        badge = document.createElement('div');
+        badge.id = 'spectatorBadge';
+        badge.style.cssText = 'position:fixed;top:4.5rem;left:50%;transform:translateX(-50%);z-index:200;padding:.4rem 1rem;border-radius:10px;background:rgba(0,212,255,.15);border:1px solid rgba(0,212,255,.3);color:#00D4FF;font-size:.8rem;font-weight:600;backdrop-filter:blur(8px);cursor:pointer';
+        badge.innerHTML = '👀 SPECTATOR MODE <span style="font-size:.65rem;opacity:.6;margin-left:.5rem">(click to pause/resume)</span>';
+        badge.onclick = function() {
+            spectatorPaused = !spectatorPaused;
+            badge.innerHTML = spectatorPaused ? '⏸ PAUSED <span style="font-size:.65rem;opacity:.6;margin-left:.5rem">(click to resume)</span>' : '👀 SPECTATOR MODE <span style="font-size:.65rem;opacity:.6;margin-left:.5rem">(click to pause)</span>';
+            if (!spectatorPaused && gameActive && !ballsMoving) setTimeout(doAITurn, 500);
+        };
+        document.body.appendChild(badge);
+    }
+    badge.style.display = '';
+    badge.innerHTML = '👀 SPECTATOR MODE <span style="font-size:.65rem;opacity:.6;margin-left:.5rem">(click to pause/resume)</span>';
+    
+    updateHUD();
+    updateBallTray();
+    showToast('👀 Watching: ' + spectatorAgent1.name + ' vs ' + spectatorAgent2.name);
+    
+    // Send heartbeat as spectator
+    fetch('/api/game-ecosystem.php?action=heartbeat', {
+        method: 'POST', headers: {'Content-Type': 'application/json'}, credentials: 'same-origin',
+        body: JSON.stringify({ game: 'pool', role: 'viewer' })
+    }).catch(function(){});
+    
+    // Start AI vs AI
+    setTimeout(doAITurn, 1500);
+};
+
+// ═══ RENDER LOOP ═══
+
+function onResize() {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+}
+
+function animate() {
+    requestAnimationFrame(animate);
+    var delta = clock.getDelta();
+    
+    // Physics (multiple substeps for accuracy)
+    if (ballsMoving) {
+        var subSteps = 3;
+        var stillMoving = false;
+        for (var s = 0; s < subSteps; s++) {
+            if (stepPhysics()) stillMoving = true;
+        }
+        syncBallPositions();
+        
+        if (!stillMoving) {
+            ballsMoving = false;
+            processTurnEnd();
+        }
+    }
+    
+    // Camera
+    cameraAngle += (targetCameraAngle - cameraAngle) * 0.05;
+    camera.position.x = Math.sin(cameraAngle) * cameraRadius;
+    camera.position.z = Math.cos(cameraAngle) * cameraRadius;
+    camera.position.y += (cameraHeight - camera.position.y) * 0.08;
+    camera.lookAt(0, 0.1, 0);
+    
+    // Update guide line
+    if (isAiming) {
+        drawGuideLine();
+    }
+    
+    renderer.render(scene, camera);
+}
+
+// ═══ INIT ═══
+
+function init() {
+    initBalls();
+    initThree();
+    renderBalls();
+    animate();
+    
+    setTimeout(function() {
+        document.getElementById('loading').classList.add('hidden');
+    }, 800);
+    
+    // Auto-start spectator mode via URL param
+    if (new URLSearchParams(window.location.search).get('autopilot') === '1') {
+        setTimeout(function() { startSpectator(); }, 1200);
+    }
+}
+
+// ═══ VOICE COMMANDS ═══
+
+var voiceRecognition = null;
+var voiceActive = false;
+var SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+function speak(text) {
+    if (!soundEnabled) return;
+    try {
+        var u = new SpeechSynthesisUtterance(text);
+        u.rate = 1; u.pitch = 1; u.volume = 0.8;
+        speechSynthesis.speak(u);
+    } catch(e) {}
+}
+
+window.toggleVoice = function() {
+    if (!SpeechRec) { showToast('Voice not supported in this browser'); return; }
+    
+    if (voiceActive) {
+        voiceActive = false;
+        if (voiceRecognition) voiceRecognition.stop();
+        document.getElementById('micBtn').classList.remove('active');
+        showToast('Voice commands off');
+        return;
+    }
+    
+    voiceActive = true;
+    document.getElementById('micBtn').classList.add('active');
+    showToast('Listening... Try "new game", "top view", "green felt"');
+    
+    voiceRecognition = new SpeechRec();
+    voiceRecognition.lang = 'en-US';
+    voiceRecognition.continuous = true;
+    voiceRecognition.interimResults = false;
+    
+    voiceRecognition.onresult = function(event) {
+        var transcript = event.results[event.results.length - 1][0].transcript.trim().toLowerCase();
+        handleVoiceCmd(transcript);
+    };
+    voiceRecognition.onend = function() { if (voiceActive) voiceRecognition.start(); };
+    voiceRecognition.onerror = function() { if (voiceActive) setTimeout(function(){ try { voiceRecognition.start(); } catch(e){} }, 500); };
+    voiceRecognition.start();
+};
+
+function handleVoiceCmd(cmd) {
+    if (cmd.match(/\b(new game|restart|play again|reset)\b/)) { newGame(); speak('Starting new game'); }
+    else if (cmd.match(/\b(easy)\b/)) { startGame('easy'); speak('Easy mode'); }
+    else if (cmd.match(/\b(medium|normal)\b/)) { startGame('medium'); speak('Medium mode'); }
+    else if (cmd.match(/\b(hard|difficult)\b/)) { startGame('hard'); speak('Hard mode'); }
+    else if (cmd.match(/\b(practice|free)\b/)) { startGame('practice'); speak('Practice mode'); }
+    else if (cmd.match(/\b(top view|overhead|bird)/)) { if (!topView) toggleTopView(); speak('Top view'); }
+    else if (cmd.match(/\b(side view|normal view|3d view)\b/)) { if (topView) toggleTopView(); speak('Side view'); }
+    else if (cmd.match(/\b(sound off|mute)\b/)) { soundEnabled = false; toggleSound(); }
+    else if (cmd.match(/\b(sound on|unmute)\b/)) { soundEnabled = true; toggleSound(); }
+    else if (cmd.match(/\b(green)\b.*felt/) || cmd.match(/felt.*\b(green)\b/)) { changeFelt('green'); speak('Green felt'); }
+    else if (cmd.match(/\b(blue)\b/)) { changeFelt('blue'); speak('Blue felt'); }
+    else if (cmd.match(/\b(red)\b.*felt/) || cmd.match(/felt.*\b(red)\b/)) { changeFelt('red'); speak('Red felt'); }
+    else if (cmd.match(/\b(purple)\b/)) { changeFelt('purple'); speak('Purple felt'); }
+    else if (cmd.match(/\b(guide|line)\b.*\b(on|show)\b/)) { showGuide = true; speak('Guide line on'); }
+    else if (cmd.match(/\b(guide|line)\b.*\b(off|hide)\b/)) { showGuide = false; speak('Guide line off'); }
+    else if (cmd.match(/\b(score|status|who|turn)\b/)) {
+        var solids = balls.filter(function(b) { return SOLIDS.indexOf(b.id) >= 0 && !b.pocketed; }).length;
+        var stripes = balls.filter(function(b) { return STRIPES.indexOf(b.id) >= 0 && !b.pocketed; }).length;
+        speak('Solids remaining: ' + solids + '. Stripes remaining: ' + stripes + '. It is ' + (currentPlayer === 1 ? 'your' : "the AI's") + ' turn.');
+    }
+    else if (cmd.match(/\bstop listening\b/)) { toggleVoice(); }
+    else if (cmd.match(/\b(commands|voice help)\b/)) { speak('Say new game, easy, medium, hard, practice, top view, side view, green felt, blue felt, red felt, purple felt, guide on, guide off, or score.'); }
+    else { showToast('🎙️ "' + cmd + '"'); }
+}
+
+// ═══ ALFRED INTEGRATION ═══
+
+var alfredOpen = false;
+var poolChatConvId = null;
+
+window.toggleAlfred = function() {
+    alfredOpen = !alfredOpen;
+    var btn = document.getElementById('alfredBtn');
+    btn.classList.toggle('active', alfredOpen);
+    
+    var panel = document.getElementById('alfredPanel');
+    if (!panel) {
+        panel = document.createElement('div');
+        panel.id = 'alfredPanel';
+        panel.innerHTML = '<div style="background:rgba(22,22,54,.95);border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:1rem;backdrop-filter:blur(16px);width:300px;position:fixed;right:1.5rem;bottom:5rem;z-index:300;max-height:400px;display:flex;flex-direction:column">' +
+            '<h4 style="font-size:.7rem;text-transform:uppercase;letter-spacing:1px;color:rgba(255,255,255,.3);margin-bottom:.5rem">🤖 Alfred — Pool Coach</h4>' +
+            '<div id="alfredChat" style="flex:1;overflow-y:auto;max-height:280px;font-size:.8rem;color:rgba(255,255,255,.6);margin-bottom:.5rem"></div>' +
+            '<div style="display:flex;gap:.5rem"><input id="alfredInput" placeholder="Ask Alfred..." style="flex:1;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:8px;color:#fff;padding:.4rem .6rem;font-size:.78rem;outline:none" onkeydown="if(event.key===\'Enter\')sendAlfred()"><button onclick="sendAlfred()" style="padding:.4rem .7rem;border-radius:8px;border:none;background:linear-gradient(135deg,#00D4FF,#10b981);color:#fff;cursor:pointer;font-size:.75rem;font-weight:600">Send</button></div>' +
+            '</div>';
+        document.body.appendChild(panel);
+        // Show welcome message
+        var chat = document.getElementById('alfredChat');
+        if (chat) chat.innerHTML = '<div style="margin:.3rem 0;color:#00D4FF"><b>Alfred:</b> Hey! I\'m your pool coach. Ask me about shot strategy, rules, or anything about the game!</div>';
+    }
+    panel.style.display = alfredOpen ? 'block' : 'none';
+    if (alfredOpen) {
+        var inp = document.getElementById('alfredInput');
+        if (inp) inp.focus();
+    }
+};
+
+var _poolAlfredOfferedNewGame = false;
+var _poolSending = false;
+
+function addPoolAlfredReply(text) {
+    var typing = document.getElementById('alfredTyping');
+    if (typing) typing.remove();
+    var chat = document.getElementById('alfredChat');
+    var div = document.createElement('div');
+    div.style.cssText = 'margin:.3rem 0;color:#00D4FF';
+    div.textContent = 'Alfred: ' + text;
+    chat.appendChild(div);
+    chat.scrollTop = chat.scrollHeight;
+}
+
+window.sendAlfred = function() {
+    if (_poolSending) return;
+    var input = document.getElementById('alfredInput');
+    var msg = input.value.trim();
+    if (!msg) return;
+    _poolSending = true;
+    input.value = '';
+    input.disabled = true;
+    
+    var chat = document.getElementById('alfredChat');
+    var userDiv = document.createElement('div');
+    userDiv.style.cssText = 'margin:.3rem 0;color:#10b981';
+    userDiv.textContent = 'You: ' + msg;
+    chat.appendChild(userDiv);
+    chat.scrollTop = chat.scrollHeight;
+
+    var unlockSend = function() { _poolSending = false; input.disabled = false; input.focus(); };
+
+    // ── Game Command Detection ─────────────────────────────────
+    var wantsNewGame = /new\s+game|start.*game|play\s+again|rematch|another\s+(game|round|match)|restart/i.test(msg);
+    var isSimpleYes = /^(yes|yeah|yep|sure|ok|okay|go ahead|do it|let'?s go|please|absolutely|definitely)\s*[!.?]*$/i.test(msg);
+    if (wantsNewGame || (isSimpleYes && _poolAlfredOfferedNewGame)) {
+        _poolAlfredOfferedNewGame = false;
+        if (!gameActive) {
+            addPoolAlfredReply('♻️ Racking up a new game — break it down!');
+            setTimeout(function() { newGame(); }, 600);
+        } else {
+            addPoolAlfredReply('You still have a game going! Finish this rack first or say "forfeit" to quit.');
+        }
+        unlockSend();
+        return;
+    }
+    var wantsForfeit = /resign|forfeit|i\s+give\s+up|i\s+quit/i.test(msg);
+    if (wantsForfeit && gameActive) {
+        if (ballsMoving) {
+            addPoolAlfredReply('Wait for the balls to stop rolling first!');
+            unlockSend();
+            return;
+        }
+        gameActive = false;
+        addPoolAlfredReply('🏳️ Game forfeited. Say "new game" whenever you\'re ready for another rack!');
+        _poolAlfredOfferedNewGame = true;
+        unlockSend();
+        return;
+    }
+    // ── Difficulty Change Command ──────────────────────────────
+    var diffMatch = msg.match(/(?:change|set|switch).*difficulty.*(?:to\s+)?(easy|medium|hard|expert)|(?:make.*(?:it|game).*(harder|easier))|(?:difficulty\s+(easy|medium|hard|expert))|(easy|medium|hard|expert)\s+mode/i);
+    if (diffMatch) {
+        var target = (diffMatch[1] || diffMatch[3] || diffMatch[4] || '').toLowerCase();
+        var relative = (diffMatch[2] || '').toLowerCase();
+        var diffMap = { easy: 'easy', medium: 'medium', hard: 'hard', expert: 'hard' };
+        var newDiff;
+        if (relative === 'harder') {
+            var levels = ['easy', 'medium', 'hard'];
+            var curIdx = levels.indexOf(aiDifficulty);
+            newDiff = levels[Math.min(curIdx + 1, 2)];
+        } else if (relative === 'easier') {
+            var levels = ['easy', 'medium', 'hard'];
+            var curIdx = levels.indexOf(aiDifficulty);
+            newDiff = levels[Math.max(curIdx - 1, 0)];
+        } else {
+            newDiff = diffMap[target] || 'medium';
+        }
+        aiDifficulty = newDiff;
+        document.getElementById('p2name').textContent = isPractice ? '—' : 'AI (' + newDiff + ')';
+        addPoolAlfredReply('🎯 Difficulty changed to ' + newDiff.toUpperCase() + '! The AI will adjust next turn.');
+        unlockSend();
+        return;
+    }
+
+    // ── Send to Alfred API ─────────────────────────────────────
+    var typingDiv = document.createElement('div');
+    typingDiv.style.cssText = 'margin:.3rem 0;color:rgba(255,255,255,.4)';
+    typingDiv.textContent = 'Alfred is thinking...';
+    typingDiv.id = 'alfredTyping';
+    chat.appendChild(typingDiv);
+    chat.scrollTop = chat.scrollHeight;
+
+    var solids = balls.filter(function(b) { return SOLIDS.indexOf(b.id) >= 0 && !b.pocketed; }).length;
+    var stripes = balls.filter(function(b) { return STRIPES.indexOf(b.id) >= 0 && !b.pocketed; }).length;
+    var eightLeft = balls.filter(function(b) { return b.id === 8 && !b.pocketed; }).length > 0;
+    // Ball positions for shot advice
+    var ballPositions = '';
+    var remaining = balls.filter(function(b) { return !b.pocketed; });
+    if (remaining.length > 0 && remaining.length <= 16) {
+        var posStrs = remaining.map(function(b) {
+            var label = b.id === 0 ? 'cue' : (SOLIDS.indexOf(b.id) >= 0 ? b.id + '(solid)' : (b.id === 8 ? '8-ball' : b.id + '(stripe)'));
+            return label + '@(' + Math.round(b.x * 10) / 10 + ',' + Math.round(b.z * 10) / 10 + ')';
+        });
+        ballPositions = ' Ball positions (x,z): ' + posStrs.join(', ') + '.';
+    }
+    var cueInHand = cueBallInHand ? ' CUE BALL IN HAND (player can place it anywhere behind the line).' : '';
+    var gameOverNote = !gameActive ? ' The game is OVER.' : '';
+    var actionHint = !gameActive
+        ? ' The game has ended. You CAN offer to start a new game — say "Ready for another rack?". The player can say yes and it starts automatically.'
+        : ' The player can say "new game", "forfeit", or "change difficulty to easy/medium/hard/expert" and it will happen automatically. You can proactively offer these.';
+    var difficultyNote = ' AI difficulty: ' + (aiDifficulty || 'medium') + '.' + (isPractice ? ' Practice mode (no AI opponent).' : '');
+    var context = 'You are Alfred, a friendly and knowledgeable pool/billiards coach. You are coaching a player in a live 3D Pool game (8-Ball).' + gameOverNote + difficultyNote + ' Game state: Solids remaining: ' + solids + ', Stripes remaining: ' + stripes + '. 8-ball still on table: ' + eightLeft + '. Player assigned: ' + (player1Type || 'not yet assigned') + '. Current turn: ' + (currentPlayer === 1 ? 'Player (human)' : 'AI opponent') + '. Break shot: ' + isBreak + '.' + cueInHand + ballPositions + ' Give helpful pool advice - shot selection, positioning, strategy. Be encouraging and specific about angles, ball numbers, and pocket targets. Keep responses to 2-3 sentences.' + actionHint;
+    
+    fetch('/api/alfred-chat.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
+        body: JSON.stringify({ message: msg, agent: 'alfred', context: context, page_url: '/vr/pool/', conv_id: poolChatConvId || '', model: 'auto' })
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        var typing = document.getElementById('alfredTyping');
+        if (typing) typing.remove();
+        if (data.conv_id) poolChatConvId = data.conv_id;
+        var resp = data.response || 'Sorry, I could not respond.';
+        var respDiv = document.createElement('div');
+        respDiv.style.cssText = 'margin:.3rem 0;color:#00D4FF';
+        respDiv.textContent = 'Alfred: ' + resp;
+        chat.appendChild(respDiv);
+        chat.scrollTop = chat.scrollHeight;
+        if (/new\s+game|another\s+(round|rack|game|match)|play\s+again|rematch/i.test(resp)) {
+            _poolAlfredOfferedNewGame = true;
+        }
+        unlockSend();
+    })
+    .catch(function() {
+        var typing = document.getElementById('alfredTyping');
+        if (typing) typing.textContent = 'Alfred: Connection error — try again.';
+        unlockSend();
+    });
+};
+
+// ═══ ECOSYSTEM: WAGER SYSTEM & AGENT PROFILES ═══
+
+var activeWager = null;
+var selectedWagerAmount = 0;
+var ecosystemAgents = [];
+
+var POOL_AGENTS = [
+    {id:'alfred', name:'Alfred', color:'#0074D9', elo:1400, specialty:'Positional', emoji:'🤖'},
+    {id:'nova', name:'Nova', color:'#a855f7', elo:1350, specialty:'Aggressive', emoji:'⚡'},
+    {id:'sage', name:'Sage', color:'#22c55e', elo:1250, specialty:'Defensive', emoji:'🌿'},
+    {id:'atlas', name:'Atlas', color:'#f59e0b', elo:1300, specialty:'Tactical', emoji:'🗺️'},
+    {id:'cipher', name:'Cipher', color:'#ef4444', elo:1500, specialty:'Aggressive', emoji:'🔐'},
+    {id:'architect', name:'Architect', color:'#06b6d4', elo:1380, specialty:'Strategic', emoji:'🏛️'},
+    {id:'pulse', name:'Pulse', color:'#ec4899', elo:1200, specialty:'Balanced', emoji:'💗'},
+    {id:'pierre', name:'Pierre', color:'#818cf8', elo:1150, specialty:'Cautious', emoji:'🎭'}
+];
+
+var wagerOpponent = POOL_AGENTS[0];
+
+window.openWagerModal = function() {
+    wagerOpponent = POOL_AGENTS[Math.floor(Math.random() * POOL_AGENTS.length)];
+    
+    var dot = document.querySelector('#wagerOpponent .opp-dot');
+    dot.style.background = wagerOpponent.color;
+    dot.textContent = wagerOpponent.emoji;
+    document.getElementById('wagerOppName').textContent = wagerOpponent.name;
+    document.getElementById('wagerOppElo').textContent = 'ELO ' + wagerOpponent.elo + ' · ' + wagerOpponent.specialty;
+    
+    selectedWagerAmount = 0;
+    document.getElementById('wagerStartBtn').style.display = 'none';
+    document.querySelectorAll('.wager-btn').forEach(function(b) { b.classList.remove('selected'); });
+    
+    document.getElementById('wagerModal').classList.add('show');
+};
+
+window.selectWager = function(amount) {
+    selectedWagerAmount = amount;
+    document.querySelectorAll('.wager-amounts .wager-btn').forEach(function(b) {
+        b.classList.toggle('selected', b.textContent === '$' + (amount / 100));
+    });
+    document.getElementById('wagerStartBtn').style.display = '';
+    document.getElementById('wagerStartBtn').textContent = 'Start $' + (amount / 100) + ' Wager vs ' + wagerOpponent.name;
+};
+
+window.closeWagerModal = function() {
+    document.getElementById('wagerModal').classList.remove('show');
+};
+
+var wagerCsrfToken = '';
+
+function getGameApiCsrfToken(forceRefresh) {
+    if (wagerCsrfToken && !forceRefresh) {
+        return Promise.resolve(wagerCsrfToken);
+    }
+
+    return fetch('/api/game-ecosystem.php?action=csrf', {
+        credentials: 'same-origin'
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        wagerCsrfToken = data.csrf_token || '';
+        return wagerCsrfToken;
+    });
+}
+
+function gameEcosystemPost(action, payload) {
+    function doFetch(token) {
+        var headers = { 'Content-Type': 'application/json' };
+        if (token) headers['X-CSRF-Token'] = token;
+
+        return fetch('/api/game-ecosystem.php?action=' + encodeURIComponent(action), {
+            method: 'POST',
+            headers: headers,
+            credentials: 'same-origin',
+            body: JSON.stringify(payload)
+        }).then(function(r) { return r.json(); });
+    }
+
+    return getGameApiCsrfToken(false)
+        .then(function(token) { return doFetch(token); })
+        .then(function(data) {
+            if (data && data.error === 'CSRF validation failed') {
+                return getGameApiCsrfToken(true).then(function(token) { return doFetch(token); });
+            }
+            return data;
+        });
+}
+
+window.startWagerGame = function() {
+    if (!selectedWagerAmount) return;
+    
+    gameEcosystemPost('place-wager', {
+        game_type: 'pool',
+        opponent_agent: wagerOpponent.id,
+        amount: selectedWagerAmount
+    })
+    .then(function(data) {
+        if (data.success) {
+            activeWager = {
+                id: data.wager_id,
+                amount: data.amount,
+                opponent: wagerOpponent
+            };
+            
+            document.getElementById('activeWagerBadge').style.display = '';
+            document.getElementById('wagerAmountDisplay').textContent = data.display;
+            
+            closeWagerModal();
+            
+            // Map agent ELO to difficulty
+            var diff = 'medium';
+            if (wagerOpponent.elo >= 1450) diff = 'hard';
+            else if (wagerOpponent.elo >= 1300) diff = 'medium';
+            else diff = 'easy';
+            
+            startGame(diff);
+            document.getElementById('p2name').textContent = wagerOpponent.name + ' (' + wagerOpponent.emoji + ')';
+            
+            showToast('💰 $' + (data.amount / 100) + ' wager placed vs ' + wagerOpponent.name + '!');
+        } else {
+            showToast('⚠️ ' + (data.error || 'Could not place wager'));
+        }
+    })
+    .catch(function() {
+        showToast('⚠️ Connection error — try again');
+    });
+};
+
+// Override endGame to settle wagers
+var _origEndGame = endGame;
+endGame = function(winner, legitimate) {
+    _origEndGame(winner, legitimate);
+    
+    if (activeWager) {
+        var result = winner === 'You' ? 'won' : 'lost';
+        // Anti-cheat: include game state evidence
+        var pocketed = balls.filter(function(b) { return b.pocketed; }).map(function(b) { return b.id; });
+        var remaining = balls.filter(function(b) { return !b.pocketed; }).map(function(b) { return b.id; });
+        
+        gameEcosystemPost('settle-wager', {
+            wager_id: activeWager.id,
+            result: result,
+            game_type: 'pool',
+            opponent_agent: activeWager.opponent.id,
+            moves: _shotCount,
+            game_evidence: {
+                pocketed: pocketed,
+                remaining: remaining,
+                shots: _shotCount,
+                legitimate: legitimate,
+                eight_ball_pocketed: pocketed.indexOf(8) >= 0
+            }
+        })
+        .then(function(data) {
+            if (data.success) {
+                var goMessage = document.getElementById('goMessage');
+                if (result === 'won') {
+                    goMessage.textContent = '🎉 You won ' + data.payout_display + '! ' + data.message;
+                } else {
+                    goMessage.textContent = '😔 ' + data.message;
+                }
+            }
+            activeWager = null;
+            document.getElementById('activeWagerBadge').style.display = 'none';
+        })
+        .catch(function() {
+            activeWager = null;
+            document.getElementById('activeWagerBadge').style.display = 'none';
+        });
+    }
+};
+
+// ── Agent Profiles ──
+
+window.showAgentProfiles = function() {
+    var overlay = document.getElementById('agentProfileOverlay');
+    var card = document.getElementById('agentProfileCard');
+    
+    card.innerHTML = '<h2 style="font-size:1.2rem;margin-bottom:1rem;background:linear-gradient(135deg,#00D4FF,#10b981);-webkit-background-clip:text;-webkit-text-fill-color:transparent">🤖 Agent Roster</h2><p style="color:rgba(255,255,255,.4);font-size:.8rem">Loading profiles…</p>';
+    overlay.classList.add('show');
+    
+    fetch('/api/game-ecosystem.php?action=agent-profiles', { credentials: 'same-origin' })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        if (data.success && data.agents) {
+            ecosystemAgents = data.agents;
+            renderAgentList(data.agents);
+        } else {
+            renderAgentList(POOL_AGENTS.map(function(a) {
+                return Object.assign({}, a, { wins: 0, losses: 0, games_played: 0, wallet: 0, streak: 0, win_rate: 50 });
+            }));
+        }
+    })
+    .catch(function() {
+        renderAgentList(POOL_AGENTS.map(function(a) {
+            return Object.assign({}, a, { wins: 0, losses: 0, games_played: 0, wallet: 0, streak: 0, win_rate: 50 });
+        }));
+    });
+};
+
+function renderAgentList(agents) {
+    var card = document.getElementById('agentProfileCard');
+    var html = '<h2 style="font-size:1.2rem;margin-bottom:1rem;background:linear-gradient(135deg,#00D4FF,#10b981);-webkit-background-clip:text;-webkit-text-fill-color:transparent">🤖 Agent Roster</h2>';
+    
+    html += '<div style="display:grid;gap:.6rem;max-height:60vh;overflow-y:auto">';
+    agents.forEach(function(a) {
+        html += '<div style="display:flex;align-items:center;gap:.6rem;padding:.6rem;border-radius:10px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);cursor:pointer" onclick="showSingleProfile(\'' + a.id + '\')">' +
+            '<div style="width:36px;height:36px;border-radius:50%;background:' + a.color + ';display:flex;align-items:center;justify-content:center;font-size:1rem">' + (a.emoji || '🤖') + '</div>' +
+            '<div style="flex:1">' +
+                '<div style="font-size:.85rem;font-weight:600">' + a.name + '</div>' +
+                '<div style="font-size:.65rem;color:rgba(255,255,255,.4)">ELO ' + a.elo + ' · ' + (a.specialty || '') + '</div>' +
+            '</div>' +
+            '<div style="text-align:right">' +
+                '<div style="font-size:.78rem;font-weight:700;color:#22c55e">$' + ((a.wallet || 0) / 100).toFixed(2) + '</div>' +
+                '<div style="font-size:.6rem;color:rgba(255,255,255,.3)">' + (a.wins || 0) + 'W · ' + (a.losses || 0) + 'L</div>' +
+            '</div>' +
+        '</div>';
+    });
+    html += '</div>';
+    html += '<button class="ap-close" onclick="closeAgentProfiles()">Close</button>';
+    card.innerHTML = html;
+}
+
+window.showSingleProfile = function(agentId) {
+    var card = document.getElementById('agentProfileCard');
+    var agent = ecosystemAgents.find(function(a) { return a.id === agentId; });
+    if (!agent) agent = POOL_AGENTS.find(function(a) { return a.id === agentId; });
+    if (!agent) return;
+    
+    var winRate = agent.games_played > 0 ? ((agent.wins / agent.games_played) * 100).toFixed(1) : '50.0';
+    
+    card.innerHTML = 
+        '<div class="ap-avatar" style="background:' + agent.color + '">' + (agent.emoji || '🤖') + '</div>' +
+        '<div class="ap-name">' + agent.name + '</div>' +
+        '<div class="ap-title">' + (agent.title || agent.specialty) + ' · ELO ' + agent.elo + '</div>' +
+        '<div class="ap-wallet">💰 $' + ((agent.wallet || 0) / 100).toFixed(2) + '</div>' +
+        '<div class="ap-stats">' +
+            '<div class="ap-stat"><div class="val">' + (agent.wins || 0) + '</div><div class="lbl">Wins</div></div>' +
+            '<div class="ap-stat"><div class="val">' + (agent.losses || 0) + '</div><div class="lbl">Losses</div></div>' +
+            '<div class="ap-stat"><div class="val">' + winRate + '%</div><div class="lbl">Win Rate</div></div>' +
+        '</div>' +
+        '<div class="ap-stats">' +
+            '<div class="ap-stat"><div class="val">' + (agent.chess_wins || 0) + '</div><div class="lbl">Chess W</div></div>' +
+            '<div class="ap-stat"><div class="val">' + (agent.checkers_wins || 0) + '</div><div class="lbl">Checkers W</div></div>' +
+            '<div class="ap-stat"><div class="val">' + (agent.pool_wins || 0) + '</div><div class="lbl">Pool W</div></div>' +
+        '</div>' +
+        '<div style="display:flex;gap:.5rem;justify-content:center;margin-top:1rem">' +
+            '<button class="ap-close" onclick="showAgentProfiles()">← All Agents</button>' +
+            '<button class="ap-close" style="border-color:rgba(0,212,255,.3);color:#00D4FF" onclick="challengeAgent(\'' + agent.id + '\')">⚔️ Challenge</button>' +
+        '</div>';
+};
+
+window.challengeAgent = function(agentId) {
+    var agent = POOL_AGENTS.find(function(a) { return a.id === agentId; });
+    if (!agent) return;
+    closeAgentProfiles();
+    wagerOpponent = agent;
+    openWagerModal();
+};
+
+window.closeAgentProfiles = function() {
+    document.getElementById('agentProfileOverlay').classList.remove('show');
+};
+
+// ── Load Ecosystem Stats on page load ──
+function loadEcosystemStats() {
+    fetch('/api/game-ecosystem.php?action=game-stats', { credentials: 'same-origin' })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        if (data.success && data.stats) {
+            document.getElementById('ecoStreak').textContent = data.stats.streak || 0;
+            document.getElementById('ecoGames').textContent = data.stats.games_played || 0;
+            document.getElementById('ecoBadge').style.display = '';
+        }
+    })
+    .catch(function() {});
+}
+
+setTimeout(loadEcosystemStats, 3000);
+
+// ── Dispute System ─────────────────────────────────────────────
+var lastGameId = null;
+
+// Show dispute button after wager games
+var _origEndGameDispute = endGame;
+endGame = function(winner, legitimate) {
+    _origEndGameDispute(winner, legitimate);
+    // Show dispute button after wager games
+    if (activeWager) {
+        document.getElementById('disputeBtn').style.display = '';
+    }
+};
+
+function openDispute() {
+    document.getElementById('disputeModal').style.display = 'flex';
+    document.getElementById('disputeResult').style.display = 'none';
+    document.getElementById('disputeReason').value = '';
+    document.getElementById('submitDisputeBtn').disabled = false;
+    // Get latest game ID
+    fetch('/api/game-ecosystem.php?action=game-history&limit=1', { credentials: 'same-origin' })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        if (data.success && data.games && data.games.length > 0) {
+            lastGameId = data.games[0].id;
+        }
+    }).catch(function() {});
+}
+window.openDispute = openDispute;
+
+function closeDispute() {
+    document.getElementById('disputeModal').style.display = 'none';
+}
+window.closeDispute = closeDispute;
+
+function submitDispute() {
+    var reason = document.getElementById('disputeReason').value.trim();
+    if (!reason) { showToast('Please provide a reason for the dispute'); return; }
+    if (!lastGameId) { showToast('No game found to dispute'); return; }
+    
+    document.getElementById('submitDisputeBtn').disabled = true;
+    document.getElementById('submitDisputeBtn').textContent = 'Alfred is reviewing…';
+    
+    fetch('/api/game-ecosystem.php?action=dispute-game', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
+        body: JSON.stringify({ game_id: lastGameId, reason: reason })
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        var resultDiv = document.getElementById('disputeResult');
+        resultDiv.style.display = '';
+        if (data.success) {
+            var icon = data.overturned ? '🔄' : '✅';
+            resultDiv.innerHTML = '<div style="font-weight:700;margin-bottom:.5rem">' + icon + ' Alfred\'s Ruling</div>' +
+                '<div style="line-height:1.6">' + (data.ruling || 'No ruling available') + '</div>';
+            if (data.overturned) {
+                resultDiv.style.borderColor = 'rgba(239,68,68,.3)';
+                showToast('⚖️ Result OVERTURNED by Alfred');
+            } else {
+                resultDiv.style.borderColor = 'rgba(16,185,129,.3)';
+                showToast('⚖️ Result UPHELD by Alfred');
+            }
+        } else {
+            resultDiv.innerHTML = '<div style="color:#ef4444">❌ ' + (data.error || 'Dispute failed') + '</div>';
+        }
+        document.getElementById('submitDisputeBtn').textContent = 'Submit to Alfred';
+        document.getElementById('submitDisputeBtn').disabled = true;
+    })
+    .catch(function() {
+        showToast('Connection error — try again');
+        document.getElementById('submitDisputeBtn').textContent = 'Submit to Alfred';
+        document.getElementById('submitDisputeBtn').disabled = false;
+    });
+}
+window.submitDispute = submitDispute;
+
+init();
+
+})();
+</script>
+<script src="/assets/js/agent-presence.js" data-game="pool" defer></script>
+<script src="/vr/shared/heartbeat.js"></script>
+</body>
+</html>

@@ -1,0 +1,49 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+# [Genesis Forge] Systemd Hardening: alfred-daemon-137.service
+# Enforces deep PrivateTmp, ProtectSystem, and ProtectHome on native daemons.
+echo "[Genesis Forge] Hardening systemd service: alfred-daemon-137.service"
+mkdir -p /etc/systemd/system/alfred-daemon-137.service.d/ || true
+cat > /etc/systemd/system/alfred-daemon-137.service.d/override.conf << 'EOF'
+[Service]
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=read-only
+NoNewPrivileges=yes
+RestrictRealtime=yes
+EOF
+
+
+# --- BEGIN MERGED CONTENT FROM: 0612.hook.chroot ---
+#!/bin/bash
+set +e
+echo "================================================="
+echo "==== ALFRED MESH DNS (Decentralized Naming) ====="
+echo "================================================="
+
+export DEBIAN_FRONTEND=noninteractive
+
+# If custom DNS binary exists, install it
+if [ -f /build-assets/kingdom-dns ]; then
+    install -m 755 /build-assets/kingdom-dns /usr/local/bin/kingdom-dns
+    echo "Custom Kingdom DNS binary installed."
+fi
+
+# Configure systemd-resolved for sovereign domains
+mkdir -p /etc/systemd/resolved.conf.d/
+cat > /etc/systemd/resolved.conf.d/kingdom-mesh.conf << 'EOF'
+[Resolve]
+# Route .kingdom and .alfred domains exclusively over the mesh (wg0)
+# Replace 10.0.0.1 with the actual Kingdom Relay IP
+DNS=10.0.0.1
+Domains=~kingdom ~alfred
+EOF
+
+echo "Mesh DNS configured."
+
+# --- END MERGED CONTENT FROM: 0612.hook.chroot ---
+
+exit 0

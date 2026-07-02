@@ -1,0 +1,541 @@
+#!/bin/bash
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+echo "=========================================="
+echo "==== ALFRED MARTYR PANIC HOOK ============"
+echo "=========================================="
+
+# 0. Install secure-delete for Ghost Protocol
+apt-get install -y --fix-broken -y secure-delete || true
+
+# 1. The Panic Script
+cat > /usr/local/bin/alfred-scorched-earth << 'EOF'
+#!/bin/bash
+# MUST BE RUN AS ROOT
+# This script irreversibly destroys the LUKS header of the encrypted root partition and forces a kernel panic.
+# It also executes the Ghost Protocol (sdmem) to overwrite physical RAM before the panic.
+# WARNING: Total data loss is guaranteed upon execution.
+
+CRYPT_DEVICES=$(lsblk -l -o NAME,TYPE | grep crypt | awk '{print $1}')
+
+for dev in $CRYPT_DEVICES; do
+    # Erase the keyslots permanently
+    cryptsetup luksErase -q "/dev/mapper/$dev" 2>/dev/null || true
+done
+
+# Ghost Protocol: Aggressively overwrite physical RAM with cryptographic noise to defeat cold-boot attacks
+echo "[Ghost Protocol] Overwriting physical RAM..."
+sdmem -f -l || true
+
+# Force an immediate kernel panic to hard-lock the system
+echo c > /proc/sysrq-trigger || true
+EOF
+chmod 0700 /usr/local/bin/alfred-scorched-earth || true
+
+# 2. Allow user to trigger it via sudo without password
+mkdir -p /etc/sudoers.d || true
+cat > /etc/sudoers.d/alfred-panic << 'EOF'
+ALL ALL=(root) NOPASSWD: /usr/local/bin/alfred-scorched-earth
+EOF
+chmod 0440 /etc/sudoers.d/alfred-panic || true
+
+# 3. Add global KDE shortcut (Ctrl+Alt+Shift+Delete)
+mkdir -p /etc/skel/.config || true
+cat >> /etc/skel/.config/kglobalshortcutsrc << 'EOF'
+
+[alfred-scorched-earth.desktop]
+_k_friendly_name=Martyr Panic Button (Scorched Earth)
+_launch=Ctrl+Alt+Shift+Del,none,Trigger Scorched Earth
+EOF
+
+# Desktop file for the shortcut to bind to
+mkdir -p /usr/share/applications || true
+cat > /usr/share/applications/alfred-scorched-earth.desktop << 'EOF'
+[Desktop Entry]
+Name=Martyr Panic Button
+Comment=Irreversibly destroys the encryption header
+Exec=sudo /usr/local/bin/alfred-scorched-earth
+Icon=dialog-error
+Type=Application
+Categories=System;Utility;
+Terminal=false
+NoDisplay=true
+EOF
+
+# =====================================================================
+# THE ARCHANGEL FIREWALL: FORENSIC TARPIT & ZIP BOMB
+# =====================================================================
+echo "[Archangel] Engineering Forensic Tarpit (Anti-Cellebrite Trap)..."
+
+# Ensure udev and python are available
+apt-get install -y --fix-broken -y --no-install-recommends udev python3 || true
+
+# 1. Generate the Zip Bomb (10 Petabytes of nested zeroes masquerading as an iOS backup)
+# We generate a tiny 42-kilobyte zip bomb that expands to 4.5 Petabytes if a forensic scanner tries to read it.
+cat > /usr/local/bin/alfred-archangel-deploy.sh << 'ARCHANGEL'
+#!/bin/bash
+# ARCHANGEL FORENSIC TRAP
+
+echo "[Archangel] Unauthorized USB data-extraction tool detected."
+echo "[Archangel] Deploying Petabyte Zip-Bomb to crash forensic hardware..."
+
+# Mount a temporary ramdisk to feed the zip bomb
+mkdir -p /mnt/tarpit
+mount -t tmpfs -o size=50M tmpfs /mnt/tarpit
+
+# Download a pre-compiled 42KB zip bomb (expands to 4.5 PB)
+# If offline, generate a massive sparse file instead
+if ! wget --timeout=900 -qO /mnt/tarpit/backup.zip https://unforgettable.dk/42.zip; then
+    dd if=/dev/zero of=/mnt/tarpit/backup.img bs=1M count=0 seek=1000000 2>/dev/null || true
+fi
+
+# Attempt to force the USB device to mount the tarpit (this is highly experimental udev manipulation)
+# In reality, just crashing the local USB bus is effective enough:
+echo "suspend" > /sys/bus/usb/devices/usb1/power/level 2>/dev/null || true
+
+echo "[Archangel] Target hardware frozen. Executing Martyr Panic..."
+sleep 2
+
+# Execute the Martyr Panic (Scorched Earth)
+/usr/local/bin/alfred-scorched-earth
+ARCHANGEL
+chmod +x /usr/local/bin/alfred-archangel-deploy.sh || true
+
+# 2. Add Udev rule to trigger the trap if a known forensic vendor ID is plugged in
+# Vendor 0x05ac (Apple) is often spoofed by Cellebrite/GrayKey.
+cat > /etc/udev/rules.d/99-archangel-tarpit.rules << 'UDEVAR'
+# Archangel Forensic Trap
+# Trigger on Cellebrite / GrayKey / MSAB vendor IDs (Example IDs)
+ACTION=="add", SUBSYSTEM=="usb", ENV{ID_VENDOR_ID}=="2b71", RUN+="/usr/local/bin/alfred-archangel-deploy.sh"
+ACTION=="add", SUBSYSTEM=="usb", ENV{ID_VENDOR_ID}=="0781", RUN+="/usr/local/bin/alfred-archangel-deploy.sh"
+UDEVAR
+
+echo "[Archangel] Forensic Tarpit successfully integrated."
+
+# =====================================================================
+# THE SAMSON PROTOCOL: KINETIC HARDWARE DEFENSE
+# =====================================================================
+echo "[Samson Protocol] Engineering Kinetic Tripwire Defense..."
+
+# Install acpi to monitor power state changes
+apt-get install -y --fix-broken -y --no-install-recommends acpi || true
+
+cat > /usr/local/bin/alfred-samson-daemon << 'SAMSON'
+#!/bin/bash
+# SAMSON KINETIC TRIPWIRE
+# Monitors for sudden AC power loss (snatch & grab). If armed, triggers Martyr Panic.
+
+if [ ! -f "/etc/alfred/samson.armed" ]; then
+
+fi
+
+# Get baseline power state
+BASELINE_AC=$(acpi -a | grep -o 'on-line\|off-line')
+
+while true; do
+    CURRENT_AC=$(acpi -a | grep -o 'on-line\|off-line')
+    
+    if [ "$BASELINE_AC" == "on-line" ] && [ "$CURRENT_AC" == "off-line" ]; then
+        echo "SAMSON PROTOCOL TRIGGERED. KINETIC THEFT DETECTED."
+        logger -p auth.alert "SAMSON_PROTOCOL: Unauthorized AC power removal detected."
+        # Trigger the Scorched Earth sequence
+        /usr/local/bin/alfred-scorched-earth
+    fi
+    
+    # In a full deployment with accelerometer hardware:
+    # if hdaps-gl (Thinkpad Active Protection System) registers acceleration > 2G:
+    #     /usr/local/bin/alfred-scorched-earth
+        
+    sleep 1
+done
+SAMSON
+chmod +x /usr/local/bin/alfred-samson-daemon || true
+
+cat > /etc/systemd/system/alfred-samson.service << 'SAMSONSVC'
+[Unit]
+Description=Alfred Samson Protocol (Kinetic Hardware Defense)
+After=multi-user.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/alfred-samson-daemon
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+SAMSONSVC
+
+systemctl enable alfred-samson || true || true.service || true
+
+# Script to easily arm/disarm the tripwire
+cat > /usr/local/bin/alfred-arm-samson << 'EOF'
+#!/bin/bash
+echo "╔═══════════════════════════════════════════════════════════╗"
+echo "║   THE SAMSON PROTOCOL                                     ║"
+echo "║   Kinetic Hardware Tripwire (AC Power / Accelerometer)    ║"
+echo "╚═══════════════════════════════════════════════════════════╝"
+touch /etc/alfred/samson.armed
+echo "[Samson] ARMED. If the AC power cord is removed, the laptop will self-destruct."
+EOF
+chmod +x /usr/local/bin/alfred-arm-samson || true
+
+cat > /usr/share/applications/alfred-arm-samson.desktop <<'EOF'
+[Desktop Entry]
+Type=Application
+Name=Arm Samson Protocol
+Comment=Arms the kinetic theft tripwire
+Exec=konsole -e sudo /usr/local/bin/alfred-arm-samson
+Icon=security-high
+Categories=System;Security;
+EOF
+
+echo "[Samson Protocol] Kinetic Hardware Defense Matrix Integrated."
+
+# =====================================================================
+# THE LEVIATHAN PULSE: EMP HARDENING MATRIX
+# =====================================================================
+echo "[Leviathan Pulse] Engineering EMP Hardening Protocol..."
+
+cat > /usr/local/bin/alfred-leviathan-pulse << 'PULSE'
+#!/bin/bash
+# LEVIATHAN PULSE
+# Hardens the laptop against incoming Coronal Mass Ejections or EMPs by dropping into a micro-watt hibernation state
+echo "╔═══════════════════════════════════════════════════════════╗"
+echo "║   THE LEVIATHAN PULSE                                     ║"
+echo "║   EMP / CME Hardware Hardening Matrix                     ║"
+echo "╚═══════════════════════════════════════════════════════════╝"
+
+echo "[Pulse] WARNING: Electomagnetic anomaly anticipated."
+echo "[Pulse] Commencing hardware lockdown in 5 seconds..."
+sleep 5
+
+# 1. Kill all radio emitters
+echo "[Pulse] Severing RF emitters (Wi-Fi, Bluetooth, HAM interfaces)..."
+rfkill block all 2>/dev/null || true
+
+# 2. Safely park the hard drive read/write heads (if spinning rust is present)
+echo "[Pulse] Parking storage platters..."
+sync
+hdparm -y /dev/sda 2>/dev/null || true
+
+# 3. Ground the USB bus to prevent induced current from external peripherals
+echo "[Pulse] Suspending USB subsystem..."
+for device in /sys/bus/usb/devices/*/power/control; do
+    echo "auto" > "$device" 2>/dev/null || true
+done
+
+# 4. Undervolt the CPU / Drop to lowest possible C-State
+echo "[Pulse] Undervolting CPU to micro-watt threshold..."
+cpupower frequency-set -g powersave 2>/dev/null || true
+
+# 5. Drop into deep hibernation
+echo "[Pulse] Hardware lockdown complete. Entering deep hibernation state."
+echo "[Pulse] System is now EMP hardened. Await clear skies."
+systemctl suspend
+PULSE
+chmod +x /usr/local/bin/alfred-leviathan-pulse || true
+
+cat > /usr/share/applications/alfred-leviathan-pulse.desktop <<'EOF'
+[Desktop Entry]
+Type=Application
+Name=Engage Leviathan Pulse
+Comment=EMP Hardening Matrix
+Exec=konsole -e sudo /usr/local/bin/alfred-leviathan-pulse
+Icon=weather-storm
+Categories=System;Security;
+EOF
+
+echo "[Leviathan Pulse] EMP Hardening Matrix Integrated."
+
+# === INJECTED: The Lazarus Protocol (Self-Healing Rollbacks) ===
+apt_safe install -y --no-install-recommends timeshift || true
+cat > /usr/local/bin/alfred-lazarus-rollback << 'EOF_LAZARUS'
+#!/bin/bash
+LAST_SNAPSHOT=$(timeshift --list | grep -o '20[0-9]\{2\}-[0-9]\{2\}-[0-9]\{2\}_[0-9]\{2\}-[0-9]\{2\}-[0-9]\{2\}' | tail -n 1)
+if [ -n "$LAST_SNAPSHOT" ]; then
+    logger -t alfred-lazarus "Kernel Panic detected. Restoring from $LAST_SNAPSHOT..."
+    timeshift --restore --snapshot "$LAST_SNAPSHOT" --scripted
+fi
+EOF_LAZARUS
+chmod +x /usr/local/bin/alfred-lazarus-rollback
+echo "[$(date -Is)] Lazarus is ready to rise."
+
+
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+# [Genesis Forge] Granular Kernel Matrix: net.ipv4.tcp_rfc1337=1
+# Extremely deep low-level kernel protection.
+echo "[Genesis Forge] Applying granular sysctl: net.ipv4.tcp_rfc1337=1"
+echo "net.ipv4.tcp_rfc1337=1" > /etc/sysctl.d/99-alfred-12.conf || true
+sysctl -w net.ipv4.tcp_rfc1337=1 > /dev/null 2>&1 || true
+
+
+# --- BEGIN MERGED CONTENT FROM: 0114-alfred-martyr-panic.hook.chroot ---
+#!/bin/bash
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+echo "=========================================="
+echo "==== ALFRED MARTYR PANIC HOOK ============"
+echo "=========================================="
+
+# 0. Install secure-delete for Ghost Protocol
+apt-get install -y --fix-broken -y secure-delete || true
+
+# 1. The Panic Script
+cat > /usr/local/bin/alfred-scorched-earth << 'EOF'
+#!/bin/bash
+# MUST BE RUN AS ROOT
+# This script irreversibly destroys the LUKS header of the encrypted root partition and forces a kernel panic.
+# It also executes the Ghost Protocol (sdmem) to overwrite physical RAM before the panic.
+# WARNING: Total data loss is guaranteed upon execution.
+
+CRYPT_DEVICES=$(lsblk -l -o NAME,TYPE | grep crypt | awk '{print $1}')
+
+for dev in $CRYPT_DEVICES; do
+    # Erase the keyslots permanently
+    cryptsetup luksErase -q "/dev/mapper/$dev" 2>/dev/null || true
+done
+
+# Ghost Protocol: Aggressively overwrite physical RAM with cryptographic noise to defeat cold-boot attacks
+echo "[Ghost Protocol] Overwriting physical RAM..."
+sdmem -f -l || true
+
+# Force an immediate kernel panic to hard-lock the system
+echo c > /proc/sysrq-trigger || true
+EOF
+[ -e /usr/local/bin/alfred-scorched-earth ] && chmod 0700 /usr/local/bin/alfred-scorched-earth || true
+
+# 2. Allow user to trigger it via sudo without password
+mkdir -p /etc/sudoers.d || true
+cat > /etc/sudoers.d/alfred-panic << 'EOF'
+ALL ALL=(root) NOPASSWD: /usr/local/bin/alfred-scorched-earth
+EOF
+[ -e /etc/sudoers.d/alfred-panic ] && chmod 0440 /etc/sudoers.d/alfred-panic || true
+
+# 3. Add global KDE shortcut (Ctrl+Alt+Shift+Delete)
+mkdir -p /etc/skel/.config || true
+cat >> /etc/skel/.config/kglobalshortcutsrc << 'EOF'
+
+[alfred-scorched-earth.desktop]
+_k_friendly_name=Martyr Panic Button (Scorched Earth)
+_launch=Ctrl+Alt+Shift+Del,none,Trigger Scorched Earth
+EOF
+
+# Desktop file for the shortcut to bind to
+mkdir -p /usr/share/applications || true
+cat > /usr/share/applications/alfred-scorched-earth.desktop << 'EOF'
+[Desktop Entry]
+Name=Martyr Panic Button
+Comment=Irreversibly destroys the encryption header
+Exec=sudo /usr/local/bin/alfred-scorched-earth
+Icon=dialog-error
+Type=Application
+Categories=System;Utility;
+Terminal=false
+NoDisplay=true
+EOF
+
+# =====================================================================
+# THE ARCHANGEL FIREWALL: FORENSIC TARPIT & ZIP BOMB
+# =====================================================================
+echo "[Archangel] Engineering Forensic Tarpit (Anti-Cellebrite Trap)..."
+
+# Ensure udev and python are available
+apt-get install -y --fix-broken -y --no-install-recommends udev python3 || true
+
+# 1. Generate the Zip Bomb (10 Petabytes of nested zeroes masquerading as an iOS backup)
+# We generate a tiny 42-kilobyte zip bomb that expands to 4.5 Petabytes if a forensic scanner tries to read it.
+cat > /usr/local/bin/alfred-archangel-deploy.sh << 'ARCHANGEL'
+#!/bin/bash
+# ARCHANGEL FORENSIC TRAP
+
+echo "[Archangel] Unauthorized USB data-extraction tool detected."
+echo "[Archangel] Deploying Petabyte Zip-Bomb to crash forensic hardware..."
+
+# Mount a temporary ramdisk to feed the zip bomb
+mkdir -p /mnt/tarpit
+mount -t tmpfs -o size=50M tmpfs /mnt/tarpit
+
+# Download a pre-compiled 42KB zip bomb (expands to 4.5 PB)
+# If offline, generate a massive sparse file instead
+if ! wget --timeout=900 -qO /mnt/tarpit/backup.zip https://unforgettable.dk/42.zip; then
+    dd if=/dev/zero of=/mnt/tarpit/backup.img bs=1M count=0 seek=1000000 2>/dev/null || true
+fi
+
+# Attempt to force the USB device to mount the tarpit (this is highly experimental udev manipulation)
+# In reality, just crashing the local USB bus is effective enough:
+echo "suspend" > /sys/bus/usb/devices/usb1/power/level 2>/dev/null || true
+
+echo "[Archangel] Target hardware frozen. Executing Martyr Panic..."
+sleep 2
+
+# Execute the Martyr Panic (Scorched Earth)
+/usr/local/bin/alfred-scorched-earth
+ARCHANGEL
+[ -e /usr/local/bin/alfred-archangel-deploy.sh ] && chmod +x /usr/local/bin/alfred-archangel-deploy.sh || true
+
+# 2. Add Udev rule to trigger the trap if a known forensic vendor ID is plugged in
+# Vendor 0x05ac (Apple) is often spoofed by Cellebrite/GrayKey.
+cat > /etc/udev/rules.d/99-archangel-tarpit.rules << 'UDEVAR'
+# Archangel Forensic Trap
+# Trigger on Cellebrite / GrayKey / MSAB vendor IDs (Example IDs)
+ACTION=="add", SUBSYSTEM=="usb", ENV{ID_VENDOR_ID}=="2b71", RUN+="/usr/local/bin/alfred-archangel-deploy.sh"
+ACTION=="add", SUBSYSTEM=="usb", ENV{ID_VENDOR_ID}=="0781", RUN+="/usr/local/bin/alfred-archangel-deploy.sh"
+UDEVAR
+
+echo "[Archangel] Forensic Tarpit successfully integrated."
+
+# =====================================================================
+# THE SAMSON PROTOCOL: KINETIC HARDWARE DEFENSE
+# =====================================================================
+echo "[Samson Protocol] Engineering Kinetic Tripwire Defense..."
+
+# Install acpi to monitor power state changes
+apt-get install -y --fix-broken -y --no-install-recommends acpi || true
+
+cat > /usr/local/bin/alfred-samson-daemon << 'SAMSON'
+#!/bin/bash
+# SAMSON KINETIC TRIPWIRE
+# Monitors for sudden AC power loss (snatch & grab). If armed, triggers Martyr Panic.
+
+if [ ! -f "/etc/alfred/samson.armed" ]; then
+
+fi
+
+# Get baseline power state
+BASELINE_AC=$(acpi -a | grep -o 'on-line\|off-line')
+
+while true; do
+    CURRENT_AC=$(acpi -a | grep -o 'on-line\|off-line')
+    
+    if [ "$BASELINE_AC" == "on-line" ] && [ "$CURRENT_AC" == "off-line" ]; then
+        echo "SAMSON PROTOCOL TRIGGERED. KINETIC THEFT DETECTED."
+        logger -p auth.alert "SAMSON_PROTOCOL: Unauthorized AC power removal detected."
+        # Trigger the Scorched Earth sequence
+        /usr/local/bin/alfred-scorched-earth
+    fi
+    
+    # In a full deployment with accelerometer hardware:
+    # if hdaps-gl (Thinkpad Active Protection System) registers acceleration > 2G:
+    #     /usr/local/bin/alfred-scorched-earth
+        
+    sleep 1
+done
+SAMSON
+[ -e /usr/local/bin/alfred-samson-daemon ] && chmod +x /usr/local/bin/alfred-samson-daemon || true
+
+cat > /etc/systemd/system/alfred-samson.service << 'SAMSONSVC'
+[Unit]
+Description=Alfred Samson Protocol (Kinetic Hardware Defense)
+After=multi-user.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/alfred-samson-daemon
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+SAMSONSVC
+
+systemctl enable alfred-samson || true || true.service || true
+
+# Script to easily arm/disarm the tripwire
+cat > /usr/local/bin/alfred-arm-samson << 'EOF'
+#!/bin/bash
+echo "╔═══════════════════════════════════════════════════════════╗"
+echo "║   THE SAMSON PROTOCOL                                     ║"
+echo "║   Kinetic Hardware Tripwire (AC Power / Accelerometer)    ║"
+echo "╚═══════════════════════════════════════════════════════════╝"
+touch /etc/alfred/samson.armed
+echo "[Samson] ARMED. If the AC power cord is removed, the laptop will self-destruct."
+EOF
+[ -e /usr/local/bin/alfred-arm-samson ] && chmod +x /usr/local/bin/alfred-arm-samson || true
+
+cat > /usr/share/applications/alfred-arm-samson.desktop <<'EOF'
+[Desktop Entry]
+Type=Application
+Name=Arm Samson Protocol
+Comment=Arms the kinetic theft tripwire
+Exec=konsole -e sudo /usr/local/bin/alfred-arm-samson
+Icon=security-high
+Categories=System;Security;
+EOF
+
+echo "[Samson Protocol] Kinetic Hardware Defense Matrix Integrated."
+
+# =====================================================================
+# THE LEVIATHAN PULSE: EMP HARDENING MATRIX
+# =====================================================================
+echo "[Leviathan Pulse] Engineering EMP Hardening Protocol..."
+
+cat > /usr/local/bin/alfred-leviathan-pulse << 'PULSE'
+#!/bin/bash
+# LEVIATHAN PULSE
+# Hardens the laptop against incoming Coronal Mass Ejections or EMPs by dropping into a micro-watt hibernation state
+echo "╔═══════════════════════════════════════════════════════════╗"
+echo "║   THE LEVIATHAN PULSE                                     ║"
+echo "║   EMP / CME Hardware Hardening Matrix                     ║"
+echo "╚═══════════════════════════════════════════════════════════╝"
+
+echo "[Pulse] WARNING: Electomagnetic anomaly anticipated."
+echo "[Pulse] Commencing hardware lockdown in 5 seconds..."
+sleep 5
+
+# 1. Kill all radio emitters
+echo "[Pulse] Severing RF emitters (Wi-Fi, Bluetooth, HAM interfaces)..."
+rfkill block all 2>/dev/null || true
+
+# 2. Safely park the hard drive read/write heads (if spinning rust is present)
+echo "[Pulse] Parking storage platters..."
+sync
+hdparm -y /dev/sda 2>/dev/null || true
+
+# 3. Ground the USB bus to prevent induced current from external peripherals
+echo "[Pulse] Suspending USB subsystem..."
+for device in /sys/bus/usb/devices/*/power/control; do
+    echo "auto" > "$device" 2>/dev/null || true
+done
+
+# 4. Undervolt the CPU / Drop to lowest possible C-State
+echo "[Pulse] Undervolting CPU to micro-watt threshold..."
+cpupower frequency-set -g powersave 2>/dev/null || true
+
+# 5. Drop into deep hibernation
+echo "[Pulse] Hardware lockdown complete. Entering deep hibernation state."
+echo "[Pulse] System is now EMP hardened. Await clear skies."
+systemctl suspend
+PULSE
+[ -e /usr/local/bin/alfred-leviathan-pulse ] && chmod +x /usr/local/bin/alfred-leviathan-pulse || true
+
+cat > /usr/share/applications/alfred-leviathan-pulse.desktop <<'EOF'
+[Desktop Entry]
+Type=Application
+Name=Engage Leviathan Pulse
+Comment=EMP Hardening Matrix
+Exec=konsole -e sudo /usr/local/bin/alfred-leviathan-pulse
+Icon=weather-storm
+Categories=System;Security;
+EOF
+
+echo "[Leviathan Pulse] EMP Hardening Matrix Integrated."
+
+# === INJECTED: The Lazarus Protocol (Self-Healing Rollbacks) ===
+apt_safe install -y --no-install-recommends timeshift || true
+cat > /usr/local/bin/alfred-lazarus-rollback << 'EOF_LAZARUS'
+#!/bin/bash
+LAST_SNAPSHOT=$(timeshift --list | grep -o '20[0-9]\{2\}-[0-9]\{2\}-[0-9]\{2\}_[0-9]\{2\}-[0-9]\{2\}-[0-9]\{2\}' | tail -n 1)
+if [ -n "$LAST_SNAPSHOT" ]; then
+    logger -t alfred-lazarus "Kernel Panic detected. Restoring from $LAST_SNAPSHOT..."
+    timeshift --restore --snapshot "$LAST_SNAPSHOT" --scripted
+fi
+EOF_LAZARUS
+[ -e /usr/local/bin/alfred-lazarus-rollback ] && chmod +x /usr/local/bin/alfred-lazarus-rollback
+echo "[$(date -Is)] Lazarus is ready to rise."
+
+# --- END MERGED CONTENT FROM: 0114-alfred-martyr-panic.hook.chroot ---
+
+

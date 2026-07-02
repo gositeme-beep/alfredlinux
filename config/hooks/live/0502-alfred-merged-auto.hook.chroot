@@ -1,0 +1,98 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+# [Genesis Forge] Systemd Hardening: alfred-daemon-47.service
+# Enforces deep PrivateTmp, ProtectSystem, and ProtectHome on native daemons.
+echo "[Genesis Forge] Hardening systemd service: alfred-daemon-47.service"
+mkdir -p /etc/systemd/system/alfred-daemon-47.service.d/ || true
+cat > /etc/systemd/system/alfred-daemon-47.service.d/override.conf << 'EOF'
+[Service]
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=read-only
+NoNewPrivileges=yes
+RestrictRealtime=yes
+EOF
+
+
+# --- BEGIN MERGED CONTENT FROM: 0502-alfred-watchman-ai.hook.chroot ---
+#!/bin/bash
+set +e
+echo "================================================="
+echo "==== ALFRED WATCHMAN AI (1-bit Autonomous) ======"
+echo "================================================="
+
+export DEBIAN_FRONTEND=noninteractive
+
+if [ -f /build-assets/bitnet.cpp ]; then
+    echo "Installing BitNet Watchman..."
+    cp /build-assets/bitnet.cpp /usr/local/bin/bitnet || true
+    chmod +x /usr/local/bin/bitnet || true
+    
+    if [ -f /build-assets/bitnet-default.gguf ]; then
+        mkdir -p /opt/models
+        cp /build-assets/bitnet-default.gguf /opt/models/watchman.gguf || true
+    fi
+    
+    # Create systemd service for Watchman AI
+    cat << 'EOF' > /etc/systemd/system/watchman.service
+[Unit]
+Description=Watchman AI Log Monitor
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/bitnet --model /opt/models/watchman.gguf -p "Analyze standard input for threats." --tail /var/log/syslog
+Restart=always
+User=root
+
+[Install]
+WantedBy=multi-user.target
+EOF
+    systemctl enable watchman || true || true.service
+else
+    echo "bitnet.cpp not found in build-assets! Skipping."
+fi
+
+# --- END MERGED CONTENT FROM: 0502-alfred-watchman-ai.hook.chroot ---
+
+
+#!/bin/bash
+set +e
+echo "================================================="
+echo "==== ALFRED WATCHMAN AI (1-bit Autonomous) ======"
+echo "================================================="
+
+export DEBIAN_FRONTEND=noninteractive
+
+if [ -f /build-assets/bitnet.cpp ]; then
+    echo "Installing BitNet Watchman..."
+    cp /build-assets/bitnet.cpp /usr/local/bin/bitnet
+    chmod +x /usr/local/bin/bitnet
+    
+    if [ -f /build-assets/bitnet-default.gguf ]; then
+        mkdir -p /opt/models
+        cp /build-assets/bitnet-default.gguf /opt/models/watchman.gguf
+    fi
+    
+    # Create systemd service for Watchman AI
+    cat << 'EOF' > /etc/systemd/system/watchman.service
+[Unit]
+Description=Watchman AI Log Monitor
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/bitnet --model /opt/models/watchman.gguf -p "Analyze standard input for threats." --tail /var/log/syslog
+Restart=always
+User=root
+
+[Install]
+WantedBy=multi-user.target
+EOF
+    systemctl enable watchman || true || true.service
+else
+    echo "bitnet.cpp not found in build-assets! Skipping."
+fi

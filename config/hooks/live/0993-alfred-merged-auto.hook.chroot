@@ -1,0 +1,141 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+# [Genesis Forge] AppArmor Isolation: /usr/local/bin/alfred-util-74
+# Creates a granular zero-trust execution envelope for individual binaries.
+echo "[Genesis Forge] Enveloping binary: /usr/local/bin/alfred-util-74"
+mkdir -p /etc/apparmor.d/alfred-isolated/ || true
+# We only construct the profile structure if it doesn't already exist
+if [ ! -f "/etc/apparmor.d/alfred-isolated/profile-87" ]; then
+    cat > /etc/apparmor.d/alfred-isolated/profile-87 << 'EOF'
+profile alfred-sandbox-87 /usr/local/bin/alfred-util-74 flags=(complain) {
+  #include <abstractions/base>
+  /usr/local/bin/alfred-util-74 rmix,
+  /dev/null rw,
+}
+EOF
+fi
+
+
+# --- BEGIN MERGED CONTENT FROM: 0993-alfred-dns-fix.hook.chroot ---
+#!/bin/bash
+echo "[0993] Emergency fixing Sovereign DNS NFTables redirect..."
+
+mkdir -p /etc/nftables.conf.d
+cat > /etc/nftables.conf.d/dns-redirect.nft << 'NFT'
+table ip nat {
+    chain output {
+        type nat hook output priority -100; policy accept;
+        udp dport 53 redirect to :5354
+        tcp dport 53 redirect to :5354
+    }
+    chain prerouting {
+        type nat hook prerouting priority -100; policy accept;
+        udp dport 53 redirect to :5354
+        tcp dport 53 redirect to :5354
+    }
+}
+NFT
+
+# Inject the include into the main nftables hook if it exists
+if [ -f "/etc/nftables.conf" ]; then
+    if ! grep -q 'include "/etc/nftables.conf.d/\*"' /etc/nftables.conf; then
+        sed -i 's/flush ruleset/flush ruleset\ninclude "\/etc\/nftables.conf.d\/\*"/g' /etc/nftables.conf
+    fi
+fi
+
+# Ensure local resolver points to 127.0.0.1
+echo "nameserver 127.0.0.1" > /etc/resolv.conf
+# DISABLED-BY-BUILD-FIX: chattr +i /etc/resolv.conf 2>/dev/null || true
+
+echo "[0993] Sovereign DNS properly routed!"
+
+# --- END MERGED CONTENT FROM: 0993-alfred-dns-fix.hook.chroot ---
+
+
+# --- BEGIN MERGED CONTENT FROM: 0993-alfred.hook.chroot ---
+#!/bin/bash
+# Auto-generated phase hook. Idempotent. Safe.
+# Phase: 993-prerelease-finalize
+set +e
+
+LOG=/var/log/alfred-build-phases.log
+mkdir -p /var/log
+TS="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+echo "[${TS}] PHASE=993-prerelease-finalize HOOK=0993-alfred.hook.chroot START" >> "$LOG"
+
+# Phase verification block (non-fatal warnings only; enforcer hooks decide hard fail).
+ok=1
+for p in ; do
+  if [ -n "$p" ] && [ ! -e "$p" ]; then
+    echo "[${TS}] WARN phase=993-prerelease-finalize missing-artifact: $p" >> "$LOG"
+    ok=0
+  fi
+done
+[ "$ok" = 1 ] && echo "[${TS}] PHASE=993-prerelease-finalize HOOK=0993-alfred.hook.chroot OK" >> "$LOG"               || echo "[${TS}] PHASE=993-prerelease-finalize HOOK=0993-alfred.hook.chroot WARN" >> "$LOG"
+
+# Mark completion stamp (used by 0999 release manifest).
+mkdir -p /var/lib/alfred/phases
+touch "/var/lib/alfred/phases/993-prerelease-finalize.done"
+
+# --- END MERGED CONTENT FROM: 0993-alfred.hook.chroot ---
+
+
+#!/bin/bash
+echo "[0993] Emergency fixing Sovereign DNS NFTables redirect..."
+
+mkdir -p /etc/nftables.conf.d
+cat > /etc/nftables.conf.d/dns-redirect.nft << 'NFT'
+table ip nat {
+    chain output {
+        type nat hook output priority -100; policy accept;
+        udp dport 53 redirect to :5354
+        tcp dport 53 redirect to :5354
+    }
+    chain prerouting {
+        type nat hook prerouting priority -100; policy accept;
+        udp dport 53 redirect to :5354
+        tcp dport 53 redirect to :5354
+    }
+}
+NFT
+
+# Inject the include into the main nftables hook if it exists
+if [ -f "/etc/nftables.conf" ]; then
+    if ! grep -q 'include "/etc/nftables.conf.d/\*"' /etc/nftables.conf; then
+        sed -i 's/flush ruleset/flush ruleset\ninclude "\/etc\/nftables.conf.d\/\*"/g' /etc/nftables.conf
+    fi
+fi
+
+# Ensure local resolver points to 127.0.0.1
+echo "nameserver 127.0.0.1" > /etc/resolv.conf
+chattr +i /etc/resolv.conf 2>/dev/null || true
+
+echo "[0993] Sovereign DNS properly routed!"
+#!/bin/bash
+# Auto-generated phase hook. Idempotent. Safe.
+# Phase: 993-prerelease-finalize
+set +euo pipefail
+
+LOG=/var/log/alfred-build-phases.log
+mkdir -p /var/log
+TS="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+echo "[${TS}] PHASE=993-prerelease-finalize HOOK=0993-alfred.hook.chroot START" >> "$LOG"
+
+# Phase verification block (non-fatal warnings only; enforcer hooks decide hard fail).
+ok=1
+for p in ; do
+  if [ -n "$p" ] && [ ! -e "$p" ]; then
+    echo "[${TS}] WARN phase=993-prerelease-finalize missing-artifact: $p" >> "$LOG"
+    ok=0
+  fi
+done
+[ "$ok" = 1 ] && echo "[${TS}] PHASE=993-prerelease-finalize HOOK=0993-alfred.hook.chroot OK" >> "$LOG"               || echo "[${TS}] PHASE=993-prerelease-finalize HOOK=0993-alfred.hook.chroot WARN" >> "$LOG"
+
+# Mark completion stamp (used by 0999 release manifest).
+mkdir -p /var/lib/alfred/phases
+touch "/var/lib/alfred/phases/993-prerelease-finalize.done"
+
+

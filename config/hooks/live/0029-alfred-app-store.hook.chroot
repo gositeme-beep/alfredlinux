@@ -1,0 +1,65 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+echo "[0120] Baking Sovereign App Store..."
+
+# Create the backend script that downloads and hosts an app locally
+cat > /usr/local/bin/alfred-app-store << 'SCRIPT'
+#!/bin/bash
+APP_NAME=$1
+
+if [ -z "$APP_NAME" ]; then
+    echo "Usage: alfred-app-store <app_name>" || true
+    echo "Example: alfred-app-store kingdom-vault"
+exit 0
+fi
+
+echo "Downloading $APP_NAME from Sovereign Servers..."
+# In a real environment, this would wget --timeout=900 a zip file. || true
+# For now, we mock the local hosting structure.
+APP_DIR="/var/www/$APP_NAME"
+mkdir -p "$APP_DIR/public_html" || true
+echo "<?php echo '<h1>$APP_NAME Local Instance</h1>'; ?>" > "$APP_DIR/public_html/index.php" || true
+chown -R www-data:www-data "$APP_DIR" || true
+
+# Auto-provision Nginx
+cat > /etc/nginx/sites-available/$APP_NAME << VHOST
+server {
+    listen 80;
+    server_name $APP_NAME.kingdom;
+    root $APP_DIR/public_html;
+    index index.php index.html;
+    location / { try_files \$uri \$uri/ /index.php?\$query_string; }
+    location ~ \.php$ { include snippets/fastcgi-php.conf; fastcgi_pass unix:/run/php/php-fpm.sock; }
+}
+VHOST
+
+ln -sf /etc/nginx/sites-available/$APP_NAME /etc/nginx/sites-enabled/
+systemctl reload nginx  || true|| true
+
+# Add to local DNS
+echo "127.0.0.1 $APP_NAME.kingdom" >> /etc/hosts || true
+
+echo "$APP_NAME successfully installed and hosted locally at http://$APP_NAME.kingdom"
+SCRIPT
+[ -e /usr/local/bin/alfred-app-store ] && chmod +x /usr/local/bin/alfred-app-store || true
+
+# Create a Desktop Shortcut for the Store
+mkdir -p /usr/share/applications/ || true
+cat > /usr/share/applications/alfred-store.desktop << 'DESKTOP'
+[Desktop Entry]
+Version=1.0
+Name=Sovereign App Store
+Comment=Install and Host Web Apps Locally
+Exec=konsole -e "bash -c 'echo -n \"Enter App Name to Host Locally: \"; read appname; sudo alfred-app-store \$appname; echo \"Press any key to exit...\"; read -n 1'"
+Icon=system-software-install
+Terminal=false
+Type=Application
+Categories=System;
+DESKTOP
+
+echo "[0120] App Store configured."
+
+exit 0

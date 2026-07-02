@@ -1,0 +1,71 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+
+echo "[Genesis Forge] Engineering LD_PRELOAD Memory Randomizer for 212..."
+
+apt-get install -y --fix-broken -y gcc || true
+
+mkdir -p /etc/apparmor.d/alfred-isolated/ || true
+
+# Strict AppArmor Mode (Enforce)
+cat > /etc/apparmor.d/alfred-isolated/profile-212 << 'EOF'
+profile alfred-sandbox-212 /usr/local/bin/alfred-util-199 flags=(enforce) {
+  #include <abstractions/base>
+  /usr/local/bin/alfred-util-199 rmix,
+  /dev/null rw,
+}
+EOF
+
+# Inject LD_PRELOAD C code
+mkdir -p /usr/lib/alfred-illusions/ || true
+cat > /usr/lib/alfred-illusions/aslr_shim.c << 'EOF'
+#define _GNU_SOURCE
+#include <dlfcn.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
+
+// Hook malloc to randomly pad allocations
+void *malloc(size_t size) {
+    static void *(*real_malloc)(size_t) = NULL;
+    if (!real_malloc) {
+        real_malloc = dlsym(RTLD_NEXT, "malloc");
+        srand(time(NULL)); // basic seed, suitable for padding jitter
+    }
+    
+    // Add up to 64 bytes of random padding to shatter heap-spray math
+    size_t pad = rand() % 64;
+    return real_malloc(size + pad);
+}
+
+// Hook calloc
+void *calloc(size_t nmemb, size_t size) {
+    static void *(*real_calloc)(size_t, size_t) = NULL;
+    if (!real_calloc) {
+        real_calloc = dlsym(RTLD_NEXT, "calloc");
+    }
+    size_t pad = rand() % 64;
+    return real_calloc(1, (nmemb * size) + pad); // simplifying pad application
+}
+EOF
+
+# Compile the shim
+gcc -shared -fPIC /usr/lib/alfred-illusions/aslr_shim.c -o /usr/lib/alfred-illusions/aslr_shim.so -ldl 2>/dev/null || true
+
+# Inject LD_PRELOAD Wrapper
+cat > /usr/local/bin/alfred-util-199-aslr-wrapper << 'EOF'
+#!/bin/bash
+# LD_PRELOAD Memory Randomizer
+# Forces the binary to use our hooked malloc/calloc functions.
+
+export LD_PRELOAD="/usr/lib/alfred-illusions/aslr_shim.so"
+exec /usr/local/bin/alfred-util-199 "$@"
+EOF
+
+[ -e "+x" ] && chmod +x /usr/local/bin/alfred-util-199-aslr-wrapper || true
+
+echo "[Genesis Forge] LD_PRELOAD Memory Randomizer Integrated."
+exit 0

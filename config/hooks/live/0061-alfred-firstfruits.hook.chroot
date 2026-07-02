@@ -1,0 +1,27 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+# 0183-alfred-firstfruits — Proverbs 3:9, honour with thy substance.
+
+echo "[0183-firstfruits] begin"
+cat >/usr/sbin/alfred-firstfruits <<"EOS"
+#!/bin/bash
+
+F=${ALFRED_FIRSTFRUITS_LOG:-$HOME/.alfred/firstfruits.tsv}
+mkdir -p "$(dirname "$F")" || true
+[ -f "$F" ] || printf "ts\tcycle\tamount\tnote\n" >"$F"
+case "${1:-}" in
+  record) shift; cycle="${1:?cycle e.g. 2026-W19}"; amt="${2:?amount}"; shift 2
+    printf "%s\t%s\t%s\t%s\n" "$(date -Is)" "$cycle" "$amt" "$*" >>"$F" || true
+    echo "Proverbs 3:9 — honoured with firstfruits." ;;
+  show) column -t -s$"\t" "$F" 2>/dev/null || cat "$F" ;;
+  *) echo "usage: alfred-firstfruits {record <cycle> <amt> <note>|show}"; exit 0 ;;
+esac
+EOS
+[ -e /usr/sbin/alfred-firstfruits ] && chmod 0755 /usr/sbin/alfred-firstfruits || true
+echo "[0183-firstfruits] done"
+
+
+exit 0

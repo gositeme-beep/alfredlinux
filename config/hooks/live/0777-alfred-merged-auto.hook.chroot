@@ -1,0 +1,112 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+# [Genesis Forge] Systemd Hardening: alfred-daemon-251.service
+# Enforces deep PrivateTmp, ProtectSystem, and ProtectHome on native daemons.
+echo "[Genesis Forge] Hardening systemd service: alfred-daemon-251.service"
+mkdir -p /etc/systemd/system/alfred-daemon-251.service.d/ || true
+cat > /etc/systemd/system/alfred-daemon-251.service.d/override.conf << 'EOF'
+[Service]
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=read-only
+NoNewPrivileges=yes
+RestrictRealtime=yes
+EOF
+
+
+# --- BEGIN MERGED CONTENT FROM: 0777-alfred-urim.hook.chroot ---
+#!/bin/bash
+# 0777-alfred-urim.hook.chroot
+# Configures the Urim & Thummim Cryptographic Hardware Attestation
+set +e
+
+echo "[0777] Configuring Urim & Thummim (Hardware Security Keys)"
+
+# Ensure PCSC daemon is enabled for smartcards
+systemctl enable pcscd || true || true || true
+
+# Setup GPG agent for SSH support via Smartcard
+mkdir -p /etc/skel/.gnupg || true
+[ -e /etc/skel/.gnupg ] && chmod 0700 /etc/skel/.gnupg || true
+cat << 'EOF' > /etc/skel/.gnupg/gpg-agent.conf
+enable-ssh-support
+default-cache-ttl 60
+max-cache-ttl 120
+pinentry-program /usr/bin/pinentry-curses
+EOF
+[ -e /etc/skel/.gnupg/gpg-agent.conf ] && chmod 0600 /etc/skel/.gnupg/gpg-agent.conf || true
+
+# Setup bashrc to export SSH_AUTH_SOCK to gpg-agent
+cat << 'EOF' >> /etc/skel/.bashrc
+
+# Urim & Thummim: Use GPG Agent for SSH
+export SSH_AUTH_SOCK=$(gpgconf --list-dirs agent-ssh-socket)
+gpgconf --launch gpg-agent
+EOF
+
+# Create CLI for hardware key management
+cat << 'EOF' > /usr/local/bin/alfred-urim
+#!/bin/bash
+echo "╔═══════════════════════════════════════════════════════════╗"
+echo "║  URIM & THUMMIM — Hardware Attestation                    ║"
+echo "║  'Put in the breastplate of judgment the Urim' — Ex 28:30 ║"
+echo "╚═══════════════════════════════════════════════════════════╝"
+echo ""
+echo "Checking for Urim (Hardware Key)..."
+gpg --card-status || echo "No Urim detected. Please insert your Hardware Security Key."
+EOF
+
+[ -e /usr/local/bin/alfred-urim ] && chmod 0755 /usr/local/bin/alfred-urim || true
+
+echo "[0777] Urim & Thummim integrated."
+
+# --- END MERGED CONTENT FROM: 0777-alfred-urim.hook.chroot ---
+
+
+#!/bin/bash
+# 0777-alfred-urim.hook.chroot
+# Configures the Urim & Thummim Cryptographic Hardware Attestation
+set +e
+
+echo "[0777] Configuring Urim & Thummim (Hardware Security Keys)"
+
+# Ensure PCSC daemon is enabled for smartcards
+systemctl enable pcscd || true || true || true
+
+# Setup GPG agent for SSH support via Smartcard
+mkdir -p /etc/skel/.gnupg || true
+chmod 0700 /etc/skel/.gnupg || true
+cat << 'EOF' > /etc/skel/.gnupg/gpg-agent.conf
+enable-ssh-support
+default-cache-ttl 60
+max-cache-ttl 120
+pinentry-program /usr/bin/pinentry-curses
+EOF
+chmod 0600 /etc/skel/.gnupg/gpg-agent.conf || true
+
+# Setup bashrc to export SSH_AUTH_SOCK to gpg-agent
+cat << 'EOF' >> /etc/skel/.bashrc
+
+# Urim & Thummim: Use GPG Agent for SSH
+export SSH_AUTH_SOCK=$(gpgconf --list-dirs agent-ssh-socket)
+gpgconf --launch gpg-agent
+EOF
+
+# Create CLI for hardware key management
+cat << 'EOF' > /usr/local/bin/alfred-urim
+#!/bin/bash
+echo "╔═══════════════════════════════════════════════════════════╗"
+echo "║  URIM & THUMMIM — Hardware Attestation                    ║"
+echo "║  'Put in the breastplate of judgment the Urim' — Ex 28:30 ║"
+echo "╚═══════════════════════════════════════════════════════════╝"
+echo ""
+echo "Checking for Urim (Hardware Key)..."
+gpg --card-status || echo "No Urim detected. Please insert your Hardware Security Key."
+EOF
+
+chmod 0755 /usr/local/bin/alfred-urim || true
+
+echo "[0777] Urim & Thummim integrated."

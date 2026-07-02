@@ -1,0 +1,21 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+# [Genesis Forge] AppArmor Isolation: /usr/local/bin/alfred-util-67
+# Creates a granular zero-trust execution envelope for individual binaries.
+echo "[Genesis Forge] Enveloping binary: /usr/local/bin/alfred-util-67"
+mkdir -p /etc/apparmor.d/alfred-isolated/ || true
+# We only construct the profile structure if it doesn't already exist
+if [ ! -f "/etc/apparmor.d/alfred-isolated/profile-80" ]; then
+    cat > /etc/apparmor.d/alfred-isolated/profile-80 << 'EOF'
+profile alfred-sandbox-80 /usr/local/bin/alfred-util-67 flags=(complain) {
+  #include <abstractions/base>
+  /usr/local/bin/alfred-util-67 rmix,
+  /dev/null rw,
+}
+EOF
+fi
+
+exit 0

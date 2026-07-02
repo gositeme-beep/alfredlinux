@@ -1,0 +1,195 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# 0790-alfred-cutting-edge.hook.chroot
+# The Cutting Edge: Kernel-Linked Shaders & Wayland HDR
+set +e
+
+echo "I: [alfred] configuring cutting edge kernel-linked graphics"
+
+# 1. Wayland HDR & VRR Environment Variables
+mkdir -p /etc/profile.d
+cat > /etc/profile.d/alfred-wayland-hdr.sh <<'EOF'
+# Force KDE Plasma Wayland to enable 10-bit HDR and Variable Refresh Rate
+export KWIN_DRM_USE_MODIFIERS=1
+export ENABLE_HDR_WSI=1
+export KWIN_DRM_NO_AMS=1
+EOF
+[ -e "/etc/profile.d/alfred-wayland-hdr.sh" ] && chmod 644 /etc/profile.d/alfred-wayland-hdr.sh
+
+# 2. The Kernel Bridge Daemon
+# This reads the live CPU/Kernel load and feeds it to the GPU
+mkdir -p /usr/local/bin
+cat > /usr/local/bin/alfred-kernel-bridge <<'EOF'
+#!/bin/bash
+while true; do
+    # Extract the 1-minute load average from the kernel
+    LOAD=$(cat /proc/loadavg | awk '{print $1}')
+    echo "$LOAD" > /tmp/alfred_kernel_load
+    sleep 2
+done
+EOF
+[ -e "/usr/local/bin/alfred-kernel-bridge" ] && chmod +x /usr/local/bin/alfred-kernel-bridge
+
+# 3. Autostart the Kernel Bridge
+mkdir -p /etc/xdg/autostart
+cat > /etc/xdg/autostart/alfred-kernel-bridge.desktop <<'EOF'
+[Desktop Entry]
+Type=Application
+Name=Alfred Kernel Bridge
+Exec=/usr/local/bin/alfred-kernel-bridge
+X-KDE-autostart-condition=ksmserver
+EOF
+
+# 4. Update the QML Shader to become a Living Hologram
+PLUGIN_DIR="/usr/share/plasma/wallpapers/org.alfred.burningbush"
+if [ -d "$PLUGIN_DIR" ]; then
+cat > "$PLUGIN_DIR/contents/ui/main.qml" <<'EOF'
+import QtQuick 2.15
+import QtQuick.Particles 2.15
+import org.kde.plasma.core as PlasmaCore
+import org.kde.plasma.plasmoid 2.0
+
+Item {
+    id: root
+    width: 1920
+    height: 1080
+
+    Rectangle {
+        anchors.fill: parent
+        color: "#030005" 
+    }
+
+    // The Kernel Link (Reads live CPU load from the bridge daemon)
+    Timer {
+        interval: 2000
+        running: true
+        repeat: true
+        onTriggered: {
+            var xhr = new XMLHttpRequest();
+            xhr.open("GET", "file:///tmp/alfred_kernel_load", true);
+            xhr.onreadystatechange = function() {
+                if (xhr.readyState === XMLHttpRequest.DONE) {
+                    var load = parseFloat(xhr.responseText);
+                    if (!isNaN(load)) {
+                        // The GPU mathematically reacts to the CPU load
+                        fireTurbulence.strength = 40 + (load * 30);
+                        fireEmitter.emitRate = 1500 + (load * 800);
+                        fireEmitter.velocity.y = -250 - (load * 80);
+                    }
+                }
+            }
+            xhr.send();
+        }
+    }
+
+    ParticleSystem {
+        id: fireSystem
+        anchors.fill: parent
+        running: Plasmoid.configuration ? Plasmoid.configuration.visible : true
+
+        Component {
+            id: fireTexture
+            Item {
+                width: 64; height: 64
+                Rectangle {
+                    anchors.fill: parent
+                    radius: width / 2
+                    gradient: Gradient {
+                        GradientStop { position: 0.0; color: "#ffffffff" }
+                        GradientStop { position: 0.2; color: "#ffffaa00" }
+                        GradientStop { position: 1.0; color: "#00ff0000" }
+                    }
+                }
+            }
+        }
+
+        ImageParticle {
+            system: fireSystem
+            source: "qrc:/qt-project.org/imports/QtQuick/Particles.2/images/star.png"
+            colorVariation: 0.1
+            color: "#ffaa00"
+            alpha: 0.0
+        }
+
+        Emitter {
+            id: fireEmitter
+            system: fireSystem
+            anchors.bottom: parent.bottom
+            anchors.horizontalCenter: parent.horizontalCenter
+            width: parent.width * 0.4
+            height: 50
+            emitRate: 1500
+            lifeSpan: 3000
+            lifeSpanVariation: 1000
+            size: 64
+            sizeVariation: 32
+            endSize: 16
+            velocity: PointDirection { y: -250; yVariation: 100; xVariation: 50 }
+            acceleration: PointDirection { y: -100 }
+        }
+
+        Turbulence {
+            id: fireTurbulence
+            system: fireSystem
+            anchors.fill: parent
+            strength: 40
+            shape: Turbulence.Complex
+        }
+    }
+}
+EOF
+fi
+
+echo "I: [alfred] Cutting edge upgrades installed."
+
+# === INJECTED: The Living Pulse (Algorithmic Hardware Breathing) ===
+apt-get install -y --no-install-recommends lm-sensors fancontrol bc || true
+cat > /usr/local/bin/alfred-living-pulse << 'EOF_PULSE'
+#!/bin/bash
+while true; do
+    LOAD=$(cat /proc/loadavg | awk '{print $1}')
+    if (($(echo "$LOAD > 2.0" | bc -l))); then
+        echo "255" > /sys/class/hwmon/hwmon1/pwm1 2>/dev/null || true
+        sleep 2
+        echo "150" > /sys/class/hwmon/hwmon1/pwm1 2>/dev/null || true
+        sleep 2
+    else
+        echo "100" > /sys/class/hwmon/hwmon1/pwm1 2>/dev/null || true
+        sleep 5
+        echo "50" > /sys/class/hwmon/hwmon1/pwm1 2>/dev/null || true
+        sleep 5
+    fi
+done
+EOF_PULSE
+[ -e "/usr/local/bin/alfred-living-pulse" ] && chmod +x /usr/local/bin/alfred-living-pulse
+cat > /etc/systemd/system/alfred-living-pulse.service << 'EOF_PULSE_SVC'
+[Unit]
+Description=The Living Pulse
+After=syslog.target
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/alfred-living-pulse
+Restart=always
+[Install]
+WantedBy=multi-user.target
+EOF_PULSE_SVC
+systemctl enable alfred-living-pulse || true || true.service 2>/dev/null || true
+echo "[$(date -Is)] The Living Pulse is beating."
+
+# === INJECTED: The Pillar of Cloud & Fire (Thermal-Visual Symbiosis) ===
+cat > /usr/local/bin/alfred-pillar << 'EOF_PILLAR'
+#!/bin/bash
+TEMP=$(sensors | grep "Core 0" | awk '{print $3}' | sed 's/+//;s/°C//' | cut -d. -f1 || echo 40)
+if [ "$TEMP" -gt 75 ]; then
+    logger -t alfred-pillar "The Pillar of Fire: System is running hot."
+    qdbus org.kde.plasmashell /PlasmaShell org.kde.PlasmaShell.evaluateScript "workspace.desktopGrid.opacity = 0.5" 2>/dev/null || true
+else
+    logger -t alfred-pillar "The Pillar of Cloud: System is cool."
+fi
+EOF_PILLAR
+[ -e "/usr/local/bin/alfred-pillar" ] && chmod +x /usr/local/bin/alfred-pillar
+echo "[$(date -Is)] The Pillar is guiding."
+
+exit 0

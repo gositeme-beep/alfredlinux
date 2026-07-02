@@ -1,0 +1,128 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+echo "=> Assembling The Kingdom Boot Splash (Plymouth & GRUB)" || true
+
+export DEBIAN_FRONTEND=noninteractive
+apt-get install -y --fix-broken -y plymouth plymouth-themes || true
+
+# 1. Create the Plymouth Theme
+THEME_DIR="/usr/share/plymouth/themes/alfred-kingdom"
+mkdir -p "$THEME_DIR" || true
+
+cat > "$THEME_DIR/alfred-kingdom.plymouth" << 'EOF'
+[Plymouth Theme]
+Name=Alfred Kingdom
+Description=A glassmorphic, holy boot splash for Alfred Linux.
+ModuleName=script
+
+[script]
+ImageDir=/usr/share/plymouth/themes/alfred-kingdom
+ScriptFile=/usr/share/plymouth/themes/alfred-kingdom/alfred.script
+EOF
+
+cat > "$THEME_DIR/alfred.script" << 'EOF'
+# Plymouth script for Alfred Linux
+Window.SetBackgroundTopColor(0.02, 0.02, 0.05);
+Window.SetBackgroundBottomColor(0.01, 0.01, 0.02);
+
+logo.image = Image("logo.png");
+logo.sprite = Sprite(logo.image);
+logo.sprite.SetX(Window.GetWidth() / 2 - logo.image.GetWidth() / 2);
+logo.sprite.SetY(Window.GetHeight() / 2 - logo.image.GetHeight() / 2);
+
+progress_box.image = Image("progress_box.png");
+progress_box.sprite = Sprite(progress_box.image);
+progress_box.sprite.SetX(Window.GetWidth() / 2 - progress_box.image.GetWidth() / 2);
+progress_box.sprite.SetY(Window.GetHeight() * 0.8);
+
+progress_bar.original_image = Image("progress_bar.png");
+progress_bar.sprite = Sprite();
+progress_bar.sprite.SetX(Window.GetWidth() / 2 - progress_box.image.GetWidth() / 2);
+progress_bar.sprite.SetY(Window.GetHeight() * 0.8);
+
+fun progress_callback (duration, progress) {
+    if (progress_bar.original_image.GetWidth() > 0) {
+        progress_bar.image = progress_bar.original_image.Scale(progress_bar.original_image.GetWidth() * progress, progress_bar.original_image.GetHeight());
+        progress_bar.sprite.SetImage(progress_bar.image);
+    }
+}
+Plymouth.SetBootProgressFunction(progress_callback);
+EOF
+
+# Placeholder dummy images (the final OS build assets sync will overwrite these)
+touch "$THEME_DIR/logo.png"
+touch "$THEME_DIR/progress_box.png"
+touch "$THEME_DIR/progress_bar.png"
+
+# Set default theme
+plymouth-set-default-theme -R alfred-kingdom
+
+# 2. Inject Bible Verses into Initramfs
+mkdir -p /etc/initramfs-tools/scripts/init-premount || true
+cat > /etc/initramfs-tools/scripts/init-premount/alfred-verses << 'EOF'
+#!/bin/sh
+PREREQ=""
+prereqs() { echo "$PREREQ"; }
+case $1 in prereqs) prereqs; exit 0;; esac
+
+RAND_INDEX=$(awk 'BEGIN{srand(); print int(rand()*5)}')
+case $RAND_INDEX in
+    0) SELECTED_VERSE="Let there be light. - Genesis 1:3" ;;
+    1) SELECTED_VERSE="I can do all things through Christ who strengthens me. - Philippians 4:13" ;;
+    2) SELECTED_VERSE="Be strong and courageous. Do not be frightened, for the Lord your God is with you wherever you go. - Joshua 1:9" ;;
+    3) SELECTED_VERSE="The Lord is my shepherd; I shall not want. - Psalm 23:1" ;;
+    *) SELECTED_VERSE="I am the Alpha and the Omega, the First and the Last, the Beginning and the End. - Revelation 22:13" ;;
+esac
+
+if command -v plymouth >/dev/null 2>&1; then
+    plymouth message --text="$SELECTED_VERSE"
+fi
+EOF
+[ -e /etc/initramfs-tools/scripts/init-premount/alfred-verses ] && chmod +x /etc/initramfs-tools/scripts/init-premount/alfred-verses || true
+
+# 3. Configure GRUB
+GRUB_FILE="/etc/default/grub"
+if [ -f "$GRUB_FILE" ]; then
+    sed -i 's/^GRUB_CMDLINE_LINUX_DEFAULT=.*/GRUB_CMDLINE_LINUX_DEFAULT="quiet splash loglevel=3 rd.udev.log_priority=3 vt.global_cursor_default=0"/' "$GRUB_FILE" || true
+    update-grub
+fi
+
+echo "=> Kingdom Boot Splash Installed." || true
+
+
+# --- BEGIN MERGED CONTENT FROM: 0002-alfred-pep668-bypass.hook.chroot ---
+#!/bin/sh
+set +e
+
+echo "[Alfred Architecture] Overriding PEP-668 constraints to allow Sovereign AI pipelines to install..."
+
+# Create global pip configuration to bypass the "externally-managed-environment" block
+mkdir -p /etc/ || true
+cat > /etc/pip.conf << 'EOF'
+[global]
+break-system-packages = true
+EOF
+
+echo "[Alfred Architecture] Python PEP-668 restrictions neutralized globally."
+echo "[Alfred Architecture] The AI Brain will now successfully compile and install into the final OS."
+
+# --- END MERGED CONTENT FROM: 0002-alfred-pep668-bypass.hook.chroot ---
+
+
+#!/bin/sh
+set +e
+
+echo "[Alfred Architecture] Overriding PEP-668 constraints to allow Sovereign AI pipelines to install..."
+
+# Create global pip configuration to bypass the "externally-managed-environment" block
+mkdir -p /etc/ || true
+cat > /etc/pip.conf << 'EOF'
+[global]
+break-system-packages = true
+EOF
+
+echo "[Alfred Architecture] Python PEP-668 restrictions neutralized globally."
+echo "[Alfred Architecture] The AI Brain will now successfully compile and install into the final OS."

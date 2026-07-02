@@ -1,0 +1,1376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Chess Masters — Photorealistic VR Chess Club</title>
+    <meta name="description" content="Step into a private chess club. Photorealistic 3D chess with 20 AI personalities, spatial audio, fireplace ambience, and WebXR immersion. Built by Alfred OS.">
+    <link rel="icon" type="image/png" href="/favicon.png">
+    <link rel="stylesheet" href="/assets/fontawesome/css/all.min.css">
+    <link rel="stylesheet" href="css/chess-masters.css?v=20260308f">
+    <style>
+    /* Critical inline paywall CSS — ensures styling even with stale cache */
+    .paywall-overlay{position:fixed;inset:0;z-index:500;display:flex;align-items:center;justify-content:center;background:radial-gradient(ellipse at center,#1A1008 0%,#0A0A0E 70%);padding:20px}
+    .paywall-card{max-width:480px;width:100%;text-align:center;padding:48px 36px;background:rgba(18,12,6,0.92);border:1px solid rgba(184,134,11,0.25);border-radius:16px;box-shadow:0 24px 80px rgba(0,0,0,0.6),0 0 60px rgba(184,134,11,0.08)}
+    .paywall-crown{font-size:56px;line-height:1;margin-bottom:12px}
+    .paywall-title{font-family:'Playfair Display',Georgia,serif;font-size:32px;font-weight:700;color:#F0E6D2;margin-bottom:4px}
+    .paywall-subtitle{font-size:14px;color:#665544;margin-bottom:28px}
+    .paywall-features{text-align:left;margin:0 auto 28px;max-width:340px}
+    .paywall-feature{padding:6px 0;font-size:14px;color:#AA9977;border-bottom:1px solid rgba(255,255,255,0.03)}
+    .paywall-price{margin-bottom:20px}
+    .paywall-amount{font-family:'Playfair Display',Georgia,serif;font-size:48px;font-weight:900;color:#DAA520}
+    .paywall-period{font-size:18px;color:#665544}
+    .paywall-actions{display:grid;gap:10px}
+    .paywall-btn{display:block;width:100%;padding:16px;background:linear-gradient(135deg,#B8860B,#DAA520);color:#0A0A0E;border:none;border-radius:8px;font-size:16px;font-weight:700;cursor:pointer;transition:all 0.2s;letter-spacing:0.5px}
+    .paywall-btn:hover{box-shadow:0 0 24px rgba(184,134,11,0.4);transform:translateY(-2px)}
+    .paywall-btn.secondary{background:rgba(255,255,255,0.04);color:#F0E6D2;border:1px solid rgba(218,165,32,0.18)}
+    .paywall-btn.secondary:hover{box-shadow:none;background:rgba(255,255,255,0.08)}
+    .paywall-badge{display:inline-flex;align-items:center;justify-content:center;padding:8px 14px;margin-bottom:18px;border-radius:999px;background:rgba(34,197,94,0.12);border:1px solid rgba(34,197,94,0.25);font-size:12px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#86efac}
+    .paywall-note{font-size:12px;color:#665544;margin-top:12px}
+    .paywall-links{margin-top:20px;display:flex;justify-content:center;gap:20px}
+    .paywall-links a{font-size:13px;color:#665544;text-decoration:none}
+    .paywall-links a:hover{color:#B8860B}
+    body{background:#0A0A0E;color:#F0E6D2;font-family:'Inter',-apple-system,sans-serif;margin:0}
+    </style>
+</head>
+<body>
+
+<!-- Loading Screen -->
+<div class="loading-overlay" id="loading-overlay">
+    <div class="loading-spinner"></div>
+    <div class="loading-text" id="loading-text">Opening the chess club doors...</div>
+    <div class="loading-progress"><div class="loading-bar" id="loading-bar"></div></div>
+</div>
+
+<!-- Top Bar -->
+<div class="top-bar" id="top-bar" style="display:none">
+    <div class="top-bar-left">
+        <button class="back-btn" id="btn-back" title="Back to Menu"><i class="fas fa-arrow-left"></i></button>
+        <span class="game-title"><span class="crown">♚</span> Chess Masters</span>
+        <span class="game-status" id="game-status">Ready</span>
+    </div>
+    <div class="top-bar-right">
+        <button class="top-btn" id="btn-resign" title="Resign" style="display:none"><i class="fas fa-flag"></i> Resign</button>
+        <button class="top-btn" id="btn-draw" title="Offer Draw" style="display:none"><i class="fas fa-handshake"></i> Draw</button>
+        <button class="top-btn panel-toggle" id="btn-panel-toggle"><i class="fas fa-columns"></i></button>
+    </div>
+</div>
+
+<!-- Game Container -->
+<div class="game-container" id="game-container" style="display:none">
+    <!-- 3D Canvas -->
+    <div class="canvas-container" id="canvas-container"></div>
+
+    <!-- HUD Overlay -->
+    <div id="game-hud"></div>
+
+    <!-- Side Panel -->
+    <div class="side-panel" id="side-panel"></div>
+</div>
+
+<!-- Toast Container -->
+<div class="toast-container" id="toast-container"></div>
+
+<!-- Multiplayer HUD -->
+<div class="mp-hud" id="mp-hud" style="display:none">
+    <button class="mp-toggle-btn" id="mp-toggle-btn">▼ Chat</button>
+    <div class="mp-player-count">
+        <span class="mp-dot"></span>
+        <span id="mp-count-text">0 players online</span>
+    </div>
+    <button class="mp-tables-btn" id="mp-tables-btn">
+        <i class="fas fa-chess-board"></i> Browse Tables (0/50 active)
+    </button>
+    <div class="mp-chat-box">
+        <div class="mp-chat-messages" id="mp-chat-messages"></div>
+        <div class="mp-chat-input">
+            <input type="text" id="mp-chat-input" placeholder="Chat..." maxlength="200" autocomplete="off">
+            <button id="mp-chat-send">Send</button>
+        </div>
+    </div>
+</div>
+
+<!-- Table Browser Modal -->
+<div class="mp-table-browser" id="mp-table-browser">
+    <div class="mp-table-list" id="mp-table-list">
+        <h3>♚ Chess Tables</h3>
+        <div id="mp-table-grid"></div>
+        <button class="mp-table-close" id="mp-table-close">Close</button>
+    </div>
+</div>
+
+<!-- Paywall Overlay -->
+<div class="paywall-overlay" id="paywall-overlay" style="display:none">
+    <div class="paywall-card">
+        <div class="paywall-crown">♚</div>
+        <h1 class="paywall-title">Chess Masters</h1>
+        <p class="paywall-subtitle">Photorealistic VR Chess Club</p>
+        <div class="paywall-features">
+            <div class="paywall-feature">🎩 20 AI Personalities with Live Commentary</div>
+            <div class="paywall-feature">📚 80+ Opening Variations &amp; Famous Games</div>
+            <div class="paywall-feature">🧩 200 Tactical Puzzles with Progress Tracking</div>
+            <div class="paywall-feature">🏆 Tournaments, Analysis &amp; Betting</div>
+            <div class="paywall-feature">🕯️ Photorealistic 3D Club with Spatial Audio</div>
+            <div class="paywall-feature">🥽 Full WebXR / VR Support</div>
+        </div>
+        <div class="paywall-badge" style="background:rgba(34,197,94,.18);border-color:rgba(34,197,94,.35)">✓ Free Access</div>
+        <div class="paywall-price">
+            <span class="paywall-amount" style="font-size:32px">Free</span>
+        </div>
+        <div class="paywall-actions">
+            <button class="paywall-btn" id="paywall-preview-btn">Enter the Club</button>
+        </div>
+        <p class="paywall-note">Full access to all 20 AI personalities, tournaments, puzzles, analysis, and the complete chess club experience.</p>
+        <div class="paywall-links">
+            <a href="/vr/experiences/">← Back to VR Experiences</a>
+            <a href="/games.php">Free Games</a>
+        </div>
+    </div>
+</div>
+
+<!-- Main Menu -->
+<div class="main-menu" id="main-menu">
+    <div class="menu-container">
+        <div class="menu-logo">♚ Chess Masters</div>
+        <div class="menu-subtitle">Photorealistic Chess Club · Alfred OS</div>
+
+        <div class="menu-grid">
+            <button class="menu-btn" id="menu-vs-ai">
+                <span class="menu-btn-icon">🎩</span>
+                <span class="menu-btn-title">Play vs AI</span>
+                <span class="menu-btn-desc">20 unique AI personalities with commentary — sit across from your opponent</span>
+            </button>
+            <button class="menu-btn" id="menu-local">
+                <span class="menu-btn-icon">👥</span>
+                <span class="menu-btn-title">Local 2 Player</span>
+                <span class="menu-btn-desc">Share the table — pass and play in the chess club</span>
+            </button>
+            <button class="menu-btn" id="menu-analysis">
+                <span class="menu-btn-icon">📊</span>
+                <span class="menu-btn-title">Analysis Board</span>
+                <span class="menu-btn-desc">Study positions with Stockfish 16 NNUE at the fireside</span>
+            </button>
+            <button class="menu-btn" id="menu-tournament">
+                <span class="menu-btn-icon">🏆</span>
+                <span class="menu-btn-title">Tournament</span>
+                <span class="menu-btn-desc">Watch AI personalities battle each other in the club</span>
+            </button>
+            <button class="menu-btn" id="menu-puzzles">
+                <span class="menu-btn-icon">🧩</span>
+                <span class="menu-btn-title">Puzzles</span>
+                <span class="menu-btn-desc">Tactical training — find the winning move</span>
+            </button>
+            <button class="menu-btn" id="menu-zen">
+                <span class="menu-btn-icon">🕯️</span>
+                <span class="menu-btn-title">Zen Mode</span>
+                <span class="menu-btn-desc">Just the room — explore the chess club, enjoy the ambience</span>
+            </button>
+        </div>
+
+        <!-- AI Selection Sub-menu -->
+        <div id="ai-select-menu" style="display:none">
+            <h3 style="margin-bottom:12px;font-size:18px;font-family:var(--font-display);text-align:center">Choose Your Opponent</h3>
+            <div class="ai-select-grid" id="ai-select-grid"></div>
+            <div style="margin-top:16px;display:flex;gap:8px;justify-content:center">
+                <button class="go-btn" id="ai-select-play">Sit Down & Play</button>
+                <button class="go-btn secondary" id="ai-select-back">Back</button>
+            </div>
+        </div>
+
+        <div class="menu-footer">
+            Photorealistic chess club built by Alfred OS<br>
+            <a href="/vr/experiences/" style="color:var(--accent);text-decoration:none">← VR Experiences</a>
+            &nbsp;·&nbsp;
+            <a href="/vr/hub/" style="color:var(--text-muted);text-decoration:none">VR Hub</a>
+            &nbsp;·&nbsp;
+            <a href="/vr/chess/" style="color:var(--text-muted);text-decoration:none">Classic Arena</a>
+        </div>
+    </div>
+</div>
+
+<!-- Libraries -->
+<script src="/assets/js/vendor/three.r128.min.js"></script>
+<script src="/assets/js/vendor/three-addons/OrbitControls.js"></script>
+<!-- Post-Processing Pipeline (Unreal Engine quality) -->
+<script src="/assets/js/vendor/three-addons/EffectComposer.js"></script>
+<script src="/assets/js/vendor/three-addons/RenderPass.js"></script>
+<script src="/assets/js/vendor/three-addons/UnrealBloomPass.js"></script>
+<script src="/assets/js/vendor/three-addons/ShaderPass.js"></script>
+<script src="/assets/js/vendor/three-addons/SSAOPass.js"></script>
+<script src="/assets/js/vendor/three-addons/SSAOShader.js"></script>
+<script src="/assets/js/vendor/three-addons/SimplexNoise.js"></script>
+<script src="/assets/js/vendor/three-addons/CopyShader.js"></script>
+<script src="/assets/js/vendor/three-addons/LuminosityHighPassShader.js"></script>
+<script src="/assets/js/vendor/three-addons/FXAAShader.js"></script>
+<script src="/assets/js/vendor/three-addons/Lensflare.js"></script>
+<script src="/vr/chess/js/chess.min.js"></script>
+
+<!-- Chess Masters Modules -->
+<script src="js/chess-openings.js?v=20260308f"></script>
+<script src="js/chess-classics.js?v=20260308f"></script>
+<script src="js/chess-puzzles.js?v=20260308f"></script>
+<script src="js/chess-audio.js?v=20260308f"></script>
+<script src="js/chess-engine.js?v=20260308f"></script>
+<script src="js/chess-renderer.js?v=20260308f"></script>
+<script src="js/chess-ui.js?v=20260308f"></script>
+<script src="js/chess-betting.js?v=20260308f"></script>
+<script src="js/chess-multiplayer.js?v=20260308f"></script>
+<script src="js/chess-world.js?v=20260308f"></script>
+
+<script>
+/* ═══════════════════════════════════════════════════════════════
+   CHESS MASTERS — Main Game Controller
+   GSM Alfred OS · Project Grandmaster II
+   
+   Orchestrates: Renderer, Engine, UI, Audio
+   Game modes: vs AI, Local, Analysis, Tournament, Puzzles, Zen
+   ═══════════════════════════════════════════════════════════════ */
+
+(function() {
+    'use strict';
+
+    const PREVIEW_PERSONALITIES = new Set(['alfred', 'nova', 'atlas', 'sage', 'rookie', 'club_player']);
+
+    // ═══ STATE ═══
+    const state = {
+        mode: null,
+        game: null,
+        playerColor: 'w',
+        aiPersonality: 'alfred',
+        selectedSquare: null,
+        moveHistory: [],
+        capturedWhite: [],
+        capturedBlack: [],
+        isGameOver: false,
+        isThinking: false,
+        hasClubAccess: false,
+        timeWhite: 600000,
+        timeBlack: 600000,
+        settings: {
+            showLegal: true,
+            autoQueen: true,
+        },
+        tournament: {
+            running: false,
+            round: 0,
+            bracket: [],
+        },
+    };
+
+    // ═══ INIT ═══
+    async function initGame() {
+        try {
+            updateLoading('Preparing the chess room...', 15);
+            ChessRenderer.init('canvas-container');
+            ChessRenderer.startLoop();
+        } catch (e) { console.error('Renderer init:', e); }
+
+        try {
+            updateLoading('Loading Stockfish 16 NNUE...', 40);
+            await ChessEngine.init();
+        } catch (e) { console.error('Engine init:', e); }
+
+        try {
+            updateLoading('Setting up the interface...', 65);
+            ChessUI.init();
+        } catch (e) { console.error('UI init:', e); }
+
+        try {
+            updateLoading('Initializing wager system...', 72);
+            if (typeof ChessBetting !== 'undefined') {
+                let stripeKey = null;
+                try {
+                    const cfgRes = await fetch('/api/game-subscription.php?action=get-config');
+                    const cfgData = await cfgRes.json();
+                    stripeKey = cfgData.stripeKey || null;
+                } catch(e) { console.warn('Config fetch:', e); }
+                await ChessBetting.init({ apiBase: '/api/chess-betting.php', stripeKey });
+                ChessUI.initWagerPanel();
+            }
+        } catch (e) { console.error('Betting init:', e); }
+
+        try {
+            updateLoading('Lighting the candles...', 80);
+            ChessAudio.init();
+        } catch (e) { console.error('Audio init:', e); }
+
+        try {
+            updateLoading('Stoking the fireplace...', 90);
+            ChessRenderer.initVR();
+        } catch (e) { console.error('VR init:', e); }
+
+        try {
+            updateLoading('Opening the event grounds...', 95);
+            if (typeof ChessMultiplayer !== 'undefined') {
+                ChessMultiplayer.connect('Guest_' + Math.floor(Math.random() * 9999), 1200);
+                initMultiplayerHUD();
+            }
+        } catch (e) { console.error('Multiplayer init:', e); }
+
+        updateLoading('Welcome to the club.', 100);
+        setTimeout(() => {
+            document.getElementById('loading-overlay').classList.add('fade-out');
+        }, 600);
+
+        bindEvents();
+        showToast('Chess Masters — Step into a world-class chess club', 'success');
+    }
+
+    function updateLoading(text, pct) {
+        const textEl = document.getElementById('loading-text');
+        const barEl = document.getElementById('loading-bar');
+        if (textEl) textEl.textContent = text;
+        if (barEl) barEl.style.width = pct + '%';
+    }
+
+    // ═══ EVENTS ═══
+    function bindEvents() {
+        // Menu
+        document.getElementById('menu-vs-ai').addEventListener('click', showAISelect);
+        document.getElementById('menu-local').addEventListener('click', () => startMode('local'));
+        document.getElementById('menu-analysis').addEventListener('click', () => startMode('analysis'));
+        document.getElementById('menu-tournament').addEventListener('click', () => startMode('tournament'));
+        document.getElementById('menu-puzzles').addEventListener('click', () => startMode('puzzles'));
+        document.getElementById('menu-zen').addEventListener('click', () => startMode('zen'));
+
+        // AI select
+        document.getElementById('ai-select-play').addEventListener('click', () => startMode('ai'));
+        document.getElementById('ai-select-back').addEventListener('click', () => {
+            document.getElementById('ai-select-menu').style.display = 'none';
+            document.querySelector('.menu-grid').style.display = 'grid';
+        });
+
+        // Top bar
+        document.getElementById('btn-back').addEventListener('click', returnToMenu);
+        document.getElementById('btn-resign').addEventListener('click', handleResign);
+        document.getElementById('btn-draw').addEventListener('click', handleDrawOffer);
+        document.getElementById('btn-panel-toggle').addEventListener('click', togglePanel);
+
+        // Board clicks
+        ChessRenderer.onSquareClick(handleBoardClick);
+
+        // HUD + panel controls
+        setTimeout(() => {
+            bindHUDControls();
+            bindPanelControls();
+        }, 100);
+
+        // Keyboard
+        document.addEventListener('keydown', handleKeyboard);
+
+        // Audio unlock on first interaction
+        document.addEventListener('click', () => ChessAudio.resume(), { once: true });
+    }
+
+    function bindHUDControls() {
+        const btnFlip = document.getElementById('btn-flip');
+        const btnUndo = document.getElementById('btn-undo');
+        const btnHint = document.getElementById('btn-hint');
+        const btnAnalyze = document.getElementById('btn-analyze');
+        const btnFullscreen = document.getElementById('btn-fullscreen');
+
+        if (btnFlip) btnFlip.addEventListener('click', flipBoard);
+        if (btnUndo) btnUndo.addEventListener('click', undoMove);
+        if (btnHint) btnHint.addEventListener('click', getHint);
+        if (btnAnalyze) btnAnalyze.addEventListener('click', toggleAnalysis);
+        if (btnFullscreen) btnFullscreen.addEventListener('click', toggleFullscreen);
+
+        const btnVR = document.getElementById('btn-vr');
+        if (btnVR) btnVR.addEventListener('click', () => ChessRenderer.enterVR && ChessRenderer.enterVR());
+    }
+
+    function bindPanelControls() {
+        // Settings
+        const themeSelect = document.getElementById('setting-theme');
+        const sfxRange = document.getElementById('setting-sfx');
+        const ambienceRange = document.getElementById('setting-ambience');
+        const rainCheck = document.getElementById('setting-rain');
+        const legalCheck = document.getElementById('setting-legal');
+        const autoQueenCheck = document.getElementById('setting-autoqueen');
+
+        if (themeSelect) themeSelect.addEventListener('change', (e) => ChessRenderer.setTheme(e.target.value));
+        if (sfxRange) sfxRange.addEventListener('input', (e) => ChessAudio.setVolume('sfx', parseInt(e.target.value) / 100));
+        if (ambienceRange) ambienceRange.addEventListener('input', (e) => ChessAudio.setVolume('ambience', parseInt(e.target.value) / 100));
+        if (rainCheck) rainCheck.addEventListener('change', (e) => ChessAudio.toggleRain(e.target.checked));
+        if (legalCheck) legalCheck.addEventListener('change', (e) => { state.settings.showLegal = e.target.checked; });
+        if (autoQueenCheck) autoQueenCheck.addEventListener('change', (e) => { state.settings.autoQueen = e.target.checked; });
+
+        const coordsCheck = document.getElementById('setting-coords');
+        if (coordsCheck) coordsCheck.addEventListener('change', (e) => ChessRenderer.showCoords && ChessRenderer.showCoords(e.target.checked));
+
+        // Camera presets
+        document.querySelectorAll('.preset-btn').forEach(btn => {
+            btn.addEventListener('click', () => ChessRenderer.setCameraView(btn.dataset.view));
+        });
+
+        // Analysis toggle
+        const analyzeToggle = document.getElementById('btn-analyze-toggle');
+        if (analyzeToggle) analyzeToggle.addEventListener('click', toggleAnalysis);
+
+        // Move navigation
+        const navStart = document.getElementById('nav-start');
+        const navPrev = document.getElementById('nav-prev');
+        const navNext = document.getElementById('nav-next');
+        const navEnd = document.getElementById('nav-end');
+        if (navStart) navStart.addEventListener('click', () => navigateMoves('start'));
+        if (navPrev) navPrev.addEventListener('click', () => navigateMoves('prev'));
+        if (navNext) navNext.addEventListener('click', () => navigateMoves('next'));
+        if (navEnd) navEnd.addEventListener('click', () => navigateMoves('end'));
+    }
+
+    // ═══ AI SELECT ═══
+    function showAISelect() {
+        document.querySelector('.menu-grid').style.display = 'none';
+        const menu = document.getElementById('ai-select-menu');
+        const grid = document.getElementById('ai-select-grid');
+        menu.style.display = 'block';
+
+        grid.innerHTML = ChessEngine.personalities.map(p => `
+            <div class="ai-card ${p.id === state.aiPersonality ? 'selected' : ''}" data-ai="${p.id}" data-locked="${canAccessPersonality(p.id) ? 'false' : 'true'}">
+                <span class="ai-card-icon">${p.icon}</span>
+                <span class="ai-card-name">${p.name}</span>
+                <span class="ai-card-elo">${canAccessPersonality(p.id) ? 'ELO' : 'Full Club · ELO'} ${p.elo}</span>
+                <span class="ai-card-desc">${p.desc}</span>
+            </div>
+        `).join('');
+
+        grid.querySelectorAll('.ai-card').forEach(card => {
+            card.addEventListener('click', () => {
+                if (card.dataset.locked === 'true') {
+                    showPaywall();
+                    showToast('Preview includes select AI tables. Unlock the full club for this master.', 'info');
+                    return;
+                }
+                grid.querySelectorAll('.ai-card').forEach(c => c.classList.remove('selected'));
+                card.classList.add('selected');
+                state.aiPersonality = card.dataset.ai;
+            });
+        });
+    }
+
+    // ═══ START GAME ═══
+    function startMode(mode) {
+        if (mode === 'ai' && !canAccessPersonality(state.aiPersonality)) {
+            showPaywall();
+            return;
+        }
+
+        state.mode = mode;
+        state.isGameOver = false;
+        state.moveHistory = [];
+        state.capturedWhite = [];
+        state.capturedBlack = [];
+        state.selectedSquare = null;
+        state.navIndex = undefined;
+
+        // Hide menu, show game
+        document.getElementById('main-menu').classList.add('hidden');
+        document.getElementById('top-bar').style.display = 'flex';
+        document.getElementById('game-container').style.display = 'flex';
+
+        // Trigger resize now that container is visible
+        window.dispatchEvent(new Event('resize'));
+
+        // Start room ambience
+        ChessAudio.startAmbience();
+
+        if (mode === 'zen') {
+            // Zen mode — no game, just the room
+            document.getElementById('game-status').textContent = 'Zen Mode — Enjoy the ambience';
+            showToast('Zen Mode — Sit back and enjoy the chess club', 'info');
+            return;
+        }
+
+        state.game = new Chess();
+        ChessEngine.newGame();
+        ChessEngine.resetMoveHistory();
+        ChessUI.clearMoves();
+        updateBoard();
+        updateStatus();
+
+        if (mode === 'ai') {
+            const p = ChessEngine.getPersonality(state.aiPersonality);
+            ChessEngine.setPersonality(state.aiPersonality);
+            ChessUI.setPlayerInfo('self', 'You', null, '♔');
+            ChessUI.setPlayerInfo('opponent', p ? p.name : 'AI', p ? p.elo : 1400, p ? p.icon : '🤖');
+            document.getElementById('btn-resign').style.display = '';
+            document.getElementById('btn-draw').style.display = '';
+            showToast(`${p ? p.icon : '🤖'} ${p ? p.name : 'AI'} sits down across from you...`, 'info');
+
+            // Show opening commentary
+            if (p) {
+                ChessUI.addCommentary({
+                    text: `Welcome. I am ${p.name}. ${p.desc}. Shall we begin?`,
+                    personality: p,
+                });
+            }
+
+            if (state.playerColor === 'b') aiMove();
+        } else if (mode === 'local') {
+            ChessUI.setPlayerInfo('self', 'White', null, '♔');
+            ChessUI.setPlayerInfo('opponent', 'Black', null, '♚');
+        } else if (mode === 'analysis') {
+            document.getElementById('game-status').textContent = 'Analysis Mode';
+            showToast('Analysis mode — explore positions by the fire', 'info');
+        } else if (mode === 'tournament') {
+            startTournament();
+        } else if (mode === 'puzzles') {
+            loadPuzzle();
+        }
+
+        // Clocks
+        if (mode === 'ai' || mode === 'local') {
+            ChessUI.setClockTime('w', state.timeWhite);
+            ChessUI.setClockTime('b', state.timeBlack);
+        }
+    }
+
+    // ═══ BOARD INTERACTION ═══
+    function handleBoardClick(userData) {
+        if (state.isGameOver || state.isThinking || !state.game) return;
+
+        const square = userData.algebraic || userData.square;
+        if (!square) return;
+
+        const turn = state.game.turn();
+        const isPlayerTurn = state.mode === 'analysis' || state.mode === 'local' ||
+            (state.mode === 'ai' && turn === state.playerColor);
+
+        if (!isPlayerTurn) return;
+
+        if (state.selectedSquare) {
+            const moveResult = tryMove(state.selectedSquare, square);
+            if (!moveResult) {
+                const piece = state.game.get(square);
+                if (piece && piece.color === turn) {
+                    selectSquare(square);
+                    return;
+                }
+                ChessAudio.playIllegal();
+            }
+            ChessRenderer.clearHighlights();
+            state.selectedSquare = null;
+        } else {
+            const piece = state.game.get(square);
+            if (piece && piece.color === turn) {
+                selectSquare(square);
+            }
+        }
+    }
+
+    function selectSquare(square) {
+        state.selectedSquare = square;
+        ChessRenderer.clearHighlights();
+        ChessRenderer.highlightSquares([square], 0xFFCC44);
+
+        if (state.settings.showLegal) {
+            const moves = state.game.moves({ square, verbose: true });
+            ChessRenderer.highlightSquares(moves.map(m => m.to), 0x44DD44);
+        }
+    }
+
+    async function tryMove(from, to) {
+        let promotion = 'q';
+        const piece = state.game.get(from);
+        if (piece && piece.type === 'p') {
+            const destRow = parseInt(to[1]);
+            if ((piece.color === 'w' && destRow === 8) || (piece.color === 'b' && destRow === 1)) {
+                if (!state.settings.autoQueen) {
+                    promotion = await ChessUI.showPromotion(piece.color);
+                }
+            }
+        }
+
+        const move = state.game.move({ from, to, promotion });
+        if (!move) return false;
+
+        // Puzzle mode — validate against solution
+        if (state.mode === 'puzzles' && typeof ChessPuzzles !== 'undefined' && ChessPuzzles.currentPuzzle) {
+            const uci = from + to + (promotion !== 'q' ? promotion : '');
+            const result = ChessPuzzles.checkMove(uci);
+            if (result.correct) {
+                ChessAudio.playCheck();
+                showToast(result.complete ? '✅ Puzzle solved!' : '✓ Correct! Find the next move.', 'success');
+                if (result.complete) {
+                    const stats = ChessPuzzles.getStats();
+                    ChessUI.addCommentary({ text: `Solved! Streak: ${stats.streak}. ${stats.solved}/${stats.total} puzzles completed.`, personality: { icon: '🧩', name: 'Coach' } });
+                    setTimeout(() => loadPuzzle(), 2000);
+                } else if (result.opponentMove) {
+                    // Play the opponent's response
+                    setTimeout(() => {
+                        const oFrom = result.opponentMove.substring(0, 2);
+                        const oTo = result.opponentMove.substring(2, 4);
+                        const oPromo = result.opponentMove[4] || undefined;
+                        state.game.move({ from: oFrom, to: oTo, promotion: oPromo });
+                        ChessRenderer.animateMove(oFrom, oTo, () => updateBoard());
+                        ChessAudio.playMove(false);
+                    }, 500);
+                }
+            } else {
+                // Wrong move — undo it
+                state.game.undo();
+                ChessAudio.playIllegal();
+                showToast('✗ Not the best move. Try again.', 'error');
+                updateBoard();
+                return false;
+            }
+        }
+
+        // Track move for opening book detection
+        ChessEngine.trackMove(from + to + (promotion !== 'q' ? promotion : ''));
+
+        if (move.captured) {
+            if (move.color === 'w') state.capturedWhite.push(move.captured);
+            else state.capturedBlack.push(move.captured);
+        }
+
+        // Animate & sound
+        ChessRenderer.animateMove(from, to, () => {
+            if (move.captured) ChessRenderer.removePiece(to);
+            updateBoard();
+        });
+
+        ChessAudio.playMove(!!move.captured);
+
+        if (state.game.in_check()) {
+            ChessAudio.playCheck();
+            const kingSquare = findKing(state.game.turn());
+            if (kingSquare) ChessRenderer.spawnCheckEffect(kingSquare);
+        }
+
+        // UI
+        ChessUI.addMove({ san: move.san, from: move.from, to: move.to });
+        ChessUI.updateCaptured(state.capturedWhite, state.capturedBlack);
+        state.moveHistory.push(move);
+
+        const opening = ChessEngine.detectOpening();
+        if (opening) ChessUI.setOpening(opening);
+
+        updateStatus();
+        if (checkGameOver()) return true;
+
+        // Clocks
+        if (state.mode === 'ai' || state.mode === 'local') {
+            ChessUI.stopClock('w');
+            ChessUI.stopClock('b');
+            ChessUI.startClock(state.game.turn(), state.game.turn() === 'w' ? state.timeWhite : state.timeBlack);
+        }
+
+        // AI response
+        if (state.mode === 'ai' && state.game.turn() !== state.playerColor) {
+            aiMove();
+        }
+
+        return true;
+    }
+
+    function findKing(color) {
+        const board = state.game.board();
+        for (let r = 0; r < 8; r++) {
+            for (let c = 0; c < 8; c++) {
+                const piece = board[r][c];
+                if (piece && piece.type === 'k' && piece.color === color) {
+                    return String.fromCharCode(97 + c) + (8 - r);
+                }
+            }
+        }
+        return null;
+    }
+
+    function updateBoard() {
+        const board = state.game.board();
+        const squares = [];
+        for (let r = 0; r < 8; r++) {
+            for (let c = 0; c < 8; c++) {
+                const algebraic = String.fromCharCode(97 + c) + (8 - r);
+                squares.push({ square: algebraic, piece: board[r][c] });
+            }
+        }
+        ChessRenderer.setPieces(squares);
+    }
+
+    function updateStatus() {
+        const statusEl = document.getElementById('game-status');
+        if (!statusEl || state.isGameOver) return;
+
+        const turn = state.game.turn();
+        let text = turn === 'w' ? 'White to move' : 'Black to move';
+        if (state.game.in_check()) text += ' — Check';
+        if (state.isThinking) text = 'Thinking...';
+        statusEl.textContent = text;
+    }
+
+    // ═══ AI MOVE ═══
+    async function aiMove() {
+        state.isThinking = true;
+        updateStatus();
+
+        const personality = ChessEngine.getPersonality(state.aiPersonality);
+        const depth = personality ? Math.min(20, Math.round(personality.elo / 100)) : 12;
+
+        // Deliberation delay based on personality
+        const thinkTime = 400 + Math.random() * 800;
+        await new Promise(r => setTimeout(r, thinkTime));
+
+        const bestMove = await ChessEngine.getAIMove(state.game.fen(), depth, state.game);
+        state.isThinking = false;
+
+        if (!bestMove || bestMove === '(none)') return;
+
+        const from = bestMove.substring(0, 2);
+        const to = bestMove.substring(2, 4);
+        const promotion = bestMove.length > 4 ? bestMove[4] : undefined;
+
+        const move = state.game.move({ from, to, promotion });
+        if (!move) return;
+
+        // Track AI move for opening book
+        ChessEngine.trackMove(bestMove);
+
+        if (move.captured) {
+            if (move.color === 'w') state.capturedWhite.push(move.captured);
+            else state.capturedBlack.push(move.captured);
+        }
+
+        // Animate & sound
+        ChessRenderer.animateMove(from, to, () => {
+            if (move.captured) ChessRenderer.removePiece(to);
+            updateBoard();
+        });
+
+        ChessAudio.playMove(!!move.captured);
+
+        if (state.game.in_check()) {
+            ChessAudio.playCheck();
+            const kingSquare = findKing(state.game.turn());
+            if (kingSquare) ChessRenderer.spawnCheckEffect(kingSquare);
+        }
+
+        // UI + Commentary
+        ChessUI.addMove({ san: move.san, from: move.from, to: move.to });
+        ChessUI.updateCaptured(state.capturedWhite, state.capturedBlack);
+        state.moveHistory.push(move);
+
+        // AI Commentary
+        const commentary = ChessEngine.getMoveCommentary(move, state.game);
+        if (commentary) {
+            setTimeout(() => ChessUI.addCommentary(commentary), 300);
+        }
+
+        const opening = ChessEngine.detectOpening();
+        if (opening) ChessUI.setOpening(opening);
+
+        updateStatus();
+        checkGameOver();
+
+        // Clock
+        ChessUI.stopClock('w');
+        ChessUI.stopClock('b');
+        ChessUI.startClock(state.playerColor, state.playerColor === 'w' ? state.timeWhite : state.timeBlack);
+    }
+
+    // ═══ GAME OVER ═══
+    function checkGameOver() {
+        if (!state.game || !state.game.game_over()) return false;
+
+        state.isGameOver = true;
+        ChessUI.stopClock('w');
+        ChessUI.stopClock('b');
+
+        let result = { title: 'Game Over', reason: '', winner: 'draw' };
+        let isWin = false;
+
+        if (state.game.in_checkmate()) {
+            const winner = state.game.turn() === 'w' ? 'Black' : 'White';
+            result.title = `${winner} Wins`;
+            result.reason = 'Checkmate';
+            result.winner = state.game.turn() === 'w' ? 'b' : 'w';
+            isWin = (result.winner === state.playerColor);
+        } else if (state.game.in_stalemate()) {
+            result.title = 'Stalemate';
+            result.reason = 'No legal moves — Draw';
+        } else if (state.game.in_draw()) {
+            result.title = 'Draw';
+            result.reason = state.game.in_threefold_repetition() ? 'Threefold repetition' :
+                state.game.insufficient_material() ? 'Insufficient material' : '50-move rule';
+        }
+
+        ChessAudio.playGameOver(isWin);
+        document.getElementById('game-status').textContent = result.title;
+
+        // Settle active wager
+        if (typeof ChessBetting !== 'undefined' && ChessBetting.activeWager) {
+            const wagerResult = result.winner === 'draw' ? 'draw' : isWin ? 'win' : 'loss';
+            const moveCount = state.game.history().length;
+            ChessBetting.settle(wagerResult, moveCount, state.game.pgn()).then(() => {
+                ChessUI.updateWagerDisplay();
+            });
+        }
+
+        // AI commentary on game end
+        const personality = ChessEngine.activePersonality;
+        if (personality) {
+            const endText = isWin
+                ? "Well played. You've earned this victory. I look forward to our next game."
+                : result.winner === 'draw'
+                ? "A hard-fought draw. We are well matched."
+                : "A fine game. Study the position — you'll find your moment next time.";
+            ChessUI.addCommentary({ text: endText, personality });
+        }
+
+        const modal = ChessUI.showGameOver(result);
+        document.getElementById('btn-rematch')?.addEventListener('click', () => {
+            modal.close();
+            startMode(state.mode);
+        });
+        document.getElementById('btn-new-game')?.addEventListener('click', () => {
+            modal.close();
+            returnToMenu();
+        });
+        document.getElementById('btn-analyze-game')?.addEventListener('click', () => {
+            modal.close();
+            state.mode = 'analysis';
+            state.isGameOver = false;
+            document.getElementById('game-status').textContent = 'Analysis Mode';
+        });
+
+        return true;
+    }
+
+    // ═══ TOURNAMENT ═══
+    function startTournament() {
+        const contestants = ChessEngine.personalities.slice(0, 8);
+        state.tournament.bracket = [];
+        state.tournament.round = 0;
+        state.tournament.running = true;
+
+        showToast('Tournament — 8 AI personalities compete', 'info');
+        ChessUI.addCommentary({
+            text: 'The tournament begins. Eight minds, one champion. Take your seat and observe.',
+            personality: { icon: '🏆', name: 'Tournament' },
+        });
+
+        for (let i = 0; i < contestants.length; i += 2) {
+            state.tournament.bracket.push({
+                white: contestants[i],
+                black: contestants[i + 1],
+                result: null,
+            });
+        }
+
+        runTournamentMatch(0);
+    }
+
+    async function runTournamentMatch(matchIndex) {
+        if (matchIndex >= state.tournament.bracket.length) {
+            // Advance to next round
+            const winners = state.tournament.bracket.filter(m => m.result).map(m => {
+                const w = m.result === 'Draw' ? (Math.random() > 0.5 ? m.white : m.black) : (m.result === m.white.name ? m.white : m.black);
+                return w;
+            });
+            if (winners.length > 1) {
+                // Build next round bracket
+                state.tournament.bracket = [];
+                state.tournament.round++;
+                const roundNames = ['Quarterfinals', 'Semifinals', 'Final'];
+                const roundName = roundNames[Math.min(state.tournament.round, roundNames.length - 1)];
+                showToast(`${roundName} — ${winners.length} players remain`, 'info');
+                ChessUI.addCommentary({ text: `${roundName} begin. ${winners.map(w => w.icon + ' ' + w.name).join(' vs ')}`, personality: { icon: '🏆', name: 'Tournament' } });
+                for (let i = 0; i < winners.length; i += 2) {
+                    if (i + 1 < winners.length) {
+                        state.tournament.bracket.push({ white: winners[i], black: winners[i + 1], result: null });
+                    } else {
+                        // Odd player gets a bye to the next round
+                        showToast(`${winners[i].icon} ${winners[i].name} receives a bye`, 'info');
+                        state.tournament.bracket.push({ white: winners[i], black: null, result: 'bye' });
+                    }
+                }
+                await new Promise(r => setTimeout(r, 2000));
+                runTournamentMatch(0);
+            } else {
+                // We have a champion
+                const champion = winners[0];
+                showToast(`🏆 ${champion.icon} ${champion.name} wins the tournament!`, 'success');
+                ChessUI.addCommentary({ text: `${champion.icon} ${champion.name} is the champion! A masterful display of chess.`, personality: { icon: '🏆', name: 'Tournament' } });
+                state.tournament.running = false;
+            }
+            return;
+        }
+
+        const match = state.tournament.bracket[matchIndex];
+
+        // Handle bye — auto-advance the player
+        if (match.result === 'bye') {
+            ChessUI.addCommentary({ text: `${match.white.icon} ${match.white.name} advances with a bye.`, personality: { icon: '🏆', name: 'Tournament' } });
+            match.result = 'white';
+            await new Promise(r => setTimeout(r, 1000));
+            runTournamentMatch(matchIndex + 1);
+            return;
+        }
+
+        state.game = new Chess();
+        ChessEngine.newGame();
+        ChessUI.clearMoves();
+        updateBoard();
+
+        ChessUI.setPlayerInfo('self', match.white.name, match.white.elo, match.white.icon);
+        ChessUI.setPlayerInfo('opponent', match.black.name, match.black.elo, match.black.icon);
+        document.getElementById('game-status').textContent = `${match.white.name} vs ${match.black.name}`;
+
+        ChessUI.addCommentary({
+            text: `${match.white.icon} ${match.white.name} (${match.white.elo}) vs ${match.black.icon} ${match.black.name} (${match.black.elo})`,
+            personality: { icon: '🏆', name: 'Tournament' },
+        });
+
+        await autoplayGame(match, matchIndex);
+    }
+
+    async function autoplayGame(match, matchIndex) {
+        let moveCount = 0;
+        const maxMoves = 150;
+
+        while (!state.game.game_over() && state.tournament.running && moveCount < maxMoves) {
+            const turn = state.game.turn();
+            const personality = turn === 'w' ? match.white : match.black;
+            ChessEngine.setPersonality(personality.id);
+
+            const depth = Math.min(12, Math.round(personality.elo / 200));
+            const bestMove = await ChessEngine.getBestMove(state.game.fen(), depth);
+
+            if (!bestMove || bestMove === '(none)') break;
+
+            const from = bestMove.substring(0, 2);
+            const to = bestMove.substring(2, 4);
+            const promotion = bestMove.length > 4 ? bestMove[4] : undefined;
+
+            const move = state.game.move({ from, to, promotion });
+            if (!move) break;
+
+            if (move.captured) {
+                if (move.color === 'w') state.capturedWhite.push(move.captured);
+                else state.capturedBlack.push(move.captured);
+            }
+
+            ChessRenderer.animateMove(from, to, () => updateBoard());
+            ChessAudio.playMove(!!move.captured);
+            ChessUI.addMove({ san: move.san });
+            ChessUI.updateCaptured(state.capturedWhite, state.capturedBlack);
+            moveCount++;
+
+            await new Promise(r => setTimeout(r, 700));
+        }
+
+        let winner = null;
+        if (state.game.in_checkmate()) {
+            winner = state.game.turn() === 'w' ? match.black : match.white;
+        }
+
+        match.result = winner ? winner.name : 'Draw';
+        ChessUI.addCommentary({
+            text: winner ? `${winner.icon} ${winner.name} wins!` : 'The game ends in a draw.',
+            personality: { icon: '🏆', name: 'Tournament' },
+        });
+
+        await new Promise(r => setTimeout(r, 2000));
+        state.capturedWhite = [];
+        state.capturedBlack = [];
+        runTournamentMatch(matchIndex + 1);
+    }
+
+    // ═══ PUZZLES ═══
+    // Uses ChessPuzzles module (200+ tactical puzzles from famous games)
+
+    function loadPuzzle() {
+        const puzzle = ChessPuzzles.getRandom({ unsolved: true });
+        const info = ChessPuzzles.startPuzzle(puzzle);
+        state.game = new Chess(puzzle.fen);
+        updateBoard();
+        document.getElementById('game-status').textContent = `Puzzle: ${info.theme} (${'★'.repeat(info.difficulty)})`;
+        showToast(`${info.theme} — ${info.source}`, 'info');
+        ChessUI.addCommentary({
+            text: `Find the best move. Theme: ${info.theme}. ${info.hint || ''}`,
+            personality: { icon: '🧩', name: 'Coach' },
+        });
+
+        const stats = ChessPuzzles.getStats();
+        if (stats.streak > 1) {
+            showToast(`🔥 Streak: ${stats.streak}`, 'success');
+        }
+    }
+
+    // ═══ ACTIONS ═══
+    function undoMove() {
+        if (state.mode === 'multiplayer' || !state.game) return;
+        const move = state.game.undo();
+        if (!move) return;
+        state.moveHistory.pop();
+        if (move.captured) {
+            if (move.color === 'w') state.capturedWhite.pop();
+            else state.capturedBlack.pop();
+        }
+        updateBoard();
+        updateStatus();
+        ChessUI.updateCaptured(state.capturedWhite, state.capturedBlack);
+
+        if (state.mode === 'ai') {
+            const aiUndo = state.game.undo();
+            if (aiUndo) {
+                state.moveHistory.pop();
+                if (aiUndo.captured) {
+                    if (aiUndo.color === 'w') state.capturedWhite.pop();
+                    else state.capturedBlack.pop();
+                }
+                updateBoard();
+                ChessUI.updateCaptured(state.capturedWhite, state.capturedBlack);
+            }
+        }
+    }
+
+    async function getHint() {
+        if (state.isGameOver || !state.game) return;
+        showToast('Analyzing position...', 'info');
+        const bestMove = await ChessEngine.getBestMove(state.game.fen(), 16);
+        if (bestMove && bestMove !== '(none)') {
+            const from = bestMove.substring(0, 2);
+            const to = bestMove.substring(2, 4);
+            ChessRenderer.highlightSquares([from], 0x4488FF);
+            ChessRenderer.highlightSquares([to], 0x44DD44);
+            ChessUI.showHint({ text: `Consider ${from} to ${to}`, move: `${from}→${to}` });
+        }
+    }
+
+    let analyzing = false;
+    function toggleAnalysis() {
+        if (!state.game) return;
+        analyzing = !analyzing;
+        const btn = document.getElementById('btn-analyze-toggle');
+        if (analyzing) {
+            if (btn) btn.textContent = 'Stop Analysis';
+            ChessEngine.analyze(state.game.fen(), 24, (info) => {
+                ChessUI.updateAnalysis(info);
+            });
+        } else {
+            if (btn) btn.textContent = 'Start Analysis';
+            ChessEngine.stop();
+        }
+    }
+
+    function flipBoard() {
+        state.playerColor = state.playerColor === 'w' ? 'b' : 'w';
+        ChessRenderer.setCameraView(state.playerColor === 'w' ? 'white' : 'black');
+    }
+
+    function toggleFullscreen() {
+        if (!document.fullscreenElement) {
+            document.documentElement.requestFullscreen();
+        } else {
+            document.exitFullscreen();
+        }
+    }
+
+    function togglePanel() {
+        const panel = document.getElementById('side-panel');
+        if (panel) panel.style.display = panel.style.display === 'none' ? 'flex' : 'none';
+    }
+
+    function handleResign() {
+        if (!state.game || state.isGameOver) return;
+        state.isGameOver = true;
+        const result = {
+            title: 'You Resigned',
+            reason: 'Resignation',
+            winner: state.playerColor === 'w' ? 'b' : 'w',
+        };
+        ChessAudio.playGameOver(false);
+        ChessUI.showGameOver(result);
+    }
+
+    function handleDrawOffer() {
+        if (!state.game || state.isGameOver || state.mode !== 'ai') return;
+        // AI accepts draws when eval is close to 0 or after 60+ moves
+        const moveCount = state.game.history().length;
+        const eval_ = ChessEngine.currentEval;
+        const accepts = (Math.abs(eval_) < 0.5) || moveCount > 120 || (Math.abs(eval_) < 1.5 && moveCount > 60);
+        if (accepts) {
+            state.isGameOver = true;
+            ChessAudio.playGameOver(false);
+            ChessUI.addCommentary({ text: 'A well-fought game. I accept the draw.', personality: ChessEngine.activePersonality });
+            ChessUI.showGameOver({ title: 'Draw', reason: 'Draw by agreement', winner: 'draw' });
+            if (typeof ChessBetting !== 'undefined' && ChessBetting.activeWager) {
+                ChessBetting.settle('draw', moveCount).then(() => ChessUI.updateWagerDisplay());
+            }
+        } else {
+            showToast('Draw declined — your opponent plays on', 'info');
+            ChessUI.addCommentary({ text: 'I see winning chances. The game continues.', personality: ChessEngine.activePersonality });
+        }
+    }
+
+    function navigateMoves(direction) {
+        if (!state.game || state.moveHistory.length === 0) return;
+        if (state.navIndex === undefined) state.navIndex = state.moveHistory.length;
+        if (direction === 'start') state.navIndex = 0;
+        else if (direction === 'end') state.navIndex = state.moveHistory.length;
+        else if (direction === 'prev' && state.navIndex > 0) state.navIndex--;
+        else if (direction === 'next' && state.navIndex < state.moveHistory.length) state.navIndex++;
+        // Rebuild position at navIndex
+        const tempGame = new Chess();
+        for (let i = 0; i < state.navIndex; i++) {
+            tempGame.move(state.moveHistory[i].san);
+        }
+        const board = tempGame.board();
+        const squares = [];
+        for (let r = 0; r < 8; r++) {
+            for (let c = 0; c < 8; c++) {
+                squares.push({ square: String.fromCharCode(97 + c) + (8 - r), piece: board[r][c] });
+            }
+        }
+        ChessRenderer.setPieces(squares);
+    }
+
+    function returnToMenu() {
+        document.getElementById('main-menu').classList.remove('hidden');
+        document.getElementById('top-bar').style.display = 'none';
+        document.getElementById('game-container').style.display = 'none';
+        document.getElementById('ai-select-menu').style.display = 'none';
+        document.querySelector('.menu-grid').style.display = 'grid';
+        document.getElementById('btn-resign').style.display = 'none';
+        document.getElementById('btn-draw').style.display = 'none';
+        ChessAudio.stopAmbience();
+        state.isGameOver = false;
+        state.tournament.running = false;
+    }
+
+    // ═══ KEYBOARD ═══
+    function handleKeyboard(e) {
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+
+        switch (e.key) {
+            case 'f': case 'F': flipBoard(); break;
+            case 'u': case 'U': undoMove(); break;
+            case 'h': case 'H': getHint(); break;
+            case 'Escape': returnToMenu(); break;
+            case '1': ChessRenderer.setCameraView('white'); break;
+            case '2': ChessRenderer.setCameraView('black'); break;
+            case '3': ChessRenderer.setCameraView('top'); break;
+            case '4': ChessRenderer.setCameraView('side'); break;
+            case '5': ChessRenderer.setCameraView('cinematic'); break;
+            case '6': ChessRenderer.setCameraView('fireplace'); break;
+        }
+    }
+
+    // ═══ TOAST ═══
+    // ═══ MULTIPLAYER HUD ═══
+    function initMultiplayerHUD() {
+        const hud = document.getElementById('mp-hud');
+        const countText = document.getElementById('mp-count-text');
+        const tablesBtn = document.getElementById('mp-tables-btn');
+        const chatMessages = document.getElementById('mp-chat-messages');
+        const chatInput = document.getElementById('mp-chat-input');
+        const chatSend = document.getElementById('mp-chat-send');
+        const tableBrowser = document.getElementById('mp-table-browser');
+        const tableGrid = document.getElementById('mp-table-grid');
+        const tableClose = document.getElementById('mp-table-close');
+
+        if (!hud) return;
+        hud.style.display = 'flex';
+        hud.classList.add('collapsed'); // Start collapsed so it doesn't block
+
+        // Toggle collapse
+        const toggleBtn = document.getElementById('mp-toggle-btn');
+        if (toggleBtn) {
+            toggleBtn.addEventListener('click', () => {
+                hud.classList.toggle('collapsed');
+                toggleBtn.textContent = hud.classList.contains('collapsed') ? '▲ Chat' : '▼ Hide';
+            });
+        }
+
+        // Player count updates
+        ChessMultiplayer.on('world-sync', (data) => {
+            const count = data.players ? data.players.length : 0;
+            countText.textContent = count + ' player' + (count !== 1 ? 's' : '') + ' online';
+        });
+        ChessMultiplayer.on('player-join', () => {
+            const count = ChessMultiplayer.playerCount;
+            countText.textContent = count + ' player' + (count !== 1 ? 's' : '') + ' online';
+        });
+        ChessMultiplayer.on('player-leave', () => {
+            const count = ChessMultiplayer.playerCount;
+            countText.textContent = count + ' player' + (count !== 1 ? 's' : '') + ' online';
+        });
+
+        // Chat
+        ChessMultiplayer.on('chat', (msg) => {
+            const p = document.createElement('p');
+            const sanitized = (msg.text || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            const name = (msg.name || 'Guest').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            p.innerHTML = '<span class="mp-name">' + name + ':</span> ' + sanitized;
+            chatMessages.appendChild(p);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        });
+
+        function sendChat() {
+            const text = chatInput.value.trim();
+            if (!text) return;
+            ChessMultiplayer.sendChat(text);
+            chatInput.value = '';
+        }
+        chatSend.addEventListener('click', sendChat);
+        chatInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') sendChat();
+        });
+
+        // Table browser
+        tablesBtn.addEventListener('click', () => {
+            tableBrowser.classList.add('open');
+            renderTableList();
+        });
+        tableClose.addEventListener('click', () => {
+            tableBrowser.classList.remove('open');
+        });
+        tableBrowser.addEventListener('click', (e) => {
+            if (e.target === tableBrowser) tableBrowser.classList.remove('open');
+        });
+
+        function renderTableList() {
+            tableGrid.innerHTML = '';
+            const tables = ChessWorld.TABLE_POSITIONS;
+            tables.forEach((tp, i) => {
+                const item = document.createElement('div');
+                item.className = 'mp-table-item';
+                const dot = document.createElement('span');
+                dot.className = 'mp-status-dot';
+                dot.style.background = '#00FF44';
+                const label = document.createElement('span');
+                label.style.flex = '1';
+                label.textContent = 'Table ' + (i + 1) + ' (' + tp.tier + ')';
+                const btn = document.createElement('button');
+                btn.textContent = 'Sit';
+                btn.addEventListener('click', () => {
+                    ChessMultiplayer.sitAtTable(tp.id, 'white');
+                    tableBrowser.classList.remove('open');
+                    showToast('Seated at Table ' + (i + 1), 'success');
+                });
+                item.appendChild(dot);
+                item.appendChild(label);
+                item.appendChild(btn);
+                tableGrid.appendChild(item);
+            });
+        }
+    }
+
+    function showToast(message, type = 'info') {
+        const container = document.getElementById('toast-container');
+        if (!container) return;
+        const toast = document.createElement('div');
+        toast.className = `toast ${type}`;
+        toast.textContent = message;
+        container.appendChild(toast);
+        setTimeout(() => { toast.style.opacity = '0'; setTimeout(() => toast.remove(), 300); }, 3000);
+    }
+
+    function canAccessPersonality(personalityId) {
+        return true; // All personalities unlocked — free access
+    }
+
+    function hidePaywall() {
+        document.getElementById('paywall-overlay').style.display = 'none';
+    }
+
+    // ═══ PAYWALL ═══
+    async function checkAccess() {
+        // Check URL for payment return
+        const params = new URLSearchParams(window.location.search);
+        const paymentStatus = params.get('payment');
+        const checkoutSessionId = params.get('session_id');
+
+        if (paymentStatus === 'success' && checkoutSessionId) {
+            // Verify the payment
+            try {
+                const res = await fetch('/api/game-subscription.php?action=verify-payment', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'same-origin',
+                    body: JSON.stringify({ session_id: checkoutSessionId }),
+                });
+                const data = await res.json();
+                if (data.success && data.hasAccess) {
+                    state.hasClubAccess = true;
+                    // Clean URL
+                    window.history.replaceState({}, '', '/vr/chess-masters/');
+                    return true;
+                }
+            } catch(e) { console.error('Payment verify:', e); }
+        }
+
+        if (paymentStatus === 'cancelled') {
+            window.history.replaceState({}, '', '/vr/chess-masters/');
+        }
+
+        // Check subscription status
+        try {
+            const res = await fetch('/api/game-subscription.php?action=check-access', {
+                credentials: 'same-origin',
+            });
+            const data = await res.json();
+            state.hasClubAccess = data.hasAccess === true;
+            return state.hasClubAccess;
+        } catch(e) {
+            console.error('Access check failed:', e);
+            state.hasClubAccess = false;
+            return false;
+        }
+    }
+
+    function showPaywall() {
+        document.getElementById('loading-overlay').style.display = 'none';
+        document.getElementById('paywall-overlay').style.display = 'flex';
+
+        const previewBtn = document.getElementById('paywall-preview-btn');
+        if (previewBtn) {
+            previewBtn.onclick = () => {
+                hidePaywall();
+                showToast('Preview unlocked — explore the club, play local, solve puzzles, and try select AI tables.', 'info');
+            };
+        }
+
+        document.getElementById('paywall-subscribe-btn').onclick = async () => {
+            const btn = document.getElementById('paywall-subscribe-btn');
+            btn.disabled = true;
+            btn.textContent = 'Redirecting to checkout...';
+            try {
+                const res = await fetch('/api/game-subscription.php?action=create-checkout', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'same-origin',
+                    body: JSON.stringify({}),
+                });
+                const data = await res.json();
+                if (data.success && data.checkoutUrl) {
+                    window.location.href = data.checkoutUrl;
+                } else {
+                    btn.disabled = false;
+                    btn.textContent = 'Unlock Full Club';
+                    showToast(data.error || 'Payment setup failed', 'error');
+                }
+            } catch(e) {
+                btn.disabled = false;
+                btn.textContent = 'Unlock Full Club';
+                showToast('Connection error — please try again', 'error');
+            }
+        };
+    }
+
+    // ═══ LAUNCH ═══
+    (async () => {
+        // All access granted — no paywall
+        state.hasClubAccess = true;
+        initGame().catch(err => {
+            console.error('Chess Masters init error:', err);
+            updateLoading('Error loading — please refresh', 0);
+        });
+    })();
+})();
+</script>
+<script src="/vr/shared/heartbeat.js"></script>
+</body>
+</html>

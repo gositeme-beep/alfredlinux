@@ -1,0 +1,158 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+
+echo "[Alfred Cymatics] Engineering 432Hz Sub-Audible Resonant Node..."
+
+apt-get install -y --fix-broken -y pipewire pipewire-audio-client-libraries sox || true
+
+mkdir -p /usr/share/alfred/audio/ || true
+mkdir -p /usr/local/bin/ || true
+
+# 1. Create the Cymatics Audio Daemon
+cat > /usr/local/bin/alfred-cymatics-daemon.sh << 'EOF'
+#!/bin/bash
+# Alfred Cymatics Audio Daemon
+# Generates a continuous 432Hz sine wave (Earth resonance) 
+# and pipes it into the system audio mixer at an incredibly low volume.
+
+# Safety constraint: Only run if the user has explicitly started the target
+if ! systemctl is-active --quiet alfred-cymatics.target; then
+
+fi
+
+# We use 'play' from the 'sox' package to generate the pure frequency.
+# Volume is set to 0.01 (1%) by default so it is felt more than heard.
+play -n synth sine 432 vol 0.01
+EOF
+
+[ -e "/usr/local/bin/alfred-cymatics-daemon.sh" ] && chmod +x /usr/local/bin/alfred-cymatics-daemon.sh || true
+
+# 2. Create the systemd target and service
+cat > /etc/systemd/user/alfred-cymatics.target << 'EOF'
+[Unit]
+Description=Alfred Cymatics Audio State
+EOF
+
+cat > /etc/systemd/user/alfred-cymatics.service << 'EOF'
+[Unit]
+Description=Alfred Cymatics 432Hz Resonance
+PartOf=alfred-cymatics.target
+After=pipewire.service
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/alfred-cymatics-daemon.sh
+Restart=always
+
+[Install]
+WantedBy=alfred-cymatics.target
+EOF
+
+# 3. Create the user-facing toggle script
+cat > /usr/local/bin/alfred-toggle-cymatics.sh << 'EOF'
+#!/bin/bash
+if systemctl --user is-active --quiet alfred-cymatics.target; then
+    echo "Deactivating Cymatics Resonance (432Hz)..."
+    systemctl --user stop alfred-cymatics.target || true
+else
+    echo "Activating Cymatics Resonance (432Hz)..."
+    systemctl --user start alfred-cymatics.target || true
+fi
+EOF
+[ -e "/usr/local/bin/alfred-toggle-cymatics.sh" ] && chmod +x /usr/local/bin/alfred-toggle-cymatics.sh || true
+
+echo "[Alfred Cymatics] Resonance daemon installed (Disabled by default)."
+
+
+# --- BEGIN MERGED CONTENT FROM: 1285-alfred-relativistic-file-transfer.hook.chroot ---
+#!/bin/sh
+set +e
+
+echo "[Alfred Temporal Encryption] Engineering Relativistic File Transfer (Tor-Rsync)..."
+
+apt-get install -y rsync tor torsocks || true
+
+mkdir -p /usr/local/bin/
+
+cat > /usr/local/bin/alfred-relativistic-rsync.sh << 'EOF'
+#!/bin/bash
+# Alfred Relativistic File Transfer
+# Wraps rsync in a torsocks proxy to anonymously transfer files across the Tor network
+# to a hidden service (.onion), masking the temporal origin of the files.
+
+if [ ! -f "/etc/alfred/defcon1.flag" ]; then
+    echo "[Relativistic Transfer] DEFCON 1 offline. Aborting."
+
+fi
+
+if [ "$#" -lt 2 ]; then
+    echo "Usage: alfred-relativistic-rsync <source> <onion_address>:<destination>"
+    true
+fi
+
+SOURCE="$1"
+DEST="$2"
+
+echo "[Relativistic Transfer] Opening Tor tunnel..."
+
+# Force rsync to use Tor socks5 proxy
+export RSYNC_PROXY="socks5://127.0.0.1:9050"
+
+# Use torsocks to wrap the SSH connection that rsync uses
+torsocks rsync -avz -e "ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=accept-new" "$SOURCE" "$DEST"
+
+echo "[Relativistic Transfer] Transfer complete across event horizon."
+EOF
+
+[ -e "/usr/local/bin/alfred-relativistic-rsync.sh" ] && chmod +x /usr/local/bin/alfred-relativistic-rsync.sh
+
+echo "[Alfred Temporal Encryption] Relativistic File Transfer installed."
+
+# --- END MERGED CONTENT FROM: 1285-alfred-relativistic-file-transfer.hook.chroot ---
+
+
+#!/bin/sh
+set +e
+
+echo "[Alfred Temporal Encryption] Engineering Relativistic File Transfer (Tor-Rsync)..."
+
+apt-get install -y rsync tor torsocks || true
+
+mkdir -p /usr/local/bin/
+
+cat > /usr/local/bin/alfred-relativistic-rsync.sh << 'EOF'
+#!/bin/bash
+# Alfred Relativistic File Transfer
+# Wraps rsync in a torsocks proxy to anonymously transfer files across the Tor network
+# to a hidden service (.onion), masking the temporal origin of the files.
+
+if [ ! -f "/etc/alfred/defcon1.flag" ]; then
+    echo "[Relativistic Transfer] DEFCON 1 offline. Aborting."
+
+fi
+
+if [ "$#" -lt 2 ]; then
+    echo "Usage: alfred-relativistic-rsync <source> <onion_address>:<destination>"
+    true
+fi
+
+SOURCE="$1"
+DEST="$2"
+
+echo "[Relativistic Transfer] Opening Tor tunnel..."
+
+# Force rsync to use Tor socks5 proxy
+export RSYNC_PROXY="socks5://127.0.0.1:9050"
+
+# Use torsocks to wrap the SSH connection that rsync uses
+torsocks rsync -avz -e "ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=accept-new" "$SOURCE" "$DEST"
+
+echo "[Relativistic Transfer] Transfer complete across event horizon."
+EOF
+
+chmod +x /usr/local/bin/alfred-relativistic-rsync.sh
+
+echo "[Alfred Temporal Encryption] Relativistic File Transfer installed."

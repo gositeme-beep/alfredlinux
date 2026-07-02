@@ -1,0 +1,77 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+
+echo "[Omega Point] Engineering Lion's Den Shield (Zero-Trust AppArmor)..."
+
+apt-get install -y --fix-broken -y apparmor apparmor-utils apparmor-profiles || true
+
+mkdir -p /etc/apparmor.d/alfred-profiles/ || true
+mkdir -p /usr/local/bin/ || true
+
+cat > /usr/local/bin/alfred-lion-den.sh << 'EOF'
+#!/bin/bash
+# Alfred Lion's Den Shield
+# Enforces a zero-trust hypervisor policy.
+# CRITICAL SYSTEM DAEMONS (sshd, systemd) are placed in STRICT ENFORCE mode 
+# permanently, regardless of Defcon status.
+# Only user-space apps are allowed loose complain mode in peacetime.
+
+echo "[Lion's Den Shield] Arming permanent zero-trust strict mode for core daemons..."
+# Force enforce mode on critical daemons
+aa-enforce /etc/apparmor.d/usr.sbin.sshd 2>/dev/null || true
+aa-enforce /etc/apparmor.d/sbin.dhclient 2>/dev/null || true
+aa-enforce /etc/apparmor.d/usr.sbin.dnsmasq 2>/dev/null || true
+
+if [ ! -f "/etc/alfred/defcon1.flag" ]; then
+    echo "[Lion's Den Shield] DEFCON 1 offline. Putting user apps in complain mode."
+    # List of user apps to complain rather than enforce
+    aa-complain /etc/apparmor.d/usr.bin.firefox 2>/dev/null || true
+    aa-complain /etc/apparmor.d/usr.bin.thunderbird 2>/dev/null || true
+else
+    echo "[Lion's Den Shield] DEFCON 1 ACTIVE. TOTAL ENFORCEMENT LOCKDOWN."
+    aa-enforce /etc/apparmor.d/* 2>/dev/null || true
+fi
+
+echo "[Lion's Den Shield] Sandbox Armed."
+EOF
+
+[ -e "/usr/local/bin/alfred-lion-den.sh" ] && chmod +x /usr/local/bin/alfred-lion-den.sh || true
+
+cat > /etc/systemd/system/alfred-lion-den.service << 'EOF'
+[Unit]
+Description=Alfred Lion's Den Shield AppArmor Enforcer
+After=apparmor.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/alfred-lion-den.sh
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+systemctl enable alfred-lion-den || true || true.service || true
+echo "[Omega Point] Lion's Den Shield Upgraded with Permanent Strict Modes."
+
+
+# --- BEGIN MERGED CONTENT FROM: 1329-alfred-mercy-of-hardware.hook.chroot ---
+#!/bin/sh
+set +e
+echo "[Mercy of Hardware] Installing thermald and cpupower for graceful thermal management..."
+apt-get install -y thermald linux-cpupower || true
+systemctl enable thermald || true || true || true
+echo "[Mercy of Hardware] Hardware throttling will now be graceful."
+
+# --- END MERGED CONTENT FROM: 1329-alfred-mercy-of-hardware.hook.chroot ---
+
+
+#!/bin/sh
+set +e
+echo "[Mercy of Hardware] Installing thermald and cpupower for graceful thermal management..."
+apt-get install -y thermald linux-cpupower || true
+systemctl enable thermald || true || true || true
+echo "[Mercy of Hardware] Hardware throttling will now be graceful."

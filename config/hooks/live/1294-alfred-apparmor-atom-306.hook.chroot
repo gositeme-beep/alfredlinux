@@ -1,0 +1,45 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+
+echo "[Genesis Forge] Engineering Firejail Kernel Sandbox for 306..."
+
+apt-get install -y --fix-broken -y firejail || true
+
+mkdir -p /etc/apparmor.d/alfred-isolated/ || true
+
+# Strict AppArmor Mode (Enforce)
+cat > /etc/apparmor.d/alfred-isolated/profile-306 << 'EOF'
+profile alfred-sandbox-306 /usr/local/bin/alfred-util-293 flags=(enforce) {
+  #include <abstractions/base>
+  /usr/local/bin/alfred-util-293 rmix,
+  /dev/null rw,
+}
+EOF
+
+# Inject aggressive Firejail wrapper
+cat > /usr/local/bin/alfred-util-293-wrapper << 'EOF'
+#!/bin/bash
+# Firejail Kernel Sandbox
+# Uses aggressive kernel namespaces to mathematically hide the /home directory,
+# block X11/Wayland GUI access, and enforce a read-only root filesystem.
+
+firejail \
+    --noprofile \
+    --read-only=/ \
+    --private \
+    --disable-mnt \
+    --net=none \
+    --nosound \
+    --novideo \
+    --no3d \
+    --caps.drop=all \
+    /usr/local/bin/alfred-util-293 "$@"
+EOF
+
+[ -e "/usr/local/bin/alfred-util-293-wrapper" ] && chmod +x /usr/local/bin/alfred-util-293-wrapper || true
+
+echo "[Genesis Forge] Firejail Sandbox Integrated."
+exit 0

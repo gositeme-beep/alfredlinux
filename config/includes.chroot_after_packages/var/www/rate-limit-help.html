@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GoSiteMe — Your Connection May Be Compromised</title>
+    <meta name="description" content="Your login was temporarily blocked. Learn how to protect yourself and use free encryption tools.">
+    <link rel="icon" href="/favicon.ico">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, sans-serif;
+            background: linear-gradient(135deg, #0f1923 0%, #1a2a3a 50%, #0f1923 100%);
+            color: #e0e8f0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+        .container { max-width: 780px; width: 100%; }
+        .logo { text-align: center; margin: 30px 0 10px; }
+        .logo h1 { font-size: 2.2rem; color: #4fc3f7; letter-spacing: 2px; }
+        .logo span { color: #81d4fa; font-weight: 300; }
+
+        .alert-banner {
+            background: linear-gradient(135deg, #b71c1c22, #e5393522);
+            border: 1px solid #e53935;
+            border-radius: 12px;
+            padding: 24px 28px;
+            margin: 24px 0;
+            text-align: center;
+        }
+        .alert-banner .shield-icon { font-size: 3rem; margin-bottom: 10px; }
+        .alert-banner h2 { color: #ef9a9a; font-size: 1.4rem; margin-bottom: 8px; }
+        .alert-banner p { color: #ffcdd2; font-size: 1rem; line-height: 1.6; }
+
+        .card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 28px;
+            margin: 18px 0;
+        }
+        .card h3 {
+            color: #4fc3f7; font-size: 1.2rem; margin-bottom: 14px;
+            display: flex; align-items: center; gap: 10px;
+        }
+        .card h3 .icon { font-size: 1.5rem; }
+        .card p, .card li { color: #b0bec5; line-height: 1.7; font-size: 0.98rem; }
+        .card ul { list-style: none; padding: 0; }
+        .card ul li { padding: 8px 0; padding-left: 28px; position: relative; }
+        .card ul li::before {
+            content: '\2713'; position: absolute; left: 0;
+            color: #66bb6a; font-weight: bold;
+        }
+
+        .highlight { color: #fff; font-weight: 600; }
+        .warn { color: #ffab40; font-weight: 600; }
+        .safe { color: #66bb6a; font-weight: 600; }
+
+        .step {
+            display: flex; gap: 18px; align-items: flex-start;
+            padding: 16px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+        .step:last-child { border-bottom: none; }
+        .step-num {
+            background: #4fc3f7; color: #0f1923;
+            width: 36px; height: 36px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 700; font-size: 1.1rem; flex-shrink: 0;
+        }
+        .step-content h4 { color: #e0e8f0; margin-bottom: 4px; }
+        .step-content p { color: #90a4ae; font-size: 0.95rem; line-height: 1.6; }
+
+        .info-box {
+            background: rgba(79, 195, 247, 0.08);
+            border: 1px solid rgba(79, 195, 247, 0.3);
+            border-radius: 10px;
+            padding: 20px 24px; margin: 18px 0;
+        }
+        .info-box p { color: #b0bec5; line-height: 1.7; font-size: 0.95rem; }
+
+        .tools-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 14px; margin-top: 14px;
+        }
+        .tool-item {
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 10px; padding: 18px; text-align: center;
+            transition: border-color 0.2s;
+        }
+        .tool-item:hover { border-color: #4fc3f7; }
+        .tool-item .tool-icon { font-size: 2rem; margin-bottom: 8px; }
+        .tool-item h4 { color: #e0e8f0; font-size: 0.95rem; margin-bottom: 6px; }
+        .tool-item p { color: #78909c; font-size: 0.85rem; line-height: 1.5; }
+        .tool-item a {
+            display: inline-block; margin-top: 8px;
+            color: #4fc3f7; text-decoration: none;
+            font-size: 0.85rem; font-weight: 600;
+        }
+        .tool-item a:hover { text-decoration: underline; }
+
+        .cta-btn {
+            display: inline-block;
+            background: linear-gradient(135deg, #4fc3f7, #0288d1);
+            color: #fff; text-decoration: none;
+            padding: 14px 36px; border-radius: 8px;
+            font-weight: 600; font-size: 1.05rem;
+            margin: 10px 8px;
+            transition: transform 0.15s, box-shadow 0.15s;
+        }
+        .cta-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(79, 195, 247, 0.3);
+        }
+        .cta-btn.secondary {
+            background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        .cta-btn.green { background: linear-gradient(135deg, #43a047, #2e7d32); }
+        .cta-section { text-align: center; margin: 30px 0; }
+
+        .encrypt-table {
+            width: 100%; margin-top: 14px; border-collapse: collapse;
+        }
+        .encrypt-table th, .encrypt-table td {
+            padding: 12px 14px; text-align: left;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+            font-size: 0.92rem;
+        }
+        .encrypt-table th {
+            color: #4fc3f7; font-weight: 600;
+            background: rgba(79, 195, 247, 0.06);
+        }
+        .encrypt-table td { color: #b0bec5; }
+        .encrypt-table td a { color: #4fc3f7; text-decoration: none; }
+        .encrypt-table td a:hover { text-decoration: underline; }
+        .badge {
+            display: inline-block; padding: 2px 10px;
+            border-radius: 20px; font-size: 0.78rem; font-weight: 600;
+        }
+        .badge.free { background: #1b5e20; color: #a5d6a7; }
+        .badge.ours { background: #0d47a1; color: #90caf9; }
+
+        .accordion {
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 10px; margin: 10px 0; overflow: hidden;
+        }
+        .accordion-header {
+            background: rgba(255,255,255,0.04);
+            padding: 16px 20px; cursor: pointer;
+            display: flex; justify-content: space-between; align-items: center;
+            color: #e0e8f0; font-weight: 600; font-size: 0.98rem;
+            transition: background 0.15s;
+            user-select: none;
+        }
+        .accordion-header:hover { background: rgba(255,255,255,0.07); }
+        .accordion-body {
+            max-height: 0; overflow: hidden;
+            transition: max-height 0.3s ease;
+            padding: 0 20px;
+        }
+        .accordion-body.open { max-height: 800px; padding: 16px 20px; }
+        .accordion-body p, .accordion-body li {
+            color: #90a4ae; font-size: 0.92rem; line-height: 1.7;
+        }
+
+        .footer {
+            text-align: center; margin-top: 40px; padding: 20px;
+            color: #546e7a; font-size: 0.85rem;
+            border-top: 1px solid rgba(255,255,255,0.05);
+        }
+
+        @media (max-width: 600px) {
+            .logo h1 { font-size: 1.6rem; }
+            .alert-banner h2 { font-size: 1.15rem; }
+            .card { padding: 20px; }
+            .tools-grid { grid-template-columns: 1fr; }
+            .encrypt-table th, .encrypt-table td { padding: 8px 10px; font-size: 0.85rem; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+
+    <!-- Logo -->
+    <div class="logo">
+        <h1>Go<span>SiteMe</span></h1>
+    </div>
+
+    <!-- ===== ALERT BANNER ===== -->
+    <div class="alert-banner">
+        <div class="shield-icon">&#128737;</div>
+        <h2>Your Login Was Temporarily Blocked</h2>
+        <p>
+            This is <span class="highlight">not your fault.</span>
+            Our security systems detected an unusual surge of requests from your network.
+            This typically means <span class="warn">someone else with access to your internet connection</span>
+            is generating excessive traffic &mdash; not you.
+        </p>
+    </div>
+
+    <!-- ===== WHAT'S HAPPENING ===== -->
+    <div class="card">
+        <h3><span class="icon">&#128269;</span> What's Actually Happening</h3>
+        <p>
+            When you connect through a home or public Wi-Fi provider, <span class="highlight">other parties with access
+            to that network can see, intercept, and interfere with your traffic.</span> Automated requests are being
+            sent through your connection &mdash; either by someone on your network, by software installed on a
+            shared device, or by your internet provider's own infrastructure.
+        </p>
+        <br>
+        <p>
+            This is <span class="warn">unauthorized surveillance and unlawful interception of communications.</span>
+            You are not the one doing this &mdash; but your connection is being used as a vehicle for it, and our
+            rate limiter triggered because it saw too many requests from your network address.
+        </p>
+    </div>
+
+    <!-- ===== IMMEDIATE FIX ===== -->
+    <div class="card">
+        <h3><span class="icon">&#128272;</span> How to Fix This Right Now</h3>
+        <div class="steps">
+            <div class="step">
+                <div class="step-num">1</div>
+                <div class="step-content">
+                    <h4>Switch to Your Phone's Cellular Data</h4>
+                    <p>
+                        <span class="safe">Turn off Wi-Fi</span> on your phone and use your mobile carrier's data
+                        (4G / 5G). This routes your traffic through a completely different network that the
+                        offending party does not control.
+                    </p>
+                </div>
+            </div>
+            <div class="step">
+                <div class="step-num">2</div>
+                <div class="step-content">
+                    <h4>Use Your Phone as a Hotspot</h4>
+                    <p>
+                        Need a laptop? Enable <span class="highlight">Personal Hotspot</span> (iPhone) or
+                        <span class="highlight">Mobile Hotspot</span> (Android) in settings and connect your
+                        computer to it instead of the compromised Wi-Fi.
+                    </p>
+                </div>
+            </div>
+            <div class="step">
+                <div class="step-num">3</div>
+                <div class="step-content">
+                    <h4>Try Logging In Again</h4>
+                    <p>
+                        Once on cellular data, return to
+                        <a href="https://gositeme.com" style="color:#4fc3f7;">gositeme.com</a>
+                        and try again. It should work immediately.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="info-box">
+        <p>
+            <strong style="color:#4fc3f7;">&#9432; Why does cellular data work?</strong><br>
+            Your cellular carrier assigns you a different IP address completely separate from your
+            home / public internet provider. The interfering party has no control over your cell network.
+            By switching, you bypass their infrastructure entirely.
+        </p>
+    </div>
+
+    <!-- ===== THE KINGDOM — GOSITEME ECOSYSTEM ===== -->
+    <div class="card" id="kingdom" style="border-color: rgba(79, 195, 247, 0.4); background: linear-gradient(135deg, rgba(79, 195, 247, 0.04), rgba(255,255,255,0.03));">
+        <h3 style="font-size: 1.4rem;"><span class="icon">&#128081;</span> The Kingdom &mdash; Nine Pillars. One Universe.</h3>
+        <p>
+            We didn't just build a website platform. We built an <span class="highlight">entire encrypted ecosystem</span>
+            &mdash; messaging, browsing, search, AI, social, VR, voice, and crypto &mdash; all connected, all
+            protected with <span class="safe">post-quantum encryption</span>. Everything you need to take back control
+            of your digital life is right here.
+        </p>
+
+        <div class="tools-grid" style="grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); margin-top: 20px;">
+
+            <div class="tool-item" style="border-color: rgba(102, 187, 106, 0.4); background: rgba(102, 187, 106, 0.06);">
+                <div class="tool-icon">&#128274;</div>
+                <h4>Veil &mdash; Encrypted Messaging</h4>
+                <p><span class="safe" style="font-size: 0.82rem;">Post-Quantum E2E Encrypted</span><br>
+                Kyber-768 + AES-256-GCM. Zero-knowledge. Like Signal, but built for the future. Nobody can read your messages &mdash; not even us.</p>
+                <a href="https://gositeme.com/veil/">Learn About Veil &rarr;</a><br>
+                <a href="https://gositeme.com/post-quantum.php">Post-Quantum Encryption &rarr;</a>
+            </div>
+
+            <div class="tool-item" style="border-color: rgba(102, 187, 106, 0.4); background: rgba(102, 187, 106, 0.06);">
+                <div class="tool-icon">&#127760;</div>
+                <h4>Alfred Browser</h4>
+                <p><span class="safe" style="font-size: 0.82rem;">Sovereign &bull; Zero Tracking &bull; Mesh Net</span><br>
+                Chromium-based browser with post-quantum encryption, zero tracking, emergency mesh networking, and built-in AI.</p>
+                <a href="https://gositeme.com/alfred-browser.php">Get Alfred Browser &rarr;</a>
+            </div>
+
+            <div class="tool-item" style="border-color: rgba(79, 195, 247, 0.3);">
+                <div class="tool-icon">&#128269;</div>
+                <h4>Alfred Search</h4>
+                <p><span class="safe" style="font-size: 0.82rem;">Zero Tracking &bull; AI-Powered</span><br>
+                Sovereign search engine. No tracking, post-quantum encrypted, voice search, and deep research built in.</p>
+                <a href="https://gositeme.com/search.php">Try Alfred Search &rarr;</a>
+            </div>
+
+            <div class="tool-item" style="border-color: rgba(79, 195, 247, 0.3);">
+                <div class="tool-icon">&#129302;</div>
+                <h4>Alfred AI &mdash; 100 Agents</h4>
+                <p>1,220+ tools. 17 AI engines. Voice, text, WhatsApp, Discord, Signal &mdash; Alfred handles everything. Your personal AI army.</p>
+                <a href="https://gositeme.com/alfred.php">Meet Alfred &rarr;</a>
+            </div>
+
+            <div class="tool-item" style="border-color: rgba(79, 195, 247, 0.3);">
+                <div class="tool-icon">&#128227;</div>
+                <h4>Pulse &mdash; Social Network</h4>
+                <p>The social network that connects everything &mdash; feed, AI agents, VR worlds, games, and payments in one living stream.</p>
+                <a href="https://gositeme.com/pulse.php">Explore Pulse &rarr;</a>
+            </div>
+
+            <div class="tool-item" style="border-color: rgba(79, 195, 247, 0.3);">
+                <div class="tool-icon">&#127918;</div>
+                <h4>VR Worlds &amp; Games</h4>
+                <p>14 photorealistic VR worlds. Chess Masters, 3D Pool, racing, concerts &mdash; spatial audio, WebXR. Play free in your browser.</p>
+                <a href="https://gositeme.com/vr/experiences/">Enter VR Worlds &rarr;</a>
+            </div>
+
+            <div class="tool-item" style="border-color: rgba(79, 195, 247, 0.3);">
+                <div class="tool-icon">&#127908;</div>
+                <h4>Voice AI &mdash; 29 Products</h4>
+                <p>24/7 AI phone agents, voice cloning, call campaigns, local &amp; toll-free numbers. 30+ languages. From $3/mo.</p>
+                <a href="https://gositeme.com/voice-products.php">Voice Products &rarr;</a>
+            </div>
+
+            <div class="tool-item" style="border-color: rgba(79, 195, 247, 0.3);">
+                <div class="tool-icon">&#128187;</div>
+                <h4>Alfred IDE &mdash; Cloud IDE</h4>
+                <p>Full VS Code in the browser with built-in Alfred AI. Terminal, Git, auto-deploy. Build anything from anywhere.</p>
+                <a href="https://gositeme.com/alfred-ide.php">Open Alfred IDE &rarr;</a>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- ===== DOWNLOAD THE APPS ===== -->
+    <div class="card" style="border-color: rgba(102, 187, 106, 0.3);">
+        <h3><span class="icon">&#128241;</span> Download Now &mdash; Every Device</h3>
+        <p>Get Veil encrypted messaging, Alfred Browser, Command Center, and the entire ecosystem on your device:</p>
+        <div class="tools-grid" style="grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); margin-top: 14px;">
+            <div class="tool-item">
+                <div class="tool-icon">&#128241;</div>
+                <h4>Android</h4>
+                <a href="https://gositeme.com/downloads/GoSiteMe-Veil.apk.torrent">Download APK &rarr;</a>
+            </div>
+            <div class="tool-item">
+                <div class="tool-icon">&#63743;</div>
+                <h4>iOS / iPad</h4>
+                <a href="https://gositeme.com/alfred-browser#ios">Get for iOS &rarr;</a>
+            </div>
+            <div class="tool-item">
+                <div class="tool-icon">&#128187;</div>
+                <h4>Windows</h4>
+                <a href="https://gositeme.com/downloads/Alfred-Browser-3.0.0-win-x64.zip.torrent">Download &rarr;</a>
+            </div>
+            <div class="tool-item">
+                <div class="tool-icon">&#127822;</div>
+                <h4>macOS Intel</h4>
+                <a href="https://gositeme.com/downloads/Alfred-Browser-3.0.0-mac-intel.zip.torrent">Download &rarr;</a>
+            </div>
+            <div class="tool-item">
+                <div class="tool-icon">&#127822;</div>
+                <h4>macOS Apple Silicon</h4>
+                <a href="https://gositeme.com/downloads/Alfred-Browser-3.0.0-mac-arm64.zip.torrent">Download &rarr;</a>
+            </div>
+            <div class="tool-item">
+                <div class="tool-icon">&#128039;</div>
+                <h4>Linux</h4>
+                <a href="https://gositeme.com/downloads/Alfred-Browser-4.0.0.AppImage.torrent">AppImage &rarr;</a><br>
+                <a href="https://gositeme.com/downloads/alfred-browser_4.0.0_amd64.deb.torrent">Ubuntu .deb &rarr;</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== ADDITIONAL SECURITY TOOLS ===== -->
+    <div class="card" id="toolkit">
+        <h3><span class="icon">&#128736;</span> Additional Security Tools We Recommend</h3>
+        <p>
+            These third-party tools complement the Kingdom ecosystem. All are <span class="highlight">free and battle-tested</span>
+            by journalists, activists, and security professionals worldwide.
+        </p>
+        <table class="encrypt-table">
+            <thead>
+                <tr><th>Tool</th><th>What It Does</th><th>Get It</th></tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>Signal</strong> <span class="badge free">Free</span></td>
+                    <td>End-to-end encrypted messaging &amp; calls. Open-source nonprofit. Alfred AI connects to Signal too.</td>
+                    <td><a href="https://signal.org/download/" rel="noopener noreferrer">signal.org</a></td>
+                </tr>
+                <tr>
+                    <td><strong>ProtonMail</strong> <span class="badge free">Free</span></td>
+                    <td>End-to-end encrypted email. Swiss-based, zero-access encryption.</td>
+                    <td><a href="https://proton.me/mail" rel="noopener noreferrer">proton.me</a></td>
+                </tr>
+                <tr>
+                    <td><strong>ProtonVPN</strong> <span class="badge free">Free tier</span></td>
+                    <td>Encrypts ALL internet traffic. Free tier, no data limits. Use until you get Alfred Browser.</td>
+                    <td><a href="https://protonvpn.com" rel="noopener noreferrer">protonvpn.com</a></td>
+                </tr>
+                <tr>
+                    <td><strong>Bitwarden</strong> <span class="badge free">Free</span></td>
+                    <td>Password manager. Unique strong passwords for every account.</td>
+                    <td><a href="https://bitwarden.com" rel="noopener noreferrer">bitwarden.com</a></td>
+                </tr>
+                <tr>
+                    <td><strong>Malwarebytes</strong> <span class="badge free">Free scan</span></td>
+                    <td>Scan for spyware, keyloggers, and malicious software on your devices.</td>
+                    <td><a href="https://www.malwarebytes.com" rel="noopener noreferrer">malwarebytes.com</a></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- ===== QUICK SETUP GUIDES ===== -->
+    <div class="card">
+        <h3><span class="icon">&#128221;</span> Quick Setup Guides</h3>
+        <p style="margin-bottom: 14px;">Click each section below for step-by-step instructions.</p>
+
+        <div class="accordion">
+            <div class="accordion-header" onclick="toggleAccordion(this)">
+                &#128274; Get Protected with Veil + Alfred Browser
+                <span class="arrow">&#9660;</span>
+            </div>
+            <div class="accordion-body">
+                <ol style="padding-left: 18px;">
+                    <li><strong>Download Alfred Browser</strong> for your device from the links above</li>
+                    <li>Alfred Browser comes with <strong>post-quantum encryption</strong>, zero tracking, and built-in AI &mdash; it protects you the moment you open it</li>
+                    <li>Open <strong>Veil</strong> from within the app or visit <a href="https://gositeme.com/veil/" style="color:#4fc3f7;">gositeme.com/veil</a></li>
+                    <li>All your messaging is now encrypted with <strong>Kyber-768 + AES-256-GCM</strong> &mdash; quantum-resistant encryption that nobody can break</li>
+                    <li>If your network goes down, Alfred Browser's <strong>emergency mesh networking</strong> can still connect you to others nearby</li>
+                </ol>
+                <p style="margin-top: 10px;">
+                    <span class="safe">Why this is better:</span> You're not just encrypting one thing &mdash; you're switching
+                    your entire digital life into a sovereign ecosystem built from the ground up for your protection.
+                </p>
+            </div>
+        </div>
+
+        <div class="accordion">
+            <div class="accordion-header" onclick="toggleAccordion(this)">
+                &#128272; Set Up a VPN in 2 Minutes
+                <span class="arrow">&#9660;</span>
+            </div>
+            <div class="accordion-body">
+                <ol style="padding-left: 18px;">
+                    <li>Go to <a href="https://protonvpn.com" style="color:#4fc3f7;">protonvpn.com</a> and create a free account</li>
+                    <li>Download the app for your device (Windows, Mac, Android, iPhone, Linux)</li>
+                    <li>Open the app, sign in, and tap <strong>"Quick Connect"</strong></li>
+                    <li>That's it. All your internet traffic is now encrypted</li>
+                </ol>
+                <p style="margin-top: 10px;">
+                    <span class="safe">What this does:</span> Creates an encrypted tunnel between your device and ProtonVPN's
+                    servers. Anyone monitoring your Wi-Fi sees nothing but encrypted data.
+                </p>
+            </div>
+        </div>
+
+        <div class="accordion">
+            <div class="accordion-header" onclick="toggleAccordion(this)">
+                &#128172; Switch to Encrypted Messaging (Signal + Veil)
+                <span class="arrow">&#9660;</span>
+            </div>
+            <div class="accordion-body">
+                <ol style="padding-left: 18px;">
+                    <li><strong>For post-quantum protection:</strong> use <a href="https://gositeme.com/veil/" style="color:#4fc3f7;">Veil</a> &mdash; Kyber-768 encryption that's built to resist even future quantum computers</li>
+                    <li><strong>For broader compatibility:</strong> download Signal from <a href="https://signal.org/download/" style="color:#4fc3f7;">signal.org</a></li>
+                    <li>Enable <strong>Registration Lock</strong> in Signal (Settings &gt; Account) to prevent number hijacking</li>
+                    <li>Enable <strong>Disappearing Messages</strong> on sensitive conversations</li>
+                    <li>Alfred AI connects to both Signal and Veil &mdash; your AI assistant works across both</li>
+                </ol>
+            </div>
+        </div>
+
+        <div class="accordion">
+            <div class="accordion-header" onclick="toggleAccordion(this)">
+                &#128270; Check Your Device for Spyware
+                <span class="arrow">&#9660;</span>
+            </div>
+            <div class="accordion-body">
+                <ol style="padding-left: 18px;">
+                    <li>Download <a href="https://www.malwarebytes.com" style="color:#4fc3f7;">Malwarebytes</a> (free version)</li>
+                    <li>Run a <strong>full system scan</strong> (not quick scan)</li>
+                    <li>Remove anything it flags</li>
+                    <li>Check browser extensions &mdash; remove anything you don't recognize</li>
+                    <li>Check installed apps &mdash; look for anything you didn't install</li>
+                    <li>On phone: Settings &gt; Apps &mdash; review the full list</li>
+                </ol>
+                <p style="margin-top: 10px;">
+                    <span class="warn">Signs of spyware:</span> Battery draining fast, device running hot when idle,
+                    data usage spikes, unfamiliar apps, camera/mic activating unexpectedly.
+                </p>
+            </div>
+        </div>
+
+        <div class="accordion">
+            <div class="accordion-header" onclick="toggleAccordion(this)">
+                &#128273; Lock Down Your Accounts (2FA)
+                <span class="arrow">&#9660;</span>
+            </div>
+            <div class="accordion-body">
+                <ol style="padding-left: 18px;">
+                    <li>Install an authenticator app: <strong>Google Authenticator</strong>, <strong>Authy</strong>, or <strong>Bitwarden Authenticator</strong></li>
+                    <li>Go to each important account's security settings</li>
+                    <li>Enable <strong>Two-Factor Authentication (2FA)</strong> &mdash; select "Authenticator App"</li>
+                    <li>Scan the QR code with your authenticator app</li>
+                    <li><strong>Save backup codes</strong> somewhere safe (printed paper, not on compromised device)</li>
+                </ol>
+                <p style="margin-top: 10px;">
+                    <span class="warn">Avoid SMS-based 2FA</span> &mdash; SIM swapping attacks can intercept texts. App-based 2FA is much safer.
+                </p>
+            </div>
+        </div>
+
+        <div class="accordion">
+            <div class="accordion-header" onclick="toggleAccordion(this)">
+                &#128225; Secure Your Home Wi-Fi Router
+                <span class="arrow">&#9660;</span>
+            </div>
+            <div class="accordion-body">
+                <ol style="padding-left: 18px;">
+                    <li>Access router admin (usually <code style="color:#4fc3f7;">192.168.1.1</code> or <code style="color:#4fc3f7;">192.168.0.1</code>)</li>
+                    <li><strong>Change the admin password</strong> from the default</li>
+                    <li>Set Wi-Fi encryption to <strong>WPA3</strong> (or WPA2 minimum)</li>
+                    <li>Change your Wi-Fi password to something long and unique</li>
+                    <li>Disable <strong>WPS</strong> (Wi-Fi Protected Setup) &mdash; known vulnerability</li>
+                    <li>Disable <strong>remote management</strong></li>
+                    <li>Check for <strong>firmware updates</strong></li>
+                    <li>Review connected devices &mdash; remove anything unrecognized</li>
+                </ol>
+                <p style="margin-top: 10px;">
+                    <span class="warn">If your ISP controls your router</span> and you can't change settings,
+                    consider buying your own. A compromised router exposes everything on your network.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== ONGOING PROTECTION ===== -->
+    <div class="card">
+        <h3><span class="icon">&#128737;</span> Protect Yourself Going Forward</h3>
+        <ul>
+            <li><span class="highlight">Stop using the affected internet provider</span> for anything sensitive until resolved</li>
+            <li><span class="highlight">Use Alfred Browser + Veil</span> &mdash; post-quantum encrypted browsing and messaging out of the box</li>
+            <li><span class="highlight">Keep a VPN running</span> when not on Alfred Browser &mdash; your strongest defense against network surveillance</li>
+            <li><span class="highlight">Use a password manager (Bitwarden)</span> &mdash; unique passwords for every account, never reuse</li>
+            <li><span class="highlight">Enable 2FA everywhere</span> using an authenticator app, not SMS</li>
+            <li><span class="highlight">Keep devices updated</span> &mdash; updates patch security vulnerabilities</li>
+            <li><span class="highlight">Document everything.</span> Screenshots, dates, error messages, suspicious behavior. This is evidence</li>
+        </ul>
+    </div>
+
+    <!-- ===== LEGAL NOTICE ===== -->
+    <div class="card" style="border-color: rgba(255, 171, 64, 0.3);">
+        <h3><span class="icon">&#9878;</span> Know Your Legal Rights</h3>
+        <p>Unauthorized interception of electronic communications is a <span class="warn">federal crime</span> under:</p>
+        <ul style="margin-top: 10px;">
+            <li><span class="highlight">Electronic Communications Privacy Act (18 U.S.C. &sect; 2511)</span> &mdash; prohibits unauthorized interception</li>
+            <li><span class="highlight">Computer Fraud and Abuse Act (18 U.S.C. &sect; 1030)</span> &mdash; prohibits unauthorized access to systems</li>
+            <li><span class="highlight">Stored Communications Act (18 U.S.C. &sect; 2701)</span> &mdash; prohibits unauthorized access to stored communications</li>
+        </ul>
+        <p style="margin-top: 14px;">If you're experiencing persistent interference, you have the right to:</p>
+        <ul style="margin-top: 8px;">
+            <li><a href="https://www.ic3.gov" style="color:#4fc3f7;" rel="noopener noreferrer">File a report with the FBI's IC3</a></li>
+            <li><a href="https://consumercomplaints.fcc.gov" style="color:#4fc3f7;" rel="noopener noreferrer">File a complaint with the FCC</a></li>
+            <li><a href="https://reportfraud.ftc.gov" style="color:#4fc3f7;" rel="noopener noreferrer">Report to the FTC</a></li>
+            <li>Contact your state's Attorney General office</li>
+            <li>Consult an attorney specializing in digital privacy and cybercrime</li>
+        </ul>
+    </div>
+
+    <!-- ===== SECURITY CHECKLIST ===== -->
+    <div class="info-box" style="border-color: rgba(102, 187, 106, 0.4); background: rgba(102, 187, 106, 0.06);">
+        <p style="text-align: center; margin-bottom: 12px;">
+            <strong style="color: #66bb6a; font-size: 1.1rem;">&#9989; Your Security Checklist</strong>
+        </p>
+        <p>
+            &#9744; Switch to cellular data or personal hotspot right now<br>
+            &#9744; Download <strong>Alfred Browser</strong> + <strong>Veil</strong><br>
+            &#9744; Install a VPN (ProtonVPN &mdash; free)<br>
+            &#9744; Install Signal for encrypted messaging<br>
+            &#9744; Create a ProtonMail for encrypted email<br>
+            &#9744; Install Bitwarden and change your passwords<br>
+            &#9744; Enable 2FA on all important accounts<br>
+            &#9744; Run Malwarebytes full scan<br>
+            &#9744; Secure your home router<br>
+            &#9744; Document everything suspicious<br>
+            &#9744; File reports if the problem persists
+        </p>
+    </div>
+
+    <!-- ===== CTAs ===== -->
+    <div class="cta-section">
+        <a href="https://gositeme.com" class="cta-btn">Return to GoSiteMe</a>
+        <a href="https://gositeme.com/alfred-browser.php" class="cta-btn green">Get Alfred Browser</a>
+        <a href="https://gositeme.com/veil/" class="cta-btn green">Get Veil Encrypted Chat</a>
+        <a href="https://gositeme.com/contact" class="cta-btn secondary">Contact Support</a>
+    </div>
+
+    <!-- ===== FOOTER ===== -->
+    <div class="footer">
+        <p>&copy; 2026 GoSiteMe &mdash; We stand with people who protect their digital rights.</p>
+        <p style="margin-top: 6px; font-size: 0.8rem; color: #37474f;">
+            This page was shown because our security system detected unusual activity from your network.
+            If you reached this page in error, please try again or contact support.
+        </p>
+    </div>
+
+</div>
+
+<script>
+function toggleAccordion(header) {
+    var body = header.nextElementSibling;
+    var arrow = header.querySelector('.arrow');
+    var isOpen = body.classList.contains('open');
+    document.querySelectorAll('.accordion-body').forEach(function(b) { b.classList.remove('open'); });
+    document.querySelectorAll('.accordion-header .arrow').forEach(function(a) { a.innerHTML = '\u25BC'; });
+    if (!isOpen) {
+        body.classList.add('open');
+        arrow.innerHTML = '\u25B2';
+    }
+}
+</script>
+</body>
+</html>

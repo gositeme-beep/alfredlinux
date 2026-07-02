@@ -1,0 +1,87 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+echo "=========================================="
+echo "==== ALFRED SANCTUARY FOCUS MODE HOOK ===="
+echo "=========================================="
+
+# 1. The Root Network Blocker
+cat > /usr/local/bin/sanctuary-net-blocker << 'EOF'
+#!/bin/bash
+# Must be run as root
+STATE_FILE="/etc/sanctuary_network_active"
+HOSTS_FILE="/etc/hosts"
+BLOCK_BLOCK="# --- SANCTUARY BLOCK ---"
+
+if [ -f "$STATE_FILE" ]; then
+    # Unblock
+    sed -i '/# --- SANCTUARY BLOCK ---/,/# --- END SANCTUARY ---/d' "$HOSTS_FILE" || true
+    rm -f "$STATE_FILE" || true
+    echo "Network restored."
+else
+    # Block
+    cat >> "$HOSTS_FILE" << 'BLOCKS'
+# --- SANCTUARY BLOCK ---
+127.0.0.1 facebook.com www.facebook.com
+127.0.0.1 twitter.com www.twitter.com x.com www.x.com
+127.0.0.1 reddit.com www.reddit.com
+127.0.0.1 instagram.com www.instagram.com
+127.0.0.1 tiktok.com www.tiktok.com
+# --- END SANCTUARY ---
+BLOCKS
+    touch "$STATE_FILE"
+    echo "Network blocked."
+fi
+EOF
+[ -e /usr/local/bin/sanctuary-net-blocker ] && chmod 0755 /usr/local/bin/sanctuary-net-blocker || true
+
+# 2. The User Facing Toggle Script
+cat > /usr/local/bin/sanctuary-mode << 'EOF'
+#!/bin/bash
+STATE_FILE="/tmp/sanctuary_user_active"
+
+if [ -f "$STATE_FILE" ]; then
+    # Disable Sanctuary
+    echo "Disabling Sanctuary..."
+    pkexec /usr/local/bin/sanctuary-net-blocker
+    
+    # Enable Notifications (revoke inhibition)
+    INHIBIT_ID=$(cat "$STATE_FILE")
+    qdbus org.kde.plasmashell /org/kde/NotificationManager/Notifications org.freedesktop.Notifications.RevokeInhibition "$INHIBIT_ID" || true
+    
+    # Notify user
+    qdbus org.kde.plasmashell /org/kde/osdService org.kde.osdService.showText "sanctuary" "Sanctuary Mode Disabled."
+    rm -f "$STATE_FILE" || true
+else
+    # Enable Sanctuary
+    echo "Enabling Sanctuary..."
+    pkexec /usr/local/bin/sanctuary-net-blocker
+    
+    # Inhibit Notifications
+    INHIBIT_ID=$(qdbus org.kde.plasmashell /org/kde/NotificationManager/Notifications org.freedesktop.Notifications.Inhibit "" "Sanctuary" "Deep Focus Activated")
+    echo "$INHIBIT_ID" > "$STATE_FILE" || true
+    
+    # Notify user
+    qdbus org.kde.plasmashell /org/kde/osdService org.kde.osdService.showText "sanctuary" "Sanctuary Mode Activated."
+fi
+EOF
+[ -e /usr/local/bin/sanctuary-mode ] && chmod 0755 /usr/local/bin/sanctuary-mode || true
+
+# 3. Desktop Application Shortcut
+mkdir -p /usr/share/applications || true
+cat > /usr/share/applications/alfred-sanctuary.desktop << 'EOF'
+[Desktop Entry]
+Name=Sanctuary Focus Mode
+Comment=Toggle deep focus (blocks social media, mutes notifications)
+Exec=/usr/local/bin/sanctuary-mode
+Icon=security-high
+Type=Application
+Categories=System;Utility;
+Terminal=false
+EOF
+
+echo "Sanctuary Focus Mode configured."
+
+exit 0

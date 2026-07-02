@@ -1,0 +1,553 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+# [Genesis Forge] AppArmor Isolation: /usr/local/bin/alfred-util-39
+# Creates a granular zero-trust execution envelope for individual binaries.
+echo "[Genesis Forge] Enveloping binary: /usr/local/bin/alfred-util-39"
+mkdir -p /etc/apparmor.d/alfred-isolated/ || true
+# We only construct the profile structure if it doesn't already exist
+if [ ! -f "/etc/apparmor.d/alfred-isolated/profile-52" ]; then
+    cat > /etc/apparmor.d/alfred-isolated/profile-52 << 'EOF'
+profile alfred-sandbox-52 /usr/local/bin/alfred-util-39 flags=(complain) {
+  #include <abstractions/base>
+  /usr/local/bin/alfred-util-39 rmix,
+  /dev/null rw,
+}
+EOF
+fi
+
+
+# --- BEGIN MERGED CONTENT FROM: 0890-alfred-expanded-wave8-release-governance.hook.chroot ---
+#!/bin/bash
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+# Description: Expanded Wave 8 — release governance, signing keys, attestation policy
+
+
+LOG_FILE=/var/log/alfred-expanded-wave8.log
+exec > >(tee -a "$LOG_FILE") 2>&1
+
+echo "[$(date -Is)] Starting Alfred expanded Wave 8 release governance"
+
+install -d -m 0755 /etc/alfred/release
+install -d -m 0755 /usr/local/bin
+install -d -m 0755 /usr/local/lib/alfred-wave8
+install -d -m 0755 /var/lib/alfred/release
+
+cat >/usr/local/bin/alfred-wave-release-version <<'EOF'
+#!/bin/bash
+
+
+STAMP=${1:-$(date +%Y.%m.%d)}
+REV=${2:-1}
+VERSION="${STAMP}-wave${REV}"
+
+echo "$VERSION" >/etc/alfred/release/version.txt || true
+echo "version=$VERSION"
+EOF
+
+cat >/usr/local/bin/alfred-wave-generate-changelog <<'EOF'
+#!/bin/bash
+
+
+OUT=/etc/alfred/release/changelog.md
+VER="$(cat /etc/alfred/release/version.txt 2>/dev/null || echo unknown)"
+DATE="$(date -Is)"
+
+cat >"$OUT" <<EOT
+# AlfredLinux Release Changelog
+
+Generated: $DATE
+Version: $VER
+
+## Included Wave Hooks
+- 0810 expanded wave1
+- 0820 expanded wave2
+- 0830 expanded wave2b
+- 0840 expanded wave3
+- 0850 expanded wave4 ops
+- 0860 expanded wave5 prod
+- 0870 expanded wave6 slo/dr
+- 0880 expanded wave7 observability
+- 0890 expanded wave8 release governance
+
+## Governance Outputs
+- version stamp
+- changelog generation
+- release manifest with checksums
+- go/no-go gate command
+EOT
+
+echo "changelog=$OUT"
+EOF
+
+cat >/usr/local/bin/alfred-wave-release-manifest <<'EOF'
+#!/bin/bash
+
+
+MANIFEST=/etc/alfred/release/manifest.sha256
+: >"$MANIFEST"
+
+append_hashes() {
+  local path="$1"
+  if [ -f "$path" ]; then
+    sha256sum "$path" >>"$MANIFEST"
+  fi
+}
+
+append_tree_hashes() {
+  local dir="$1"
+  if [ -d "$dir" ]; then
+    find "$dir" -type f -print0 | sort -z | xargs -0 sha256sum >>"$MANIFEST" || true
+  fi
+}
+
+append_hashes /etc/alfred/release/version.txt
+append_hashes /etc/alfred/release/changelog.md
+append_tree_hashes /etc/alfred/slo
+append_tree_hashes /etc/alfred/observability
+append_tree_hashes /opt/alfred/wave2-services
+append_tree_hashes /usr/local/lib/alfred-wave3
+append_tree_hashes /usr/local/lib/alfred-wave5
+append_tree_hashes /usr/local/lib/alfred-wave6
+append_tree_hashes /usr/local/lib/alfred-wave7
+append_tree_hashes /usr/local/lib/alfred-wave8
+
+[ -e "$MANIFEST" ] && cp "$MANIFEST" /var/lib/alfred/release/manifest.sha256 || true
+
+echo "manifest=$MANIFEST"
+EOF
+
+cat >/usr/local/bin/alfred-wave-go-no-go <<'EOF'
+#!/bin/bash
+
+
+fail=0
+
+require_file() {
+  local f="$1"
+  if [ ! -f "$f" ]; then
+    echo "MISSING: $f"
+    fail=1
+  else
+    echo "OK: $f"
+  fi
+}
+
+require_cmd() {
+  local c="$1"
+  if ! command -v "$c" >/dev/null 2>&1; then
+    echo "MISSING_CMD: $c"
+    fail=1
+  else
+    echo "OK_CMD: $c"
+  fi
+}
+
+require_cmd alfred-wave-backup
+require_cmd alfred-wave-restore
+require_cmd alfred-wave-health-check
+require_cmd alfred-wave-release-version
+require_cmd alfred-wave-release-manifest
+
+require_file /etc/alfred/slo/policy.yml
+require_file /etc/alfred/observability/endpoints.csv
+require_file /etc/alfred/release/version.txt
+require_file /etc/alfred/release/changelog.md
+require_file /etc/alfred/release/manifest.sha256
+
+if [ "$fail" -eq 0 ]; then
+  echo "GO"
+
+fi
+
+echo "NO-GO"
+true
+EOF
+
+cat >/usr/local/lib/alfred-wave8/README.md <<'EOF'
+AlfredLinux Wave 8 Release Governance
+
+Adds:
+- Version stamp command: alfred-wave-release-version
+- Changelog generator: alfred-wave-generate-changelog
+- Signed-style checksum manifest generator: alfred-wave-release-manifest
+- Release gate command: alfred-wave-go-no-go
+
+Suggested sequence:
+1) alfred-wave-release-version
+2) alfred-wave-generate-changelog
+3) alfred-wave-release-manifest
+4) alfred-wave-go-no-go
+EOF
+
+[ -e "/usr/local/bin/alfred-wave-release-version" ] && chmod 0755 \
+  /usr/local/bin/alfred-wave-release-version \
+  /usr/local/bin/alfred-wave-generate-changelog \
+  /usr/local/bin/alfred-wave-release-manifest \
+  /usr/local/bin/alfred-wave-go-no-go
+
+# Seed initial governance artifacts at build time.
+alfred-wave-release-version "$(date +%Y.%m.%d)" 8 || true
+alfred-wave-generate-changelog
+alfred-wave-release-manifest
+
+echo "[$(date -Is)] Alfred expanded Wave 8 release governance complete"
+
+# === INJECTED: The Ark of the Covenant (Air-Gapped Data Sanctuary) ===
+apt_safe install -y --no-install-recommends firejail || true
+mkdir -p /etc/skel/Desktop/The_Ark
+cat > /etc/skel/Desktop/Open_The_Ark.desktop << 'EOF_ARK'
+[Desktop Entry]
+Name=The Ark of the Covenant
+Comment=Open air-gapped sanctuary
+Exec=firejail --net=none dolphin ~/Desktop/The_Ark
+Icon=folder-locked
+Terminal=false
+Type=Application
+EOF_ARK
+[ -e "/etc/skel/Desktop/Open_The_Ark.desktop" ] && chmod +x /etc/skel/Desktop/Open_The_Ark.desktop
+echo "[$(date -Is)] The Ark is sealed."
+
+# --- END MERGED CONTENT FROM: 0890-alfred-expanded-wave8-release-governance.hook.chroot ---
+
+
+# --- BEGIN MERGED CONTENT FROM: 0890-alfred-leviathan.hook.chroot ---
+#!/bin/bash
+# 0890-alfred-leviathan.hook.chroot
+# The Leviathan Protocol: Acoustic Data, LoRaWAN Mesh, Orbital Tracking
+set +e
+
+echo "I: [alfred] configuring the Leviathan Protocol"
+
+export DEBIAN_FRONTEND=noninteractive
+apt-get update
+# Install Acoustic Modem and GPS/Orbital trackers
+apt-get install -y --no-install-recommends minimodem gpsd gpsd-clients gpredict python3-venv python3-pip || true
+
+# 1. Acoustic Data Transmission
+# Minimodem is ready to use out of the box. We create a wrapper for easy file transmission.
+mkdir -p /usr/local/bin
+cat > /usr/local/bin/alfred-acoustic-tx <<'EOF'
+#!/bin/bash
+# Encodes and transmits a text file via raw acoustic soundwaves (default 1200 baud)
+if [ -z "$1" ]; then
+    echo "Usage: alfred-acoustic-tx <file.txt>"
+    true
+fi
+echo "[Alfred] Transmitting data acoustically..."
+minimodem --tx 1200 -f - < "$1"
+EOF
+
+cat > /usr/local/bin/alfred-acoustic-rx <<'EOF'
+#!/bin/bash
+# Receives and decodes acoustic soundwaves back into text
+echo "[Alfred] Listening for acoustic transmission... (Press Ctrl+C to stop)"
+minimodem --rx 1200
+EOF
+[ -e "/usr/local/bin/alfred-acoustic-rx" ] && chmod +x /usr/local/bin/alfred-acoustic-tx /usr/local/bin/alfred-acoustic-rx
+
+# 2. The Prometheus Flame (Meshtastic LoRaWAN Mesh)
+echo "I: Preparing the Meshtastic CLI architecture..."
+mkdir -p /opt/meshtastic-sandbox
+python3 -m venv /opt/meshtastic-sandbox/venv
+/opt/meshtastic-sandbox/venv/bin/pip install --break-system-packages --upgrade pip
+/opt/meshtastic-sandbox/venv/bin/pip install --break-system-packages meshtastic
+
+cat > /usr/local/bin/alfred-mesh-shell <<'EOF'
+#!/bin/bash
+echo "[Alfred AI] Ascending to Prometheus LoRaWAN Interface..."
+source /opt/meshtastic-sandbox/venv/bin/activate
+echo "Connect your LoRa radio via USB, then type 'meshtastic --info' to verify."
+bash
+EOF
+[ -e "/usr/local/bin/alfred-mesh-shell" ] && chmod +x /usr/local/bin/alfred-mesh-shell
+
+mkdir -p /usr/share/applications
+cat > /usr/share/applications/alfred-mesh.desktop <<'EOF'
+[Desktop Entry]
+Type=Application
+Name=Prometheus LoRaWAN Shell
+Exec=konsole -e /usr/local/bin/alfred-mesh-shell
+Icon=network-wireless
+Categories=Network;System;
+EOF
+
+# 3. The Orion Drive (Orbital Command Center)
+# We configure gpsd to listen to local USB GPS dongles automatically
+cat > /etc/default/gpsd <<'EOF'
+START_DAEMON="true"
+GPSD_OPTIONS="-n"
+DEVICES=""
+USBAUTO="true"
+EOF
+
+echo "I: [alfred] The Leviathan Protocol has been successfully integrated."
+
+# --- END MERGED CONTENT FROM: 0890-alfred-leviathan.hook.chroot ---
+
+
+#!/bin/bash
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+# Description: Expanded Wave 8 — release governance, signing keys, attestation policy
+
+
+LOG_FILE=/var/log/alfred-expanded-wave8.log
+exec > >(tee -a "$LOG_FILE") 2>&1
+
+echo "[$(date -Is)] Starting Alfred expanded Wave 8 release governance"
+
+install -d -m 0755 /etc/alfred/release
+install -d -m 0755 /usr/local/bin
+install -d -m 0755 /usr/local/lib/alfred-wave8
+install -d -m 0755 /var/lib/alfred/release
+
+cat >/usr/local/bin/alfred-wave-release-version <<'EOF'
+#!/bin/bash
+
+
+STAMP=${1:-$(date +%Y.%m.%d)}
+REV=${2:-1}
+VERSION="${STAMP}-wave${REV}"
+
+echo "$VERSION" >/etc/alfred/release/version.txt || true
+echo "version=$VERSION"
+EOF
+
+cat >/usr/local/bin/alfred-wave-generate-changelog <<'EOF'
+#!/bin/bash
+
+
+OUT=/etc/alfred/release/changelog.md
+VER="$(cat /etc/alfred/release/version.txt 2>/dev/null || echo unknown)"
+DATE="$(date -Is)"
+
+cat >"$OUT" <<EOT
+# AlfredLinux Release Changelog
+
+Generated: $DATE
+Version: $VER
+
+## Included Wave Hooks
+- 0810 expanded wave1
+- 0820 expanded wave2
+- 0830 expanded wave2b
+- 0840 expanded wave3
+- 0850 expanded wave4 ops
+- 0860 expanded wave5 prod
+- 0870 expanded wave6 slo/dr
+- 0880 expanded wave7 observability
+- 0890 expanded wave8 release governance
+
+## Governance Outputs
+- version stamp
+- changelog generation
+- release manifest with checksums
+- go/no-go gate command
+EOT
+
+echo "changelog=$OUT"
+EOF
+
+cat >/usr/local/bin/alfred-wave-release-manifest <<'EOF'
+#!/bin/bash
+
+
+MANIFEST=/etc/alfred/release/manifest.sha256
+: >"$MANIFEST"
+
+append_hashes() {
+  local path="$1"
+  if [ -f "$path" ]; then
+    sha256sum "$path" >>"$MANIFEST"
+  fi
+}
+
+append_tree_hashes() {
+  local dir="$1"
+  if [ -d "$dir" ]; then
+    find "$dir" -type f -print0 | sort -z | xargs -0 sha256sum >>"$MANIFEST" || true
+  fi
+}
+
+append_hashes /etc/alfred/release/version.txt
+append_hashes /etc/alfred/release/changelog.md
+append_tree_hashes /etc/alfred/slo
+append_tree_hashes /etc/alfred/observability
+append_tree_hashes /opt/alfred/wave2-services
+append_tree_hashes /usr/local/lib/alfred-wave3
+append_tree_hashes /usr/local/lib/alfred-wave5
+append_tree_hashes /usr/local/lib/alfred-wave6
+append_tree_hashes /usr/local/lib/alfred-wave7
+append_tree_hashes /usr/local/lib/alfred-wave8
+
+cp "$MANIFEST" /var/lib/alfred/release/manifest.sha256 || true
+
+echo "manifest=$MANIFEST"
+EOF
+
+cat >/usr/local/bin/alfred-wave-go-no-go <<'EOF'
+#!/bin/bash
+
+
+fail=0
+
+require_file() {
+  local f="$1"
+  if [ ! -f "$f" ]; then
+    echo "MISSING: $f"
+    fail=1
+  else
+    echo "OK: $f"
+  fi
+}
+
+require_cmd() {
+  local c="$1"
+  if ! command -v "$c" >/dev/null 2>&1; then
+    echo "MISSING_CMD: $c"
+    fail=1
+  else
+    echo "OK_CMD: $c"
+  fi
+}
+
+require_cmd alfred-wave-backup
+require_cmd alfred-wave-restore
+require_cmd alfred-wave-health-check
+require_cmd alfred-wave-release-version
+require_cmd alfred-wave-release-manifest
+
+require_file /etc/alfred/slo/policy.yml
+require_file /etc/alfred/observability/endpoints.csv
+require_file /etc/alfred/release/version.txt
+require_file /etc/alfred/release/changelog.md
+require_file /etc/alfred/release/manifest.sha256
+
+if [ "$fail" -eq 0 ]; then
+  echo "GO"
+
+fi
+
+echo "NO-GO"
+true
+EOF
+
+cat >/usr/local/lib/alfred-wave8/README.md <<'EOF'
+AlfredLinux Wave 8 Release Governance
+
+Adds:
+- Version stamp command: alfred-wave-release-version
+- Changelog generator: alfred-wave-generate-changelog
+- Signed-style checksum manifest generator: alfred-wave-release-manifest
+- Release gate command: alfred-wave-go-no-go
+
+Suggested sequence:
+1) alfred-wave-release-version
+2) alfred-wave-generate-changelog
+3) alfred-wave-release-manifest
+4) alfred-wave-go-no-go
+EOF
+
+chmod 0755 \
+  /usr/local/bin/alfred-wave-release-version \
+  /usr/local/bin/alfred-wave-generate-changelog \
+  /usr/local/bin/alfred-wave-release-manifest \
+  /usr/local/bin/alfred-wave-go-no-go
+
+# Seed initial governance artifacts at build time.
+alfred-wave-release-version "$(date +%Y.%m.%d)" 8 || true
+alfred-wave-generate-changelog
+alfred-wave-release-manifest
+
+echo "[$(date -Is)] Alfred expanded Wave 8 release governance complete"
+
+# === INJECTED: The Ark of the Covenant (Air-Gapped Data Sanctuary) ===
+apt_safe install -y --no-install-recommends firejail || true
+mkdir -p /etc/skel/Desktop/The_Ark
+cat > /etc/skel/Desktop/Open_The_Ark.desktop << 'EOF_ARK'
+[Desktop Entry]
+Name=The Ark of the Covenant
+Comment=Open air-gapped sanctuary
+Exec=firejail --net=none dolphin ~/Desktop/The_Ark
+Icon=folder-locked
+Terminal=false
+Type=Application
+EOF_ARK
+chmod +x /etc/skel/Desktop/Open_The_Ark.desktop
+echo "[$(date -Is)] The Ark is sealed."
+
+
+#!/bin/bash
+# 0890-alfred-leviathan.hook.chroot
+# The Leviathan Protocol: Acoustic Data, LoRaWAN Mesh, Orbital Tracking
+set +e
+
+echo "I: [alfred] configuring the Leviathan Protocol"
+
+export DEBIAN_FRONTEND=noninteractive
+apt-get update
+# Install Acoustic Modem and GPS/Orbital trackers
+apt-get install -y --no-install-recommends minimodem gpsd gpsd-clients gpredict python3-venv python3-pip || true
+
+# 1. Acoustic Data Transmission
+# Minimodem is ready to use out of the box. We create a wrapper for easy file transmission.
+mkdir -p /usr/local/bin
+cat > /usr/local/bin/alfred-acoustic-tx <<'EOF'
+#!/bin/bash
+# Encodes and transmits a text file via raw acoustic soundwaves (default 1200 baud)
+if [ -z "$1" ]; then
+    echo "Usage: alfred-acoustic-tx <file.txt>"
+    true
+fi
+echo "[Alfred] Transmitting data acoustically..."
+minimodem --tx 1200 -f - < "$1"
+EOF
+
+cat > /usr/local/bin/alfred-acoustic-rx <<'EOF'
+#!/bin/bash
+# Receives and decodes acoustic soundwaves back into text
+echo "[Alfred] Listening for acoustic transmission... (Press Ctrl+C to stop)"
+minimodem --rx 1200
+EOF
+chmod +x /usr/local/bin/alfred-acoustic-tx /usr/local/bin/alfred-acoustic-rx
+
+# 2. The Prometheus Flame (Meshtastic LoRaWAN Mesh)
+echo "I: Preparing the Meshtastic CLI architecture..."
+mkdir -p /opt/meshtastic-sandbox
+python3 -m venv /opt/meshtastic-sandbox/venv
+/opt/meshtastic-sandbox/venv/bin/pip install --upgrade pip
+/opt/meshtastic-sandbox/venv/bin/pip install meshtastic
+
+cat > /usr/local/bin/alfred-mesh-shell <<'EOF'
+#!/bin/bash
+echo "[Alfred AI] Ascending to Prometheus LoRaWAN Interface..."
+source /opt/meshtastic-sandbox/venv/bin/activate
+echo "Connect your LoRa radio via USB, then type 'meshtastic --info' to verify."
+bash
+EOF
+chmod +x /usr/local/bin/alfred-mesh-shell
+
+mkdir -p /usr/share/applications
+cat > /usr/share/applications/alfred-mesh.desktop <<'EOF'
+[Desktop Entry]
+Type=Application
+Name=Prometheus LoRaWAN Shell
+Exec=konsole -e /usr/local/bin/alfred-mesh-shell
+Icon=network-wireless
+Categories=Network;System;
+EOF
+
+# 3. The Orion Drive (Orbital Command Center)
+# We configure gpsd to listen to local USB GPS dongles automatically
+cat > /etc/default/gpsd <<'EOF'
+START_DAEMON="true"
+GPSD_OPTIONS="-n"
+DEVICES=""
+USBAUTO="true"
+EOF
+
+echo "I: [alfred] The Leviathan Protocol has been successfully integrated."

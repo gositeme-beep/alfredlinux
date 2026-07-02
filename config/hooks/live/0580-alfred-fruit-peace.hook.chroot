@@ -1,0 +1,27 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+# 0728-alfred-fruit-peace — Galatians 5:22-23
+
+echo "[0728-fruit-peace] begin"
+cat >/usr/sbin/alfred-fruit-peace <<"EOS"
+#!/bin/bash
+# alfred-fruit-peace — daily checkin (1-10 self-rating)
+
+LOG=${ALFRED_FRUIT_LOG:-$HOME/.alfred/fruit.tsv}
+mkdir -p "$(dirname "$LOG")" || true
+[ -f "$LOG" ] || printf 'ts\tfruit\trating\tnote\n' >"$LOG"
+case "${1:-}" in
+  rate) shift; r="${1:?1-10}"; shift; printf '%s\t%s\t%s\t%s\n' "$(date -Is)" 'peace' "$r" "$*" >>"$LOG"; echo "peace rated $r" ;;
+  show) grep -P "\\tpeace\\t" "$LOG" | tail -10 ;;
+  avg)  grep -P "\\tpeace\\t" "$LOG" | awk -F'\t' '{s+=$3;n++}END{if(n)printf "%.2f over %d entries\n",s/n,n;else print "no data"}' ;;
+  *) echo "Galatians 5:22 — and peace."; echo "usage: alfred-fruit-peace {rate <1-10> <note>|show|avg}" ;;
+esac
+EOS
+chmod 0755 /usr/sbin/alfred-fruit-peace || true
+echo "[0728-fruit-peace] done"
+
+
+exit 0
