@@ -1,0 +1,94 @@
+# Alfred Linux — fast test/lint gates (suggested addition by an external contributor).
+# Canonical on-disk path: .gitea/workflows/ (Forgejo/GoForge Actions, https://alfredlinux.com/forge/).
+# Mirror to .github/workflows/ and .forgejo/workflows/ per your sync convention
+# (see scripts/sync-forgejo-actions-yaml.sh — consider extending it to cover this file).
+#
+# This starter runs ONLY the day-1-safe gates that pass against the repo as-is:
+#   - php -l    : PHP syntax check (blocking — a failure here is a real syntax error to fix)
+#   - shellcheck: baseline over scripts/ + tests/ (non-blocking — triage, then make errors block)
+# The commented jobs at the bottom (PHPUnit, Node tests, hook-lint) are ready to enable once
+# tests + Composer land and the tests/hook-lint.sh count is fixed. See docs/TESTING-AND-CI.md.
+name: alfred-tests
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  workflow_dispatch:
+
+jobs:
+  php-syntax:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'   # TODO: confirm your target PHP version, then pin it here + in composer.json
+      - name: php -l (syntax check every *.php under var/www)
+        working-directory: config/includes.chroot_after_packages/var/www
+        run: |
+          set -euo pipefail
+          # -P4 = 4 parallel; fails the job on the first real syntax error.
+          find . -name '*.php' -print0 | xargs -0 -r -n1 -P4 php -l >/dev/null
+          echo "php -l: all files parsed OK"
+
+  shell-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install shellcheck
+        run: sudo apt-get update -qq && sudo apt-get install -y --no-install-recommends shellcheck
+      - name: shellcheck baseline (scripts/ + tests/, non-blocking)
+        continue-on-error: true   # remove once the baseline is triaged, then block on error-severity
+        run: |
+          # Scoped to real shell code; excludes the config/ chroot overlay payloads.
+          mapfile -d '' files < <(find scripts tests -name '*.sh' -print0 2>/dev/null)
+          if [ "${#files[@]}" -eq 0 ]; then echo "no shell scripts found"; exit 0; fi
+          shellcheck --severity=warning "${files[@]}" || true
+          echo "shellcheck baseline complete (non-blocking — see docs/TESTING-AND-CI.md to make it a gate)"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# ENABLE WHEN READY — copy these into the jobs: block above once the prerequisites
+# exist. Full guidance in docs/TESTING-AND-CI.md (§3 tests, §4 CI, §6 phases).
+#
+#  php-tests:            # needs: composer.json at var/www + tests under tests/{Unit,Api,Security}
+#    runs-on: ubuntu-latest
+#    strategy: { matrix: { php-version: ['8.1', '8.3'] } }
+#    steps:
+#      - uses: actions/checkout@v4
+#      - uses: shivammathur/setup-php@v2
+#        with: { php-version: '${{ matrix.php-version }}', tools: composer }
+#      - run: composer install --no-progress --prefer-dist
+#        working-directory: config/includes.chroot_after_packages/var/www
+#      - run: vendor/bin/phpunit
+#        working-directory: config/includes.chroot_after_packages/var/www
+#      - run: vendor/bin/phpstan analyse includes --level=1   # start low; raise over time
+#        working-directory: config/includes.chroot_after_packages/var/www
+#      - run: vendor/bin/phpcs --standard=PSR12 includes --report=summary || true   # report-only
+#        working-directory: config/includes.chroot_after_packages/var/www
+#    # Integration tests touching MySQL/Redis need a services: block + a dummy GOSITEME_DB_PASS.
+#
+#  node-tests:           # needs: real "test" scripts in each service's package.json
+#    runs-on: ubuntu-latest
+#    strategy:
+#      matrix:
+#        service:
+#          - config/includes.chroot_after_packages/opt/gohostme-backend
+#          - config/includes.chroot_after_packages/opt/handshake
+#          - config/includes.chroot_after_packages/opt/sovereign-dns
+#    steps:
+#      - uses: actions/checkout@v4
+#      - uses: actions/setup-node@v4
+#        with: { node-version: '20.x' }
+#      - run: npm ci
+#        working-directory: ${{ matrix.service }}
+#      - run: npm test
+#        working-directory: ${{ matrix.service }}
+#    # Excludes opt/hsd (empty stub) and alfred-remote-ssh (no first-party Node code).
+#
+#  hook-lint:            # enable AFTER fixing the hardcoded 1335 count in tests/hook-lint.sh
+#    runs-on: ubuntu-latest
+#    steps:
+#      - uses: actions/checkout@v4
+#      - run: bash tests/hook-lint.sh config/hooks/live
