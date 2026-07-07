@@ -1,0 +1,161 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+
+echo "[Genesis Forge] Engineering Fork-Bomb Mathematical Limit for 220..."
+
+apt-get install -y --fix-broken -y cgroup-tools || true
+
+mkdir -p /etc/apparmor.d/alfred-isolated/ || true
+
+# Strict AppArmor Mode (Enforce)
+cat > /etc/apparmor.d/alfred-isolated/profile-220 << 'EOF'
+profile alfred-sandbox-220 /usr/local/bin/alfred-util-207 flags=(enforce) {
+  #include <abstractions/base>
+  /usr/local/bin/alfred-util-207 rmix,
+  /dev/null rw,
+}
+EOF
+
+# Inject Fork-Bomb Prevention Wrapper
+cat > /usr/local/bin/alfred-util-207-pids-wrapper << 'EOF'
+#!/bin/bash
+# Fork-Bomb Mathematical Limit
+# Enforces a strict cgroup pids.max limit of 2 (the process + 1 child)
+
+CGROUP_NAME="alfred_pids_$$"
+cgcreate -g pids:/$CGROUP_NAME
+
+# Limit maximum processes in this cgroup to 2
+cgset -r pids.max=2 /$CGROUP_NAME 2>/dev/null || true
+
+# Execute the utility inside the locked cgroup
+cgexec -g pids:/$CGROUP_NAME /usr/local/bin/alfred-util-207 "$@"
+EXIT_CODE=$?
+
+# Cleanup
+cgdelete pids:/$CGROUP_NAME 2>/dev/null || true
+
+exit $EXIT_CODE
+EOF
+
+[ -e "/usr/local/bin/alfred-util-207-pids-wrapper" ] && chmod +x /usr/local/bin/alfred-util-207-pids-wrapper || true
+
+echo "[Genesis Forge] Fork-Bomb Mathematical Limit Integrated."
+
+
+# --- BEGIN MERGED CONTENT FROM: 1207-alfred-sacred-geometry-render.hook.chroot ---
+#!/bin/sh
+set +e
+
+echo "[Alfred Sacred Geometry] Injecting Golden Ratio Compositor Overrides..."
+
+# We inject a script into the user's profile that defines Wayland/X11 overrides
+# but ONLY executes if the user explicitly triggers it.
+
+mkdir -p /usr/share/alfred/geometry/
+mkdir -p /usr/local/bin/
+
+cat > /usr/local/bin/alfred-toggle-sacred-geometry.sh << 'EOF'
+#!/bin/bash
+# Toggles the Golden Ratio (1.618) UI scaling override.
+
+FLAG_FILE="$HOME/.config/alfred_sacred_geometry_enabled"
+
+if [ -f "$FLAG_FILE" ]; then
+    rm -f "$FLAG_FILE"
+    echo "Sacred Geometry disabled. Reverting to standard scaling on next login."
+    # Reset Xfce scaling to 1.0
+    xfconf-query -c xsettings -p /Gdk/WindowScalingFactor -s 1 2>/dev/null || true
+else
+    touch "$FLAG_FILE"
+    echo "Sacred Geometry enabled. Enforcing Golden Ratio (1.618) scaling."
+    # Force Xfce/GDK scaling to approximate the golden ratio
+    # GTK doesn't support fractional scaling natively without Wayland, 
+    # so we enforce font scaling and UI DPI math
+    xfconf-query -c xsettings -p /Xft/DPI -s 155 2>/dev/null || true # 96 * 1.618
+fi
+EOF
+
+[ -e "/usr/local/bin/alfred-toggle-sacred-geometry.sh" ] && chmod +x /usr/local/bin/alfred-toggle-sacred-geometry.sh
+
+# Create the profile injection
+cat > /etc/profile.d/alfred-sacred-geometry.sh << 'EOF'
+# Alfred Sacred Geometry Profile Override
+# Activates the golden ratio compositor settings ONLY if the user has opted in.
+
+if [ -f "$HOME/.config/alfred_sacred_geometry_enabled" ]; then
+    # Wayland fractional scaling override
+    export WLR_DRM_DEVICES=/dev/dri/card0
+    export QT_WAYLAND_FORCE_DPI=155
+    export GDK_DPI_SCALE=1.618
+    
+    # Render pure geometric window shadows if using a compositor like picom
+    if command -v picom >/dev/null 2>&1; then
+        export PICOM_SHADOW_RADIUS=21 # Fibonacci sequence
+        export PICOM_SHADOW_OPACITY=0.618
+    fi
+fi
+EOF
+
+echo "[Alfred Sacred Geometry] Override scripts installed (Disabled by default)."
+
+# --- END MERGED CONTENT FROM: 1207-alfred-sacred-geometry-render.hook.chroot ---
+
+
+#!/bin/sh
+set +e
+
+echo "[Alfred Sacred Geometry] Injecting Golden Ratio Compositor Overrides..."
+
+# We inject a script into the user's profile that defines Wayland/X11 overrides
+# but ONLY executes if the user explicitly triggers it.
+
+mkdir -p /usr/share/alfred/geometry/
+mkdir -p /usr/local/bin/
+
+cat > /usr/local/bin/alfred-toggle-sacred-geometry.sh << 'EOF'
+#!/bin/bash
+# Toggles the Golden Ratio (1.618) UI scaling override.
+
+FLAG_FILE="$HOME/.config/alfred_sacred_geometry_enabled"
+
+if [ -f "$FLAG_FILE" ]; then
+    rm -f "$FLAG_FILE"
+    echo "Sacred Geometry disabled. Reverting to standard scaling on next login."
+    # Reset Xfce scaling to 1.0
+    xfconf-query -c xsettings -p /Gdk/WindowScalingFactor -s 1 2>/dev/null || true
+else
+    touch "$FLAG_FILE"
+    echo "Sacred Geometry enabled. Enforcing Golden Ratio (1.618) scaling."
+    # Force Xfce/GDK scaling to approximate the golden ratio
+    # GTK doesn't support fractional scaling natively without Wayland, 
+    # so we enforce font scaling and UI DPI math
+    xfconf-query -c xsettings -p /Xft/DPI -s 155 2>/dev/null || true # 96 * 1.618
+fi
+EOF
+
+chmod +x /usr/local/bin/alfred-toggle-sacred-geometry.sh
+
+# Create the profile injection
+cat > /etc/profile.d/alfred-sacred-geometry.sh << 'EOF'
+# Alfred Sacred Geometry Profile Override
+# Activates the golden ratio compositor settings ONLY if the user has opted in.
+
+if [ -f "$HOME/.config/alfred_sacred_geometry_enabled" ]; then
+    # Wayland fractional scaling override
+    export WLR_DRM_DEVICES=/dev/dri/card0
+    export QT_WAYLAND_FORCE_DPI=155
+    export GDK_DPI_SCALE=1.618
+    
+    # Render pure geometric window shadows if using a compositor like picom
+    if command -v picom >/dev/null 2>&1; then
+        export PICOM_SHADOW_RADIUS=21 # Fibonacci sequence
+        export PICOM_SHADOW_OPACITY=0.618
+    fi
+fi
+EOF
+
+echo "[Alfred Sacred Geometry] Override scripts installed (Disabled by default)."

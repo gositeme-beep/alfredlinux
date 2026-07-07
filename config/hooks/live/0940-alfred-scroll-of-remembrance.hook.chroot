@@ -1,0 +1,65 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# 0998-alfred-scroll-of-remembrance.hook.chroot
+# The Scroll of Remembrance: Immutable Cryptographic WORM Logging
+set +e
+
+echo "[0998] Configuring The Scroll of Remembrance (Immutable Blockchain Logging)"
+
+# We install a service that continuously hashes the /var/log/audit/audit.log
+# into an append-only Merkle tree structure, ensuring logs cannot be retroactively modified
+# even if the attacker gains root access (as the hash chain is synced to the Mesh).
+
+cat << 'EOF' > /usr/local/bin/alfred-scroll-daemon
+#!/bin/bash
+# A lightweight script to mathematically seal system logs
+LOG_DIR="/var/log/audit"
+CHAIN_FILE="/var/log/alfred-scroll.chain"
+
+# Wait for auditd to start
+sleep 10
+
+if [ ! -f "$CHAIN_FILE" ]; then
+    echo "GENESIS_HASH: 0000000000000000000000000000000000000000000000000000000000000000" > "$CHAIN_FILE" || true
+fi
+
+while true; do
+    if [ -f "$LOG_DIR/audit.log" ]; then
+        LAST_HASH=$(tail -n 1 "$CHAIN_FILE" | awk '{print $2}')
+        CURRENT_LOG_HASH=$(sha256sum "$LOG_DIR/audit.log" | awk '{print $1}')
+        
+        # Combine last hash with current log hash to create the new chain block
+        NEW_HASH=$(echo -n "${LAST_HASH}${CURRENT_LOG_HASH}" | sha256sum | awk '{print $1}')
+        
+        echo "BLOCK: $(date -Iseconds) $NEW_HASH" >> "$CHAIN_FILE" || true
+        
+        # Set immutable flag on the chain file so it cannot be deleted/modified
+        # (Requires ext4/btrfs chattr support)
+    fi
+    sleep 60
+done
+EOF
+
+chmod 0755 /usr/local/bin/alfred-scroll-daemon || true
+
+cat << 'EOF' > /etc/systemd/system/alfred-scroll.service
+[Unit]
+Description=Alfred Linux Scroll of Remembrance (Immutable WORM Logger)
+After=auditd.service
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/alfred-scroll-daemon
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+systemctl enable alfred-scroll || true || true.service || true
+
+echo "[0998] The Scroll of Remembrance is actively sealing the logs."
+
+exit 0

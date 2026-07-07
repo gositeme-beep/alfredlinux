@@ -1,0 +1,387 @@
+/* AI Server Configurator — dark, pro, high-contrast. Scoped under .ai-servers-page when inside site layout. */
+.ai-servers-page {
+  --ai-bg: #0c0e12;
+  --ai-bg-card: #141820;
+  --ai-bg-hover: #1a1f2e;
+  --ai-border: #2a3142;
+  --ai-text: #e6eaf0;
+  --ai-text-muted: #8b95a8;
+  --ai-accent: #00d4aa;
+  --ai-accent-dim: #00a884;
+  --ai-danger: #f25c54;
+  --ai-radius: 10px;
+  --ai-font: 'DM Sans', 'Segoe UI', system-ui, sans-serif;
+  background: var(--ai-bg);
+  color: var(--ai-text);
+  font-family: var(--ai-font);
+  font-size: 16px;
+  line-height: 1.5;
+  margin: 0;
+  padding: 10rem 0 3rem 0;
+}
+
+.ai-servers-page * {
+  box-sizing: border-box;
+}
+
+/* Hero — matches reference “Build Stunning Websites” style */
+.ai-servers-page .ai-config-hero {
+  background: linear-gradient(165deg, #0f1218 0%, #0c0e12 40%, #0a0c10 100%);
+  border-bottom: 1px solid var(--ai-border);
+  padding: 2.5rem 2rem 2rem;
+  text-align: center;
+}
+
+.ai-servers-page .ai-config-hero-inner {
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.ai-servers-page .ai-config-hero-title {
+  margin: 0 0 0.5rem 0;
+  font-size: clamp(1.75rem, 4vw, 2.25rem);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--ai-text);
+}
+
+.ai-servers-page .ai-config-hero-tagline {
+  color: var(--ai-text-muted);
+  font-size: 1rem;
+  line-height: 1.5;
+  margin: 0 0 1.5rem 0;
+}
+
+.ai-servers-page .presets-hero {
+  justify-content: center;
+  margin-top: 0;
+}
+
+.presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 1.25rem;
+}
+
+.preset-btn {
+  padding: 0.6rem 1.1rem;
+  border: 1px solid var(--ai-border);
+  border-radius: var(--ai-radius);
+  background: var(--ai-bg-card);
+  color: var(--ai-text);
+  font-family: inherit;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.preset-btn:hover {
+  background: var(--ai-bg-hover);
+  border-color: var(--ai-accent-dim);
+  color: var(--ai-accent);
+}
+
+.preset-btn.active {
+  background: var(--ai-accent);
+  border-color: var(--ai-accent);
+  color: var(--ai-bg);
+}
+
+.ai-servers-page .main-wrap {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 2rem;
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: 2rem;
+  align-items: start;
+  min-height: 40vh;
+}
+
+@media (max-width: 1100px) {
+  .ai-servers-page .main-wrap {
+    grid-template-columns: 1fr;
+  }
+}
+
+.config-sections {
+  display: flex;
+  flex-direction: column;
+  gap: 2.5rem;
+}
+
+.config-section {
+  background: var(--ai-bg-card);
+  border: 1px solid var(--ai-border);
+  border-radius: var(--ai-radius);
+  padding: 1.5rem;
+}
+
+.config-section h2 {
+  margin: 0 0 1rem 0;
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: var(--ai-text);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.selected-summary {
+  margin-bottom: 1rem;
+}
+
+.selected-summary .choose-prompt {
+  color: var(--ai-text-muted);
+  font-style: italic;
+  margin: 0;
+  padding: 1rem;
+  border: 1px dashed var(--ai-border);
+  border-radius: var(--ai-radius);
+}
+
+.options-label {
+  font-size: 0.8rem;
+  color: var(--ai-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 0.75rem;
+}
+
+.product-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1rem;
+  align-items: start;
+}
+
+.product-grid .product-card {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.product-grid .product-card .card-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.product-grid .product-card .price {
+  margin-top: auto;
+}
+
+.product-card {
+  border: 2px solid var(--ai-border);
+  border-radius: var(--ai-radius);
+  overflow: hidden;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+  background: var(--ai-bg);
+}
+
+.product-card:hover {
+  border-color: var(--ai-accent-dim);
+  background: var(--ai-bg-hover);
+}
+
+.product-card.selected {
+  border-color: var(--ai-accent);
+  background: rgba(0, 212, 170, 0.08);
+}
+
+.product-card .card-img {
+  height: 140px;
+  background: var(--ai-bg-hover);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem;
+}
+
+.product-card .card-img img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+.product-card .card-img .no-img {
+  font-size: 0.7rem;
+  color: var(--ai-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.product-card .card-body {
+  padding: 0.9rem;
+}
+
+.product-card .card-body h4 {
+  margin: 0 0 0.35rem 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.product-card .spec-line {
+  margin: 0 0 0.4rem 0;
+  font-size: 0.8rem;
+  color: var(--ai-text-muted);
+}
+
+.product-card .badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-bottom: 0.5rem;
+}
+
+.product-card .badge {
+  font-size: 0.65rem;
+  padding: 0.2rem 0.45rem;
+  background: rgba(0, 212, 170, 0.2);
+  color: var(--ai-accent);
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.product-card .price {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--ai-accent);
+}
+
+/* Sidebar — sticky below site nav (~5rem) */
+.ai-servers-page .build-sidebar {
+  position: sticky;
+  top: 5.5rem;
+  background: var(--ai-bg-card);
+  border: 1px solid var(--ai-border);
+  border-radius: var(--ai-radius);
+  padding: 1.5rem;
+}
+
+@media (max-width: 1100px) {
+  .ai-servers-page .build-sidebar {
+    position: static;
+  }
+}
+
+.build-sidebar h3 {
+  margin: 0 0 1rem 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.build-total-wrap {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--ai-accent);
+  margin-bottom: 0.75rem;
+}
+
+#build-summary {
+  font-size: 0.9rem;
+  color: var(--ai-text-muted);
+  margin-bottom: 0.75rem;
+  line-height: 1.5;
+}
+
+#build-summary .kimi-ready {
+  color: var(--ai-accent);
+}
+
+#build-warnings {
+  margin-bottom: 1rem;
+}
+
+#build-warnings .warn {
+  font-size: 0.85rem;
+  color: var(--ai-danger);
+  margin: 0;
+}
+
+.quote-box {
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--ai-border);
+}
+
+.quote-box label {
+  display: block;
+  font-size: 0.85rem;
+  color: var(--ai-text-muted);
+  margin-bottom: 0.4rem;
+}
+
+.quote-box input {
+  width: 100%;
+  padding: 0.65rem 0.75rem;
+  border: 1px solid var(--ai-border);
+  border-radius: 6px;
+  background: var(--ai-bg);
+  color: var(--ai-text);
+  font-family: inherit;
+  font-size: 0.95rem;
+  margin-bottom: 0.75rem;
+}
+
+.quote-box input::placeholder {
+  color: var(--ai-text-muted);
+}
+
+.quote-submit {
+  width: 100%;
+  padding: 0.9rem 1.25rem;
+  background: var(--ai-accent);
+  border: none;
+  border-radius: var(--ai-radius);
+  color: var(--ai-bg);
+  font-family: inherit;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.1s;
+}
+
+.quote-submit:hover {
+  background: var(--ai-accent-dim);
+}
+
+.quote-submit:active {
+  transform: scale(0.98);
+}
+
+.quote-submit-primary {
+  font-size: 1.05rem;
+  padding: 1rem 1.25rem;
+}
+
+.quote-submit-secondary {
+  background: var(--ai-bg-hover);
+  border: 1px solid var(--ai-border);
+  color: var(--ai-text);
+  margin-top: 0.5rem;
+}
+
+.quote-hint {
+  font-size: 0.85rem;
+  color: var(--ai-text-muted);
+  margin: 0.5rem 0 0 0;
+  line-height: 1.4;
+}
+
+.config-sections .error {
+  color: var(--ai-danger);
+  padding: 1rem;
+}
+
+.current-pick .product-card {
+  max-width: 280px;
+}
+
+.current-pick .product-card.selected {
+  border-color: var(--ai-accent);
+}

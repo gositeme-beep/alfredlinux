@@ -1,0 +1,4 @@
+RewriteEngine On
+RewriteBase /api/v1/
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteRule ^(.*)$ router.php [QSA,L]

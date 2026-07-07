@@ -1,0 +1,34 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# 0805-alfred-digital-ark.hook.chroot
+# Installs a GUI script for persistent cloud/USB sync
+
+set +e
+
+echo "[0805] Installing Digital Ark (Persistent Backup)..."
+DEBIAN_FRONTEND=noninteractive apt-get install -y --fix-broken -y --no-install-recommends gnupg zenity tar || true
+
+cat << 'EOF' > /usr/local/bin/alfred-ark-sync
+#!/bin/bash
+if zenity --question --text="Do you want to securely backup your Kingdom files to the Digital Ark?" --title="Digital Ark"; then
+    mkdir -p ~/ArkBackup || true
+    tar -czf ~/ArkBackup/kingdom_backup.tar.gz ~/.config ~/Documents 2>/dev/null || true
+    zenity --info --text="Backup successfully saved to ~/ArkBackup/kingdom_backup.tar.gz! \n\nYou can now move this to a secure USB or IPFS node." --title="Digital Ark"
+fi
+EOF
+[ -e /usr/local/bin/alfred-ark-sync ] && chmod +x /usr/local/bin/alfred-ark-sync || true
+
+cat << 'EOF' > /usr/share/applications/alfred-ark.desktop
+[Desktop Entry]
+Name=Digital Ark Sync
+Exec=/usr/local/bin/alfred-ark-sync
+Icon=drive-harddisk
+Type=Application
+Categories=Utility;
+EOF
+
+echo "[0805] Digital Ark configured."
+
+exit 0

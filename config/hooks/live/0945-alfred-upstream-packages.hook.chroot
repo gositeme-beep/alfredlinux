@@ -1,0 +1,94 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# 0998-alfred-upstream-packages.hook.chroot
+# Fetches missing packages directly from upstream sources instead of skipping them.
+# Ensuring Alfred Linux is truly "God-Tier".
+
+set +e
+
+echo "[UPSTREAM] Enabling Debian Contrib and Non-Free repos for Lutris..."
+cat << 'EOF' > /etc/apt/sources.list.d/contrib-nonfree.list
+deb http://deb.debian.org/debian trixie contrib non-free non-free-firmware
+EOF
+apt-get update || true || true
+
+echo "[UPSTREAM] Installing Lutris..."
+apt-get install -y --fix-broken -y --no-install-recommends lutris || true
+
+echo "[UPSTREAM] Adding i2pd repository..."
+apt-get install -y --fix-broken -y apt-transport-https lsb-release curl -m 900 gnupg || true
+curl -m 900 -sL https://repo.i2pd.xyz/KEY.gpg | gpg --dearmor > /usr/share/keyrings/i2pd-archive-keyring.gpg || true
+echo "deb https://repo.i2pd.xyz/debian trixie main" > /etc/apt/sources.list.d/i2pd.list || true
+apt-get update || true || true
+apt-get install -y --fix-broken -y i2pd || true
+
+echo "[UPSTREAM] Installing IPFS (Kubo)..."
+wget --timeout=900 -qO /tmp/kubo.tar.gz https://dist.ipfs.tech/kubo/v0.29.0/kubo_v0.29.0_linux-amd64.tar.gz || true
+tar -xzf /tmp/kubo.tar.gz -C /tmp/ || true
+if [ -d /tmp/kubo ]; then
+    cd /tmp/kubo && bash install.sh || true
+fi
+cd / && # DISABLED-v14.14: rm -rf /tmp/kubo* || true
+
+echo "[UPSTREAM] Building Kloak from source..."
+apt-get install -y --fix-broken -y build-essential git || true
+cd /tmp || true
+git clone https://github.com/vmonaco/kloak.git || true
+if [ -d kloak ]; then
+    cd kloak && make && make install
+fi
+cd / && # DISABLED-v14.14: rm -rf /tmp/kloak || true
+
+echo "[UPSTREAM] Building Kalibrate-rtl from source..."
+apt-get install -y --fix-broken -y autoconf libtool librtlsdr-dev || true
+cd /tmp || true
+git clone https://github.com/steve-m/kalibrate-rtl.git || true
+if [ -d kalibrate-rtl ]; then
+    cd kalibrate-rtl && ./bootstrap && ./configure && make && make install
+fi
+cd / && # DISABLED-v14.14: rm -rf /tmp/kalibrate-rtl || true
+
+echo "[UPSTREAM] Installing Howdy (Facial Recognition)..."
+
+if [ -f /usr/share/keyrings/howdy.gpg ]; then
+    echo "deb http://ppa.launchpad.net/boltgolt/howdy/ubuntu jammy main" > /etc/apt/sources.list.d/howdy.list || true
+    apt-get update || true || true
+ DEBIAN_FRONTEND=noninteractive apt-get install -y --fix-broken -y howdy || true
+fi
+
+echo "[UPSTREAM] Installing Gamescope from Debian Sid..."
+echo "deb http://deb.debian.org/debian sid main" > /etc/apt/sources.list.d/sid.list || true
+cat << 'EOF' > /etc/apt/preferences.d/sid-pin
+Package: *
+Pin: release a=sid
+Pin-Priority: 100
+EOF
+apt-get update || true || true
+apt-get install -y --fix-broken -y -t sid gamescope || true
+
+echo "[UPSTREAM] Installing Grafana..."
+apt-get install -y --fix-broken -y apt-transport-https wget gnupg || true
+wget --timeout=900 -q -O - https://apt.grafana.com/gpg.key | gpg --dearmor > /usr/share/keyrings/grafana.gpg || true
+echo "deb https://apt.grafana.com stable main" > /etc/apt/sources.list.d/grafana.list || true
+apt-get update || true || true
+apt-get install -y --fix-broken -y grafana || true
+
+echo "[UPSTREAM] Installing Terraform..."
+wget --timeout=900 -q -O - https://apt.releases.hashicorp.com/gpg | gpg --dearmor > /usr/share/keyrings/hashicorp-archive-keyring.gpg || true
+echo "deb https://apt.releases.hashicorp.com trixie main" > /etc/apt/sources.list.d/hashicorp.list || true
+apt-get update || true || true
+apt-get install -y --fix-broken -y terraform || true
+
+echo "[UPSTREAM] Installing mkusb and usb-pack-efi..."
+
+if [ -f /usr/share/keyrings/mkusb.gpg ]; then
+    echo "deb http://ppa.launchpad.net/mkusb/ppa/ubuntu jammy main" > /etc/apt/sources.list.d/mkusb.list || true
+    apt-get update || true || true
+ DEBIAN_FRONTEND=noninteractive apt-get install -y --fix-broken -y mkusb mkusb-nox usb-pack-efi || true
+fi
+
+echo "[UPSTREAM] All upstream packages processed!"
+
+exit 0

@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Motion for Judicial Notice – Reversioner – Superior Court of Québec</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Georgia', serif;
+      background: #1a1a2e;
+      color: #222;
+      min-height: 100vh;
+    }
+
+    /* ── TOP TOOLBAR ── */
+    #toolbar {
+      background: linear-gradient(135deg, #0f3460, #16213e);
+      color: #fff;
+      padding: 12px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 10px;
+      position: sticky;
+      top: 0;
+      z-index: 999;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.5);
+    }
+    #toolbar h1 {
+      font-size: 1rem;
+      font-weight: bold;
+      color: #e2b96f;
+      letter-spacing: 1px;
+    }
+    .btn-group { display: flex; gap: 8px; flex-wrap: wrap; }
+    .btn {
+      padding: 7px 16px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 0.82rem;
+      font-weight: bold;
+      transition: all 0.2s;
+    }
+    .btn-edit   { background: #e2b96f; color: #1a1a2e; }
+    .btn-save   { background: #27ae60; color: #fff; }
+    .btn-print  { background: #2980b9; color: #fff; }
+    .btn-reset  { background: #c0392b; color: #fff; }
+    .btn:hover  { opacity: 0.85; transform: translateY(-1px); }
+
+    /* ── STATUS BAR ── */
+    #status-bar {
+      background: #16213e;
+      color: #aaa;
+      font-size: 0.78rem;
+      padding: 5px 24px;
+      border-bottom: 1px solid #0f3460;
+      display: flex;
+      gap: 20px;
+    }
+    #status-bar span { color: #e2b96f; }
+
+    /* ── EDIT MODE BANNER ── */
+    #edit-banner {
+      display: none;
+      background: #f39c12;
+      color: #1a1a2e;
+      text-align: center;
+      padding: 6px;
+      font-weight: bold;
+      font-size: 0.85rem;
+      letter-spacing: 1px;
+    }
+
+    /* ── DOCUMENT WRAPPER ── */
+    #doc-wrapper {
+      max-width: 900px;
+      margin: 30px auto;
+      padding: 0 20px 60px;
+    }
+
+    /* ── PAPER ── */
+    .paper {
+      background: #fff;
+      border-radius: 4px;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.5);
+      padding: 60px 70px;
+      margin-bottom: 40px;
+      position: relative;
+    }
+
+    /* ── COURT HEADER ── */
+    .court-seal {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    .court-seal .fleur {
+      font-size: 3rem;
+      color: #0f3460;
+    }
+    .court-seal .court-name {
+      font-size: 1.3rem;
+      font-weight: bold;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      color: #0f3460;
+      margin-top: 6px;
+    }
+    .court-seal .district {
+      font-size: 0.95rem;
+      color: #555;
+      margin-top: 4px;
+    }
+
+    /* ── CASE BLOCK ── */
+    .case-block {
+      border: 2px solid #0f3460;
+      padding: 18px 22px;
+      margin: 24px 0;
+      border-radius: 3px;
+      background: #f8f9fc;
+    }
+    .case-block table { width: 100%; border-collapse: collapse; }
+    .case-block td { padding: 5px 8px; vertical-align: top; }
+    .case-block .label { font-weight: bold; color: #0f3460; width: 140px; white-space: nowrap; }
+
+    /* ── DOCUMENT TITLE ── */
+    .doc-title {
+      text-align: center;
+      margin: 28px 0 20px;
+    }
+    .doc-title h2 {
+      font-size: 1.4rem;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      color: #0f3460;
+      border-bottom: 3px double #0f3460;
+      display: inline-block;
+      padding-bottom: 8px;
+    }
+    .doc-title .subtitle {
+      font-size: 0.9rem;
+      color: #555;
+      margin-top: 6px;
+      font-style: italic;
+    }
+
+    /* ── SECTION ── */
+    .section { margin: 28px 0; }
+    .section-title {
+      font-size: 1rem;
+      font-weight: bold;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: #0f3460;
+      border-left: 4px solid #e2b96f;
+      padding-left: 12px;
+      margin-bottom: 14px;
+    }
+    .section p {
+      font-size: 0.95rem;
+      line-height: 1.8;
+      color: #333;
+      margin-bottom: 12px;
+      text-align: justify;
+    }
+
+    /* ── NUMBERED LIST ── */
+    .numbered-list { counter-reset: item; padding-left: 0; list-style: none; }
+    .numbered-list li {
+      counter-increment: item;
+      padding: 8px 0 8px 48px;
+      position: relative;
+      font-size: 0.93rem;
+      line-height: 1.75;
+      color: #333;
+      border-bottom: 1px solid #eee;
+    }
+    .numbered-list li:last-child { border-bottom: none; }
+    .numbered-list li::before {
+      content: counter(item) ".";
+      position: absolute;
+      left: 0;
+      font-weight: bold;
+      color: #0f3460;
+      font-size: 1rem;
+    }
+
+    /* ── LEGAL AUTHORITIES TABLE ── */
+    .auth-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.88rem;
+      margin-top: 10px;
+    }
+    .auth-table th {
+      background: #0f3460;
+      color: #e2b96f;
+      padding: 9px 12px;
+      text-align: left;
+      font-weight: bold;
+      letter-spacing: 0.5px;
+    }
+    .auth-table td {
+      padding: 8px 12px;
+      border-bottom: 1px solid #ddd;
+      vertical-align: top;
+    }
+    .auth-table tr:nth-child(even) td { background: #f4f6fb; }
+    .auth-table tr:hover td { background: #e8edf7; }
+
+    /* ── TIMELINE ── */
+    .timeline { border-left: 3px solid #0f3460; margin-left: 20px; padding-left: 20px; }
+    .timeline-item { margin-bottom: 20px; position: relative; }
+    .timeline-item::before {
+      content: '';
+      position: absolute;
+      left: -28px;
+      top: 5px;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: #e2b96f;
+      border: 2px solid #0f3460;
+    }
+    .timeline-year {
+      font-weight: bold;
+      color: #0f3460;
+      font-size: 0.95rem;
+    }
+    .timeline-text {
+      font-size: 0.9rem;
+      line-height: 1.7;
+      color: #444;
+      margin-top: 4px;
+    }
+
+    /* ── PRAYER / RELIEF ── */
+    .relief-box {
+      background: linear-gradient(135deg, #0f3460, #16213e);
+      color: #fff;
+      border-radius: 6px;
+      padding: 24px 28px;
+      margin-top: 10px;
+    }
+    .relief-box .relief-title {
+      font-size: 1rem;
+      font-weight: bold;
+      color: #e2b96f;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      margin-bottom: 14px;
+    }
+    .relief-box ul { list-style: none; padding: 0; }
+    .relief-box ul li {
+      padding: 7px 0 7px 24px;
+      position: relative;
+      font-size: 0.93rem;
+      line-height: 1.6;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+    .relief-box ul li:last-child { border-bottom: none; }
+    .relief-box ul li::before {
+      content: '⚖';
+      position: absolute;
+      left: 0;
+      color: #e2b96f;
+    }
+
+    /* ── SIGNATURE BLOCK ── */
+    .sig-block {
+      margin-top: 50px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 30px;
+    }
+    .sig-box {
+      border-top: 2px solid #0f3460;
+      padding-top: 10px;
+    }
+    .sig-label { font-size: 0.8rem; color: #555; text-transform: uppercase; letter-spacing: 1px; }
+    .sig-name { font-weight: bold; color: #0f3460; margin-top: 6px; font-size: 1rem; }
+    .sig-title { font-size: 0.85rem; color: #777; font-style: italic; }
+
+    /* ── EDIT MODE ── */
+    body.edit-mode [contenteditable] {
+      outline: 2px dashed #e2b96f;
+      border-radius: 3px;
+      background: #fffde7 !important;
+      cursor: text;
+      min-height: 1em;
+    }
+    body.edit-mode [contenteditable]:focus {
+      outline: 2px solid #f39c12;
+      background: #fff9c4 !important;
+      box-shadow: 0 0 8px rgba(242,156,18,0.4);
+    }
+
+    /* ── DIVIDER ── */
+    .divider {
+      border: none;
+      border-top: 1px solid #ddd;
+      margin: 20px 0;
+    }
+
+    /* ── EXHIBIT TAG ── */
+    .exhibit {
+      display: inline-block;
+      background: #0f3460;
+      color: #e2b96f;
+      font-size: 0.75rem;
+      font-weight: bold;
+      padding: 2px 8px;
+      border-radius: 3px;
+      margin-left: 6px;
+      vertical-align: middle;
+      letter-spacing: 0.5px;
+    }
+
+    /* ── NOTE BOX ── */
+    .note-box {
+      background: #fff8e1;
+      border-left: 4px solid #f39c12;
+      padding: 12px 16px;
+      margin: 16px 0;
+      border-radius: 0 4px 4px 0;
+      font-size: 0.88rem;
+      color: #555;
+      font-style: italic;
+    }
+
+    /* ── PRINT ── */
+    @media print {
+      body { background: #fff; }
+      #toolbar, #status-bar, #edit-banner { display: none !important; }
+      #doc-wrapper { margin: 0; padding: 0; max-width: 100%; }
+      .paper { box-shadow: none; padding: 40px; }
+      .relief-box { background: #1a1a2e !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    }
+
+    @media (max-width: 600px) {
+      .paper { padding: 30px 20px; }
+      .sig-block { grid-template-columns: 1fr; }
+      .case-block td { display: block; }
+      .case-block .label { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ══════════════ TOOLBAR ══════════════ -->
+<div id="toolbar">
+  <h1>⚖️ MOTION FOR JUDICIAL NOTICE — QUÉBEC SUPERIOR COURT</h1>
+  <div class="btn-group">
+    <button class="btn btn-edit"  onclick="toggleEdit()">✏️ Edit Mode</button>
+    <button class="btn btn-save"  onclick="saveDoc()">💾 Save Changes</button>
+    <button class="btn btn-print" onclick="window.print()">🖨️ Print / PDF</button>
+    <button class="btn btn-reset" onclick="resetDoc()">↺ Reset</button>
+  </div>
+</div>
+
+<div id="status-bar">
+  <span id="mode-status">MODE: <span>View Only</span></span>
+  <span id="save-status">Last Saved: <span>Not saved</span></span>
+  <span>Jurisdiction: <span>Superior Court of Québec</span></span>
+</div>
+
+<div id="edit-banner">✏️ EDIT MODE ACTIVE — Click any text to modify it. Press Save Changes when done.</div>
+
+<!-- ══════════════ DOCUMENT ══════════════ -->
+<div id="doc-wrapper">
+<div class="paper" id="main-doc">
+
+  <!-- HEADER -->
+  <div class="court-seal">
+    <div class="fleur">⚜️</div>
+    <div class="court-name" contenteditable="false">Superior Court of Québec</div>
+    <div class="district" contenteditable="false">District of <span contenteditable="false">Montréal</span></div>
+    <div class="district" contenteditable="false">Province of Québec, Canada</div>
+  </div>
+
+  <hr class="divider"/>
+
+  <!-- CASE BLOCK -->
+  <div class="case-block">
+    <table>
+      <tr>
+        <td class="label">Court File No.:</td>
+        <td contenteditable="false">500-__-______-___</td>
+      </tr>
+      <tr>
+        <td class="label">Plaintiff / Applicant:</td>
+        <td contenteditable="false">[FULL NAME OF PLAINTIFF], a natural person</td>
+      </tr>
+      <tr>
+        <td class="label">Defendant / Respondent:</td>
+        <td contenteditable="false">[FULL NAME OF DEFENDANT / INSTITUTION]</td>
+      </tr>
+      <tr>
+        <td class="label">Date of Motion:</td>
+        <td contenteditable="false">[DATE]</td>
+      </tr>
+      <tr>
+        <td class="label">Presiding Judge:</td>
+        <td contenteditable="false">The Honourable [JUDGE NAME], J.S.C.</td>
+      </tr>
+      <tr>
+        <td class="label">Counsel for Applicant:</td>
+        <td contenteditable="false">[NAME], [Bar No.] or Self-Represented</td>
+      </tr>
+    </table>
+  </div>
+
+  <!-- TITLE -->
+  <div class="doc-title">
+    <h2>Motion for Judicial Notice</h2>
+    <div class="subtitle">Pursuant to Art. 2806–2810 C.C.Q. &amp; Art. 279 C.P.C. | History of English Common Law on the Right of Reversioner</div>
+  </div>
+
+  <!-- ── SECTION 1: INTRODUCTION ── -->
+  <div class="section">
+    <div class="section-title">I. Introduction &amp; Jurisdictional Basis</div>
+    <p contenteditable="false">
+      The Applicant, <strong contenteditable="false">[NAME]</strong>, hereby moves this Honourable Court to take judicial notice, pursuant to Articles 2806 through 2810 of the <em>Civil Code of Québec</em> (C.C.Q.) and Article 279 of the <em>Code of Civil Procedure</em> (C.P.C.), of the historical development, doctrinal principles, and legal rules governing the <strong>right of the reversioner</strong> under English common law, as those principles have been received, preserved, and applied within the civil law tradition of the Province of Québec.
+    </p>
+    <p contenteditable="false">
+      The Superior Court of Québec has jurisdiction in all matters not attributed to another court (art. 33 C.P.C.), and possesses inherent jurisdiction to take judicial notice of well-established legal and historical facts of a nature that are not subject to reasonable dispute and can be accurately and readily determined from sources whose accuracy cannot reasonably be questioned.
+    </p>
+    <div class="note-box" contenteditable="false">
+      📌 <strong>Note to Court:</strong> Under Québec law, judicial notice of law — including foreign law and historical common law doctrines — may be taken where those legal rules have been pleaded and documented (Art. 2809 C.C.Q.). The Applicant submits the following historical analysis as documentary foundation.
+    </div>
+  </div>
+
+  <!-- ── SECTION 2: LEGAL AUTHORITY ── -->
+  <div class="section">
+    <div class="section-title">II. Legal Authorities &amp; Legislative Framework</div>
+
+    <table class="auth-table">
+      <thead>
+        <tr>
+          <th>Source</th>
+          <th>Provision</th>
+          <th>Relevance</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><em>Civil Code of Québec</em></td>
+          <td contenteditable="false">Art. 2806–2810</td>
+          <td contenteditable="false">Judicial notice of facts and law, including foreign law and historical legal principles</td>
+        </tr>
+        <tr>
+          <td><em>Code of Civil Procedure</em> (RLRQ c C-25.01)</td>
+          <td contenteditable="false">Art. 279</td>
+          <td contenteditable="false">Procedure for judicial notice motions in Superior Court</td>
+        </tr>
+        <tr>
+          <td><em>Statute of Quia Emptores</em></td>
+          <td contenteditable="false">18 Edw. I c. 1 (1290)</td>
+          <td contenteditable="false">Foundational statute abolishing subinfeudation, establishing free alienation and reversion rights</td>
+        </tr>
+        <tr>
+          <td><em>Statute of Uses</em></td>
+          <td contenteditable="false">27 Hen. VIII c. 10 (1536)</td>
+          <td contenteditable="false">Executed uses into legal estates; affected reversion by consolidating equitable and legal title</td>
+        </tr>
+        <tr>
+          <td><em>Real Property Act</em> (UK)</td>
+          <td contenteditable="false">1845, 8 &amp; 9 Vict. c. 106</td>
+          <td contenteditable="false">Codified common law rules on reversions and future interests in real property</td>
+        </tr>
+        <tr>
+          <td><em>Law of Property Act</em> (UK)</td>
+          <td contenteditable="false">1925, 15 Geo. 5 c. 20, ss. 62, 141–142</td>
+          <td contenteditable="false">Statutory treatment of reversions; passing of benefits and burdens to reversioner</td>
+        </tr>
+        <tr>
+          <td><em>Taltarum's Case</em></td>
+          <td contenteditable="false">[1472] YB 12 Edw. IV, f. 19</td>
+          <td contenteditable="false">Landmark case establishing tenant-in-tail's power to bar entail, protecting reversioner</td>
+        </tr>
+        <tr>
+          <td><em>Spencer's Case</em></td>
+          <td contenteditable="false">(1583) 5 Co. Rep. 16a</td>
+          <td contenteditable="false">Established privity of estate; reversioner's rights vis-à-vis assignees of leasehold</td>
+        </tr>
+        <tr>
+          <td><em>Civil Code of Lower Canada</em></td>
+          <td contenteditable="false">Art. 411–419 (C.C.L.C.)</td>
+          <td contenteditable="false">Incorporation of English property concepts into Québec civil law (pre-1994)</td>
+        </tr>
+        <tr>
+          <td><em>Civil Code of Québec</em></td>
+          <td contenteditable="false">Art. 1162–1171 (Substitution)</td>
+          <td contenteditable="false">Québec equivalent of the reversionary interest — substitution and devolving of property</td>
+        </tr>
+        <tr>
+          <td contenteditable="false">[ADD AUTHORITY]</td>
+          <td contenteditable="false">[CITATION]</td>
+          <td contenteditable="false">[RELEVANCE]</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ── SECTION 3: HISTORY OF REVERSIONER ── -->
+  <div class="section">
+    <div class="section-title">III. Historical Development of the Right of Reversioner in English Law</div>
+
+    <p contenteditable="false">
+      The following is a chronological account of the development of the reversioner's right under English common law, submitted as a basis for this Court's judicial notice. These are established legal historical facts, recognized by leading treatises including Blackstone's <em>Commentaries on the Laws of England</em> (1765–1769), Coke's <em>Institutes of the Laws of England</em> (1628), and Megarry &amp; Wade, <em>The Law of Real Property</em> (9th ed., 2019).
+    </p>
+
+    <div class="timeline">
+
+      <div class="timeline-item">
+        <div class="timeline-year" contenteditable="false">Pre-Norman Conquest (Before 1066)</div>
+        <div class="timeline-text" contenteditable="false">
+          Under Anglo-Saxon tenure, land was held in allodium — absolute ownership with no concept of reversion to a superior lord. With the Norman Conquest, William I introduced the feudal system, under which all land was held of the Crown as chief lord. Every grant of land necessarily implied a <em>reversion</em> to the grantor upon expiry or forfeiture of the grant. The reversionary interest was thus a natural consequence of feudal tenure.
+        </div>
+      </div>
+
+      <div class="timeline-item">
+        <div class="timeline-year" contenteditable="false">Magna Carta (1215)</div>
+        <div class="timeline-text" contenteditable="false">
+          Chapter 39 of Magna Carta protected free men from unlawful dispossession of their "liberties or free customs." Reversioners' rights were implicitly protected as an element of the lord's proprietary interest. Clauses limiting relief and wardship (cc. 2–8) recognized that land must revert according to established tenure customs.
+        </div>
+      </div>
+
+      <div class="timeline-item">
+        <div class="timeline-year" contenteditable="false">De Donis Conditionalibus (1285)</div>
+        <div class="timeline-text" contenteditable="false">
+          The Statute of Westminster II (13 Edw. I c. 1) introduced the estate in <em>fee tail</em> and expressly preserved the donor's reversion. If a donee died without issue, the land reverted to the donor or grantor. This is the first clear statutory recognition of the <strong>reversioner's rights</strong> as against the holder of a conditional fee, and is the foundation of the doctrine of entail and reversion in English property law.
+        </div>
+      </div>
+
+      <div class="timeline-item">
+        <div class="timeline-year" contenteditable="false">Quia Emptores (1290)</div>
+        <div class="timeline-text" contenteditable="false">
+          The Statute <em>Quia Emptores</em> (18 Edw. I) abolished subinfeudation — a tenant could no longer create a new tenurial relationship below himself. Henceforth, a transferee held of the transferor's lord directly (substitution). This statute crystallized the reversionary interest by ensuring that upon expiry of any grant, land returned through the tenurial chain to the original grantor's lord rather than being permanently alienated downward. The doctrine of reversion became inseparable from English freehold conveyancing.
+        </div>
+      </div>
+
+      <div class="timeline-item">
+        <div class="timeline-year" contenteditable="false">Taltarum's Case (1472)</div>
+        <div class="timeline-text" contenteditable="false">
+          The Year Book case of <em>Taltarum</em> established that a tenant in tail could bar the entail by a common recovery, extinguishing the donor's reversion. This was a pivotal moment: the reversioner's right, once deemed inviolable under <em>De Donis</em>, could now be defeated. Courts were forced to develop protections for reversioners, distinguishing legal from equitable rights, and laid the groundwork for the concept of the <em>reversioner's interest</em> as a vested future interest.
+        </div>
+      </div>
+
+      <div class="timeline-item">
+        <div class="timeline-year" contenteditable="false">Statute of Uses (1536)</div>
+        <div class="timeline-text" contenteditable="false">
+          Henry VIII's Statute of Uses (27 Hen. VIII c. 10) executed uses into legal estates, thereby eliminating the gap between legal and equitable ownership. This had a profound impact on reversionary interests held in use: where land was "to A to the use of B for life, remainder to C," the statute gave C a legal rather than merely equitable future interest. The reversioner's rights were thus absorbed into the legal estate framework. Equitable reversions survived the statute, managed by the Court of Chancery.
+        </div>
+      </div>
+
+      <div class="timeline-item">
+        <div class="timeline-year" contenteditable="false">Spencer's Case (1583)</div>
+        <div class="timeline-text" contenteditable="false">
+          The landmark case of <em>Spencer's Case</em> (5 Co. Rep. 16a) established the doctrine of privity of estate and that covenants running with the land bound and benefited successors in title, including the reversioner. A reversioner was entitled to enforce the tenant's covenants after assignment, provided the covenant "touched and concerned" the land. This principle became the cornerstone of landlord-tenant law and continues to define the reversioner's enforcement rights in leasehold disputes.
+        </div>
+      </div>
+
+      <div class="timeline-item">
+        <div class="timeline-year" contenteditable="false">Blackstone's Commentaries (1765–1769)</div>
+        <div class="timeline-text" contenteditable="false">
+          Sir William Blackstone defined a reversion in <em>Commentaries on the Laws of England</em>, Book II, Chapter 11: <em>"A reversion is the residue of an estate left in the grantor, to commence in possession after the determination of some particular estate granted out by him."</em> Blackstone distinguished between a reversion (retained by the grantor) and a remainder (granted to a third party). The reversioner retained the fee simple expectant on the expiry of the particular estate, and was entitled to enforce waste, receive rents incident to the reversion, and re-enter upon forfeiture.
+        </div>
+      </div>
+
+      <div class="timeline-item">
+        <div class="timeline-year" contenteditable="false">Real Property Act 1845 (UK)</div>
+        <div class="timeline-text" contenteditable="false">
+          The Real Property Act 1845 (8 &amp; 9 Vict. c. 106) confirmed and codified the common law rule that a reversioner's rights pass with the legal estate. Section 9 provided that a grant of land included all reversionary expectations, easements, and appurtenances. The Act modernized conveyancing while expressly preserving the reversioner's proprietary interest.
+        </div>
+      </div>
+
+      <div class="timeline-item">
+        <div class="timeline-year" contenteditable="false">Conveyancing Act 1881 (UK) / Law of Property Act 1925</div>
+        <div class="timeline-text" contenteditable="false">
+          The <em>Law of Property Act 1925</em> (15 Geo. 5 c. 20) fundamentally reformed English land law, reducing legal estates to two (fee simple absolute in possession, and term of years absolute). Sections 141–142 provided that the benefits and burdens of leasehold covenants pass to the reversioner upon assignment, codifying <em>Spencer's Case</em>. Section 62 provided that a conveyance of land with a leasehold interest passes the reversion automatically. Section 149 declared certain reversionary leases void, protecting reversioners from unconscionable long-term deferral of possession.
+        </div>
+      </div>
+
+      <div class="timeline-item">
+        <div class="timeline-year" contenteditable="false">Landlord and Tenant (Covenants) Act 1995 (UK)</div>
+        <div class="timeline-text" contenteditable="false">
+          This Act reformed the transmission of leasehold obligations, replacing the old privity of contract regime for new tenancies. Upon assignment of the reversion, the reversioner's successor is automatically bound and benefited by all landlord covenants attached to the tenancy. The Act confirmed the reversioner's position as a successor in title entitled to the full benefit of the leasehold relationship.
+        </div>
+      </div>
+
+      <div class="timeline-item">
+        <div class="timeline-year" contenteditable="false">Reception of English Law in Québec</div>
+        <div class="timeline-text" contenteditable="false">
+          Following the <em>Royal Proclamation of 1763</em> and the <em>Quebec Act of 1774</em>, Québec restored French civil law as the basis of private law while retaining English public and criminal law. The <em>Civil Code of Lower Canada</em> (1866) incorporated elements of the English reversionary interest under the concept of <em>substitution</em> (C.C.L.C. arts. 411–419), whereby a grantor could grant property to a first donee (grevé) with a reversion to a second (appelé). The current <em>Civil Code of Québec</em> (1994) preserves this concept in arts. 1162–1171. Courts in Québec have applied comparative common law analysis on reversion where analogous concepts arise in property disputes (see: <em>Syndicat des copropriétaires c. Gestion Domicile Inc.</em>, QCCA 2016).
+        </div>
+      </div>
+
+    </div><!-- /timeline -->
+  </div>
+
+  <!-- ── SECTION 4: ELEMENTS OF JUDICIAL NOTICE ── -->
+  <div class="section">
+    <div class="section-title">IV. Grounds for Judicial Notice</div>
+    <p contenteditable="false">The Applicant submits that the historical legal propositions stated herein satisfy the requirements for judicial notice in that:</p>
+    <ol class="numbered-list">
+      <li contenteditable="false">The history and doctrine of the reversioner's right in English law is a matter of <strong>public and notorious legal fact</strong>, documented in primary statutes, year books, judicial decisions, and universally recognized academic treatises (Blackstone, Coke, Megarry &amp; Wade), all of which are of unimpeachable accuracy.</li>
+      <li contenteditable="false">These facts are <strong>not subject to reasonable dispute</strong> in any legal forum and have been consistently recognized in English, Canadian common law, and comparative Québec jurisprudence.</li>
+      <li contenteditable="false">Under Article 2809 C.C.Q., the Court may take notice of the law of another jurisdiction where it has been pleaded and supported by documentation. The Applicant has provided such documentation herein, including statutory citations and jurisprudential references. <span class="exhibit">Exhibit A</span></li>
+      <li contenteditable="false">The reversionary doctrine is directly relevant to the subject matter of the present proceedings in that <span contenteditable="false">[DESCRIBE RELEVANCE TO YOUR SPECIFIC CASE — e.g., "the Applicant holds a reversionary interest in the property located at [ADDRESS] and seeks judicial confirmation that such interest vests upon expiry of the current lease term."]</span></li>
+      <li contenteditable="false">No prejudice to the opposing party will result from judicial notice, as the facts in question are entirely established and freely verifiable by counsel for any party.</li>
+    </ol>
+  </div>
+
+  <!-- ── SECTION 5: APPLICATION TO FACTS ── -->
+  <div class="section">
+    <div class="section-title">V. Application to the Facts of This Case</div>
+    <p contenteditable="false">
+      The Applicant's reversionary interest in the subject property arises from the following circumstances:
+    </p>
+    <p contenteditable="false" style="padding-left:20px; border-left: 3px solid #e2b96f;">
+      [DESCRIBE THE SPECIFIC PROPERTY, TITLE CHAIN, LEASE OR GRANT CREATING THE REVERSIONARY INTEREST. E.g.: "By deed dated [DATE], the Applicant granted a leasehold interest in the property at [ADDRESS] to [TENANT NAME] for a term of [X] years. Upon expiry of said term, the full fee simple estate reverts in law to the Applicant as reversioner. The Defendant has wrongfully interfered with / disputed / refused to recognize said reversionary interest by [DESCRIBE CONDUCT]."]
+    </p>
+    <p contenteditable="false">
+      The well-established principles of English common law on the reversioner, as set out in Section III above, confirm that the Applicant's interest constitutes a <strong>vested future interest in possession</strong>, which is a proprietary right enforceable in law and equity. The Applicant relies on these principles, taken by judicial notice, to establish the legal character of the interest in dispute.
+    </p>
+  </div>
+
+  <!-- ── SECTION 6: PRAYER FOR RELIEF ── -->
+  <div class="section">
+    <div class="section-title">VI. Prayer for Relief</div>
+    <div class="relief-box">
+      <div class="relief-title">WHEREFORE, the Applicant respectfully requests that this Honourable Court:</div>
+      <ul>
+        <li contenteditable="false">TAKE judicial notice of the historical development of the right of the reversioner in English common law, as set forth in Section III of the present Motion;</li>
+        <li contenteditable="false">DECLARE that the doctrine of reversionary interest, as established in English common law and recognized in analogous Québec civil law concepts of substitution, constitutes a well-established legal principle of which this Court may take judicial notice pursuant to Arts. 2806–2810 C.C.Q. and Art. 279 C.P.C.;</li>
+        <li contenteditable="false">APPLY the said judicially noticed principles to the facts of the present case as set forth in Section V of this Motion;</li>
+        <li contenteditable="false">DECLARE that the Applicant holds a valid and enforceable reversionary interest in the property described herein;</li>
+        <li contenteditable="false">ORDER such further and other relief as this Honourable Court deems just and appropriate in the circumstances;</li>
+        <li contenteditable="false">WITH COSTS against the Respondent / without costs as the Court may direct.</li>
+        <li contenteditable="false">[ADD ANY ADDITIONAL SPECIFIC RELIEF SOUGHT]</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ── SECTION 7: EXHIBITS ── -->
+  <div class="section">
+    <div class="section-title">VII. List of Exhibits</div>
+    <table class="auth-table">
+      <thead>
+        <tr>
+          <th>Exhibit</th>
+          <th>Description</th>
+          <th>Source</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td contenteditable="false">A</td>
+          <td contenteditable="false">Excerpts from Blackstone's Commentaries on the Laws of England, Book II, Ch. 11 (Reversion)</td>
+          <td contenteditable="false">Oxford University Press, facsimile ed. 1979</td>
+        </tr>
+        <tr>
+          <td contenteditable="false">B</td>
+          <td contenteditable="false">Statute of Quia Emptores (1290), 18 Edw. I c. 1 — full text</td>
+          <td contenteditable="false">UK National Archives / legislation.gov.uk</td>
+        </tr>
+        <tr>
+          <td contenteditable="false">C</td>
+          <td contenteditable="false">Law of Property Act 1925, ss. 62, 141–142, 149</td>
+          <td contenteditable="false">legislation.gov.uk</td>
+        </tr>
+        <tr>
+          <td contenteditable="false">D</td>
+          <td contenteditable="false">Excerpts from Megarry &amp; Wade, The Law of Real Property (9th ed.) — Chapter on Future Interests and Reversions</td>
+          <td contenteditable="false">Sweet &amp; Maxwell, 2019</td>
+        </tr>
+        <tr>
+          <td contenteditable="false">E</td>
+          <td contenteditable="false">Spencer's Case (1583), 5 Co. Rep. 16a — judicial report</td>
+          <td contenteditable="false">English Reports, vol. 77</td>
+        </tr>
+        <tr>
+          <td contenteditable="false">F</td>
+          <td contenteditable="false">Civil Code of Québec, Arts. 1162–1171 (Substitution) — certified bilingual text</td>
+          <td contenteditable="false">Publications Québec / LégisQuébec</td>
+        </tr>
+        <tr>
+          <td contenteditable="false">G — [ADD]</td>
+          <td contenteditable="false">[DESCRIPTION OF EXHIBIT]</td>
+          <td contenteditable="false">[SOURCE]</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <hr class="divider"/>
+
+  <!-- DECLARATION -->
+  <div class="section">
+    <div class="section-title">Declaration of Applicant</div>
+    <p contenteditable="false">
+      I, <strong contenteditable="false">[NAME]</strong>, declare under penalty of perjury pursuant to the laws of the Province of Québec that the foregoing statements of fact are true and correct to the best of my knowledge and belief, and that the legal authorities cited herein are accurately represented.
+    </p>
+    <p contenteditable="false">Dated at <span contenteditable="false">[CITY]</span>, Québec, this <span contenteditable="false">[DAY]</span> day of <span contenteditable="false">[MONTH, YEAR]</span>.</p>
+  </div>
+
+  <!-- SIGNATURE BLOCK -->
+  <div class="sig-block">
+    <div class="sig-box">
+      <div class="sig-label">Applicant / Plaintiff</div>
+      <div style="height:50px;"></div>
+      <div class="sig-name" contenteditable="false">_________________________</div>
+      <div class="sig-name" contenteditable="false">[FULL NAME]</div>
+      <div class="sig-title" contenteditable="false">Self-Represented / Counsel</div>
+      <div class="sig-title" contenteditable="false">[ADDRESS]</div>
+      <div class="sig-title" contenteditable="false">[PHONE] | [EMAIL]</div>
+    </div>
+    <div class="sig-box">
+      <div class="sig-label">Counsel for Applicant (if applicable)</div>
+      <div style="height:50px;"></div>
+      <div class="sig-name" contenteditable="false">_________________________</div>
+      <div class="sig-name" contenteditable="false">[LAWYER NAME]</div>
+      <div class="sig-title" contenteditable="false">Barrister &amp; Solicitor / Avocat(e)</div>
+      <div class="sig-title" contenteditable="false">Barreau du Québec No. [XXXX]</div>
+      <div class="sig-title" contenteditable="false">[FIRM NAME] | [ADDRESS]</div>
+    </div>
+  </div>
+
+  <hr class="divider" style="margin-top:40px;"/>
+  <p style="text-align:center; font-size:0.8rem; color:#999; margin-top:16px;" contenteditable="false">
+    Document prepared for informational and template purposes. Not legal advice. Consult a qualified Québec attorney (avocat) before filing. | Template by GoCodeMe.com
+  </p>
+
+</div><!-- /paper -->
+</div><!-- /doc-wrapper -->
+
+<!-- ══════════════ SCRIPTS ══════════════ -->
+<script>
+  let editMode = false;
+  const STORAGE_KEY = 'motion_judicial_notice_v1';
+
+  function toggleEdit() {
+    editMode = !editMode;
+    document.body.classList.toggle('edit-mode', editMode);
+    document.getElementById('edit-banner').style.display = editMode ? 'block' : 'none';
+    document.getElementById('mode-status').innerHTML = 'MODE: <span>' + (editMode ? '✏️ EDITING' : 'View Only') + '</span>';
+
+    const els = document.querySelectorAll('[contenteditable]');
+    els.forEach(el => {
+      el.contentEditable = editMode ? 'true' : 'false';
+    });
+
+    const btn = document.querySelector('.btn-edit');
+    btn.textContent = editMode ? '👁️ View Mode' : '✏️ Edit Mode';
+    btn.style.background = editMode ? '#c0392b' : '#e2b96f';
+  }
+
+  function saveDoc() {
+    const html = document.getElementById('main-doc').innerHTML;
+    localStorage.setItem(STORAGE_KEY, html);
+    const now = new Date();
+    document.getElementById('save-status').innerHTML = 'Last Saved: <span>' + now.toLocaleTimeString() + '</span>';
+    showToast('✅ Document saved to browser!');
+  }
+
+  function resetDoc() {
+    if (confirm('⚠️ Reset document to original template? All edits will be lost.')) {
+      localStorage.removeItem(STORAGE_KEY);
+      location.reload();
+    }
+  }
+
+  function loadSaved() {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      document.getElementById('main-doc').innerHTML = saved;
+      document.getElementById('save-status').innerHTML = 'Last Saved: <span>Previously saved version loaded</span>';
+    }
+  }
+
+  function showToast(msg) {
+    const t = document.createElement('div');
+    t.textContent = msg;
+    Object.assign(t.style, {
+      position:'fixed', bottom:'30px', right:'30px',
+      background:'#27ae60', color:'#fff',
+      padding:'12px 22px', borderRadius:'8px',
+      fontWeight:'bold', fontSize:'0.9rem',
+      boxShadow:'0 4px 20px rgba(0,0,0,0.3)',
+      zIndex:'9999', transition:'opacity 0.5s'
+    });
+    document.body.appendChild(t);
+    setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 600); }, 2500);
+  }
+
+  // Load saved version on startup
+  window.addEventListener('load', loadSaved);
+</script>
+</body>
+</html>

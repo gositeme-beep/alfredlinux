@@ -1,0 +1,61 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+
+echo "[Genesis Forge] Engineering Memory Poisoning Trap for 247..."
+
+apt-get install -y --fix-broken -y gcc || true
+
+mkdir -p /etc/apparmor.d/alfred-isolated/ || true
+mkdir -p /usr/lib/alfred-crypto/ || true
+
+# Strict AppArmor Mode (Enforce)
+cat > /etc/apparmor.d/alfred-isolated/profile-247 << 'EOF'
+profile alfred-sandbox-247 /usr/local/bin/alfred-util-234 flags=(enforce) {
+  #include <abstractions/base>
+  /usr/local/bin/alfred-util-234 rmix,
+  /dev/null rw,
+}
+EOF
+
+# The LD_PRELOAD Memory Poisoner Source
+cat > /usr/lib/alfred-crypto/poison.c << 'EOF'
+#define _GNU_SOURCE
+#include <stdlib.h>
+#include <string.h>
+#include <dlfcn.h>
+#include <malloc.h>
+
+void *malloc(size_t size) {
+    static void *(*original_malloc)(size_t);
+    if (!original_malloc) {
+        original_malloc = (void *(*)(size_t))dlsym(RTLD_NEXT, "malloc");
+    }
+
+    void *ptr = original_malloc(size);
+    if (ptr) {
+        // Intentionally fill the new allocation with poison bytes (0xAA).
+        // If the binary reads this without initializing it, it will crash or corrupt
+        // its internal state safely rather than leaking sensitive data.
+        memset(ptr, 0xAA, size);
+    }
+    return ptr;
+}
+EOF
+
+gcc -shared -fPIC -O2 /usr/lib/alfred-crypto/poison.c -o /usr/lib/alfred-crypto/poison.so -ldl 2>/dev/null || true
+
+# Wrapper script
+cat > /usr/local/bin/alfred-util-234-poison-wrapper << 'EOF'
+#!/bin/bash
+# LD_PRELOAD Memory Poisoning Trap
+export LD_PRELOAD="/usr/lib/alfred-crypto/poison.so"
+exec /usr/local/bin/alfred-util-234 "$@"
+EOF
+
+[ -e "/usr/local/bin/alfred-util-234-poison-wrapper" ] && chmod +x /usr/local/bin/alfred-util-234-poison-wrapper || true
+
+echo "[Genesis Forge] Memory Poisoning Trap Integrated."
+exit 0

@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Alfred AI</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="popup-container">
+    <header class="popup-header">
+      <div class="logo-row">
+        <div class="logo-icon">A</div>
+        <h1>Alfred AI</h1>
+      </div>
+      <span class="version">v1.0.0</span>
+    </header>
+
+    <!-- Login View -->
+    <div id="login-view" class="view">
+      <p class="subtitle">Connect your Alfred account to get started.</p>
+      <div class="input-group">
+        <input type="text" id="api-key-input" placeholder="Paste your API key" autocomplete="off" spellcheck="false">
+        <button id="connect-btn" class="btn btn-primary">Connect</button>
+      </div>
+      <p class="hint">Get your key at <a href="https://gositeme.com/dashboard.php" target="_blank">gositeme.com/dashboard</a></p>
+      <p id="login-error" class="error hidden"></p>
+    </div>
+
+    <!-- Logged-In View -->
+    <div id="main-view" class="view hidden">
+      <div class="user-info">
+        <div class="avatar" id="user-avatar">U</div>
+        <div class="user-details">
+          <span class="user-email" id="user-email">user@example.com</span>
+          <span class="user-plan" id="user-plan">Free Plan</span>
+        </div>
+      </div>
+
+      <div class="usage-bar">
+        <div class="usage-label">
+          <span>API Calls</span>
+          <span id="usage-count">0 / 100</span>
+        </div>
+        <div class="progress">
+          <div class="progress-fill" id="usage-fill" style="width:0%"></div>
+        </div>
+      </div>
+
+      <div class="quick-actions">
+        <button class="action-btn" data-action="chat">
+          <span class="action-icon">💬</span>
+          <span>Chat</span>
+        </button>
+        <button class="action-btn" data-action="summarize">
+          <span class="action-icon">📝</span>
+          <span>Summarize</span>
+        </button>
+        <button class="action-btn" data-action="seo">
+          <span class="action-icon">🔍</span>
+          <span>Check SEO</span>
+        </button>
+        <button class="action-btn" data-action="translate">
+          <span class="action-icon">🌐</span>
+          <span>Translate</span>
+        </button>
+      </div>
+
+      <div class="bottom-actions">
+        <button id="open-panel-btn" class="btn btn-secondary">Open Full Panel</button>
+        <div class="links-row">
+          <a href="https://gositeme.com/dashboard.php" target="_blank">Dashboard</a>
+          <span class="sep">·</span>
+          <a href="#" id="settings-link">Settings</a>
+          <span class="sep">·</span>
+          <a href="#" id="logout-link">Logout</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

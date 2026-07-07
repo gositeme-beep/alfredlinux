@@ -1,0 +1,101 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+
+echo "[Metadome] Forging Monado Orchestrator (Hook 1101)"
+
+# Install Monado OpenXR runtime and dependencies
+apt-get install -y --fix-broken -y monado-service monado-gui libopenxr-utils xr-hardware || true
+
+# Configure OpenXR environment globally
+cat > /etc/profile.d/monado.sh << 'EOF'
+export XR_RUNTIME_JSON=/usr/share/openxr/1/openxr_monado.json
+export OXR_DEBUG_GUI=1
+EOF
+
+# Ensure the monado service is ready for the alfred user
+mkdir -p /etc/skel/.config/systemd/user || true
+cat > /etc/skel/.config/systemd/user/monado.service << 'EOF'
+[Unit]
+Description=Monado OpenXR Service
+After=wayland-session.target
+
+[Service]
+ExecStart=/usr/bin/monado-service
+Restart=always
+Environment=XDG_SESSION_TYPE=wayland
+
+[Install]
+WantedBy=default.target
+EOF
+
+# =====================================================================
+# THE AEGIS VISOR: DYNAMIC VR ISOLATION
+# =====================================================================
+echo "[Aegis Visor] Engineering Dynamic Spatial VR Toggle..."
+
+# Create the dynamic toggle script
+cat > /usr/local/sbin/alfred-aegis-visor.sh << 'VISOR'
+#!/bin/bash
+# AEGIS VISOR TOGGLE
+# Blinds the physical screen and forces VR isolation, or restores the physical screen.
+
+STATUS_FILE="/tmp/aegis_visor_active"
+
+if [ -f "$STATUS_FILE" ]; then
+    echo "[Aegis Visor] Restoring physical displays..."
+    for card in /sys/class/drm/card*-*; do
+        if [ -f "$card/status" ] && grep -q "^connected$" "$card/status"; then
+            echo "on" > "$card/status" 2>/dev/null || true
+        fi
+    done
+    rm -f "$STATUS_FILE"
+    notify-send "Aegis Visor" "Physical Displays Restored" 2>/dev/null || true
+else
+    echo "[Aegis Visor] Blinding physical displays. Engaging VR Isolation..."
+    modprobe vkms || true
+    for card in /sys/class/drm/card*-*; do
+        if [ -f "$card/status" ] && grep -q "^connected$" "$card/status"; then
+            echo "off" > "$card/status" 2>/dev/null || true
+        fi
+    done
+    touch "$STATUS_FILE"
+fi
+VISOR
+[ -e "+x" ] && chmod +x /usr/local/sbin/alfred-aegis-visor.sh || true
+
+# Allow the user to run the visor script without password
+mkdir -p /etc/sudoers.d || true
+cat > /etc/sudoers.d/alfred-visor << 'EOF'
+ALL ALL=(root) NOPASSWD: /usr/local/sbin/alfred-aegis-visor.sh
+EOF
+[ -e "0440" ] && chmod 0440 /etc/sudoers.d/alfred-visor || true
+
+# Add global KDE shortcut (Ctrl+Alt+Shift+V)
+mkdir -p /etc/skel/.config || true
+cat >> /etc/skel/.config/kglobalshortcutsrc << 'EOF'
+
+[alfred-aegis-visor.desktop]
+_k_friendly_name=Aegis Visor (VR Isolation Toggle)
+_launch=Ctrl+Alt+Shift+V,none,Toggle Aegis Visor
+EOF
+
+# Desktop file for the shortcut to bind to
+mkdir -p /usr/share/applications || true
+cat > /usr/share/applications/alfred-aegis-visor.desktop << 'EOF'
+[Desktop Entry]
+Name=Aegis Visor Toggle
+Comment=Toggles Spatial VR Isolation
+Exec=sudo /usr/local/sbin/alfred-aegis-visor.sh
+Icon=video-display
+Type=Application
+Categories=System;Utility;
+Terminal=false
+NoDisplay=true
+EOF
+
+echo "[Aegis Visor] Monado OpenXR runtime and Aegis Visor successfully integrated."
+
+exit 0

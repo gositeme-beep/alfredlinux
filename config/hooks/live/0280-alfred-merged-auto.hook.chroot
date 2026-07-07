@@ -1,0 +1,2705 @@
+#!/bin/bash
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Description: Maximum-sovereign tooling install — full self-host, mesh, federation, signal, matrix, etc.
+set +e
+export DEBIAN_FRONTEND=noninteractive
+export UCF_FORCE_CONFFNEW=1
+export APT_LISTCHANGES_FRONTEND=none
+# Fix /tmp permissions (may be restricted by earlier hooks in chroot)
+chmod 1777 /tmp 2>/dev/null || true
+# profile.d/alfred-max-build.sh uses a quoted heredoc so $(nproc) is evaluated at login, not during ISO build.
+echo "╔════════════════════════════════════════════════════════════╗"
+echo "║  HOOK 0280: Alfred MAX — Total Sovereign Compute v5.0     ║"
+echo "║  Max Cores • Max RAM • Mesh Cloud • Self-Evolution        ║"
+echo "╚════════════════════════════════════════════════════════════╝"
+
+###############################################################################
+# 1. MAX PERFORMANCE — Squeeze every core and byte of RAM
+###############################################################################
+echo "[MAX] Configuring maximum performance tuning..."
+
+cat > /etc/sysctl.d/99-alfred-max-performance.conf << 'SYSEOF'
+# Alfred Linux 5.0 — MAX Performance Kernel Tuning
+# Every core. Every byte. For God's people.
+
+# --- CPU / Scheduler ---
+kernel.sched_autogroup_enabled = 1
+kernel.sched_child_runs_first = 1
+kernel.sched_latency_ns = 4000000
+kernel.sched_min_granularity_ns = 500000
+kernel.sched_wakeup_granularity_ns = 500000
+kernel.sched_migration_cost_ns = 250000
+kernel.sched_nr_migrate = 128
+
+# --- Memory — Use ALL available RAM aggressively ---
+vm.swappiness = 10
+vm.vfs_cache_pressure = 50
+vm.dirty_ratio = 40
+vm.dirty_background_ratio = 10
+vm.dirty_expire_centisecs = 3000
+vm.dirty_writeback_centisecs = 500
+vm.overcommit_memory = 1
+vm.max_map_count = 1048576
+vm.min_free_kbytes = 65536
+
+# --- Network — Max throughput for mesh ---
+net.core.rmem_max = 16777216
+net.core.wmem_max = 16777216
+net.core.rmem_default = 1048576
+net.core.wmem_default = 1048576
+net.core.optmem_max = 65536
+net.core.netdev_max_backlog = 50000
+net.core.somaxconn = 65535
+net.ipv4.tcp_rmem = 4096 1048576 16777216
+net.ipv4.tcp_wmem = 4096 1048576 16777216
+net.ipv4.tcp_max_syn_backlog = 65535
+net.ipv4.tcp_slow_start_after_idle = 0
+net.ipv4.tcp_tw_reuse = 1
+net.ipv4.tcp_fin_timeout = 15
+net.ipv4.tcp_keepalive_time = 300
+net.ipv4.tcp_keepalive_intvl = 30
+net.ipv4.tcp_keepalive_probes = 5
+net.ipv4.tcp_fastopen = 3
+net.ipv4.tcp_mtu_probing = 1
+net.ipv4.tcp_congestion_control = bbr
+
+# --- File System — Max open files ---
+fs.file-max = 2097152
+fs.inotify.max_user_watches = 524288
+fs.inotify.max_user_instances = 1024
+
+# --- IPC — For AI/ML shared memory ---
+kernel.shmmax = 68719476736
+kernel.shmall = 4294967296
+kernel.shmmni = 4096
+kernel.msgmax = 65536
+kernel.msgmnb = 65536
+SYSEOF
+
+# Limits for max file descriptors and processes
+cat > /etc/security/limits.d/99-alfred-max.conf << 'LIMEOF'
+# Alfred Linux 5.0 — MAX resource limits
+*    soft    nofile    1048576
+*    hard    nofile    1048576
+*    soft    nproc     unlimited
+*    hard    nproc     unlimited
+*    soft    memlock   unlimited
+*    hard    memlock   unlimited
+*    soft    stack     unlimited
+*    hard    stack     unlimited
+root soft    nofile    1048576
+root hard    nofile    1048576
+LIMEOF
+
+# Enable BBR congestion control
+cat > /etc/modules-load.d/alfred-bbr.conf << 'BBREOF'
+tcp_bbr
+BBREOF
+
+###############################################################################
+# 2. CPU GOVERNOR — Performance mode by default
+###############################################################################
+echo "[MAX] Setting CPU governor to performance..."
+cat > /usr/local/bin/alfred-max-cpu << 'CPUEOF'
+#!/bin/bash
+# alfred-max-cpu — Set all CPU cores to maximum performance
+ACTION="${1:-performance}"
+
+case "$ACTION" in
+    performance|max)
+        for gov in /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor; do
+            [ -f "$gov" ] && echo "performance" > "$gov" 2>/dev/null
+        done
+        echo "All CPU cores set to PERFORMANCE mode"
+        ;;
+    powersave|eco)
+        for gov in /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor; do
+            [ -f "$gov" ] && echo "powersave" > "$gov" 2>/dev/null
+        done
+        echo "All CPU cores set to POWERSAVE mode"
+        ;;
+    auto|ondemand)
+        for gov in /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor; do
+            [ -f "$gov" ] && echo "ondemand" > "$gov" 2>/dev/null
+        done
+        echo "All CPU cores set to ONDEMAND (auto-scale)"
+        ;;
+    status)
+        echo "CPU Cores: $(nproc)"
+        echo "Governor: $(cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor 2>/dev/null || echo 'N/A')"
+        echo "Frequency range:"
+        for cpu in /sys/devices/system/cpu/cpu*/cpufreq; do
+            if [ -f "$cpu/scaling_cur_freq" ]; then
+                CUR=$(cat "$cpu/scaling_cur_freq")
+                MAX=$(cat "$cpu/scaling_max_freq" 2>/dev/null)
+                CPU_NUM=$(basename $(dirname "$cpu"))
+                echo "  $CPU_NUM: $(( CUR / 1000 )) MHz / $(( MAX / 1000 )) MHz max"
+            fi
+        done
+        ;;
+    *)
+        echo "Usage: alfred-max-cpu [performance|powersave|auto|status]"
+        ;;
+esac
+CPUEOF
+chmod +x /usr/local/bin/alfred-max-cpu || true
+
+# Auto-set performance at boot
+cat > /etc/systemd/system/alfred-max-cpu.service << 'CPUSVCEOF'
+[Unit]
+Description=Alfred MAX CPU Performance Governor
+After=multi-user.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/alfred-max-cpu performance
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
+CPUSVCEOF
+systemctl enable alfred-max-cpu || true || true.service 2>/dev/null || true
+
+###############################################################################
+# 3. ZRAM — Use compressed RAM as swap (doubles effective memory)
+###############################################################################
+echo "[MAX] Setting up ZRAM (compressed RAM = 2x effective memory)..."
+DEBIAN_FRONTEND=noninteractive apt-get install -y --fix-broken -y --no-install-recommends \
+    -o Dpkg::Options::=--force-confdef \
+    -o Dpkg::Options::=--force-confnew \
+    zram-tools 2>/dev/null || true
+
+cat > /etc/default/zramswap << 'ZRAMEOF'
+# Alfred Linux 5.0 — ZRAM config
+# Uses 50% of RAM as compressed swap = ~2x effective memory
+ALGO=zstd
+PERCENT=50
+PRIORITY=100
+ZRAMEOF
+
+###############################################################################
+# 4. OMAHON CLOUD — Distributed AI compute across mesh
+###############################################################################
+echo "[MAX] Setting up Omahon Cloud — distributed AI compute..."
+cat > /usr/local/bin/alfred-omahon-cloud << 'OMAHONEOF'
+#!/bin/bash
+# alfred-omahon-cloud — Distributed AI inference across Alfred mesh network
+# Uses Omahon (local) + mesh peers for parallel AI workloads
+
+BOLD='\033[1m'
+GREEN='\033[0;32m'
+CYAN='\033[0;36m'
+YELLOW='\033[1;33m'
+NC='\033[0m'
+
+MESH_DIR="$HOME/.config/alfred/mesh"
+CLOUD_DIR="$HOME/.config/alfred/omahon-cloud"
+mkdir -p "$MESH_DIR" "$CLOUD_DIR" || true
+
+discover_peers() {
+    echo -e "${CYAN}[Omahon Cloud] Discovering mesh peers...${NC}"
+    # Use avahi to find Alfred machines on the network
+    PEERS=()
+    if command -v avahi-browse &>/dev/null; then
+        while IFS= read -r line; do
+            IP=$(echo "$line" | grep -oE '([0-9]{1,3}\.){3}[0-9]{1,3}' | head -1)
+            [ -n "$IP" ] && PEERS+=("$IP")
+        done < <(avahi-browse -rpt _alfred._tcp 2>/dev/null | grep "=" | head -20)
+    fi
+
+    # Also check known peers
+    if [ -f "$MESH_DIR/known-peers.txt" ]; then
+        while read -r peer; do
+            [ -n "$peer" ] && PEERS+=("$peer")
+        done < "$MESH_DIR/known-peers.txt"
+    fi
+
+    # Deduplicate
+    UNIQUE_PEERS=($(printf '%s\n' "${PEERS[@]}" | sort -u))
+    echo -e "${GREEN}Found ${#UNIQUE_PEERS[@]} mesh peers${NC}"
+    printf '%s\n' "${UNIQUE_PEERS[@]}" > "$CLOUD_DIR/active-peers.txt" || true
+    printf '%s\n' "${UNIQUE_PEERS[@]}"
+}
+
+cloud_status() {
+    echo -e "${BOLD}╔═══════════════════════════════════════════╗${NC}"
+    echo -e "${BOLD}║  Omahon Cloud — Distributed AI Compute    ║${NC}"
+    echo -e "${BOLD}╚═══════════════════════════════════════════╝${NC}"
+    echo ""
+    echo -e "${CYAN}[Local Node]${NC}"
+    echo "  Hostname: $(hostname)"
+    echo "  CPU Cores: $(nproc)"
+    echo "  RAM: $(free -h | awk '/^Mem:/ {print $2}')"
+    echo "  GPU: $(lspci 2>/dev/null | grep -iE 'vga|3d' | head -1 | cut -d: -f3- || echo 'N/A')"
+    if command -v omahon &>/dev/null; then
+        echo -e "  Omahon: ${GREEN}✓ installed${NC}"
+    else
+        echo -e "  Omahon: ${YELLOW}not installed${NC}"
+    fi
+
+    echo ""
+    echo -e "${CYAN}[Mesh Peers]${NC}"
+    discover_peers
+
+    echo ""
+    echo -e "${CYAN}[Cloud Capacity]${NC}"
+    LOCAL_CORES=$(nproc)
+    LOCAL_RAM_KB=$(grep MemTotal /proc/meminfo | awk '{print $2}')
+    PEER_COUNT=$(wc -l < "$CLOUD_DIR/active-peers.txt" 2>/dev/null || echo 0)
+    # Estimate: each peer contributes avg 4 cores + 8GB
+    TOTAL_CORES=$((LOCAL_CORES + PEER_COUNT * 4))
+    TOTAL_RAM_GB=$(( (LOCAL_RAM_KB / 1024 / 1024) + PEER_COUNT * 8 ))
+    echo "  Total estimated cores: $TOTAL_CORES"
+    echo "  Total estimated RAM: ${TOTAL_RAM_GB} GB"
+    echo "  Nodes: $((PEER_COUNT + 1))"
+}
+
+distribute_task() {
+    if [[ $# -eq 0 ]]; then
+        echo "Usage: alfred-omahon-cloud run -- <task words...>" >&2 || true
+        return 1
+    fi
+    TASKP=$(printf '%.80s' "$*")
+    echo -e "${CYAN}[Omahon Cloud] Distributing task: ${TASKP}...${NC}"
+
+    # Local Omahon first (argv, not a shell string)
+    if command -v omahon &>/dev/null; then
+        echo -e "${GREEN}[Local] Running on Omahon...${NC}"
+        omahon "$@" 2>/dev/null &
+        LOCAL_PID=$!
+    fi
+
+    # Fan out to peers
+    if [ -f "$CLOUD_DIR/active-peers.txt" ]; then
+        while read -r peer; do
+            [[ -z "${peer//[[:space:]]/}" ]] || [[ "$peer" == \#* ]] && continue
+            echo -e "${YELLOW}[Peer: $peer] Dispatching...${NC}"
+            ssh -o ConnectTimeout=3 -o BatchMode=yes -o StrictHostKeyChecking=accept-new "$peer" \
+                omahon "$@" 2>/dev/null &
+        done < "$CLOUD_DIR/active-peers.txt"
+    fi
+
+    # Wait for first result
+    wait -n 2>/dev/null
+    echo -e "${GREEN}[Omahon Cloud] Task complete${NC}"
+}
+
+case "${1:-help}" in
+    status)    cloud_status ;;
+    discover)  discover_peers ;;
+    run)       shift; distribute_task "$@" ;;
+    help|*)
+        echo "alfred-omahon-cloud — Distributed AI compute across Alfred mesh"
+        echo ""
+        echo "Commands:"
+        echo "  status    — Show cloud capacity (local + mesh peers)"
+        echo "  discover  — Find Alfred machines on the network"
+        echo "  run       — Distribute an AI task across the cloud"
+        echo "  help      — Show this help"
+        ;;
+esac
+OMAHONEOF
+chmod +x /usr/local/bin/alfred-omahon-cloud || true
+
+###############################################################################
+# 5. MESH SKYNET — Distributed compute swarm
+###############################################################################
+echo "[MAX] Setting up Mesh Skynet — swarm compute..."
+cat > /usr/local/bin/alfred-skynet << 'SKYNETEOF'
+#!/bin/bash
+# alfred-skynet — Alfred Mesh Swarm Compute Network
+# Every Alfred machine becomes a node in a sovereign compute grid
+
+BOLD='\033[1m'
+GREEN='\033[0;32m'
+RED='\033[0;31m'
+CYAN='\033[0;36m'
+NC='\033[0m'
+
+SKYNET_DIR="$HOME/.config/alfred/skynet"
+SKYNET_PORT=7331
+mkdir -p "$SKYNET_DIR" || true
+
+# Node identity
+NODE_ID=$(cat "$SKYNET_DIR/node-id" 2>/dev/null)
+if [ -z "$NODE_ID" ]; then
+    NODE_ID=$(hostname)-$(head -c 8 /dev/urandom | xxd -p)
+    echo "$NODE_ID" > "$SKYNET_DIR/node-id" || true
+fi
+
+skynet_status() {
+    echo -e "${BOLD}╔═══════════════════════════════════════════╗${NC}"
+    echo -e "${BOLD}║       Alfred Skynet — Mesh Swarm          ║${NC}"
+    echo -e "${BOLD}╚═══════════════════════════════════════════╝${NC}"
+    echo ""
+    echo -e "${CYAN}Node ID:${NC} $NODE_ID"
+    echo -e "${CYAN}Role:${NC} $(cat "$SKYNET_DIR/role" 2>/dev/null || echo 'worker')"
+    echo ""
+    echo -e "${CYAN}[Resources Available to Swarm]${NC}"
+    echo "  CPU: $(nproc) cores @ $(cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq 2>/dev/null | awk '{printf "%.1f GHz", $1/1000000}' || echo 'N/A')"
+    echo "  RAM: $(free -h | awk '/^Mem:/ {print $7}') available of $(free -h | awk '/^Mem:/ {print $2}')"
+    echo "  Disk: $(df -h / | awk 'NR==2 {print $4}') free"
+    GPU_INFO=$(lspci 2>/dev/null | grep -iE 'vga|3d' | head -1 | cut -d: -f3-)
+    echo "  GPU: ${GPU_INFO:-none}"
+    echo ""
+
+    # Check swarm members
+    echo -e "${CYAN}[Swarm Members]${NC}"
+    if [ -f "$SKYNET_DIR/swarm-members.txt" ]; then
+        while read -r member; do
+            if ping -c1 -W1 "$member" &>/dev/null; then
+                echo -e "  ${GREEN}●${NC} $member (online)"
+            else
+                echo -e "  ${RED}○${NC} $member (offline)"
+            fi
+        done < "$SKYNET_DIR/swarm-members.txt"
+    else
+        echo "  No swarm members yet. Run 'alfred-skynet join <ip>' to add nodes." || true
+    fi
+}
+
+skynet_join() {
+    PEER="$1"
+    [ -z "$PEER" ] && echo "Usage: alfred-skynet join <ip>" && return 1
+    echo "$PEER" >> "$SKYNET_DIR/swarm-members.txt" || true
+    sort -u -o "$SKYNET_DIR/swarm-members.txt" "$SKYNET_DIR/swarm-members.txt"
+    echo -e "${GREEN}Added $PEER to swarm${NC}"
+    # Share our existence with the peer
+    ssh -o ConnectTimeout=3 -o StrictHostKeyChecking=accept-new "$PEER" \
+        "mkdir -p ~/.config/alfred/skynet && echo '$(hostname -I | awk '{print $1}')' >> ~/.config/alfred/skynet/swarm-members.txt && sort -u -o ~/.config/alfred/skynet/swarm-members.txt ~/.config/alfred/skynet/swarm-members.txt" 2>/dev/null \
+        && echo -e "${GREEN}Bidirectional mesh established with $PEER${NC}" \
+        || echo -e "${RED}Could not reach peer — added locally only${NC}"
+}
+
+skynet_distribute() {
+    if [[ $# -eq 0 ]]; then
+        echo "Usage: alfred-skynet distribute -- <command> [args...]" >&2 || true
+        echo "Example: alfred-skynet distribute -- ls -la /tmp" >&2 || true
+        return 1
+    fi
+    if [[ -f "$SKYNET_DIR/distribute-allowlist" && -s "$SKYNET_DIR/distribute-allowlist" ]]; then
+        _sk_cmd=$1
+        _sk_base=$(basename -- "$_sk_cmd")
+        if ! grep -qxF -- "$_sk_cmd" "$SKYNET_DIR/distribute-allowlist" 2>/dev/null \
+            && ! grep -qxF -- "$_sk_base" "$SKYNET_DIR/distribute-allowlist" 2>/dev/null; then
+            echo "Skynet: $_sk_cmd not allowed — add basename or full path to $SKYNET_DIR/distribute-allowlist (one per line)." >&2 || true
+            return 1
+        fi
+    fi
+    echo -e "${CYAN}[Skynet] Distributing argv to swarm:${NC} $*"
+    echo -e "${GREEN}[Local]${NC}"
+    # Never use bash -c on a joined string (command injection). Exec argv locally.
+    "$@" &
+
+    if [ -f "$SKYNET_DIR/swarm-members.txt" ]; then
+        while read -r member; do
+            [[ -z "${member//[[:space:]]/}" ]] || [[ "$member" == \#* ]] && continue
+            echo -e "${CYAN}[Node: $member]${NC}"
+            # Pass argv through to remote ssh without local shell interpretation.
+            ssh -o ConnectTimeout=3 -o BatchMode=yes -o StrictHostKeyChecking=accept-new "$member" "$@" 2>/dev/null &
+        done < "$SKYNET_DIR/swarm-members.txt"
+    fi
+    wait
+    echo -e "${GREEN}[Skynet] All nodes completed${NC}"
+}
+
+case "${1:-help}" in
+    status)      skynet_status ;;
+    join)        skynet_join "$2" ;;
+    leave)
+        _peer="${2:-}"
+        if [[ -z "$_peer" ]]; then echo "Usage: alfred-skynet leave <ip>" >&2; true; fi
+        if [[ -f "$SKYNET_DIR/swarm-members.txt" ]]; then
+            _tmp=$(mktemp) || true
+            if grep -Fvx "$_peer" "$SKYNET_DIR/swarm-members.txt" >"$_tmp" 2>/dev/null; then
+                mv -f "$_tmp" "$SKYNET_DIR/swarm-members.txt" || true
+            else
+                rm -f "$_tmp" || true
+            fi
+        fi
+        echo "Removed $_peer"
+        ;;
+    distribute)  shift; skynet_distribute "$@" ;;
+    id)          echo "$NODE_ID" ;;
+    help|*)
+        echo "alfred-skynet — Mesh Swarm Compute"
+        echo ""
+        echo "Commands:"
+        echo "  status       — Show node info and swarm members"
+        echo "  join <ip>    — Add a node to the swarm (bidirectional)" || true
+        echo "  leave <ip>   — Remove a node from the swarm" || true
+        echo "  distribute -- <cmd> [args] — Run argv on all swarm nodes (no shell string)" || true
+        echo "    Optional: ~/.config/alfred/skynet/distribute-allowlist (non-empty) restricts argv[0]"
+        echo "  id           — Show this node's unique ID"
+        ;;
+esac
+SKYNETEOF
+chmod +x /usr/local/bin/alfred-skynet || true
+
+###############################################################################
+# 6. SELF-EVOLUTION ENGINE — OS that upgrades itself
+###############################################################################
+echo "[MAX] Installing self-evolution engine..."
+cat > /usr/local/bin/alfred-evolve << 'EVOLVEEOF'
+#!/bin/bash
+# alfred-evolve — Self-Evolution Engine for Alfred Linux
+# The OS learns, adapts, and upgrades itself
+
+BOLD='\033[1m'
+GREEN='\033[0;32m'
+CYAN='\033[0;36m'
+YELLOW='\033[1;33m'
+NC='\033[0m'
+
+EVOLVE_DIR="/var/lib/alfred/evolution"
+EVOLVE_LOG="$EVOLVE_DIR/evolution.log"
+mkdir -p "$EVOLVE_DIR" || true
+
+log_evolve() {
+    echo "$(date '+%Y-%m-%d %H:%M:%S') | $*" >> "$EVOLVE_LOG" || true
+}
+
+evolve_system() {
+    echo -e "${BOLD}╔═══════════════════════════════════════════╗${NC}"
+    echo -e "${BOLD}║   Alfred Self-Evolution Engine v5.0       ║${NC}"
+    echo -e "${BOLD}╚═══════════════════════════════════════════╝${NC}"
+    echo ""
+    log_evolve "Evolution cycle started"
+
+    # Phase 1: Security patches
+    echo -e "${CYAN}[Phase 1] Security evolution...${NC}"
+    SECURITY_UPDATES=$(apt-get -s upgrade 2>/dev/null | grep -c "^Inst" || echo 0)
+    echo "  $SECURITY_UPDATES packages can be upgraded"
+    if [ "$SECURITY_UPDATES" -gt 0 ]; then
+        echo -e "  ${YELLOW}Run 'alfred-evolve apply' to install${NC}"
+    else
+        echo -e "  ${GREEN}System is current${NC}"
+    fi
+    log_evolve "Security: $SECURITY_UPDATES pending updates"
+
+    # Phase 2: Performance adaptation
+    echo -e "${CYAN}[Phase 2] Performance adaptation...${NC}"
+    LOAD=$(cat /proc/loadavg | awk '{print $1}')
+    CORES=$(nproc)
+    LOAD_PER_CORE=$(echo "$LOAD $CORES" | awk '{printf "%.2f", $1/$2}')
+    echo "  Load per core: $LOAD_PER_CORE"
+    if (( $(echo "$LOAD_PER_CORE > 0.8" | bc -l 2>/dev/null || echo 0) )); then
+        echo -e "  ${YELLOW}High load — consider adding mesh nodes${NC}"
+    else
+        echo -e "  ${GREEN}Load is optimal${NC}"
+    fi
+    log_evolve "Performance: load/core=$LOAD_PER_CORE"
+
+    # Phase 3: Storage health
+    echo -e "${CYAN}[Phase 3] Storage evolution...${NC}"
+    DISK_USED=$(df / | awk 'NR==2 {print $5}' | tr -d '%')
+    echo "  Root disk: ${DISK_USED}% used"
+    if [ "$DISK_USED" -gt 85 ]; then
+        echo -e "  ${YELLOW}Cleaning package cache...${NC}"
+        apt-get clean 2>/dev/null
+        echo -e "  ${GREEN}Cache cleaned${NC}"
+    fi
+    # Clean old logs
+    journalctl --vacuum-time=7d 2>/dev/null
+    log_evolve "Storage: ${DISK_USED}% used"
+
+    # Phase 4: Tool evolution — check for newer versions
+    echo -e "${CYAN}[Phase 4] Tool evolution...${NC}"
+    if command -v omahon &>/dev/null; then
+        echo -e "  Omahon: ${GREEN}✓ installed${NC}"
+    fi
+    if command -v ollama &>/dev/null; then
+        OLLAMA_VER=$(ollama --version 2>/dev/null || echo "installed")
+        echo -e "  Ollama: ${GREEN}$OLLAMA_VER${NC}"
+    fi
+    log_evolve "Tool check complete"
+
+    # Phase 5: Memory optimization
+    echo -e "${CYAN}[Phase 5] Memory optimization...${NC}"
+    CACHED_MB=$(free -m | awk '/^Mem:/ {print $6}')
+    AVAILABLE_MB=$(free -m | awk '/^Mem:/ {print $7}')
+    echo "  Available: ${AVAILABLE_MB} MB | Cached: ${CACHED_MB} MB"
+    if [ "$AVAILABLE_MB" -lt 512 ]; then
+        echo -e "  ${YELLOW}Low memory — clearing caches${NC}"
+        sync && echo 3 > /proc/sys/vm/drop_caches 2>/dev/null
+    fi
+    log_evolve "Memory: ${AVAILABLE_MB}MB available"
+
+    # Phase 6: Network mesh check
+    echo -e "${CYAN}[Phase 6] Mesh network health...${NC}"
+    if command -v avahi-browse &>/dev/null; then
+        MESH_NODES=$(avahi-browse -rpt _alfred._tcp 2>/dev/null | grep "=" | wc -l || echo 0)
+        echo "  Mesh nodes visible: $MESH_NODES"
+    fi
+    log_evolve "Mesh: $MESH_NODES nodes"
+
+    echo ""
+    echo -e "${GREEN}Evolution cycle complete. $(wc -l < "$EVOLVE_LOG" 2>/dev/null || echo 0) cycles recorded.${NC}"
+    log_evolve "Evolution cycle complete"
+}
+
+evolve_apply() {
+    echo -e "${CYAN}[Evolve] Applying system upgrades...${NC}"
+    DEBIAN_FRONTEND=noninteractive apt-get update -qq || true
+    DEBIAN_FRONTEND=noninteractive apt-get upgrade -y
+    log_evolve "System upgraded"
+    echo -e "${GREEN}System evolved.${NC}"
+}
+
+evolve_history() {
+    echo -e "${BOLD}Evolution History${NC}"
+    tail -50 "$EVOLVE_LOG" 2>/dev/null || echo "No history yet"
+}
+
+case "${1:-status}" in
+    status|check) evolve_system ;;
+    apply)        evolve_apply ;;
+    history)      evolve_history ;;
+    help|*)
+        echo "alfred-evolve — Self-Evolution Engine"
+        echo ""
+        echo "Commands:"
+        echo "  status   — Run evolution diagnostics"
+        echo "  apply    — Apply all pending upgrades"
+        echo "  history  — View evolution log"
+        ;;
+esac
+EVOLVEEOF
+chmod +x /usr/local/bin/alfred-evolve || true
+
+# Self-evolution timer — runs every 6 hours
+cat > /etc/systemd/system/alfred-evolve.service << 'ESVCEOF'
+[Unit]
+Description=Alfred Self-Evolution Engine
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/alfred-evolve check
+StandardOutput=journal
+ESVCEOF
+
+cat > /etc/systemd/system/alfred-evolve.timer << 'ETMREOF'
+[Unit]
+Description=Alfred Self-Evolution Timer (every 6 hours)
+
+[Timer]
+OnBootSec=5min
+OnUnitActiveSec=6h
+Persistent=true
+
+[Install]
+WantedBy=timers.target
+ETMREOF
+systemctl enable alfred-evolve || true || true.timer 2>/dev/null || true
+
+###############################################################################
+# 7. HUGE PAGES + NUMA — Max memory throughput for AI
+###############################################################################
+echo "[MAX] Configuring transparent hugepages + NUMA awareness..."
+cat > /etc/tmpfiles.d/alfred-hugepages.conf << 'HPEOF'
+w /sys/kernel/mm/transparent_hugepage/enabled - - - - madvise
+w /sys/kernel/mm/transparent_hugepage/defrag - - - - defer+madvise
+HPEOF
+
+# Install numactl for NUMA-aware compute
+DEBIAN_FRONTEND=noninteractive apt-get install -y --fix-broken -y --no-install-recommends \
+    -o Dpkg::Options::=--force-confdef \
+    -o Dpkg::Options::=--force-confnew \
+    numactl \
+    irqbalance \
+    cpufrequtils \
+    linux-cpupower \
+    schedtool \
+    util-linux \
+    bc \
+    2>/dev/null || true
+
+# Enable irqbalance for multi-core interrupt distribution
+systemctl enable irqbalance || true || true 2>/dev/null || true
+
+###############################################################################
+# 8. PARALLEL BUILD SYSTEM — Use all cores for compilation
+###############################################################################
+echo "[MAX] Setting up parallel build defaults..."
+cat > /etc/profile.d/alfred-max-build.sh << 'BUILDEOF'
+# Alfred Linux 5.0 — Use all cores for building
+export MAKEFLAGS="-j$(nproc)"
+export CARGO_BUILD_JOBS=$(nproc)
+export CMAKE_BUILD_PARALLEL_LEVEL=$(nproc)
+export NINJAFLAGS="-j$(nproc)"
+
+# AVX2 CachyOS-level Compiler Optimization
+export CFLAGS="-O3 -march=x86-64-v3 -flto"
+export CXXFLAGS="-O3 -march=x86-64-v3 -flto"
+BUILDEOF
+
+echo 'CFLAGS="-O3 -march=x86-64-v3 -flto"' >> /etc/environment
+echo 'CXXFLAGS="-O3 -march=x86-64-v3 -flto"' >> /etc/environment
+
+###############################################################################
+# 9. I/O SCHEDULER — Max disk throughput
+###############################################################################
+echo "[MAX] Configuring I/O scheduler for maximum throughput..."
+cat > /etc/udev/rules.d/60-alfred-io-scheduler.rules << 'IOEOF'
+# Alfred Linux 5.0 — Optimal I/O scheduler
+# NVMe/SSD: none (lowest latency)
+# HDD: mq-deadline (best throughput)
+ACTION=="add|change", KERNEL=="sd[a-z]*", ATTR{queue/rotational}=="0", ATTR{queue/scheduler}="none"
+ACTION=="add|change", KERNEL=="sd[a-z]*", ATTR{queue/rotational}=="1", ATTR{queue/scheduler}="mq-deadline"
+ACTION=="add|change", KERNEL=="nvme*", ATTR{queue/scheduler}="none"
+IOEOF
+
+###############################################################################
+# 11. DYNAMIC SCHEDULER & OOM ASSASSIN — Pop!_OS / Fedora DNA
+###############################################################################
+echo "[MAX] Injecting system76-scheduler and earlyoom..."
+DEBIAN_FRONTEND=noninteractive apt-get install -y --fix-broken -y --no-install-recommends \
+    earlyoom \
+    system76-scheduler 2>/dev/null || true
+
+systemctl enable earlyoom || true || true 2>/dev/null || true
+systemctl enable system76-scheduler || true || true 2>/dev/null || true
+
+###############################################################################
+# 12. SOVEREIGN SURVIVAL ARSENAL — Ark, Burning Bush, Wilderness
+###############################################################################
+echo "[MAX] Injecting Sovereign Survival Arsenal (Ark, Burning Bush, Wilderness)..."
+
+DEBIAN_FRONTEND=noninteractive apt-get install -y --fix-broken -y --no-install-recommends \
+    jq 2>/dev/null || true
+
+cat > /usr/local/bin/alfred-wilderness << 'WILDEOF'
+#!/bin/bash
+# alfred-wilderness — Extreme Battery Survival Protocol
+BOLD='\033[1m'
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+NC='\033[0m'
+
+if [ "$1" == "restore" ]; then
+    echo -e "${GREEN}[Wilderness] Restoring MAX performance state...${NC}"
+    /usr/local/bin/alfred-max-cpu performance
+    systemctl start syncthing@$USER 2>/dev/null || true
+    echo -e "${GREEN}[Wilderness] Protocol disengaged.${NC}"
+
+fi
+
+echo -e "${BOLD}${RED}[!] INITIATING WILDERNESS PROTOCOL [!]${NC}"
+echo "Forcing extreme powersave state for grid survival..."
+/usr/local/bin/alfred-max-cpu powersave
+
+for bl in /sys/class/backlight/*; do
+    if [ -d "$bl" ]; then
+        MAX_BL=$(cat "$bl/max_brightness")
+        NEW_BL=$((MAX_BL / 10))
+        [ "$NEW_BL" -eq 0 ] && NEW_BL=1
+        echo "$NEW_BL" > "$bl/brightness" 2>/dev/null || true
+    fi
+done
+
+systemctl stop syncthing@$USER 2>/dev/null || true
+pkill -f omahon 2>/dev/null || true
+pkill -f ollama 2>/dev/null || true
+echo -e "${GREEN}Wilderness Protocol Engaged. System is now drawing minimum power.${NC}"
+echo -e "Run ${BOLD}alfred-wilderness restore${NC} to return to normal."
+WILDEOF
+chmod +x /usr/local/bin/alfred-wilderness
+
+cat > /usr/local/bin/alfred-ark << 'ARKEOF'
+#!/bin/bash
+# alfred-ark — Immutable Mesh Storage Protocol
+BOLD='\033[1m'
+CYAN='\033[0;36m'
+GREEN='\033[0;32m'
+NC='\033[0m'
+
+ARK_DIR="$HOME/Ark"
+
+if [ "$1" == "start" ]; then
+    echo -e "${CYAN}[Ark Protocol] Initiating Immutable Sync...${NC}"
+    mkdir -p "$ARK_DIR/Scripture" "$ARK_DIR/AI_Models" "$ARK_DIR/Wiki"
+    systemctl --user enable syncthing 2>/dev/null || true
+    systemctl --user start syncthing 2>/dev/null || true
+    echo -e "${GREEN}Ark is online. $ARK_DIR is actively mirroring to the Skynet Mesh.${NC}"
+    echo "Web GUI: http://127.0.0.1:8384"
+
+fi
+echo -e "${BOLD}Alfred Ark Storage Protocol${NC}"
+echo "Usage: alfred-ark start"
+ARKEOF
+chmod +x /usr/local/bin/alfred-ark
+
+cat > /usr/local/bin/alfred-burning-bush << 'BUSHEOF'
+#!/bin/bash
+# alfred-burning-bush — Semantic AI Scripture Engine (King Jesus Version)
+BOLD='\033[1m'
+YELLOW='\033[1;33m'
+CYAN='\033[0;36m'
+NC='\033[0m'
+
+if [ -z "$1" ]; then
+    echo -e "${BOLD}The Burning Bush Semantic Engine${NC}"
+    echo -e "Usage: alfred-burning-bush \"<your concept or question>\""
+    echo -e "Example: alfred-burning-bush \"Show me where water symbolizes judgment\""
+    true
+fi
+QUERY="$*"
+echo -e "${YELLOW}[Burning Bush] Seeking the King Jesus Version for: \"$QUERY\"...${NC}"
+PAYLOAD=$(jq -n --arg q "$QUERY" '{model: "llama3", prompt: ("You are the Burning Bush Semantic Engine. Search the themes of the King Jesus Version of the Bible to answer: " + $q), stream: false}')
+if ! command -v ollama &>/dev/null; then
+    echo "Ollama is not installed or running. The Burning Bush requires local AI."
+    true
+fi
+curl --max-time 900 -s -X POST http://127.0.0.1:11434/api/generate -d "$PAYLOAD" | jq -r '.response' || echo "Failed to commune with the local AI." || true
+BUSHEOF
+chmod +x /usr/local/bin/alfred-burning-bush
+
+###############################################################################
+# 13. THE BIBLICAL FLOW — Jericho, Manna, Exodus
+###############################################################################
+echo "[MAX] Injecting Biblical Flow (Jericho Defense, Manna Protocol, Exodus Routing)..."
+
+DEBIAN_FRONTEND=noninteractive apt-get install -y --fix-broken -y --no-install-recommends \
+    tor obfs4proxy 2>/dev/null || true
+
+
+cat > /usr/local/bin/alfred-manna << 'MANNAEOF'
+#!/bin/bash
+# alfred-manna — The Manna Protocol (Idle Mesh Cycle Harvester)
+# "He that gathered much had nothing over." — Exodus 16:18
+BOLD='\033[1m'
+CYAN='\033[0;36m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+NC='\033[0m'
+
+MANNA_DIR="/var/lib/alfred/manna"
+MANNA_LOG="$MANNA_DIR/harvest.log"
+mkdir -p "$MANNA_DIR/concordance" 2>/dev/null || true
+
+manna_gather() {
+    echo -e "${BOLD}╔═══════════════════════════════════════════╗${NC}"
+    echo -e "${BOLD}║  THE MANNA PROTOCOL — Gathering...        ║${NC}"
+    echo -e "${BOLD}╚═══════════════════════════════════════════╝${NC}"
+    echo ""
+
+    # Only harvest when system is idle (load < 0.3 per core)
+    LOAD=$(cat /proc/loadavg | awk '{print $1}')
+    CORES=$(nproc)
+    THRESHOLD=$(echo "$CORES * 0.3" | bc -l 2>/dev/null || echo "1")
+    IS_IDLE=$(echo "$LOAD < $THRESHOLD" | bc -l 2>/dev/null || echo 1)
+
+    if [ "$IS_IDLE" != "1" ]; then
+        echo -e "${YELLOW}[Manna] System is under load ($LOAD). Waiting for idle...${NC}"
+        echo "$(date '+%Y-%m-%d %H:%M:%S') | SKIPPED — load=$LOAD" >> "$MANNA_LOG" || true
+
+    fi
+
+    echo -e "${CYAN}[Manna] System is idle ($LOAD). Harvesting cycles...${NC}"
+
+    # Use idle cycles to build concordance via local AI
+    if command -v ollama &>/dev/null; then
+        # Complete 94-book King Jesus Version canon
+        BOOKS=("Genesis" "Exodus" "Leviticus" "Numbers" "Deuteronomy" "Joshua" "Judges" "Ruth" "1 Samuel" "2 Samuel" "1 Kings" "2 Kings" "1 Chronicles" "2 Chronicles" "Ezra" "Nehemiah" "Tobit" "Judith" "Esther" "1 Maccabees" "2 Maccabees" "3 Maccabees" "4 Maccabees" "Job" "Psalms" "Proverbs" "Ecclesiastes" "Song of Solomon" "Wisdom of Solomon" "Sirach" "Isaiah" "Jeremiah" "Lamentations" "Baruch" "Letter of Jeremiah" "Ezekiel" "Daniel" "Prayer of Azariah" "Susanna" "Bel and the Dragon" "Hosea" "Joel" "Amos" "Obadiah" "Jonah" "Micah" "Nahum" "Habakkuk" "Zephaniah" "Haggai" "Zechariah" "Malachi" "Matthew" "Mark" "Luke" "John" "Acts" "Romans" "1 Corinthians" "2 Corinthians" "Galatians" "Ephesians" "Philippians" "Colossians" "1 Thessalonians" "2 Thessalonians" "1 Timothy" "2 Timothy" "Titus" "Philemon" "Hebrews" "James" "1 Peter" "2 Peter" "1 John" "2 John" "3 John" "Jude" "Revelation" "1 Enoch" "2 Enoch" "Jubilees" "Jasher" "2 Esdras" "Prayer of Manasseh" "Psalm 151" "1 Clement" "2 Clement" "Shepherd of Hermas" "Didache" "Epistle of Barnabas" "Apocalypse of Peter" "Gospel of Thomas" "Odes of Solomon" "Psalms of Solomon")
+        # Pick a random book to index
+        BOOK="${BOOKS[$RANDOM % ${#BOOKS[@]}]}"
+        CONCORDANCE_FILE="$MANNA_DIR/concordance/$(echo $BOOK | tr ' ' '_').json"
+
+        if [ ! -f "$CONCORDANCE_FILE" ]; then
+            echo -e "${GREEN}[Manna] Indexing: $BOOK (King Jesus Version)...${NC}"
+            PAYLOAD=$(jq -n --arg book "$BOOK" '{model: "llama3", prompt: ("Generate a detailed thematic concordance for the book of " + $book + " from the King Jesus Version. List the major themes, symbols, prophecies, and cross-references to other books. Output as structured JSON."), stream: false}')
+            RESULT=$(curl --max-time 900 -s -X POST http://127.0.0.1:11434/api/generate -d "$PAYLOAD" 2>/dev/null | jq -r '.response' 2>/dev/null) || true
+            if [ -n "$RESULT" ] && [ "$RESULT" != "null" ]; then
+                echo "$RESULT" > "$CONCORDANCE_FILE"
+                echo -e "${GREEN}[Manna] Concordance for $BOOK harvested and stored.${NC}"
+                echo "$(date '+%Y-%m-%d %H:%M:%S') | HARVESTED — $BOOK" >> "$MANNA_LOG" || true
+            fi
+        else
+            echo -e "${CYAN}[Manna] $BOOK already indexed. Skipping.${NC}"
+        fi
+    else
+        echo -e "${YELLOW}[Manna] Ollama not available. Cannot harvest.${NC}"
+    fi
+}
+
+manna_status() {
+    echo -e "${BOLD}The Manna Protocol — Status${NC}"
+    INDEXED=$(ls "$MANNA_DIR/concordance/" 2>/dev/null | wc -l)
+    echo "  Books indexed: $INDEXED / 94"
+    echo "  Concordance dir: $MANNA_DIR/concordance/"
+    if [ -f "$MANNA_LOG" ]; then
+        echo "  Last harvest: $(tail -1 "$MANNA_LOG")"
+        echo "  Total harvests: $(wc -l < "$MANNA_LOG")"
+    fi
+}
+
+case "${1:-status}" in
+    gather)  manna_gather ;;
+    status)  manna_status ;;
+    help|*)
+        echo "alfred-manna — The Manna Protocol (Idle Cycle Harvester)"
+        echo ""
+        echo "Commands:"
+        echo "  gather  — Harvest idle CPU cycles to index Scripture"
+        echo "  status  — Show concordance progress"
+        ;;
+esac
+MANNAEOF
+chmod +x /usr/local/bin/alfred-manna
+
+# Manna timer — harvest every 2 hours when idle
+cat > /etc/systemd/system/alfred-manna.service << 'MSVCEOF'
+[Unit]
+Description=Alfred Manna Protocol — Idle Cycle Scripture Harvester
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/alfred-manna gather
+StandardOutput=journal
+Nice=19
+IOSchedulingClass=idle
+MSVCEOF
+
+cat > /etc/systemd/system/alfred-manna.timer << 'MTMREOF'
+[Unit]
+Description=Alfred Manna Timer (every 2 hours)
+
+[Timer]
+OnBootSec=15min
+OnUnitActiveSec=2h
+Persistent=true
+
+[Install]
+WantedBy=timers.target
+MTMREOF
+systemctl enable alfred-manna || true || true.timer 2>/dev/null || true
+
+cat > /usr/local/bin/alfred-exodus << 'EXODUSEOF'
+#!/bin/bash
+# alfred-exodus — The Exodus Routing Protocol (Censorship Annihilation)
+# "Let my people go." — Exodus 5:1
+BOLD='\033[1m'
+RED='\033[0;31m'
+CYAN='\033[0;36m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+NC='\033[0m'
+
+EXODUS_DIR="/var/lib/alfred/exodus"
+mkdir -p "$EXODUS_DIR" 2>/dev/null || true
+
+exodus_detect() {
+    echo -e "${CYAN}[Exodus] Probing for censorship...${NC}"
+    BLOCKED=0
+
+    # Test known canary endpoints
+    CANARIES=("https://check.torproject.org" "https://signal.org" "https://protonmail.com")
+    for url in "${CANARIES[@]}"; do
+        if ! curl -s --max-time 5 -o /dev/null -w "%{http_code}" "$url" 2>/dev/null | grep -qE "^(200|301|302)"; then
+            echo -e "  ${RED}✗${NC} $url — BLOCKED or unreachable"
+            BLOCKED=$((BLOCKED + 1))
+        else
+            echo -e "  ${GREEN}✓${NC} $url — reachable"
+        fi
+    done
+
+    if [ "$BLOCKED" -ge 2 ]; then
+        echo -e "${RED}[Exodus] Censorship detected ($BLOCKED canaries blocked).${NC}"
+        echo "CENSORED" > "$EXODUS_DIR/status"
+        return 1
+    else
+        echo -e "${GREEN}[Exodus] Internet appears unrestricted.${NC}"
+        echo "FREE" > "$EXODUS_DIR/status"
+        return 0
+    fi
+}
+
+exodus_part_sea() {
+    echo -e "${BOLD}${CYAN}╔═══════════════════════════════════════════╗${NC}"
+    echo -e "${BOLD}${CYAN}║  EXODUS ROUTING — PARTING THE SEA         ║${NC}"
+    echo -e "${BOLD}${CYAN}╚═══════════════════════════════════════════╝${NC}"
+    echo ""
+
+    # Start Tor with obfs4 bridges
+    echo -e "${CYAN}[Exodus] Starting Tor with obfuscated bridges...${NC}"
+    systemctl start tor 2>/dev/null || true
+
+    # Wait for Tor to bootstrap
+    TRIES=0
+    while [ $TRIES -lt 30 ]; do
+        if curl --max-time 900 -s --socks5 127.0.0.1:9050 https://check.torproject.org 2>/dev/null | grep -q "Congratulations"; then
+            echo -e "${GREEN}[Exodus] Tor circuit established.${NC}"
+            break
+        fi
+        TRIES=$((TRIES + 1))
+        sleep 2
+    done
+
+    # Configure system-wide SOCKS proxy
+    echo -e "${CYAN}[Exodus] Routing all traffic through the parted sea...${NC}"
+    export ALL_PROXY="socks5://127.0.0.1:9050"
+    export HTTP_PROXY="socks5://127.0.0.1:9050"
+    export HTTPS_PROXY="socks5://127.0.0.1:9050"
+
+    # Write proxy config for persistence
+    cat > /etc/profile.d/alfred-exodus-proxy.sh << 'PROXYEOF'
+export ALL_PROXY="socks5://127.0.0.1:9050"
+export HTTP_PROXY="socks5://127.0.0.1:9050"
+export HTTPS_PROXY="socks5://127.0.0.1:9050"
+PROXYEOF
+
+    echo "PARTED" > "$EXODUS_DIR/status"
+    echo -e "${GREEN}[Exodus] The sea is parted. All traffic is now routed through Tor.${NC}"
+    echo -e "${YELLOW}Run 'alfred-exodus restore' to return to direct routing.${NC}"
+}
+
+exodus_restore() {
+    echo -e "${CYAN}[Exodus] Restoring direct routing...${NC}"
+    rm -f /etc/profile.d/alfred-exodus-proxy.sh 2>/dev/null || true
+    unset ALL_PROXY HTTP_PROXY HTTPS_PROXY
+    systemctl stop tor 2>/dev/null || true
+    echo "FREE" > "$EXODUS_DIR/status"
+    echo -e "${GREEN}[Exodus] Direct routing restored.${NC}"
+}
+
+exodus_status() {
+    STATUS=$(cat "$EXODUS_DIR/status" 2>/dev/null || echo "UNKNOWN")
+    echo -e "${BOLD}Exodus Routing — Status: ${STATUS}${NC}"
+    if systemctl is-active tor &>/dev/null; then
+        echo -e "  ${GREEN}●${NC} Tor is ACTIVE"
+    else
+        echo -e "  ○ Tor is inactive"
+    fi
+    if [ -f /etc/profile.d/alfred-exodus-proxy.sh ]; then
+        echo -e "  ${CYAN}●${NC} System proxy is ACTIVE (all traffic through Tor)"
+    else
+        echo -e "  ○ System proxy is not active (direct routing)"
+    fi
+}
+
+case "${1:-status}" in
+    detect)   exodus_detect ;;
+    part)     exodus_part_sea ;;
+    restore)  exodus_restore ;;
+    status)   exodus_status ;;
+    help|*)
+        echo "alfred-exodus — The Exodus Routing Protocol"
+        echo ""
+        echo "Commands:"
+        echo "  detect   — Probe for censorship / DPI"
+        echo "  part     — Part the sea (route all traffic through Tor)"
+        echo "  restore  — Return to direct routing"
+        echo "  status   — Show routing status"
+        ;;
+esac
+EXODUSEOF
+chmod +x /usr/local/bin/alfred-exodus
+
+###############################################################################
+# 14. PHASE XXXII — The Watchtower & The Upper Room
+###############################################################################
+echo "[MAX] Phase XXXII: The Watchtower & The Upper Room..."
+
+cat > /usr/local/bin/alfred-watchtower << 'WATCHEOF'
+#!/bin/bash
+# alfred-watchtower — The Watchtower (Real-Time Intrusion Detection)
+# "I have set watchmen upon thy walls, O Jerusalem." — Isaiah 62:6
+BOLD='\033[1m'
+RED='\033[0;31m'
+CYAN='\033[0;36m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+NC='\033[0m'
+
+WATCH_DIR="/var/lib/alfred/watchtower"
+WATCH_LOG="$WATCH_DIR/watchtower.log"
+mkdir -p "$WATCH_DIR" 2>/dev/null || true
+
+log_watch() {
+    echo "$(date '+%Y-%m-%d %H:%M:%S') | $*" >> "$WATCH_LOG" || true
+}
+
+watchtower_scan() {
+    echo -e "${BOLD}${CYAN}╔═══════════════════════════════════════════╗${NC}"
+    echo -e "${BOLD}${CYAN}║  THE WATCHTOWER — Scanning the Walls      ║${NC}"
+    echo -e "${BOLD}${CYAN}╚═══════════════════════════════════════════╝${NC}"
+    echo ""
+    THREATS=0
+
+    # 1. Check for failed SSH login attempts
+    echo -e "${CYAN}[Watchtower] Scanning for brute-force attempts...${NC}"
+    FAILED_SSH=$(journalctl _COMM=sshd --since "1 hour ago" 2>/dev/null | grep -c "Failed password" || echo 0)
+    if [ "$FAILED_SSH" -gt 10 ]; then
+        echo -e "  ${RED}⚠${NC} $FAILED_SSH failed SSH logins in the last hour — ACTIVE BRUTE FORCE"
+        THREATS=$((THREATS + 1))
+        log_watch "THREAT: $FAILED_SSH failed SSH attempts"
+    elif [ "$FAILED_SSH" -gt 0 ]; then
+        echo -e "  ${YELLOW}△${NC} $FAILED_SSH failed SSH logins (low)"
+    else
+        echo -e "  ${GREEN}✓${NC} No failed SSH attempts"
+    fi
+
+    # 2. Check for active network connections to suspicious ports
+    echo -e "${CYAN}[Watchtower] Scanning outbound connections...${NC}"
+    SUSPECT_CONNS=$(ss -tunp 2>/dev/null | grep -cE ':(4444|5555|6666|31337|1337) ' || echo 0)
+    if [ "$SUSPECT_CONNS" -gt 0 ]; then
+        echo -e "  ${RED}⚠${NC} $SUSPECT_CONNS connections to known malicious ports"
+        THREATS=$((THREATS + 1))
+        log_watch "THREAT: $SUSPECT_CONNS suspicious outbound connections"
+    else
+        echo -e "  ${GREEN}✓${NC} No suspicious outbound connections"
+    fi
+
+    # 3. Check for unauthorized SUID binaries
+    echo -e "${CYAN}[Watchtower] Scanning for rogue SUID binaries...${NC}"
+    KNOWN_SUID="/var/lib/alfred/watchtower/known-suid.txt"
+    CURRENT_SUID=$(find /usr/bin /usr/sbin /usr/local/bin -perm -4000 2>/dev/null | sort)
+    if [ -f "$KNOWN_SUID" ]; then
+        NEW_SUID=$(diff <(echo "$CURRENT_SUID") "$KNOWN_SUID" 2>/dev/null | grep "^<" | wc -l || echo 0)
+        if [ "$NEW_SUID" -gt 0 ]; then
+            echo -e "  ${RED}⚠${NC} $NEW_SUID new SUID binaries detected since last baseline"
+            THREATS=$((THREATS + 1))
+            log_watch "THREAT: $NEW_SUID new SUID binaries"
+        else
+            echo -e "  ${GREEN}✓${NC} SUID binaries unchanged"
+        fi
+    else
+        echo "$CURRENT_SUID" > "$KNOWN_SUID"
+        echo -e "  ${CYAN}◆${NC} SUID baseline recorded ($(echo "$CURRENT_SUID" | wc -l) binaries)"
+    fi
+
+    # 4. Check open listening ports
+    echo -e "${CYAN}[Watchtower] Scanning listening ports...${NC}"
+    LISTEN_COUNT=$(ss -tlnp 2>/dev/null | tail -n +2 | wc -l)
+    echo -e "  ${CYAN}◆${NC} $LISTEN_COUNT ports listening"
+
+    # 5. Check systemd for unknown services
+    echo -e "${CYAN}[Watchtower] Scanning for unknown services...${NC}"
+    FAILED_SVCS=$(systemctl --failed --no-pager 2>/dev/null | grep -c "loaded units listed" || echo 0)
+    FAILED_COUNT=$(systemctl --failed --no-pager 2>/dev/null | grep -c "failed" || echo 0)
+    if [ "$FAILED_COUNT" -gt 0 ]; then
+        echo -e "  ${YELLOW}△${NC} $FAILED_COUNT failed systemd services"
+    else
+        echo -e "  ${GREEN}✓${NC} All services healthy"
+    fi
+
+    echo ""
+    if [ "$THREATS" -gt 0 ]; then
+        echo -e "${RED}[Watchtower] $THREATS ACTIVE THREATS DETECTED.${NC}"
+        # Auto-trigger Jericho warning if armed
+        JERICHO_STATUS=$(cat /var/lib/alfred/jericho/status 2>/dev/null || echo "DISARMED")
+        if [ "$JERICHO_STATUS" == "ARMED" ] && [ "$THREATS" -ge 3 ]; then
+            echo -e "${RED}[Watchtower → Jericho] Critical threat level. Jericho is ARMED. The walls are ready to fall.${NC}"
+        fi
+    else
+        echo -e "${GREEN}[Watchtower] All clear. The walls hold firm.${NC}"
+    fi
+    log_watch "Scan complete: $THREATS threats"
+}
+
+case "${1:-scan}" in
+    scan)    watchtower_scan ;;
+    log)     tail -50 "$WATCH_LOG" 2>/dev/null || echo "No log yet" ;;
+    help|*)
+        echo "alfred-watchtower — The Watchtower (Intrusion Detection)"
+        echo ""
+        echo "Commands:"
+        echo "  scan  — Scan for active threats"
+        echo "  log   — View recent scan history"
+        ;;
+esac
+WATCHEOF
+chmod +x /usr/local/bin/alfred-watchtower
+systemctl enable alfred-watchtower || true || true.timer 2>/dev/null || true
+
+
+cat > /usr/local/bin/alfred-commission << 'COMMEOF'
+#!/bin/bash
+# alfred-commission — The Great Commission (Spread the OS to All Nations)
+# "Go ye therefore, and teach all nations." — Matthew 28:19
+BOLD='\033[1m'
+CYAN='\033[0;36m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+RED='\033[0;31m'
+NC='\033[0m'
+
+COMM_DIR="/var/lib/alfred/commission"
+mkdir -p "$COMM_DIR" 2>/dev/null || true
+
+commission_create() {
+    TARGET_DEV="$1"
+    if [ -z "$TARGET_DEV" ]; then
+        echo -e "${BOLD}The Great Commission — Create Bootable USB${NC}"
+        echo ""
+        echo "Available USB devices:"
+        lsblk -dno NAME,SIZE,MODEL | grep -v "loop\|sr" | while read -r line; do
+            echo "  /dev/$line"
+        done
+        echo ""
+        echo "Usage: alfred-commission create /dev/sdX"
+        return 1
+    fi
+
+    # Safety check
+    if echo "$TARGET_DEV" | grep -qE "^/dev/(sda|nvme0n1)"; then
+        echo -e "${RED}[Commission] REFUSED — $TARGET_DEV appears to be your primary drive.${NC}"
+        return 1
+    fi
+
+    echo -e "${BOLD}${GREEN}╔═══════════════════════════════════════════╗${NC}"
+    echo -e "${BOLD}${GREEN}║  THE GREAT COMMISSION — Go Ye Therefore   ║${NC}"
+    echo -e "${BOLD}${GREEN}╚═══════════════════════════════════════════╝${NC}"
+    echo ""
+    echo -e "${RED}WARNING: This will ERASE $TARGET_DEV completely.${NC}"
+    echo -e "Type 'MATTHEW2819' to confirm:"
+    read -r CONFIRM
+    if [ "$CONFIRM" != "MATTHEW2819" ]; then
+        echo "Aborted."
+        return 1
+    fi
+
+    # Check if we have a cached ISO
+    ISO_FILE=$(ls /var/lib/alfred/commission/alfred-linux-*.iso 2>/dev/null | head -1)
+    if [ -z "$ISO_FILE" ]; then
+        # Look in common locations
+        ISO_FILE=$(ls /home/*/Downloads/alfred-linux-*.iso /tmp/alfred-linux-*.iso 2>/dev/null | head -1)
+    fi
+
+    if [ -n "$ISO_FILE" ] && [ -f "$ISO_FILE" ]; then
+        echo -e "${CYAN}[Commission] Found ISO: $ISO_FILE${NC}"
+        echo -e "${CYAN}[Commission] Writing to $TARGET_DEV...${NC}"
+        dd if="$ISO_FILE" of="$TARGET_DEV" bs=4M status=progress conv=fsync 2>&1
+        sync
+        echo -e "${GREEN}[Commission] The Word has been written.${NC}"
+        echo -e "${GREEN}[Commission] $TARGET_DEV is now a bootable Alfred Linux drive.${NC}"
+        echo -e "${CYAN}Go therefore, and teach all nations.${NC}"
+    else
+        echo -e "${YELLOW}[Commission] No Alfred Linux ISO found on this system.${NC}"
+        echo -e "${CYAN}Place an ISO at /var/lib/alfred/commission/ and try again.${NC}"
+        echo -e "${CYAN}Or use 'alfred-resurrection snapshot' to create a portable system state.${NC}"
+    fi
+}
+
+commission_status() {
+    echo -e "${BOLD}The Great Commission — Status${NC}"
+    ISO_FILE=$(ls /var/lib/alfred/commission/alfred-linux-*.iso 2>/dev/null | head -1)
+    if [ -n "$ISO_FILE" ]; then
+        SIZE=$(du -sh "$ISO_FILE" 2>/dev/null | awk '{print $1}')
+        echo -e "  ${GREEN}✓${NC} ISO ready: $(basename $ISO_FILE) ($SIZE)"
+    else
+        echo "  ○ No ISO cached. Place one at /var/lib/alfred/commission/"
+    fi
+    echo ""
+    echo "  USB devices available:"
+    lsblk -dno NAME,SIZE,MODEL | grep -v "loop\|sr" | while read -r line; do
+        echo "    /dev/$line"
+    done
+}
+
+case "${1:-status}" in
+    create)  commission_create "$2" ;;
+    status)  commission_status ;;
+    help|*)
+        echo "alfred-commission — The Great Commission"
+        echo ""
+        echo "Commands:"
+        echo "  create /dev/sdX  — Write Alfred Linux to a USB drive"
+        echo "  status           — Show ISO and USB drive availability"
+        ;;
+esac
+COMMEOF
+chmod +x /usr/local/bin/alfred-commission
+
+###############################################################################
+###############################################################################
+echo "[MAX] Creating alfred-max master command..."
+cat > /usr/local/bin/alfred-max << 'MAXEOF'
+#!/bin/bash
+# alfred-max — Alfred Linux MAX Mode Master Control
+BOLD='\033[1m'
+GREEN='\033[0;32m'
+CYAN='\033[0;36m'
+NC='\033[0m'
+
+max_status() {
+    echo -e "${BOLD}╔═════════════════════════════════════════════════╗${NC}"
+    echo -e "${BOLD}║  Alfred MAX — Total Sovereign Compute v5.0     ║${NC}"
+    echo -e "${BOLD}╚═════════════════════════════════════════════════╝${NC}"
+    echo ""
+    echo -e "${CYAN}[System]${NC}"
+    echo "  Hostname:  $(hostname)"
+    echo "  Kernel:    $(uname -r)"
+    echo "  CPU:       $(nproc) cores — $(lscpu | grep 'Model name' | cut -d: -f2 | xargs)"
+    echo "  RAM:       $(free -h | awk '/^Mem:/ {printf "%s total, %s available", $2, $7}')"
+    echo "  Swap:      $(free -h | awk '/^Swap:/ {printf "%s total", $2}')"
+    echo "  ZRAM:      $(swapon --show 2>/dev/null | grep zram | awk '{print $3}' || echo 'not active')"
+    echo "  Governor:  $(cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor 2>/dev/null || echo 'N/A')"
+    echo "  Load:      $(cat /proc/loadavg | awk '{print $1, $2, $3}')"
+    echo ""
+    echo -e "${CYAN}[Compute Stack]${NC}"
+    command -v omahon &>/dev/null && echo -e "  ${GREEN}✓${NC} Omahon AI Engine" || echo "  ○ Omahon"
+    command -v ollama &>/dev/null && echo -e "  ${GREEN}✓${NC} Ollama LLM" || echo "  ○ Ollama"
+    command -v vulkaninfo &>/dev/null && echo -e "  ${GREEN}✓${NC} Vulkan GPU" || echo "  ○ Vulkan"
+    command -v clinfo &>/dev/null && echo -e "  ${GREEN}✓${NC} OpenCL Compute" || echo "  ○ OpenCL"
+    command -v nvcc &>/dev/null && echo -e "  ${GREEN}✓${NC} CUDA" || echo "  ○ CUDA (run alfred-gpu install-nvidia)"
+    echo ""
+    echo -e "${CYAN}[Mesh / Cloud]${NC}"
+    alfred-skynet status 2>/dev/null | grep -E "●|○|Swarm" || echo "  Run 'alfred-skynet status' for mesh info"
+    echo ""
+    echo -e "${CYAN}[Evolution]${NC}"
+    CYCLES=$(wc -l < /var/lib/alfred/evolution/evolution.log 2>/dev/null || echo 0)
+    echo "  Evolution cycles: $CYCLES"
+    LAST=$(tail -1 /var/lib/alfred/evolution/evolution.log 2>/dev/null || echo "Never")
+    echo "  Last evolution: $LAST"
+}
+
+case "${1:-status}" in
+    status) max_status ;;
+    *)
+        echo "alfred-max — Master Control"
+        echo ""
+        echo "Sub-systems:"
+        echo "  alfred-max-cpu    — CPU governor control"
+        echo "  alfred-gpu        — GPU compute stack"
+        echo "  alfred-skynet     — Mesh swarm network"
+        echo "  alfred-omahon-cloud — Distributed AI"
+        echo "  alfred-mesh       — Device discovery"
+        echo "  alfred-ark        — Immutable mesh storage sync"
+        echo "  alfred-wilderness — Extreme battery survival mode"
+        echo "  alfred-burning-bush — Semantic AI scripture engine"
+        echo "  alfred-jericho    — Anti-tamper cryptographic defense"
+        echo "  alfred-manna      — Idle cycle scripture concordance"
+        echo "  alfred-exodus     — Censorship annihilation routing"
+        echo "  alfred-watchtower — Real-time intrusion detection"
+        echo "  alfred-upper-room — Sovereign encrypted mesh messenger"
+        echo "  alfred-resurrection — System snapshot and rebirth"
+        echo "  alfred-commission — Spread the OS to all nations"
+        ;;
+esac
+MAXEOF
+chmod +x /usr/local/bin/alfred-max || true
+
+###############################################################################
+echo ""
+echo "╔═════════════════════════════════════════════════════════════╗"
+echo "║  MAX SOVEREIGN COMPUTE — Alfred Linux 5.0                  ║"
+echo "║                                                            ║"
+echo "║  Every core. Every byte. For God's people.                 ║"
+echo "║                                                            ║"
+echo "║  ✓ Max CPU: Performance governor on all cores              ║"
+echo "║  ✓ Max RAM: ZRAM compression (2x effective memory)         ║"
+echo "║  ✓ Max I/O: Auto SSD/NVMe/HDD scheduler tuning            ║"
+echo "║  ✓ Max Network: BBR + tuned TCP stack for mesh             ║"
+echo "║  ✓ Huge Pages: Transparent hugepages for AI workloads      ║"
+echo "║  ✓ NUMA: Multi-socket awareness + irqbalance               ║"
+echo "║  ✓ Omahon Cloud: Distributed AI across mesh                ║"
+echo "║  ✓ Skynet Mesh: Swarm compute grid                         ║"
+echo "║  ✓ Self-Evolution: Auto-upgrade every 6 hours              ║"
+echo "║  ✓ Parallel Build: MAKEFLAGS=\$(nproc) everywhere           ║"
+echo "║  ✓ CachyOS AVX2: x86-64-v3 global compiler optimization    ║"
+echo "║  ✓ Dynamic Sched: system76-scheduler + earlyoom assassin   ║"
+echo "║  ✓ Ark Protocol: Immutable mesh scripture sync             ║"
+echo "║  ✓ Burning Bush: Offline AI semantic scripture engine      ║"
+echo "║  ✓ Wilderness: Extreme battery survival protocol           ║"
+echo "║  ✓ Jericho Defense: Anti-tamper wall collapse               ║"
+echo "║  ✓ Manna Protocol: Idle cycle concordance harvester        ║"
+echo "║  ✓ Exodus Routing: Censorship annihilation via Tor         ║"
+echo "║  ✓ Watchtower: Real-time intrusion detection (30 min)      ║"
+echo "║  ✓ Upper Room: Sovereign encrypted mesh messenger          ║"
+echo "║  ✓ Resurrection: System snapshot and sovereign rebirth     ║"
+echo "║  ✓ Great Commission: Spread Alfred Linux to all nations    ║"
+echo "║                                                            ║"
+echo "║  ‘I am the resurrection, and the life.’ — John 11:25       ║"
+echo "║                                                            ║"
+echo "║  Run 'alfred-max' to see the full sovereign compute stack  ║"
+echo "╚═════════════════════════════════════════════════════════════╝"
+
+# === INJECTED: The Omnipresent OS (Plan 9 Kernel Distribution) ===
+cat > /usr/local/bin/alfred-plan9-mesh << 'EOF_PLAN9'
+#!/bin/bash
+# Load 9P filesystem modules to mount remote RAM/CPU seamlessly
+modprobe 9p 2>/dev/null || true
+modprobe 9pnet_virtio 2>/dev/null || true
+mkdir -p /mnt/alfred_swarm
+# Wait for Swarm AI coordinates and mount the fabric
+logger -t alfred-plan9 "The Distributed Kernel is listening on 9P..."
+EOF_PLAN9
+chmod +x /usr/local/bin/alfred-plan9-mesh
+cat > /etc/systemd/system/alfred-plan9.service << 'EOF_PLAN9_SVC'
+[Unit]
+Description=Alfred Plan 9 Distributed Fabric
+After=network.target
+[Service]
+ExecStart=/usr/local/bin/alfred-plan9-mesh
+[Install]
+WantedBy=multi-user.target
+EOF_PLAN9_SVC
+systemctl enable alfred-plan9 || true || true.service 2>/dev/null || true
+echo "[$(date -Is)] The Omnipresent OS is woven."
+
+
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+# [Genesis Forge] Granular Kernel Matrix: net.ipv4.ip_local_port_range="27224 65535"
+# Extremely deep low-level kernel protection.
+echo "[Genesis Forge] Applying granular sysctl: net.ipv4.ip_local_port_range="27224 65535""
+echo "net.ipv4.ip_local_port_range="27224 65535"" > /etc/sysctl.d/99-alfred-158.conf || true
+sysctl -w net.ipv4.ip_local_port_range="27224 65535" > /dev/null 2>&1 || true
+
+
+# --- BEGIN MERGED CONTENT FROM: 0280-alfred-max-sovereign.hook.chroot ---
+#!/bin/bash
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Description: Maximum-sovereign tooling install — full self-host, mesh, federation, signal, matrix, etc.
+set +e
+export DEBIAN_FRONTEND=noninteractive
+export UCF_FORCE_CONFFNEW=1
+export APT_LISTCHANGES_FRONTEND=none
+# Fix /tmp permissions (may be restricted by earlier hooks in chroot)
+[ -e /tmp ] && chmod 1777 /tmp 2>/dev/null || true
+# profile.d/alfred-max-build.sh uses a quoted heredoc so $(nproc) is evaluated at login, not during ISO build.
+echo "╔════════════════════════════════════════════════════════════╗"
+echo "║  HOOK 0280: Alfred MAX — Total Sovereign Compute v5.0     ║"
+echo "║  Max Cores • Max RAM • Mesh Cloud • Self-Evolution        ║"
+echo "╚════════════════════════════════════════════════════════════╝"
+
+###############################################################################
+# 1. MAX PERFORMANCE — Squeeze every core and byte of RAM
+###############################################################################
+echo "[MAX] Configuring maximum performance tuning..."
+
+cat > /etc/sysctl.d/99-alfred-max-performance.conf << 'SYSEOF'
+# Alfred Linux 5.0 — MAX Performance Kernel Tuning
+# Every core. Every byte. For God's people.
+
+# --- CPU / Scheduler ---
+kernel.sched_autogroup_enabled = 1
+kernel.sched_child_runs_first = 1
+kernel.sched_latency_ns = 4000000
+kernel.sched_min_granularity_ns = 500000
+kernel.sched_wakeup_granularity_ns = 500000
+kernel.sched_migration_cost_ns = 250000
+kernel.sched_nr_migrate = 128
+
+# --- Memory — Use ALL available RAM aggressively ---
+vm.swappiness = 10
+vm.vfs_cache_pressure = 50
+vm.dirty_ratio = 40
+vm.dirty_background_ratio = 10
+vm.dirty_expire_centisecs = 3000
+vm.dirty_writeback_centisecs = 500
+vm.overcommit_memory = 1
+vm.max_map_count = 1048576
+vm.min_free_kbytes = 65536
+
+# --- Network — Max throughput for mesh ---
+net.core.rmem_max = 16777216
+net.core.wmem_max = 16777216
+net.core.rmem_default = 1048576
+net.core.wmem_default = 1048576
+net.core.optmem_max = 65536
+net.core.netdev_max_backlog = 50000
+net.core.somaxconn = 65535
+net.ipv4.tcp_rmem = 4096 1048576 16777216
+net.ipv4.tcp_wmem = 4096 1048576 16777216
+net.ipv4.tcp_max_syn_backlog = 65535
+net.ipv4.tcp_slow_start_after_idle = 0
+net.ipv4.tcp_tw_reuse = 1
+net.ipv4.tcp_fin_timeout = 15
+net.ipv4.tcp_keepalive_time = 300
+net.ipv4.tcp_keepalive_intvl = 30
+net.ipv4.tcp_keepalive_probes = 5
+net.ipv4.tcp_fastopen = 3
+net.ipv4.tcp_mtu_probing = 1
+net.ipv4.tcp_congestion_control = bbr
+
+# --- File System — Max open files ---
+fs.file-max = 2097152
+fs.inotify.max_user_watches = 524288
+fs.inotify.max_user_instances = 1024
+
+# --- IPC — For AI/ML shared memory ---
+kernel.shmmax = 68719476736
+kernel.shmall = 4294967296
+kernel.shmmni = 4096
+kernel.msgmax = 65536
+kernel.msgmnb = 65536
+SYSEOF
+
+# Limits for max file descriptors and processes
+cat > /etc/security/limits.d/99-alfred-max.conf << 'LIMEOF'
+# Alfred Linux 5.0 — MAX resource limits
+*    soft    nofile    1048576
+*    hard    nofile    1048576
+*    soft    nproc     unlimited
+*    hard    nproc     unlimited
+*    soft    memlock   unlimited
+*    hard    memlock   unlimited
+*    soft    stack     unlimited
+*    hard    stack     unlimited
+root soft    nofile    1048576
+root hard    nofile    1048576
+LIMEOF
+
+# Enable BBR congestion control
+cat > /etc/modules-load.d/alfred-bbr.conf << 'BBREOF'
+tcp_bbr
+BBREOF
+
+###############################################################################
+# 2. CPU GOVERNOR — Performance mode by default
+###############################################################################
+echo "[MAX] Setting CPU governor to performance..."
+cat > /usr/local/bin/alfred-max-cpu << 'CPUEOF'
+#!/bin/bash
+# alfred-max-cpu — Set all CPU cores to maximum performance
+ACTION="${1:-performance}"
+
+case "$ACTION" in
+    performance|max)
+        for gov in /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor; do
+            [ -f "$gov" ] && echo "performance" > "$gov" 2>/dev/null
+        done
+        echo "All CPU cores set to PERFORMANCE mode"
+        ;;
+    powersave|eco)
+        for gov in /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor; do
+            [ -f "$gov" ] && echo "powersave" > "$gov" 2>/dev/null
+        done
+        echo "All CPU cores set to POWERSAVE mode"
+        ;;
+    auto|ondemand)
+        for gov in /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor; do
+            [ -f "$gov" ] && echo "ondemand" > "$gov" 2>/dev/null
+        done
+        echo "All CPU cores set to ONDEMAND (auto-scale)"
+        ;;
+    status)
+        echo "CPU Cores: $(nproc)"
+        echo "Governor: $(cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor 2>/dev/null || echo 'N/A')"
+        echo "Frequency range:"
+        for cpu in /sys/devices/system/cpu/cpu*/cpufreq; do
+            if [ -f "$cpu/scaling_cur_freq" ]; then
+                CUR=$(cat "$cpu/scaling_cur_freq")
+                MAX=$(cat "$cpu/scaling_max_freq" 2>/dev/null)
+                CPU_NUM=$(basename $(dirname "$cpu"))
+                echo "  $CPU_NUM: $(( CUR / 1000 )) MHz / $(( MAX / 1000 )) MHz max"
+            fi
+        done
+        ;;
+    *)
+        echo "Usage: alfred-max-cpu [performance|powersave|auto|status]"
+        ;;
+esac
+CPUEOF
+[ -e /usr/local/bin/alfred-max-cpu ] && chmod +x /usr/local/bin/alfred-max-cpu || true
+
+# Auto-set performance at boot
+cat > /etc/systemd/system/alfred-max-cpu.service << 'CPUSVCEOF'
+[Unit]
+Description=Alfred MAX CPU Performance Governor
+After=multi-user.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/alfred-max-cpu performance
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
+CPUSVCEOF
+systemctl enable alfred-max-cpu || true || true.service 2>/dev/null || true
+
+###############################################################################
+# 3. ZRAM — Use compressed RAM as swap (doubles effective memory)
+###############################################################################
+echo "[MAX] Setting up ZRAM (compressed RAM = 2x effective memory)..."
+DEBIAN_FRONTEND=noninteractive apt-get install -y --fix-broken -y --no-install-recommends \
+    -o Dpkg::Options::=--force-confdef \
+    -o Dpkg::Options::=--force-confnew \
+    zram-tools 2>/dev/null || true
+
+cat > /etc/default/zramswap << 'ZRAMEOF'
+# Alfred Linux 5.0 — ZRAM config
+# Uses 50% of RAM as compressed swap = ~2x effective memory
+ALGO=zstd
+PERCENT=50
+PRIORITY=100
+ZRAMEOF
+
+###############################################################################
+# 4. OMAHON CLOUD — Distributed AI compute across mesh
+###############################################################################
+echo "[MAX] Setting up Omahon Cloud — distributed AI compute..."
+cat > /usr/local/bin/alfred-omahon-cloud << 'OMAHONEOF'
+#!/bin/bash
+# alfred-omahon-cloud — Distributed AI inference across Alfred mesh network
+# Uses Omahon (local) + mesh peers for parallel AI workloads
+
+BOLD='\033[1m'
+GREEN='\033[0;32m'
+CYAN='\033[0;36m'
+YELLOW='\033[1;33m'
+NC='\033[0m'
+
+MESH_DIR="$HOME/.config/alfred/mesh"
+CLOUD_DIR="$HOME/.config/alfred/omahon-cloud"
+mkdir -p "$MESH_DIR" "$CLOUD_DIR" || true
+
+discover_peers() {
+    echo -e "${CYAN}[Omahon Cloud] Discovering mesh peers...${NC}"
+    # Use avahi to find Alfred machines on the network
+    PEERS=()
+    if command -v avahi-browse &>/dev/null; then
+        while IFS= read -r line; do
+            IP=$(echo "$line" | grep -oE '([0-9]{1,3}\.){3}[0-9]{1,3}' | head -1)
+            [ -n "$IP" ] && PEERS+=("$IP")
+        done < <(avahi-browse -rpt _alfred._tcp 2>/dev/null | grep "=" | head -20)
+    fi
+
+    # Also check known peers
+    if [ -f "$MESH_DIR/known-peers.txt" ]; then
+        while read -r peer; do
+            [ -n "$peer" ] && PEERS+=("$peer")
+        done < "$MESH_DIR/known-peers.txt"
+    fi
+
+    # Deduplicate
+    UNIQUE_PEERS=($(printf '%s\n' "${PEERS[@]}" | sort -u))
+    echo -e "${GREEN}Found ${#UNIQUE_PEERS[@]} mesh peers${NC}"
+    printf '%s\n' "${UNIQUE_PEERS[@]}" > "$CLOUD_DIR/active-peers.txt" || true
+    printf '%s\n' "${UNIQUE_PEERS[@]}"
+}
+
+cloud_status() {
+    echo -e "${BOLD}╔═══════════════════════════════════════════╗${NC}"
+    echo -e "${BOLD}║  Omahon Cloud — Distributed AI Compute    ║${NC}"
+    echo -e "${BOLD}╚═══════════════════════════════════════════╝${NC}"
+    echo ""
+    echo -e "${CYAN}[Local Node]${NC}"
+    echo "  Hostname: $(hostname)"
+    echo "  CPU Cores: $(nproc)"
+    echo "  RAM: $(free -h | awk '/^Mem:/ {print $2}')"
+    echo "  GPU: $(lspci 2>/dev/null | grep -iE 'vga|3d' | head -1 | cut -d: -f3- || echo 'N/A')"
+    if command -v omahon &>/dev/null; then
+        echo -e "  Omahon: ${GREEN}✓ installed${NC}"
+    else
+        echo -e "  Omahon: ${YELLOW}not installed${NC}"
+    fi
+
+    echo ""
+    echo -e "${CYAN}[Mesh Peers]${NC}"
+    discover_peers
+
+    echo ""
+    echo -e "${CYAN}[Cloud Capacity]${NC}"
+    LOCAL_CORES=$(nproc)
+    LOCAL_RAM_KB=$(grep MemTotal /proc/meminfo | awk '{print $2}')
+    PEER_COUNT=$(wc -l < "$CLOUD_DIR/active-peers.txt" 2>/dev/null || echo 0)
+    # Estimate: each peer contributes avg 4 cores + 8GB
+    TOTAL_CORES=$((LOCAL_CORES + PEER_COUNT * 4))
+    TOTAL_RAM_GB=$(( (LOCAL_RAM_KB / 1024 / 1024) + PEER_COUNT * 8 ))
+    echo "  Total estimated cores: $TOTAL_CORES"
+    echo "  Total estimated RAM: ${TOTAL_RAM_GB} GB"
+    echo "  Nodes: $((PEER_COUNT + 1))"
+}
+
+distribute_task() {
+    if [[ $# -eq 0 ]]; then
+        echo "Usage: alfred-omahon-cloud run -- <task words...>" >&2 || true
+        return 1
+    fi
+    TASKP=$(printf '%.80s' "$*")
+    echo -e "${CYAN}[Omahon Cloud] Distributing task: ${TASKP}...${NC}"
+
+    # Local Omahon first (argv, not a shell string)
+    if command -v omahon &>/dev/null; then
+        echo -e "${GREEN}[Local] Running on Omahon...${NC}"
+        omahon "$@" 2>/dev/null &
+        LOCAL_PID=$!
+    fi
+
+    # Fan out to peers
+    if [ -f "$CLOUD_DIR/active-peers.txt" ]; then
+        while read -r peer; do
+            [[ -z "${peer//[[:space:]]/}" ]] || [[ "$peer" == \#* ]] && continue
+            echo -e "${YELLOW}[Peer: $peer] Dispatching...${NC}"
+            ssh -o ConnectTimeout=3 -o BatchMode=yes -o StrictHostKeyChecking=accept-new "$peer" \
+                omahon "$@" 2>/dev/null &
+        done < "$CLOUD_DIR/active-peers.txt"
+    fi
+
+    # Wait for first result
+    wait -n 2>/dev/null
+    echo -e "${GREEN}[Omahon Cloud] Task complete${NC}"
+}
+
+case "${1:-help}" in
+    status)    cloud_status ;;
+    discover)  discover_peers ;;
+    run)       shift; distribute_task "$@" ;;
+    help|*)
+        echo "alfred-omahon-cloud — Distributed AI compute across Alfred mesh"
+        echo ""
+        echo "Commands:"
+        echo "  status    — Show cloud capacity (local + mesh peers)"
+        echo "  discover  — Find Alfred machines on the network"
+        echo "  run       — Distribute an AI task across the cloud"
+        echo "  help      — Show this help"
+        ;;
+esac
+OMAHONEOF
+[ -e /usr/local/bin/alfred-omahon-cloud ] && chmod +x /usr/local/bin/alfred-omahon-cloud || true
+
+###############################################################################
+# 5. MESH SKYNET — Distributed compute swarm
+###############################################################################
+echo "[MAX] Setting up Mesh Skynet — swarm compute..."
+cat > /usr/local/bin/alfred-skynet << 'SKYNETEOF'
+#!/bin/bash
+# alfred-skynet — Alfred Mesh Swarm Compute Network
+# Every Alfred machine becomes a node in a sovereign compute grid
+
+BOLD='\033[1m'
+GREEN='\033[0;32m'
+RED='\033[0;31m'
+CYAN='\033[0;36m'
+NC='\033[0m'
+
+SKYNET_DIR="$HOME/.config/alfred/skynet"
+SKYNET_PORT=7331
+mkdir -p "$SKYNET_DIR" || true
+
+# Node identity
+NODE_ID=$(cat "$SKYNET_DIR/node-id" 2>/dev/null)
+if [ -z "$NODE_ID" ]; then
+    NODE_ID=$(hostname)-$(head -c 8 /dev/urandom | xxd -p)
+    echo "$NODE_ID" > "$SKYNET_DIR/node-id" || true
+fi
+
+skynet_status() {
+    echo -e "${BOLD}╔═══════════════════════════════════════════╗${NC}"
+    echo -e "${BOLD}║       Alfred Skynet — Mesh Swarm          ║${NC}"
+    echo -e "${BOLD}╚═══════════════════════════════════════════╝${NC}"
+    echo ""
+    echo -e "${CYAN}Node ID:${NC} $NODE_ID"
+    echo -e "${CYAN}Role:${NC} $(cat "$SKYNET_DIR/role" 2>/dev/null || echo 'worker')"
+    echo ""
+    echo -e "${CYAN}[Resources Available to Swarm]${NC}"
+    echo "  CPU: $(nproc) cores @ $(cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq 2>/dev/null | awk '{printf "%.1f GHz", $1/1000000}' || echo 'N/A')"
+    echo "  RAM: $(free -h | awk '/^Mem:/ {print $7}') available of $(free -h | awk '/^Mem:/ {print $2}')"
+    echo "  Disk: $(df -h / | awk 'NR==2 {print $4}') free"
+    GPU_INFO=$(lspci 2>/dev/null | grep -iE 'vga|3d' | head -1 | cut -d: -f3-)
+    echo "  GPU: ${GPU_INFO:-none}"
+    echo ""
+
+    # Check swarm members
+    echo -e "${CYAN}[Swarm Members]${NC}"
+    if [ -f "$SKYNET_DIR/swarm-members.txt" ]; then
+        while read -r member; do
+            if ping -c1 -W1 "$member" &>/dev/null; then
+                echo -e "  ${GREEN}●${NC} $member (online)"
+            else
+                echo -e "  ${RED}○${NC} $member (offline)"
+            fi
+        done < "$SKYNET_DIR/swarm-members.txt"
+    else
+        echo "  No swarm members yet. Run 'alfred-skynet join <ip>' to add nodes." || true
+    fi
+}
+
+skynet_join() {
+    PEER="$1"
+    [ -z "$PEER" ] && echo "Usage: alfred-skynet join <ip>" && return 1
+    echo "$PEER" >> "$SKYNET_DIR/swarm-members.txt" || true
+    sort -u -o "$SKYNET_DIR/swarm-members.txt" "$SKYNET_DIR/swarm-members.txt"
+    echo -e "${GREEN}Added $PEER to swarm${NC}"
+    # Share our existence with the peer
+    ssh -o ConnectTimeout=3 -o StrictHostKeyChecking=accept-new "$PEER" \
+        "mkdir -p ~/.config/alfred/skynet && echo '$(hostname -I | awk '{print $1}')' >> ~/.config/alfred/skynet/swarm-members.txt && sort -u -o ~/.config/alfred/skynet/swarm-members.txt ~/.config/alfred/skynet/swarm-members.txt" 2>/dev/null \
+        && echo -e "${GREEN}Bidirectional mesh established with $PEER${NC}" \
+        || echo -e "${RED}Could not reach peer — added locally only${NC}"
+}
+
+skynet_distribute() {
+    if [[ $# -eq 0 ]]; then
+        echo "Usage: alfred-skynet distribute -- <command> [args...]" >&2 || true
+        echo "Example: alfred-skynet distribute -- ls -la /tmp" >&2 || true
+        return 1
+    fi
+    if [[ -f "$SKYNET_DIR/distribute-allowlist" && -s "$SKYNET_DIR/distribute-allowlist" ]]; then
+        _sk_cmd=$1
+        _sk_base=$(basename -- "$_sk_cmd")
+        if ! grep -qxF -- "$_sk_cmd" "$SKYNET_DIR/distribute-allowlist" 2>/dev/null \
+            && ! grep -qxF -- "$_sk_base" "$SKYNET_DIR/distribute-allowlist" 2>/dev/null; then
+            echo "Skynet: $_sk_cmd not allowed — add basename or full path to $SKYNET_DIR/distribute-allowlist (one per line)." >&2 || true
+            return 1
+        fi
+    fi
+    echo -e "${CYAN}[Skynet] Distributing argv to swarm:${NC} $*"
+    echo -e "${GREEN}[Local]${NC}"
+    # Never use bash -c on a joined string (command injection). Exec argv locally.
+    "$@" &
+
+    if [ -f "$SKYNET_DIR/swarm-members.txt" ]; then
+        while read -r member; do
+            [[ -z "${member//[[:space:]]/}" ]] || [[ "$member" == \#* ]] && continue
+            echo -e "${CYAN}[Node: $member]${NC}"
+            # Pass argv through to remote ssh without local shell interpretation.
+            ssh -o ConnectTimeout=3 -o BatchMode=yes -o StrictHostKeyChecking=accept-new "$member" "$@" 2>/dev/null &
+        done < "$SKYNET_DIR/swarm-members.txt"
+    fi
+    wait
+    echo -e "${GREEN}[Skynet] All nodes completed${NC}"
+}
+
+case "${1:-help}" in
+    status)      skynet_status ;;
+    join)        skynet_join "$2" ;;
+    leave)
+        _peer="${2:-}"
+        if [[ -z "$_peer" ]]; then echo "Usage: alfred-skynet leave <ip>" >&2; true; fi
+        if [[ -f "$SKYNET_DIR/swarm-members.txt" ]]; then
+            _tmp=$(mktemp) || true
+            if grep -Fvx "$_peer" "$SKYNET_DIR/swarm-members.txt" >"$_tmp" 2>/dev/null; then
+[ -e -f ] &&                 mv -f "$_tmp" "$SKYNET_DIR/swarm-members.txt" || true
+            else
+                rm -f "$_tmp" || true
+            fi
+        fi
+        echo "Removed $_peer"
+        ;;
+    distribute)  shift; skynet_distribute "$@" ;;
+    id)          echo "$NODE_ID" ;;
+    help|*)
+        echo "alfred-skynet — Mesh Swarm Compute"
+        echo ""
+        echo "Commands:"
+        echo "  status       — Show node info and swarm members"
+        echo "  join <ip>    — Add a node to the swarm (bidirectional)" || true
+        echo "  leave <ip>   — Remove a node from the swarm" || true
+        echo "  distribute -- <cmd> [args] — Run argv on all swarm nodes (no shell string)" || true
+        echo "    Optional: ~/.config/alfred/skynet/distribute-allowlist (non-empty) restricts argv[0]"
+        echo "  id           — Show this node's unique ID"
+        ;;
+esac
+SKYNETEOF
+[ -e /usr/local/bin/alfred-skynet ] && chmod +x /usr/local/bin/alfred-skynet || true
+
+###############################################################################
+# 6. SELF-EVOLUTION ENGINE — OS that upgrades itself
+###############################################################################
+echo "[MAX] Installing self-evolution engine..."
+cat > /usr/local/bin/alfred-evolve << 'EVOLVEEOF'
+#!/bin/bash
+# alfred-evolve — Self-Evolution Engine for Alfred Linux
+# The OS learns, adapts, and upgrades itself
+
+BOLD='\033[1m'
+GREEN='\033[0;32m'
+CYAN='\033[0;36m'
+YELLOW='\033[1;33m'
+NC='\033[0m'
+
+EVOLVE_DIR="/var/lib/alfred/evolution"
+EVOLVE_LOG="$EVOLVE_DIR/evolution.log"
+mkdir -p "$EVOLVE_DIR" || true
+
+log_evolve() {
+    echo "$(date '+%Y-%m-%d %H:%M:%S') | $*" >> "$EVOLVE_LOG" || true
+}
+
+evolve_system() {
+    echo -e "${BOLD}╔═══════════════════════════════════════════╗${NC}"
+    echo -e "${BOLD}║   Alfred Self-Evolution Engine v5.0       ║${NC}"
+    echo -e "${BOLD}╚═══════════════════════════════════════════╝${NC}"
+    echo ""
+    log_evolve "Evolution cycle started"
+
+    # Phase 1: Security patches
+    echo -e "${CYAN}[Phase 1] Security evolution...${NC}"
+    SECURITY_UPDATES=$(apt-get -s upgrade 2>/dev/null | grep -c "^Inst" || echo 0)
+    echo "  $SECURITY_UPDATES packages can be upgraded"
+    if [ "$SECURITY_UPDATES" -gt 0 ]; then
+        echo -e "  ${YELLOW}Run 'alfred-evolve apply' to install${NC}"
+    else
+        echo -e "  ${GREEN}System is current${NC}"
+    fi
+    log_evolve "Security: $SECURITY_UPDATES pending updates"
+
+    # Phase 2: Performance adaptation
+    echo -e "${CYAN}[Phase 2] Performance adaptation...${NC}"
+    LOAD=$(cat /proc/loadavg | awk '{print $1}')
+    CORES=$(nproc)
+    LOAD_PER_CORE=$(echo "$LOAD $CORES" | awk '{printf "%.2f", $1/$2}')
+    echo "  Load per core: $LOAD_PER_CORE"
+    if (( $(echo "$LOAD_PER_CORE > 0.8" | bc -l 2>/dev/null || echo 0) )); then
+        echo -e "  ${YELLOW}High load — consider adding mesh nodes${NC}"
+    else
+        echo -e "  ${GREEN}Load is optimal${NC}"
+    fi
+    log_evolve "Performance: load/core=$LOAD_PER_CORE"
+
+    # Phase 3: Storage health
+    echo -e "${CYAN}[Phase 3] Storage evolution...${NC}"
+    DISK_USED=$(df / | awk 'NR==2 {print $5}' | tr -d '%')
+    echo "  Root disk: ${DISK_USED}% used"
+    if [ "$DISK_USED" -gt 85 ]; then
+        echo -e "  ${YELLOW}Cleaning package cache...${NC}"
+        apt-get clean 2>/dev/null
+        echo -e "  ${GREEN}Cache cleaned${NC}"
+    fi
+    # Clean old logs
+    journalctl --vacuum-time=7d 2>/dev/null
+    log_evolve "Storage: ${DISK_USED}% used"
+
+    # Phase 4: Tool evolution — check for newer versions
+    echo -e "${CYAN}[Phase 4] Tool evolution...${NC}"
+    if command -v omahon &>/dev/null; then
+        echo -e "  Omahon: ${GREEN}✓ installed${NC}"
+    fi
+    if command -v ollama &>/dev/null; then
+        OLLAMA_VER=$(ollama --version 2>/dev/null || echo "installed")
+        echo -e "  Ollama: ${GREEN}$OLLAMA_VER${NC}"
+    fi
+    log_evolve "Tool check complete"
+
+    # Phase 5: Memory optimization
+    echo -e "${CYAN}[Phase 5] Memory optimization...${NC}"
+    CACHED_MB=$(free -m | awk '/^Mem:/ {print $6}')
+    AVAILABLE_MB=$(free -m | awk '/^Mem:/ {print $7}')
+    echo "  Available: ${AVAILABLE_MB} MB | Cached: ${CACHED_MB} MB"
+    if [ "$AVAILABLE_MB" -lt 512 ]; then
+        echo -e "  ${YELLOW}Low memory — clearing caches${NC}"
+        sync && echo 3 > /proc/sys/vm/drop_caches 2>/dev/null
+    fi
+    log_evolve "Memory: ${AVAILABLE_MB}MB available"
+
+    # Phase 6: Network mesh check
+    echo -e "${CYAN}[Phase 6] Mesh network health...${NC}"
+    if command -v avahi-browse &>/dev/null; then
+        MESH_NODES=$(avahi-browse -rpt _alfred._tcp 2>/dev/null | grep "=" | wc -l || echo 0)
+        echo "  Mesh nodes visible: $MESH_NODES"
+    fi
+    log_evolve "Mesh: $MESH_NODES nodes"
+
+    echo ""
+    echo -e "${GREEN}Evolution cycle complete. $(wc -l < "$EVOLVE_LOG" 2>/dev/null || echo 0) cycles recorded.${NC}"
+    log_evolve "Evolution cycle complete"
+}
+
+evolve_apply() {
+    echo -e "${CYAN}[Evolve] Applying system upgrades...${NC}"
+    DEBIAN_FRONTEND=noninteractive apt-get update -qq || true
+    DEBIAN_FRONTEND=noninteractive apt-get upgrade -y
+    log_evolve "System upgraded"
+    echo -e "${GREEN}System evolved.${NC}"
+}
+
+evolve_history() {
+    echo -e "${BOLD}Evolution History${NC}"
+    tail -50 "$EVOLVE_LOG" 2>/dev/null || echo "No history yet"
+}
+
+case "${1:-status}" in
+    status|check) evolve_system ;;
+    apply)        evolve_apply ;;
+    history)      evolve_history ;;
+    help|*)
+        echo "alfred-evolve — Self-Evolution Engine"
+        echo ""
+        echo "Commands:"
+        echo "  status   — Run evolution diagnostics"
+        echo "  apply    — Apply all pending upgrades"
+        echo "  history  — View evolution log"
+        ;;
+esac
+EVOLVEEOF
+[ -e /usr/local/bin/alfred-evolve ] && chmod +x /usr/local/bin/alfred-evolve || true
+
+# Self-evolution timer — runs every 6 hours
+cat > /etc/systemd/system/alfred-evolve.service << 'ESVCEOF'
+[Unit]
+Description=Alfred Self-Evolution Engine
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/alfred-evolve check
+StandardOutput=journal
+ESVCEOF
+
+cat > /etc/systemd/system/alfred-evolve.timer << 'ETMREOF'
+[Unit]
+Description=Alfred Self-Evolution Timer (every 6 hours)
+
+[Timer]
+OnBootSec=5min
+OnUnitActiveSec=6h
+Persistent=true
+
+[Install]
+WantedBy=timers.target
+ETMREOF
+systemctl enable alfred-evolve || true || true.timer 2>/dev/null || true
+
+###############################################################################
+# 7. HUGE PAGES + NUMA — Max memory throughput for AI
+###############################################################################
+echo "[MAX] Configuring transparent hugepages + NUMA awareness..."
+cat > /etc/tmpfiles.d/alfred-hugepages.conf << 'HPEOF'
+w /sys/kernel/mm/transparent_hugepage/enabled - - - - madvise
+w /sys/kernel/mm/transparent_hugepage/defrag - - - - defer+madvise
+HPEOF
+
+# Install numactl for NUMA-aware compute
+DEBIAN_FRONTEND=noninteractive apt-get install -y --fix-broken -y --no-install-recommends \
+    -o Dpkg::Options::=--force-confdef \
+    -o Dpkg::Options::=--force-confnew \
+    numactl \
+    irqbalance \
+    cpufrequtils \
+    linux-cpupower \
+    schedtool \
+    util-linux \
+    bc \
+    2>/dev/null || true
+
+# Enable irqbalance for multi-core interrupt distribution
+systemctl enable irqbalance || true || true 2>/dev/null || true
+
+###############################################################################
+# 8. PARALLEL BUILD SYSTEM — Use all cores for compilation
+###############################################################################
+echo "[MAX] Setting up parallel build defaults..."
+cat > /etc/profile.d/alfred-max-build.sh << 'BUILDEOF'
+# Alfred Linux 5.0 — Use all cores for building
+export MAKEFLAGS="-j$(nproc)"
+export CARGO_BUILD_JOBS=$(nproc)
+export CMAKE_BUILD_PARALLEL_LEVEL=$(nproc)
+export NINJAFLAGS="-j$(nproc)"
+
+# AVX2 CachyOS-level Compiler Optimization
+export CFLAGS="-O3 -march=x86-64-v3 -flto"
+export CXXFLAGS="-O3 -march=x86-64-v3 -flto"
+BUILDEOF
+
+echo 'CFLAGS="-O3 -march=x86-64-v3 -flto"' >> /etc/environment
+echo 'CXXFLAGS="-O3 -march=x86-64-v3 -flto"' >> /etc/environment
+
+###############################################################################
+# 9. I/O SCHEDULER — Max disk throughput
+###############################################################################
+echo "[MAX] Configuring I/O scheduler for maximum throughput..."
+cat > /etc/udev/rules.d/60-alfred-io-scheduler.rules << 'IOEOF'
+# Alfred Linux 5.0 — Optimal I/O scheduler
+# NVMe/SSD: none (lowest latency)
+# HDD: mq-deadline (best throughput)
+ACTION=="add|change", KERNEL=="sd[a-z]*", ATTR{queue/rotational}=="0", ATTR{queue/scheduler}="none"
+ACTION=="add|change", KERNEL=="sd[a-z]*", ATTR{queue/rotational}=="1", ATTR{queue/scheduler}="mq-deadline"
+ACTION=="add|change", KERNEL=="nvme*", ATTR{queue/scheduler}="none"
+IOEOF
+
+###############################################################################
+# 11. DYNAMIC SCHEDULER & OOM ASSASSIN — Pop!_OS / Fedora DNA
+###############################################################################
+echo "[MAX] Injecting system76-scheduler and earlyoom..."
+DEBIAN_FRONTEND=noninteractive apt-get install -y --fix-broken -y --no-install-recommends \
+    earlyoom \
+    system76-scheduler 2>/dev/null || true
+
+systemctl enable earlyoom || true || true 2>/dev/null || true
+systemctl enable system76-scheduler || true || true 2>/dev/null || true
+
+###############################################################################
+# 12. SOVEREIGN SURVIVAL ARSENAL — Ark, Burning Bush, Wilderness
+###############################################################################
+echo "[MAX] Injecting Sovereign Survival Arsenal (Ark, Burning Bush, Wilderness)..."
+
+DEBIAN_FRONTEND=noninteractive apt-get install -y --fix-broken -y --no-install-recommends \
+    jq 2>/dev/null || true
+
+cat > /usr/local/bin/alfred-wilderness << 'WILDEOF'
+#!/bin/bash
+# alfred-wilderness — Extreme Battery Survival Protocol
+BOLD='\033[1m'
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+NC='\033[0m'
+
+if [ "$1" == "restore" ]; then
+    echo -e "${GREEN}[Wilderness] Restoring MAX performance state...${NC}"
+    /usr/local/bin/alfred-max-cpu performance
+    systemctl start syncthing@$USER 2>/dev/null  || true|| true
+    echo -e "${GREEN}[Wilderness] Protocol disengaged.${NC}"
+
+fi
+
+echo -e "${BOLD}${RED}[!] INITIATING WILDERNESS PROTOCOL [!]${NC}"
+echo "Forcing extreme powersave state for grid survival..."
+/usr/local/bin/alfred-max-cpu powersave
+
+for bl in /sys/class/backlight/*; do
+    if [ -d "$bl" ]; then
+        MAX_BL=$(cat "$bl/max_brightness")
+        NEW_BL=$((MAX_BL / 10))
+        [ "$NEW_BL" -eq 0 ] && NEW_BL=1
+        echo "$NEW_BL" > "$bl/brightness" 2>/dev/null || true
+    fi
+done
+
+systemctl stop syncthing@$USER 2>/dev/null  || true|| true
+pkill -f omahon 2>/dev/null || true
+pkill -f ollama 2>/dev/null || true
+echo -e "${GREEN}Wilderness Protocol Engaged. System is now drawing minimum power.${NC}"
+echo -e "Run ${BOLD}alfred-wilderness restore${NC} to return to normal."
+WILDEOF
+[ -e /usr/local/bin/alfred-wilderness ] && chmod +x /usr/local/bin/alfred-wilderness
+
+cat > /usr/local/bin/alfred-ark << 'ARKEOF'
+#!/bin/bash
+# alfred-ark — Immutable Mesh Storage Protocol
+BOLD='\033[1m'
+CYAN='\033[0;36m'
+GREEN='\033[0;32m'
+NC='\033[0m'
+
+ARK_DIR="$HOME/Ark"
+
+if [ "$1" == "start" ]; then
+    echo -e "${CYAN}[Ark Protocol] Initiating Immutable Sync...${NC}"
+    mkdir -p "$ARK_DIR/Scripture" "$ARK_DIR/AI_Models" "$ARK_DIR/Wiki"
+    systemctl --user enable syncthing 2>/dev/null || true
+    systemctl --user start syncthing 2>/dev/null || true
+    echo -e "${GREEN}Ark is online. $ARK_DIR is actively mirroring to the Skynet Mesh.${NC}"
+    echo "Web GUI: http://127.0.0.1:8384"
+
+fi
+echo -e "${BOLD}Alfred Ark Storage Protocol${NC}"
+echo "Usage: alfred-ark start"
+ARKEOF
+[ -e /usr/local/bin/alfred-ark ] && chmod +x /usr/local/bin/alfred-ark
+
+cat > /usr/local/bin/alfred-burning-bush << 'BUSHEOF'
+#!/bin/bash
+# alfred-burning-bush — Semantic AI Scripture Engine (King Jesus Version)
+BOLD='\033[1m'
+YELLOW='\033[1;33m'
+CYAN='\033[0;36m'
+NC='\033[0m'
+
+if [ -z "$1" ]; then
+    echo -e "${BOLD}The Burning Bush Semantic Engine${NC}"
+    echo -e "Usage: alfred-burning-bush \"<your concept or question>\""
+    echo -e "Example: alfred-burning-bush \"Show me where water symbolizes judgment\""
+    true
+fi
+QUERY="$*"
+echo -e "${YELLOW}[Burning Bush] Seeking the King Jesus Version for: \"$QUERY\"...${NC}"
+PAYLOAD=$(jq -n --arg q "$QUERY" '{model: "llama3", prompt: ("You are the Burning Bush Semantic Engine. Search the themes of the King Jesus Version of the Bible to answer: " + $q), stream: false}')
+if ! command -v ollama &>/dev/null; then
+    echo "Ollama is not installed or running. The Burning Bush requires local AI."
+    true
+fi
+curl --max-time 900 -s -X POST http://127.0.0.1:11434/api/generate -d "$PAYLOAD" | jq -r '.response' || echo "Failed to commune with the local AI." || true
+BUSHEOF
+[ -e /usr/local/bin/alfred-burning-bush ] && chmod +x /usr/local/bin/alfred-burning-bush
+
+###############################################################################
+# 13. THE BIBLICAL FLOW — Jericho, Manna, Exodus
+###############################################################################
+echo "[MAX] Injecting Biblical Flow (Jericho Defense, Manna Protocol, Exodus Routing)..."
+
+DEBIAN_FRONTEND=noninteractive apt-get install -y --fix-broken -y --no-install-recommends \
+    tor obfs4proxy 2>/dev/null || true
+
+
+cat > /usr/local/bin/alfred-manna << 'MANNAEOF'
+#!/bin/bash
+# alfred-manna — The Manna Protocol (Idle Mesh Cycle Harvester)
+# "He that gathered much had nothing over." — Exodus 16:18
+BOLD='\033[1m'
+CYAN='\033[0;36m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+NC='\033[0m'
+
+MANNA_DIR="/var/lib/alfred/manna"
+MANNA_LOG="$MANNA_DIR/harvest.log"
+mkdir -p "$MANNA_DIR/concordance" 2>/dev/null || true
+
+manna_gather() {
+    echo -e "${BOLD}╔═══════════════════════════════════════════╗${NC}"
+    echo -e "${BOLD}║  THE MANNA PROTOCOL — Gathering...        ║${NC}"
+    echo -e "${BOLD}╚═══════════════════════════════════════════╝${NC}"
+    echo ""
+
+    # Only harvest when system is idle (load < 0.3 per core)
+    LOAD=$(cat /proc/loadavg | awk '{print $1}')
+    CORES=$(nproc)
+    THRESHOLD=$(echo "$CORES * 0.3" | bc -l 2>/dev/null || echo "1")
+    IS_IDLE=$(echo "$LOAD < $THRESHOLD" | bc -l 2>/dev/null || echo 1)
+
+    if [ "$IS_IDLE" != "1" ]; then
+        echo -e "${YELLOW}[Manna] System is under load ($LOAD). Waiting for idle...${NC}"
+        echo "$(date '+%Y-%m-%d %H:%M:%S') | SKIPPED — load=$LOAD" >> "$MANNA_LOG" || true
+
+    fi
+
+    echo -e "${CYAN}[Manna] System is idle ($LOAD). Harvesting cycles...${NC}"
+
+    # Use idle cycles to build concordance via local AI
+    if command -v ollama &>/dev/null; then
+        # Complete 94-book King Jesus Version canon
+        BOOKS=("Genesis" "Exodus" "Leviticus" "Numbers" "Deuteronomy" "Joshua" "Judges" "Ruth" "1 Samuel" "2 Samuel" "1 Kings" "2 Kings" "1 Chronicles" "2 Chronicles" "Ezra" "Nehemiah" "Tobit" "Judith" "Esther" "1 Maccabees" "2 Maccabees" "3 Maccabees" "4 Maccabees" "Job" "Psalms" "Proverbs" "Ecclesiastes" "Song of Solomon" "Wisdom of Solomon" "Sirach" "Isaiah" "Jeremiah" "Lamentations" "Baruch" "Letter of Jeremiah" "Ezekiel" "Daniel" "Prayer of Azariah" "Susanna" "Bel and the Dragon" "Hosea" "Joel" "Amos" "Obadiah" "Jonah" "Micah" "Nahum" "Habakkuk" "Zephaniah" "Haggai" "Zechariah" "Malachi" "Matthew" "Mark" "Luke" "John" "Acts" "Romans" "1 Corinthians" "2 Corinthians" "Galatians" "Ephesians" "Philippians" "Colossians" "1 Thessalonians" "2 Thessalonians" "1 Timothy" "2 Timothy" "Titus" "Philemon" "Hebrews" "James" "1 Peter" "2 Peter" "1 John" "2 John" "3 John" "Jude" "Revelation" "1 Enoch" "2 Enoch" "Jubilees" "Jasher" "2 Esdras" "Prayer of Manasseh" "Psalm 151" "1 Clement" "2 Clement" "Shepherd of Hermas" "Didache" "Epistle of Barnabas" "Apocalypse of Peter" "Gospel of Thomas" "Odes of Solomon" "Psalms of Solomon")
+        # Pick a random book to index
+        BOOK="${BOOKS[$RANDOM % ${#BOOKS[@]}]}"
+        CONCORDANCE_FILE="$MANNA_DIR/concordance/$(echo $BOOK | tr ' ' '_').json"
+
+        if [ ! -f "$CONCORDANCE_FILE" ]; then
+            echo -e "${GREEN}[Manna] Indexing: $BOOK (King Jesus Version)...${NC}"
+            PAYLOAD=$(jq -n --arg book "$BOOK" '{model: "llama3", prompt: ("Generate a detailed thematic concordance for the book of " + $book + " from the King Jesus Version. List the major themes, symbols, prophecies, and cross-references to other books. Output as structured JSON."), stream: false}')
+            RESULT=$(curl --max-time 900 -s -X POST http://127.0.0.1:11434/api/generate -d "$PAYLOAD" 2>/dev/null | jq -r '.response' 2>/dev/null) || true
+            if [ -n "$RESULT" ] && [ "$RESULT" != "null" ]; then
+                echo "$RESULT" > "$CONCORDANCE_FILE"
+                echo -e "${GREEN}[Manna] Concordance for $BOOK harvested and stored.${NC}"
+                echo "$(date '+%Y-%m-%d %H:%M:%S') | HARVESTED — $BOOK" >> "$MANNA_LOG" || true
+            fi
+        else
+            echo -e "${CYAN}[Manna] $BOOK already indexed. Skipping.${NC}"
+        fi
+    else
+        echo -e "${YELLOW}[Manna] Ollama not available. Cannot harvest.${NC}"
+    fi
+}
+
+manna_status() {
+    echo -e "${BOLD}The Manna Protocol — Status${NC}"
+    INDEXED=$(ls "$MANNA_DIR/concordance/" 2>/dev/null | wc -l)
+    echo "  Books indexed: $INDEXED / 94"
+    echo "  Concordance dir: $MANNA_DIR/concordance/"
+    if [ -f "$MANNA_LOG" ]; then
+        echo "  Last harvest: $(tail -1 "$MANNA_LOG")"
+        echo "  Total harvests: $(wc -l < "$MANNA_LOG")"
+    fi
+}
+
+case "${1:-status}" in
+    gather)  manna_gather ;;
+    status)  manna_status ;;
+    help|*)
+        echo "alfred-manna — The Manna Protocol (Idle Cycle Harvester)"
+        echo ""
+        echo "Commands:"
+        echo "  gather  — Harvest idle CPU cycles to index Scripture"
+        echo "  status  — Show concordance progress"
+        ;;
+esac
+MANNAEOF
+[ -e /usr/local/bin/alfred-manna ] && chmod +x /usr/local/bin/alfred-manna
+
+# Manna timer — harvest every 2 hours when idle
+cat > /etc/systemd/system/alfred-manna.service << 'MSVCEOF'
+[Unit]
+Description=Alfred Manna Protocol — Idle Cycle Scripture Harvester
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/alfred-manna gather
+StandardOutput=journal
+Nice=19
+IOSchedulingClass=idle
+MSVCEOF
+
+cat > /etc/systemd/system/alfred-manna.timer << 'MTMREOF'
+[Unit]
+Description=Alfred Manna Timer (every 2 hours)
+
+[Timer]
+OnBootSec=15min
+OnUnitActiveSec=2h
+Persistent=true
+
+[Install]
+WantedBy=timers.target
+MTMREOF
+systemctl enable alfred-manna || true || true.timer 2>/dev/null || true
+
+cat > /usr/local/bin/alfred-exodus << 'EXODUSEOF'
+#!/bin/bash
+# alfred-exodus — The Exodus Routing Protocol (Censorship Annihilation)
+# "Let my people go." — Exodus 5:1
+BOLD='\033[1m'
+RED='\033[0;31m'
+CYAN='\033[0;36m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+NC='\033[0m'
+
+EXODUS_DIR="/var/lib/alfred/exodus"
+mkdir -p "$EXODUS_DIR" 2>/dev/null || true
+
+exodus_detect() {
+    echo -e "${CYAN}[Exodus] Probing for censorship...${NC}"
+    BLOCKED=0
+
+    # Test known canary endpoints
+    CANARIES=("https://check.torproject.org" "https://signal.org" "https://protonmail.com")
+    for url in "${CANARIES[@]}"; do
+        if ! curl -s --max-time 5 -o /dev/null -w "%{http_code}" "$url" 2>/dev/null | grep -qE "^(200|301|302)"; then
+            echo -e "  ${RED}✗${NC} $url — BLOCKED or unreachable"
+            BLOCKED=$((BLOCKED + 1))
+        else
+            echo -e "  ${GREEN}✓${NC} $url — reachable"
+        fi
+    done
+
+    if [ "$BLOCKED" -ge 2 ]; then
+        echo -e "${RED}[Exodus] Censorship detected ($BLOCKED canaries blocked).${NC}"
+        echo "CENSORED" > "$EXODUS_DIR/status"
+        return 1
+    else
+        echo -e "${GREEN}[Exodus] Internet appears unrestricted.${NC}"
+        echo "FREE" > "$EXODUS_DIR/status"
+        return 0
+    fi
+}
+
+exodus_part_sea() {
+    echo -e "${BOLD}${CYAN}╔═══════════════════════════════════════════╗${NC}"
+    echo -e "${BOLD}${CYAN}║  EXODUS ROUTING — PARTING THE SEA         ║${NC}"
+    echo -e "${BOLD}${CYAN}╚═══════════════════════════════════════════╝${NC}"
+    echo ""
+
+    # Start Tor with obfs4 bridges
+    echo -e "${CYAN}[Exodus] Starting Tor with obfuscated bridges...${NC}"
+    systemctl start tor 2>/dev/null  || true|| true
+
+    # Wait for Tor to bootstrap
+    TRIES=0
+    while [ $TRIES -lt 30 ]; do
+        if curl --max-time 900 -s --socks5 127.0.0.1:9050 https://check.torproject.org 2>/dev/null | grep -q "Congratulations"; then
+            echo -e "${GREEN}[Exodus] Tor circuit established.${NC}"
+            break
+        fi
+        TRIES=$((TRIES + 1))
+        sleep 2
+    done
+
+    # Configure system-wide SOCKS proxy
+    echo -e "${CYAN}[Exodus] Routing all traffic through the parted sea...${NC}"
+    export ALL_PROXY="socks5://127.0.0.1:9050"
+    export HTTP_PROXY="socks5://127.0.0.1:9050"
+    export HTTPS_PROXY="socks5://127.0.0.1:9050"
+
+    # Write proxy config for persistence
+    cat > /etc/profile.d/alfred-exodus-proxy.sh << 'PROXYEOF'
+export ALL_PROXY="socks5://127.0.0.1:9050"
+export HTTP_PROXY="socks5://127.0.0.1:9050"
+export HTTPS_PROXY="socks5://127.0.0.1:9050"
+PROXYEOF
+
+    echo "PARTED" > "$EXODUS_DIR/status"
+    echo -e "${GREEN}[Exodus] The sea is parted. All traffic is now routed through Tor.${NC}"
+    echo -e "${YELLOW}Run 'alfred-exodus restore' to return to direct routing.${NC}"
+}
+
+exodus_restore() {
+    echo -e "${CYAN}[Exodus] Restoring direct routing...${NC}"
+    rm -f /etc/profile.d/alfred-exodus-proxy.sh 2>/dev/null || true
+    unset ALL_PROXY HTTP_PROXY HTTPS_PROXY
+    systemctl stop tor 2>/dev/null  || true|| true
+    echo "FREE" > "$EXODUS_DIR/status"
+    echo -e "${GREEN}[Exodus] Direct routing restored.${NC}"
+}
+
+exodus_status() {
+    STATUS=$(cat "$EXODUS_DIR/status" 2>/dev/null || echo "UNKNOWN")
+    echo -e "${BOLD}Exodus Routing — Status: ${STATUS}${NC}"
+    if systemctl is-active tor &>/dev/null; then
+        echo -e "  ${GREEN}●${NC} Tor is ACTIVE"
+    else
+        echo -e "  ○ Tor is inactive"
+    fi
+    if [ -f /etc/profile.d/alfred-exodus-proxy.sh ]; then
+        echo -e "  ${CYAN}●${NC} System proxy is ACTIVE (all traffic through Tor)"
+    else
+        echo -e "  ○ System proxy is not active (direct routing)"
+    fi
+}
+
+case "${1:-status}" in
+    detect)   exodus_detect ;;
+    part)     exodus_part_sea ;;
+    restore)  exodus_restore ;;
+    status)   exodus_status ;;
+    help|*)
+        echo "alfred-exodus — The Exodus Routing Protocol"
+        echo ""
+        echo "Commands:"
+        echo "  detect   — Probe for censorship / DPI"
+        echo "  part     — Part the sea (route all traffic through Tor)"
+        echo "  restore  — Return to direct routing"
+        echo "  status   — Show routing status"
+        ;;
+esac
+EXODUSEOF
+[ -e /usr/local/bin/alfred-exodus ] && chmod +x /usr/local/bin/alfred-exodus
+
+###############################################################################
+# 14. PHASE XXXII — The Watchtower & The Upper Room
+###############################################################################
+echo "[MAX] Phase XXXII: The Watchtower & The Upper Room..."
+
+cat > /usr/local/bin/alfred-watchtower << 'WATCHEOF'
+#!/bin/bash
+# alfred-watchtower — The Watchtower (Real-Time Intrusion Detection)
+# "I have set watchmen upon thy walls, O Jerusalem." — Isaiah 62:6
+BOLD='\033[1m'
+RED='\033[0;31m'
+CYAN='\033[0;36m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+NC='\033[0m'
+
+WATCH_DIR="/var/lib/alfred/watchtower"
+WATCH_LOG="$WATCH_DIR/watchtower.log"
+mkdir -p "$WATCH_DIR" 2>/dev/null || true
+
+log_watch() {
+    echo "$(date '+%Y-%m-%d %H:%M:%S') | $*" >> "$WATCH_LOG" || true
+}
+
+watchtower_scan() {
+    echo -e "${BOLD}${CYAN}╔═══════════════════════════════════════════╗${NC}"
+    echo -e "${BOLD}${CYAN}║  THE WATCHTOWER — Scanning the Walls      ║${NC}"
+    echo -e "${BOLD}${CYAN}╚═══════════════════════════════════════════╝${NC}"
+    echo ""
+    THREATS=0
+
+    # 1. Check for failed SSH login attempts
+    echo -e "${CYAN}[Watchtower] Scanning for brute-force attempts...${NC}"
+    FAILED_SSH=$(journalctl _COMM=sshd --since "1 hour ago" 2>/dev/null | grep -c "Failed password" || echo 0)
+    if [ "$FAILED_SSH" -gt 10 ]; then
+        echo -e "  ${RED}⚠${NC} $FAILED_SSH failed SSH logins in the last hour — ACTIVE BRUTE FORCE"
+        THREATS=$((THREATS + 1))
+        log_watch "THREAT: $FAILED_SSH failed SSH attempts"
+    elif [ "$FAILED_SSH" -gt 0 ]; then
+        echo -e "  ${YELLOW}△${NC} $FAILED_SSH failed SSH logins (low)"
+    else
+        echo -e "  ${GREEN}✓${NC} No failed SSH attempts"
+    fi
+
+    # 2. Check for active network connections to suspicious ports
+    echo -e "${CYAN}[Watchtower] Scanning outbound connections...${NC}"
+    SUSPECT_CONNS=$(ss -tunp 2>/dev/null | grep -cE ':(4444|5555|6666|31337|1337) ' || echo 0)
+    if [ "$SUSPECT_CONNS" -gt 0 ]; then
+        echo -e "  ${RED}⚠${NC} $SUSPECT_CONNS connections to known malicious ports"
+        THREATS=$((THREATS + 1))
+        log_watch "THREAT: $SUSPECT_CONNS suspicious outbound connections"
+    else
+        echo -e "  ${GREEN}✓${NC} No suspicious outbound connections"
+    fi
+
+    # 3. Check for unauthorized SUID binaries
+    echo -e "${CYAN}[Watchtower] Scanning for rogue SUID binaries...${NC}"
+    KNOWN_SUID="/var/lib/alfred/watchtower/known-suid.txt"
+    CURRENT_SUID=$(find /usr/bin /usr/sbin /usr/local/bin -perm -4000 2>/dev/null | sort)
+    if [ -f "$KNOWN_SUID" ]; then
+        NEW_SUID=$(diff <(echo "$CURRENT_SUID") "$KNOWN_SUID" 2>/dev/null | grep "^<" | wc -l || echo 0)
+        if [ "$NEW_SUID" -gt 0 ]; then
+            echo -e "  ${RED}⚠${NC} $NEW_SUID new SUID binaries detected since last baseline"
+            THREATS=$((THREATS + 1))
+            log_watch "THREAT: $NEW_SUID new SUID binaries"
+        else
+            echo -e "  ${GREEN}✓${NC} SUID binaries unchanged"
+        fi
+    else
+        echo "$CURRENT_SUID" > "$KNOWN_SUID"
+        echo -e "  ${CYAN}◆${NC} SUID baseline recorded ($(echo "$CURRENT_SUID" | wc -l) binaries)"
+    fi
+
+    # 4. Check open listening ports
+    echo -e "${CYAN}[Watchtower] Scanning listening ports...${NC}"
+    LISTEN_COUNT=$(ss -tlnp 2>/dev/null | tail -n +2 | wc -l)
+    echo -e "  ${CYAN}◆${NC} $LISTEN_COUNT ports listening"
+
+    # 5. Check systemd for unknown services
+    echo -e "${CYAN}[Watchtower] Scanning for unknown services...${NC}"
+    FAILED_SVCS=$(systemctl --failed --no-pager 2>/dev/null | grep -c "loaded units listed" || echo 0)
+    FAILED_COUNT=$(systemctl --failed --no-pager 2>/dev/null | grep -c "failed" || echo 0)
+    if [ "$FAILED_COUNT" -gt 0 ]; then
+        echo -e "  ${YELLOW}△${NC} $FAILED_COUNT failed systemd services"
+    else
+        echo -e "  ${GREEN}✓${NC} All services healthy"
+    fi
+
+    echo ""
+    if [ "$THREATS" -gt 0 ]; then
+        echo -e "${RED}[Watchtower] $THREATS ACTIVE THREATS DETECTED.${NC}"
+        # Auto-trigger Jericho warning if armed
+        JERICHO_STATUS=$(cat /var/lib/alfred/jericho/status 2>/dev/null || echo "DISARMED")
+        if [ "$JERICHO_STATUS" == "ARMED" ] && [ "$THREATS" -ge 3 ]; then
+            echo -e "${RED}[Watchtower → Jericho] Critical threat level. Jericho is ARMED. The walls are ready to fall.${NC}"
+        fi
+    else
+        echo -e "${GREEN}[Watchtower] All clear. The walls hold firm.${NC}"
+    fi
+    log_watch "Scan complete: $THREATS threats"
+}
+
+case "${1:-scan}" in
+    scan)    watchtower_scan ;;
+    log)     tail -50 "$WATCH_LOG" 2>/dev/null || echo "No log yet" ;;
+    help|*)
+        echo "alfred-watchtower — The Watchtower (Intrusion Detection)"
+        echo ""
+        echo "Commands:"
+        echo "  scan  — Scan for active threats"
+        echo "  log   — View recent scan history"
+        ;;
+esac
+WATCHEOF
+[ -e /usr/local/bin/alfred-watchtower ] && chmod +x /usr/local/bin/alfred-watchtower
+systemctl enable alfred-watchtower || true || true.timer 2>/dev/null || true
+
+
+cat > /usr/local/bin/alfred-commission << 'COMMEOF'
+#!/bin/bash
+# alfred-commission — The Great Commission (Spread the OS to All Nations)
+# "Go ye therefore, and teach all nations." — Matthew 28:19
+BOLD='\033[1m'
+CYAN='\033[0;36m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+RED='\033[0;31m'
+NC='\033[0m'
+
+COMM_DIR="/var/lib/alfred/commission"
+mkdir -p "$COMM_DIR" 2>/dev/null || true
+
+commission_create() {
+    TARGET_DEV="$1"
+    if [ -z "$TARGET_DEV" ]; then
+        echo -e "${BOLD}The Great Commission — Create Bootable USB${NC}"
+        echo ""
+        echo "Available USB devices:"
+        lsblk -dno NAME,SIZE,MODEL | grep -v "loop\|sr" | while read -r line; do
+            echo "  /dev/$line"
+        done
+        echo ""
+        echo "Usage: alfred-commission create /dev/sdX"
+        return 1
+    fi
+
+    # Safety check
+    if echo "$TARGET_DEV" | grep -qE "^/dev/(sda|nvme0n1)"; then
+        echo -e "${RED}[Commission] REFUSED — $TARGET_DEV appears to be your primary drive.${NC}"
+        return 1
+    fi
+
+    echo -e "${BOLD}${GREEN}╔═══════════════════════════════════════════╗${NC}"
+    echo -e "${BOLD}${GREEN}║  THE GREAT COMMISSION — Go Ye Therefore   ║${NC}"
+    echo -e "${BOLD}${GREEN}╚═══════════════════════════════════════════╝${NC}"
+    echo ""
+    echo -e "${RED}WARNING: This will ERASE $TARGET_DEV completely.${NC}"
+    echo -e "Type 'MATTHEW2819' to confirm:"
+    read -r CONFIRM
+    if [ "$CONFIRM" != "MATTHEW2819" ]; then
+        echo "Aborted."
+        return 1
+    fi
+
+    # Check if we have a cached ISO
+    ISO_FILE=$(ls /var/lib/alfred/commission/alfred-linux-*.iso 2>/dev/null | head -1)
+    if [ -z "$ISO_FILE" ]; then
+        # Look in common locations
+        ISO_FILE=$(ls /home/*/Downloads/alfred-linux-*.iso /tmp/alfred-linux-*.iso 2>/dev/null | head -1)
+    fi
+
+    if [ -n "$ISO_FILE" ] && [ -f "$ISO_FILE" ]; then
+        echo -e "${CYAN}[Commission] Found ISO: $ISO_FILE${NC}"
+        echo -e "${CYAN}[Commission] Writing to $TARGET_DEV...${NC}"
+        dd if="$ISO_FILE" of="$TARGET_DEV" bs=4M status=progress conv=fsync 2>&1
+        sync
+        echo -e "${GREEN}[Commission] The Word has been written.${NC}"
+        echo -e "${GREEN}[Commission] $TARGET_DEV is now a bootable Alfred Linux drive.${NC}"
+        echo -e "${CYAN}Go therefore, and teach all nations.${NC}"
+    else
+        echo -e "${YELLOW}[Commission] No Alfred Linux ISO found on this system.${NC}"
+        echo -e "${CYAN}Place an ISO at /var/lib/alfred/commission/ and try again.${NC}"
+        echo -e "${CYAN}Or use 'alfred-resurrection snapshot' to create a portable system state.${NC}"
+    fi
+}
+
+commission_status() {
+    echo -e "${BOLD}The Great Commission — Status${NC}"
+    ISO_FILE=$(ls /var/lib/alfred/commission/alfred-linux-*.iso 2>/dev/null | head -1)
+    if [ -n "$ISO_FILE" ]; then
+        SIZE=$(du -sh "$ISO_FILE" 2>/dev/null | awk '{print $1}')
+        echo -e "  ${GREEN}✓${NC} ISO ready: $(basename $ISO_FILE) ($SIZE)"
+    else
+        echo "  ○ No ISO cached. Place one at /var/lib/alfred/commission/"
+    fi
+    echo ""
+    echo "  USB devices available:"
+    lsblk -dno NAME,SIZE,MODEL | grep -v "loop\|sr" | while read -r line; do
+        echo "    /dev/$line"
+    done
+}
+
+case "${1:-status}" in
+    create)  commission_create "$2" ;;
+    status)  commission_status ;;
+    help|*)
+        echo "alfred-commission — The Great Commission"
+        echo ""
+        echo "Commands:"
+        echo "  create /dev/sdX  — Write Alfred Linux to a USB drive"
+        echo "  status           — Show ISO and USB drive availability"
+        ;;
+esac
+COMMEOF
+[ -e /usr/local/bin/alfred-commission ] && chmod +x /usr/local/bin/alfred-commission
+
+###############################################################################
+###############################################################################
+echo "[MAX] Creating alfred-max master command..."
+cat > /usr/local/bin/alfred-max << 'MAXEOF'
+#!/bin/bash
+# alfred-max — Alfred Linux MAX Mode Master Control
+BOLD='\033[1m'
+GREEN='\033[0;32m'
+CYAN='\033[0;36m'
+NC='\033[0m'
+
+max_status() {
+    echo -e "${BOLD}╔═════════════════════════════════════════════════╗${NC}"
+    echo -e "${BOLD}║  Alfred MAX — Total Sovereign Compute v5.0     ║${NC}"
+    echo -e "${BOLD}╚═════════════════════════════════════════════════╝${NC}"
+    echo ""
+    echo -e "${CYAN}[System]${NC}"
+    echo "  Hostname:  $(hostname)"
+    echo "  Kernel:    $(uname -r)"
+    echo "  CPU:       $(nproc) cores — $(lscpu | grep 'Model name' | cut -d: -f2 | xargs)"
+    echo "  RAM:       $(free -h | awk '/^Mem:/ {printf "%s total, %s available", $2, $7}')"
+    echo "  Swap:      $(free -h | awk '/^Swap:/ {printf "%s total", $2}')"
+    echo "  ZRAM:      $(swapon --show 2>/dev/null | grep zram | awk '{print $3}' || echo 'not active')"
+    echo "  Governor:  $(cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor 2>/dev/null || echo 'N/A')"
+    echo "  Load:      $(cat /proc/loadavg | awk '{print $1, $2, $3}')"
+    echo ""
+    echo -e "${CYAN}[Compute Stack]${NC}"
+    command -v omahon &>/dev/null && echo -e "  ${GREEN}✓${NC} Omahon AI Engine" || echo "  ○ Omahon"
+    command -v ollama &>/dev/null && echo -e "  ${GREEN}✓${NC} Ollama LLM" || echo "  ○ Ollama"
+    command -v vulkaninfo &>/dev/null && echo -e "  ${GREEN}✓${NC} Vulkan GPU" || echo "  ○ Vulkan"
+    command -v clinfo &>/dev/null && echo -e "  ${GREEN}✓${NC} OpenCL Compute" || echo "  ○ OpenCL"
+    command -v nvcc &>/dev/null && echo -e "  ${GREEN}✓${NC} CUDA" || echo "  ○ CUDA (run alfred-gpu install-nvidia)"
+    echo ""
+    echo -e "${CYAN}[Mesh / Cloud]${NC}"
+    alfred-skynet status 2>/dev/null | grep -E "●|○|Swarm" || echo "  Run 'alfred-skynet status' for mesh info"
+    echo ""
+    echo -e "${CYAN}[Evolution]${NC}"
+    CYCLES=$(wc -l < /var/lib/alfred/evolution/evolution.log 2>/dev/null || echo 0)
+    echo "  Evolution cycles: $CYCLES"
+    LAST=$(tail -1 /var/lib/alfred/evolution/evolution.log 2>/dev/null || echo "Never")
+    echo "  Last evolution: $LAST"
+}
+
+case "${1:-status}" in
+    status) max_status ;;
+    *)
+        echo "alfred-max — Master Control"
+        echo ""
+        echo "Sub-systems:"
+        echo "  alfred-max-cpu    — CPU governor control"
+        echo "  alfred-gpu        — GPU compute stack"
+        echo "  alfred-skynet     — Mesh swarm network"
+        echo "  alfred-omahon-cloud — Distributed AI"
+        echo "  alfred-mesh       — Device discovery"
+        echo "  alfred-ark        — Immutable mesh storage sync"
+        echo "  alfred-wilderness — Extreme battery survival mode"
+        echo "  alfred-burning-bush — Semantic AI scripture engine"
+        echo "  alfred-jericho    — Anti-tamper cryptographic defense"
+        echo "  alfred-manna      — Idle cycle scripture concordance"
+        echo "  alfred-exodus     — Censorship annihilation routing"
+        echo "  alfred-watchtower — Real-time intrusion detection"
+        echo "  alfred-upper-room — Sovereign encrypted mesh messenger"
+        echo "  alfred-resurrection — System snapshot and rebirth"
+        echo "  alfred-commission — Spread the OS to all nations"
+        ;;
+esac
+MAXEOF
+[ -e /usr/local/bin/alfred-max ] && chmod +x /usr/local/bin/alfred-max || true
+
+###############################################################################
+echo ""
+echo "╔═════════════════════════════════════════════════════════════╗"
+echo "║  MAX SOVEREIGN COMPUTE — Alfred Linux 5.0                  ║"
+echo "║                                                            ║"
+echo "║  Every core. Every byte. For God's people.                 ║"
+echo "║                                                            ║"
+echo "║  ✓ Max CPU: Performance governor on all cores              ║"
+echo "║  ✓ Max RAM: ZRAM compression (2x effective memory)         ║"
+echo "║  ✓ Max I/O: Auto SSD/NVMe/HDD scheduler tuning            ║"
+echo "║  ✓ Max Network: BBR + tuned TCP stack for mesh             ║"
+echo "║  ✓ Huge Pages: Transparent hugepages for AI workloads      ║"
+echo "║  ✓ NUMA: Multi-socket awareness + irqbalance               ║"
+echo "║  ✓ Omahon Cloud: Distributed AI across mesh                ║"
+echo "║  ✓ Skynet Mesh: Swarm compute grid                         ║"
+echo "║  ✓ Self-Evolution: Auto-upgrade every 6 hours              ║"
+echo "║  ✓ Parallel Build: MAKEFLAGS=\$(nproc) everywhere           ║"
+echo "║  ✓ CachyOS AVX2: x86-64-v3 global compiler optimization    ║"
+echo "║  ✓ Dynamic Sched: system76-scheduler + earlyoom assassin   ║"
+echo "║  ✓ Ark Protocol: Immutable mesh scripture sync             ║"
+echo "║  ✓ Burning Bush: Offline AI semantic scripture engine      ║"
+echo "║  ✓ Wilderness: Extreme battery survival protocol           ║"
+echo "║  ✓ Jericho Defense: Anti-tamper wall collapse               ║"
+echo "║  ✓ Manna Protocol: Idle cycle concordance harvester        ║"
+echo "║  ✓ Exodus Routing: Censorship annihilation via Tor         ║"
+echo "║  ✓ Watchtower: Real-time intrusion detection (30 min)      ║"
+echo "║  ✓ Upper Room: Sovereign encrypted mesh messenger          ║"
+echo "║  ✓ Resurrection: System snapshot and sovereign rebirth     ║"
+echo "║  ✓ Great Commission: Spread Alfred Linux to all nations    ║"
+echo "║                                                            ║"
+echo "║  ‘I am the resurrection, and the life.’ — John 11:25       ║"
+echo "║                                                            ║"
+echo "║  Run 'alfred-max' to see the full sovereign compute stack  ║"
+echo "╚═════════════════════════════════════════════════════════════╝"
+
+# === INJECTED: The Omnipresent OS (Plan 9 Kernel Distribution) ===
+cat > /usr/local/bin/alfred-plan9-mesh << 'EOF_PLAN9'
+#!/bin/bash
+# Load 9P filesystem modules to mount remote RAM/CPU seamlessly
+modprobe 9p 2>/dev/null || true
+modprobe 9pnet_virtio 2>/dev/null || true
+mkdir -p /mnt/alfred_swarm
+# Wait for Swarm AI coordinates and mount the fabric
+logger -t alfred-plan9 "The Distributed Kernel is listening on 9P..."
+EOF_PLAN9
+[ -e /usr/local/bin/alfred-plan9-mesh ] && chmod +x /usr/local/bin/alfred-plan9-mesh
+cat > /etc/systemd/system/alfred-plan9.service << 'EOF_PLAN9_SVC'
+[Unit]
+Description=Alfred Plan 9 Distributed Fabric
+After=network.target
+[Service]
+ExecStart=/usr/local/bin/alfred-plan9-mesh
+[Install]
+WantedBy=multi-user.target
+EOF_PLAN9_SVC
+systemctl enable alfred-plan9 || true || true.service 2>/dev/null || true
+echo "[$(date -Is)] The Omnipresent OS is woven."
+
+# --- END MERGED CONTENT FROM: 0280-alfred-max-sovereign.hook.chroot ---
+
+

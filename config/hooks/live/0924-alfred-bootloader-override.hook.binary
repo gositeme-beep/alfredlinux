@@ -1,0 +1,27 @@
+#!/bin/bash
+BIN=/work/build/binary
+INC=/work/config/includes.binary
+if [ -d "$INC/isolinux" ] && [ -d "$BIN/isolinux" ]; then
+  for f in "$INC/isolinux"/*; do
+    [ -f "$f" ] || continue
+    name=$(basename "$f")
+    cp -fv "$f" "$BIN/isolinux/$name"
+  done
+fi
+if [ -d "$INC/boot/grub" ] && [ -d "$BIN/boot/grub" ]; then
+  for f in "$INC/boot/grub"/*; do
+    [ -f "$f" ] || continue
+    name=$(basename "$f")
+    cp -fv "$f" "$BIN/boot/grub/$name"
+  done
+fi
+add_lsm_safe() {
+  local f="$1"
+  [ -f "$f" ] || return 0
+  if grep -q 'lsm=' "$f"; then return 0; fi
+  sed -i -E 's|(append[[:space:]]+initrd=[^[:space:]]+[[:space:]]+boot=live[^\r\n]*)|\1 components lsm=apparmor apparmor=1 security=apparmor|I' "$f"
+  sed -i -E 's|(linux[[:space:]]+/live/vmlinuz[^\r\n]*)|\1 components lsm=apparmor apparmor=1 security=apparmor|I' "$f"
+}
+for cfg in "$BIN"/isolinux/live.cfg "$BIN"/isolinux/install.cfg "$BIN"/boot/grub/grub.cfg "$BIN"/boot/grub/live.cfg; do
+  add_lsm_safe "$cfg"
+done

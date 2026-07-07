@@ -1,0 +1,81 @@
+#!/bin/bash
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+echo "================================================="
+echo "==== ALFRED SWORD (Dead Man's Switch) ==========="
+echo "================================================="
+
+export DEBIAN_FRONTEND=noninteractive
+
+# Create a udev rule for the Sword USB
+# When the specific USB (idVendor=XXXX) is removed, it runs the panic script
+cat << 'EOF' > /etc/udev/rules.d/99-sword.rules
+ACTION=="remove", SUBSYSTEM=="usb", ENV{ID_VENDOR_ID}=="0951", RUN+="/usr/local/bin/sword-panic.sh"
+EOF
+
+# Create the panic script
+cat << 'EOF' > /usr/local/bin/sword-panic.sh
+#!/bin/bash
+# Sword panic activated!
+echo "SWORD REMOVED. PURGING RAM AND HALTING." > /dev/kmsg
+if [ -f /usr/local/bin/secure-delete ]; then
+    /usr/local/bin/secure-delete /home/gositeme/law/*
+fi
+# Kernel panic
+echo c > /proc/sysrq-trigger
+EOF
+
+chmod +x /usr/local/bin/sword-panic.sh
+echo "Sword udev rule loaded."
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+# [Genesis Forge] Systemd Hardening: alfred-daemon-49.service
+# Enforces deep PrivateTmp, ProtectSystem, and ProtectHome on native daemons.
+echo "[Genesis Forge] Hardening systemd service: alfred-daemon-49.service"
+mkdir -p /etc/systemd/system/alfred-daemon-49.service.d/ || true
+cat > /etc/systemd/system/alfred-daemon-49.service.d/override.conf << 'EOF'
+[Service]
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=read-only
+NoNewPrivileges=yes
+RestrictRealtime=yes
+EOF
+
+
+# --- BEGIN MERGED CONTENT FROM: 0504-alfred-sword-switch.hook.chroot ---
+#!/bin/bash
+set +e
+echo "================================================="
+echo "==== ALFRED SWORD (Dead Man's Switch) ==========="
+echo "================================================="
+
+export DEBIAN_FRONTEND=noninteractive
+
+# Create a udev rule for the Sword USB
+# When the specific USB (idVendor=XXXX) is removed, it runs the panic script
+cat << 'EOF' > /etc/udev/rules.d/99-sword.rules
+ACTION=="remove", SUBSYSTEM=="usb", ENV{ID_VENDOR_ID}=="0951", RUN+="/usr/local/bin/sword-panic.sh"
+EOF
+
+# Create the panic script
+cat << 'EOF' > /usr/local/bin/sword-panic.sh
+#!/bin/bash
+# Sword panic activated!
+echo "SWORD REMOVED. PURGING RAM AND HALTING." > /dev/kmsg
+if [ -f /usr/local/bin/secure-delete ]; then
+    /usr/local/bin/secure-delete /home/gositeme/law/*
+fi
+# Kernel panic
+echo c > /proc/sysrq-trigger
+EOF
+
+chmod +x /usr/local/bin/sword-panic.sh || true
+echo "Sword udev rule loaded."
+
+# --- END MERGED CONTENT FROM: 0504-alfred-sword-switch.hook.chroot ---
+
+

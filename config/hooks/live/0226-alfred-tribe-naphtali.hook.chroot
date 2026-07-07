@@ -1,0 +1,24 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+# 0410-alfred-tribe-naphtali — 🦌 naphtali — swift-words-of-grace
+
+echo "[0410-tribe-naphtali] begin"
+install -d /etc/alfred/tribes /usr/share/alfred/tribes
+cat >/etc/alfred/tribes/naphtali.flag <<EOS
+TRIBE=naphtali
+EMOJI=🦌
+GIFT=swift-words-of-grace
+VERSE="Genesis 49:21 — a hind let loose, goodly words."
+EOS
+cat >/usr/share/alfred/tribes/naphtali.txt <<EOS
+🦌  Tribe of naphtali
+Genesis 49:21 — a hind let loose, goodly words.
+Gift: swift-words-of-grace
+EOS
+echo "[0410-tribe-naphtali] done"
+
+
+exit 0

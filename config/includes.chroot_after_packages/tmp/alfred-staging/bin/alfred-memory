@@ -1,0 +1,8 @@
+#!/bin/sh
+# /usr/bin/alfred-memory — sovereign persistent recall CLI
+export CLAUDE_MEM_HOME="${CLAUDE_MEM_HOME:-$HOME/.alfred/memory}"
+export CLAUDE_MEM_PORT="${CLAUDE_MEM_PORT:-37777}"
+export ALFRED_BRAND="Alfred"
+exec /opt/alfred-memory/dist/cli.mjs "$@" 2>/dev/null \
+  || exec /opt/alfred-memory/openclaw/cli.mjs "$@" 2>/dev/null \
+  || exec node /opt/alfred-memory/src/cli.js "$@"

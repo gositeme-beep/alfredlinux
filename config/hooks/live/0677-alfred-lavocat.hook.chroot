@@ -1,0 +1,47 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+echo "[0802] Baking Lavocat.ca Justice System Integration..."
+
+# 1. Create the Notary CLI Script
+cat > /usr/local/bin/alfred-lavocat-notary << 'SCRIPT'
+#!/bin/bash
+FILE="$1"
+if [ -z "$FILE" ]; then
+exit 0
+fi
+
+# Compute SHA-256 Hash of the file
+HASH=$(sha256sum "$FILE" | awk '{print $1}')
+FILENAME=$(basename "$FILE")
+
+# Open Lavocat Notary Portal in the default web browser (or Alfred Chromium)
+xdg-open "https://lavocat.ca/notary/register?hash=${HASH}&filename=${FILENAME}"
+SCRIPT
+[ -e /usr/local/bin/alfred-lavocat-notary ] && chmod +x /usr/local/bin/alfred-lavocat-notary || true
+
+# 2. Create the KDE Dolphin Service Menu (Right-Click Context Menu)
+# KDE Plasma 6 uses /usr/share/kio/servicemenus/
+mkdir -p /usr/share/kio/servicemenus/ || true
+cat > /usr/share/kio/servicemenus/lavocat-notary.desktop << 'DESKTOP'
+[Desktop Entry]
+Type=Service
+MimeType=application/octet-stream;text/plain;image/*;application/pdf;
+Actions=lavocatNotarize;
+X-KDE-Priority=TopLevel
+
+[Desktop Action lavocatNotarize]
+Name=Notarize via Lavocat.ca (Justice System)
+Icon=document-sign-signature
+Exec=/usr/local/bin/alfred-lavocat-notary "%u"
+DESKTOP
+
+# Also place in KDE 5 location for backwards compatibility
+mkdir -p /usr/share/kservices5/ServiceMenus/ || true
+[ -e "/usr/share/kio/servicemenus/lavocat-notary.desktop" ] && cp /usr/share/kio/servicemenus/lavocat-notary.desktop /usr/share/kservices5/ServiceMenus/ || true
+
+echo "[0802] Lavocat.ca Digital Notary integration complete."
+
+exit 0

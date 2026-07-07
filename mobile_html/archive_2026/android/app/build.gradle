@@ -1,0 +1,90 @@
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    namespace 'com.gositeme.veil'
+    compileSdk 34
+
+    // Load keystore properties
+    def keystorePropertiesFile = rootProject.file("keystore.properties")
+    def keystoreProperties = new Properties()
+    if (keystorePropertiesFile.exists()) {
+        keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+    }
+
+    signingConfigs {
+        release {
+            if (keystorePropertiesFile.exists()) {
+                keyAlias keystoreProperties['keyAlias']
+                keyPassword keystoreProperties['keyPassword']
+                storeFile file(rootProject.file(keystoreProperties['storeFile']))
+                storePassword keystoreProperties['storePassword']
+            }
+        }
+    }
+
+    defaultConfig {
+        applicationId "com.gositeme.veil"
+        minSdk 26        // Android 8.0 — required for TWA
+        targetSdk 34
+        versionCode 5
+        versionName "3.0.0"
+
+        ndk {
+            debugSymbolLevel 'FULL'
+        }
+
+        // TWA host + default URL
+        manifestPlaceholders = [
+            hostName    : "gositeme.com",
+            defaultUrl  : "https://gositeme.com/veil/",
+            launcherName: "Veil Messenger",
+            assetStatements: '[{"relation": ["delegate_permission/common.handle_all_urls"],' +
+                             ' "target": {"namespace": "web", "site": "https://gositeme.com"}}]'
+        ]
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled true
+            shrinkResources true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            if (keystorePropertiesFile.exists()) {
+                signingConfig signingConfigs.release
+            }
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
+
+dependencies {
+    // AndroidX AppCompat — provides Theme.AppCompat and backwards-compatible themes
+    implementation 'androidx.appcompat:appcompat:1.7.0'
+
+    // AndroidX Browser — contains TrustedWebActivityIntentBuilder & TWA support
+    implementation 'androidx.browser:browser:1.8.0'
+
+    // Splash screen API
+    implementation 'androidx.core:core-splashscreen:1.0.1'
+
+    // SwipeRefreshLayout for pull-to-refresh
+    implementation 'androidx.swiperefreshlayout:swiperefreshlayout:1.1.0'
+
+    // Biometric authentication
+    implementation 'androidx.biometric:biometric:1.1.0'
+
+    // Force Kotlin stdlib alignment (AppCompat pulls mixed versions)
+    constraints {
+        implementation('org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.8.22') {
+            because 'Align with kotlin-stdlib'
+        }
+        implementation('org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.8.22') {
+            because 'Align with kotlin-stdlib'
+        }
+    }
+}

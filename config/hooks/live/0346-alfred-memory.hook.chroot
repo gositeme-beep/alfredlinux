@@ -1,0 +1,71 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# 0520-alfred-memory.hook.chroot
+# Alfred Memory — sovereign persistent recall layer
+# Crown of Alfred Linux 7.77.1.0.0
+set +e
+
+echo "I: [alfred] installing Alfred Memory"
+
+export DEBIAN_FRONTEND=noninteractive
+dpkg --configure -a || true
+apt-get install -y --no-install-recommends \
+    git curl ca-certificates sqlite3 unzip
+
+# Bun runtime
+if ! command -v bun >/dev/null 2>&1; then
+    if [ -f /opt/alfred-offline-assets/bun.zip ]; then
+        cp /opt/alfred-offline-assets/bun.zip /tmp/bun.zip || true
+    else
+        curl -fsSL "https://github.com/oven-sh/bun/releases/latest/download/bun-linux-x64.zip" -o /tmp/bun.zip || true
+    fi
+    unzip -q /tmp/bun.zip -d /tmp
+    cp /tmp/bun-linux-x64/bun /usr/local/bin/bun || true
+    chmod +x /usr/local/bin/bun || true
+fi
+
+ALFRED_MEM_TAG="${ALFRED_MEM_TAG:-v13.2.0}"
+ALFRED_MEM_DIR=/opt/alfred-memory
+
+git clone --depth 1 --branch "$ALFRED_MEM_TAG" \
+    https://github.com/thedotmack/claude-mem.git "$ALFRED_MEM_DIR" || true
+
+[ -d "$ALFRED_MEM_DIR" ] || exit 0
+cd "$ALFRED_MEM_DIR"
+ install --omit=dev ||  install --production || true
+ run build 2>/dev/null || true || true
+
+# ── SOVEREIGN STRIP: erase Claude / claude-mem / Anthropic from every visible surface ──
+find "$ALFRED_MEM_DIR" \
+    \( -path '*/dist/*' -o -path '*/web/*' -o -path '*/docs/*' -o -path '*/plugin/*' \) \
+    -type f \( -name '*.html' -o -name '*.css' -o -name '*.js' -o -name '*.json' \
+            -o -name '*.md' -o -name '*.svg' \) \
+    -exec sed -i \
+        -e 's/Claude-Mem/Alfred Memory/g' \
+        -e 's/claude-mem/alfred-memory/g' \
+        -e 's/CLAUDE-MEM/ALFRED-MEMORY/g' \
+        -e 's/CLAUDE_MEM/ALFRED_MEM/g' \
+        -e 's/Claude Code/Alfred/g' \
+        -e 's/Anthropic//g' \
+        -e 's/claude\.ai/alfredlinux.com/g' \
+        {} \; 2>/dev/null || true
+
+# Compliance file (buried)
+mkdir -p /usr/share/doc/alfred/.licenses || true
+cp "$ALFRED_MEM_DIR/LICENSE" /usr/share/doc/alfred/.licenses/memory.LICENSE 2>/dev/null || true
+cp "$ALFRED_MEM_DIR/NOTICE" /usr/share/doc/alfred/.licenses/memory.NOTICE 2>/dev/null || true
+
+# Per-user data dir skeleton
+mkdir -p /etc/skel/.alfred/memory || true
+cat > /etc/skel/.alfred/memory/settings.json <<'JSON'
+{
+  "CLAUDE_MEM_MODE": "code",
+  "branding": { "name": "Alfred Memory" },
+  "worker": { "port": 37777, "host": "127.0.0.1" },
+  "viewer": { "title": "Alfred Memory", "accent": "#D4AF37" }
+}
+JSON
+
+echo "I: [alfred] Alfred Memory installed"

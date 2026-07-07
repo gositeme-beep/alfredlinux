@@ -1,0 +1,38 @@
+#!/bin/bash
+# /usr/bin/alfred-onboard — one-shot first-boot wizard
+# Crown of Alfred Linux 7.77.1.0.0
+set -e
+
+cat <<'BANNER'
+
+           ╔══════════════════════════════════════╗
+           ║   🎩  ALFRED LINUX  —  LIVING OS    ║
+           ║         Crown · 7.77.1.0.0           ║
+           ╚══════════════════════════════════════╝
+
+  At your service, sir.
+
+BANNER
+
+# Memory first
+echo "→ initializing recall…"
+alfred-memory install --quiet 2>/dev/null || true
+
+# Agent persona binding
+echo "→ binding sovereign persona…"
+mkdir -p "$HOME/.alfred/agent"
+cp /usr/share/alfred/persona/alfred.md "$HOME/.alfred/agent/SOUL.md"
+
+# Gateway
+echo "→ preparing channels…"
+alfred-gateway onboard --install-daemon 2>/dev/null || true
+
+# Enable services for the user
+systemctl --user enable --now \
+    alfred-memory alfred-agent alfred-gateway 2>/dev/null || \
+sudo systemctl enable --now alfred-memory alfred-agent alfred-gateway
+
+echo ""
+echo "  ✓ Alfred is at your service, sir."
+echo "  Type:  alfred"
+echo ""

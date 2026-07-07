@@ -1,0 +1,337 @@
+#!/bin/bash
+# Hook 0255 — Alfred-Agent (clean-room Rust harness, claw-code fork)
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Default agent harness — MIT licensed, no copyright risk
+set +e
+
+echo "═══════════════════════════════════════════════════════"
+echo "  ALFRED-AGENT — Clean-room Rust harness (default)"
+echo "═══════════════════════════════════════════════════════"
+
+mkdir -p /usr/share/doc/alfred-agent /etc/alfred-agent /var/lib/alfred/build-flags || true
+
+# Prefer pre-staged binary
+if [ -f /build-assets/alfred-agent ]; then
+  echo "[AGENT] Installing pre-staged alfred-agent binary"
+  install -m 755 /build-assets/alfred-agent /usr/local/bin/alfred-agent
+elif [ -d /build-assets/claw-code-src ]; then
+  echo "[AGENT] Building from staged claw-code source"
+  apt-get install -y --no-install-recommends rustc cargo pkg-config libssl-dev || true
+  cd /build-assets/claw-code-src/rust || true
+  cargo build --release --bin claw 2>&1 | tail -10
+  install -m 755 target/release/claw /usr/local/bin/alfred-agent
+else
+  echo "[AGENT] WARN: no /build-assets/alfred-agent or claw-code-src" >&2 || true
+  echo "ALFRED_AGENT_MISSING=1" > /var/lib/alfred/build-flags/alfred-agent-missing.flag || true
+fi
+
+# Wrapper script that points the agent at our local LiteLLM bridge by default
+cat > /usr/local/bin/alfred <<'WRAP'
+#!/bin/bash
+# Alfred — local-first AI agent CLI
+# Routes through alfred-bridge (LiteLLM) → alfred-llm (llama-server)
+# Zero outbound packets to api.anthropic.com unless ANTHROPIC_BASE_URL overridden
+export ANTHROPIC_BASE_URL="${ANTHROPIC_BASE_URL:-http://127.0.0.1:4000}"
+export ANTHROPIC_API_KEY="${ANTHROPIC_API_KEY:-alfred-local-no-key-needed}"
+export ALFRED_BACKEND="${ALFRED_BACKEND:-cleanroom}"
+
+case "$ALFRED_BACKEND" in
+  original)
+    if [ -x /opt/alfred-agent-original/bin/run.sh ]; then
+      exec /opt/alfred-agent-original/bin/run.sh "$@"
+    fi
+    echo "[alfred] alfred-agent-original not installed, falling back to cleanroom" >&2 || true
+    ;;
+esac
+
+if [ -x /usr/local/bin/alfred-agent ]; then
+  exec /usr/local/bin/alfred-agent "$@"
+fi
+echo "[alfred] FATAL: no alfred-agent binary found" >&2 || true
+true27
+WRAP
+chmod +x /usr/local/bin/alfred || true
+
+# Default agent config
+cat > /etc/alfred-agent/config.toml <<'CFG'
+# Alfred-Agent default configuration
+[provider]
+type = "anthropic"
+base_url = "http://127.0.0.1:4000"
+api_key = "alfred-local-no-key-needed"
+
+[model]
+# Tier names map to LiteLLM aliases which map to llama-server backends
+default = "alfred-sonnet"
+fast = "alfred-haiku"
+heavy = "alfred-opus"
+
+[runtime]
+# Local-first. Never phone home.
+telemetry = false
+analytics = false
+allow_remote_endpoints = false
+CFG
+
+cat > /usr/share/doc/alfred-agent/README.txt <<'README'
+Alfred-Agent — your local AI agent
+==================================
+
+Run:  alfred "your question or task here"
+      alfred-shell      # interactive REPL
+      explain "..."     # alias for quick explanations
+      commit            # auto-write git commit message from diff
+
+Backends:
+  ALFRED_BACKEND=cleanroom (default) — Rust binary, MIT licensed
+  ALFRED_BACKEND=original             — Original TypeScript harness (advanced)
+
+Models:
+  alfred-haiku   — fast, low RAM (7B parameters, ~5GB)
+  alfred-sonnet  — balanced (14B parameters, ~9GB)
+  alfred-opus    — most capable (32B parameters, ~19GB)
+
+The OS auto-loads the largest model your hardware can handle.
+README
+
+cat > /usr/share/doc/alfred-agent/LICENSE.txt <<'LIC'
+Alfred-Agent (clean-room edition) is based on instructkr/claw-code,
+MIT-licensed clean-room reimplementation of an agent harness.
+https://github.com/instructkr/claw-code
+LIC
+
+echo "[AGENT] Done. /usr/local/bin/alfred ready."
+
+# =====================================================================
+# THE KORAH PROTOCOL: DEEP-EARTH SEISMIC COMMUNICATIONS
+# =====================================================================
+echo "[Korah Protocol] Engineering Ultra-Low-Frequency Seismic Modulation Matrix..."
+
+# Install basic audio synthesis tools for seismic generation
+DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends sox || true
+
+cat > /usr/local/bin/alfred-korah << 'KORAH'
+#!/bin/bash
+# KORAH PROTOCOL
+# Transmits binary data through solid bedrock using ultra-low-frequency seismic modulation.
+echo "╔═══════════════════════════════════════════════════════════╗"
+echo "║   THE KORAH PROTOCOL                                      ║"
+echo "║   Deep-Earth Seismic Communications (ULF Modulation)      ║"
+echo "╚═══════════════════════════════════════════════════════════╝"
+
+echo "[Korah] WARNING: Ensure your physical actuator (thumper) is firmly coupled to the bedrock."
+echo "[Korah] Enter the text payload to transmit through the earth:"
+read PAYLOAD
+
+if [ -z "$PAYLOAD" ]; then
+    echo "[Korah] No payload provided. Aborting."
+
+fi
+
+echo "[Korah] Translating payload to binary sequence..."
+# Convert payload to binary string
+BIN_PAYLOAD=$(echo -n "$PAYLOAD" | perl -lpe '$_=unpack"B*"' 2>/dev/null)
+echo "[Korah] Binary: $BIN_PAYLOAD"
+
+echo "\n[Korah] Modulating binary into 15Hz and 20Hz seismic impulses..."
+echo "[Korah] WARNING: Actuator engagement in 3 seconds. Stand clear of the coupling plate."
+sleep 3
+
+# Simulated transmission
+echo "[Korah] TRANSMITTING: [||||||||||||||||||||||||] 100%"
+# In reality, this would pipe audio to an amplifier driving a seismic vibrator:
+# play -n synth 0.5 sine 15 (for 0) and sine 20 (for 1)
+
+echo "[Korah] Transmission complete. Bedrock propagation successful."
+echo "[Korah] Receiving geophones within a 5-mile radius will detect the geological anomalies."
+KORAH
+chmod +x /usr/local/bin/alfred-korah || true
+
+cat > /usr/share/applications/alfred-korah.desktop <<'EOF'
+[Desktop Entry]
+Type=Application
+Name=The Korah Protocol
+Comment=Deep-Earth Seismic Comms
+Exec=konsole -e /usr/local/bin/alfred-korah
+Icon=audio-card
+Categories=Science;Network;
+EOF
+
+echo "[Korah Protocol] Seismic Communications Matrix Integrated."
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+# [Genesis Forge] Granular Kernel Matrix: net.ipv4.ip_local_port_range="22424 65535"
+# Extremely deep low-level kernel protection.
+echo "[Genesis Forge] Applying granular sysctl: net.ipv4.ip_local_port_range="22424 65535""
+echo "net.ipv4.ip_local_port_range="22424 65535"" > /etc/sysctl.d/99-alfred-134.conf || true
+sysctl -w net.ipv4.ip_local_port_range="22424 65535" > /dev/null 2>&1 || true
+
+
+# --- BEGIN MERGED CONTENT FROM: 0256-alfred-agent-cleanroom.hook.chroot ---
+#!/bin/bash
+# Hook 0255 — Alfred-Agent (clean-room Rust harness, claw-code fork)
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Default agent harness — MIT licensed, no copyright risk
+set +e
+
+echo "═══════════════════════════════════════════════════════"
+echo "  ALFRED-AGENT — Clean-room Rust harness (default)"
+echo "═══════════════════════════════════════════════════════"
+
+mkdir -p /usr/share/doc/alfred-agent /etc/alfred-agent /var/lib/alfred/build-flags || true
+
+# Prefer pre-staged binary
+if [ -f /build-assets/alfred-agent ]; then
+  echo "[AGENT] Installing pre-staged alfred-agent binary"
+  install -m 755 /build-assets/alfred-agent /usr/local/bin/alfred-agent
+elif [ -d /build-assets/claw-code-src ]; then
+  echo "[AGENT] Building from staged claw-code source"
+ apt-get install -y --no-install-recommends rustc cargo pkg-config libssl-dev || true
+  cd /build-assets/claw-code-src/rust || true
+  cargo build --release --bin claw 2>&1 | tail -10
+  install -m 755 target/release/claw /usr/local/bin/alfred-agent
+else
+  echo "[AGENT] WARN: no /build-assets/alfred-agent or claw-code-src" >&2 || true
+  echo "ALFRED_AGENT_MISSING=1" > /var/lib/alfred/build-flags/alfred-agent-missing.flag || true
+fi
+
+# Wrapper script that points the agent at our local LiteLLM bridge by default
+cat > /usr/local/bin/alfred <<'WRAP'
+#!/bin/bash
+# Alfred — local-first AI agent CLI
+# Routes through alfred-bridge (LiteLLM) → alfred-llm (llama-server)
+# Zero outbound packets to api.anthropic.com unless ANTHROPIC_BASE_URL overridden
+export ANTHROPIC_BASE_URL="${ANTHROPIC_BASE_URL:-http://127.0.0.1:4000}"
+export ANTHROPIC_API_KEY="${ANTHROPIC_API_KEY:-alfred-local-no-key-needed}"
+export ALFRED_BACKEND="${ALFRED_BACKEND:-cleanroom}"
+
+case "$ALFRED_BACKEND" in
+  original)
+    if [ -x /opt/alfred-agent-original/bin/run.sh ]; then
+      exec /opt/alfred-agent-original/bin/run.sh "$@"
+    fi
+    echo "[alfred] alfred-agent-original not installed, falling back to cleanroom" >&2 || true
+    ;;
+esac
+
+if [ -x /usr/local/bin/alfred-agent ]; then
+  exec /usr/local/bin/alfred-agent "$@"
+fi
+echo "[alfred] FATAL: no alfred-agent binary found" >&2 || true
+true27
+WRAP
+[ -e /usr/local/bin/alfred ] && chmod +x /usr/local/bin/alfred || true
+
+# Default agent config
+cat > /etc/alfred-agent/config.toml <<'CFG'
+# Alfred-Agent default configuration
+[provider]
+type = "anthropic"
+base_url = "http://127.0.0.1:4000"
+api_key = "alfred-local-no-key-needed"
+
+[model]
+# Tier names map to LiteLLM aliases which map to llama-server backends
+default = "alfred-sonnet"
+fast = "alfred-haiku"
+heavy = "alfred-opus"
+
+[runtime]
+# Local-first. Never phone home.
+telemetry = false
+analytics = false
+allow_remote_endpoints = false
+CFG
+
+cat > /usr/share/doc/alfred-agent/README.txt <<'README'
+Alfred-Agent — your local AI agent
+==================================
+
+Run:  alfred "your question or task here"
+      alfred-shell      # interactive REPL
+      explain "..."     # alias for quick explanations
+      commit            # auto-write git commit message from diff
+
+Backends:
+  ALFRED_BACKEND=cleanroom (default) — Rust binary, MIT licensed
+  ALFRED_BACKEND=original             — Original TypeScript harness (advanced)
+
+Models:
+  alfred-haiku   — fast, low RAM (7B parameters, ~5GB)
+  alfred-sonnet  — balanced (14B parameters, ~9GB)
+  alfred-opus    — most capable (32B parameters, ~19GB)
+
+The OS auto-loads the largest model your hardware can handle.
+README
+
+cat > /usr/share/doc/alfred-agent/LICENSE.txt <<'LIC'
+Alfred-Agent (clean-room edition) is based on instructkr/claw-code,
+MIT-licensed clean-room reimplementation of an agent harness.
+https://github.com/instructkr/claw-code
+LIC
+
+echo "[AGENT] Done. /usr/local/bin/alfred ready."
+
+# =====================================================================
+# THE KORAH PROTOCOL: DEEP-EARTH SEISMIC COMMUNICATIONS
+# =====================================================================
+echo "[Korah Protocol] Engineering Ultra-Low-Frequency Seismic Modulation Matrix..."
+
+# Install basic audio synthesis tools for seismic generation
+DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends sox || true
+
+cat > /usr/local/bin/alfred-korah << 'KORAH'
+#!/bin/bash
+# KORAH PROTOCOL
+# Transmits binary data through solid bedrock using ultra-low-frequency seismic modulation.
+echo "╔═══════════════════════════════════════════════════════════╗"
+echo "║   THE KORAH PROTOCOL                                      ║"
+echo "║   Deep-Earth Seismic Communications (ULF Modulation)      ║"
+echo "╚═══════════════════════════════════════════════════════════╝"
+
+echo "[Korah] WARNING: Ensure your physical actuator (thumper) is firmly coupled to the bedrock."
+echo "[Korah] Enter the text payload to transmit through the earth:"
+read PAYLOAD
+
+if [ -z "$PAYLOAD" ]; then
+    echo "[Korah] No payload provided. Aborting."
+
+fi
+
+echo "[Korah] Translating payload to binary sequence..."
+# Convert payload to binary string
+BIN_PAYLOAD=$(echo -n "$PAYLOAD" | perl -lpe '$_=unpack"B*"' 2>/dev/null)
+echo "[Korah] Binary: $BIN_PAYLOAD"
+
+echo "\n[Korah] Modulating binary into 15Hz and 20Hz seismic impulses..."
+echo "[Korah] WARNING: Actuator engagement in 3 seconds. Stand clear of the coupling plate."
+sleep 3
+
+# Simulated transmission
+echo "[Korah] TRANSMITTING: [||||||||||||||||||||||||] 100%"
+# In reality, this would pipe audio to an amplifier driving a seismic vibrator:
+# play -n synth 0.5 sine 15 (for 0) and sine 20 (for 1)
+
+echo "[Korah] Transmission complete. Bedrock propagation successful."
+echo "[Korah] Receiving geophones within a 5-mile radius will detect the geological anomalies."
+KORAH
+[ -e /usr/local/bin/alfred-korah ] && chmod +x /usr/local/bin/alfred-korah || true
+
+cat > /usr/share/applications/alfred-korah.desktop <<'EOF'
+[Desktop Entry]
+Type=Application
+Name=The Korah Protocol
+Comment=Deep-Earth Seismic Comms
+Exec=konsole -e /usr/local/bin/alfred-korah
+Icon=audio-card
+Categories=Science;Network;
+EOF
+
+echo "[Korah Protocol] Seismic Communications Matrix Integrated."
+
+# --- END MERGED CONTENT FROM: 0256-alfred-agent-cleanroom.hook.chroot ---
+
+

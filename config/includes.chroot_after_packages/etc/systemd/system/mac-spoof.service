@@ -1,0 +1,12 @@
+[Unit]
+Description=Hardware Identity Spoofing (MAC Randomization)
+Wants=network-pre.target
+Before=network-pre.target
+
+[Service]
+Type=oneshot
+ExecStart=/bin/bash -c 'for interface in $(ls /sys/class/net | grep -v lo); do ip link set dev $interface down && macchanger -r $interface && ip link set dev $interface up; done'
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target

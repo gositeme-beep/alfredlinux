@@ -1,0 +1,58 @@
+================================================================================
+GOSITEME ACCOUNT — BACKUP (ALL PROJECTS). IGNORE WHMCS FOR THIS.
+================================================================================
+
+This is NOT a WHMCS button. It runs on the SERVER. WHMCS does not start or stop it.
+
+--------------------------------------------------------------------------------
+ONE COMMAND — backs up ALL sites + ALL databases we find + almost all of /home/gositeme
+--------------------------------------------------------------------------------
+
+  cd /home/gositeme/domains/gositeme.com/public_html
+  bash scripts/START-FULL-BACKUP.sh
+
+  (That script runs the full backup in the background for you.)
+
+  • PARANOID_FULL_HOME=1  → almost everything in /home/gositeme (all projects, not just websites folder)
+  • ECOSYSTEM_INCLUDE_GIT=1 → includes .git in the sites archive (bigger, complete)
+
+  Faster / smaller (no full home, no git in tar): drop both env vars:
+
+  nohup bash scripts/ecosystem-full-backup.sh >> ~/backups/nohup.log 2>&1 &
+
+--------------------------------------------------------------------------------
+STOP IT (if you need to kill the backup)
+--------------------------------------------------------------------------------
+
+  pkill -f ecosystem-full-backup.sh
+  pkill -f 'tar --warning=no-file-changed -C /home/gositeme'
+  pkill -f 'pigz -3'
+
+--------------------------------------------------------------------------------
+WHERE IT GOES
+--------------------------------------------------------------------------------
+
+  ~/backups/ecosystem-export-YYYYMMDD-HHMMSS/
+
+  Download THAT ENTIRE FOLDER off the server (SFTP: backups/ecosystem-export-...)
+
+--------------------------------------------------------------------------------
+WHAT’S INSIDE (your many projects)
+--------------------------------------------------------------------------------
+
+  databases/                    ← one .sql.gz per MySQL database we found (all sites)
+  MANIFEST-databases.json       ← list of which DB is which (no passwords)
+  all-domains-*.tar.gz          ← all website folders under domains/
+  home-gositeme-FULL-*.tar.gz   ← only if PARANOID_FULL_HOME=1 — rest of your account home
+  SYSTEM-*.txt, crontab-*.txt   ← small helper files
+
+  Top-level gositeme-db-*.sql.gz is a shortcut to the main platform DB dump inside databases/
+
+--------------------------------------------------------------------------------
+RESTORE LATER
+--------------------------------------------------------------------------------
+
+  Read:  scripts/UBUNTU-COMPLETE-RESTORE-GUIDE.md
+  (step-by-step Ubuntu — you don’t have to remember the details now)
+
+================================================================================

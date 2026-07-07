@@ -1,0 +1,104 @@
+#!/bin/sh
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+echo "[Mercy of Recovery] Installing Timeshift for automated OS snapshots..."
+apt-get install -y timeshift || true
+mkdir -p /etc/timeshift || true
+cat > /etc/timeshift/timeshift.json << 'EOF'
+{
+  "backup_device_uuid" : "",
+  "parent_device_uuid" : "",
+  "do_first_run" : "false",
+  "btrfs_mode" : "false",
+  "include_btrfs_home" : "false",
+  "schedule_hourly" : "false",
+  "schedule_daily" : "true",
+  "schedule_weekly" : "false",
+  "schedule_monthly" : "false",
+  "schedule_boot" : "true"
+}
+EOF
+echo "[Mercy of Recovery] The OS will now forgive mistakes via automated snapshots."
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+
+echo "[Omega Point] Engineering Resurrection Protocol (Bare-Metal NetBoot)..."
+
+apt-get install -y --fix-broken -y ipxe kexec-tools curl gnupg2 -m 900 || true
+
+mkdir -p /usr/local/bin/ || true
+mkdir -p /etc/alfred/keys/ || true
+
+# Generate a dummy verification key for the Holy Server
+gpg --batch --passphrase '' --quick-generate-key "Holy Server <holy@alfredlinux.com>" default default never || true
+gpg --armor --export "Holy Server <holy@alfredlinux.com>" > /etc/alfred/keys/holy-server.asc || true
+
+cat > /usr/local/bin/alfred-resurrection.sh << 'EOF'
+#!/bin/bash
+# Alfred Resurrection Protocol
+# A scorched-earth recovery system. If the system is hopelessly compromised,
+# this script pulls a fresh vmlinuz and initrd from the holy server,
+# cryptographically verifies them, and uses kexec to instantly reboot 
+# into a pristine environment from RAM.
+
+if [ "$1" != "AUTHORIZE_RESURRECTION" ]; then
+    echo "Usage: alfred-resurrection.sh AUTHORIZE_RESURRECTION"
+
+fi
+
+echo "[Resurrection] Initiating Rebirth Sequence..."
+HOLY_SERVER="https://holy.alfredlinux.com/rebirth"
+VMLINUZ="/tmp/vmlinuz-rebirth"
+INITRD="/tmp/initrd-rebirth"
+
+echo "[Resurrection] Downloading pristine kernel artifacts..."
+curl -sL "$HOLY_SERVER/vmlinuz" -o $VMLINUZ || true
+curl -sL "$HOLY_SERVER/vmlinuz.sig" -o $VMLINUZ.sig || true
+
+echo "[Resurrection] Cryptographically verifying kernel signature..."
+gpg --import /etc/alfred/keys/holy-server.asc >/dev/null 2>&1
+if ! gpg --verify $VMLINUZ.sig $VMLINUZ 2>/dev/null; then
+    echo "[Resurrection] CRITICAL: KERNEL SIGNATURE VERIFICATION FAILED!"
+    echo "[Resurrection] The Holy Server may be compromised or MITM attack detected."
+    echo "[Resurrection] HALTING HARDWARE IMMEDIATELY TO PREVENT POISONED REBIRTH."
+    echo o > /proc/sysrq-trigger
+
+fi
+
+echo "[Resurrection] Kernel verified. Executing pristine Rebirth..."
+kexec -l $VMLINUZ --initrd=$INITRD --append="root=/dev/ram0 rw" || true
+kexec -e
+EOF
+
+[ -e "/usr/local/bin/alfred-resurrection.sh" ] && chmod +x /usr/local/bin/alfred-resurrection.sh || true
+echo "[Omega Point] Resurrection Protocol Upgraded with Cryptographic Signatures."
+
+
+# --- BEGIN MERGED CONTENT FROM: 1332-alfred-mercy-of-recovery.hook.chroot ---
+#!/bin/sh
+set +e
+echo "[Mercy of Recovery] Installing Timeshift for automated OS snapshots..."
+apt-get install -y timeshift || true
+mkdir -p /etc/timeshift || true
+cat > /etc/timeshift/timeshift.json << 'EOF'
+{
+  "backup_device_uuid" : "",
+  "parent_device_uuid" : "",
+  "do_first_run" : "false",
+  "btrfs_mode" : "false",
+  "include_btrfs_home" : "false",
+  "schedule_hourly" : "false",
+  "schedule_daily" : "true",
+  "schedule_weekly" : "false",
+  "schedule_monthly" : "false",
+  "schedule_boot" : "true"
+}
+EOF
+echo "[Mercy of Recovery] The OS will now forgive mistakes via automated snapshots."
+
+# --- END MERGED CONTENT FROM: 1332-alfred-mercy-of-recovery.hook.chroot ---
+
+

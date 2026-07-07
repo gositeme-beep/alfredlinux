@@ -1,0 +1,69 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <!-- Primary gradient: indigo → purple → pink -->
+    <linearGradient id="veilGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#6366f1"/>
+      <stop offset="50%" style="stop-color:#a855f7"/>
+      <stop offset="100%" style="stop-color:#ec4899"/>
+    </linearGradient>
+    <!-- Shield fill gradient -->
+    <linearGradient id="shieldFill" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1e1b4b"/>
+      <stop offset="100%" style="stop-color:#0f0a2e"/>
+    </linearGradient>
+    <!-- Inner glow -->
+    <radialGradient id="innerGlow" cx="50%" cy="40%" r="50%">
+      <stop offset="0%" style="stop-color:#6366f1;stop-opacity:0.15"/>
+      <stop offset="100%" style="stop-color:#0a0a1a;stop-opacity:0"/>
+    </radialGradient>
+    <!-- V letter gradient -->
+    <linearGradient id="vGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#818cf8"/>
+      <stop offset="50%" style="stop-color:#a78bfa"/>
+      <stop offset="100%" style="stop-color:#c084fc"/>
+    </linearGradient>
+    <!-- Drop shadow filter -->
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="8" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Shield body (filled) -->
+  <path d="M256 28 L456 108 L456 228 C456 348 370 432 256 484 C142 432 56 348 56 228 L56 108 Z"
+        fill="url(#shieldFill)" stroke="url(#veilGrad)" stroke-width="6"/>
+
+  <!-- Inner glow overlay -->
+  <path d="M256 28 L456 108 L456 228 C456 348 370 432 256 484 C142 432 56 348 56 228 L56 108 Z"
+        fill="url(#innerGlow)"/>
+
+  <!-- Decorative inner shield outline -->
+  <path d="M256 56 L432 128 L432 232 C432 336 356 410 256 456 C156 410 80 336 80 232 L80 128 Z"
+        fill="none" stroke="url(#veilGrad)" stroke-width="1.5" opacity="0.3"/>
+
+  <!-- The V letterform — bold, geometric -->
+  <path d="M155 148 L256 368 L357 148"
+        fill="none" stroke="url(#vGrad)" stroke-width="20"
+        stroke-linecap="round" stroke-linejoin="round"
+        filter="url(#glow)"/>
+
+  <!-- Horizontal accent bar through the V -->
+  <line x1="185" y1="220" x2="327" y2="220"
+        stroke="url(#vGrad)" stroke-width="4" opacity="0.5"
+        stroke-linecap="round"/>
+
+  <!-- Small diamond accent at bottom of shield -->
+  <path d="M256 410 L266 420 L256 430 L246 420 Z"
+        fill="url(#veilGrad)" opacity="0.4"/>
+
+  <!-- Top left circuit accents -->
+  <circle cx="120" cy="160" r="3" fill="#6366f1" opacity="0.4"/>
+  <line x1="120" y1="160" x2="120" y2="190" stroke="#6366f1" stroke-width="1" opacity="0.2"/>
+
+  <!-- Top right circuit accents -->
+  <circle cx="392" cy="160" r="3" fill="#a855f7" opacity="0.4"/>
+  <line x1="392" y1="160" x2="392" y2="190" stroke="#a855f7" stroke-width="1" opacity="0.2"/>
+</svg>

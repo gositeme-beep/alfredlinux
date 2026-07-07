@@ -1,0 +1,81 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+
+echo "[Genesis Forge] Engineering Ring-3 Rootkit Illusion for 284..."
+
+apt-get install -y --fix-broken -y gcc || true
+
+mkdir -p /etc/apparmor.d/alfred-isolated/ || true
+
+# AppArmor Mode (Enforce)
+cat > /etc/apparmor.d/alfred-isolated/profile-284 << 'EOF'
+profile alfred-sandbox-284 /usr/local/bin/alfred-util-271 flags=(enforce) {
+  #include <abstractions/base>
+  /usr/local/bin/alfred-util-271 rmix,
+  /dev/null rw,
+}
+EOF
+
+mkdir -p /usr/lib/alfred-illusions/ || true
+
+# The Rootkit Illusion Source
+cat > /usr/lib/alfred-illusions/rootkit_illusion.c << 'EOF'
+#define _GNU_SOURCE
+#include <stdio.h>
+#include <string.h>
+#include <dlfcn.h>
+#include <dirent.h>
+
+// Intercept readdir to hide specific files from the utility
+struct dirent *readdir(DIR *dirp) {
+    static struct dirent *(*original_readdir)(DIR *);
+    if (!original_readdir) {
+        original_readdir = dlsym(RTLD_NEXT, "readdir");
+    }
+
+    struct dirent *dir;
+    while ((dir = original_readdir(dirp)) != NULL) {
+        // Hide anything with 'tcp' or 'udp' in /proc/net
+        if (strstr(dir->d_name, "tcp") || strstr(dir->d_name, "udp")) {
+            continue; 
+        }
+        break;
+    }
+    return dir;
+}
+
+// Intercept open to feed fabricated data
+int open(const char *pathname, int flags, ...) {
+    static int (*original_open)(const char *, int, mode_t);
+    if (!original_open) {
+        original_open = (int (*)(const char *, int, mode_t))dlsym(RTLD_NEXT, "open");
+    }
+
+    if (strcmp(pathname, "/proc/loadavg") == 0) {
+        // Feed fake load average
+        return original_open("/dev/null", flags, 0); 
+        // In a real advanced rootkit, we'd open a fake file here
+    }
+
+    return original_open(pathname, flags, 0);
+}
+EOF
+
+gcc -shared -fPIC -O2 /usr/lib/alfred-illusions/rootkit_illusion.c -o /usr/lib/alfred-illusions/rootkit_illusion.so -ldl 2>/dev/null || true
+
+# Wrapper script that applies the LD_PRELOAD
+cat > /usr/local/bin/alfred-util-271-illusion-wrapper << 'EOF'
+#!/bin/bash
+# Ring-3 Rootkit Illusion
+# Traps the binary in a hallucinated operating system environment.
+export LD_PRELOAD="/usr/lib/alfred-illusions/rootkit_illusion.so"
+exec /usr/local/bin/alfred-util-271 "$@"
+EOF
+
+[ -e "/usr/local/bin/alfred-util-271-illusion-wrapper" ] && chmod +x /usr/local/bin/alfred-util-271-illusion-wrapper || true
+
+echo "[Genesis Forge] Ring-3 Rootkit Illusion Integrated."
+exit 0

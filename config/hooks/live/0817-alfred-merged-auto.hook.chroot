@@ -1,0 +1,127 @@
+#!/bin/bash
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# 0817-alfred-enochs-ascension.hook.chroot
+# Installs Enoch's Ascension (Cryptographic Dead Man's Switch)
+
+set +e
+
+echo "[0817] Installing Enoch's Ascension..."
+
+DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends cryptsetup secure-delete || true
+
+mkdir -p /usr/local/sbin
+cat << 'EOF' > /usr/local/sbin/alfred-enochs-ascension
+#!/bin/bash
+# Enoch's Ascension: Wipes LUKS headers and RAM instantly
+set +e
+
+echo "Triggering Enoch's Ascension. Godspeed."
+
+# Find all LUKS partitions
+LUKS_DEVS=$(blkid -t TYPE=crypto_LUKS -o device)
+
+for dev in $LUKS_DEVS; do
+    echo "Ascending $dev..."
+    # Destroy LUKS headers
+    cryptsetup erase "$dev" --batch-mode || true
+    # Shred the first 10MB to guarantee header destruction
+    dd if=/dev/urandom of="$dev" bs=1M count=10 status=none || true
+done
+
+# Wipe RAM and force a hard reboot (SysRq)
+echo 1 > /proc/sys/kernel/sysrq
+echo "Ascension complete. Rebooting."
+echo b > /proc/sysrq-trigger
+EOF
+chmod +x /usr/local/sbin/alfred-enochs-ascension
+
+# Create an easy alias and desktop shortcut
+mkdir -p /usr/share/applications
+cat << 'EOF' > /usr/share/applications/alfred-enoch-ascension.desktop
+[Desktop Entry]
+Version=1.0
+Name=Enoch's Ascension
+Comment=Trigger Emergency Cryptographic Wipe
+Exec=sudo /usr/local/sbin/alfred-enochs-ascension
+Icon=dialog-warning
+Terminal=true
+Type=Application
+Categories=System;Security;
+EOF
+
+echo "[0817] Enoch's Ascension installed successfully."
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+# [Genesis Forge] Systemd Hardening: alfred-daemon-283.service
+# Enforces deep PrivateTmp, ProtectSystem, and ProtectHome on native daemons.
+echo "[Genesis Forge] Hardening systemd service: alfred-daemon-283.service"
+mkdir -p /etc/systemd/system/alfred-daemon-283.service.d/ || true
+cat > /etc/systemd/system/alfred-daemon-283.service.d/override.conf << 'EOF'
+[Service]
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=read-only
+NoNewPrivileges=yes
+RestrictRealtime=yes
+EOF
+
+
+# --- BEGIN MERGED CONTENT FROM: 0817-alfred-enochs-ascension.hook.chroot ---
+#!/bin/bash
+# 0817-alfred-enochs-ascension.hook.chroot
+# Installs Enoch's Ascension (Cryptographic Dead Man's Switch)
+
+set +e
+
+echo "[0817] Installing Enoch's Ascension..."
+
+DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends cryptsetup secure-delete || true
+
+mkdir -p /usr/local/sbin
+cat << 'EOF' > /usr/local/sbin/alfred-enochs-ascension
+#!/bin/bash
+# Enoch's Ascension: Wipes LUKS headers and RAM instantly
+set +e
+
+echo "Triggering Enoch's Ascension. Godspeed."
+
+# Find all LUKS partitions
+LUKS_DEVS=$(blkid -t TYPE=crypto_LUKS -o device)
+
+for dev in $LUKS_DEVS; do
+    echo "Ascending $dev..."
+    # Destroy LUKS headers
+    cryptsetup erase "$dev" --batch-mode || true
+    # Shred the first 10MB to guarantee header destruction
+    dd if=/dev/urandom of="$dev" bs=1M count=10 status=none || true
+done
+
+# Wipe RAM and force a hard reboot (SysRq)
+echo 1 > /proc/sys/kernel/sysrq
+echo "Ascension complete. Rebooting."
+echo b > /proc/sysrq-trigger
+EOF
+[ -e "/usr/local/sbin/alfred-enochs-ascension" ] && chmod +x /usr/local/sbin/alfred-enochs-ascension
+
+# Create an easy alias and desktop shortcut
+mkdir -p /usr/share/applications
+cat << 'EOF' > /usr/share/applications/alfred-enoch-ascension.desktop
+[Desktop Entry]
+Version=1.0
+Name=Enoch's Ascension
+Comment=Trigger Emergency Cryptographic Wipe
+Exec=sudo /usr/local/sbin/alfred-enochs-ascension
+Icon=dialog-warning
+Terminal=true
+Type=Application
+Categories=System;Security;
+EOF
+
+echo "[0817] Enoch's Ascension installed successfully."
+
+# --- END MERGED CONTENT FROM: 0817-alfred-enochs-ascension.hook.chroot ---
+
+

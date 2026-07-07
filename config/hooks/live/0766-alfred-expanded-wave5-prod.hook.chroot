@@ -1,0 +1,154 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/sh
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+# Description: Expanded Wave 5 — production profile for Wave 2 services
+
+
+LOG_FILE=/var/log/alfred-expanded-wave5.log
+exec > "$LOG_FILE" 2>&1
+
+echo "[$(date -Is)] Starting Alfred expanded Wave 5 production profile"
+
+install -d -m 0755 /opt/alfred/wave2-services/prod
+install -d -m 0755 /usr/local/lib/alfred-wave5
+install -d -m 0755 /usr/local/bin
+
+# Production environment defaults for staged service deployments.
+cat >/opt/alfred/wave2-services/prod/.env <<'EOF'
+TZ=UTC
+ALFRED_BASE=/var/lib/alfred
+ALFRED_BACKUP=/var/backups/alfred-wave
+VAULTWARDEN_TAG=1.32.7
+NTFY_TAG=v2.11.0
+SEARXNG_TAG=2026.4.18-719f265
+FORGEJO_TAG=11.0.3
+JELLYFIN_TAG=10.10.7
+GRAFANA_TAG=11.1.4
+POSTGRES_TAG=16-alpine
+REDIS_TAG=7.2-alpine
+EOF
+
+cat >/opt/alfred/wave2-services/prod/compose.vaultwarden.prod.yml <<'EOF'
+version: "3.8"
+services:
+  vaultwarden:
+    image: vaultwarden/server:${VAULTWARDEN_TAG}
+    restart: unless-stopped
+    read_only: true
+    tmpfs: ["/tmp"]
+    ports: ["8082:80"]
+    environment:
+      - TZ=${TZ}
+      - ADMIN_TOKEN_FILE=/run/secrets/admin_token
+      - SIGNUPS_ALLOWED=false
+    volumes:
+      - ${ALFRED_BASE}/vaultwarden:/data
+    secrets:
+      - admin_token
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "-", "http://localhost:80/alive"] || true
+      interval: 30s
+      timeout: 5s
+      retries: 5
+secrets:
+  admin_token:
+    file: /etc/alfred/secrets/vaultwarden_admin_token
+EOF
+
+cat >/opt/alfred/wave2-services/prod/compose.ntfy.prod.yml <<'EOF'
+version: "3.8"
+services:
+  ntfy:
+    image: binwiederhier/ntfy:${NTFY_TAG}
+    restart: unless-stopped
+    command: ["serve"]
+    ports: ["8083:80"]
+    environment:
+      - TZ=${TZ}
+    volumes:
+      - ${ALFRED_BASE}/ntfy:/var/cache/ntfy
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "-", "http://localhost:80/v1/health"] || true
+      interval: 30s
+      timeout: 5s
+      retries: 5
+EOF
+
+cat >/opt/alfred/wave2-services/prod/compose.searxng.prod.yml <<'EOF'
+version: "3.8"
+services:
+  searxng:
+    image: searxng/searxng:${SEARXNG_TAG}
+    restart: unless-stopped
+    ports: ["8084:8080"]
+    environment:
+      - TZ=${TZ}
+    volumes:
+      - ${ALFRED_BASE}/searxng:/etc/searxng
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "-", "http://localhost:8080/healthz"] || true
+      interval: 30s
+      timeout: 5s
+      retries: 5
+EOF
+
+cat >/usr/local/bin/alfred-wave-backup <<'EOF'
+#!/bin/bash
+
+
+BASE=${ALFRED_BASE:-/var/lib/alfred}
+OUT=${ALFRED_BACKUP:-/var/backups/alfred-wave}
+TS=$(date +%Y%m%d-%H%M%S)
+ARCHIVE="$OUT/alfred-wave-$TS.tar.zst"
+
+install -d -m 0755 "$OUT"
+if [ ! -d "$BASE" ]; then
+  echo "base path not found: $BASE"
+exit 0
+fi
+
+tar --zstd -cpf "$ARCHIVE" -C "$BASE" . || true
+echo "backup created: $ARCHIVE"
+EOF
+
+cat >/usr/local/bin/alfred-wave-restore <<'EOF'
+#!/bin/bash
+
+
+if [ $# -ne 1 ]; then
+  echo "usage: alfred-wave-restore /path/to/archive.tar.zst"
+exit 0
+fi
+
+ARCHIVE="$1"
+BASE=${ALFRED_BASE:-/var/lib/alfred}
+
+if [ ! -f "$ARCHIVE" ]; then
+  echo "archive not found: $ARCHIVE"
+exit 0
+fi
+
+install -d -m 0755 "$BASE"
+tar --zstd -xpf "$ARCHIVE" -C "$BASE" || true
+echo "restore complete into: $BASE"
+EOF
+
+cat >/usr/local/lib/alfred-wave5/README.md <<'EOF'
+AlfredLinux Wave 5 Production Profile
+
+Contents:
+- Pinned container tags (.env)
+- Production compose overlays for core deferred services
+- Healthchecks and safer container defaults
+- Backup and restore utility scripts
+
+Commands:
+- alfred-wave-backup
+- alfred-wave-restore /path/to/archive.tar.zst
+EOF
+
+chmod 0755 /usr/local/bin/alfred-wave-backup /usr/local/bin/alfred-wave-restore || true
+
+echo "[$(date -Is)] Alfred expanded Wave 5 production profile complete"
+
+exit 0

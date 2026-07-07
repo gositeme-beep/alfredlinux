@@ -1,0 +1,15 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+export DEBIAN_FRONTEND=noninteractive
+
+echo "=> [Sovereignty Protocol] Baking llama.cpp Source Code into the OS for offline Auto-Forging..."
+mkdir -p /opt/llama-cpp-src
+# We use || true so a github timeout doesn't crash the build
+git clone https://github.com/ggerganov/llama.cpp.git /opt/llama-cpp-src || true
+
+echo "=> [Sovereignty Protocol] AI Source Code is successfully baked into the ISO."
+
+exit 0

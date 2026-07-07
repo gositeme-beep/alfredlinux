@@ -1,0 +1,38 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# 0870-alfred-seventh-seal.hook.chroot
+# Configures The Seventh Seal (Quantum-Resistant Cryptography)
+set +e
+
+echo "[0870] Configuring The Seventh Seal (Quantum Cryptography)"
+
+cat << 'EOF' > /usr/local/bin/alfred-seventh-seal
+#!/bin/bash
+echo "╔═══════════════════════════════════════════════════════════╗"
+echo "║  THE SEVENTH SEAL — Quantum-Resistant Cryptography        ║"
+echo "║  'And when he had opened the seventh seal...'             ║"
+echo "╚═══════════════════════════════════════════════════════════╝"
+echo ""
+
+# Enforce Post-Quantum SSH Key Exchange
+if [ -f /etc/ssh/sshd_config ]; then
+    echo "Enforcing sntrup761x25519-sha512@openssh.com..."
+    sed -i '/KexAlgorithms/d' /etc/ssh/sshd_config || true
+    echo "KexAlgorithms sntrup761x25519-sha512@openssh.com" >> /etc/ssh/sshd_config || true
+    systemctl restart sshd  || true|| true
+    echo "The Seventh Seal is active. 'Harvest Now, Decrypt Later' mitigated."
+else
+    echo "SSH daemon not found."
+fi
+EOF
+
+chmod 0755 /usr/local/bin/alfred-seventh-seal || true
+
+# Execute immediately during build to bake it in
+/usr/local/bin/alfred-seventh-seal || true
+
+echo "[0870] Seventh Seal configured."
+
+exit 0

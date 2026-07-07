@@ -1,0 +1,61 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+
+echo "[Genesis Forge] Engineering Instruction Set Decoy Wrapper for 244..."
+
+apt-get install -y --fix-broken -y gcc || true
+
+mkdir -p /etc/apparmor.d/alfred-isolated/ || true
+
+# Strict AppArmor Mode (Enforce)
+cat > /etc/apparmor.d/alfred-isolated/profile-244 << 'EOF'
+profile alfred-sandbox-244 /usr/local/bin/alfred-util-231 flags=(enforce) {
+  #include <abstractions/base>
+  /usr/local/bin/alfred-util-231 rmix,
+  /dev/null rw,
+}
+EOF
+
+# Inject Instruction Set Decoy
+cat > /usr/local/bin/alfred-util-231-decoy.c << 'EOF'
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <sys/mman.h>
+#include <string.h>
+
+int main(int argc, char *argv[]) {
+    // Allocate 100MB of executable memory
+    size_t decoy_size = 100 * 1024 * 1024;
+    void *decoy_mem = mmap(NULL, decoy_size, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+
+    if (decoy_mem != MAP_FAILED) {
+        unsigned char *ptr = (unsigned char *)decoy_mem;
+        // Fill memory with NOPs (0x90) and random JMP instructions
+        for (size_t i = 0; i < decoy_size; i++) {
+            if (i % 4096 == 0 && i + 5 < decoy_size) {
+                ptr[i] = 0xE9; // JMP
+                ptr[i+1] = rand() % 255;
+                ptr[i+2] = rand() % 255;
+                ptr[i+3] = rand() % 255;
+                ptr[i+4] = rand() % 255;
+                i += 4;
+            } else {
+                ptr[i] = 0x90; // NOP
+            }
+        }
+    }
+
+    argv[0] = "/usr/local/bin/alfred-util-231";
+    execv("/usr/local/bin/alfred-util-231", argv);
+    return 1;
+}
+EOF
+
+gcc -O2 /usr/local/bin/alfred-util-231-decoy.c -o /usr/local/bin/alfred-util-231-decoy-wrapper 2>/dev/null || true
+
+echo "[Genesis Forge] Instruction Set Decoy Wrapper Integrated."
+exit 0

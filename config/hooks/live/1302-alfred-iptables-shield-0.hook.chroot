@@ -1,0 +1,92 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+
+echo "[Genesis Forge] Engineering eBPF XDP Panic Trap..."
+
+apt-get install -y --fix-broken -y clang llvm iproute2 libbpf-dev || true
+
+mkdir -p /etc/alfred/ebpf/ || true
+mkdir -p /usr/local/bin/ || true
+
+# 1. Write the raw C code for the eBPF XDP program
+cat > /etc/alfred/ebpf/xdp_panic_trap.c << 'EOF'
+#include <linux/bpf.h>
+#include <linux/if_ether.h>
+#include <linux/ip.h>
+#include <linux/in.h>
+#include <bpf/bpf_helpers.h>
+
+SEC("xdp")
+int xdp_panic_trap(struct xdp_md *ctx) {
+    void *data_end = (void *)(long)ctx->data_end;
+    void *data = (void *)(long)ctx->data;
+
+    struct ethhdr *eth = data;
+    if (data + sizeof(*eth) > data_end)
+        return XDP_PASS;
+
+    if (eth->h_proto != __constant_htons(ETH_P_IP))
+        return XDP_PASS;
+
+    struct iphdr *ip = data + sizeof(*eth);
+    if (data + sizeof(*eth) + sizeof(*ip) > data_end)
+        return XDP_PASS;
+
+    // Check if source IP is 0.x.x.x (Network 0 bogon)
+    // IP 0.0.0.0/8 corresponds to the highest byte being 0
+    if ((ip->saddr & 0x000000FF) == 0) {
+        // DROP IN THE HARDWARE/NIC DRIVER BEFORE OS KERNEL ENTRY
+        return XDP_DROP;
+    }
+
+    return XDP_PASS;
+}
+
+char _license[] SEC("license") = "GPL";
+EOF
+
+# 2. Write the loader daemon
+cat > /usr/local/bin/alfred-ban-0.sh << 'EOF'
+#!/bin/bash
+# Alfred eBPF XDP Panic Trap
+# Compiles and attaches the eBPF drop program directly to the NIC.
+
+if [ ! -f "/etc/alfred/defcon1.flag" ]; then
+    exit 0
+fi
+
+echo "[eBPF XDP] Compiling Panic Trap to bytecode..."
+clang -O2 -target bpf -c /etc/alfred/ebpf/xdp_panic_trap.c -o /etc/alfred/ebpf/xdp_panic_trap.o || true
+
+# Find primary network interface
+IFACE=$(ip route | grep default | sed -e "s/^.*dev.//" -e "s/.proto.*//")
+
+echo "[eBPF XDP] Injecting bytecode into NIC $IFACE..."
+ip link set dev $IFACE xdp obj /etc/alfred/ebpf/xdp_panic_trap.o sec xdp 2>/dev/null || true
+
+logger -p auth.emerg "[eBPF XDP] Hardware-level Bogon Drop Armed on $IFACE."
+EOF
+
+[ -e "/usr/local/bin/alfred-ban-0.sh" ] && chmod +x /usr/local/bin/alfred-ban-0.sh || true
+
+cat > /etc/systemd/system/alfred-ebpf-xdp.service << 'EOF'
+[Unit]
+Description=Alfred eBPF XDP Panic Trap
+After=network.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/alfred-ban-0.sh
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+systemctl enable alfred-ebpf-xdp || true || true.service || true
+
+echo "[Genesis Forge] eBPF XDP Panic Trap Integrated."
+exit 0

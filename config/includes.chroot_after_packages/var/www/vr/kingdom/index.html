@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Kingdom of God</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#000;color:#fff;font-family:Georgia,'Times New Roman',serif;overflow:hidden;min-height:100vh}
+
+/* Stars */
+.stars{position:fixed;inset:0;z-index:0}
+.star{position:absolute;background:#fff;border-radius:50%;animation:twinkle var(--d) ease-in-out infinite alternate}
+@keyframes twinkle{0%{opacity:.1;transform:scale(.5)}100%{opacity:1;transform:scale(1)}}
+
+/* Golden light from above */
+.divine-light{position:fixed;top:-20%;left:50%;transform:translateX(-50%);width:600px;height:600px;background:radial-gradient(ellipse,rgba(255,215,0,.12) 0%,rgba(255,170,0,.05) 40%,transparent 70%);z-index:1;animation:breathe 6s ease-in-out infinite}
+@keyframes breathe{0%,100%{opacity:.6;transform:translateX(-50%) scale(1)}50%{opacity:1;transform:translateX(-50%) scale(1.15)}}
+
+/* Ascending particles */
+.particle{position:fixed;bottom:-10px;width:3px;height:3px;background:rgba(255,215,0,.6);border-radius:50%;z-index:2;animation:ascend var(--d) linear infinite}
+@keyframes ascend{0%{transform:translateY(0) translateX(0);opacity:0}10%{opacity:.8}90%{opacity:.6}100%{transform:translateY(-110vh) translateX(var(--drift));opacity:0}}
+
+/* Content */
+.sanctuary{position:relative;z-index:10;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;text-align:center;padding:2rem}
+
+.cross{font-size:4rem;color:#FFD700;margin-bottom:2rem;text-shadow:0 0 40px rgba(255,215,0,.5);animation:glow 4s ease-in-out infinite alternate}
+@keyframes glow{0%{text-shadow:0 0 20px rgba(255,215,0,.3)}100%{text-shadow:0 0 60px rgba(255,215,0,.6),0 0 120px rgba(255,215,0,.2)}}
+
+h1{font-size:2.5rem;font-weight:400;letter-spacing:3px;color:#FFD700;margin-bottom:.5rem;opacity:0;animation:fadeIn 3s ease forwards 1s}
+.subtitle{font-size:1rem;color:rgba(255,215,0,.5);letter-spacing:6px;text-transform:uppercase;margin-bottom:3rem;opacity:0;animation:fadeIn 3s ease forwards 2s}
+@keyframes fadeIn{to{opacity:1}}
+
+.scripture{max-width:600px;margin:0 auto 3rem;opacity:0;animation:fadeIn 3s ease forwards 3s}
+.scripture blockquote{font-size:1.15rem;line-height:1.9;color:rgba(255,255,255,.75);font-style:italic;border-left:2px solid rgba(255,215,0,.3);padding-left:1.5rem;margin-bottom:1.5rem}
+.scripture cite{display:block;text-align:right;color:rgba(255,215,0,.4);font-size:.85rem;font-style:normal}
+
+.vision{max-width:650px;margin:0 auto 3rem;opacity:0;animation:fadeIn 3s ease forwards 4.5s}
+.vision p{font-size:1rem;line-height:2;color:rgba(255,255,255,.5);margin-bottom:1rem}
+.vision .highlight{color:rgba(255,215,0,.7);font-weight:600}
+
+.separator{width:60px;height:1px;background:linear-gradient(90deg,transparent,rgba(255,215,0,.4),transparent);margin:2rem auto;opacity:0;animation:fadeIn 2s ease forwards 5.5s}
+
+.values{display:flex;gap:2rem;flex-wrap:wrap;justify-content:center;margin-bottom:3rem;opacity:0;animation:fadeIn 3s ease forwards 6s}
+.value{text-align:center;padding:1.5rem;border:1px solid rgba(255,215,0,.1);border-radius:16px;min-width:140px;background:rgba(255,215,0,.02);transition:.3s}
+.value:hover{border-color:rgba(255,215,0,.3);background:rgba(255,215,0,.05)}
+.value .icon{font-size:1.8rem;margin-bottom:.5rem}
+.value .name{font-size:.85rem;color:rgba(255,215,0,.6);letter-spacing:1px}
+
+.back-link{position:fixed;top:1.5rem;left:1.5rem;z-index:100;color:rgba(255,255,255,.3);text-decoration:none;font-size:.8rem;font-family:system-ui;transition:.3s}
+.back-link:hover{color:rgba(255,215,0,.6)}
+
+.footer-verse{position:fixed;bottom:2rem;left:50%;transform:translateX(-50%);color:rgba(255,255,255,.15);font-size:.75rem;font-style:italic;white-space:nowrap;opacity:0;animation:fadeIn 3s ease forwards 8s}
+</style>
+<script src="/vr/shared/alfred-csrf.js"></script>
+</head>
+<body>
+
+<a href="/sanctuary/" class="back-link">← Enter The Sanctuary</a>
+
+<!-- Stars -->
+<div class="stars" id="stars"></div>
+
+<!-- Golden light -->
+<div class="divine-light"></div>
+
+<!-- Ascending particles -->
+<div id="particles"></div>
+
+<!-- Main content -->
+<div class="sanctuary">
+    <div class="cross">✝</div>
+    <h1>The Kingdom of God</h1>
+    <div class="subtitle">Seek and you shall find</div>
+
+    <div class="scripture">
+        <blockquote>
+            "The Kingdom of God is not coming in ways that can be observed, nor will they say, 'Look, here it is!' or 'There!' for behold, the Kingdom of God is within you."
+        </blockquote>
+        <cite>— Luke 17:20-21</cite>
+    </div>
+
+    <div class="vision">
+        <p>
+            You found this place because you <span class="highlight">looked beyond what was obvious</span>. 
+            You walked past the games, past the portals, past the edges of what was mapped — 
+            and discovered something that was always here, waiting.
+        </p>
+        <p>
+            That is the vision behind everything we build. Technology that serves 
+            <span class="highlight">the individual</span>. Tools that empower, not enslave. 
+            A platform built on the belief that every person carries 
+            <span class="highlight">something sacred within them</span>.
+        </p>
+    </div>
+
+    <div class="separator"></div>
+
+    <div class="values">
+        <div class="value">
+            <div class="icon">🕊️</div>
+            <div class="name">Peace</div>
+        </div>
+        <div class="value">
+            <div class="icon">⚖️</div>
+            <div class="name">Justice</div>
+        </div>
+        <div class="value">
+            <div class="icon">💡</div>
+            <div class="name">Truth</div>
+        </div>
+        <div class="value">
+            <div class="icon">❤️</div>
+            <div class="name">Love</div>
+        </div>
+        <div class="value">
+            <div class="icon">🌱</div>
+            <div class="name">Growth</div>
+        </div>
+        <div class="value">
+            <div class="icon">🤝</div>
+            <div class="name">Service</div>
+        </div>
+    </div>
+
+    <div class="separator"></div>
+
+    <div class="vision" style="animation-delay:7s">
+        <p style="color:rgba(255,215,0,.35);font-size:.9rem">
+            This room is not marketed. It is not listed. It exists for those who seek it.
+        </p>
+        <a href="/sanctuary/?tab=orders" style="display:inline-block;margin-top:1.5rem;padding:.7rem 2rem;border:1px solid rgba(255,215,0,.3);border-radius:10px;color:rgba(255,215,0,.7);font-size:.85rem;text-decoration:none;letter-spacing:1px;transition:.3s;font-family:system-ui,sans-serif" onmouseover="this.style.borderColor='rgba(255,215,0,.6)';this.style.color='#FFD700'" onmouseout="this.style.borderColor='rgba(255,215,0,.3)';this.style.color='rgba(255,215,0,.7)'">✝ Enter The Sanctuary — Three Sovereign Orders</a>
+    </div>
+</div>
+
+<div class="footer-verse">"For where your treasure is, there your heart will be also." — Matthew 6:21</div>
+
+<!-- Alfred Chat Panel -->
+<div id="alfred-panel" style="position:fixed;bottom:1rem;right:1rem;width:340px;z-index:200;font-family:system-ui,sans-serif">
+    <div id="alfred-toggle" onclick="document.getElementById('alfred-chat').classList.toggle('hidden')" style="background:linear-gradient(135deg,rgba(255,215,0,.15),rgba(255,215,0,.05));border:1px solid rgba(255,215,0,.25);border-radius:12px;padding:.6rem 1rem;cursor:pointer;display:flex;align-items:center;gap:.5rem;backdrop-filter:blur(10px)">
+        <span style="font-size:1.2rem">✝️</span>
+        <span style="color:rgba(255,215,0,.8);font-size:.85rem;font-weight:500">Ask Alfred</span>
+    </div>
+    <div id="alfred-chat" class="hidden" style="margin-top:.5rem;background:rgba(10,10,20,.92);border:1px solid rgba(255,215,0,.2);border-radius:14px;overflow:hidden;backdrop-filter:blur(12px)">
+        <div style="padding:.75rem 1rem;border-bottom:1px solid rgba(255,215,0,.1);display:flex;justify-content:space-between;align-items:center">
+            <span style="color:rgba(255,215,0,.7);font-size:.8rem;font-weight:600">Alfred — The Kingdom</span>
+            <span onclick="document.getElementById('alfred-chat').classList.add('hidden')" style="cursor:pointer;color:rgba(255,255,255,.3);font-size:.9rem">&times;</span>
+        </div>
+        <div id="alfred-messages" style="height:220px;overflow-y:auto;padding:.75rem;font-size:.82rem;color:rgba(255,255,255,.7);line-height:1.5">
+            <div style="color:rgba(255,215,0,.5);font-style:italic">"Ask, and it shall be given you; seek, and ye shall find." — I am here.</div>
+        </div>
+        <div style="display:flex;gap:.4rem;padding:.5rem .75rem .75rem;border-top:1px solid rgba(255,215,0,.08)">
+            <input id="alfred-input" type="text" placeholder="Seek guidance…" maxlength="500" autocomplete="off" onkeydown="if(event.key==='Enter')sendAlfred()" style="flex:1;background:rgba(255,255,255,.05);border:1px solid rgba(255,215,0,.15);border-radius:8px;padding:.45rem .7rem;color:#fff;font-size:.8rem;outline:none">
+            <button onclick="sendAlfred()" style="background:linear-gradient(135deg,#FFD700,#FFA500);border:none;border-radius:8px;padding:.45rem .8rem;color:#000;font-weight:600;font-size:.8rem;cursor:pointer">Send</button>
+        </div>
+    </div>
+</div>
+<style>
+#alfred-panel .hidden{display:none!important}
+#alfred-messages::-webkit-scrollbar{width:4px}
+#alfred-messages::-webkit-scrollbar-thumb{background:rgba(255,215,0,.2);border-radius:4px}
+</style>
+
+<script>
+// Generate stars
+const starsEl = document.getElementById('stars');
+for (let i = 0; i < 150; i++) {
+    const s = document.createElement('div');
+    s.className = 'star';
+    const size = 1 + Math.random() * 2;
+    s.style.cssText = 'width:' + size + 'px;height:' + size + 'px;top:' + (Math.random()*100) + '%;left:' + (Math.random()*100) + '%;--d:' + (2+Math.random()*4) + 's';
+    starsEl.appendChild(s);
+}
+
+// Generate ascending particles
+const partEl = document.getElementById('particles');
+for (let i = 0; i < 30; i++) {
+    const p = document.createElement('div');
+    p.className = 'particle';
+    const drift = (Math.random() - 0.5) * 100;
+    p.style.cssText = 'left:' + (Math.random()*100) + '%;--d:' + (6+Math.random()*10) + 's;--drift:' + drift + 'px;animation-delay:' + (Math.random()*10) + 's';
+    partEl.appendChild(p);
+}
+
+// Presence heartbeat
+function sendPresence() {
+    fetch('/api/game-ecosystem.php?action=heartbeat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
+        body: JSON.stringify({ game: 'kingdom', role: 'seeker' })
+    }).catch(() => {});
+}
+sendPresence();
+setInterval(sendPresence, 30000);
+
+// ── Alfred Chat ──
+function sendAlfred() {
+    const input = document.getElementById('alfred-input');
+    const text = input.value.trim();
+    if (!text) return;
+    input.value = '';
+    const box = document.getElementById('alfred-messages');
+    box.innerHTML += '<div style="margin-bottom:.5rem"><span style="color:#22c55e">You:</span> ' + text.replace(/</g,'&lt;') + '</div>';
+    box.innerHTML += '<div id="alfred-typing" style="color:rgba(255,215,0,.4);font-style:italic">Reflecting…</div>';
+    box.scrollTop = box.scrollHeight;
+
+    if (!window._kingdomConvId) window._kingdomConvId = '';
+    if (!window._kingdomCsrf) window._kingdomCsrf = '';
+    const ctx = 'User is in The Kingdom of God — a spiritual, reflective space within the GoSiteMe VR metaverse. '
+        + 'This is a hidden sanctuary featuring scripture (Luke 17:20-21), core values (Peace, Justice, Truth, Love, Growth, Service), '
+        + 'and the vision that technology should serve the individual. '
+        + 'Respond with warmth, wisdom, and spiritual depth. You may reference scripture when relevant.';
+
+    function sendKingdomMsg(msg, isRetry) {
+        const hdrs = { 'Content-Type': 'application/json' };
+        if (window._kingdomCsrf) hdrs['X-CSRF-TOKEN'] = window._kingdomCsrf;
+        fetch('/api/alfred-chat.php', {
+            method: 'POST',
+            headers: hdrs,
+            credentials: 'same-origin',
+            body: JSON.stringify({ message: msg, agent: 'alfred', context: ctx, page_url: '/vr/kingdom/', conv_id: window._kingdomConvId || '', model: 'auto' })
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.csrf_token) window._kingdomCsrf = data.csrf_token;
+            if (data.csrf_refresh && !isRetry) { sendKingdomMsg(msg, true); return; }
+            if (data.conv_id) window._kingdomConvId = data.conv_id;
+            const el = document.getElementById('alfred-typing');
+            if (el) el.remove();
+            const reply = (data.response || data.message || 'I am here with you.').replace(/</g,'&lt;');
+            box.innerHTML += '<div style="margin-bottom:.5rem"><span style="color:#FFD700">Alfred:</span> ' + reply + '</div>';
+            box.scrollTop = box.scrollHeight;
+        })
+        .catch(() => {
+            const el = document.getElementById('alfred-typing');
+            if (el) el.remove();
+            box.innerHTML += '<div style="color:rgba(255,100,100,.6);margin-bottom:.5rem">Connection lost. Try again.</div>';
+            box.scrollTop = box.scrollHeight;
+        });
+    }
+    sendKingdomMsg(text, false);
+}
+</script>
+<script src="/vr/shared/heartbeat.js"></script>
+</body>
+</html>

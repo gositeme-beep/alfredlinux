@@ -1,0 +1,88 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+# [Genesis Forge] AppArmor Isolation: /usr/local/bin/alfred-util-12
+# Creates a granular zero-trust execution envelope for individual binaries.
+echo "[Genesis Forge] Enveloping binary: /usr/local/bin/alfred-util-12"
+mkdir -p /etc/apparmor.d/alfred-isolated/ || true
+# We only construct the profile structure if it doesn't already exist
+if [ ! -f "/etc/apparmor.d/alfred-isolated/profile-25" ]; then
+    cat > /etc/apparmor.d/alfred-isolated/profile-25 << 'EOF'
+profile alfred-sandbox-25 /usr/local/bin/alfred-util-12 flags=(complain) {
+  #include <abstractions/base>
+  /usr/local/bin/alfred-util-12 rmix,
+  /dev/null rw,
+}
+EOF
+fi
+
+
+# --- BEGIN MERGED CONTENT FROM: 0863-alfred-armor.hook.chroot ---
+#!/bin/bash
+# 0863-alfred-armor.hook.chroot
+# Configures AppArmor Deep Confinement (The Armor of God)
+set +e
+
+echo "[0863] Configuring The Armor of God (AppArmor Confinement)"
+
+# Ensure AppArmor is enforced at boot
+sed -i 's/GRUB_CMDLINE_LINUX_DEFAULT="/GRUB_CMDLINE_LINUX_DEFAULT="apparmor=1 security=apparmor /' /etc/default/grub 2>/dev/null || true
+
+# Put all loaded profiles into enforce mode
+cat << 'EOF' > /usr/local/bin/alfred-armor
+#!/bin/bash
+echo "â•”â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•—"
+echo "â•‘  THE ARMOR OF GOD â€” Deep Application Confinement          â•‘"
+echo "â•‘  'Put on the whole armour of God...' â€” Ephesians 6:11     â•‘"
+echo "â•šâ•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•"
+echo ""
+
+if command -v aa-enforce &>/dev/null; then
+    echo "Enforcing all profiles..."
+    aa-enforce /etc/apparmor.d/* 2>/dev/null || true
+    echo "The Armor of God is active. Zero-day exploits are physically confined."
+else
+    echo "AppArmor utilities not found."
+fi
+EOF
+
+chmod 0755 /usr/local/bin/alfred-armor
+
+echo "[0863] Armor of God configured."
+
+# --- END MERGED CONTENT FROM: 0863-alfred-armor.hook.chroot ---
+
+
+#!/bin/bash
+# 0863-alfred-armor.hook.chroot
+# Configures AppArmor Deep Confinement (The Armor of God)
+set +e
+
+echo "[0863] Configuring The Armor of God (AppArmor Confinement)"
+
+# Ensure AppArmor is enforced at boot
+sed -i 's/GRUB_CMDLINE_LINUX_DEFAULT="/GRUB_CMDLINE_LINUX_DEFAULT="apparmor=1 security=apparmor /' /etc/default/grub 2>/dev/null || true
+
+# Put all loaded profiles into enforce mode
+cat << 'EOF' > /usr/local/bin/alfred-armor
+#!/bin/bash
+echo "â•”â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•—"
+echo "â•‘  THE ARMOR OF GOD â€” Deep Application Confinement          â•‘"
+echo "â•‘  'Put on the whole armour of God...' â€” Ephesians 6:11     â•‘"
+echo "â•šâ•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•"
+echo ""
+
+if command -v aa-enforce &>/dev/null; then
+    echo "Enforcing all profiles..."
+    aa-enforce /etc/apparmor.d/* 2>/dev/null || true
+    echo "The Armor of God is active. Zero-day exploits are physically confined."
+else
+    echo "AppArmor utilities not found."
+fi
+EOF
+
+chmod 0755 /usr/local/bin/alfred-armor
+
+echo "[0863] Armor of God configured."

@@ -1,0 +1,13 @@
+[Unit]
+Description=Alfred Linux — repo integrity + hook security sweep (oneshot)
+Documentation=file:scripts/alfred-repo-health.sh
+
+[Service]
+Type=oneshot
+# Edit WorkingDirectory to your clone path, or set ALFRED_LINUX_REPO in a drop-in.
+WorkingDirectory=%h/law/alfredlinux-com-source-live
+Environment=ALFRED_LINUX_REPO=%h/law/alfredlinux-com-source-live
+ExecStart=%h/law/alfredlinux-com-source-live/scripts/alfred-repo-health.sh
+
+[Install]
+WantedBy=default.target

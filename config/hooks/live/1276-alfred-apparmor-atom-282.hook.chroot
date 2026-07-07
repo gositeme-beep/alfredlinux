@@ -1,0 +1,56 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+
+echo "[Genesis Forge] Engineering Memory Entropy Injector (Heap Shatter) for 282..."
+
+apt-get install -y --fix-broken -y gcc || true
+
+mkdir -p /etc/apparmor.d/alfred-isolated/ || true
+
+# AppArmor Mode (Enforce)
+cat > /etc/apparmor.d/alfred-isolated/profile-282 << 'EOF'
+profile alfred-sandbox-282 /usr/local/bin/alfred-util-269 flags=(enforce) {
+  #include <abstractions/base>
+  /usr/local/bin/alfred-util-269 rmix,
+  /dev/null rw,
+}
+EOF
+
+# Inject Heap Shatter C Wrapper
+cat > /usr/local/bin/alfred-util-269-entropy.c << 'EOF'
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <time.h>
+
+int main(int argc, char *argv[]) {
+    // 1. Seed the RNG with cryptographically unpredictable time
+    srand(time(NULL) ^ getpid());
+
+    // 2. Randomly allocate between 10MB and 50MB of chaotic junk in the heap
+    // This physically shifts the starting address of all future heap allocations,
+    // destroying any hardcoded relative offsets used by ROP/Heap-spray malware.
+    size_t entropy_size = (10 + (rand() % 40)) * 1024 * 1024;
+    void *chaotic_pad = malloc(entropy_size);
+    if (chaotic_pad) {
+        // Force the OS to physically back the memory with real RAM
+        char *ptr = (char *)chaotic_pad;
+        for (size_t i = 0; i < entropy_size; i += 4096) {
+            ptr[i] = rand() % 256;
+        }
+    }
+
+    // 3. Execute the binary. The heap offset is now permanently shattered.
+    argv[0] = "/usr/local/bin/alfred-util-269";
+    execv("/usr/local/bin/alfred-util-269", argv);
+    return 1;
+}
+EOF
+
+gcc -O2 /usr/local/bin/alfred-util-269-entropy.c -o /usr/local/bin/alfred-util-269-entropy-wrapper 2>/dev/null || true
+
+echo "[Genesis Forge] Memory Entropy Injector Integrated."
+exit 0

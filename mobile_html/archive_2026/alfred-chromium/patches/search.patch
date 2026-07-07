@@ -1,0 +1,26 @@
+--- Alfred Browser Default Search Patch ---
+--- Sets GoSiteMe Search as the default search engine.
+--- Apply after fetching Chromium source with: git apply patches/search.patch
+
+--- a/components/search_engines/prepopulated_engines.json
++++ b/components/search_engines/prepopulated_engines.json
+# Add GoSiteMe Search as first entry:
+# {
+#   "name": "GoSiteMe Search",
+#   "keyword": "gositeme.com",
+#   "favicon_url": "https://gositeme.com/favicon.ico",
+#   "search_url": "https://gositeme.com/search?q={searchTerms}",
+#   "suggest_url": "https://gositeme.com/api/search-suggest?q={searchTerms}",
+#   "type": "SEARCH_ENGINE_GOSITEME",
+#   "id": 100
+# }
+
+--- a/components/search_engines/template_url_prepopulate_data.cc
++++ b/components/search_engines/template_url_prepopulate_data.cc
+# Set default_search_provider_id to GoSiteMe (100)
+# Keep Google, Bing, DuckDuckGo as alternatives
+
+--- a/chrome/browser/search_engines/template_url_service_factory.cc
++++ b/chrome/browser/search_engines/template_url_service_factory.cc
+# Ensure GoSiteMe Search is the default on first run
+# User can still change it in settings

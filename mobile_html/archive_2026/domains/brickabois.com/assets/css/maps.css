@@ -1,0 +1,515 @@
+/**
+ * Quebec Regional Maps Page Styles
+ */
+
+.maps-page {
+    min-height: 100vh;
+    background: var(--color-bg);
+    padding-top: 80px;
+}
+
+.maps-hero {
+    padding: 4rem 0;
+    background: linear-gradient(135deg, rgba(15, 15, 30, 1) 0%, rgba(26, 26, 46, 1) 100%);
+    text-align: center;
+    border-bottom: 2px solid var(--color-border);
+}
+
+.page-title {
+    font-size: clamp(2.5rem, 5vw, 4rem);
+    font-weight: 900;
+    color: var(--color-accent);
+    margin-bottom: 1rem;
+    background: linear-gradient(135deg, var(--color-accent) 0%, var(--color-primary) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.page-subtitle {
+    font-size: clamp(1.5rem, 3vw, 2rem);
+    color: var(--color-text-secondary);
+    margin-bottom: 1rem;
+}
+
+.page-description {
+    font-size: 1.1rem;
+    color: var(--color-text-secondary);
+    max-width: 800px;
+    margin: 0 auto;
+    line-height: 1.6;
+}
+
+.maps-content {
+    padding: 4rem 0;
+}
+
+.maps-source-info {
+    background: rgba(212, 165, 116, 0.1);
+    border: 1px solid rgba(212, 165, 116, 0.3);
+    border-radius: 15px;
+    padding: 1.5rem;
+    margin-bottom: 3rem;
+    text-align: center;
+    color: var(--color-text-secondary);
+}
+
+.maps-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 2rem;
+    margin-top: 2rem;
+}
+
+.map-card {
+    background: var(--color-bg-card);
+    border: 2px solid var(--color-border);
+    border-radius: 20px;
+    padding: 2rem;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.map-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--color-primary), var(--color-accent));
+    transform: scaleX(0);
+    transition: transform 0.3s ease;
+}
+
+.map-card:hover {
+    transform: translateY(-8px);
+    border-color: var(--color-accent);
+    box-shadow: 0 15px 40px rgba(212, 165, 116, 0.3);
+}
+
+.map-card:hover::before {
+    transform: scaleX(1);
+}
+
+.map-card-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.map-region-code {
+    background: var(--color-primary);
+    color: var(--color-text);
+    width: 50px;
+    height: 50px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 900;
+    font-size: 1.2rem;
+    flex-shrink: 0;
+}
+
+.map-region-name {
+    flex: 1;
+}
+
+.map-region-name h3 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--color-accent);
+    margin: 0;
+}
+
+.map-region-name p {
+    font-size: 0.9rem;
+    color: var(--color-text-secondary);
+    margin: 0.25rem 0 0 0;
+}
+
+.map-card-body {
+    margin-bottom: 1.5rem;
+}
+
+.map-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid var(--color-border);
+}
+
+.map-info:last-child {
+    border-bottom: none;
+}
+
+.map-info-label {
+    font-weight: 600;
+    color: var(--color-text-secondary);
+    font-size: 0.9rem;
+}
+
+.map-info-value {
+    color: var(--color-text);
+    font-weight: 500;
+}
+
+.map-card-footer {
+    display: flex;
+    gap: 1rem;
+}
+
+.map-btn {
+    flex: 1;
+    padding: 0.75rem 1.5rem;
+    background: var(--color-primary);
+    color: var(--color-text);
+    border: none;
+    border-radius: 25px;
+    font-weight: 600;
+    text-decoration: none;
+    text-align: center;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    display: inline-block;
+}
+
+.map-btn:hover {
+    background: var(--color-primary-light);
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(212, 165, 116, 0.4);
+}
+
+.map-btn-secondary {
+    background: transparent;
+    border: 2px solid var(--color-border);
+    color: var(--color-text);
+}
+
+.map-btn-secondary:hover {
+    border-color: var(--color-accent);
+    background: rgba(212, 165, 116, 0.1);
+}
+
+.map-icon {
+    font-size: 2rem;
+    margin-right: 0.5rem;
+    vertical-align: middle;
+}
+
+/* Advanced Interactive Map Styles */
+.interactive-map-section {
+    padding: 4rem 0;
+    background: var(--color-bg-light);
+    border-top: 2px solid var(--color-border);
+    border-bottom: 2px solid var(--color-border);
+}
+
+.map-header {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.map-header h2 {
+    font-size: clamp(2rem, 4vw, 3rem);
+    font-weight: 800;
+    color: var(--color-accent);
+    margin-bottom: 0.5rem;
+}
+
+.map-header p {
+    color: var(--color-text-secondary);
+    font-size: 1.1rem;
+}
+
+.map-controls {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.map-search {
+    flex: 1;
+    min-width: 250px;
+    display: flex;
+    gap: 0.5rem;
+    position: relative;
+}
+
+.map-search .search-input {
+    flex: 1;
+    padding: 0.75rem 1rem;
+    border: 2px solid var(--color-border);
+    border-radius: 25px;
+    background: var(--color-bg-card);
+    color: var(--color-text);
+    font-size: 1rem;
+    transition: all 0.3s ease;
+}
+
+.map-search .search-input:focus {
+    outline: none;
+    border-color: var(--color-accent);
+    box-shadow: 0 0 0 3px rgba(212, 165, 116, 0.1);
+}
+
+.search-btn {
+    padding: 0.75rem 1.5rem;
+    background: var(--color-primary);
+    border: none;
+    border-radius: 25px;
+    color: var(--color-text);
+    cursor: pointer;
+    font-size: 1.2rem;
+    transition: all 0.3s ease;
+}
+
+.search-btn:hover {
+    background: var(--color-primary-light);
+    transform: translateY(-2px);
+}
+
+.region-filter {
+    padding: 0.75rem 1.5rem;
+    border: 2px solid var(--color-border);
+    border-radius: 25px;
+    background: var(--color-bg-card);
+    color: var(--color-text);
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    min-width: 200px;
+}
+
+.region-filter:focus {
+    outline: none;
+    border-color: var(--color-accent);
+    box-shadow: 0 0 0 3px rgba(212, 165, 116, 0.1);
+}
+
+.reset-btn {
+    padding: 0.75rem 1.5rem;
+    background: transparent;
+    border: 2px solid var(--color-border);
+    border-radius: 25px;
+    color: var(--color-text);
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-weight: 600;
+}
+
+.reset-btn:hover {
+    border-color: var(--color-accent);
+    background: rgba(212, 165, 116, 0.1);
+}
+
+.advanced-map-container {
+    position: relative;
+    width: 100%;
+    height: 600px;
+    background: var(--color-bg-card);
+    border: 2px solid var(--color-border);
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+#mapCanvas {
+    width: 100%;
+    height: 100%;
+    display: block;
+    cursor: grab;
+}
+
+#mapCanvas:active {
+    cursor: grabbing;
+}
+
+.map-zoom-controls {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    z-index: 10;
+}
+
+.zoom-btn {
+    width: 45px;
+    height: 45px;
+    background: var(--color-bg-card);
+    border: 2px solid var(--color-border);
+    border-radius: 12px;
+    color: var(--color-text);
+    font-size: 1.5rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.zoom-btn:hover {
+    background: var(--color-primary);
+    border-color: var(--color-accent);
+    transform: scale(1.1);
+}
+
+.city-details-panel {
+    position: fixed;
+    top: 50%;
+    right: -400px;
+    transform: translateY(-50%);
+    width: 380px;
+    max-height: 80vh;
+    background: var(--color-bg-card);
+    border: 2px solid var(--color-border);
+    border-radius: 20px;
+    padding: 2rem;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    transition: right 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow-y: auto;
+}
+
+.city-details-panel.active {
+    right: 2rem;
+}
+
+.close-panel {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    width: 35px;
+    height: 35px;
+    background: transparent;
+    border: 2px solid var(--color-border);
+    border-radius: 50%;
+    color: var(--color-text);
+    font-size: 1.5rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    line-height: 1;
+}
+
+.close-panel:hover {
+    background: var(--color-primary);
+    border-color: var(--color-accent);
+    transform: rotate(90deg);
+}
+
+.city-details-panel h3 {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--color-accent);
+    margin-bottom: 1.5rem;
+    padding-right: 2rem;
+}
+
+.city-info {
+    margin-bottom: 1.5rem;
+}
+
+.info-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid var(--color-border);
+}
+
+.info-item:last-child {
+    border-bottom: none;
+}
+
+.info-label {
+    font-weight: 600;
+    color: var(--color-text-secondary);
+}
+
+.info-value {
+    color: var(--color-text);
+    font-weight: 500;
+}
+
+.city-actions {
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 2px solid var(--color-border);
+}
+
+.action-btn {
+    display: block;
+    width: 100%;
+    padding: 1rem;
+    background: var(--color-primary);
+    color: var(--color-text);
+    text-decoration: none;
+    text-align: center;
+    border-radius: 12px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.action-btn:hover {
+    background: var(--color-primary-light);
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(212, 165, 116, 0.4);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .maps-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .map-card-header {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .map-card-footer {
+        flex-direction: column;
+    }
+
+    .interactive-map-section {
+        padding: 2rem 0;
+    }
+
+    .advanced-map-container {
+        height: 400px;
+    }
+
+    .map-controls {
+        flex-direction: column;
+    }
+
+    .map-search,
+    .region-filter,
+    .reset-btn {
+        width: 100%;
+    }
+
+    .city-details-panel {
+        width: calc(100% - 2rem);
+        right: -100%;
+        max-width: 380px;
+    }
+
+    .city-details-panel.active {
+        right: 1rem;
+    }
+}
+

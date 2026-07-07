@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pulse Social</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="app">
+        <div id="splash" class="splash">
+            <div class="splash-icon">💚</div>
+            <h1>Pulse Social</h1>
+            <p>Your Social Network</p>
+            <div class="loading-bar"><div class="loading-fill"></div></div>
+        </div>
+
+        <div id="social" class="social hidden">
+            <header class="header">
+                <h2>Pulse</h2>
+                <div class="header-right">
+                    <button id="btn-new-post" class="icon-btn" title="New Post">✏️</button>
+                    <button id="btn-search" class="icon-btn" title="Search">🔍</button>
+                </div>
+            </header>
+
+            <iframe id="pulse-frame" src="https://gositeme.com/pulse.php" frameborder="0"></iframe>
+
+            <nav class="bottom-nav">
+                <button class="nav-btn active" data-page="feed">
+                    <span>🏠</span><small>Feed</small>
+                </button>
+                <button class="nav-btn" data-page="search">
+                    <span>🔍</span><small>Discover</small>
+                </button>
+                <button class="nav-btn" data-page="post">
+                    <span>➕</span><small>Post</small>
+                </button>
+                <button class="nav-btn" data-page="notifications">
+                    <span>🔔</span><small>Alerts</small>
+                </button>
+                <button class="nav-btn" data-page="profile">
+                    <span>👤</span><small>Profile</small>
+                </button>
+            </nav>
+        </div>
+    </div>
+    <script src="main.js"></script>
+</body>
+</html>

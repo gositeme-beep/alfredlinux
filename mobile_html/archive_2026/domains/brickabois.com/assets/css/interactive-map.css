@@ -1,0 +1,388 @@
+/**
+ * Advanced Interactive Map Styles
+ */
+
+#interactiveVillageMap {
+    position: relative;
+    width: 100%;
+    height: 600px;
+    min-height: 600px;
+    border-radius: 20px;
+    background: 
+        radial-gradient(ellipse at 30% 40%, rgba(45, 80, 22, 0.1) 0%, transparent 50%),
+        radial-gradient(ellipse at 70% 60%, rgba(139, 105, 20, 0.1) 0%, transparent 50%),
+        linear-gradient(135deg, rgba(15, 15, 30, 0.95) 0%, rgba(26, 26, 46, 0.95) 100%);
+    overflow: hidden;
+    border: 2px solid rgba(212, 165, 116, 0.3);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+}
+
+#interactiveVillageMap:empty::before {
+    content: 'Loading map...';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: var(--color-text-secondary);
+    font-size: 1.2rem;
+}
+
+#villageMapCanvas {
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+
+/* Map Controls */
+.map-controls {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.map-zoom-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(10px);
+    border-radius: 10px;
+    padding: 0.5rem;
+    border: 1px solid rgba(212, 165, 116, 0.3);
+}
+
+.map-btn {
+    width: 40px;
+    height: 40px;
+    background: rgba(212, 165, 116, 0.2);
+    border: 1px solid rgba(212, 165, 116, 0.5);
+    border-radius: 8px;
+    color: var(--color-accent);
+    font-size: 1.5rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.map-btn:hover {
+    background: rgba(212, 165, 116, 0.4);
+    border-color: var(--color-accent);
+    transform: scale(1.1);
+    box-shadow: 0 5px 15px rgba(212, 165, 116, 0.4);
+}
+
+.map-filter-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(10px);
+    border-radius: 10px;
+    padding: 0.5rem;
+    border: 1px solid rgba(212, 165, 116, 0.3);
+}
+
+.map-filter {
+    padding: 0.5rem 1rem;
+    background: rgba(212, 165, 116, 0.1);
+    border: 1px solid rgba(212, 165, 116, 0.3);
+    border-radius: 8px;
+    color: var(--color-text);
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    min-width: 150px;
+}
+
+.map-filter:hover {
+    background: rgba(212, 165, 116, 0.2);
+    border-color: var(--color-accent);
+}
+
+.map-filter:focus {
+    outline: none;
+    border-color: var(--color-accent);
+    box-shadow: 0 0 0 3px rgba(212, 165, 116, 0.2);
+}
+
+/* Search Bar */
+.map-search-bar {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    z-index: 100;
+    display: flex;
+    gap: 0.5rem;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(10px);
+    border-radius: 25px;
+    padding: 0.5rem 1rem;
+    border: 1px solid rgba(212, 165, 116, 0.3);
+    min-width: 300px;
+}
+
+.map-search-input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: var(--color-text);
+    font-size: 1rem;
+    padding: 0.5rem;
+    outline: none;
+}
+
+.map-search-input::placeholder {
+    color: var(--color-text-secondary);
+}
+
+.map-btn-small {
+    width: 24px;
+    height: 24px;
+    background: transparent;
+    border: none;
+    color: var(--color-text-secondary);
+    font-size: 1.2rem;
+    cursor: pointer;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+}
+
+.map-btn-small:hover {
+    background: rgba(212, 165, 116, 0.2);
+    color: var(--color-accent);
+}
+
+/* Village Info Panel */
+.village-info-panel {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    width: 350px;
+    max-width: calc(100% - 40px);
+    background: rgba(0, 0, 0, 0.9);
+    backdrop-filter: blur(20px);
+    border-radius: 20px;
+    padding: 1.5rem;
+    border: 1px solid rgba(212, 165, 116, 0.3);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+    z-index: 200;
+    color: var(--color-text);
+    max-height: 80vh;
+    overflow-y: auto;
+}
+
+.village-info-panel h3 {
+    color: var(--color-accent);
+    font-size: 1.5rem;
+    margin: 0 0 1rem 0;
+    padding-right: 2rem;
+}
+
+.info-close {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    background: transparent;
+    border: none;
+    color: var(--color-text-secondary);
+    font-size: 1.5rem;
+    cursor: pointer;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: all 0.3s ease;
+}
+
+.info-close:hover {
+    background: rgba(212, 165, 116, 0.2);
+    color: var(--color-accent);
+    transform: rotate(90deg);
+}
+
+.info-photo {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+    border-radius: 15px;
+    margin-bottom: 1rem;
+}
+
+.info-desc {
+    color: var(--color-text-secondary);
+    line-height: 1.6;
+    margin-bottom: 1rem;
+    font-size: 0.95rem;
+}
+
+.info-stats {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+}
+
+.info-stat {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--color-text-secondary);
+    font-size: 0.9rem;
+}
+
+.stat-icon {
+    font-size: 1.2rem;
+}
+
+.info-meta {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+    font-size: 0.9rem;
+    color: var(--color-text-secondary);
+}
+
+.status-badge {
+    padding: 0.25rem 0.75rem;
+    border-radius: 15px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.status-active {
+    background: rgba(16, 185, 129, 0.2);
+    color: #10b981;
+    border: 1px solid rgba(16, 185, 129, 0.5);
+}
+
+.status-forming {
+    background: rgba(245, 158, 11, 0.2);
+    color: #f59e0b;
+    border: 1px solid rgba(245, 158, 11, 0.5);
+}
+
+.info-link {
+    display: inline-block;
+    padding: 0.75rem 1.5rem;
+    background: var(--color-primary);
+    color: var(--color-text);
+    text-decoration: none;
+    border-radius: 25px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    text-align: center;
+    width: 100%;
+}
+
+.info-link:hover {
+    background: var(--color-primary-light);
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(212, 165, 116, 0.4);
+}
+
+/* Animations */
+@keyframes slideInRight {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+/* Map Legend */
+.map-legend {
+    position: absolute;
+    bottom: 20px;
+    left: 20px;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(10px);
+    border-radius: 10px;
+    padding: 1rem;
+    border: 1px solid rgba(212, 165, 116, 0.3);
+    z-index: 100;
+    font-size: 0.85rem;
+    color: var(--color-text);
+}
+
+.map-legend h4 {
+    margin: 0 0 0.5rem 0;
+    color: var(--color-accent);
+    font-size: 0.9rem;
+}
+
+.map-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0.25rem 0;
+}
+
+.map-legend-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+}
+
+.map-legend-dot.active {
+    background: rgba(212, 165, 116, 0.9);
+}
+
+.map-legend-dot.forming {
+    background: rgba(245, 158, 11, 0.9);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .map-controls {
+        top: 10px;
+        right: 10px;
+    }
+
+    .map-search-bar {
+        top: 10px;
+        left: 10px;
+        min-width: 200px;
+        max-width: calc(100% - 120px);
+    }
+
+    .village-info-panel {
+        bottom: 10px;
+        right: 10px;
+        width: calc(100% - 20px);
+        max-width: none;
+    }
+
+    .map-zoom-controls {
+        flex-direction: row;
+    }
+
+    .map-filter-controls {
+        flex-direction: row;
+    }
+
+    .map-legend {
+        bottom: 10px;
+        left: 10px;
+        font-size: 0.75rem;
+        padding: 0.75rem;
+    }
+}
+

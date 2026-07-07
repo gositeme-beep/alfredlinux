@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CSS Test - Simple</title>
+    <style>
+        /* Basic CSS test */
+        .test-red {
+            background-color: red;
+            color: white;
+            padding: 20px;
+            margin: 10px;
+            border-radius: 8px;
+        }
+        
+        .test-blue {
+            background-color: blue;
+            color: white;
+            padding: 20px;
+            margin: 10px;
+            border-radius: 8px;
+        }
+        
+        .test-green {
+            background-color: green;
+            color: white;
+            padding: 20px;
+            margin: 10px;
+            border-radius: 8px;
+        }
+        
+        /* Tailwind-like classes */
+        .bg-red-500 { background-color: #ef4444 !important; }
+        .bg-blue-500 { background-color: #3b82f6 !important; }
+        .bg-green-500 { background-color: #10b981 !important; }
+        .text-white { color: #ffffff !important; }
+        .p-4 { padding: 1rem !important; }
+        .m-2 { margin: 0.5rem !important; }
+        .rounded-lg { border-radius: 0.5rem !important; }
+        .text-center { text-align: center !important; }
+        .font-bold { font-weight: 700 !important; }
+        .text-xl { font-size: 1.25rem !important; line-height: 1.75rem !important; }
+    </style>
+</head>
+<body>
+    <div style="padding: 20px; font-family: Arial, sans-serif;">
+        <h1 style="text-align: center; color: #333;">CSS Loading Test</h1>
+        
+        <div class="test-red">
+            <h2>Basic CSS Test (Red)</h2>
+            <p>This should have a red background with white text.</p>
+        </div>
+        
+        <div class="test-blue">
+            <h2>Basic CSS Test (Blue)</h2>
+            <p>This should have a blue background with white text.</p>
+        </div>
+        
+        <div class="test-green">
+            <h2>Basic CSS Test (Green)</h2>
+            <p>This should have a green background with white text.</p>
+        </div>
+        
+        <div class="bg-red-500 text-white p-4 m-2 rounded-lg text-center">
+            <h2 class="font-bold text-xl">Tailwind-like CSS Test (Red)</h2>
+            <p>This should have a red background with white text using Tailwind-like classes.</p>
+        </div>
+        
+        <div class="bg-blue-500 text-white p-4 m-2 rounded-lg text-center">
+            <h2 class="font-bold text-xl">Tailwind-like CSS Test (Blue)</h2>
+            <p>This should have a blue background with white text using Tailwind-like classes.</p>
+        </div>
+        
+        <div class="bg-green-500 text-white p-4 m-2 rounded-lg text-center">
+            <h2 class="font-bold text-xl">Tailwind-like CSS Test (Green)</h2>
+            <p>This should have a green background with white text using Tailwind-like classes.</p>
+        </div>
+        
+        <div style="margin-top: 30px; padding: 20px; background-color: #f0f0f0; border-radius: 8px;">
+            <h3>Instructions:</h3>
+            <ul>
+                <li>If you see colored boxes with white text, CSS is working.</li>
+                <li>If you see plain text without colors, CSS is not loading.</li>
+                <li>Check the browser's developer tools (F12) for any CSS errors.</li>
+            </ul>
+        </div>
+    </div>
+</body>
+</html> 

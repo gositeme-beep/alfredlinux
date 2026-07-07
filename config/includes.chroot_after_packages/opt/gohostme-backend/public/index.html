@@ -1,0 +1,971 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>GoHostMe — Hosting Control Panel</title>
+<style>
+:root {
+  --gold: #e2b340;
+  --gold-dim: #b8891e;
+  --gold-glow: rgba(226,179,64,0.18);
+  --bg: #0d1117;
+  --bg2: #161b22;
+  --bg3: #1c2128;
+  --border: rgba(226,179,64,0.2);
+  --text: #e6edf3;
+  --muted: #8b949e;
+  --green: #3fb950;
+  --red: #f85149;
+  --blue: #58a6ff;
+  --yellow: #d29922;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
+
+/* ── Login ── */
+#login-screen {
+  position: fixed; inset: 0; background: var(--bg);
+  display: flex; align-items: center; justify-content: center; z-index: 9999;
+}
+.login-box {
+  width: 380px; padding: 40px; background: var(--bg2);
+  border: 1px solid var(--border); border-radius: 12px;
+  box-shadow: 0 0 40px var(--gold-glow);
+}
+.login-box .logo { text-align: center; margin-bottom: 28px; }
+.login-box .logo h1 { font-size: 24px; color: var(--gold); letter-spacing: 2px; }
+.login-box .logo p { color: var(--muted); font-size: 13px; margin-top: 4px; }
+.login-box label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 1px; }
+.login-box input {
+  width: 100%; padding: 10px 14px; background: var(--bg3); border: 1px solid var(--border);
+  border-radius: 6px; color: var(--text); font-size: 14px; margin-bottom: 16px; outline: none;
+  transition: border-color 0.2s;
+}
+.login-box input:focus { border-color: var(--gold); box-shadow: 0 0 0 3px var(--gold-glow); }
+.btn-login {
+  width: 100%; padding: 12px; background: var(--gold); color: #0d1117;
+  border: none; border-radius: 6px; font-size: 15px; font-weight: 700;
+  cursor: pointer; letter-spacing: 1px; transition: opacity 0.2s;
+}
+.btn-login:hover { opacity: 0.9; }
+.login-error { color: var(--red); font-size: 13px; margin-top: 10px; text-align: center; display: none; }
+
+/* ── Header ── */
+#app { display: none; flex-direction: column; height: 100vh; }
+#header {
+  height: 52px; background: var(--bg2); border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; padding: 0 20px; gap: 16px; flex-shrink: 0;
+}
+#header .brand { font-size: 18px; font-weight: 700; color: var(--gold); letter-spacing: 2px; }
+#header .brand span { color: var(--muted); font-weight: 400; font-size: 13px; margin-left: 8px; }
+#header .spacer { flex: 1; }
+#header .user-info { font-size: 13px; color: var(--muted); }
+#header .btn-logout { padding: 5px 14px; border: 1px solid var(--border); background: transparent; color: var(--muted); border-radius: 5px; cursor: pointer; font-size: 12px; }
+#header .btn-logout:hover { border-color: var(--gold); color: var(--gold); }
+
+/* ── Layout ── */
+#main { display: flex; flex: 1; overflow: hidden; }
+
+/* ── Sidebar ── */
+#sidebar {
+  width: 220px; background: var(--bg2); border-right: 1px solid var(--border);
+  overflow-y: auto; flex-shrink: 0; padding: 12px 0;
+}
+.nav-section { padding: 4px 16px 6px; font-size: 10px; text-transform: uppercase; letter-spacing: 1.5px; color: var(--muted); margin-top: 8px; }
+.nav-item {
+  display: flex; align-items: center; gap: 10px; padding: 9px 20px;
+  cursor: pointer; color: var(--muted); font-size: 13px; transition: all 0.15s;
+  border-left: 3px solid transparent;
+}
+.nav-item:hover { color: var(--text); background: var(--gold-glow); }
+.nav-item.active { color: var(--gold); border-left-color: var(--gold); background: var(--gold-glow); }
+.nav-item .icon { font-size: 16px; width: 20px; text-align: center; }
+
+/* ── Content ── */
+#content { flex: 1; overflow-y: auto; padding: 24px; background: var(--bg); }
+
+/* ── Panel: Dashboard ── */
+.stats-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px; }
+.stat-card {
+  background: var(--bg2); border: 1px solid var(--border); border-radius: 10px;
+  padding: 20px; position: relative; overflow: hidden;
+}
+.stat-card::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+  background: var(--gold);
+}
+.stat-card .label { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); margin-bottom: 8px; }
+.stat-card .value { font-size: 28px; font-weight: 700; color: var(--text); }
+.stat-card .sub { font-size: 12px; color: var(--muted); margin-top: 4px; }
+.stat-card .icon { position: absolute; right: 16px; top: 50%; transform: translateY(-50%); font-size: 32px; opacity: 0.15; }
+
+.progress-bar { height: 4px; border-radius: 2px; background: var(--bg3); margin-top: 10px; overflow: hidden; }
+.progress-bar .fill { height: 100%; background: var(--gold); border-radius: 2px; transition: width 0.6s ease; }
+.progress-bar .fill.warn { background: var(--yellow); }
+.progress-bar .fill.danger { background: var(--red); }
+
+/* ── Tables ── */
+.section-title { font-size: 16px; font-weight: 600; color: var(--text); margin-bottom: 16px; display: flex; align-items: center; gap: 10px; }
+.section-title .badge { padding: 2px 8px; background: var(--gold-glow); border: 1px solid var(--border); border-radius: 12px; font-size: 11px; color: var(--gold); }
+.card { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; margin-bottom: 20px; }
+.card-header { padding: 14px 20px; border-bottom: 1px solid var(--border); font-size: 13px; font-weight: 600; color: var(--gold); display: flex; align-items: center; justify-content: space-between; }
+table { width: 100%; border-collapse: collapse; }
+th { padding: 10px 16px; text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); background: var(--bg3); border-bottom: 1px solid var(--border); }
+td { padding: 11px 16px; font-size: 13px; border-bottom: 1px solid rgba(226,179,64,0.06); }
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: var(--gold-glow); }
+
+/* ── Status Pills ── */
+.pill { display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; letter-spacing: 0.5px; }
+.pill.green { background: rgba(63,185,80,0.15); color: var(--green); }
+.pill.red { background: rgba(248,81,73,0.15); color: var(--red); }
+.pill.yellow { background: rgba(210,153,34,0.15); color: var(--yellow); }
+
+/* ── Buttons ── */
+.btn { padding: 7px 16px; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; border: 1px solid transparent; transition: all 0.15s; letter-spacing: 0.5px; }
+.btn-gold { background: var(--gold); color: #0d1117; }
+.btn-gold:hover { opacity: 0.85; }
+.btn-outline { background: transparent; border-color: var(--border); color: var(--muted); }
+.btn-outline:hover { border-color: var(--gold); color: var(--gold); }
+.btn-danger { background: transparent; border-color: rgba(248,81,73,0.4); color: var(--red); }
+.btn-danger:hover { background: rgba(248,81,73,0.1); }
+
+/* ── DA Setup Notice ── */
+.notice { padding: 14px 20px; border-radius: 8px; margin-bottom: 20px; display: flex; align-items: flex-start; gap: 12px; font-size: 13px; }
+.notice.warn { background: rgba(210,153,34,0.1); border: 1px solid rgba(210,153,34,0.3); color: var(--yellow); }
+.notice.info { background: var(--gold-glow); border: 1px solid var(--border); color: var(--gold); }
+
+/* ── Form ── */
+.form-row { margin-bottom: 14px; }
+.form-row label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.8px; }
+.form-row input, .form-row select {
+  width: 100%; padding: 9px 14px; background: var(--bg3); border: 1px solid var(--border);
+  border-radius: 6px; color: var(--text); font-size: 13px; outline: none;
+}
+.form-row input:focus, .form-row select:focus { border-color: var(--gold); box-shadow: 0 0 0 3px var(--gold-glow); }
+
+/* ── Loading ── */
+.loading { text-align: center; padding: 40px; color: var(--muted); font-size: 13px; }
+.spinner { display: inline-block; width: 20px; height: 20px; border: 2px solid var(--border); border-top-color: var(--gold); border-radius: 50%; animation: spin 0.8s linear infinite; margin-right: 8px; vertical-align: middle; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Grid ── */
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+@media(max-width: 768px) { .grid-2 { grid-template-columns: 1fr; } #sidebar { display: none; } }
+
+#toast {
+  position: fixed; bottom: 24px; right: 24px; padding: 12px 20px;
+  background: var(--bg2); border: 1px solid var(--border); border-radius: 8px;
+  color: var(--text); font-size: 13px; z-index: 9999; opacity: 0;
+  transform: translateY(10px); transition: all 0.3s; pointer-events: none;
+}
+#toast.show { opacity: 1; transform: translateY(0); }
+#toast.success { border-color: var(--green); }
+#toast.error { border-color: var(--red); }
+</style>
+</head>
+<body>
+
+<!-- Login Screen -->
+<div id="login-screen">
+  <div class="login-box">
+    <div class="logo">
+      <h1>GoHostMe</h1>
+      <p>Hosting Control Panel — Powered by Alfred</p>
+    </div>
+    <div class="form-row">
+      <label>Email Address</label>
+      <input type="email" id="login-email" placeholder="you@example.com" autocomplete="username"/>
+    </div>
+    <div class="form-row">
+      <label>Password</label>
+      <input type="password" id="login-pass" placeholder="••••••••" autocomplete="current-password"/>
+    </div>
+    <button class="btn-login" onclick="doLogin()">SIGN IN</button>
+    <div class="login-error" id="login-error"></div>
+  </div>
+</div>
+
+<!-- Main App -->
+<div id="app">
+  <!-- Header -->
+  <div id="header">
+    <div class="brand">GoHostMe <span>Control Panel</span></div>
+    <div class="spacer"></div>
+    <div class="user-info" id="user-info"></div>
+    <button class="btn-logout" onclick="doLogout()">Sign Out</button>
+  </div>
+
+  <!-- Main -->
+  <div id="main">
+    <!-- Sidebar -->
+    <nav id="sidebar">
+      <div class="nav-section">Overview</div>
+      <div class="nav-item active" data-page="dashboard"><span class="icon">⚡</span>Dashboard</div>
+      <div class="nav-item" data-page="services"><span class="icon">⚙️</span>Services</div>
+      <div class="nav-item" data-page="pm2"><span class="icon">🚀</span>PM2 Processes</div>
+
+      <div class="nav-section">Hosting</div>
+      <div class="nav-item" data-page="domains"><span class="icon">🌐</span>Domains</div>
+      <div class="nav-item" data-page="email"><span class="icon">📧</span>Email</div>
+      <div class="nav-item" data-page="databases"><span class="icon">🗄️</span>Databases</div>
+      <div class="nav-item" data-page="dns"><span class="icon">📡</span>DNS</div>
+      <div class="nav-item" data-page="ssl"><span class="icon">🔒</span>SSL / TLS</div>
+      <div class="nav-item" data-page="files"><span class="icon">📁</span>Files</div>
+
+      <div class="nav-section">System</div>
+      <div class="nav-item" data-page="bridge"><span class="icon">🌉</span>Bridge Status</div>
+      <div class="nav-item" data-page="cron"><span class="icon">🕒</span>Cron Jobs</div>
+      <div class="nav-item" data-page="backups"><span class="icon">💾</span>Backups</div>
+
+      <div class="nav-section">GoSiteMe</div>
+      <div class="nav-item" onclick="window.open('https://gositeme.com','_blank')"><span class="icon">🏠</span>GoSiteMe</div>
+      <div class="nav-item" onclick="window.open('https://gositeme.com/alfred-ide','_blank')"><span class="icon">💻</span>Alfred IDE</div>
+    </nav>
+
+    <!-- Content -->
+    <div id="content">
+      <!-- Pages rendered here by JS -->
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ── State ──────────────────────────────────────────────────────────────────
+let currentPage = 'dashboard';
+let currentUser = null;
+let statsInterval = null;
+
+// Detect base path — works both at /gohostme/* (via PHP proxy) and direct :2224
+const API_BASE = window.location.pathname.startsWith('/gohostme') ? '/gohostme' : '';
+
+// ── Boot ───────────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  // Check for stored token
+  const tok = localStorage.getItem('ghm_token');
+  if (tok) {
+    api('/api/auth/me', 'GET', null, tok)
+      .then(u => { currentUser = u; showApp(); loadPage('dashboard'); })
+      .catch(() => showLogin());
+  } else {
+    showLogin();
+  }
+
+  // Nav clicks
+  document.querySelectorAll('.nav-item[data-page]').forEach(el => {
+    el.addEventListener('click', () => loadPage(el.dataset.page));
+  });
+
+  // Enter key on login
+  document.getElementById('login-pass').addEventListener('keydown', e => {
+    if (e.key === 'Enter') doLogin();
+  });
+});
+
+// ── API ────────────────────────────────────────────────────────────────────
+function api(url, method = 'GET', body = null, overrideToken = null) {
+  const tok = overrideToken || localStorage.getItem('ghm_token');
+  const opts = {
+    method,
+    headers: { 'Content-Type': 'application/json', ...(tok ? { Authorization: `Bearer ${tok}` } : {}) }
+  };
+  if (body) opts.body = JSON.stringify(body);
+  return fetch(API_BASE + url, opts).then(r => {
+    if (!r.ok) throw new Error(`${r.status}`);
+    return r.json();
+  });
+}
+
+function toast(msg, type = 'info') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = `show ${type}`;
+  setTimeout(() => t.className = '', 3000);
+}
+
+// ── Auth ───────────────────────────────────────────────────────────────────
+async function doLogin() {
+  const email = document.getElementById('login-email').value.trim();
+  const pass = document.getElementById('login-pass').value;
+  const err = document.getElementById('login-error');
+  err.style.display = 'none';
+  try {
+    const r = await api('/api/auth/login', 'POST', { email, password: pass });
+    if (r.token) {
+      localStorage.setItem('ghm_token', r.token);
+      currentUser = r.user;
+      showApp();
+      loadPage('dashboard');
+    }
+  } catch (e) {
+    err.textContent = 'Invalid email or password.';
+    err.style.display = 'block';
+  }
+}
+
+function doLogout() {
+  api('/api/auth/logout', 'POST').catch(() => {});
+  localStorage.removeItem('ghm_token');
+  currentUser = null;
+  showLogin();
+  if (statsInterval) clearInterval(statsInterval);
+}
+
+function showLogin() {
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('app').style.display = 'none';
+}
+function showApp() {
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app').style.display = 'flex';
+  document.getElementById('user-info').textContent = currentUser.name || currentUser.email;
+}
+
+// ── Page Router ────────────────────────────────────────────────────────────
+function loadPage(page) {
+  currentPage = page;
+  document.querySelectorAll('.nav-item').forEach(el => el.classList.toggle('active', el.dataset.page === page));
+  if (statsInterval) { clearInterval(statsInterval); statsInterval = null; }
+
+  const content = document.getElementById('content');
+  content.innerHTML = `<div class="loading"><span class="spinner"></span>Loading...</div>`;
+
+  const pages = {
+    dashboard: pageDashboard,
+    services: pageServices,
+    pm2: pagePM2,
+    domains: pageDomains,
+    email: pageEmail,
+    databases: pageDatabases,
+    dns: pageDNS,
+    ssl: pageSSL,
+    files: pageFiles,
+    bridge: pageBridge,
+    cron: pageCron,
+    backups: pageBackups
+  };
+  if (pages[page]) pages[page](content);
+  else content.innerHTML = `<div class="loading">Page not found: ${escHtml(page)}</div>`;
+}
+
+// ── Dashboard ──────────────────────────────────────────────────────────────
+async function pageDashboard(el) {
+  el.innerHTML = `
+    <div class="section-title">⚡ Server Dashboard</div>
+    <div class="stats-grid" id="stats-grid">
+      <div class="stat-card"><div class="label">CPU Load</div><div class="value" id="stat-cpu">—</div><div class="sub">Current usage</div><div class="progress-bar"><div class="fill" id="bar-cpu" style="width:0%"></div></div><div class="icon">🖥️</div></div>
+      <div class="stat-card"><div class="label">Memory</div><div class="value" id="stat-mem">—</div><div class="sub" id="stat-mem-sub"></div><div class="progress-bar"><div class="fill" id="bar-mem" style="width:0%"></div></div><div class="icon">💾</div></div>
+      <div class="stat-card"><div class="label">Disk</div><div class="value" id="stat-disk">—</div><div class="sub" id="stat-disk-sub"></div><div class="progress-bar"><div class="fill" id="bar-disk" style="width:0%"></div></div><div class="icon">📀</div></div>
+      <div class="stat-card"><div class="label">Uptime</div><div class="value" id="stat-uptime">—</div><div class="sub" id="stat-platform"></div><div class="icon">⏱️</div></div>
+    </div>
+    <div class="grid-2">
+      <div>
+        <div class="section-title">🔧 Quick Access</div>
+        <div class="card">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--border)">
+            ${[['Domains','domains','🌐'],['Email','email','📧'],['Databases','databases','🗄️'],['DNS','dns','📡'],['SSL','ssl','🔒'],['PM2','pm2','🚀'],['Files','files','📁'],['Bridge','bridge','🌉']].map(([n,p,i])=>`
+              <div style="background:var(--bg2);padding:18px;cursor:pointer;transition:background 0.15s" onmouseover="this.style.background='var(--bg3)'" onmouseout="this.style.background='var(--bg2)'" onclick="loadPage('${p}')">
+                <div style="font-size:24px;margin-bottom:6px">${i}</div>
+                <div style="font-size:13px;color:var(--text);font-weight:500">${n}</div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="section-title">🌍 Server Info</div>
+        <div class="card">
+          <div style="padding:20px">
+            <table><tbody id="server-info-table">
+              <tr><td style="color:var(--muted);width:120px">Host</td><td id="si-host">—</td></tr>
+              <tr><td style="color:var(--muted)">Platform</td><td id="si-platform">—</td></tr>
+              <tr><td style="color:var(--muted)">IP</td><td>15.235.50.60</td></tr>
+              <tr><td style="color:var(--muted)">GoSiteMe</td><td><a href="https://gositeme.com" target="_blank" style="color:var(--gold)">gositeme.com</a></td></tr>
+              <tr><td style="color:var(--muted)">GoHostMe</td><td style="color:var(--green)">:2224 ✓ (you're here)</td></tr>
+              <tr><td style="color:var(--muted)">Bridge</td><td><a href="#" onclick="loadPage('bridge')" style="color:var(--gold)">Sovereignty Bridge</a></td></tr>
+            </tbody></table>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+  updateStats();
+  statsInterval = setInterval(updateStats, 5000);
+}
+
+async function updateStats() {
+  try {
+    const s = await api('/api/system/stats');
+    document.getElementById('stat-cpu').textContent = s.cpu + '%';
+    document.getElementById('stat-mem').textContent = s.memory.percent + '%';
+    document.getElementById('stat-mem-sub').textContent = fmtBytes(s.memory.used) + ' / ' + fmtBytes(s.memory.total);
+    document.getElementById('stat-disk').textContent = s.disk.percent + '%';
+    document.getElementById('stat-disk-sub').textContent = fmtBytes(s.disk.used) + ' / ' + fmtBytes(s.disk.total);
+    document.getElementById('stat-uptime').textContent = fmtUptime(s.uptime);
+    document.getElementById('stat-platform').textContent = s.platform;
+    document.getElementById('si-host').textContent = s.hostname;
+    document.getElementById('si-platform').textContent = s.platform;
+    setBar('bar-cpu', s.cpu);
+    setBar('bar-mem', s.memory.percent);
+    setBar('bar-disk', s.disk.percent);
+  } catch(e) { /* ignore */ }
+}
+
+function setBar(id, pct) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.style.width = pct + '%';
+  el.className = 'fill' + (pct > 90 ? ' danger' : pct > 70 ? ' warn' : '');
+}
+
+// ── Services ───────────────────────────────────────────────────────────────
+async function pageServices(el) {
+  const data = await api('/api/system/services').catch(() => []);
+  el.innerHTML = `
+    <div class="section-title">⚙️ System Services</div>
+    <div class="card">
+      <table>
+        <thead><tr><th>Service</th><th>Status</th><th>Start Mode</th></tr></thead>
+        <tbody>
+          ${data.map(s => `
+            <tr>
+              <td><strong>${s.name}</strong></td>
+              <td><span class="pill ${s.running ? 'green' : 'red'}">${s.running ? '● Running' : '● Stopped'}</span></td>
+              <td><span style="color:var(--muted)">${s.startmode || '—'}</span></td>
+            </tr>
+          `).join('') || '<tr><td colspan="3" style="text-align:center;color:var(--muted)">No services data</td></tr>'}
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+
+// ── PM2 ────────────────────────────────────────────────────────────────────
+async function pagePM2(el) {
+  const data = await api('/api/pm2/list').catch(() => []);
+  const online = data.filter(p => p.status === 'online').length;
+  el.innerHTML = `
+    <div class="section-title">🚀 PM2 Processes <span class="badge">${online}/${data.length} online</span></div>
+    <div class="card">
+      <table>
+        <thead><tr><th>ID</th><th>Name</th><th>Status</th><th>CPU</th><th>Memory</th><th>Restarts</th><th>Uptime</th><th>Actions</th></tr></thead>
+        <tbody>
+          ${data.map(p => `
+            <tr>
+              <td style="color:var(--muted)">${p.id}</td>
+              <td><strong>${escHtml(p.name)}</strong></td>
+              <td><span class="pill ${p.status === 'online' ? 'green' : 'red'}">${p.status || '—'}</span></td>
+              <td>${p.cpu != null ? p.cpu + '%' : '—'}</td>
+              <td>${p.memory ? fmtBytes(p.memory) : '—'}</td>
+              <td>${p.restarts || 0}</td>
+              <td style="color:var(--muted)">${p.uptime ? fmtUptime(Math.floor((Date.now() - p.uptime) / 1000)) : '—'}</td>
+              <td style="white-space:nowrap">
+                ${p.status === 'online' 
+                  ? `<button class="btn btn-outline" style="padding:3px 8px" onclick="pm2Action('restart','${escHtml(p.name)}')">↻</button> <button class="btn btn-danger" style="padding:3px 8px" onclick="pm2Action('stop','${escHtml(p.name)}')">■</button>`
+                  : `<button class="btn btn-gold" style="padding:3px 8px" onclick="pm2Action('start','${escHtml(p.name)}')">▶</button>`}
+                <button class="btn btn-outline" style="padding:3px 8px" onclick="pm2Logs('${escHtml(p.name)}')">📋</button>
+              </td>
+            </tr>
+          `).join('') || '<tr><td colspan="8" style="text-align:center;color:var(--muted)">No processes</td></tr>'}
+        </tbody>
+      </table>
+    </div>
+    <div id="pm2-logs-panel" style="display:none" class="card"><div class="card-header"><span id="pm2-logs-title">Logs</span><button class="btn btn-outline" style="padding:3px 8px" onclick="document.getElementById('pm2-logs-panel').style.display='none'">✕</button></div><pre id="pm2-logs-content" style="padding:16px;font-size:11px;color:var(--muted);max-height:300px;overflow:auto;background:var(--bg3);margin:0;white-space:pre-wrap"></pre></div>
+  `;
+}
+
+async function pm2Action(action, name) {
+  toast(`${action}ing ${name}...`);
+  try {
+    await api('/api/pm2/action', 'POST', { action, name });
+    toast(`${name} ${action}ed`, 'success');
+    setTimeout(() => loadPage('pm2'), 1000);
+  } catch(e) { toast(`Failed: ${e.message}`, 'error'); }
+}
+
+async function pm2Logs(name) {
+  const panel = document.getElementById('pm2-logs-panel');
+  const content = document.getElementById('pm2-logs-content');
+  const title = document.getElementById('pm2-logs-title');
+  panel.style.display = 'block';
+  title.textContent = `Logs: ${name}`;
+  content.textContent = 'Loading...';
+  try {
+    const data = await api('/api/pm2/logs', 'POST', { name, lines: 100 });
+    content.textContent = data.logs || 'No logs';
+  } catch(e) { content.textContent = 'Error: ' + e.message; }
+}
+
+// ── Domains ────────────────────────────────────────────────────────────────
+async function pageDomains(el) {
+  const data = await api('/api/domains').catch(() => ({ domains: [], whmcs: [] }));
+  const allDomains = [...new Set([...(data.domains || []), ...(data.whmcs || []).map(d => d.domain)])].sort();
+  el.innerHTML = `
+    <div class="section-title">🌐 Domains <span class="badge">${allDomains.length}</span></div>
+    <div class="card">
+      <div class="card-header">
+        <span>All Domains</span>
+        <button class="btn btn-gold" onclick="document.getElementById('add-domain-form').style.display=document.getElementById('add-domain-form').style.display==='none'?'block':'none'">+ Add Domain</button>
+      </div>
+      <div id="add-domain-form" style="display:none;padding:16px;border-bottom:1px solid var(--border)">
+        <div style="display:flex;gap:10px;align-items:end">
+          <div class="form-row" style="flex:1;margin:0"><label>Domain Name</label><input id="new-domain" type="text" placeholder="example.com"/></div>
+          <button class="btn btn-gold" onclick="addDomain()">Create</button>
+        </div>
+        <div id="add-domain-result" style="margin-top:8px;font-size:12px"></div>
+      </div>
+      <table>
+        <thead><tr><th>Domain</th><th>Status</th><th>SSL</th><th>Source</th><th>Actions</th></tr></thead>
+        <tbody>
+          ${allDomains.map(d => {
+            const whmcsDom = (data.whmcs || []).find(w => w.domain === d);
+            return `<tr>
+              <td><strong>${escHtml(d)}</strong></td>
+              <td><span class="pill ${whmcsDom?.status === 'Active' ? 'green' : 'yellow'}">${whmcsDom?.status || 'Active'}</span></td>
+              <td><button class="btn btn-outline" style="padding:2px 8px;font-size:11px" onclick="loadPage('ssl');setTimeout(()=>{document.getElementById('ssl-domain-input').value='${escHtml(d)}';checkSSL()},200)">Check</button></td>
+              <td style="color:var(--muted)">${whmcsDom ? 'WHMCS' : 'Filesystem'}</td>
+              <td><button class="btn btn-outline" style="padding:2px 8px;font-size:11px" onclick="loadPage('dns');setTimeout(()=>{document.getElementById('dns-domain-manual').value='${escHtml(d)}';loadDNS('${escHtml(d)}')},300)">DNS</button></td>
+            </tr>`;
+          }).join('') || '<tr><td colspan="5" style="text-align:center;color:var(--muted)">No domains found</td></tr>'}
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+
+async function addDomain() {
+  const domain = document.getElementById('new-domain').value.trim();
+  const result = document.getElementById('add-domain-result');
+  if (!domain) { result.innerHTML = '<span style="color:var(--red)">Enter a domain</span>'; return; }
+  result.innerHTML = '<span class="spinner"></span>Creating...';
+  try {
+    const r = await api('/api/domains/create', 'POST', { domain });
+    result.innerHTML = `<span style="color:var(--green)">✓ ${escHtml(domain)} created</span>`;
+    toast(`${domain} created`, 'success');
+    setTimeout(() => loadPage('domains'), 1500);
+  } catch(e) { result.innerHTML = `<span style="color:var(--red)">${escHtml(e.message)}</span>`; }
+}
+
+// ── Email ──────────────────────────────────────────────────────────────────
+async function pageEmail(el) {
+  const domData = await api('/api/domains').catch(() => ({ domains: [] }));
+  const domains = (domData.domains || []).sort();
+  el.innerHTML = `
+    <div class="section-title">📧 Email Management</div>
+    <div class="card">
+      <div class="card-header">
+        <span>Email Accounts</span>
+        <div style="display:flex;gap:8px">
+          <a href="https://gositeme.com/webmail" target="_blank" class="btn btn-outline">Open Webmail</a>
+          <button class="btn btn-gold" onclick="document.getElementById('email-create-form').style.display=document.getElementById('email-create-form').style.display==='none'?'block':'none'">+ Create Account</button>
+        </div>
+      </div>
+      <div id="email-create-form" style="display:none;padding:16px;border-bottom:1px solid var(--border)">
+        <div style="display:flex;gap:10px;align-items:end;flex-wrap:wrap">
+          <div class="form-row" style="margin:0"><label>User</label><input id="email-user" type="text" placeholder="info" style="width:140px"/></div>
+          <div style="font-size:20px;color:var(--muted);padding-top:18px">@</div>
+          <div class="form-row" style="margin:0"><label>Domain</label><select id="email-domain" style="width:200px;padding:9px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text)">${domains.map(d => `<option value="${escHtml(d)}">${escHtml(d)}</option>`).join('')}</select></div>
+          <div class="form-row" style="margin:0"><label>Password</label><input id="email-pass" type="password" placeholder="••••••••" style="width:180px"/></div>
+          <button class="btn btn-gold" onclick="createEmail()">Create</button>
+        </div>
+        <div id="email-create-result" style="margin-top:8px;font-size:12px"></div>
+      </div>
+      <div style="padding:12px 16px;border-bottom:1px solid var(--border);display:flex;gap:8px;flex-wrap:wrap">
+        ${domains.slice(0, 10).map(d => `<button class="btn btn-outline" style="padding:4px 10px;font-size:11px" onclick="loadEmail('${escHtml(d)}')">${escHtml(d)}</button>`).join('')}
+      </div>
+      <table id="email-table"><tbody><tr><td style="text-align:center;color:var(--muted);padding:30px">Select a domain above to load email accounts</td></tr></tbody></table>
+    </div>
+  `;
+}
+
+async function createEmail() {
+  const user = document.getElementById('email-user').value.trim();
+  const domain = document.getElementById('email-domain').value;
+  const password = document.getElementById('email-pass').value;
+  const result = document.getElementById('email-create-result');
+  if (!user || !domain || !password) { result.innerHTML = '<span style="color:var(--red)">Fill all fields</span>'; return; }
+  result.innerHTML = '<span class="spinner"></span>Creating...';
+  try {
+    await api('/api/email/create', 'POST', { user, domain, password });
+    result.innerHTML = `<span style="color:var(--green)">✓ ${escHtml(user)}@${escHtml(domain)} created</span>`;
+    toast('Email account created', 'success');
+    loadEmail(domain);
+  } catch(e) { result.innerHTML = `<span style="color:var(--red)">${escHtml(e.message)}</span>`; }
+}
+
+let currentEmailDomain = '';
+async function loadEmail(domain) {
+  currentEmailDomain = domain;
+  const data = await api(`/api/email/accounts?domain=${encodeURIComponent(domain)}`).catch(() => ({ accounts: [] }));
+  const tbody = document.querySelector('#email-table tbody');
+  if (!tbody) return;
+  const accounts = data.accounts || [];
+  tbody.innerHTML = accounts.length
+    ? `<tr><th style="padding:10px 16px;background:var(--bg3);width:70%">Email Address</th><th style="padding:10px 16px;background:var(--bg3)">Actions</th></tr>${accounts.map(a => `<tr><td>${escHtml(a)}</td><td><button class="btn btn-danger" style="padding:2px 8px;font-size:11px" onclick="deleteEmail('${escHtml(a)}')">Delete</button></td></tr>`).join('')}`
+    : `<tr><td style="text-align:center;color:var(--muted);padding:30px">No accounts found for ${escHtml(domain)}</td></tr>`;
+}
+
+async function deleteEmail(email) {
+  if (!confirm(`Delete ${email}?`)) return;
+  const [user, domain] = email.split('@');
+  try {
+    await api(`/api/email/account?user=${encodeURIComponent(user)}&domain=${encodeURIComponent(domain)}`, 'DELETE');
+    toast(`${email} deleted`, 'success');
+    loadEmail(domain);
+  } catch(e) { toast('Delete failed: ' + e.message, 'error'); }
+}
+
+// ── Databases ──────────────────────────────────────────────────────────────
+async function pageDatabases(el) {
+  const data = await api('/api/databases').catch(() => ({ databases: [] }));
+  el.innerHTML = `
+    <div class="section-title">🗄️ Databases <span class="badge">${data.databases.length}</span></div>
+    <div class="card">
+      <table>
+        <thead><tr><th>Database Name</th><th>Engine</th></tr></thead>
+        <tbody>
+          ${data.databases.map(d => `<tr><td><strong>${d}</strong></td><td style="color:var(--muted)">MariaDB</td></tr>`).join('')}
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+
+// ── DNS ────────────────────────────────────────────────────────────────────
+let currentDNSDomain = '';
+async function pageDNS(el) {
+  const zones = await api('/api/dns/zones/list').catch(() => ({ zones: [] }));
+  const zoneList = zones.zones || [];
+  el.innerHTML = `
+    <div class="section-title">📡 DNS Management</div>
+    <div class="card">
+      <div class="card-header">
+        <span>DNS Zones</span>
+        <div style="display:flex;gap:8px;align-items:center">
+          <select id="dns-zone-select" onchange="loadDNS(this.value)" style="padding:7px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:13px">
+            <option value="">Select zone...</option>
+            ${zoneList.map(z => `<option value="${escHtml(z)}">${escHtml(z)}</option>`).join('')}
+          </select>
+          <input id="dns-domain-manual" type="text" placeholder="or type domain" style="width:180px;padding:7px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:13px;outline:none"/>
+          <button class="btn btn-gold" onclick="loadDNS(document.getElementById('dns-domain-manual').value.trim() || document.getElementById('dns-zone-select').value)">Load</button>
+        </div>
+      </div>
+      <div id="dns-add-form" style="display:none;padding:16px;border-bottom:1px solid var(--border)">
+        <div style="display:flex;gap:10px;align-items:end;flex-wrap:wrap">
+          <div class="form-row" style="margin:0"><label>Name</label><input id="dns-rec-name" type="text" placeholder="@ or subdomain" style="width:140px"/></div>
+          <div class="form-row" style="margin:0"><label>Type</label><select id="dns-rec-type" style="width:90px;padding:9px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text)"><option>A</option><option>AAAA</option><option>CNAME</option><option>MX</option><option>TXT</option><option>NS</option><option>SRV</option><option>CAA</option></select></div>
+          <div class="form-row" style="margin:0"><label>Value</label><input id="dns-rec-value" type="text" placeholder="value" style="width:220px"/></div>
+          <div class="form-row" style="margin:0"><label>TTL</label><input id="dns-rec-ttl" type="number" value="3600" style="width:80px"/></div>
+          <button class="btn btn-gold" onclick="addDNSRecord()">Add Record</button>
+        </div>
+        <div id="dns-add-result" style="margin-top:8px;font-size:12px"></div>
+      </div>
+      <div id="dns-records" style="padding:16px;text-align:center;color:var(--muted)">Select a zone to view records</div>
+    </div>
+  `;
+}
+
+async function loadDNS(domain) {
+  if (!domain) return;
+  currentDNSDomain = domain;
+  const container = document.getElementById('dns-records');
+  if (!container) return;
+  container.innerHTML = '<span class="spinner"></span>Loading zone...';
+  const data = await api(`/api/dns/${encodeURIComponent(domain)}`).catch(e => ({ error: e.message }));
+  if (data.error) { container.innerHTML = `<span style="color:var(--red)">${escHtml(data.error)}</span>`; return; }
+  // Show add form
+  const addForm = document.getElementById('dns-add-form');
+  if (addForm) addForm.style.display = 'block';
+  const records = data.records || [];
+  if (!records.length) { container.innerHTML = `<div style="padding:20px;color:var(--muted)">No records found. Raw:<pre style="background:var(--bg3);padding:12px;border-radius:6px;font-size:12px;overflow:auto;max-height:300px;color:var(--gold)">${escHtml(data.raw || JSON.stringify(data, null, 2))}</pre></div>`; return; }
+  container.innerHTML = `
+    <table>
+      <thead><tr><th style="padding:10px 12px;background:var(--bg3)">Name</th><th style="padding:10px 12px;background:var(--bg3)">Type</th><th style="padding:10px 12px;background:var(--bg3)">TTL</th><th style="padding:10px 12px;background:var(--bg3)">Value</th><th style="padding:10px 12px;background:var(--bg3)">Actions</th></tr></thead>
+      <tbody>${records.map(r => `<tr><td style="padding:8px 12px;font-size:12px">${escHtml(r.name||'')}</td><td style="padding:8px 12px"><span class="pill ${r.type==='A'||r.type==='AAAA'?'green':r.type==='MX'?'yellow':r.type==='CNAME'?'blue':'grey'}">${escHtml(r.type||'')}</span></td><td style="padding:8px 12px;font-size:12px">${escHtml(r.ttl||'')}</td><td style="padding:8px 12px;font-size:12px;max-width:300px;overflow:hidden;text-overflow:ellipsis" title="${escHtml(r.value||'')}">${escHtml(r.value||'')}</td><td style="padding:8px 12px"><button class="btn btn-danger" style="padding:2px 8px;font-size:11px" onclick="deleteDNSRecord('${escHtml(r.name||'')}','${escHtml(r.type||'')}','${escHtml(r.value||'')}')">Delete</button></td></tr>`).join('')}</tbody>
+    </table>
+  `;
+}
+
+async function addDNSRecord() {
+  const name = document.getElementById('dns-rec-name').value.trim();
+  const type = document.getElementById('dns-rec-type').value;
+  const value = document.getElementById('dns-rec-value').value.trim();
+  const ttl = document.getElementById('dns-rec-ttl').value || '3600';
+  const result = document.getElementById('dns-add-result');
+  if (!name || !value) { result.innerHTML = '<span style="color:var(--red)">Name and value required</span>'; return; }
+  result.innerHTML = '<span class="spinner"></span>Adding...';
+  try {
+    await api(`/api/dns/${encodeURIComponent(currentDNSDomain)}/record`, 'POST', { name, type, value, ttl });
+    result.innerHTML = '<span style="color:var(--green)">✓ Record added</span>';
+    toast('DNS record added', 'success');
+    loadDNS(currentDNSDomain);
+  } catch(e) { result.innerHTML = `<span style="color:var(--red)">${escHtml(e.message)}</span>`; }
+}
+
+async function deleteDNSRecord(name, type, value) {
+  if (!confirm(`Delete ${type} record "${name}" → "${value}"?`)) return;
+  try {
+    await api(`/api/dns/${encodeURIComponent(currentDNSDomain)}/record`, 'DELETE', { name, type, value });
+    toast('Record deleted', 'success');
+    loadDNS(currentDNSDomain);
+  } catch(e) { toast('Delete failed: ' + e.message, 'error'); }
+}
+
+// ── SSL ────────────────────────────────────────────────────────────────────
+async function pageSSL(el) {
+  const domData = await api('/api/domains').catch(() => ({ domains: [] }));
+  const domains = (domData.domains || []).sort();
+  el.innerHTML = `
+    <div class="section-title">🔒 SSL / TLS</div>
+    <div class="card">
+      <div class="card-header">
+        <span>Certificate Status</span>
+        <button class="btn btn-gold" onclick="document.getElementById('ssl-request-form').style.display=document.getElementById('ssl-request-form').style.display==='none'?'block':'none'">+ Request Let's Encrypt</button>
+      </div>
+      <div id="ssl-request-form" style="display:none;padding:16px;border-bottom:1px solid var(--border)">
+        <div style="display:flex;gap:10px;align-items:end;flex-wrap:wrap">
+          <div class="form-row" style="margin:0"><label>Domain</label><select id="ssl-req-domain" style="width:250px;padding:9px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text)">${domains.map(d => `<option value="${escHtml(d)}">${escHtml(d)}</option>`).join('')}</select></div>
+          <button class="btn btn-gold" onclick="requestSSL()">Request Certificate</button>
+        </div>
+        <div id="ssl-req-result" style="margin-top:8px;font-size:12px"></div>
+      </div>
+      <div style="padding:20px">
+        <div style="display:flex;gap:10px;margin-bottom:16px">
+          <input id="ssl-domain-input" type="text" placeholder="gositeme.com" style="flex:1;padding:9px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:13px;outline:none"/>
+          <button class="btn btn-gold" onclick="checkSSL()">Check</button>
+        </div>
+        <div id="ssl-result" style="margin-top:8px"></div>
+      </div>
+      <div style="padding:0 16px 16px">
+        <div style="font-size:12px;color:var(--muted);margin-bottom:8px">Quick Check All Domains:</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          ${domains.slice(0, 12).map(d => `<button class="btn btn-outline" style="padding:4px 10px;font-size:11px" onclick="checkSSL('${escHtml(d)}')">${escHtml(d)}</button>`).join('')}
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+async function checkSSL(domainArg) {
+  const domain = domainArg || document.getElementById('ssl-domain-input').value.trim();
+  if (!domain) return;
+  if (!domainArg) document.getElementById('ssl-domain-input').value = domain;
+  document.getElementById('ssl-result').innerHTML = '<span class="spinner"></span>';
+  const data = await api(`/api/ssl/${encodeURIComponent(domain)}`).catch(e => ({ error: e.message }));
+  const result = document.getElementById('ssl-result');
+  if (data.error) {
+    result.innerHTML = `<span style="color:var(--red)">${escHtml(data.error)}</span>`;
+  } else if (!data.expiry) {
+    result.innerHTML = `<span class="pill yellow">No certificate found for ${escHtml(domain)}</span>`;
+  } else {
+    const exp = new Date(data.expiry);
+    const daysLeft = Math.ceil((exp - Date.now()) / 86400000);
+    result.innerHTML = `<div style="display:flex;align-items:center;gap:12px"><span class="pill ${daysLeft > 30 ? 'green' : daysLeft > 7 ? 'yellow' : 'red'}">✓ Valid</span><span style="font-size:13px">Expires: ${escHtml(data.expiry)} (${daysLeft} days)</span></div>`;
+  }
+}
+
+async function requestSSL() {
+  const domain = document.getElementById('ssl-req-domain').value;
+  const result = document.getElementById('ssl-req-result');
+  if (!domain) return;
+  result.innerHTML = '<span class="spinner"></span>Requesting certificate (this may take a minute)...';
+  try {
+    const data = await api('/api/ssl/request', 'POST', { domain });
+    result.innerHTML = `<span style="color:var(--green)">✓ ${escHtml(data.message || 'Certificate issued')}</span>`;
+    toast('SSL certificate issued for ' + domain, 'success');
+  } catch(e) { result.innerHTML = `<span style="color:var(--red)">${escHtml(e.message)}</span>`; }
+}
+
+// ── Files ──────────────────────────────────────────────────────────────────
+let fileCurrentPath = '/home/gositeme';
+async function pageFiles(el) {
+  el.innerHTML = `
+    <div class="section-title">📁 File Browser</div>
+    <div class="card">
+      <div class="card-header">
+        <span id="file-path" style="font-family:monospace;font-size:12px;color:var(--muted)">/home/gositeme</span>
+        <button class="btn btn-outline" onclick="loadFiles('/home/gositeme')">Home</button>
+      </div>
+      <div id="file-list" style="padding:0"></div>
+    </div>
+  `;
+  loadFiles('/home/gositeme');
+}
+
+async function loadFiles(p) {
+  fileCurrentPath = p;
+  const el = document.getElementById('file-list');
+  const pathEl = document.getElementById('file-path');
+  if (el) el.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>';
+
+  const data = await api(`/api/files?path=${encodeURIComponent(p)}`).catch(() => ({ items: [] }));
+  if (pathEl) pathEl.textContent = data.path || p;
+  if (!el) return;
+
+  const parent = p !== '/home/gositeme' ? `<tr onclick="loadFiles('${escHtml(p.split('/').slice(0,-1).join('/') || '/home/gositeme')}')" style="cursor:pointer"><td style="padding:10px 16px">📂</td><td style="padding:10px 16px;color:var(--gold)">..</td><td></td></tr>` : '';
+  const rows = (data.items || []).map(f => `
+    <tr style="cursor:pointer" onclick="${f.type === 'dir' ? `loadFiles('${escHtml(f.path)}')` : '#'}">
+      <td style="padding:10px 16px">${f.type === 'dir' ? '📂' : '📄'}</td>
+      <td style="padding:10px 16px">${escHtml(f.name)}</td>
+      <td style="padding:10px 16px;color:var(--muted)">${f.type}</td>
+    </tr>
+  `).join('');
+  el.innerHTML = `<table><thead><tr><th></th><th>Name</th><th>Type</th></tr></thead><tbody>${parent}${rows}</tbody></table>`;
+}
+
+// ── Bridge Status ──────────────────────────────────────────────────────────
+async function pageBridge(el) {
+  el.innerHTML = `
+    <div class="section-title">🌉 Bridge Status</div>
+    <div class="card">
+      <div class="card-header"><span>System Bridge</span><button class="btn btn-gold" onclick="pageBridge(document.getElementById('content'))">Refresh</button></div>
+      <div id="bridge-status" style="padding:20px"><span class="spinner"></span>Testing bridge...</div>
+    </div>
+    <div class="card" style="margin-top:16px">
+      <div class="card-header">Command Tiers</div>
+      <div style="padding:20px;font-size:13px;line-height:2">
+        <div><span class="pill green">GREEN</span> Read-only commands — no token needed (apache-test, dns-zone-read, service-status, etc.)</div>
+        <div><span class="pill yellow">YELLOW</span> Mutating commands — HMAC token required (apache-reload, dns-reload, certbot-request, email-create/delete, etc.)</div>
+        <div><span class="pill red">RED</span> Destructive commands — HMAC token + approval (vhost-create/delete, dns-zone-create, dns-record-add/delete, etc.)</div>
+      </div>
+    </div>
+  `;
+  const data = await api('/api/bridge/status').catch(e => ({ ok: false, error: e.message }));
+  document.getElementById('bridge-status').innerHTML = data.ok
+    ? `<div style="display:flex;align-items:center;gap:12px"><span class="pill green">✓ Bridge Online</span><span style="font-size:13px;color:var(--muted)">${escHtml(data.output || 'Syntax OK')}</span></div>`
+    : `<div style="display:flex;align-items:center;gap:12px"><span class="pill red">✗ Bridge Error</span><span style="font-size:13px;color:var(--red)">${escHtml(data.error || 'Unknown error')}</span></div>`;
+}
+
+// ── Cron Jobs ──────────────────────────────────────────────────────────────
+async function pageCron(el) {
+  el.innerHTML = `
+    <div class="section-title">⏰ Cron Jobs</div>
+    <div class="card">
+      <div class="card-header">
+        <span>Scheduled Tasks</span>
+        <button class="btn btn-gold" onclick="document.getElementById('cron-add-form').style.display=document.getElementById('cron-add-form').style.display==='none'?'block':'none'">+ Add Job</button>
+      </div>
+      <div id="cron-add-form" style="display:none;padding:16px;border-bottom:1px solid var(--border)">
+        <div style="display:flex;gap:10px;align-items:end;flex-wrap:wrap">
+          <div class="form-row" style="margin:0"><label>Schedule</label><input id="cron-schedule" type="text" placeholder="*/5 * * * *" style="width:160px"/></div>
+          <div class="form-row" style="margin:0"><label>Command</label><input id="cron-command" type="text" placeholder="/usr/bin/php /path/to/script.php" style="width:350px"/></div>
+          <button class="btn btn-gold" onclick="addCron()">Add</button>
+        </div>
+        <div id="cron-add-result" style="margin-top:8px;font-size:12px"></div>
+      </div>
+      <div id="cron-list" style="padding:16px"><span class="spinner"></span>Loading...</div>
+    </div>
+  `;
+  loadCron();
+}
+
+async function loadCron() {
+  const data = await api('/api/cron').catch(e => ({ error: e.message, jobs: [] }));
+  const container = document.getElementById('cron-list');
+  if (!container) return;
+  const jobs = data.jobs || [];
+  container.innerHTML = jobs.length
+    ? `<table><thead><tr><th style="padding:8px 12px;background:var(--bg3)">Schedule</th><th style="padding:8px 12px;background:var(--bg3)">Command</th><th style="padding:8px 12px;background:var(--bg3)">Actions</th></tr></thead><tbody>${jobs.map((j, i) => `<tr><td style="padding:8px 12px;font-family:monospace;font-size:12px;white-space:nowrap">${escHtml(j.schedule || '')}</td><td style="padding:8px 12px;font-size:12px;max-width:400px;overflow:hidden;text-overflow:ellipsis" title="${escHtml(j.command || '')}">${escHtml(j.command || '')}</td><td style="padding:8px 12px"><button class="btn btn-danger" style="padding:2px 8px;font-size:11px" onclick="deleteCron(${i})">Delete</button></td></tr>`).join('')}</tbody></table>`
+    : '<div style="text-align:center;color:var(--muted);padding:20px">No cron jobs found</div>';
+}
+
+async function addCron() {
+  const schedule = document.getElementById('cron-schedule').value.trim();
+  const command = document.getElementById('cron-command').value.trim();
+  const result = document.getElementById('cron-add-result');
+  if (!schedule || !command) { result.innerHTML = '<span style="color:var(--red)">Schedule and command required</span>'; return; }
+  result.innerHTML = '<span class="spinner"></span>Adding...';
+  try {
+    await api('/api/cron', 'POST', { schedule, command });
+    result.innerHTML = '<span style="color:var(--green)">✓ Job added</span>';
+    toast('Cron job added', 'success');
+    loadCron();
+  } catch(e) { result.innerHTML = `<span style="color:var(--red)">${escHtml(e.message)}</span>`; }
+}
+
+async function deleteCron(index) {
+  if (!confirm('Delete this cron job?')) return;
+  try {
+    await api(`/api/cron/${index}`, 'DELETE');
+    toast('Cron job deleted', 'success');
+    loadCron();
+  } catch(e) { toast('Delete failed: ' + e.message, 'error'); }
+}
+
+// ── Backups ────────────────────────────────────────────────────────────────
+async function pageBackups(el) {
+  const domData = await api('/api/domains').catch(() => ({ domains: [] }));
+  const domains = (domData.domains || []).sort();
+  el.innerHTML = `
+    <div class="section-title">💾 Backups</div>
+    <div class="card">
+      <div class="card-header">
+        <span>Create Backup</span>
+      </div>
+      <div style="padding:20px">
+        <div style="display:flex;gap:10px;align-items:end;flex-wrap:wrap">
+          <div class="form-row" style="margin:0"><label>Domain</label><select id="backup-domain" style="width:250px;padding:9px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text)">${domains.map(d => `<option value="${escHtml(d)}">${escHtml(d)}</option>`).join('')}</select></div>
+          <div class="form-row" style="margin:0"><label>Type</label><select id="backup-type" style="width:140px;padding:9px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text)"><option value="full">Full</option><option value="files">Files Only</option><option value="database">Database Only</option></select></div>
+          <button class="btn btn-gold" onclick="createBackup()">Create Backup</button>
+        </div>
+        <div id="backup-create-result" style="margin-top:8px;font-size:12px"></div>
+      </div>
+    </div>
+    <div class="card" style="margin-top:16px">
+      <div class="card-header"><span>Existing Backups</span><button class="btn btn-outline" onclick="loadBackups()">Refresh</button></div>
+      <div id="backup-list" style="padding:16px"><span class="spinner"></span>Loading...</div>
+    </div>
+  `;
+  loadBackups();
+}
+
+async function loadBackups() {
+  const data = await api('/api/backups').catch(e => ({ error: e.message, backups: [] }));
+  const container = document.getElementById('backup-list');
+  if (!container) return;
+  const backups = data.backups || [];
+  container.innerHTML = backups.length
+    ? `<table><thead><tr><th style="padding:8px 12px;background:var(--bg3)">Name</th><th style="padding:8px 12px;background:var(--bg3)">Size</th><th style="padding:8px 12px;background:var(--bg3)">Date</th></tr></thead><tbody>${backups.map(b => `<tr><td style="padding:8px 12px;font-size:12px">${escHtml(b.name || b)}</td><td style="padding:8px 12px;font-size:12px">${b.size ? fmtBytes(b.size) : '-'}</td><td style="padding:8px 12px;font-size:12px">${b.modified ? new Date(b.modified).toLocaleDateString() : '-'}</td></tr>`).join('')}</tbody></table>`
+    : '<div style="text-align:center;color:var(--muted);padding:20px">No backups found</div>';
+}
+
+async function createBackup() {
+  const domain = document.getElementById('backup-domain').value;
+  const type = document.getElementById('backup-type').value;
+  const result = document.getElementById('backup-create-result');
+  if (!domain) return;
+  result.innerHTML = '<span class="spinner"></span>Creating backup (this may take a while)...';
+  try {
+    const data = await api('/api/backups/create', 'POST', { domain, type });
+    result.innerHTML = `<span style="color:var(--green)">✓ ${escHtml(data.message || 'Backup created')}</span>`;
+    toast('Backup created', 'success');
+    loadBackups();
+  } catch(e) { result.innerHTML = `<span style="color:var(--red)">${escHtml(e.message)}</span>`; }
+}
+
+// ── Helpers ────────────────────────────────────────────────────────────────
+function fmtBytes(b) {
+  if (!b) return '0B';
+  if (b > 1e9) return (b/1e9).toFixed(1) + ' GB';
+  if (b > 1e6) return (b/1e6).toFixed(1) + ' MB';
+  return (b/1e3).toFixed(0) + ' KB';
+}
+
+function fmtUptime(s) {
+  const d = Math.floor(s / 86400);
+  const h = Math.floor((s % 86400) / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  if (d > 0) return `${d}d ${h}h`;
+  if (h > 0) return `${h}h ${m}m`;
+  return `${m}m`;
+}
+
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+</script>
+</body>
+</html>

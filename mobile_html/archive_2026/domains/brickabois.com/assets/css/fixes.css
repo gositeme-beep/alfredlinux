@@ -1,0 +1,159 @@
+/**
+ * Critical Fixes - Ensure Elements Are Visible and Properly Aligned
+ */
+
+/* Reset any problematic transforms that break layout */
+body {
+    overflow-x: hidden;
+    width: 100%;
+    position: relative;
+}
+
+/* Ensure containers are centered and aligned */
+.container {
+    max-width: 1200px !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    padding-left: 2rem !important;
+    padding-right: 2rem !important;
+    position: relative !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+}
+
+/* Ensure all main content is visible and properly positioned */
+section {
+    opacity: 1 !important;
+    visibility: visible !important;
+    position: relative !important;
+    width: 100% !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    clear: both !important;
+}
+
+.hero-content {
+    opacity: 1 !important;
+    visibility: visible !important;
+    position: relative !important;
+    margin: 0 auto !important;
+    text-align: center !important;
+}
+
+.dimension-card,
+.stat-card,
+.step-card,
+.value-card,
+.testimonial-card,
+.village-card,
+.activity-section,
+.posts-list,
+.events-list {
+    opacity: 1 !important;
+    visibility: visible !important;
+    position: relative !important;
+}
+
+/* Fix grid alignment */
+.stats-grid,
+.dimensions-grid,
+.steps-grid,
+.values-grid,
+.testimonials-grid {
+    display: grid !important;
+    width: 100% !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+}
+
+/* Ensure text elements are visible and aligned */
+h1, h2, h3, h4, h5, h6,
+p, span, a, button,
+.hero-title, .hero-subtitle, .hero-tagline {
+    opacity: 1 !important;
+    visibility: visible !important;
+    position: relative !important;
+}
+
+/* Fix hero section alignment */
+.hero {
+    position: relative !important;
+    width: 100% !important;
+    margin: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+}
+
+.hero .container {
+    width: 100% !important;
+    max-width: 1200px !important;
+    margin: 0 auto !important;
+}
+
+/* Ensure canvas doesn't block content */
+#particleCanvas {
+    pointer-events: none !important;
+    z-index: 0 !important;
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+}
+
+/* Fix navbar alignment */
+.navbar {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    width: 100% !important;
+    transform: none !important;
+}
+
+/* Fix footer alignment */
+footer {
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    clear: both !important;
+}
+
+footer .container {
+    margin: 0 auto !important;
+}
+
+/* Ensure proper body alignment */
+html {
+    width: 100%;
+    overflow-x: hidden;
+}
+
+body {
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    position: relative;
+}
+
+/* Fix any horizontal scrolling issues */
+* {
+    max-width: 100%;
+}
+
+/* Ensure sections don't shift */
+section {
+    clear: both;
+}
+
+/* Fix grid items alignment */
+.stats-grid > *,
+.dimensions-grid > *,
+.steps-grid > *,
+.values-grid > * {
+    width: 100%;
+    max-width: 100%;
+}
+

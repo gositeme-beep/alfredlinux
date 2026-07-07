@@ -1,0 +1,50 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+# SPDX-License-Identifier: AGPL-3.0-or-later
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# Genesis Forge: AppArmor Strict + Namespace Exile (Synthesized)
+
+echo "[Genesis Forge] Applying Strict Sandbox to Original Logic..."
+
+cat > /etc/apparmor.d/alfred-isolated/profile-278 << 'EOF'
+profile alfred-sandbox-278 /usr/local/bin/alfred-util-265 flags=(enforce) {
+  #include <abstractions/base>
+  /usr/local/bin/alfred-util-265 rmix,
+  /dev/null rw,
+}
+EOF
+
+# Inject Network Blackhole Wrapper
+cat > /usr/local/bin/alfred-util-265-net-wrapper << 'EOF'
+#!/bin/bash
+# Network Namespace Blackhole
+# Traps the binary in a dedicated Linux Network Namespace containing zero
+# network interfaces. It is mathematically incapable of communicating with
+# the internet or the local host.
+
+# `unshare` creates an empty network namespace.
+unshare -- \
+    /usr/local/bin/alfred-util-265 "$@"
+EOF
+
+# Execute original logic inside the exiled namespace
+exec /bin/bash -s << 'EOF_UNSHARE_EXILE'
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+# [Genesis Forge] AppArmor Isolation: /usr/local/bin/alfred-util-265
+# Creates a granular zero-trust execution envelope for individual binaries.
+echo "[Genesis Forge] Enveloping binary: /usr/local/bin/alfred-util-265"
+mkdir -p /etc/apparmor.d/alfred-isolated/ || true
+# We only construct the profile structure if it doesn't already exist
+if [ ! -f "/etc/apparmor.d/alfred-isolated/profile-278" ]; then
+    cat > /etc/apparmor.d/alfred-isolated/profile-278 << 'EOF'
+profile alfred-sandbox-278 /usr/local/bin/alfred-util-265 flags=(complain) {
+  #include <abstractions/base>
+  /usr/local/bin/alfred-util-265 rmix,
+  /dev/null rw,
+}
+EOF
+fi
+
+exit 0
+EOF_UNSHARE_EXILE

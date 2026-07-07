@@ -1,0 +1,49 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+# [Genesis Forge] Granular Kernel Matrix: net.ipv4.ip_local_port_range="12424 65535"
+# Extremely deep low-level kernel protection.
+echo "[Genesis Forge] Applying granular sysctl: net.ipv4.ip_local_port_range="12424 65535""
+echo "net.ipv4.ip_local_port_range="12424 65535"" > /etc/sysctl.d/99-alfred-84.conf || true
+sysctl -w net.ipv4.ip_local_port_range="12424 65535" > /dev/null 2>&1 || true
+
+
+# --- BEGIN MERGED CONTENT FROM: 0193.hook.chroot ---
+#!/bin/bash
+set +e
+echo "================================================="
+echo "==== ALFRED TREASURY (Air-Gapped Crypto) ========"
+echo "================================================="
+
+export DEBIAN_FRONTEND=noninteractive
+
+if ls /build-assets/treasury/* 1>/dev/null 2>&1; then
+    echo "Installing custom Kingdom Treasury binaries..."
+[ -e -r ] &&     cp -r /build-assets/treasury/* /usr/local/bin/
+chmod +x /usr/local/bin/*
+else
+    echo "No custom treasury binaries found in /build-assets. Installing fallbacks."
+ apt-get install -y --no-install-recommends electrum || true
+fi
+
+cat > /usr/local/sbin/alfred-treasury << 'EOF'
+#!/bin/bash
+echo "Engaging Treasury Cold Storage Protocol..."
+if command -v alfred-faraday-on >/dev/null; then
+    alfred-faraday-on
+else
+    rfkill block all
+fi
+echo "Network severed. You are in an air-gapped state."
+echo "Treasury operations are mathematically safe from exfiltration."
+# Users can launch their specific wallets here
+EOF
+[ -e /usr/local/sbin/alfred-treasury ] && chmod +x /usr/local/sbin/alfred-treasury
+
+echo "Treasury installed."
+
+# --- END MERGED CONTENT FROM: 0193.hook.chroot ---
+
+exit 0

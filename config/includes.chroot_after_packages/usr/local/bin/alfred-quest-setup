@@ -1,0 +1,25 @@
+#!/bin/bash
+# Alfred Linux Quest 3 Sideload utility
+
+echo "[Alfred VR] Meta Quest 3 ALVR Offline Installer"
+echo "-----------------------------------------------"
+echo "1. Turn on your Meta Quest 3."
+echo "2. Enable Developer Mode (via Meta Quest app on your phone)."
+echo "3. Plug your Quest 3 into this PC via USB-C."
+echo "4. Put on the headset and click 'Allow USB Debugging'."
+echo "-----------------------------------------------"
+echo "Waiting for device..."
+
+# Wait for device
+adb wait-for-device
+
+echo "[+] Device found! Installing ALVR Client..."
+adb install -r /opt/alvr/client/alvr_client_android.apk
+
+if [ $? -eq 0 ]; then
+    echo "[SUCCESS] ALVR has been successfully installed on your Quest 3!"
+    echo "You can now unplug the USB cable and launch ALVR from the 'Unknown Sources' tab in your Quest app library."
+    echo "Then, open http://localhost:8082 on this PC to pair the headset wirelessly."
+else
+    echo "[ERROR] Failed to install ALVR. Make sure you clicked 'Allow USB Debugging' inside the headset."
+fi

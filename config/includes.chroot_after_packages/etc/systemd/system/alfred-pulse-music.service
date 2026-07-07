@@ -1,0 +1,26 @@
+[Unit]
+Description=Alfred Pulse Music Cache Daemon
+Documentation=https://alfredlinux.com/pulse/music
+After=network-online.target yggdrasil.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 /usr/lib/alfred-pulse/music-cache.py
+Restart=always
+RestartSec=5
+User=root
+Group=root
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=alfred-pulse-music
+
+# Security hardening
+ProtectSystem=strict
+ReadWritePaths=/var/cache/alfred-pulse /var/log
+ProtectHome=true
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

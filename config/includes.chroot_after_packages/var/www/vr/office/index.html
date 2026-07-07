@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GoSiteMe Virtual Office — Live Demos & Meetings</title>
+<meta name="description" content="Join our 3D virtual office space for live product demos, Alfred IDE walkthroughs, and team meetings with Alfred AI.">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0a0a14;color:#fff;font-family:'Inter','Segoe UI',system-ui,sans-serif;overflow:hidden}
+
+/* Loading */
+#loading{position:fixed;inset:0;background:#0a0a14;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;transition:opacity .8s}
+#loading.hidden{opacity:0;pointer-events:none}
+#loading h1{font-size:2.2rem;margin-bottom:.3rem;background:linear-gradient(135deg,#0074D9,#7D00FF);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+#loading p{color:rgba(255,255,255,.4);margin-bottom:2rem;font-size:.9rem}
+.load-ring{width:60px;height:60px;border:3px solid rgba(125,0,255,.2);border-top-color:#7D00FF;border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* HUD */
+#hud{position:fixed;top:0;left:0;right:0;padding:.8rem 1.5rem;display:flex;align-items:center;justify-content:space-between;z-index:100;background:linear-gradient(180deg,rgba(10,10,20,.95),transparent);pointer-events:none}
+#hud>*{pointer-events:auto}
+.hud-title{font-size:1.1rem;font-weight:700;background:linear-gradient(135deg,#0074D9,#7D00FF);-webkit-background-clip:text;-webkit-text-fill-color:transparent;display:flex;align-items:center;gap:.5rem}
+.hud-btn{padding:.4rem .8rem;border-radius:8px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.06);color:rgba(255,255,255,.7);cursor:pointer;font-size:.75rem;font-weight:600;transition:.2s;backdrop-filter:blur(8px)}
+.hud-btn:hover{background:rgba(0,168,255,.15);color:#00A8FF;border-color:rgba(0,168,255,.3)}
+.hud-btn.active{background:rgba(125,0,255,.25);color:#a855f7;border-color:rgba(125,0,255,.4)}
+.hud-right{display:flex;gap:.5rem;align-items:center}
+
+/* Online badge */
+#onlineBadge{position:fixed;top:4.5rem;left:1.5rem;z-index:100;background:rgba(22,22,54,.9);border:1px solid rgba(34,197,94,.3);border-radius:10px;padding:.35rem .7rem;font-size:.75rem;color:#22c55e;backdrop-filter:blur(8px);display:flex;align-items:center;gap:.4rem}
+#onlineBadge .dot{width:6px;height:6px;background:#22c55e;border-radius:50%;animation:pulse 2s ease infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* Demo Screen */
+#demoScreen{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:80%;max-width:1000px;height:70vh;background:#1e1e2e;border-radius:16px;border:2px solid rgba(125,0,255,.3);box-shadow:0 0 60px rgba(125,0,255,.15);z-index:50;display:none;overflow:hidden}
+#demoScreen.visible{display:block}
+.demo-titlebar{background:rgba(30,30,50,.95);padding:.5rem 1rem;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,.06)}
+.demo-titlebar .title{font-size:.8rem;font-weight:600;color:#a855f7;display:flex;align-items:center;gap:.5rem}
+.demo-titlebar .controls{display:flex;gap:.4rem}
+.demo-titlebar .controls span{width:12px;height:12px;border-radius:50%;cursor:pointer}
+.demo-close{background:#ef4444}
+.demo-min{background:#f59e0b}
+.demo-max{background:#22c55e}
+.demo-content{width:100%;height:calc(100% - 38px);background:#0d1117;position:relative;overflow:hidden}
+.demo-content iframe{width:100%;height:100%;border:none}
+
+/* IDE simulation when no iframe */
+.ide-sim{width:100%;height:100%;display:grid;grid-template-columns:48px 200px 1fr 300px;grid-template-rows:1fr;font-family:'JetBrains Mono','Fira Code',monospace;font-size:.75rem}
+.ide-activity{background:#1e1e2e;border-right:1px solid rgba(255,255,255,.06);display:flex;flex-direction:column;align-items:center;padding:.5rem 0;gap:.8rem}
+.ide-activity i{color:rgba(255,255,255,.4);font-size:1.1rem;cursor:pointer;padding:.4rem;border-radius:6px;transition:.2s}
+.ide-activity i:hover{color:#fff;background:rgba(255,255,255,.06)}
+.ide-activity i.active{color:#7D00FF;border-left:2px solid #7D00FF}
+.ide-explorer{background:#1a1a2e;border-right:1px solid rgba(255,255,255,.06);padding:.5rem 0;overflow-y:auto}
+.ide-explorer h4{font-size:.65rem;text-transform:uppercase;letter-spacing:.1em;color:rgba(255,255,255,.3);padding:.3rem .8rem;margin-bottom:.3rem}
+.ide-tree{list-style:none;padding:0}
+.ide-tree li{padding:.15rem .8rem;font-size:.72rem;color:rgba(255,255,255,.6);cursor:pointer;transition:.1s;display:flex;align-items:center;gap:.4rem}
+.ide-tree li:hover{background:rgba(255,255,255,.04);color:#fff}
+.ide-tree li.folder{color:#f59e0b}
+.ide-tree li.file{color:#00a8ff}
+.ide-editor{background:#0d1117;overflow-y:auto;padding:1rem;position:relative}
+.ide-editor .line{display:flex;gap:1rem;line-height:1.65}
+.ide-editor .ln{color:rgba(255,255,255,.15);min-width:28px;text-align:right;user-select:none}
+.ide-editor .code{color:#e0e0e0}
+.ide-editor .keyword{color:#ff79c6}
+.ide-editor .string{color:#a5d6a7}
+.ide-editor .comment{color:#555}
+.ide-editor .func{color:#82aaff}
+.ide-editor .type{color:#f59e0b}
+.ide-alfred{background:#161636;border-left:1px solid rgba(255,255,255,.06);display:flex;flex-direction:column}
+.ide-alfred-header{padding:.6rem .8rem;border-bottom:1px solid rgba(255,255,255,.06);display:flex;align-items:center;gap:.5rem;font-size:.78rem;font-weight:600;color:#a855f7}
+.ide-alfred-header .avatar{width:24px;height:24px;border-radius:50%;background:linear-gradient(135deg,#0074D9,#7D00FF);display:flex;align-items:center;justify-content:center;font-size:.7rem}
+.ide-alfred-chat{flex:1;overflow-y:auto;padding:.5rem;display:flex;flex-direction:column;gap:.5rem}
+.ide-msg{padding:.4rem .6rem;border-radius:8px;font-size:.72rem;line-height:1.5;max-width:90%}
+.ide-msg.alfred{background:rgba(125,0,255,.1);border:1px solid rgba(125,0,255,.15);color:#c4b5fd;align-self:flex-start}
+.ide-msg.user{background:rgba(0,168,255,.1);border:1px solid rgba(0,168,255,.15);color:#90cdf4;align-self:flex-end}
+.ide-alfred-input{padding:.5rem;border-top:1px solid rgba(255,255,255,.06);display:flex;gap:.4rem}
+.ide-alfred-input input{flex:1;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:6px;padding:.3rem .6rem;color:#fff;font-size:.72rem}
+.ide-alfred-input button{background:linear-gradient(135deg,#7D00FF,#0074D9);border:none;border-radius:6px;padding:.3rem .6rem;color:#fff;cursor:pointer;font-size:.7rem}
+
+/* Participant list */
+#participants{position:fixed;right:1.5rem;bottom:1.5rem;z-index:100;background:rgba(22,22,54,.9);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:.8rem;backdrop-filter:blur(12px);min-width:180px;display:none}
+#participants.visible{display:block}
+#participants h4{font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:rgba(255,255,255,.3);margin-bottom:.5rem}
+.participant{display:flex;align-items:center;gap:.5rem;padding:.25rem 0;font-size:.78rem}
+.participant .p-avatar{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.65rem;font-weight:700;color:#fff}
+.participant .p-name{color:#fff}
+.participant .p-role{font-size:.65rem;color:#8b8fa3;margin-left:auto}
+
+/* Presentation controls */
+#presBar{position:fixed;bottom:1.5rem;left:50%;transform:translateX(-50%);z-index:100;background:rgba(22,22,54,.9);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:.5rem 1rem;backdrop-filter:blur(12px);display:flex;gap:1rem;align-items:center}
+#presBar .pres-btn{padding:.35rem .7rem;border-radius:8px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.04);color:rgba(255,255,255,.7);cursor:pointer;font-size:.72rem;font-weight:600;transition:.2s;display:flex;align-items:center;gap:.3rem}
+#presBar .pres-btn:hover{background:rgba(125,0,255,.15);color:#a855f7;border-color:rgba(125,0,255,.3)}
+#presBar .pres-btn.live{background:rgba(239,68,68,.15);color:#ef4444;border-color:rgba(239,68,68,.3)}
+#presBar .pres-btn.live:hover{background:rgba(239,68,68,.25)}
+
+/* Floor/Room canvas */
+#roomCanvas{position:fixed;inset:0;z-index:1}
+
+/* 3D environment fallback — CSS room */
+.room-3d{position:fixed;inset:0;perspective:800px;z-index:1;overflow:hidden}
+.room-floor{position:absolute;bottom:0;left:-50%;width:200%;height:50%;background:linear-gradient(180deg,#12121e 0%,#1a1a2e 100%);transform:rotateX(60deg);transform-origin:bottom center}
+.room-floor::before{content:'';position:absolute;inset:0;background:repeating-linear-gradient(90deg,rgba(125,0,255,.03) 0,rgba(125,0,255,.03) 1px,transparent 1px,transparent 80px),repeating-linear-gradient(0deg,rgba(125,0,255,.03) 0,rgba(125,0,255,.03) 1px,transparent 1px,transparent 80px);opacity:.6}
+.room-wall-back{position:absolute;top:10%;left:5%;right:5%;height:40%;background:linear-gradient(180deg,#0f0f1a,#161636);border:1px solid rgba(255,255,255,.03);border-radius:4px}
+.room-window{position:absolute;background:linear-gradient(180deg,#0a132e,#0d1a3a);border:2px solid rgba(255,255,255,.06);border-radius:8px;box-shadow:0 0 30px rgba(0,116,217,.05)}
+.room-window.w1{top:15%;left:8%;width:18%;height:25%}
+.room-window.w2{top:15%;right:8%;width:18%;height:25%}
+
+/* Desk objects */
+.desk{position:absolute;z-index:5}
+.desk-surface{background:linear-gradient(135deg,#1a1a30,#22224a);border:1px solid rgba(255,255,255,.06);border-radius:8px;box-shadow:0 4px 20px rgba(0,0,0,.3)}
+.desk-monitor{background:#0d1117;border:2px solid rgba(255,255,255,.08);border-radius:6px;box-shadow:0 0 15px rgba(125,0,255,.08)}
+.desk-stand{width:8px;height:20px;background:rgba(255,255,255,.06);margin:0 auto}
+
+/* Meeting table */
+.meeting-table{position:absolute;bottom:25%;left:50%;transform:translateX(-50%);z-index:3}
+.table-surface{width:400px;height:160px;background:linear-gradient(135deg,rgba(30,30,60,.8),rgba(40,40,80,.8));border:1px solid rgba(255,255,255,.06);border-radius:60px;box-shadow:0 8px 40px rgba(0,0,0,.4)}
+
+/* Chair avatars around table */
+.seat{position:absolute;z-index:4}
+.seat-avatar{width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1rem;border:2px solid rgba(255,255,255,.15);box-shadow:0 2px 10px rgba(0,0,0,.3);cursor:pointer;transition:.3s}
+.seat-avatar:hover{transform:scale(1.15);border-color:rgba(125,0,255,.5)}
+.seat-label{text-align:center;font-size:.6rem;color:rgba(255,255,255,.4);margin-top:2px;white-space:nowrap}
+
+/* Main presentation screen */
+.pres-screen{position:absolute;top:18%;left:50%;transform:translateX(-50%);z-index:6;width:45%;max-width:550px}
+.pres-monitor{background:#0d1117;border:3px solid rgba(125,0,255,.25);border-radius:10px;box-shadow:0 0 40px rgba(125,0,255,.1);overflow:hidden;aspect-ratio:16/9}
+.pres-monitor .screen-content{width:100%;height:100%;position:relative}
+.pres-label{text-align:center;font-size:.65rem;color:rgba(125,0,255,.5);margin-top:.3rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase}
+
+@media(max-width:768px){
+    .ide-sim{grid-template-columns:1fr;grid-template-rows:auto}
+    .ide-activity,.ide-explorer{display:none}
+    .ide-alfred{position:fixed;bottom:0;left:0;right:0;height:40vh;z-index:200;border-radius:0}
+    .pres-screen{width:85%}
+    .meeting-table{display:none}
+    #presBar{flex-wrap:wrap;width:90%}
+}
+</style>
+<link rel="stylesheet" href="/assets/fontawesome/css/all.min.css">
+<script src="/vr/shared/alfred-csrf.js"></script>
+</head>
+<body>
+
+<!-- Loading Screen -->
+<div id="loading">
+    <h1>🏢 Virtual Office</h1>
+    <p>Preparing the meeting room...</p>
+    <div class="load-ring"></div>
+</div>
+
+<!-- HUD -->
+<div id="hud">
+    <div class="hud-title">
+        <span>🏢</span> GoSiteMe Virtual Office
+    </div>
+    <div class="hud-right">
+        <button class="hud-btn" onclick="toggleDemo()"><i class="fas fa-desktop"></i> Demo IDE</button>
+        <button class="hud-btn" onclick="toggleParticipants()"><i class="fas fa-users"></i> People</button>
+        <a href="/vr/hub/" class="hud-btn"><i class="fas fa-arrow-left"></i> VR Hub</a>
+        <a href="/games.php" class="hud-btn"><i class="fas fa-gamepad"></i> Games</a>
+    </div>
+</div>
+
+<!-- Online Badge -->
+<div id="onlineBadge">
+    <span class="dot"></span>
+    <span id="onlineCount">1</span> in office
+</div>
+
+<!-- 3D Room Environment (CSS 3D) -->
+<div class="room-3d">
+    <div class="room-floor"></div>
+    <div class="room-wall-back"></div>
+    <div class="room-window w1"></div>
+    <div class="room-window w2"></div>
+
+    <!-- Main Presentation Screen -->
+    <div class="pres-screen">
+        <div class="pres-monitor">
+            <div class="screen-content" id="screenContent">
+                <!-- Default: Alfred IDE splash -->
+                <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;background:linear-gradient(135deg,#0a0a2e,#1a0a3e);text-align:center;padding:2rem">
+                    <div style="font-size:2.5rem;margin-bottom:.5rem">🤖</div>
+                    <h2 style="font-size:1.1rem;background:linear-gradient(135deg,#0074D9,#7D00FF);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:.3rem">Alfred IDE</h2>
+                    <p style="color:rgba(255,255,255,.4);font-size:.7rem;max-width:300px">Click "Demo IDE" to launch the interactive Alfred IDE with Alfred AI assistant</p>
+                    <div style="display:flex;gap:.5rem;margin-top:1rem;flex-wrap:wrap;justify-content:center">
+                        <span style="background:rgba(125,0,255,.15);color:#a855f7;padding:.2rem .5rem;border-radius:6px;font-size:.6rem">1,290+ MCP Tools</span>
+                        <span style="background:rgba(0,168,255,.15);color:#00a8ff;padding:.2rem .5rem;border-radius:6px;font-size:.6rem">16 AI Engines</span>
+                        <span style="background:rgba(20,241,149,.15);color:#14F195;padding:.2rem .5rem;border-radius:6px;font-size:.6rem">Full IDE</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="pres-label">Presentation Screen</div>
+    </div>
+
+    <!-- Meeting Table -->
+    <div class="meeting-table">
+        <div class="table-surface"></div>
+    </div>
+
+    <!-- Seats around table — 8 agent seats + presenter -->
+    <div class="seat" style="bottom:38%;left:20%">
+        <div class="seat-avatar" style="background:linear-gradient(135deg,#0074D9,#0056a0)" title="Alfred — Chief Strategist">🤖</div>
+        <div class="seat-label">Alfred</div>
+    </div>
+    <div class="seat" style="bottom:38%;left:30%">
+        <div class="seat-avatar" style="background:linear-gradient(135deg,#a855f7,#7c3aed)" title="Nova — Tactical Genius">⚡</div>
+        <div class="seat-label">Nova</div>
+    </div>
+    <div class="seat" style="bottom:32%;left:25%">
+        <div class="seat-avatar" style="background:linear-gradient(135deg,#22c55e,#16a34a)" title="Sage — Patient Guardian">🌿</div>
+        <div class="seat-label">Sage</div>
+    </div>
+    <div class="seat" style="bottom:32%;left:35%">
+        <div class="seat-avatar" style="background:linear-gradient(135deg,#f59e0b,#d97706)" title="Atlas — World Navigator">🗺️</div>
+        <div class="seat-label">Atlas</div>
+    </div>
+    <div class="seat" style="bottom:38%;right:30%">
+        <div class="seat-avatar" style="background:linear-gradient(135deg,#ef4444,#dc2626)" title="Cipher — Code Breaker">🔐</div>
+        <div class="seat-label">Cipher</div>
+    </div>
+    <div class="seat" style="bottom:38%;right:20%">
+        <div class="seat-avatar" style="background:linear-gradient(135deg,#06b6d4,#0891b2)" title="Architect — Master Builder">🏛️</div>
+        <div class="seat-label">Architect</div>
+    </div>
+    <div class="seat" style="bottom:32%;right:25%">
+        <div class="seat-avatar" style="background:linear-gradient(135deg,#ec4899,#db2777)" title="Pulse — Rhythm Keeper">💗</div>
+        <div class="seat-label">Pulse</div>
+    </div>
+    <div class="seat" style="bottom:32%;right:35%">
+        <div class="seat-avatar" style="background:linear-gradient(135deg,#818cf8,#6366f1)" title="Pierre — Quiet Thinker">🎭</div>
+        <div class="seat-label">Pierre</div>
+    </div>
+    
+    <!-- Presenter seat (you) -->
+    <div class="seat" style="bottom:24%;left:50%;transform:translateX(-50%)">
+        <div class="seat-avatar" style="background:linear-gradient(135deg,#14F195,#9945FF);border-color:#14F195" title="You — Presenter">👤</div>
+        <div class="seat-label" style="color:#14F195">You (Presenter)</div>
+    </div>
+</div>
+
+<!-- Demo IDE Screen (overlay) -->
+<div id="demoScreen">
+    <div class="demo-titlebar">
+        <div class="title"><i class="fas fa-code"></i> Alfred IDE — Alfred AI Assistant</div>
+        <div class="controls">
+            <span class="demo-min" onclick="minimizeDemo()"></span>
+            <span class="demo-max" onclick="maximizeDemo()"></span>
+            <span class="demo-close" onclick="toggleDemo()"></span>
+        </div>
+    </div>
+    <div class="demo-content">
+        <div class="ide-sim" id="ideSim">
+            <!-- Activity Bar -->
+            <div class="ide-activity">
+                <i class="fas fa-file-code active" title="Explorer"></i>
+                <i class="fas fa-search" title="Search"></i>
+                <i class="fas fa-code-branch" title="Git"></i>
+                <i class="fas fa-bug" title="Debug"></i>
+                <i class="fas fa-puzzle-piece" title="Extensions"></i>
+                <i class="fas fa-robot" title="Alfred AI" style="color:#7D00FF"></i>
+            </div>
+
+            <!-- File Explorer -->
+            <div class="ide-explorer">
+                <h4>Explorer — GoSiteMe</h4>
+                <ul class="ide-tree">
+                    <li class="folder"><i class="fas fa-folder" style="color:#f59e0b"></i> api/</li>
+                    <li class="folder"><i class="fas fa-folder" style="color:#f59e0b"></i> config/</li>
+                    <li class="folder"><i class="fas fa-folder" style="color:#f59e0b"></i> includes/</li>
+                    <li class="folder"><i class="fas fa-folder" style="color:#f59e0b"></i> pay/</li>
+                    <li class="folder"><i class="fas fa-folder" style="color:#f59e0b"></i> sdks/</li>
+                    <li class="folder"><i class="fas fa-folder" style="color:#f59e0b"></i> vr/</li>
+                    <li class="file"><i class="fas fa-file-code" style="color:#00a8ff"></i> index.php</li>
+                    <li class="file"><i class="fas fa-file-code" style="color:#00a8ff"></i> games.php</li>
+                    <li class="file"><i class="fas fa-file-code" style="color:#a855f7"></i> alfred.php</li>
+                    <li class="file"><i class="fas fa-file-code" style="color:#22c55e"></i> dashboard.php</li>
+                    <li class="file"><i class="fas fa-file" style="color:#8b8fa3"></i> manifest.json</li>
+                </ul>
+            </div>
+
+            <!-- Code Editor -->
+            <div class="ide-editor" id="ideEditor">
+                <!-- Code will be populated by JS -->
+            </div>
+
+            <!-- Alfred Chat Panel -->
+            <div class="ide-alfred">
+                <div class="ide-alfred-header">
+                    <div class="avatar">🤖</div>
+                    Alfred AI — Pair Programmer
+                </div>
+                <div class="ide-alfred-chat" id="alfredChat">
+                    <div class="ide-msg alfred">Welcome to Alfred IDE! I'm Alfred, your AI pair programmer. I have access to 1,290+ MCP tools. Ask me anything about the codebase.</div>
+                </div>
+                <div class="ide-alfred-input">
+                    <input type="text" id="alfredInput" placeholder="Ask Alfred..." onkeydown="if(event.key==='Enter')sendAlfredMsg()">
+                    <button onclick="sendAlfredMsg()"><i class="fas fa-paper-plane"></i></button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Participants Panel -->
+<div id="participants">
+    <h4>In This Room</h4>
+    <div class="participant">
+        <div class="p-avatar" style="background:linear-gradient(135deg,#14F195,#9945FF)">👤</div>
+        <span class="p-name">You</span>
+        <span class="p-role">Presenter</span>
+    </div>
+    <div class="participant">
+        <div class="p-avatar" style="background:#0074D9">🤖</div>
+        <span class="p-name">Alfred</span>
+        <span class="p-role">AI Agent</span>
+    </div>
+    <div class="participant">
+        <div class="p-avatar" style="background:#a855f7">⚡</div>
+        <span class="p-name">Nova</span>
+        <span class="p-role">AI Agent</span>
+    </div>
+    <div class="participant">
+        <div class="p-avatar" style="background:#22c55e">🌿</div>
+        <span class="p-name">Sage</span>
+        <span class="p-role">AI Agent</span>
+    </div>
+    <div class="participant">
+        <div class="p-avatar" style="background:#f59e0b">🗺️</div>
+        <span class="p-name">Atlas</span>
+        <span class="p-role">AI Agent</span>
+    </div>
+    <div class="participant">
+        <div class="p-avatar" style="background:#ef4444">🔐</div>
+        <span class="p-name">Cipher</span>
+        <span class="p-role">AI Agent</span>
+    </div>
+    <div class="participant">
+        <div class="p-avatar" style="background:#06b6d4">🏛️</div>
+        <span class="p-name">Architect</span>
+        <span class="p-role">AI Agent</span>
+    </div>
+    <div class="participant">
+        <div class="p-avatar" style="background:#ec4899">💗</div>
+        <span class="p-name">Pulse</span>
+        <span class="p-role">AI Agent</span>
+    </div>
+    <div class="participant">
+        <div class="p-avatar" style="background:#818cf8">🎭</div>
+        <span class="p-name">Pierre</span>
+        <span class="p-role">AI Agent</span>
+    </div>
+    <div id="guestList"></div>
+</div>
+
+<!-- Presentation Controls -->
+<div id="presBar">
+    <button class="pres-btn" onclick="toggleDemo()"><i class="fas fa-desktop"></i> IDE Demo</button>
+    <button class="pres-btn" onclick="showSlide('features')"><i class="fas fa-list"></i> Features</button>
+    <button class="pres-btn" onclick="showSlide('agents')"><i class="fas fa-robot"></i> Agents</button>
+    <button class="pres-btn" onclick="showSlide('token')"><i class="fas fa-coins"></i> GSM Token</button>
+    <button class="pres-btn live" onclick="togglePresenting()"><i class="fas fa-broadcast-tower"></i> <span id="presStatus">Go Live</span></button>
+</div>
+
+<script>
+// ═══ Virtual Office Controller ═══
+
+let demoVisible = false;
+let participantsVisible = false;
+let isPresenting = false;
+
+// Loading
+setTimeout(() => {
+    document.getElementById('loading').classList.add('hidden');
+    setTimeout(() => document.getElementById('loading').style.display = 'none', 800);
+}, 1500);
+
+// Toggle IDE Demo
+function toggleDemo() {
+    demoVisible = !demoVisible;
+    document.getElementById('demoScreen').classList.toggle('visible', demoVisible);
+    if (demoVisible) populateEditor();
+}
+
+function minimizeDemo() {
+    document.getElementById('demoScreen').classList.remove('visible');
+    demoVisible = false;
+}
+
+function maximizeDemo() {
+    const ds = document.getElementById('demoScreen');
+    ds.style.width = '95%';
+    ds.style.height = '90vh';
+    ds.style.maxWidth = '1400px';
+}
+
+// Toggle participants
+function toggleParticipants() {
+    participantsVisible = !participantsVisible;
+    document.getElementById('participants').classList.toggle('visible', participantsVisible);
+}
+
+// Toggle presenting
+function togglePresenting() {
+    isPresenting = !isPresenting;
+    document.getElementById('presStatus').textContent = isPresenting ? 'Live' : 'Go Live';
+    const btn = document.querySelector('.pres-btn.live');
+    if (isPresenting) {
+        btn.style.background = 'rgba(239,68,68,.3)';
+        btn.style.animation = 'pulse 2s infinite';
+    } else {
+        btn.style.background = '';
+        btn.style.animation = '';
+    }
+}
+
+// Show different slides on the presentation screen
+function showSlide(type) {
+    const screen = document.getElementById('screenContent');
+    
+    const slides = {
+        features: `
+            <div style="padding:1.5rem;background:#0d1117;height:100%;overflow-y:auto">
+                <h3 style="font-size:1rem;color:#fff;margin-bottom:1rem;display:flex;align-items:center;gap:.5rem">
+                    <span style="color:#7D00FF">◆</span> Alfred IDE Features
+                </h3>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:.6rem">
+                    ${['1,290+ MCP Tools','16 AI Engines','Full Browser IDE','Voice Commands','WhatsApp Control','Git Integration','Live Collaboration','AI Code Review','Auto-Deploy','Debug Assistant','Package Manager','Terminal'].map(f =>
+                        '<div style="background:rgba(125,0,255,.06);border:1px solid rgba(125,0,255,.12);border-radius:8px;padding:.5rem .7rem;font-size:.7rem;color:#c4b5fd;display:flex;align-items:center;gap:.4rem"><i class="fas fa-check" style="color:#14F195;font-size:.6rem"></i> '+f+'</div>'
+                    ).join('')}
+                </div>
+            </div>`,
+        agents: `
+            <div style="padding:1.5rem;background:#0d1117;height:100%;overflow-y:auto">
+                <h3 style="font-size:1rem;color:#fff;margin-bottom:1rem;display:flex;align-items:center;gap:.5rem">
+                    <span style="color:#7D00FF">◆</span> AI Agent Fleet
+                </h3>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem">
+                    ${[
+                        {e:'🤖',n:'Alfred',r:'Chief Strategist',c:'#0074D9'},
+                        {e:'⚡',n:'Nova',r:'Tactical Genius',c:'#a855f7'},
+                        {e:'🌿',n:'Sage',r:'Patient Guardian',c:'#22c55e'},
+                        {e:'🗺️',n:'Atlas',r:'World Navigator',c:'#f59e0b'},
+                        {e:'🔐',n:'Cipher',r:'Code Breaker',c:'#ef4444'},
+                        {e:'🏛️',n:'Architect',r:'Master Builder',c:'#06b6d4'},
+                        {e:'💗',n:'Pulse',r:'Rhythm Keeper',c:'#ec4899'},
+                        {e:'🎭',n:'Pierre',r:'Quiet Thinker',c:'#818cf8'}
+                    ].map(a =>
+                        '<div style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:8px;padding:.5rem;display:flex;align-items:center;gap:.5rem"><span style="font-size:1.2rem">'+a.e+'</span><div><div style="font-size:.75rem;font-weight:700;color:'+a.c+'">'+a.n+'</div><div style="font-size:.6rem;color:#8b8fa3">'+a.r+'</div></div></div>'
+                    ).join('')}
+                </div>
+            </div>`,
+        token: `
+            <div style="padding:1.5rem;background:#0d1117;height:100%;overflow-y:auto;text-align:center">
+                <div style="font-size:2rem;margin-bottom:.5rem">◎</div>
+                <h3 style="font-size:1rem;background:linear-gradient(135deg,#9945FF,#14F195);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:.5rem">GSM Token Economy</h3>
+                <p style="color:#8b8fa3;font-size:.7rem;margin-bottom:1rem;max-width:300px;margin-left:auto;margin-right:auto">Utility token on Solana powering the entire GoSiteMe platform</p>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;text-align:center">
+                    <div style="background:rgba(153,69,255,.08);border-radius:8px;padding:.5rem"><div style="font-size:.9rem;font-weight:700;color:#fff">1B</div><div style="font-size:.6rem;color:#8b8fa3">Total Supply</div></div>
+                    <div style="background:rgba(20,241,149,.08);border-radius:8px;padding:.5rem"><div style="font-size:.9rem;font-weight:700;color:#fff">SPL</div><div style="font-size:.6rem;color:#8b8fa3">Standard</div></div>
+                    <div style="background:rgba(0,168,255,.08);border-radius:8px;padding:.5rem"><div style="font-size:.9rem;font-weight:700;color:#fff">8</div><div style="font-size:.6rem;color:#8b8fa3">AI Agents</div></div>
+                    <div style="background:rgba(245,158,11,.08);border-radius:8px;padding:.5rem"><div style="font-size:.9rem;font-weight:700;color:#fff">5%</div><div style="font-size:.6rem;color:#8b8fa3">Chess Rake</div></div>
+                </div>
+            </div>`
+    };
+    
+    if (slides[type]) {
+        screen.innerHTML = slides[type];
+    }
+}
+
+// Populate the code editor with sample GoSiteMe code
+function populateEditor() {
+    const editor = document.getElementById('ideEditor');
+    const code = [
+        { ln: 1, code: '<span class="comment">// GoSiteMe — Alfred AI Integration</span>' },
+        { ln: 2, code: '<span class="keyword">class</span> <span class="type">AlfredEngine</span> {' },
+        { ln: 3, code: '  <span class="keyword">constructor</span>() {' },
+        { ln: 4, code: '    <span class="keyword">this</span>.agents = [<span class="string">\'alfred\'</span>, <span class="string">\'nova\'</span>, <span class="string">\'sage\'</span>];' },
+        { ln: 5, code: '    <span class="keyword">this</span>.mcpTools = <span class="func">1290</span>;' },
+        { ln: 6, code: '    <span class="keyword">this</span>.aiEngines = <span class="func">16</span>;' },
+        { ln: 7, code: '  }' },
+        { ln: 8, code: '' },
+        { ln: 9, code: '  <span class="keyword">async</span> <span class="func">processQuery</span>(prompt) {' },
+        { ln: 10, code: '    <span class="keyword">const</span> context = <span class="keyword">await</span> <span class="keyword">this</span>.<span class="func">gatherContext</span>();' },
+        { ln: 11, code: '    <span class="keyword">const</span> tools = <span class="keyword">this</span>.<span class="func">selectTools</span>(prompt);' },
+        { ln: 12, code: '    <span class="keyword">return</span> <span class="keyword">await</span> <span class="keyword">this</span>.<span class="func">execute</span>({' },
+        { ln: 13, code: '      prompt, context, tools,' },
+        { ln: 14, code: '      model: <span class="string">\'claude-opus-4\'</span>,' },
+        { ln: 15, code: '      agents: <span class="keyword">this</span>.agents' },
+        { ln: 16, code: '    });' },
+        { ln: 17, code: '  }' },
+        { ln: 18, code: '' },
+        { ln: 19, code: '  <span class="func">selectTools</span>(prompt) {' },
+        { ln: 20, code: '    <span class="comment">// 1,290+ MCP tools available</span>' },
+        { ln: 21, code: '    <span class="keyword">const</span> categories = [' },
+        { ln: 22, code: '      <span class="string">\'file-system\'</span>, <span class="string">\'git\'</span>, <span class="string">\'browser\'</span>,' },
+        { ln: 23, code: '      <span class="string">\'database\'</span>, <span class="string">\'terminal\'</span>, <span class="string">\'voice\'</span>,' },
+        { ln: 24, code: '      <span class="string">\'crypto\'</span>, <span class="string">\'analytics\'</span>, <span class="string">\'deploy\'</span>' },
+        { ln: 25, code: '    ];' },
+        { ln: 26, code: '    <span class="keyword">return</span> <span class="keyword">this</span>.<span class="func">matchTools</span>(prompt, categories);' },
+        { ln: 27, code: '  }' },
+        { ln: 28, code: '}' },
+    ];
+    
+    editor.innerHTML = code.map(l =>
+        `<div class="line"><span class="ln">${l.ln}</span><span class="code">${l.code}</span></div>`
+    ).join('');
+}
+
+// Alfred chat - real API connection
+let officeConvId = null;
+let _officeSending = false;
+
+function sendAlfredMsg() {
+    if (_officeSending) return;
+    const input = document.getElementById('alfredInput');
+    const msg = input.value.trim();
+    if (!msg) return;
+
+    _officeSending = true;
+    input.disabled = true;
+
+    const chat = document.getElementById('alfredChat');
+
+    // User message
+    const userEl = document.createElement('div');
+    userEl.className = 'ide-msg user';
+    userEl.textContent = msg;
+    chat.appendChild(userEl);
+    input.value = '';
+    chat.scrollTop = chat.scrollHeight;
+
+    // Typing indicator with unique id
+    const typingId = 'alfredTyping_' + Date.now();
+    const typingEl = document.createElement('div');
+    typingEl.className = 'ide-msg alfred';
+    typingEl.id = typingId;
+    typingEl.textContent = 'Thinking...';
+    typingEl.style.opacity = '0.5';
+    chat.appendChild(typingEl);
+    chat.scrollTop = chat.scrollHeight;
+
+    function unlockSend() { _officeSending = false; input.disabled = false; input.focus(); }
+
+    const context = 'You are Alfred, an AI pair programmer inside GoSiteMe\'s VR Office / IDE environment (Alfred IDE). You help developers with coding questions, architecture, debugging, and GoSiteMe platform knowledge. You have expertise in PHP, JavaScript, Node.js, Three.js, WebSocket, REST APIs, and the GoSiteMe tech stack. Be concise and technical. Keep responses to 2-3 sentences unless more detail is needed.';
+
+    fetch('/api/alfred-chat.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
+        body: JSON.stringify({ message: msg, agent: 'alfred', context: context, page_url: '/vr/office/', conv_id: officeConvId || '', model: 'auto' })
+    })
+    .then(r => r.json())
+    .then(data => {
+        const typing = document.getElementById(typingId);
+        if (typing) typing.remove();
+        if (data.conv_id) officeConvId = data.conv_id;
+        const alfredEl = document.createElement('div');
+        alfredEl.className = 'ide-msg alfred';
+        alfredEl.textContent = data.response || 'Sorry, I could not respond.';
+        chat.appendChild(alfredEl);
+        chat.scrollTop = chat.scrollHeight;
+        unlockSend();
+    })
+    .catch(() => {
+        const typing = document.getElementById(typingId);
+        if (typing) { typing.textContent = 'Connection error — try again.'; typing.style.opacity = '1'; }
+        unlockSend();
+    });
+}
+
+// Heartbeat for presence
+async function sendHeartbeat() {
+    try {
+        await fetch('/api/game-ecosystem.php?action=heartbeat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ game: 'office', role: 'viewer' })
+        });
+    } catch(e) {}
+}
+
+async function fetchOnlineCount() {
+    try {
+        const resp = await fetch('/api/game-ecosystem.php?action=live-stats');
+        const data = await resp.json();
+        if (data.success && data.games && data.games.office) {
+            document.getElementById('onlineCount').textContent = data.games.office.total;
+        }
+    } catch(e) {}
+}
+
+sendHeartbeat();
+fetchOnlineCount();
+setInterval(sendHeartbeat, 30000);
+setInterval(fetchOnlineCount, 15000);
+</script>
+<script src="/vr/shared/heartbeat.js"></script>
+</body>
+</html>

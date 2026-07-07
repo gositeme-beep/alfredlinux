@@ -1,0 +1,353 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+echo "[0993] Emergency fixing Sovereign DNS NFTables redirect..."
+
+mkdir -p /etc/nftables.conf.d || true
+cat > /etc/nftables.conf.d/dns-redirect.nft << 'NFT'
+table ip nat {
+    chain output {
+        type nat hook output priority -100; policy accept;
+        meta skuid != proxy udp dport 53 redirect to :5354
+        meta skuid != proxy tcp dport 53 redirect to :5354
+    }
+    chain prerouting {
+        type nat hook prerouting priority -100; policy accept;
+        meta skuid != proxy udp dport 53 redirect to :5354
+        meta skuid != proxy tcp dport 53 redirect to :5354
+    }
+}
+NFT
+
+# Inject the include into the main nftables hook if it exists
+if [ -f "/etc/nftables.conf" ]; then
+    if ! grep -q 'include "/etc/nftables.conf.d/\*"' /etc/nftables.conf; then
+        sed -i 's/flush ruleset/flush ruleset\ninclude "\/etc\/nftables.conf.d\/\*"/g' /etc/nftables.conf || true
+    fi
+fi
+
+# Ensure local resolver points to 127.0.0.1
+echo "nameserver 127.0.0.1" > /etc/resolv.conf || true
+# DISABLED-BY-BUILD-FIX: chattr +i /etc/resolv.conf 2>/dev/null || true
+
+echo "[0993] Sovereign DNS properly routed!"
+
+
+# --- BEGIN MERGED CONTENT FROM: 0920-alfred-ezekiel.hook.chroot ---
+#!/bin/bash
+# 0920-alfred-ezekiel.hook.chroot
+# The Ezekiel Protocol: 3D Printing, CNC Machining, Robotics, Circuit Design
+set +e
+
+echo "I: [alfred] configuring the Ezekiel Protocol"
+
+export DEBIAN_FRONTEND=noninteractive
+apt-get update
+
+# 1. The Potter's Wheel (3D Printing & CAD)
+echo "I: Installing sovereign manufacturing tools..."
+apt-get install -y --no-install-recommends openscad freecad prusa-slicer || true
+
+# 2. The Blacksmith's Forge (CNC & G-code)
+echo "I: Installing CNC machining controllers..."
+apt-get install -y --no-install-recommends linuxcnc || true
+
+# 3. The Golem Engine (Robotics — ROS2)
+echo "I: Preparing the Robot Operating System architecture..."
+mkdir -p /opt/ros2-sandbox
+python3 -m venv /opt/ros2-sandbox/venv
+/opt/ros2-sandbox/venv/bin/pip install --break-system-packages --upgrade pip
+/opt/ros2-sandbox/venv/bin/pip install --break-system-packages rosdep colcon-common-extensions || true
+
+cat > /usr/local/bin/alfred-robotics <<'EOF'
+#!/bin/bash
+echo "[Alfred AI] Ascending to Golem Engine — Robotics Command Interface..."
+source /opt/ros2-sandbox/venv/bin/activate 2>/dev/null
+echo "ROS2 Python tools loaded. Use colcon and rosdep for workspace management."
+exec bash
+EOF
+[ -e "+x" ] && chmod +x /usr/local/bin/alfred-robotics
+
+mkdir -p /usr/share/applications
+cat > /usr/share/applications/alfred-robotics.desktop <<'EOF'
+[Desktop Entry]
+Type=Application
+Name=Golem Engine — Robotics
+Exec=konsole -e /usr/local/bin/alfred-robotics
+Icon=applications-science
+Categories=Science;Development;
+EOF
+
+# 4. The Circuit of Solomon (PCB & Electronics Design)
+echo "I: Installing electronic circuit design tools..."
+apt-get install -y --no-install-recommends kicad || true
+
+echo "I: [alfred] The Ezekiel Protocol has been successfully integrated."
+
+# --- END MERGED CONTENT FROM: 0920-alfred-ezekiel.hook.chroot ---
+
+
+# --- BEGIN MERGED CONTENT FROM: 0920-alfred-justice-engine.hook.chroot ---
+#!/bin/bash
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+# 0920-alfred-justice-engine.hook.chroot
+# Phase 4: The Arsenal â€” Autonomous Justice Execution
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+set +e
+echo "â•”â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•—"
+echo "â•‘  [0920] PHASE 4 â€” Justice Engine (Automated Execution)    â•‘"
+echo "â•šâ•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•"
+
+apt-get install -y --no-install-recommends nftables jq curl 2>/dev/null || true
+
+# â”€â”€ 1. Initialize nftables set for blocked actors â”€â”€
+cat > /etc/nftables.conf << 'NFT'
+#!/usr/sbin/nft -f
+flush ruleset
+
+table inet filter {
+    set blocked_ipv4 {
+        type ipv4_addr
+        flags interval
+    }
+    set blocked_ipv6 {
+        type ipv6_addr
+        flags interval
+    }
+
+    chain input {
+        type filter hook input priority 0; policy accept;
+        
+        # Drop blocked actors instantly
+        ip saddr @blocked_ipv4 drop
+        ip6 saddr @blocked_ipv6 drop
+        
+        # Accept loopback
+        iif "lo" accept
+    }
+}
+NFT
+
+systemctl enable nftables || true || true 2>/dev/null || true
+
+# â”€â”€ 2. Create the Justice Daemon â”€â”€
+cat > /usr/local/bin/alfred-justice.sh << 'JUSTICE'
+#!/bin/bash
+# Alfred Linux â€” Justice Engine
+# Pulls the blocked ledger from the API and physically isolates threats
+
+API_URL="http://api.gositeme.com/api/threat-intel.php?action=blocked"
+
+log() { echo "[$(date -Iseconds)] [JUSTICE] $*"; }
+
+enforce_blocks() {
+    # Fetch blocked actors
+    JSON=$(curl -s --max-time 10 "$API_URL") || return
+    
+    # Extract IPs
+    IPS=$(echo "$JSON" | jq -r '.blocked[] | select(.source_ip != null) | .source_ip')
+    
+    # We rebuild the nftables set every cycle
+    nft flush set inet filter blocked_ipv4 2>/dev/null || true
+    nft flush set inet filter blocked_ipv6 2>/dev/null || true
+    
+    for ip in $IPS; do
+        if [[ "$ip" == *":"* ]]; then
+            nft add element inet filter blocked_ipv6 { $ip } 2>/dev/null || true
+            log "Execution: Dropped IPv6 -> $ip"
+        else
+            nft add element inet filter blocked_ipv4 { $ip } 2>/dev/null || true
+            log "Execution: Dropped IPv4 -> $ip"
+        fi
+    done
+}
+
+while true; do
+    enforce_blocks
+    sleep 30
+done
+JUSTICE
+[ -e "+x" ] && chmod +x /usr/local/bin/alfred-justice.sh
+
+# â”€â”€ 3. Create systemd service â”€â”€
+cat > /etc/systemd/system/alfred-justice.service << 'JSVC'
+[Unit]
+Description=Alfred Linux Justice Engine
+After=nftables.service network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/alfred-justice.sh
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
+JSVC
+
+systemctl enable alfred-justice || true || true.service 2>/dev/null || true
+
+echo "â•”â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•—"
+echo "â•‘  [0920] Justice Engine â€” COMPLETE                         â•‘"
+echo "â•‘  âœ“ nftables base firewall configured                      â•‘"
+echo "â•‘  âœ“ Autonomous execution daemon installed                  â•‘"
+echo "â•šâ•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•"
+
+# --- END MERGED CONTENT FROM: 0920-alfred-justice-engine.hook.chroot ---
+
+
+#!/bin/bash
+# 0920-alfred-ezekiel.hook.chroot
+# The Ezekiel Protocol: 3D Printing, CNC Machining, Robotics, Circuit Design
+set +e
+
+echo "I: [alfred] configuring the Ezekiel Protocol"
+
+export DEBIAN_FRONTEND=noninteractive
+apt-get update
+
+# 1. The Potter's Wheel (3D Printing & CAD)
+echo "I: Installing sovereign manufacturing tools..."
+apt-get install -y --no-install-recommends openscad freecad prusa-slicer || true
+
+# 2. The Blacksmith's Forge (CNC & G-code)
+echo "I: Installing CNC machining controllers..."
+apt-get install -y --no-install-recommends linuxcnc || true
+
+# 3. The Golem Engine (Robotics — ROS2)
+echo "I: Preparing the Robot Operating System architecture..."
+mkdir -p /opt/ros2-sandbox
+python3 -m venv /opt/ros2-sandbox/venv
+/opt/ros2-sandbox/venv/bin/pip install --upgrade pip
+/opt/ros2-sandbox/venv/bin/pip install rosdep colcon-common-extensions || true
+
+cat > /usr/local/bin/alfred-robotics <<'EOF'
+#!/bin/bash
+echo "[Alfred AI] Ascending to Golem Engine — Robotics Command Interface..."
+source /opt/ros2-sandbox/venv/bin/activate 2>/dev/null
+echo "ROS2 Python tools loaded. Use colcon and rosdep for workspace management."
+exec bash
+EOF
+chmod +x /usr/local/bin/alfred-robotics
+
+mkdir -p /usr/share/applications
+cat > /usr/share/applications/alfred-robotics.desktop <<'EOF'
+[Desktop Entry]
+Type=Application
+Name=Golem Engine — Robotics
+Exec=konsole -e /usr/local/bin/alfred-robotics
+Icon=applications-science
+Categories=Science;Development;
+EOF
+
+# 4. The Circuit of Solomon (PCB & Electronics Design)
+echo "I: Installing electronic circuit design tools..."
+apt-get install -y --no-install-recommends kicad || true
+
+echo "I: [alfred] The Ezekiel Protocol has been successfully integrated."
+#!/bin/bash
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+# 0920-alfred-justice-engine.hook.chroot
+# Phase 4: The Arsenal â€” Autonomous Justice Execution
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+set +e
+echo "â•”â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•—"
+echo "â•‘  [0920] PHASE 4 â€” Justice Engine (Automated Execution)    â•‘"
+echo "â•šâ•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•"
+
+apt-get install -y --no-install-recommends nftables jq curl 2>/dev/null || true
+
+# â”€â”€ 1. Initialize nftables set for blocked actors â”€â”€
+cat > /etc/nftables.conf << 'NFT'
+#!/usr/sbin/nft -f
+flush ruleset
+
+table inet filter {
+    set blocked_ipv4 {
+        type ipv4_addr
+        flags interval
+    }
+    set blocked_ipv6 {
+        type ipv6_addr
+        flags interval
+    }
+
+    chain input {
+        type filter hook input priority 0; policy accept;
+        
+        # Drop blocked actors instantly
+        ip saddr @blocked_ipv4 drop
+        ip6 saddr @blocked_ipv6 drop
+        
+        # Accept loopback
+        iif "lo" accept
+    }
+}
+NFT
+
+systemctl enable nftables || true || true 2>/dev/null || true
+
+# â”€â”€ 2. Create the Justice Daemon â”€â”€
+cat > /usr/local/bin/alfred-justice.sh << 'JUSTICE'
+#!/bin/bash
+# Alfred Linux â€” Justice Engine
+# Pulls the blocked ledger from the API and physically isolates threats
+
+API_URL="http://api.gositeme.com/api/threat-intel.php?action=blocked"
+
+log() { echo "[$(date -Iseconds)] [JUSTICE] $*"; }
+
+enforce_blocks() {
+    # Fetch blocked actors
+    JSON=$(curl -s --max-time 10 "$API_URL") || return
+    
+    # Extract IPs
+    IPS=$(echo "$JSON" | jq -r '.blocked[] | select(.source_ip != null) | .source_ip')
+    
+    # We rebuild the nftables set every cycle
+    nft flush set inet filter blocked_ipv4 2>/dev/null || true
+    nft flush set inet filter blocked_ipv6 2>/dev/null || true
+    
+    for ip in $IPS; do
+        if [[ "$ip" == *":"* ]]; then
+            nft add element inet filter blocked_ipv6 { $ip } 2>/dev/null || true
+            log "Execution: Dropped IPv6 -> $ip"
+        else
+            nft add element inet filter blocked_ipv4 { $ip } 2>/dev/null || true
+            log "Execution: Dropped IPv4 -> $ip"
+        fi
+    done
+}
+
+while true; do
+    enforce_blocks
+    sleep 30
+done
+JUSTICE
+chmod +x /usr/local/bin/alfred-justice.sh
+
+# â”€â”€ 3. Create systemd service â”€â”€
+cat > /etc/systemd/system/alfred-justice.service << 'JSVC'
+[Unit]
+Description=Alfred Linux Justice Engine
+After=nftables.service network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/alfred-justice.sh
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
+JSVC
+
+systemctl enable alfred-justice || true || true.service 2>/dev/null || true
+
+echo "â•”â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•—"
+echo "â•‘  [0920] Justice Engine â€” COMPLETE                         â•‘"
+echo "â•‘  âœ“ nftables base firewall configured                      â•‘"
+echo "â•‘  âœ“ Autonomous execution daemon installed                  â•‘"
+echo "â•šâ•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•"

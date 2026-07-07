@@ -1,0 +1,76 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# ═══════════════════════════════════════════════════════════════
+# 0990-alfred-genesis-autostart.hook.chroot
+# Phase 8: The Genesis Sequence (First-Boot Initialization)
+# ═══════════════════════════════════════════════════════════════
+set +e
+echo "╔═══════════════════════════════════════════════════════════╗"
+echo "║  [0990] PHASE 8 — The Genesis Sequence                    ║"
+echo "╚═══════════════════════════════════════════════════════════╝"
+
+mkdir -p /opt/alfred-genesis || true
+
+# Install local python web server script
+cat > /opt/alfred-genesis/server.py << 'EOF'
+#!/usr/bin/env python3
+from http.server import HTTPServer, BaseHTTPRequestHandler
+import os, subprocess, sys
+
+class GenesisHandler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        if self.path == '/finish':
+            self.send_response(200)
+            self.send_header('Access-Control-Allow-Origin', '*')
+            self.end_headers()
+            self.wfile.write(b"OK")
+            # Self-destruct the autostart file so it never runs again
+            os.system("rm -f /etc/xdg/autostart/alfred-genesis.desktop")
+            os.system("rm -f /home/*/ .config/autostart/alfred-genesis.desktop")
+            # Kill chromium
+            os.system("pkill -9 chromium")
+            sys.exit(0)
+        else:
+            self.send_response(404)
+            self.end_headers()
+
+if __name__ == '__main__':
+    # Run once, handle one request, then exit
+    httpd = HTTPServer(('127.0.0.1', 44044), GenesisHandler)
+    httpd.handle_request()
+EOF
+[ -e "+x" ] && chmod +x /opt/alfred-genesis/server.py || true
+
+# Create the startup script
+cat > /opt/alfred-genesis/launch.sh << 'EOF'
+#!/bin/bash
+# Wait for KDE to settle
+sleep 5
+# Start the local python endpoint in background
+/opt/alfred-genesis/server.py &
+# Launch chromium in full-screen kiosk mode
+chromium --kiosk --incognito --no-first-run --window-position=0,0 --user-data-dir=/tmp/genesis-chrome "file:///opt/alfred-genesis/index.html"
+EOF
+[ -e "+x" ] && chmod +x /opt/alfred-genesis/launch.sh || true
+
+# Install the autostart desktop file for KDE (system-wide XDG)
+mkdir -p /etc/xdg/autostart || true
+cat > /etc/xdg/autostart/alfred-genesis.desktop << 'EOF'
+[Desktop Entry]
+Type=Application
+Exec=/opt/alfred-genesis/launch.sh
+Hidden=false
+NoDisplay=false
+X-GNOME-Autostart-enabled=true
+Name[en_US]=Alfred Genesis Sequence
+Name=Alfred Genesis Sequence
+Comment=Initializes the node on first boot
+EOF
+
+echo "╔═══════════════════════════════════════════════════════════╗"
+echo "║  [0990] The Genesis Sequence — COMPLETE                   ║"
+echo "╚═══════════════════════════════════════════════════════════╝"
+
+exit 0

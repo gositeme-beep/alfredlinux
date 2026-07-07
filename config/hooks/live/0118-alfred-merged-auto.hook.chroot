@@ -1,0 +1,196 @@
+#!/bin/bash
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+echo "[0118] Baking GoHostMe Native Server Stack & Sovereign Billing Portal..."
+
+PHP_SOCK_PATH=$(find /run/php -name "php*-fpm.sock" | head -n 1)
+if [ -z "$PHP_SOCK_PATH" ]; then
+    PHP_SOCK_PATH="/run/php/php-fpm.sock"
+fi
+
+mkdir -p /etc/nginx/sites-available /etc/nginx/sites-enabled || true
+cat > /etc/nginx/sites-available/gohostme-panel << NGINX
+server {
+    listen 2222;
+    listen 2223 ssl;
+    ssl_certificate /etc/ssl/certs/ssl-cert-snakeoil.pem;
+    ssl_certificate_key /etc/ssl/private/ssl-cert-snakeoil.key;
+    server_name localhost;
+
+    root /var/www;
+    index dashboard.php index.php landing.php;
+
+    location / {
+        try_files \$uri \$uri/ /dashboard.php?\$query_string;
+    }
+
+    # Sovereign Billing Portal Routing
+    location ^~ /pay {
+        alias /var/www/pay;
+        index index.php dashboard.php;
+        try_files \$uri \$uri/ /pay/index.php?\$query_string;
+        
+        location ~ \.php$ {
+            include snippets/fastcgi-php.conf;
+            fastcgi_param SCRIPT_FILENAME \$request_filename;
+            fastcgi_pass unix:\$PHP_SOCK_PATH;
+        }
+    }
+
+    location ~ \.php$ {
+        include snippets/fastcgi-php.conf;
+        fastcgi_pass unix:\$PHP_SOCK_PATH;
+    }
+}
+NGINX
+
+ln -s /etc/nginx/sites-available/gohostme-panel /etc/nginx/sites-enabled/gohostme-panel 2>/dev/null || true
+rm -f /etc/nginx/sites-enabled/default || true
+
+# Set permissions
+chown -R www-data:www-data /var/www || true
+chmod -R 755 /var/www || true
+
+# Start services
+systemctl enable mariadb || true || true 2>/dev/null || true
+systemctl enable nginx || true || true 2>/dev/null || true
+systemctl enable redis-server || true || true 2>/dev/null || true
+for svc in /lib/systemd/system/php*-fpm.service; do
+    systemctl enable  || true || true$(basename $svc) 2>/dev/null || true
+done
+
+echo "[0118] GoHostMe Server Stack configured."
+
+
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+# [Genesis Forge] Granular Kernel Matrix: net.ipv4.conf.all.accept_redirects=0
+# Extremely deep low-level kernel protection.
+echo "[Genesis Forge] Applying granular sysctl: net.ipv4.conf.all.accept_redirects=0"
+echo "net.ipv4.conf.all.accept_redirects=0" > /etc/sysctl.d/99-alfred-15.conf || true
+sysctl -w net.ipv4.conf.all.accept_redirects=0 > /dev/null 2>&1 || true
+
+
+# --- BEGIN MERGED CONTENT FROM: 0118-alfred-gohostme-stack.hook.chroot ---
+#!/bin/bash
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+echo "[0118] Baking GoHostMe Native Server Stack & Sovereign Billing Portal..."
+
+PHP_SOCK_PATH=$(find /run/php -name "php*-fpm.sock" | head -n 1)
+if [ -z "$PHP_SOCK_PATH" ]; then
+    PHP_SOCK_PATH="/run/php/php-fpm.sock"
+fi
+
+mkdir -p /etc/nginx/sites-available /etc/nginx/sites-enabled || true
+cat > /etc/nginx/sites-available/gohostme-panel << NGINX
+server {
+    listen 2222;
+    listen 2223 ssl;
+    ssl_certificate /etc/ssl/certs/ssl-cert-snakeoil.pem;
+    ssl_certificate_key /etc/ssl/private/ssl-cert-snakeoil.key;
+    server_name localhost;
+
+    root /var/www;
+    index dashboard.php index.php landing.php;
+
+    location / {
+        try_files \$uri \$uri/ /dashboard.php?\$query_string;
+    }
+
+    # Sovereign Billing Portal Routing
+    location ^~ /pay {
+        alias /var/www/pay;
+        index index.php dashboard.php;
+        try_files \$uri \$uri/ /pay/index.php?\$query_string;
+        
+        location ~ \.php$ {
+            include snippets/fastcgi-php.conf;
+            fastcgi_param SCRIPT_FILENAME \$request_filename;
+            fastcgi_pass unix:\$PHP_SOCK_PATH;
+        }
+    }
+
+    location ~ \.php$ {
+        include snippets/fastcgi-php.conf;
+        fastcgi_pass unix:\$PHP_SOCK_PATH;
+    }
+}
+NGINX
+
+ln -s /etc/nginx/sites-available/gohostme-panel /etc/nginx/sites-enabled/gohostme-panel 2>/dev/null || true
+rm -f /etc/nginx/sites-enabled/default || true
+
+# Set permissions
+chown -R www-data:www-data /var/www || true
+[ -e 755 ] && chmod -R 755 /var/www || true
+
+# Start services
+systemctl enable mariadb || true || true 2>/dev/null || true
+systemctl enable nginx || true || true 2>/dev/null || true
+systemctl enable redis-server || true || true 2>/dev/null || true
+for svc in /lib/systemd/system/php*-fpm.service; do
+    systemctl enable  || true || true$(basename $svc) 2>/dev/null || true
+done
+
+echo "[0118] GoHostMe Server Stack configured."
+
+# --- END MERGED CONTENT FROM: 0118-alfred-gohostme-stack.hook.chroot ---
+
+
+# --- BEGIN MERGED CONTENT FROM: 0118.hook.chroot ---
+#!/bin/bash
+set +e
+echo "================================================="
+echo "==== ALFRED SOVEREIGN FIREWALL (nftables) ======="
+echo "================================================="
+
+export DEBIAN_FRONTEND=noninteractive
+apt-get install -y --no-install-recommends nftables || true
+
+cat > /etc/nftables.conf << 'EOF'
+#!/usr/sbin/nft -f
+flush ruleset
+
+table inet filter {
+    chain input {
+        type filter hook input priority 0; policy drop;
+
+        # Loopback
+        iifname "lo" accept
+
+        # Established & Related
+        ct state established,related accept
+
+        # WireGuard (Mesh)
+        udp dport 51820 accept
+
+        # SSH (Assume protected by WireGuard or local LAN)
+        tcp dport 22 accept
+
+        # Syncthing (Mesh Sync)
+        tcp dport 22000 accept
+        udp dport 22000 accept
+        udp dport 21027 accept
+
+        # Drop invalid
+        ct state invalid drop
+    }
+    chain forward {
+        type filter hook forward priority 0; policy drop;
+    }
+    chain output {
+        type filter hook output priority 0; policy accept;
+    }
+}
+EOF
+
+systemctl enable nftables || true || true
+echo "Sovereign firewall configured (default DROP)."
+
+# --- END MERGED CONTENT FROM: 0118.hook.chroot ---
+
+

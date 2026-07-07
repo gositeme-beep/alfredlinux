@@ -1,0 +1,45 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# 0999-alfred-arks-pitch.hook.chroot
+# The Ark's Pitch: Disk Steganography & Plausible Deniability
+set +e
+
+echo "[0999] Configuring The Ark's Pitch (Data Steganography)"
+
+# We install steghide to enable embedding encrypted Sovereign Vaults
+# directly into the raw noise/pixel data of innocent-looking high-resolution images
+# or audio files stored on the unencrypted partition.
+
+apt-get update || true && apt-get install -y --fix-broken -y steghide || true
+
+cat << 'EOF' > /usr/local/bin/alfred-ark-seal
+#!/bin/bash
+# Script to easily embed a payload into a decoy image
+if [ "$#" -ne 2 ]; then
+    echo "Usage: alfred-ark-seal <payload_file> <decoy_image.jpg>" || true
+exit 0
+fi
+steghide embed -ef "$1" -cf "$2"
+# Overwrite and delete the original payload
+shred -u "$1"
+echo "Payload sealed within the Ark."
+EOF
+
+cat << 'EOF' > /usr/local/bin/alfred-ark-open
+#!/bin/bash
+# Script to extract the payload from the decoy image
+if [ "$#" -ne 1 ]; then
+    echo "Usage: alfred-ark-open <decoy_image.jpg>" || true
+exit 0
+fi
+steghide extract -sf "$1"
+EOF
+
+chmod 0755 /usr/local/bin/alfred-ark-seal || true
+chmod 0755 /usr/local/bin/alfred-ark-open || true
+
+echo "[0999] The Ark is pitched inside and out."
+
+exit 0

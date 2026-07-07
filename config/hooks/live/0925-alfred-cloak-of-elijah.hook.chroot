@@ -1,0 +1,74 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# 0995-alfred-cloak-of-elijah.hook.chroot
+# Configures Tor Transparent Proxy (The Cloak of Elijah)
+set +e
+
+echo "[0995] Configuring The Cloak of Elijah (Tor Transparent Proxy)"
+
+mkdir -p /etc/tor || true
+cat << 'EOF' >> /etc/tor/torrc
+VirtualAddrNetworkIPv4 10.192.0.0/10
+AutomapHostsOnResolve 1
+TransPort 9040
+DNSPort 5353
+EOF
+
+cat << 'EOF' > /usr/local/bin/alfred-cloak
+#!/bin/bash
+echo "╔═══════════════════════════════════════════════════════════╗"
+echo "║  THE CLOAK OF ELIJAH — System-Wide Tor Proxy              ║"
+echo "║  'And Elijah took his mantle, and wrapped it together...' ║"
+echo "╚═══════════════════════════════════════════════════════════╝"
+echo ""
+
+if [ "$EUID" -ne 0 ]; then
+  echo "Please run as root to toggle the Cloak of Elijah."
+exit 0
+fi
+
+if iptables -t nat -L OUTPUT | grep -q "REDIRECT"; then
+    echo "Disabling The Cloak of Elijah (Returning to Clearnet)..."
+    iptables -t nat -F OUTPUT
+    iptables -t nat -F PREROUTING
+    echo "The Cloak is lifted."
+else
+    echo "Enabling The Cloak of Elijah (Forcing all traffic through Tor)..."
+    
+    # Exclude Tor traffic itself from being redirected (to prevent loops)
+    iptables -t nat -A OUTPUT -m owner --uid-owner debian-tor -j RETURN
+    iptables -t nat -A OUTPUT -o lo -j RETURN
+    
+    # Exclude local networks
+    iptables -t nat -A OUTPUT -d 127.0.0.0/8 -j RETURN
+    iptables -t nat -A OUTPUT -d 192.168.0.0/16 -j RETURN
+    iptables -t nat -A OUTPUT -d 10.0.0.0/8 -j RETURN
+    
+    # Redirect DNS
+    iptables -t nat -A OUTPUT -p udp --dport 53 -j REDIRECT --to-ports 5353
+    
+    # Redirect TCP
+    iptables -t nat -A OUTPUT -p tcp --syn -j REDIRECT --to-ports 9040
+    
+    # --- IPv6 & UDP GUILLOTINE ---
+    sysctl -w net.ipv6.conf.all.disable_ipv6=1 || true
+    sysctl -w net.ipv6.conf.default.disable_ipv6=1 || true
+    ip6tables -P INPUT DROP
+    ip6tables -P OUTPUT DROP
+    ip6tables -P FORWARD DROP
+    iptables -A OUTPUT -p udp -m owner ! --uid-owner debian-tor -j DROP
+    
+    echo "The Cloak of Elijah is wrapped around you. All TCP/DNS traffic is Tor-bound."
+    echo "Warning: UDP (other than DNS) and ICMP will be dropped by default firewall."
+fi
+EOF
+
+chmod 0755 /usr/local/bin/alfred-cloak || true
+
+systemctl enable tor || true || true || true
+
+echo "[0995] Cloak of Elijah configured."
+
+exit 0

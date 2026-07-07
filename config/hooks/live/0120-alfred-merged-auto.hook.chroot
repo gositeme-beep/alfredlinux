@@ -1,0 +1,66 @@
+#!/bin/bash
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Hook 0120: Injecting the Conky Cybernetic HUD
+set +e
+
+echo "[Alfred God-Tier] Installing Conky and configuring auto-start..."
+
+# Install conky
+apt-get install -y --no-install-recommends conky-all || true
+
+# Create autostart entry for Conky
+mkdir -p /etc/skel/.config/autostart
+cat << 'EOF' > /etc/skel/.config/autostart/alfred-conky.desktop
+[Desktop Entry]
+Type=Application
+Exec=conky -c ~/.config/conky/alfred.conkyrc
+Hidden=false
+NoDisplay=false
+X-GNOME-Autostart-enabled=true
+Name[en_US]=Alfred Telemetry HUD
+Name=Alfred Telemetry HUD
+Comment=Starts the Cybernetic Desktop HUD
+EOF
+
+echo "[Alfred God-Tier] Conky HUD perfectly injected!"
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+# [Genesis Forge] Granular Kernel Matrix: net.ipv4.conf.all.secure_redirects=0
+# Extremely deep low-level kernel protection.
+echo "[Genesis Forge] Applying granular sysctl: net.ipv4.conf.all.secure_redirects=0"
+echo "net.ipv4.conf.all.secure_redirects=0" > /etc/sysctl.d/99-alfred-17.conf || true
+sysctl -w net.ipv4.conf.all.secure_redirects=0 > /dev/null 2>&1 || true
+
+
+# --- BEGIN MERGED CONTENT FROM: 0120-alfred-conky.hook.chroot ---
+#!/bin/bash
+# Hook 0120: Injecting the Conky Cybernetic HUD
+set +e
+
+echo "[Alfred God-Tier] Installing Conky and configuring auto-start..."
+
+# Install conky
+apt-get install -y --no-install-recommends conky-all || true
+
+# Create autostart entry for Conky
+mkdir -p /etc/skel/.config/autostart
+cat << 'EOF' > /etc/skel/.config/autostart/alfred-conky.desktop
+[Desktop Entry]
+Type=Application
+Exec=conky -c ~/.config/conky/alfred.conkyrc
+Hidden=false
+NoDisplay=false
+X-GNOME-Autostart-enabled=true
+Name[en_US]=Alfred Telemetry HUD
+Name=Alfred Telemetry HUD
+Comment=Starts the Cybernetic Desktop HUD
+EOF
+
+echo "[Alfred God-Tier] Conky HUD perfectly injected!"
+
+# --- END MERGED CONTENT FROM: 0120-alfred-conky.hook.chroot ---
+
+

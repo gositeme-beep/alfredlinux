@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0f0a18"/>
+      <stop offset="100%" style="stop-color:#080510"/>
+    </linearGradient>
+    <linearGradient id="voice" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#f59e0b"/>
+      <stop offset="50%" style="stop-color:#fbbf24"/>
+      <stop offset="100%" style="stop-color:#22d3ee"/>
+    </linearGradient>
+    <linearGradient id="ring" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#f59e0b"/>
+      <stop offset="100%" style="stop-color:#06b6d4"/>
+    </linearGradient>
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="5" result="blur"/>
+      <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="512" height="512" rx="110" fill="url(#bg)"/>
+  <rect x="4" y="4" width="504" height="504" rx="106" fill="none" stroke="url(#ring)" stroke-width="5" opacity="0.7"/>
+
+  <!-- Microphone body -->
+  <rect x="220" y="130" width="72" height="140" rx="36" fill="none" stroke="url(#voice)" stroke-width="10" filter="url(#glow)"/>
+
+  <!-- Microphone cage/grille -->
+  <line x1="225" y1="170" x2="287" y2="170" stroke="url(#voice)" stroke-width="2" opacity="0.3"/>
+  <line x1="225" y1="190" x2="287" y2="190" stroke="url(#voice)" stroke-width="2" opacity="0.3"/>
+  <line x1="225" y1="210" x2="287" y2="210" stroke="url(#voice)" stroke-width="2" opacity="0.3"/>
+  <line x1="225" y1="230" x2="287" y2="230" stroke="url(#voice)" stroke-width="2" opacity="0.3"/>
+
+  <!-- Microphone stand arc -->
+  <path d="M175 260 C175 330 210 370 256 370 C302 370 337 330 337 260"
+    fill="none" stroke="url(#voice)" stroke-width="8" stroke-linecap="round" opacity="0.7" filter="url(#glow)"/>
+
+  <!-- Stand -->
+  <line x1="256" y1="370" x2="256" y2="410" stroke="url(#voice)" stroke-width="8" stroke-linecap="round" opacity="0.7"/>
+  <line x1="210" y1="410" x2="302" y2="410" stroke="url(#voice)" stroke-width="8" stroke-linecap="round" opacity="0.7"/>
+
+  <!-- Sound waves -->
+  <path d="M155 190 C140 210 140 250 155 270" fill="none" stroke="url(#voice)" stroke-width="4" stroke-linecap="round" opacity="0.35"/>
+  <path d="M130 175 C110 205 110 260 130 290" fill="none" stroke="url(#voice)" stroke-width="4" stroke-linecap="round" opacity="0.2"/>
+  <path d="M357 190 C372 210 372 250 357 270" fill="none" stroke="url(#voice)" stroke-width="4" stroke-linecap="round" opacity="0.35"/>
+  <path d="M382 175 C402 205 402 260 382 290" fill="none" stroke="url(#voice)" stroke-width="4" stroke-linecap="round" opacity="0.2"/>
+</svg>

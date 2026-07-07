@@ -1,0 +1,96 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+# [Genesis Forge] AppArmor Isolation: /usr/local/bin/alfred-util-11
+# Creates a granular zero-trust execution envelope for individual binaries.
+echo "[Genesis Forge] Enveloping binary: /usr/local/bin/alfred-util-11"
+mkdir -p /etc/apparmor.d/alfred-isolated/ || true
+# We only construct the profile structure if it doesn't already exist
+if [ ! -f "/etc/apparmor.d/alfred-isolated/profile-24" ]; then
+    cat > /etc/apparmor.d/alfred-isolated/profile-24 << 'EOF'
+profile alfred-sandbox-24 /usr/local/bin/alfred-util-11 flags=(complain) {
+  #include <abstractions/base>
+  /usr/local/bin/alfred-util-11 rmix,
+  /dev/null rw,
+}
+EOF
+fi
+
+
+# --- BEGIN MERGED CONTENT FROM: 0862-alfred-manna.hook.chroot ---
+#!/bin/bash
+# 0862-alfred-manna.hook.chroot
+# Configures IPFS Decentralized Swarm (The Manna Protocol)
+set +e
+
+echo "[0862] Configuring The Manna Protocol (IPFS)"
+
+# IPFS binary is typically called kubo, we will download the binary or use a script to set it up
+cat << 'EOF' > /usr/local/bin/alfred-manna
+#!/bin/bash
+echo "â•”â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•—"
+echo "â•‘  THE MANNA PROTOCOL â€” Decentralized Swarm Distribution    â•‘"
+echo "â•‘  'And when the children of Israel saw it... It is manna'  â•‘"
+echo "â•šâ•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•"
+echo ""
+
+if command -v ipfs &>/dev/null; then
+    ipfs daemon &
+    echo "The Manna Protocol is active. Node connected to the swarm."
+else
+    echo "IPFS is not fully installed yet."
+    echo "Fetching manna from the heavens (installing kubo)..."
+    # We download the kubo binary in real-time if not present in repos
+    wget -qO /tmp/kubo.tar.gz https://dist.ipfs.tech/kubo/v0.41.0/kubo_v0.41.0_linux-amd64.tar.gz || true
+    tar -xf /tmp/kubo.tar.gz -C /tmp/
+    /tmp/kubo/install.sh
+    # DISABLED-v14.14: rm -rf /tmp/kubo*
+    ipfs init
+    echo "Installation complete. Run alfred-manna again to start the daemon."
+fi
+EOF
+
+chmod 0755 /usr/local/bin/alfred-manna
+
+echo "[0862] Manna Protocol configured."
+
+# --- END MERGED CONTENT FROM: 0862-alfred-manna.hook.chroot ---
+
+
+#!/bin/bash
+# 0862-alfred-manna.hook.chroot
+# Configures IPFS Decentralized Swarm (The Manna Protocol)
+set +e
+
+echo "[0862] Configuring The Manna Protocol (IPFS)"
+
+# IPFS binary is typically called kubo, we will download the binary or use a script to set it up
+cat << 'EOF' > /usr/local/bin/alfred-manna
+#!/bin/bash
+echo "â•”â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•—"
+echo "â•‘  THE MANNA PROTOCOL â€” Decentralized Swarm Distribution    â•‘"
+echo "â•‘  'And when the children of Israel saw it... It is manna'  â•‘"
+echo "â•šâ•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•"
+echo ""
+
+if command -v ipfs &>/dev/null; then
+    ipfs daemon &
+    echo "The Manna Protocol is active. Node connected to the swarm."
+else
+    echo "IPFS is not fully installed yet."
+    echo "Fetching manna from the heavens (installing kubo)..."
+    # We download the kubo binary in real-time if not present in repos
+    wget -qO /tmp/kubo.tar.gz https://dist.ipfs.tech/kubo/v0.41.0/kubo_v0.41.0_linux-amd64.tar.gz
+    tar -xf /tmp/kubo.tar.gz -C /tmp/
+    /tmp/kubo/install.sh
+    # DISABLED-v14.14: rm -rf /tmp/kubo*
+    ipfs init
+    echo "Installation complete. Run alfred-manna again to start the daemon."
+fi
+EOF
+
+chmod 0755 /usr/local/bin/alfred-manna
+
+echo "[0862] Manna Protocol configured."

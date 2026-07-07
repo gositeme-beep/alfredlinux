@@ -1,0 +1,44 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+
+echo "[Genesis Forge] Engineering Cgroup Resource Strangulation for 257..."
+
+mkdir -p /etc/apparmor.d/alfred-isolated/ || true
+
+# Strict AppArmor Mode (Enforce)
+cat > /etc/apparmor.d/alfred-isolated/profile-257 << 'EOF'
+profile alfred-sandbox-257 /usr/local/bin/alfred-util-244 flags=(enforce) {
+  #include <abstractions/base>
+  /usr/local/bin/alfred-util-244 rmix,
+  /dev/null rw,
+}
+EOF
+
+# Inject Cgroup Strangulation Wrapper
+cat > /usr/local/bin/alfred-util-244-cgroup-wrapper << 'EOF'
+#!/bin/bash
+# Cgroup Resource Strangulation
+# Limits CPU to 1% and Memory to 10MB to prevent cryptomining and DoS attacks.
+
+CGROUP_DIR="/sys/fs/cgroup/alfred_strangle_244_$$"
+mkdir -p "$CGROUP_DIR" 2>/dev/null || true
+
+if [ -d "$CGROUP_DIR" ]; then
+    # 10MB Memory Limit
+    echo 10485760 > "$CGROUP_DIR/memory.max" 2>/dev/null || true
+    # 1% CPU quota (1000 out of 100000)
+    echo "1000 100000" > "$CGROUP_DIR/cpu.max" 2>/dev/null || true
+    # Add ourselves to the cgroup
+    echo $$ > "$CGROUP_DIR/cgroup.procs" 2>/dev/null || true
+fi
+
+exec /usr/local/bin/alfred-util-244 "$@"
+EOF
+
+[ -e "/usr/local/bin/alfred-util-244-cgroup-wrapper" ] && chmod +x /usr/local/bin/alfred-util-244-cgroup-wrapper || true
+
+echo "[Genesis Forge] Cgroup Resource Strangulation Integrated."
+exit 0

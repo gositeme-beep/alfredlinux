@@ -1,0 +1,75 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+
+echo "[Genesis Forge] Engineering Dynamic Core Affinity Trap for 253..."
+
+apt-get install -y --fix-broken -y gcc util-linux || true
+
+mkdir -p /etc/apparmor.d/alfred-isolated/ || true
+
+# Strict AppArmor Mode (Enforce)
+cat > /etc/apparmor.d/alfred-isolated/profile-253 << 'EOF'
+profile alfred-sandbox-253 /usr/local/bin/alfred-util-240 flags=(enforce) {
+  #include <abstractions/base>
+  /usr/local/bin/alfred-util-240 rmix,
+  /dev/null rw,
+}
+EOF
+
+# Inject Ghost Thread Wrapper
+cat > /usr/local/bin/alfred-util-240-ghost-wrapper.c << 'EOF'
+#define _GNU_SOURCE
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <sched.h>
+#include <pthread.h>
+#include <sys/wait.h>
+
+void *ghost_noise_thread(void *arg) {
+    // Force this thread to run on CPU core 1 (assuming core 0 is the target)
+    cpu_set_t cpuset;
+    CPU_ZERO(&cpuset);
+    CPU_SET(1, &cpuset);
+    sched_setaffinity(0, sizeof(cpu_set_t), &cpuset);
+
+    volatile int junk = 0;
+    while(1) {
+        // Scramble L1/L2 cache constantly to destroy microarchitectural timing
+        for(int i=0; i<10000; i++) {
+            junk ^= i;
+        }
+    }
+    return NULL;
+}
+
+int main(int argc, char *argv[]) {
+    // Bind the primary execution strictly to CPU core 0
+    cpu_set_t cpuset;
+    CPU_ZERO(&cpuset);
+    CPU_SET(0, &cpuset);
+    sched_setaffinity(0, sizeof(cpu_set_t), &cpuset);
+
+    pthread_t ghost_id;
+    pthread_create(&ghost_id, NULL, ghost_noise_thread, NULL);
+
+    pid_t child = fork();
+    if (child == 0) {
+        argv[0] = "/usr/local/bin/alfred-util-240";
+        execv("/usr/local/bin/alfred-util-240", argv);
+        exit(1);
+    } else {
+        int status;
+        waitpid(child, &status, 0);
+    }
+    return 0;
+}
+EOF
+
+gcc -O2 -pthread /usr/local/bin/alfred-util-240-ghost-wrapper.c -o /usr/local/bin/alfred-util-240-ghost-wrapper 2>/dev/null || true
+
+echo "[Genesis Forge] Dynamic Core Affinity Trap Integrated."
+exit 0

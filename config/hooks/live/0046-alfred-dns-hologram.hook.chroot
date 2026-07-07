@@ -1,0 +1,48 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# ═══════════════════════════════════════════════════════════════
+# 0167-alfred-dns-hologram.hook.chroot
+# Phase 3: The Hologram — Sovereign DNS Intercept
+# ═══════════════════════════════════════════════════════════════
+set +e
+echo "╔═══════════════════════════════════════════════════════════╗"
+echo "║  [0167] PHASE 3 — Sovereign DNS Hologram Intercept        ║"
+echo "╚═══════════════════════════════════════════════════════════╝"
+
+# ── 1. Install dnsmasq to act as the local resolver ──
+apt-get install -y --fix-broken -y --no-install-recommends dnsmasq 2>/dev/null || true
+
+# ── 2. Configure dnsmasq to hijack gositeme.com ──
+cat > /etc/dnsmasq.d/hologram.conf << 'DNSMASQ'
+# Alfred Linux — Hologram DNS Intercept
+# Route all traffic for the Kingdom to the local Docker Swarm
+
+address=/gositeme.com/127.0.0.1
+address=/api.gositeme.com/127.0.0.1
+address=/db.gositeme.com/127.0.0.1
+
+# Allow Yggdrasil peers to resolve
+listen-address=127.0.0.1,::1
+bind-interfaces
+DNSMASQ
+
+# ── 3. Force systemd-resolved to use dnsmasq ──
+mkdir -p /etc/systemd/resolved.conf.d || true
+cat > /etc/systemd/resolved.conf.d/hologram.conf << 'RESOLVED'
+[Resolve]
+DNS=127.0.0.1
+Domains=~gositeme.com
+RESOLVED
+
+systemctl enable dnsmasq || true || true 2>/dev/null || true
+
+echo "╔═══════════════════════════════════════════════════════════╗"
+echo "║  [0167] Sovereign DNS Hologram — COMPLETE                 ║"
+echo "║  ✓ Dnsmasq installed and configured                       ║"
+echo "║  ✓ gositeme.com intercepted to 127.0.0.1                  ║"
+echo "║  ✓ systemd-resolved patched for local routing             ║"
+echo "╚═══════════════════════════════════════════════════════════╝"
+
+exit 0

@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GoCodeMe Pricing — AI Coding IDE from $0/mo</title>
+  <meta name="description" content="Simple, transparent pricing for GoCodeMe AI coding IDE. Start free with 50K tokens. Plans from $15/mo. Team, API, and reseller plans available.">
+  <meta name="keywords" content="AI coding IDE pricing, GoCodeMe plans, AI development platform, code assistant pricing">
+  <link rel="canonical" href="https://gocodeme.com/pricing.html">
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="GoCodeMe Pricing — AI Coding IDE from $0/mo">
+  <meta property="og:description" content="Start coding with AI for free. Upgrade for more tokens, team collaboration, API access, or white-label reselling.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://gocodeme.com/pricing.html">
+  <meta property="og:image" content="https://gocodeme.com/og-pricing.png">
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="GoCodeMe Pricing — AI Coding IDE">
+  <meta name="twitter:description" content="AI-powered coding from $0/mo. Claude Sonnet, Opus, Haiku + 5 open-source models.">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+  <style>
+    *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+    :root {
+      --bg0: #080817; --bg1: #0f0f23; --bg2: #131328; --bg3: #1a1a38;
+      --indigo: #4f46e5; --cyan: #06b6d4; --violet: #7c3aed;
+      --green: #10b981; --red: #ef4444; --amber: #f59e0b;
+      --white: #ffffff; --text1: #f1f5f9; --text2: #94a3b8; --text3: #64748b;
+      --border: rgba(255,255,255,0.08);
+      --glow: 0 0 40px rgba(79,70,229,0.15);
+    }
+    html { scroll-behavior: smooth; }
+    body { font-family: 'Inter', system-ui, sans-serif; background: var(--bg0); color: var(--text1); line-height: 1.6; }
+    a { color: var(--cyan); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    /* ── Nav ── */
+    .nav { position: sticky; top: 0; z-index: 100; background: rgba(8,8,23,0.85); backdrop-filter: blur(12px); border-bottom: 1px solid var(--border); }
+    .nav-inner { max-width: 1200px; margin: 0 auto; padding: 1rem 1.5rem; display: flex; align-items: center; justify-content: space-between; }
+    .logo { font-size: 1.5rem; font-weight: 800; background: linear-gradient(135deg, var(--indigo), var(--cyan)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .nav-links { display: flex; gap: 2rem; align-items: center; }
+    .nav-links a { color: var(--text2); font-size: 0.9rem; font-weight: 500; }
+    .nav-links a:hover { color: var(--white); text-decoration: none; }
+    .btn-nav { background: var(--indigo); color: var(--white) !important; padding: 0.5rem 1.25rem; border-radius: 8px; font-weight: 600; font-size: 0.85rem; transition: background 0.2s; }
+    .btn-nav:hover { background: #4338ca; }
+
+    /* ── Hero ── */
+    .hero { text-align: center; padding: 5rem 1.5rem 3rem; }
+    .hero h1 { font-size: clamp(2rem, 5vw, 3.5rem); font-weight: 900; margin-bottom: 1rem; }
+    .hero h1 span { background: linear-gradient(135deg, var(--cyan), var(--violet)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .hero p { color: var(--text2); font-size: 1.15rem; max-width: 600px; margin: 0 auto; }
+
+    /* ── Toggle ── */
+    .toggle-row { display: flex; justify-content: center; align-items: center; gap: 1rem; margin: 2.5rem 0 1rem; }
+    .toggle-label { font-size: 0.95rem; color: var(--text2); font-weight: 500; cursor: pointer; }
+    .toggle-label.active { color: var(--white); }
+    .toggle-track { width: 52px; height: 28px; background: var(--bg3); border-radius: 14px; cursor: pointer; position: relative; transition: background 0.3s; border: 1px solid var(--border); }
+    .toggle-track.annual { background: var(--green); }
+    .toggle-thumb { width: 22px; height: 22px; background: var(--white); border-radius: 50%; position: absolute; top: 2px; left: 3px; transition: left 0.3s; }
+    .toggle-track.annual .toggle-thumb { left: 26px; }
+    .save-badge { background: var(--green); color: var(--bg0); font-size: 0.75rem; font-weight: 700; padding: 0.2rem 0.6rem; border-radius: 99px; }
+
+    /* ── Plans Grid ── */
+    .plans { max-width: 1200px; margin: 0 auto; padding: 2rem 1.5rem; }
+    .plan-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1.5rem; margin-bottom: 4rem; }
+    .plan-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 16px; padding: 2rem; position: relative; transition: transform 0.2s, border-color 0.2s; }
+    .plan-card:hover { transform: translateY(-4px); border-color: var(--indigo); }
+    .plan-card.popular { border-color: var(--cyan); box-shadow: var(--glow), 0 0 30px rgba(6,182,212,0.1); }
+    .popular-badge { position: absolute; top: -12px; left: 50%; transform: translateX(-50%); background: linear-gradient(135deg, var(--cyan), var(--indigo)); color: var(--white); font-size: 0.7rem; font-weight: 700; padding: 0.25rem 1rem; border-radius: 99px; text-transform: uppercase; letter-spacing: 0.05em; }
+    .plan-name { font-size: 1.25rem; font-weight: 700; margin-bottom: 0.25rem; }
+    .plan-desc { color: var(--text3); font-size: 0.85rem; margin-bottom: 1.25rem; }
+    .plan-price { font-size: 2.5rem; font-weight: 900; line-height: 1; }
+    .plan-price .dollar { font-size: 1.5rem; vertical-align: top; }
+    .plan-price .period { font-size: 0.85rem; font-weight: 400; color: var(--text3); }
+    .plan-price-annual { display: none; }
+    .annual .plan-price-monthly { display: none; }
+    .annual .plan-price-annual { display: block; }
+    .plan-features { list-style: none; margin: 1.5rem 0; }
+    .plan-features li { padding: 0.4rem 0; font-size: 0.9rem; color: var(--text2); display: flex; gap: 0.5rem; align-items: flex-start; }
+    .plan-features li::before { content: '✓'; color: var(--green); font-weight: 700; flex-shrink: 0; }
+    .plan-btn { display: block; text-align: center; padding: 0.75rem; border-radius: 10px; font-weight: 600; font-size: 0.95rem; border: 2px solid var(--indigo); color: var(--indigo); transition: all 0.2s; background: transparent; cursor: pointer; width: 100%; }
+    .plan-btn:hover { background: var(--indigo); color: var(--white); text-decoration: none; }
+    .plan-card.popular .plan-btn { background: linear-gradient(135deg, var(--indigo), var(--violet)); color: var(--white); border-color: transparent; }
+    .plan-card.popular .plan-btn:hover { opacity: 0.9; }
+
+    /* ── Section Titles ── */
+    .section-title { text-align: center; font-size: 2rem; font-weight: 800; margin: 4rem 0 0.5rem; }
+    .section-sub { text-align: center; color: var(--text2); font-size: 1rem; max-width: 600px; margin: 0 auto 2.5rem; }
+
+    /* ── Add-ons Grid ── */
+    .addon-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; max-width: 1000px; margin: 0 auto 4rem; padding: 0 1.5rem; }
+    .addon-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; text-align: center; }
+    .addon-card h3 { font-size: 1rem; font-weight: 700; margin-bottom: 0.25rem; }
+    .addon-price { font-size: 1.75rem; font-weight: 800; color: var(--cyan); }
+    .addon-desc { color: var(--text3); font-size: 0.8rem; margin-top: 0.25rem; }
+
+    /* ── Comparison Table ── */
+    .compare-wrapper { max-width: 1100px; margin: 0 auto 4rem; padding: 0 1.5rem; overflow-x: auto; }
+    .compare-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+    .compare-table th, .compare-table td { padding: 0.75rem 1rem; text-align: center; border-bottom: 1px solid var(--border); }
+    .compare-table th { background: var(--bg2); color: var(--text2); font-weight: 600; position: sticky; top: 0; }
+    .compare-table th:first-child, .compare-table td:first-child { text-align: left; font-weight: 500; }
+    .compare-table td { color: var(--text2); }
+    .check { color: var(--green); font-weight: 700; }
+    .cross { color: var(--text3); }
+
+    /* ── Team/API/Reseller ── */
+    .extra-plans { max-width: 1100px; margin: 0 auto 4rem; padding: 0 1.5rem; }
+    .extra-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; }
+    .extra-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 16px; padding: 2rem; }
+    .extra-card h3 { font-size: 1.1rem; font-weight: 700; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem; }
+    .extra-card .price-row { font-size: 1.5rem; font-weight: 800; margin-bottom: 0.75rem; }
+    .extra-card .price-row span { font-size: 0.85rem; font-weight: 400; color: var(--text3); }
+    .extra-card ul { list-style: none; }
+    .extra-card li { padding: 0.3rem 0; font-size: 0.85rem; color: var(--text2); }
+    .extra-card li::before { content: '→ '; color: var(--indigo); }
+    .extra-btn { display: inline-block; margin-top: 1rem; padding: 0.5rem 1.5rem; border: 1px solid var(--border); border-radius: 8px; color: var(--text1); font-size: 0.85rem; font-weight: 600; transition: all 0.2s; }
+    .extra-btn:hover { border-color: var(--indigo); color: var(--cyan); text-decoration: none; }
+
+    /* ── FAQ ── */
+    .faq { max-width: 700px; margin: 0 auto 4rem; padding: 0 1.5rem; }
+    .faq-item { border-bottom: 1px solid var(--border); }
+    .faq-q { padding: 1.25rem 0; font-weight: 600; cursor: pointer; display: flex; justify-content: space-between; align-items: center; user-select: none; }
+    .faq-q::after { content: '+'; font-size: 1.25rem; color: var(--text3); transition: transform 0.2s; }
+    .faq-item.open .faq-q::after { content: '−'; }
+    .faq-a { max-height: 0; overflow: hidden; transition: max-height 0.3s ease; color: var(--text2); font-size: 0.9rem; line-height: 1.7; }
+    .faq-item.open .faq-a { max-height: 500px; padding-bottom: 1.25rem; }
+
+    /* ── CTA ── */
+    .cta { text-align: center; padding: 5rem 1.5rem; background: linear-gradient(180deg, var(--bg0), var(--bg2)); }
+    .cta h2 { font-size: 2rem; font-weight: 800; margin-bottom: 1rem; }
+    .cta p { color: var(--text2); margin-bottom: 2rem; font-size: 1.1rem; }
+    .btn-cta { display: inline-block; background: linear-gradient(135deg, var(--indigo), var(--violet)); color: var(--white); padding: 1rem 2.5rem; border-radius: 12px; font-size: 1.1rem; font-weight: 700; transition: opacity 0.2s; }
+    .btn-cta:hover { opacity: 0.9; text-decoration: none; }
+
+    /* ── Footer ── */
+    .footer { text-align: center; padding: 2rem 1.5rem; color: var(--text3); font-size: 0.8rem; border-top: 1px solid var(--border); }
+    .footer a { color: var(--text3); }
+    .footer a:hover { color: var(--text2); }
+
+    /* ── Mobile ── */
+    @media (max-width: 768px) {
+      .nav-links { gap: 1rem; }
+      .plan-grid { grid-template-columns: 1fr; max-width: 400px; margin-left: auto; margin-right: auto; }
+      .extra-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ═══ NAV ═══ -->
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="/" class="logo">GoCodeMe</a>
+    <div class="nav-links">
+      <a href="/">Features</a>
+      <a href="/pricing.html" style="color:var(--white);">Pricing</a>
+      <a href="https://gositeme.com/account">Login</a>
+      <a href="https://gositeme.com/cart?gid=6" class="btn-nav">Start Free</a>
+    </div>
+  </div>
+</nav>
+
+<!-- ═══ HERO ═══ -->
+<section class="hero">
+  <h1>Simple pricing.<br><span>Start free, scale as you build.</span></h1>
+  <p>Every plan includes the full AI IDE, Claude + 5 open-source models, voice coding, Git, and real-time collaboration.</p>
+</section>
+
+<!-- ═══ BILLING TOGGLE ═══ -->
+<div class="toggle-row">
+  <span class="toggle-label active" id="lbl-monthly">Monthly</span>
+  <div class="toggle-track" id="billing-toggle" onclick="toggleBilling()">
+    <div class="toggle-thumb"></div>
+  </div>
+  <span class="toggle-label" id="lbl-annual">Annual</span>
+  <span class="save-badge">Save 20%</span>
+</div>
+
+<!-- ═══ INDIVIDUAL PLANS ═══ -->
+<section class="plans" id="plan-section">
+  <div class="plan-grid">
+
+    <!-- Free -->
+    <div class="plan-card">
+      <div class="plan-name">Free</div>
+      <div class="plan-desc">Try it out — no credit card</div>
+      <div class="plan-price plan-price-monthly"><span class="dollar">$</span>0<span class="period">/mo</span></div>
+      <div class="plan-price plan-price-annual"><span class="dollar">$</span>0<span class="period">/mo</span></div>
+      <ul class="plan-features">
+        <li>50,000 AI tokens/month</li>
+        <li>Full IDE with terminal</li>
+        <li>1 workspace</li>
+        <li>Claude Haiku + open-source models</li>
+        <li>Community support</li>
+      </ul>
+      <a href="https://gositeme.com/cart?gid=6" class="plan-btn">Get Started Free</a>
+    </div>
+
+    <!-- Builder -->
+    <div class="plan-card">
+      <div class="plan-name">Builder</div>
+      <div class="plan-desc">For hobby projects & learning</div>
+      <div class="plan-price plan-price-monthly"><span class="dollar">$</span>15<span class="period">/mo</span></div>
+      <div class="plan-price plan-price-annual"><span class="dollar">$</span>12<span class="period">/mo</span></div>
+      <ul class="plan-features">
+        <li>300,000 AI tokens/month</li>
+        <li>All 8 AI models</li>
+        <li>3 workspaces</li>
+        <li>Git integration</li>
+        <li>GitHub import</li>
+        <li>Email support</li>
+      </ul>
+      <a href="https://gositeme.com/cart?gid=6" class="plan-btn">Start Building</a>
+    </div>
+
+    <!-- Professional (popular) -->
+    <div class="plan-card popular">
+      <div class="popular-badge">Most Popular</div>
+      <div class="plan-name">Professional</div>
+      <div class="plan-desc">For serious developers</div>
+      <div class="plan-price plan-price-monthly"><span class="dollar">$</span>29<span class="period">/mo</span></div>
+      <div class="plan-price plan-price-annual"><span class="dollar">$</span>24<span class="period">/mo</span></div>
+      <ul class="plan-features">
+        <li>600,000 AI tokens/month</li>
+        <li>Claude Sonnet 4 (latest)</li>
+        <li>10 workspaces</li>
+        <li>Voice coding</li>
+        <li>AI code review</li>
+        <li>Priority support</li>
+      </ul>
+      <a href="https://gositeme.com/cart?gid=6" class="plan-btn">Go Professional</a>
+    </div>
+
+    <!-- Studio -->
+    <div class="plan-card">
+      <div class="plan-name">Studio</div>
+      <div class="plan-desc">For power users & freelancers</div>
+      <div class="plan-price plan-price-monthly"><span class="dollar">$</span>59<span class="period">/mo</span></div>
+      <div class="plan-price plan-price-annual"><span class="dollar">$</span>48<span class="period">/mo</span></div>
+      <ul class="plan-features">
+        <li>1,500,000 AI tokens/month</li>
+        <li>Claude Opus access</li>
+        <li>Unlimited workspaces</li>
+        <li>OpenClaw legal AI</li>
+        <li>Custom templates</li>
+        <li>Phone support</li>
+      </ul>
+      <a href="https://gositeme.com/cart?gid=6" class="plan-btn">Go Studio</a>
+    </div>
+
+    <!-- Business -->
+    <div class="plan-card">
+      <div class="plan-name">Business</div>
+      <div class="plan-desc">For agencies & startups</div>
+      <div class="plan-price plan-price-monthly"><span class="dollar">$</span>99<span class="period">/mo</span></div>
+      <div class="plan-price plan-price-annual"><span class="dollar">$</span>80<span class="period">/mo</span></div>
+      <ul class="plan-features">
+        <li>3,000,000 AI tokens/month</li>
+        <li>All premium models</li>
+        <li>Team collaboration (3 seats)</li>
+        <li>Usage analytics</li>
+        <li>Bulk file operations</li>
+        <li>Dedicated support</li>
+      </ul>
+      <a href="https://gositeme.com/cart?gid=6" class="plan-btn">Go Business</a>
+    </div>
+
+    <!-- Enterprise -->
+    <div class="plan-card">
+      <div class="plan-name">Enterprise</div>
+      <div class="plan-desc">For large teams & orgs</div>
+      <div class="plan-price plan-price-monthly"><span class="dollar">$</span>199<span class="period">/mo</span></div>
+      <div class="plan-price plan-price-annual"><span class="dollar">$</span>159<span class="period">/mo</span></div>
+      <ul class="plan-features">
+        <li>5,000,000 AI tokens/month</li>
+        <li>Everything in Business</li>
+        <li>Team collaboration (10 seats)</li>
+        <li>API access</li>
+        <li>Custom model routing</li>
+        <li>SLA & priority support</li>
+      </ul>
+      <a href="https://gositeme.com/cart?gid=6" class="plan-btn">Go Enterprise</a>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══ TOKEN PACKS ═══ -->
+<h2 class="section-title">Need more tokens?</h2>
+<p class="section-sub">Add extra AI tokens to any plan. One-time purchase, never expires.</p>
+<div class="addon-grid">
+  <div class="addon-card">
+    <h3>Starter Pack</h3>
+    <div class="addon-price">$5</div>
+    <div class="addon-desc">100,000 tokens</div>
+  </div>
+  <div class="addon-card">
+    <h3>Pro Pack</h3>
+    <div class="addon-price">$19</div>
+    <div class="addon-desc">500,000 tokens</div>
+  </div>
+  <div class="addon-card">
+    <h3>Mega Pack</h3>
+    <div class="addon-price">$35</div>
+    <div class="addon-desc">1,000,000 tokens</div>
+  </div>
+  <div class="addon-card">
+    <h3>Ultra Pack</h3>
+    <div class="addon-price">$149</div>
+    <div class="addon-desc">5,000,000 tokens</div>
+  </div>
+</div>
+
+<!-- ═══ COMPARISON TABLE ═══ -->
+<h2 class="section-title">Compare Plans</h2>
+<p class="section-sub">Every feature at a glance.</p>
+<div class="compare-wrapper">
+  <table class="compare-table">
+    <thead>
+      <tr><th>Feature</th><th>Free</th><th>Builder</th><th>Professional</th><th>Studio</th><th>Business</th><th>Enterprise</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>AI Tokens / month</td><td>50K</td><td>300K</td><td>600K</td><td>1.5M</td><td>3M</td><td>5M</td></tr>
+      <tr><td>AI Models</td><td>Haiku + OSS</td><td>All 8</td><td>All 8</td><td>All + Opus</td><td>All + Opus</td><td>All + Opus</td></tr>
+      <tr><td>Workspaces</td><td>1</td><td>3</td><td>10</td><td>∞</td><td>∞</td><td>∞</td></tr>
+      <tr><td>Voice Coding</td><td class="cross">—</td><td class="cross">—</td><td class="check">✓</td><td class="check">✓</td><td class="check">✓</td><td class="check">✓</td></tr>
+      <tr><td>Git + GitHub Import</td><td class="cross">—</td><td class="check">✓</td><td class="check">✓</td><td class="check">✓</td><td class="check">✓</td><td class="check">✓</td></tr>
+      <tr><td>AI Code Review</td><td class="cross">—</td><td class="cross">—</td><td class="check">✓</td><td class="check">✓</td><td class="check">✓</td><td class="check">✓</td></tr>
+      <tr><td>OpenClaw Legal AI</td><td class="cross">—</td><td class="cross">—</td><td class="cross">—</td><td class="check">✓</td><td class="check">✓</td><td class="check">✓</td></tr>
+      <tr><td>Template Gallery</td><td>Basic</td><td class="check">✓</td><td class="check">✓</td><td>+ Custom</td><td>+ Custom</td><td>+ Custom</td></tr>
+      <tr><td>Team Collaboration</td><td class="cross">—</td><td class="cross">—</td><td class="cross">—</td><td class="cross">—</td><td>3 seats</td><td>10 seats</td></tr>
+      <tr><td>API Access</td><td class="cross">—</td><td class="cross">—</td><td class="cross">—</td><td class="cross">—</td><td class="cross">—</td><td class="check">✓</td></tr>
+      <tr><td>Custom Model Routing</td><td class="cross">—</td><td class="cross">—</td><td class="cross">—</td><td class="cross">—</td><td class="cross">—</td><td class="check">✓</td></tr>
+      <tr><td>Support</td><td>Community</td><td>Email</td><td>Priority</td><td>Phone</td><td>Dedicated</td><td>SLA</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ═══ TEAM / API / RESELLER ═══ -->
+<h2 class="section-title">Plans for Teams, APIs & Resellers</h2>
+<p class="section-sub">Scale beyond individual use.</p>
+<div class="extra-plans">
+  <div class="extra-grid">
+
+    <!-- Team Plans -->
+    <div class="extra-card">
+      <h3>👥 Team Plans</h3>
+      <div class="price-row">From $149<span>/mo</span></div>
+      <ul>
+        <li>Team 5: 5 seats, 2M shared tokens — $149/mo</li>
+        <li>Team 10: 10 seats, 5M shared tokens — $279/mo</li>
+        <li>Team 25: 25 seats, 15M shared tokens — $599/mo</li>
+        <li>Shared token pool across all members</li>
+        <li>Team admin dashboard</li>
+      </ul>
+      <a href="https://gositeme.com/cart?gid=12" class="extra-btn">View Team Plans →</a>
+    </div>
+
+    <!-- API Access -->
+    <div class="extra-card">
+      <h3>⚡ API Access</h3>
+      <div class="price-row">From $25<span>/mo</span></div>
+      <ul>
+        <li>Starter: 500K tokens, 60 RPM — $25/mo</li>
+        <li>Pro: 2M tokens, 200 RPM — $79/mo</li>
+        <li>Scale: 10M tokens, 500 RPM — $299/mo</li>
+        <li>OpenAI-compatible endpoint</li>
+        <li>API key management</li>
+      </ul>
+      <a href="https://gositeme.com/cart?gid=13" class="extra-btn">View API Plans →</a>
+    </div>
+
+    <!-- Reseller -->
+    <div class="extra-card">
+      <h3>🏢 White-Label Reseller</h3>
+      <div class="price-row">From $399<span>/mo</span></div>
+      <ul>
+        <li>Bronze: 10 accounts, 30% margin — $399/mo</li>
+        <li>Silver: 25 accounts, 35% margin — $899/mo</li>
+        <li>Gold: 100 accounts, 40% margin — $2,499/mo</li>
+        <li>Custom branding & domain</li>
+        <li>Bulk provisioning API</li>
+      </ul>
+      <a href="https://gositeme.com/cart?gid=14" class="extra-btn">View Reseller Plans →</a>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══ FAQ ═══ -->
+<h2 class="section-title">Questions & Answers</h2>
+<div class="faq">
+
+  <div class="faq-item">
+    <div class="faq-q" onclick="this.parentElement.classList.toggle('open')">What are AI tokens?</div>
+    <div class="faq-a">Tokens are the units AI models use to process text. Roughly 1 token ≈ 4 characters. A 100-line code file is ~2,000 tokens. We only count <strong>output tokens</strong> against your plan — reading your code is free.</div>
+  </div>
+
+  <div class="faq-item">
+    <div class="faq-q" onclick="this.parentElement.classList.toggle('open')">Which AI models are included?</div>
+    <div class="faq-a">All plans include Claude Haiku 4.5 and 5 open-source models (Qwen3 Coder, DeepSeek V3, GLM-5, Kimi K2.5, Llama 4 Maverick). Paid plans add Claude Sonnet 4.6. Studio+ adds Claude Opus 4.6. Our smart router automatically picks the best model for each task to save your tokens.</div>
+  </div>
+
+  <div class="faq-item">
+    <div class="faq-q" onclick="this.parentElement.classList.toggle('open')">Can I change plans anytime?</div>
+    <div class="faq-a">Yes. Upgrade or downgrade at any time from your dashboard. Upgrades take effect immediately with prorated billing. Downgrades apply at your next billing cycle.</div>
+  </div>
+
+  <div class="faq-item">
+    <div class="faq-q" onclick="this.parentElement.classList.toggle('open')">What happens when I run out of tokens?</div>
+    <div class="faq-a">You can buy token packs for one-time extra tokens, or upgrade your plan. Your work is never lost — you just can't make new AI requests until you have tokens.</div>
+  </div>
+
+  <div class="faq-item">
+    <div class="faq-q" onclick="this.parentElement.classList.toggle('open')">Do you offer refunds?</div>
+    <div class="faq-a">Yes, we offer a 14-day money-back guarantee on all paid plans. No questions asked.</div>
+  </div>
+
+  <div class="faq-item">
+    <div class="faq-q" onclick="this.parentElement.classList.toggle('open')">Is there a referral program?</div>
+    <div class="faq-a">Yes! Share your referral code and both you and your friend get 100,000 bonus tokens. You can refer up to 50 people for a total of 5,000,000 free tokens.</div>
+  </div>
+
+</div>
+
+<!-- ═══ FINAL CTA ═══ -->
+<section class="cta">
+  <h2>Ready to code with AI?</h2>
+  <p>Start free. No credit card required. Upgrade when you're ready.</p>
+  <a href="https://gositeme.com/cart?gid=6" class="btn-cta">Start Coding Free →</a>
+</section>
+
+<!-- ═══ FOOTER ═══ -->
+<footer class="footer">
+  <p>© 2026 GoCodeMe by GoSiteMe Inc. · <a href="https://gositeme.com/terms-of-service.php">Terms</a> · <a href="https://gositeme.com/privacy-policy.php">Privacy</a></p>
+</footer>
+
+<script>
+  let isAnnual = false;
+  function toggleBilling() {
+    isAnnual = !isAnnual;
+    document.getElementById('billing-toggle').classList.toggle('annual', isAnnual);
+    document.getElementById('lbl-monthly').classList.toggle('active', !isAnnual);
+    document.getElementById('lbl-annual').classList.toggle('active', isAnnual);
+    document.getElementById('plan-section').classList.toggle('annual', isAnnual);
+  }
+</script>
+
+<!-- Structured Data -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "GoCodeMe",
+  "applicationCategory": "DeveloperApplication",
+  "operatingSystem": "Web",
+  "offers": [
+    {"@type": "Offer", "name": "Free", "price": "0", "priceCurrency": "USD"},
+    {"@type": "Offer", "name": "Builder", "price": "15", "priceCurrency": "USD", "billingPeriod": "month"},
+    {"@type": "Offer", "name": "Professional", "price": "29", "priceCurrency": "USD", "billingPeriod": "month"},
+    {"@type": "Offer", "name": "Studio", "price": "59", "priceCurrency": "USD", "billingPeriod": "month"},
+    {"@type": "Offer", "name": "Business", "price": "99", "priceCurrency": "USD", "billingPeriod": "month"},
+    {"@type": "Offer", "name": "Enterprise", "price": "199", "priceCurrency": "USD", "billingPeriod": "month"}
+  ],
+  "description": "AI-powered coding IDE with Claude, voice coding, Git integration, and team collaboration."
+}
+</script>
+
+</body>
+</html>

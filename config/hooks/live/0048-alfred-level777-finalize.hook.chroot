@@ -1,0 +1,86 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+# 0168-alfred-level777-finalize.hook.chroot
+# Wires up assets shipped via config/includes.chroot:
+#   - /etc/update-motd.d/50-kingdom-bread (MOTD)
+#   - /usr/local/bin/alfred-welcome      (welcome script)
+#   - /usr/share/alfred/welcome/welcome.xml
+#   - /usr/share/alfred/quantum/policy.xml + audit.sh + enforcer.sh
+#   - /usr/share/alfred/bios/level-777-bios.sh (reference)
+# Idempotent. Non-fatal warnings only. Real package install handled by
+# config/package-lists/level-999-boot-extras.list.chroot.
+
+
+LOG=/var/log/alfred-build-phases.log
+mkdir -p /var/log /var/lib/alfred/phases || true
+TS="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+echo "[${TS}] HOOK=0168-alfred-level777-finalize START" >> "$LOG" || true
+
+ok=1
+warn() { echo "[${TS}] WARN 0168 $*" >> "$LOG"; ok=0; }
+
+# 1. MOTD: ensure permissions and disable conflicting Debian motds.
+if [ -f /etc/update-motd.d/50-kingdom-bread ]; then
+chmod 0755 /etc/update-motd.d/50-kingdom-bread || true
+    # Tame default verbose motds so kingdom-bread is the show.
+    for f in /etc/update-motd.d/10-uname /etc/update-motd.d/10-help-text \
+             /etc/update-motd.d/50-motd-news /etc/update-motd.d/80-livepatch \
+             /etc/update-motd.d/91-release-upgrade /etc/update-motd.d/95-hwe-eol; do
+        [ -f "$f" ] && chmod -x "$f" 2>/dev/null || true
+    done
+else
+    warn "MOTD 50-kingdom-bread missing"
+fi
+
+# 2. Welcome runtime
+if [ -x /usr/local/bin/alfred-welcome ] && [ -r /usr/share/alfred/welcome/welcome.xml ]; then
+    # Auto-launch on first interactive shell (idempotent).
+    PROFILE=/etc/profile.d/zz-alfred-welcome.sh
+    if [ ! -f "$PROFILE" ]; then
+        cat > "$PROFILE" <<'PEOF'
+# Alfred Welcome of All Welcomes — runs once per user per machine.
+if [ -n "$PS1" ] && [ -t 0 ] && [ -z "${ALFRED_WELCOME_SHOWN:-}" ]; then
+    STAMP="$HOME/.config/alfred/welcome-shown"
+    if [ ! -f "$STAMP" ]; then
+        mkdir -p "$(dirname "$STAMP")" || true
+        touch "$STAMP"
+        export ALFRED_WELCOME_SHOWN=1
+        /usr/local/bin/alfred-welcome 2>/dev/null || true
+    fi
+fi
+PEOF
+[ -e "$PROFILE" ] && chmod 0644 "$PROFILE" || true
+    fi
+else
+    warn "alfred-welcome or welcome.xml missing"
+fi
+
+# 3. Quantum policy file present + readable
+[ -r /usr/share/alfred/quantum/policy.xml ] || warn "quantum policy.xml missing"
+[ -x /usr/share/alfred/quantum/audit.sh ]   || warn "quantum audit.sh missing/not exec"
+
+# 4. Level-777 BIOS reference present (ships with ISO as documentation)
+[ -r /usr/share/alfred/bios/level-777-bios.sh ] || warn "level-777-bios.sh reference missing"
+
+# 5. Phase stamp
+touch /var/lib/alfred/phases/168-level777-finalize.done
+[ "$ok" = 1 ] && echo "[${TS}] HOOK=0168-alfred-level777-finalize OK"   >> "$LOG" \
+              || echo "[${TS}] HOOK=0168-alfred-level777-finalize WARN" >> "$LOG"
+exit 0
+
+
+# GOD_MODE_PS1
+cat >> /etc/skel/.bashrc << 'PS1EOF'
+
+# Alfred God-Mode Prompt
+parse_git_branch() {
+     git branch 2> /dev/null | sed -e '/^[^*]/d' -e 's/* \(.*\)/ [\1]/'
+}
+get_cpu_temp() {
+     sensors 2>/dev/null | awk '/Core 0/ {print $3}' | tr -d '+' || echo ""
+}
+PS1='\[\033[01;32m\]\u@\h\[\033[00m\] \[\033[01;31m\]$(get_cpu_temp)\[\033[00m\]:\[\033[01;34m\]\w\[\033[00m\]\[\033[01;33m\]$(parse_git_branch)\[\033[00m\] \$ '
+PS1EOF

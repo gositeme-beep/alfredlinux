@@ -1,0 +1,85 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# 0800-alfred-omnipresence.hook.chroot
+# The Omni-Presence Architecture: Flicker-Free Boot, Biometrics, Spatial OS
+set +e
+
+echo "I: [alfred] configuring omni-presence architecture"
+
+export DEBIAN_FRONTEND=noninteractive
+apt-get update || true || true
+# Install biometrics (YubiKey U2F, Fingerprint) and 3D Visualizer (Gource)
+apt-get install -y --fix-broken -y --no-install-recommends libpam-u2f fprintd gource || true
+
+# 1. Seamless Cinematic Boot Sequence (Zero Flicker)
+if [ -f /etc/default/grub ]; then
+    # Keep the EFI framebuffer during boot to prevent black screen flashing
+    echo "GRUB_GFXPAYLOAD_LINUX=keep" >> /etc/default/grub
+    # Inject vt.handoff=7 to prevent the VT console from flashing text before Plymouth starts
+    sed -i 's/GRUB_CMDLINE_LINUX_DEFAULT="\(.*\)"/GRUB_CMDLINE_LINUX_DEFAULT="\1 splash vt.handoff=7"/g' /etc/default/grub || true
+    # Run update-grub if possible
+    update-grub
+fi
+
+# 2. Biometric "God-Seal" Authentication (PAM Injection)
+if [ -f /etc/pam.d/sddm ]; then
+    # Insert YubiKey (U2F) and Facial/Fingerprint (fprintd/howdy) as sufficient authentication factors above the standard password prompt
+    sed -i '1i auth sufficient pam_u2f.so cue\nauth sufficient pam_fprintd.so\n' /etc/pam.d/sddm
+fi
+
+if [ -f /etc/pam.d/sudo ]; then
+    sed -i '1i auth sufficient pam_u2f.so cue\nauth sufficient pam_fprintd.so\n' /etc/pam.d/sudo
+fi
+
+# 3. The Hyper-Dimensional 3D File System (Spatial OS)
+mkdir -p /usr/local/bin
+cat > /usr/local/bin/alfred-spatial-os <<'EOF'
+#!/bin/bash
+# Generates a real-time 3D cityscape of the user's home directory
+# Gource will render folders as nodes and files as glowing points of light.
+gource \
+    --fullscreen \
+    --title "Alfred Linux - Hyper-Dimensional File System" \
+    --camera-mode overview \
+    --bloom-multiplier 2.0 \
+    --bloom-intensity 1.2 \
+    --key \
+    --transparent \
+    --background-colour 000000 \
+    "$HOME"
+EOF
+[ -e "/usr/local/bin/alfred-spatial-os" ] && chmod +x /usr/local/bin/alfred-spatial-os
+
+# Bind Super+F to launch the Spatial OS in KDE Plasma
+mkdir -p /etc/xdg
+if [ -f /etc/xdg/kglobalshortcutsrc ]; then
+    # If the file exists, append our shortcut
+    cat >> /etc/xdg/kglobalshortcutsrc <<'EOF'
+
+[alfred-spatial.desktop]
+_launch=Meta+F,Meta+F,Spatial File System
+EOF
+else
+    # Create the file if it doesn't exist
+    cat > /etc/xdg/kglobalshortcutsrc <<'EOF'
+[alfred-spatial.desktop]
+_launch=Meta+F,Meta+F,Spatial File System
+EOF
+fi
+
+# Create the desktop entry so KDE can map the shortcut
+mkdir -p /usr/share/applications
+cat > /usr/share/applications/alfred-spatial.desktop <<'EOF'
+[Desktop Entry]
+Type=Application
+Name=Spatial File System
+Exec=/usr/local/bin/alfred-spatial-os
+Terminal=false
+Categories=System;Utility;
+EOF
+
+echo "I: [alfred] Omni-Presence architecture successfully forged."
+
+exit 0

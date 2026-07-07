@@ -1,0 +1,49 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+
+echo "[Genesis Forge] Engineering Systemd Iron Maiden for 309..."
+
+mkdir -p /etc/apparmor.d/alfred-isolated/ || true
+
+# AppArmor Enforce mode
+cat > /etc/apparmor.d/alfred-isolated/profile-309 << 'EOF'
+profile alfred-sandbox-309 /usr/local/bin/alfred-util-296 flags=(enforce) {
+  #include <abstractions/base>
+  /usr/local/bin/alfred-util-296 rmix,
+  /dev/null rw,
+}
+EOF
+
+# Inject the Systemd Iron Maiden
+cat > /etc/systemd/system/alfred-util-296.service << 'EOF'
+[Unit]
+Description=Alfred Iron Maiden Sandbox for util 296
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/alfred-util-296
+
+# The Iron Maiden Isolations
+ProtectSystem=strict
+ProtectHome=yes
+PrivateDevices=yes
+PrivateNetwork=yes
+PrivateUsers=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+NoNewPrivileges=yes
+RestrictNamespaces=yes
+RestrictSUIDSGID=yes
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+systemctl daemon-reload 2>/dev/null || true
+
+echo "[Genesis Forge] Systemd Iron Maiden Sandbox Integrated."
+exit 0

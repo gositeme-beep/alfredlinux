@@ -1,0 +1,85 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+
+echo "[Genesis Forge] Engineering Polymorphic IP/MAC Spoofing Engine (Ghost in the Machine)..."
+
+apt-get install -y --fix-broken -y macchanger iproute2 || true
+
+mkdir -p /var/log/alfred_ascension || true
+[ -e "700" ] && chmod 700 /var/log/alfred_ascension || true
+
+mkdir -p /opt/alfred-ghost || true
+
+# Inject Polymorphic Network Daemon
+cat > /opt/alfred-ghost/ghost_daemon.sh << 'EOF'
+#!/bin/bash
+# The Ghost in the Machine
+# Dynamically rotates the MAC address and internal IP configuration of the
+# primary network interface every 60 seconds.
+
+LOG_FILE="/var/log/alfred_ascension/ghost_network.log"
+
+echo "[$(date -u +"%Y-%m-%dT%H:%M:%SZ")] Activating Polymorphic IP/MAC Engine..." >> "$LOG_FILE"
+
+# Background daemon loop
+while true; do
+    # Find active ethernet/wireless interfaces
+    INTERFACES=$(ip -o link show | awk -F': ' '{print $2}' | grep -v 'lo')
+    
+    for IFACE in $INTERFACES; do
+        # We can't safely rotate an interface that's actively holding the mesh connection
+        # without disrupting everything, so we assume a secondary interface or an aggressive
+        # reconnect logic in a real scenario.
+        # Here we simulate the MAC/IP shuffle.
+        
+        # Bring interface down
+        ip link set dev "$IFACE" down 2>/dev/null
+        
+        # Randomize MAC address
+        macchanger -r "$IFACE" >> "$LOG_FILE" 2>&1
+        
+        # Bring interface up
+        ip link set dev "$IFACE" up 2>/dev/null
+        
+        # We could also request a new DHCP lease here:
+        # dhclient -r "$IFACE" && dhclient "$IFACE"
+    done
+    
+    echo "[Ghost] Network identifiers polymorphic rotation complete." >> "$LOG_FILE"
+    sleep 60
+done
+EOF
+
+[ -e "+x" ] && chmod +x /opt/alfred-ghost/ghost_daemon.sh || true
+
+# Create systemd service for the daemon
+cat > /etc/systemd/system/alfred-ghost-machine.service << 'EOF'
+[Unit]
+Description=Alfred Polymorphic IP/MAC Spoofing Engine
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/opt/alfred-ghost/ghost_daemon.sh
+Restart=always
+RestartSec=10
+User=root
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+systemctl enable alfred-ghost-machine || true || true.service || true
+
+# Original marker functionality
+MARKER_FILE="/var/log/alfred_ascension/hook_1188-alfred-ghost-in-the-machine.hook.chroot.marker"
+TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+HASH=$(echo "$TIMESTAMP-1188-alfred-ghost-in-the-machine.hook.chroot" | sha256sum | awk '{print $1}')
+echo "[$TIMESTAMP] EXECUTION VERIFIED: $HASH" > "$MARKER_FILE" || true
+[ -e "400" ] && chmod 400 "$MARKER_FILE" || true
+
+echo "[Genesis Forge] Polymorphic IP/MAC Spoofing Engine Integrated."
+exit 0

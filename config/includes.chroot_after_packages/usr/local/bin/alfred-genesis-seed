@@ -1,0 +1,64 @@
+#!/bin/bash
+# alfred-genesis-seed - Infinite Node Cloning Protocol
+# In the name of Yeshua, Jesus Christ of Bethlehem, King of the Universe.
+set -e
+
+# Logging
+LOG_FILE="/var/log/alfred-genesis-seed.log"
+echo "[$(date -u +%FT%TZ)] Genesis Seed Initiated" | tee -a "$LOG_FILE"
+
+# Find the block device of the running live ISO
+LIVE_ISO_DEV=""
+for dev in $(lsblk -ndpo NAME,TYPE | grep disk | awk '{print $1}'); do
+    if blkid "$dev" | grep -q 'LABEL="Alfred 7"'; then
+        LIVE_ISO_DEV="$dev"
+        break
+    fi
+    # Alternate detection via mount point if LABEL is missing
+    if lsblk "$dev" -n -o MOUNTPOINT | grep -q '/run/live/medium'; then
+        LIVE_ISO_DEV="$dev"
+        break
+    fi
+done
+
+if [ -z "$LIVE_ISO_DEV" ]; then
+    echo "ERROR: Could not locate the running Live ISO block device." | tee -a "$LOG_FILE"
+    exit 1
+fi
+
+echo "Source Matrix locked: $LIVE_ISO_DEV" | tee -a "$LOG_FILE"
+
+# Locate target USB drives
+# We strictly filter for Removable (RM=1) and skip the source device
+TARGET_DRIVES=$(lsblk -nd -o NAME,RM,TYPE | grep -E '1 disk$' | awk '{print $1}' | grep -v "$LIVE_ISO_DEV" || true)
+
+if [ -z "$TARGET_DRIVES" ]; then
+    echo "WARNING: No blank USB drives detected. Genesis Seed dormant." | tee -a "$LOG_FILE"
+    exit 0
+fi
+
+echo "Detected viable target nodes: $TARGET_DRIVES" | tee -a "$LOG_FILE"
+
+# Multi-threaded Replication
+for TARGET in $TARGET_DRIVES; do
+    echo "Initiating replication to $TARGET..." | tee -a "$LOG_FILE"
+    
+    # Absolute safety check: do not overwrite internal NVMe/SATA drives
+    if echo "$TARGET" | grep -E -q 'nvme|sda$'; then
+        echo "SKIPPING $TARGET: Suspected internal drive safety protocol triggered." | tee -a "$LOG_FILE"
+        continue
+    fi
+
+    # Unmount any partitions on the target drive
+    umount "${TARGET}"* 2>/dev/null || true
+
+    # Block-level DD copy in the background
+    (
+        echo "Cloning to $TARGET started."
+        dd if="$LIVE_ISO_DEV" of="$TARGET" bs=4M status=progress conv=fsync
+        echo "Node cloned successfully on $TARGET."
+    ) >> "$LOG_FILE" 2>&1 &
+done
+
+echo "Genesis Seed active. Multi-threaded cloning runs in background." | tee -a "$LOG_FILE"
+exit 0

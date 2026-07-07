@@ -1,0 +1,90 @@
+#!/bin/bash
+# 1050-alfred-export-packages-json.hook.chroot
+# Exports the final list of installed packages to JSON for the alfredlinux.com website
+
+set -e
+
+echo "[TELEMETRY] Exporting complete package manifest to packages.json using Python..."
+
+if [ -d /work/iso-output ]; then
+    dpkg-query -W -f='${Package}|${Section}|${binary:Summary}\n' > /tmp/pkg_dump.txt
+    
+    python3 -c '
+import json, sys, subprocess
+data = []
+with open("/tmp/pkg_dump.txt", "r", encoding="utf-8") as f:
+    for line in f:
+        parts = line.strip().split("|", 2)
+        if len(parts) >= 1 and parts[0]:
+            desc = parts[2] if len(parts) > 2 else ""
+            name = parts[0]
+            if not desc.strip():
+                try:
+                    out = subprocess.check_output(["apt-cache", "show", name.split(":")[0]], stderr=subprocess.DEVNULL, universal_newlines=True)
+                    desc_lines = []
+                    capture = False
+                    for l in out.split("\n"):
+                        if l.startswith("Description-en:") or l.startswith("Description:"):
+                            desc_lines.append(l.split(":", 1)[1].strip())
+                            capture = True
+                        elif capture and l.startswith(" "):
+                            if l.strip() == ".": desc_lines.append("\n")
+                            else: desc_lines.append(l.strip())
+                        elif capture and not l.startswith(" "): break
+                    if desc_lines: desc = " ".join(desc_lines).replace(" \n ", "\n").strip()
+                except: pass
+            data.append({
+                "name": name, 
+                "category": parts[1] if len(parts) > 1 and parts[1] else "misc", 
+                "description": desc
+            })
+
+private_apps = [
+    {"name": "Opencut", "category": "multimedia", "description": "Alfred Linux Exclusive: Professional non-linear video editing suite, injected directly into the core filesystem."},
+    {"name": "Winamp", "category": "multimedia", "description": "Alfred Linux Exclusive: Legendary high-fidelity audio playback engine, custom-ported and natively integrated."},
+    {"name": "Unreal Engine", "category": "development", "description": "Alfred Linux Exclusive: Full Unreal Engine 5 rendering environment pre-configured for instant 3D development."},
+    {"name": "Alfred AI Core", "category": "artificial-intelligence", "description": "Alfred Linux Exclusive: Embedded local machine learning engine for autonomous system interrogation and tuning."},
+    {"name": "GoHostMe Backend", "category": "server", "description": "Alfred Linux Exclusive: Complete pre-configured LEMP stack (Nginx, MariaDB, PHP-FPM) built natively into the OS."},
+    {"name": "Sovereign Control Panel", "category": "network", "description": "Alfred Linux Exclusive: Uncensorable DNS and decentralized routing management dashboard."},
+    {"name": "Aura Dashboard", "category": "system", "description": "Alfred Linux Exclusive: Real-time kinetic telemetry and process visualization overlay."},
+    {"name": "ALVR VR Client", "category": "virtual-reality", "description": "Alfred Linux Exclusive: Advanced remote VR streaming architecture optimized specifically for the custom kernel."},
+    {"name": "Alfred Pulse", "category": "system", "description": "Alfred Linux Exclusive: Core biometric and ambient computing integration daemon."},
+    {"name": "Alfred Genesis", "category": "system", "description": "Alfred Linux Exclusive: The primary bootstrap orchestrator for the Sovereign architecture."},
+    {"name": "Alfred Capabilities", "category": "security", "description": "Alfred Linux Exclusive: Hardened AppArmor and system capability mapping module."},
+    {"name": "Alfred Offline Assets", "category": "misc", "description": "Alfred Linux Exclusive: Fully cached, zero-dependency offline documentation and asset vault."},
+    {"name": "Handshake (HNS)", "category": "network", "description": "Pre-configured Handshake decentralized naming protocol for uncensorable top-level domains."},
+    {"name": "Handshake Daemon (hsd)", "category": "network", "description": "Native Handshake blockchain node daemon."},
+    {"name": "Sovereign DNS", "category": "network", "description": "Alfred Linux Exclusive: Integrated, non-logging local DNS resolver for total anonymity."}
+]
+
+launch_map = {
+    "Opencut": "/opt/opencut/opencut --no-sandbox",
+    "Winamp": "/opt/winamp/winamp",
+    "Unreal Engine": "/opt/unreal-engine/Engine/Binaries/Linux/UnrealEditor",
+    "Alfred AI Core": "/opt/alfred-ai/start_engine.sh",
+    "GoHostMe Backend": "systemctl restart nginx mariadb php8.3-fpm",
+    "Sovereign Control Panel": "/opt/sovereign-control-panel/start.sh",
+    "Aura Dashboard": "/opt/aura-dashboard/launch.sh",
+    "ALVR VR Client": "/opt/alvr/alvr_dashboard",
+    "Alfred Pulse": "systemctl restart alfred-pulse",
+    "Alfred Genesis": "/opt/alfred-genesis/bootstrap.sh",
+    "Alfred Capabilities": "aa-status",
+    "Alfred Offline Assets": "/opt/alfred-offline-assets/serve.sh",
+    "Handshake (HNS)": "hsd-cli info",
+    "Handshake Daemon (hsd)": "systemctl status hsd",
+    "Sovereign DNS": "systemctl restart sovereign-dns"
+}
+
+for app in private_apps:
+    data.insert(0, app)
+
+for pkg in data:
+    if pkg.get("name") in launch_map:
+        pkg["launch_command"] = launch_map[pkg["name"]]
+
+with open("/work/iso-output/packages.json", "w", encoding="utf-8") as f:
+    json.dump(data, f)
+'
+    rm -f /tmp/pkg_dump.txt
+    echo "[TELEMETRY] packages.json generation complete!"
+fi

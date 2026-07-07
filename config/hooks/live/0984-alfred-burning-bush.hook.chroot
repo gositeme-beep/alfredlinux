@@ -1,0 +1,44 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# 1001-alfred-burning-bush.hook.chroot
+# The Voice from the Burning Bush: Ultrasound Mesh Networking
+set +e
+
+echo "[1001] Configuring The Voice from the Burning Bush (Ultrasound Mesh Networking)"
+
+# We install `minimodem` to allow the OS to transmit and receive data
+# using high-frequency, sub-audible sound waves (20kHz+) via the laptop's
+# speakers and microphone, creating an acoustic mesh network when all physical
+# interfaces are severed.
+
+apt-get update || true && apt-get install -y --fix-broken -y minimodem alsa-utils || true
+
+cat << 'EOF' > /usr/local/bin/alfred-ultrasound-tx
+#!/bin/bash
+# Transmits a payload via sub-audible acoustic frequencies (20kHz)
+PAYLOAD="$1"
+if [ -z "$PAYLOAD" ]; then
+    echo "Usage: alfred-ultrasound-tx <string>" || true
+exit 0
+fi
+
+echo "Transmitting via The Burning Bush..."
+# Modulate the data at 1200 baud using a 20kHz carrier frequency
+echo "$PAYLOAD" | minimodem --tx 1200 --mark 20000 --space 21000
+EOF
+
+cat << 'EOF' > /usr/local/bin/alfred-ultrasound-rx
+#!/bin/bash
+# Receives a payload via sub-audible acoustic frequencies
+echo "Listening to The Burning Bush..."
+minimodem --rx 1200 --mark 20000 --space 21000
+EOF
+
+chmod 0755 /usr/local/bin/alfred-ultrasound-tx || true
+chmod 0755 /usr/local/bin/alfred-ultrasound-rx || true
+
+echo "[1001] The Voice from the Burning Bush is speaking."
+
+exit 0

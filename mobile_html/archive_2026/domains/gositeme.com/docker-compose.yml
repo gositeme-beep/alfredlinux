@@ -1,0 +1,188 @@
+# Alfred AI Infrastructure Stack
+# ───────────────────────────────
+# Full sovereignty deployment via Docker Compose.
+# Services: PHP API, WebSocket, Job Queue, MCP Client, Discord Bot,
+#           Meilisearch, Redis, Ollama, ChromaDB, Caddy Reverse Proxy
+#
+# Usage:
+#   docker compose up -d                    # Start all services
+#   docker compose up -d --scale worker=3   # Scale job workers
+#   docker compose logs -f websocket        # Follow specific logs
+#   docker compose exec ollama ollama pull llama3.1  # Pull AI model
+
+version: '3.9'
+
+x-common: &common
+  restart: unless-stopped
+  logging:
+    driver: json-file
+    options:
+      max-size: "10m"
+      max-file: "3"
+
+services:
+  # ── Caddy Reverse Proxy ────────────────────────────────────────
+  caddy:
+    <<: *common
+    image: caddy:2-alpine
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"  # HTTP/3
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+      - ./:/srv/www:ro
+    depends_on:
+      - websocket
+      - mcp-client
+      - job-queue
+    networks:
+      - alfred
+
+  # ── Redis ──────────────────────────────────────────────────────
+  redis:
+    <<: *common
+    image: redis:7-alpine
+    command: redis-server --appendonly yes --maxmemory 512mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      retries: 3
+    networks:
+      - alfred
+
+  # ── Meilisearch ────────────────────────────────────────────────
+  meilisearch:
+    <<: *common
+    image: getmeili/meilisearch:v1.6
+    environment:
+      MEILI_MASTER_KEY: ${MEILI_KEY:-alfred-meili-dev-key}
+      MEILI_ENV: production
+      MEILI_MAX_INDEXING_MEMORY: 1Gi
+    volumes:
+      - meili_data:/meili_data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:7700/health"]
+      interval: 15s
+      retries: 3
+    networks:
+      - alfred
+
+  # ── Ollama (Self-hosted LLM) ───────────────────────────────────
+  ollama:
+    <<: *common
+    image: ollama/ollama:latest
+    volumes:
+      - ollama_data:/root/.ollama
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
+      interval: 30s
+      retries: 3
+    networks:
+      - alfred
+
+  # ── ChromaDB (Vector Database) ─────────────────────────────────
+  chromadb:
+    <<: *common
+    image: chromadb/chroma:latest
+    environment:
+      IS_PERSISTENT: "TRUE"
+      ANONYMIZED_TELEMETRY: "FALSE"
+    volumes:
+      - chroma_data:/chroma/chroma
+    networks:
+      - alfred
+
+  # ── WebSocket Server ───────────────────────────────────────────
+  websocket:
+    <<: *common
+    build:
+      context: ./websocket
+      dockerfile: Dockerfile
+    environment:
+      PORT: "3010"
+      REDIS_URL: redis://redis:6379
+      WS_SECRET: ${WS_SECRET:-alfred-ws-dev-secret}
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - alfred
+
+  # ── Job Queue Worker ───────────────────────────────────────────
+  job-queue:
+    <<: *common
+    build:
+      context: ./websocket
+      dockerfile: Dockerfile
+    command: node job-queue.js
+    environment:
+      JOB_PORT: "3011"
+      REDIS_URL: redis://redis:6379
+      JOB_SECRET: ${JOB_SECRET:-alfred-job-dev-secret}
+      SENDGRID_API_KEY: ${SENDGRID_API_KEY:-}
+      PUSH_SECRET: ${PUSH_SECRET:-alfred-push-dev}
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - alfred
+
+  # ── MCP Client ─────────────────────────────────────────────────
+  mcp-client:
+    <<: *common
+    build:
+      context: ./websocket
+      dockerfile: Dockerfile
+    command: node mcp-client.js
+    environment:
+      MCP_PORT: "3005"
+      MCP_SECRET: ${MCP_SECRET:-alfred-mcp-dev-secret}
+      BRAVE_API_KEY: ${BRAVE_API_KEY:-}
+      GITHUB_TOKEN: ${GITHUB_TOKEN:-}
+    depends_on:
+      - redis
+    networks:
+      - alfred
+
+  # ── Discord Bot ────────────────────────────────────────────────
+  discord-bot:
+    <<: *common
+    build:
+      context: ./websocket
+      dockerfile: Dockerfile
+    command: node discord-bot.js
+    environment:
+      DISCORD_BOT_TOKEN: ${DISCORD_BOT_TOKEN:-}
+      DISCORD_APP_ID: ${DISCORD_APP_ID:-}
+      ALFRED_API_URL: http://caddy
+      JOB_SECRET: ${JOB_SECRET:-alfred-job-dev-secret}
+    depends_on:
+      - caddy
+    networks:
+      - alfred
+    profiles:
+      - discord  # Only start when discord profile is active
+
+networks:
+  alfred:
+    driver: bridge
+
+volumes:
+  redis_data:
+  meili_data:
+  ollama_data:
+  chroma_data:
+  caddy_data:
+  caddy_config:

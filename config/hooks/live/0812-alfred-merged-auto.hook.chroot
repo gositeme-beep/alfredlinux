@@ -1,0 +1,107 @@
+#!/bin/bash
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# 0812-alfred-mount-of-olives.hook.chroot
+# Installs a focus mode for prayer and study
+
+set +e
+
+echo "[0812] Installing Mount of Olives Focus Mode..."
+
+mkdir -p /usr/local/bin
+cat << 'EOF' > /usr/local/bin/alfred-mount-of-olives
+#!/bin/bash
+# Provide a notification
+kdialog --title "Mount of Olives" --passivepopup "Sanctuary Mode Activated. Notifications silenced." 3 &
+
+# Mute volume
+amixer -D pulse sset Master mute || true
+
+# Hide all open windows (Show Desktop)
+wmctrl -k on || true
+
+# Open Konsole with a focus prompt
+konsole -e "bash -c 'clear; echo \"Be still, and know that I am God. (Psalm 46:10)\"; echo \"\"; echo \"Focus mode activated. All digital distractions have been minimized.\"; exec bash'" &
+EOF
+chmod +x /usr/local/bin/alfred-mount-of-olives
+
+mkdir -p /usr/share/applications
+cat << 'EOF' > /usr/share/applications/alfred-mount-of-olives.desktop
+[Desktop Entry]
+Name=Mount of Olives (Focus)
+Exec=/usr/local/bin/alfred-mount-of-olives
+Icon=preferences-desktop-user-behavior
+Type=Application
+Categories=Utility;
+EOF
+
+# Put it on the desktop
+mkdir -p /etc/skel/Desktop
+cp /usr/share/applications/alfred-mount-of-olives.desktop /etc/skel/Desktop/
+chmod +x /etc/skel/Desktop/alfred-mount-of-olives.desktop
+
+echo "[0812] Mount of Olives installed."
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+# [Genesis Forge] Systemd Hardening: alfred-daemon-278.service
+# Enforces deep PrivateTmp, ProtectSystem, and ProtectHome on native daemons.
+echo "[Genesis Forge] Hardening systemd service: alfred-daemon-278.service"
+mkdir -p /etc/systemd/system/alfred-daemon-278.service.d/ || true
+cat > /etc/systemd/system/alfred-daemon-278.service.d/override.conf << 'EOF'
+[Service]
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=read-only
+NoNewPrivileges=yes
+RestrictRealtime=yes
+EOF
+
+
+# --- BEGIN MERGED CONTENT FROM: 0812-alfred-mount-of-olives.hook.chroot ---
+#!/bin/bash
+# 0812-alfred-mount-of-olives.hook.chroot
+# Installs a focus mode for prayer and study
+
+set +e
+
+echo "[0812] Installing Mount of Olives Focus Mode..."
+
+mkdir -p /usr/local/bin
+cat << 'EOF' > /usr/local/bin/alfred-mount-of-olives
+#!/bin/bash
+# Provide a notification
+kdialog --title "Mount of Olives" --passivepopup "Sanctuary Mode Activated. Notifications silenced." 3 &
+
+# Mute volume
+amixer -D pulse sset Master mute || true
+
+# Hide all open windows (Show Desktop)
+wmctrl -k on || true
+
+# Open Konsole with a focus prompt
+konsole -e "bash -c 'clear; echo \"Be still, and know that I am God. (Psalm 46:10)\"; echo \"\"; echo \"Focus mode activated. All digital distractions have been minimized.\"; exec bash'" &
+EOF
+[ -e "/usr/local/bin/alfred-mount-of-olives" ] && chmod +x /usr/local/bin/alfred-mount-of-olives
+
+mkdir -p /usr/share/applications
+cat << 'EOF' > /usr/share/applications/alfred-mount-of-olives.desktop
+[Desktop Entry]
+Name=Mount of Olives (Focus)
+Exec=/usr/local/bin/alfred-mount-of-olives
+Icon=preferences-desktop-user-behavior
+Type=Application
+Categories=Utility;
+EOF
+
+# Put it on the desktop
+mkdir -p /etc/skel/Desktop
+[ -e "/usr/share/applications/alfred-mount-of-olives.desktop" ] && cp /usr/share/applications/alfred-mount-of-olives.desktop /etc/skel/Desktop/
+[ -e "/etc/skel/Desktop/alfred-mount-of-olives.desktop" ] && chmod +x /etc/skel/Desktop/alfred-mount-of-olives.desktop
+
+echo "[0812] Mount of Olives installed."
+
+# --- END MERGED CONTENT FROM: 0812-alfred-mount-of-olives.hook.chroot ---
+
+

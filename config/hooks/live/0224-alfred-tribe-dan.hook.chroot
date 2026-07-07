@@ -1,0 +1,24 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+# 0409-alfred-tribe-dan — 🐍 dan — discernment-and-justice
+
+echo "[0409-tribe-dan] begin"
+install -d /etc/alfred/tribes /usr/share/alfred/tribes
+cat >/etc/alfred/tribes/dan.flag <<EOS
+TRIBE=dan
+EMOJI=🐍
+GIFT=discernment-and-justice
+VERSE="Genesis 49:16 — Dan shall judge his people."
+EOS
+cat >/usr/share/alfred/tribes/dan.txt <<EOS
+🐍  Tribe of dan
+Genesis 49:16 — Dan shall judge his people.
+Gift: discernment-and-justice
+EOS
+echo "[0409-tribe-dan] done"
+
+
+exit 0

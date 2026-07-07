@@ -1,0 +1,11 @@
+[Unit]
+Description=Aura Dashboard USB Command Service
+After=network.target
+
+[Service]
+ExecStart=/usr/bin/python3 /usr/local/bin/usb-toggle-server.py
+Restart=always
+User=root
+
+[Install]
+WantedBy=multi-user.target

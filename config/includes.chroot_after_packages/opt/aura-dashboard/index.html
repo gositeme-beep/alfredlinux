@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MetaDome Aura Dashboard</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <!-- WebXR A-Frame Injection for Meta Quest 3 -->
+    <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
+</head>
+<body>
+    <div class="background-mesh"></div>
+    <div class="glass-container">
+        
+        <!-- Header -->
+        <header class="dashboard-header">
+            <div class="brand">
+                <div class="pulse-ring"></div>
+                <h1>AURA <span>Commander HUD</span></h1>
+            </div>
+            <div class="system-status">
+                <span class="status-indicator online"></span>
+                <p>QGSM Mesh: <span class="highlight">SECURE</span></p>
+                <p>Enoch Protocol: <span class="highlight">ARMED</span></p>
+            </div>
+        </header>
+
+        <!-- Main Grid -->
+        <main class="dashboard-grid">
+            
+            <!-- Treasury Panel -->
+            <section class="glass-panel treasury-panel">
+                <h2>Genesis Treasury</h2>
+                <div class="metric">
+                    <span class="label">Total $META Staked</span>
+                    <span class="value">42,000,000.00</span>
+                </div>
+                <div class="metric">
+                    <span class="label">Active Validators</span>
+                    <span class="value">144</span>
+                </div>
+                <div class="metric">
+                    <span class="label">Arweave Endowment</span>
+                    <span class="value">Active (Immortalized)</span>
+                </div>
+            </section>
+
+            <!-- Robotics Telemetry Panel -->
+            <section class="glass-panel robotics-panel">
+                <h2>Alfred Robotics Telemetry</h2>
+                <div class="telemetry-feed" id="telemetry-feed">
+                    <!-- Javascript will inject data here -->
+                    <div class="telemetry-item">
+                        <span class="unit-id">DID:ALFRED:UNIT-0001</span>
+                        <span class="unit-status">ONLINE - Bat: 98%</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- L'Avocat Justice Panel -->
+            <section class="glass-panel justice-panel">
+                <h2>L'Avocat Judiciary</h2>
+                <div class="metric">
+                    <span class="label">Active Arbitrations</span>
+                    <span class="value" id="active-cases">3</span>
+                </div>
+                <div class="action-buttons">
+                    <button class="glass-btn danger">Execute Verdict (Commander Only)</button>
+                </div>
+            </section>
+
+            <!-- Network Topology Panel -->
+            <section class="glass-panel map-panel">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <h2>QGSM Topology (9.9.9.9)</h2>
+                    <button class="glass-btn xr-btn" onclick="document.querySelector('a-scene').enterVR()">Launch Alfred Matrix</button>
+                </div>
+                <div class="map-visualization">
+                    <!-- 3D Holographic WebXR Matrix for Meta Quest 3 -->
+                    <a-scene embedded style="width:100%; height:100%; border-radius:12px;">
+                        <a-sky color="#050A1F"></a-sky>
+                        <!-- Central Genesis Node -->
+                        <a-sphere position="0 1.5 -3" radius="0.5" color="#00ffcc" animation="property: rotation; to: 0 360 0; loop: true; dur: 5000" wireframe="true"></a-sphere>
+                        <a-text value="Genesis Node" position="0 2.2 -3" align="center" color="#00ffcc" scale="0.8 0.8 0.8"></a-text>
+                        
+                        <!-- Peripheral Mesh Nodes -->
+                        <a-box position="-2 1 -2" rotation="0 45 0" color="#7a00ff" wireframe="true"></a-box>
+                        <a-box position="2 1 -4" rotation="0 45 0" color="#7a00ff" wireframe="true"></a-box>
+                        <a-box position="0 3 -4" rotation="0 45 0" color="#7a00ff" wireframe="true"></a-box>
+                        
+                        <!-- Connections (Lines) -->
+                        <a-entity line="start: 0 1.5 -3; end: -2 1 -2; color: #00ffcc"></a-entity>
+                        <a-entity line="start: 0 1.5 -3; end: 2 1 -4; color: #00ffcc"></a-entity>
+                        <a-entity line="start: 0 1.5 -3; end: 0 3 -4; color: #00ffcc"></a-entity>
+                        
+                        <a-camera position="0 1.6 0"></a-camera>
+                    </a-scene>
+                </div>
+            </section>
+
+        </main>
+    </div>
+    
+    <script src="app.js"></script>
+</body>
+</html>

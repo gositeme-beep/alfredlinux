@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GoSiteMe VR Concert Hall</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0a0a14;color:#fff;font-family:'Inter','Segoe UI',system-ui,sans-serif;overflow:hidden}
+#loading{position:fixed;inset:0;background:#0a0a14;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;transition:opacity .8s}
+#loading.hidden{opacity:0;pointer-events:none}
+#loading h1{font-size:2.5rem;margin-bottom:.3rem;background:linear-gradient(135deg,#7D00FF,#ec4899);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.load-ring{width:60px;height:60px;border:3px solid rgba(125,0,255,.2);border-top-color:#7D00FF;border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+#hud{position:fixed;top:0;left:0;right:0;padding:1rem 1.5rem;display:flex;align-items:center;justify-content:space-between;z-index:100;background:linear-gradient(180deg,rgba(10,10,20,.95),transparent);pointer-events:none}
+#hud>*{pointer-events:auto}
+.hud-title{font-size:1.2rem;font-weight:700;background:linear-gradient(135deg,#7D00FF,#ec4899);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.hud-btn{padding:.45rem .9rem;border-radius:8px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.06);color:rgba(255,255,255,.7);cursor:pointer;font-size:.78rem;font-weight:600;transition:.2s;backdrop-filter:blur(8px)}
+.hud-btn:hover{background:rgba(125,0,255,.15);color:#a855f7}
+
+#infoPanel{position:fixed;bottom:1.5rem;left:50%;transform:translateX(-50%);z-index:100;background:rgba(22,22,54,.9);border:1px solid rgba(125,0,255,.2);border-radius:14px;padding:.6rem 1.2rem;backdrop-filter:blur(12px);text-align:center}
+#infoPanel .track-name{font-weight:700;font-size:1rem;color:#ec4899}
+#infoPanel .track-info{font-size:.72rem;color:rgba(255,255,255,.4)}
+
+#controls{position:fixed;bottom:1rem;left:1.5rem;z-index:100;font-size:.7rem;color:rgba(255,255,255,.25)}
+#visualMode{position:fixed;top:5rem;right:1.5rem;z-index:100;display:flex;flex-direction:column;gap:.4rem}
+.mode-btn{padding:.35rem .7rem;border-radius:8px;border:1px solid rgba(125,0,255,.2);background:rgba(255,255,255,.04);color:rgba(255,255,255,.6);cursor:pointer;font-size:.7rem;text-align:center;transition:.2s}
+.mode-btn.active{background:rgba(125,0,255,.2);color:#a855f7;border-color:rgba(125,0,255,.4)}
+.mode-btn:hover{background:rgba(125,0,255,.12);color:#a855f7}
+</style>
+<script src="/vr/shared/alfred-csrf.js"></script>
+</head>
+<body>
+<div id="loading"><h1>🎵 Concert Hall</h1><p>Preparing the show…</p><div class="load-ring"></div></div>
+<div id="hud">
+    <div class="hud-title">🎵 GoSiteMe Concert Hall</div>
+    <div style="display:flex;gap:.5rem">
+        <button class="hud-btn" onclick="prevTrack()">⏮</button>
+        <button class="hud-btn" onclick="toggleMusic()">▶ Play</button>
+        <button class="hud-btn" onclick="nextTrack()">⏭</button>
+        <button class="hud-btn" onclick="toggleSetlist()">📋 Setlist</button>
+        <button class="hud-btn" onclick="location.href='/vr/hub/'">← Back to Hub</button>
+    </div>
+</div>
+<div id="infoPanel">
+    <div class="track-name">AI Symphony No.1</div>
+    <div class="track-info">Procedurally generated · Click Play to start</div>
+    <div id="trackProgress" style="margin-top:.4rem;width:200px;height:3px;background:rgba(255,255,255,.1);border-radius:2px;margin-left:auto;margin-right:auto"><div id="trackBar" style="height:100%;width:0%;background:linear-gradient(90deg,#7D00FF,#ec4899);border-radius:2px;transition:width .3s"></div></div>
+</div>
+<div id="setlistPanel" style="position:fixed;left:1.5rem;top:5rem;z-index:100;width:200px;background:rgba(22,22,54,.9);border:1px solid rgba(125,0,255,.2);border-radius:14px;padding:.8rem;backdrop-filter:blur(12px);display:none">
+    <h4 style="font-size:.7rem;text-transform:uppercase;letter-spacing:1px;color:rgba(255,255,255,.4);margin-bottom:.5rem">📋 Setlist</h4>
+    <div id="setlistItems"></div>
+</div>
+<div id="controls">WASD to move · Mouse to look · Click to lock</div>
+<!-- Alfred Chat Panel -->
+<div id="alfredPanel" style="position:fixed;bottom:1rem;right:1rem;width:320px;max-height:380px;background:rgba(15,15,35,.95);border:1px solid rgba(125,0,255,.3);border-radius:14px;z-index:200;display:flex;flex-direction:column;backdrop-filter:blur(12px)">
+    <div style="padding:.6rem .8rem;border-bottom:1px solid rgba(255,255,255,.08);display:flex;justify-content:space-between;align-items:center;cursor:pointer" onclick="document.getElementById('alfredChat').style.display=document.getElementById('alfredChat').style.display==='none'?'flex':'none'">
+        <span style="font-weight:700;font-size:.82rem;background:linear-gradient(135deg,#7D00FF,#ec4899);-webkit-background-clip:text;-webkit-text-fill-color:transparent">🎵 Alfred · Concert Guide</span>
+        <span style="color:rgba(255,255,255,.3);font-size:.7rem">▼</span>
+    </div>
+    <div id="alfredChat" style="display:flex;flex-direction:column;flex:1;overflow-y:auto;padding:.5rem .7rem;max-height:240px;font-size:.78rem;line-height:1.35">
+        <div style="color:#a855f7">Alfred: Welcome to the Concert Hall! Ask me about the music, visuals, or navigate anywhere. 🎶</div>
+    </div>
+    <div style="display:flex;gap:.3rem;padding:.5rem .6rem;border-top:1px solid rgba(255,255,255,.06)">
+        <input type="text" id="alfredInput" placeholder="Ask Alfred..." maxlength="200" onkeydown="if(event.key==='Enter')sendAlfred()" style="flex:1;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:.4rem .6rem;color:#fff;font-size:.78rem;outline:none">
+        <button onclick="sendAlfred()" style="padding:.4rem .7rem;border-radius:8px;border:1px solid rgba(125,0,255,.3);background:rgba(125,0,255,.15);color:#a855f7;cursor:pointer;font-size:.75rem;font-weight:600">Ask</button>
+    </div>
+</div>
+<div id="visualMode">
+    <button class="mode-btn active" onclick="setMode('bars')">Bars</button>
+    <button class="mode-btn" onclick="setMode('wave')">Wave</button>
+    <button class="mode-btn" onclick="setMode('ring')">Ring</button>
+    <button class="mode-btn" onclick="setMode('particles')">Stars</button>
+</div>
+<script src="/assets/js/vendor/three.r128.min.js"></script>
+<script src="/vr/shared/gositeme-quality.js"></script>
+<script>
+let scene, camera, renderer, clock;
+let audioCtx, analyser, freqData, concertProximityGain;
+let playerPos = {x:0, y:1.6, z:12};
+let playerRot = {x:-0.1, y:0};
+let moveState = {forward:false, backward:false, left:false, right:false};
+let isPointerLocked = false;
+let isPlaying = false;
+let currentMode = 'bars';
+const CONCERT_SPEAKER_POS = [{x:-8, z:-11}, {x:8, z:-11}];
+const CONCERT_STAGE_POS = {x:0, z:-10};
+const CONCERT_AUDIO_MAX_DIST = 25;
+
+// Visual elements
+let barMeshes = [], waveMesh, ringMeshes = [], starParticles;
+let spotLights = [], stageGlow;
+
+const TRACKS = [
+    {name:'AI Symphony No.1', bpm:120},
+    {name:'Digital Dreams', bpm:130},
+    {name:'Neon Pulse', bpm:140},
+    {name:'Quantum Beat', bpm:110},
+    {name:'Agent Anthem', bpm:128},
+];
+let currentTrack = 0;
+let trackStartTime = 0;
+let trackDuration = 0;
+
+function init() {
+    scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x050510);
+    scene.fog = new THREE.FogExp2(0x050510, 0.015);
+
+    camera = new THREE.PerspectiveCamera(70, innerWidth/innerHeight, 0.1, 80);
+    renderer = new THREE.WebGLRenderer({antialias:true});
+    renderer.setSize(innerWidth, innerHeight);
+    renderer.setPixelRatio(typeof GoSiteMeQuality!=='undefined'?GoSiteMeQuality.dpr:Math.min(devicePixelRatio,2));
+    renderer.shadowMap.enabled = true;
+    document.body.appendChild(renderer.domElement);
+    clock = new THREE.Clock();
+
+    scene.add(new THREE.AmbientLight(0x100820, 0.3));
+
+    // Floor — dark reflective
+    const floor = new THREE.Mesh(
+        new THREE.PlaneGeometry(50, 50),
+        new THREE.MeshStandardMaterial({color:0x080815, roughness:0.2, metalness:0.8})
+    );
+    floor.rotation.x = -Math.PI/2; floor.receiveShadow = true;
+    scene.add(floor);
+
+    // Stage platform
+    const stage = new THREE.Mesh(
+        new THREE.BoxGeometry(16, 0.6, 10),
+        new THREE.MeshStandardMaterial({color:0x1a0a30, roughness:0.3, metalness:0.5})
+    );
+    stage.position.set(0, 0.3, -8); stage.receiveShadow = true;
+    scene.add(stage);
+
+    // Stage back wall
+    const backWall = new THREE.Mesh(
+        new THREE.PlaneGeometry(16, 8),
+        new THREE.MeshStandardMaterial({color:0x0a0a20, roughness:0.4, emissive:0x0a0030, emissiveIntensity:0.1})
+    );
+    backWall.position.set(0, 4.3, -13); scene.add(backWall);
+
+    // DJ booth
+    const booth = new THREE.Mesh(
+        new THREE.BoxGeometry(3, 1.2, 1.5),
+        new THREE.MeshStandardMaterial({color:0x2a1060, roughness:0.3, metalness:0.6, emissive:0x7D00FF, emissiveIntensity:0.1})
+    );
+    booth.position.set(0, 1.2, -10); scene.add(booth);
+
+    // Speaker stacks
+    const spkMat = new THREE.MeshStandardMaterial({color:0x111122, roughness:0.6, metalness:0.4});
+    [-8, 8].forEach(x => {
+        for(let y = 0; y < 3; y++) {
+            const spk = new THREE.Mesh(new THREE.BoxGeometry(2.5, 1.5, 1.5), spkMat);
+            spk.position.set(x, 0.6 + y * 1.5 + 0.75, -11);
+            scene.add(spk);
+            const cone = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.5, 0.15, 16),
+                new THREE.MeshStandardMaterial({color:0x222233}));
+            cone.rotation.x = Math.PI/2;
+            cone.position.set(x, 0.6 + y * 1.5 + 0.75, -10.2);
+            scene.add(cone);
+        }
+    });
+
+    // Stage lights
+    const lightColors = [0x7D00FF, 0xec4899, 0x0074D9, 0x22c55e, 0xf59e0b, 0x06b6d4];
+    for(let i = 0; i < 6; i++) {
+        const sl = new THREE.SpotLight(lightColors[i], 1.5, 25, Math.PI/6, 0.4);
+        sl.position.set(-7 + i * 2.8, 8, -6);
+        sl.target.position.set(-4 + i * 1.6, 0, -3);
+        scene.add(sl); scene.add(sl.target);
+        spotLights.push(sl);
+    }
+
+    // Audience seating hints
+    const seatMat = new THREE.MeshStandardMaterial({color:0x121228, roughness:0.7});
+    for(let row = 0; row < 4; row++) {
+        for(let seat = -3; seat <= 3; seat++) {
+            const s = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.2, 0.8), seatMat);
+            s.position.set(seat * 1.8, 0.1, 2 + row * 2.5);
+            scene.add(s);
+        }
+    }
+
+    createVisualizerBars();
+    createVisualizerWave();
+    createVisualizerRing();
+    createVisualizerStars();
+
+    setupControls();
+    updateTrackInfo();
+}
+
+function createVisualizerBars() {
+    const barCount = 64;
+    for(let i = 0; i < barCount; i++) {
+        const geo = new THREE.BoxGeometry(0.2, 1, 0.2);
+        geo.translate(0, 0.5, 0);
+        const hue = i / barCount;
+        const color = new THREE.Color().setHSL(hue, 1, 0.5);
+        const mat = new THREE.MeshStandardMaterial({color, emissive:color, emissiveIntensity:0.5, transparent:true, opacity:0.8});
+        const bar = new THREE.Mesh(geo, mat);
+        bar.position.set(-7 + (i / barCount) * 14, 0.6, -9);
+        bar.visible = currentMode === 'bars';
+        scene.add(bar);
+        barMeshes.push(bar);
+    }
+}
+
+function createVisualizerWave() {
+    const pts = [];
+    for(let i = 0; i < 128; i++) pts.push(new THREE.Vector3(-7 + (i/128)*14, 4, -9));
+    const geo = new THREE.BufferGeometry().setFromPoints(pts);
+    waveMesh = new THREE.Line(geo, new THREE.LineBasicMaterial({color:0xec4899}));
+    waveMesh.visible = currentMode === 'wave';
+    scene.add(waveMesh);
+}
+
+function createVisualizerRing() {
+    for(let i = 0; i < 32; i++) {
+        const angle = (i / 32) * Math.PI * 2;
+        const geo = new THREE.BoxGeometry(0.3, 0.3, 0.3);
+        const hue = i / 32;
+        const color = new THREE.Color().setHSL(hue, 1, 0.5);
+        const mat = new THREE.MeshStandardMaterial({color, emissive:color, emissiveIntensity:0.6, transparent:true, opacity:0.8});
+        const mesh = new THREE.Mesh(geo, mat);
+        mesh.position.set(Math.cos(angle) * 4, 4, -8 + Math.sin(angle) * 4);
+        mesh.visible = currentMode === 'ring';
+        scene.add(mesh);
+        ringMeshes.push(mesh);
+    }
+}
+
+function createVisualizerStars() {
+    const count = 500;
+    const geo = new THREE.BufferGeometry();
+    const positions = new Float32Array(count * 3);
+    const colors = new Float32Array(count * 3);
+    for(let i = 0; i < count; i++) {
+        positions[i*3] = (Math.random() - 0.5) * 30;
+        positions[i*3+1] = Math.random() * 10 + 1;
+        positions[i*3+2] = (Math.random() - 0.5) * 20 - 5;
+        const c = new THREE.Color().setHSL(Math.random(), 1, 0.6);
+        colors[i*3] = c.r; colors[i*3+1] = c.g; colors[i*3+2] = c.b;
+    }
+    geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+    geo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+    starParticles = new THREE.Points(geo, new THREE.PointsMaterial({size:0.15, vertexColors:true, transparent:true, opacity:0.8}));
+    starParticles.visible = currentMode === 'particles';
+    scene.add(starParticles);
+}
+
+function setMode(mode) {
+    currentMode = mode;
+    barMeshes.forEach(b => b.visible = mode === 'bars');
+    waveMesh.visible = mode === 'wave';
+    ringMeshes.forEach(r => r.visible = mode === 'ring');
+    starParticles.visible = mode === 'particles';
+    document.querySelectorAll('.mode-btn').forEach(b => b.classList.toggle('active', b.textContent.toLowerCase().includes(mode.substring(0,3))));
+}
+
+function setupControls() {
+    renderer.domElement.addEventListener('click', () => renderer.domElement.requestPointerLock());
+    document.addEventListener('pointerlockchange', () => { isPointerLocked = !!document.pointerLockElement; });
+    document.addEventListener('mousemove', e => {
+        if(!isPointerLocked) return;
+        playerRot.y -= e.movementX * 0.002;
+        playerRot.x -= e.movementY * 0.002;
+        playerRot.x = Math.max(-Math.PI/3, Math.min(Math.PI/3, playerRot.x));
+    });
+    document.addEventListener('keydown', e => {
+        switch(e.key.toLowerCase()){
+            case 'w': moveState.forward=true; break;
+            case 's': moveState.backward=true; break;
+            case 'a': moveState.left=true; break;
+            case 'd': moveState.right=true; break;
+        }
+    });
+    document.addEventListener('keyup', e => {
+        switch(e.key.toLowerCase()){
+            case 'w': moveState.forward=false; break;
+            case 's': moveState.backward=false; break;
+            case 'a': moveState.left=false; break;
+            case 'd': moveState.right=false; break;
+        }
+    });
+}
+
+function initAudio() {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    concertProximityGain = audioCtx.createGain();
+    concertProximityGain.gain.value = 1.0;
+    analyser = audioCtx.createAnalyser();
+    analyser.fftSize = 256;
+    freqData = new Uint8Array(analyser.frequencyBinCount);
+    concertProximityGain.connect(audioCtx.destination);
+
+    // Generate procedural music with oscillators
+    playProceduralMusic();
+}
+
+function playProceduralMusic() {
+    const track = TRACKS[currentTrack];
+    const beatInterval = 60 / track.bpm;
+    const now = audioCtx.currentTime;
+
+    // Bass line
+    const bassNotes = [55, 65.41, 73.42, 82.41];
+    for(let bar = 0; bar < 16; bar++) {
+        const note = bassNotes[bar % bassNotes.length];
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.value = note;
+        gain.gain.setValueAtTime(0.12, now + bar * beatInterval * 4);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + bar * beatInterval * 4 + beatInterval * 3.5);
+        osc.connect(gain); gain.connect(analyser); analyser.connect(concertProximityGain);
+        osc.start(now + bar * beatInterval * 4);
+        osc.stop(now + bar * beatInterval * 4 + beatInterval * 4);
+    }
+
+    // Melody
+    const melodyNotes = [440, 523.25, 659.25, 587.33, 493.88, 440, 392, 349.23];
+    for(let i = 0; i < 32; i++) {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.value = melodyNotes[i % melodyNotes.length] * (1 + Math.floor(i/8) * 0.1);
+        gain.gain.setValueAtTime(0.06, now + i * beatInterval * 2);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + i * beatInterval * 2 + beatInterval * 1.8);
+        osc.connect(gain); gain.connect(analyser);
+        osc.start(now + i * beatInterval * 2);
+        osc.stop(now + i * beatInterval * 2 + beatInterval * 2);
+    }
+
+    // Hi-hat pattern
+    for(let i = 0; i < 64; i++) {
+        const bufferSize = audioCtx.sampleRate * 0.05;
+        const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for(let s = 0; s < bufferSize; s++) data[s] = (Math.random() * 2 - 1) * Math.exp(-s / (bufferSize * 0.1));
+        const src = audioCtx.createBufferSource();
+        const gain = audioCtx.createGain();
+        src.buffer = buffer;
+        gain.gain.value = i % 2 === 0 ? 0.08 : 0.04;
+        src.connect(gain); gain.connect(analyser);
+        src.start(now + i * beatInterval);
+    }
+
+    // Schedule next loop
+    const totalDuration = 64 * beatInterval;
+    trackDuration = totalDuration;
+    trackStartTime = performance.now();
+    setTimeout(() => {
+        if(isPlaying) {
+            currentTrack = (currentTrack + 1) % TRACKS.length;
+            updateTrackInfo();
+            updateSetlist();
+            playProceduralMusic();
+        }
+    }, totalDuration * 1000);
+}
+
+function updateTrackInfo() {
+    const track = TRACKS[currentTrack];
+    document.querySelector('#infoPanel .track-name').textContent = track.name;
+    document.querySelector('#infoPanel .track-info').textContent = `${track.bpm} BPM · Procedurally generated`;
+}
+
+function toggleMusic() {
+    const btn = document.querySelector('#hud .hud-btn:nth-child(2)');
+    if(!isPlaying) {
+        if(!audioCtx) initAudio();
+        else { audioCtx.resume(); playProceduralMusic(); }
+        isPlaying = true;
+        btn.textContent = '⏸ Pause';
+        updateSetlist();
+    } else {
+        isPlaying = false;
+        if(audioCtx) audioCtx.suspend();
+        btn.textContent = '▶ Play';
+    }
+}
+
+function nextTrack() {
+    currentTrack = (currentTrack + 1) % TRACKS.length;
+    updateTrackInfo();
+    updateSetlist();
+    if(isPlaying && audioCtx) {
+        audioCtx.close();
+        audioCtx = null; analyser = null; concertProximityGain = null;
+        initAudio();
+    }
+}
+
+function prevTrack() {
+    currentTrack = (currentTrack - 1 + TRACKS.length) % TRACKS.length;
+    updateTrackInfo();
+    updateSetlist();
+    if(isPlaying && audioCtx) {
+        audioCtx.close();
+        audioCtx = null; analyser = null; concertProximityGain = null;
+        initAudio();
+    }
+}
+
+function toggleSetlist() {
+    const panel = document.getElementById('setlistPanel');
+    panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+    if(panel.style.display === 'block') updateSetlist();
+}
+
+function updateSetlist() {
+    const items = document.getElementById('setlistItems');
+    items.innerHTML = TRACKS.map((t, i) => {
+        const isCurrent = i === currentTrack;
+        const color = isCurrent ? '#ec4899' : 'rgba(255,255,255,.5)';
+        const weight = isCurrent ? '700' : '400';
+        const prefix = isCurrent ? '▶ ' : (i < currentTrack ? '✓ ' : '');
+        return '<div style="font-size:.75rem;padding:3px 0;color:'+color+';font-weight:'+weight+';cursor:pointer" onclick="jumpToTrack('+i+')">'+prefix+t.name+' <span style="color:rgba(255,255,255,.3)">'+t.bpm+'bpm</span></div>';
+    }).join('');
+}
+
+function jumpToTrack(idx) {
+    currentTrack = idx;
+    updateTrackInfo();
+    updateSetlist();
+    if(isPlaying && audioCtx) {
+        audioCtx.close();
+        audioCtx = null; analyser = null; concertProximityGain = null;
+        initAudio();
+    }
+}
+
+function updateVisualizer() {
+    if(!analyser) {
+        // Default idle animation
+        const t = clock.elapsedTime;
+        barMeshes.forEach((bar, i) => {
+            bar.scale.y = 0.3 + Math.sin(t * 2 + i * 0.3) * 0.2;
+        });
+        ringMeshes.forEach((m, i) => {
+            const angle = (i / 32) * Math.PI * 2 + t * 0.3;
+            m.position.set(Math.cos(angle) * 4, 4 + Math.sin(t + i) * 0.3, -8 + Math.sin(angle) * 4);
+        });
+        return;
+    }
+
+    analyser.getByteFrequencyData(freqData);
+    const t = clock.elapsedTime;
+
+    // Bars
+    if(currentMode === 'bars') {
+        barMeshes.forEach((bar, i) => {
+            const idx = Math.floor(i / barMeshes.length * freqData.length);
+            const val = freqData[idx] / 255;
+            bar.scale.y = 0.1 + val * 4;
+            bar.material.emissiveIntensity = val;
+        });
+    }
+
+    // Wave
+    if(currentMode === 'wave') {
+        const positions = waveMesh.geometry.attributes.position.array;
+        for(let i = 0; i < 128; i++) {
+            const idx = Math.floor(i / 128 * freqData.length);
+            positions[i * 3 + 1] = 4 + (freqData[idx] / 255) * 3;
+        }
+        waveMesh.geometry.attributes.position.needsUpdate = true;
+    }
+
+    // Ring
+    if(currentMode === 'ring') {
+        ringMeshes.forEach((m, i) => {
+            const angle = (i / 32) * Math.PI * 2 + t * 0.5;
+            const idx = Math.floor(i / 32 * freqData.length);
+            const val = freqData[idx] / 255;
+            const r = 3 + val * 3;
+            m.position.set(Math.cos(angle) * r, 4 + val * 2, -8 + Math.sin(angle) * r);
+            m.scale.setScalar(0.5 + val * 2);
+            m.material.emissiveIntensity = val;
+        });
+    }
+
+    // Stars
+    if(currentMode === 'particles') {
+        const positions = starParticles.geometry.attributes.position.array;
+        const count = positions.length / 3;
+        for(let i = 0; i < count; i++) {
+            const idx = Math.floor((i / count) * freqData.length);
+            const val = freqData[idx] / 255;
+            positions[i*3+1] += val * 0.05 * Math.sin(t + i);
+            if(positions[i*3+1] > 12) positions[i*3+1] = 1;
+        }
+        starParticles.geometry.attributes.position.needsUpdate = true;
+    }
+
+    // Stage lights react to bass
+    const bassLevel = freqData[2] / 255;
+    spotLights.forEach((sl, i) => {
+        sl.intensity = 0.5 + bassLevel * 3;
+        sl.target.position.x = Math.sin(t * 0.5 + i * 1.05) * 6;
+        sl.target.position.z = -3 + Math.cos(t * 0.3 + i) * 3;
+    });
+}
+
+function updatePlayer(dt) {
+    const speed = 5 * dt;
+    const dir = new THREE.Vector3();
+    if(moveState.forward) dir.z -= 1;
+    if(moveState.backward) dir.z += 1;
+    if(moveState.left) dir.x -= 1;
+    if(moveState.right) dir.x += 1;
+    if(dir.length() > 0) {
+        dir.normalize();
+        dir.applyAxisAngle(new THREE.Vector3(0,1,0), playerRot.y);
+        playerPos.x = Math.max(-20, Math.min(20, playerPos.x + dir.x * speed));
+        playerPos.z = Math.max(-12, Math.min(20, playerPos.z + dir.z * speed));
+    }
+    camera.position.set(playerPos.x, playerPos.y, playerPos.z);
+    camera.rotation.order = 'YXZ';
+    camera.rotation.y = playerRot.y;
+    camera.rotation.x = playerRot.x;
+
+    // Proximity audio — louder near speakers/stage
+    if(concertProximityGain && audioCtx) {
+        let minDist = CONCERT_AUDIO_MAX_DIST;
+        CONCERT_SPEAKER_POS.forEach(sp => {
+            const d = Math.sqrt((playerPos.x-sp.x)**2 + (playerPos.z-sp.z)**2);
+            if(d < minDist) minDist = d;
+        });
+        const stageDist = Math.sqrt((playerPos.x-CONCERT_STAGE_POS.x)**2 + (playerPos.z-CONCERT_STAGE_POS.z)**2);
+        if(stageDist < minDist) minDist = stageDist;
+        const ratio = Math.min(1, minDist / CONCERT_AUDIO_MAX_DIST);
+        let vol = 1.0 - ratio * 0.85;
+        vol = vol * vol * (3 - 2 * vol);
+        const t0 = audioCtx.currentTime;
+        concertProximityGain.gain.cancelScheduledValues(t0);
+        concertProximityGain.gain.setTargetAtTime(Math.max(0.08, vol), t0, 0.08);
+    }
+}
+
+function animate() {
+    requestAnimationFrame(animate);
+    const dt = Math.min(clock.getDelta(), 0.1);
+    updatePlayer(dt);
+    updateVisualizer();
+    // Track progress bar
+    if(isPlaying && trackDuration > 0) {
+        const elapsed = (performance.now() - trackStartTime) / 1000;
+        const pct = Math.min(100, (elapsed / trackDuration) * 100);
+        document.getElementById('trackBar').style.width = pct + '%';
+    }
+    renderer.render(scene, camera);
+}
+
+window.addEventListener('load', () => {
+    init(); animate();
+    setTimeout(() => document.getElementById('loading').classList.add('hidden'), 1000);
+});
+window.addEventListener('resize', () => {
+    camera.aspect = innerWidth/innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(innerWidth, innerHeight);
+});
+window.toggleMusic = toggleMusic;
+window.setMode = setMode;
+window.nextTrack = nextTrack;
+window.prevTrack = prevTrack;
+window.toggleSetlist = toggleSetlist;
+window.jumpToTrack = jumpToTrack;
+
+// ═══════════════ ALFRED CHAT ═══════════════
+var _concertConvId = null;
+var _concertSending = false;
+
+function sendAlfred() {
+    if (_concertSending) return;
+    var input = document.getElementById('alfredInput');
+    var msg = input.value.trim();
+    if (!msg) return;
+    _concertSending = true;
+    input.value = '';
+    input.disabled = true;
+
+    var chat = document.getElementById('alfredChat');
+    var userDiv = document.createElement('div');
+    userDiv.style.cssText = 'margin:.3rem 0;color:#10b981';
+    userDiv.textContent = 'You: ' + msg;
+    chat.appendChild(userDiv);
+
+    var typingDiv = document.createElement('div');
+    typingDiv.id = 'alfredTyping';
+    typingDiv.style.cssText = 'margin:.3rem 0;color:rgba(255,255,255,.4)';
+    typingDiv.textContent = 'Alfred is thinking...';
+    chat.appendChild(typingDiv);
+    chat.scrollTop = chat.scrollHeight;
+
+    var trackName = TRACKS[currentTrack] ? TRACKS[currentTrack].name : 'none';
+    var trackBpm = TRACKS[currentTrack] ? TRACKS[currentTrack].bpm : 0;
+    var context = 'You are Alfred, an AI concert guide inside GoSiteMe VR Concert Hall. ' +
+        'Current track: ' + trackName + ' at ' + trackBpm + ' BPM. ' +
+        'Playing: ' + isPlaying + '. Visual mode: ' + currentMode + '. ' +
+        'Track ' + (currentTrack + 1) + '/' + TRACKS.length + '. ' +
+        'The user can say: play, pause, next track, previous track, or change visual mode (bars, wave, ring, stars). ' +
+        'Help with music appreciation, atmosphere, and navigation. Keep responses to 2-3 sentences.';
+
+    // Local commands
+    var lower = msg.toLowerCase();
+    if (/next\s*track/i.test(lower)) { nextTrack(); reply('⏭️ Skipping to next track!'); return; }
+    if (/prev|previous/i.test(lower)) { prevTrack(); reply('⏮️ Going back!'); return; }
+    if (/^play$/i.test(lower) || /start\s*music/i.test(lower)) { if (!isPlaying) toggleMusic(); reply('▶️ Music playing!'); return; }
+    if (/^pause$|^stop$/i.test(lower)) { if (isPlaying) toggleMusic(); reply('⏸️ Music paused.'); return; }
+    if (/bars|wave|ring|star|particle/i.test(lower)) {
+        var mode = /bars/i.test(lower) ? 'bars' : /wave/i.test(lower) ? 'wave' : /ring/i.test(lower) ? 'ring' : 'particles';
+        setMode(mode); reply('🎨 Visual mode: ' + mode + '!'); return;
+    }
+
+    fetch('/api/alfred-chat.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
+        body: JSON.stringify({ message: msg, agent: 'alfred', context: context, page_url: '/vr/concert/', conv_id: _concertConvId || '', model: 'auto' })
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        if (data.conv_id) _concertConvId = data.conv_id;
+        reply(data.response || 'Sorry, I could not respond.');
+    })
+    .catch(function() { reply('Connection error — try again.'); });
+
+    function reply(text) {
+        var t = document.getElementById('alfredTyping'); if (t) t.remove();
+        var div = document.createElement('div');
+        div.style.cssText = 'margin:.3rem 0;color:#a855f7';
+        div.textContent = 'Alfred: ' + text;
+        chat.appendChild(div);
+        chat.scrollTop = chat.scrollHeight;
+        _concertSending = false; input.disabled = false; input.focus();
+    }
+}
+window.sendAlfred = sendAlfred;
+</script>
+<script src="/vr/shared/heartbeat.js"></script>
+</body>
+</html>

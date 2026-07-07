@@ -1,0 +1,15 @@
+{
+  "name": "liberte-meme-en-cellule-ubuntu",
+  "version": "0.1.0",
+  "description": "Ubuntu deployment package for Liberte Meme En Cellule",
+  "scripts": {
+    "setup": "npm install && npx prisma generate && npx prisma migrate deploy",
+    "build": "npm run build",
+    "start": "npm start",
+    "dev": "npm run dev"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
+  }
+}

@@ -1,0 +1,15 @@
+#!/bin/sh
+# Enable the Alfred Pulse Music Cache daemon on boot
+# This allows P2P music distribution over the Yggdrasil mesh network
+set -e
+
+echo "[alfred-pulse-music] Enabling alfred-pulse-music.service..."
+
+# Enable the service
+systemctl enable alfred-pulse-music.service 2>/dev/null || true
+
+# Create the cache directory structure
+mkdir -p /var/cache/alfred-pulse/music
+mkdir -p /var/log
+
+echo "[alfred-pulse-music] Service enabled and cache directories created."

@@ -1,0 +1,29 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# 0999-alfred-manna-in-the-wilderness.hook.chroot
+# The Manna in the Wilderness: Decentralized OS Repositories
+set +e
+
+echo "[0999] Configuring The Manna in the Wilderness (Decentralized Apt Mirrors)"
+
+# We install apt-transport-tor so Debian can pull updates over the Tor network,
+# and we configure the system to prioritize Tor Hidden Service mirrors for Debian.
+# If DNS or clear-net routing is censored, the OS will still receive security updates.
+
+apt-get update || true && apt-get install -y --fix-broken -y apt-transport-tor || true
+
+# Swap standard debian sources with the official Debian Onion Services
+cat << 'EOF' > /etc/apt/sources.list
+# Official Debian Tor Hidden Services
+deb tor+http://2s4yqjx5ul6okpp3f2ba6rubvnqfl2pr2hg4vqtztrgfu3venm7ndhid.onion/debian/ trixie main contrib non-free non-free-firmware
+deb-src tor+http://2s4yqjx5ul6okpp3f2ba6rubvnqfl2pr2hg4vqtztrgfu3venm7ndhid.onion/debian/ trixie main contrib non-free non-free-firmware
+
+deb tor+http://5ajw6aqf3ep7sijnscdzw77t7xq4xjpsy3ksy8s43n9iixpif25mwrad.onion/debian-security trixie-security main contrib non-free non-free-firmware
+deb-src tor+http://5ajw6aqf3ep7sijnscdzw77t7xq4xjpsy3ksy8s43n9iixpif25mwrad.onion/debian-security trixie-security main contrib non-free non-free-firmware
+EOF
+
+echo "[0999] The Manna is falling from the network."
+
+exit 0

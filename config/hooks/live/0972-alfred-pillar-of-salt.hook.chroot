@@ -1,0 +1,49 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# 1000-alfred-pillar-of-salt.hook.chroot
+# The Pillar of Salt: Radioactive Data Decay
+set +e
+
+echo "[1000] Configuring The Pillar of Salt (Radioactive Data Decay)"
+
+# We install a cron job that mathematically "decays" highly sensitive directories
+# if they are not explicitly renewed by the user. If the decay timer expires, 
+# the files are turned to mathematical salt (shredded and zeroed).
+
+mkdir -p /home/alfred/Radioactive_Vault || true
+
+cat << 'EOF' > /usr/local/bin/alfred-radioactive-decay
+#!/bin/bash
+# Checks the last access time of the vault. If older than 7 days, obliterate it.
+VAULT="/home/alfred/Radioactive_Vault"
+
+if [ -d "$VAULT" ]; then
+    # Get time since last modification in seconds
+    LAST_MOD=$(stat -c %Y "$VAULT")
+    NOW=$(date +%s)
+    DIFF=$((NOW - LAST_MOD))
+    
+    # 7 days = 604800 seconds
+    if [ "$DIFF" -gt 604800 ]; then
+        echo "RADIOACTIVE DECAY THRESHOLD REACHED. SALTING THE VAULT."
+        find "$VAULT" -type f -exec shred -u {} \;
+        # DISABLED-v14.14: rm -rf "$VAULT" || true
+        logger -p auth.alert "PILLAR_OF_SALT: Vault turned to salt due to 7-day inactivity."
+    fi
+fi
+EOF
+
+chmod 0755 /usr/local/bin/alfred-radioactive-decay || true
+
+# Run it every hour
+cat << 'EOF' > /etc/cron.hourly/alfred-pillar-of-salt
+#!/bin/bash
+/usr/local/bin/alfred-radioactive-decay
+EOF
+chmod 0755 /etc/cron.hourly/alfred-pillar-of-salt || true
+
+echo "[1000] The Pillar of Salt is crystallizing."
+
+exit 0

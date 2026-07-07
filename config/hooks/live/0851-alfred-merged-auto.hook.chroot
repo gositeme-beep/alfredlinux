@@ -1,0 +1,88 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+# [Genesis Forge] AppArmor Isolation: /usr/local/bin/alfred-util-1
+# Creates a granular zero-trust execution envelope for individual binaries.
+echo "[Genesis Forge] Enveloping binary: /usr/local/bin/alfred-util-1"
+mkdir -p /etc/apparmor.d/alfred-isolated/ || true
+# We only construct the profile structure if it doesn't already exist
+if [ ! -f "/etc/apparmor.d/alfred-isolated/profile-14" ]; then
+    cat > /etc/apparmor.d/alfred-isolated/profile-14 << 'EOF'
+profile alfred-sandbox-14 /usr/local/bin/alfred-util-1 flags=(complain) {
+  #include <abstractions/base>
+  /usr/local/bin/alfred-util-1 rmix,
+  /dev/null rw,
+}
+EOF
+fi
+
+
+# --- BEGIN MERGED CONTENT FROM: 0851-alfred-spatial.hook.chroot ---
+#!/bin/bash
+# 0851-alfred-spatial.hook.chroot
+# Configures KDE Plasma for the "New Jerusalem" Spatial Desktop (Wayland)
+set +e
+
+echo "[0851] Configuring Spatial Desktop (KWin Wayland)"
+
+# We need to set the default KWin effects for all users
+# Plasma reads from /etc/xdg/kwinrc for system-wide defaults
+mkdir -p /etc/xdg
+cat << 'EOF' > /etc/xdg/kwinrc
+[Plugins]
+wobblywindowsEnabled=true
+magiclampEnabled=true
+blurEnabled=true
+cubeEnabled=true
+desktopgridEnabled=true
+EOF
+
+# Ensure SDDM uses Wayland by default
+mkdir -p /etc/sddm.conf.d
+cat << 'EOF' > /etc/sddm.conf.d/wayland.conf
+[General]
+DisplayServer=wayland
+GreeterEnvironment=QT_WAYLAND_SHELL_INTEGRATION=layer-shell
+
+[Wayland]
+CompositorCommand=kwin_wayland --drm --no-lockscreen --no-global-shortcuts --locale1
+EOF
+
+echo "[0851] Spatial Desktop configured."
+
+# --- END MERGED CONTENT FROM: 0851-alfred-spatial.hook.chroot ---
+
+
+#!/bin/bash
+# 0851-alfred-spatial.hook.chroot
+# Configures KDE Plasma for the "New Jerusalem" Spatial Desktop (Wayland)
+set +e
+
+echo "[0851] Configuring Spatial Desktop (KWin Wayland)"
+
+# We need to set the default KWin effects for all users
+# Plasma reads from /etc/xdg/kwinrc for system-wide defaults
+mkdir -p /etc/xdg
+cat << 'EOF' > /etc/xdg/kwinrc
+[Plugins]
+wobblywindowsEnabled=true
+magiclampEnabled=true
+blurEnabled=true
+cubeEnabled=true
+desktopgridEnabled=true
+EOF
+
+# Ensure SDDM uses Wayland by default
+mkdir -p /etc/sddm.conf.d
+cat << 'EOF' > /etc/sddm.conf.d/wayland.conf
+[General]
+DisplayServer=wayland
+GreeterEnvironment=QT_WAYLAND_SHELL_INTEGRATION=layer-shell
+
+[Wayland]
+CompositorCommand=kwin_wayland --drm --no-lockscreen --no-global-shortcuts --locale1
+EOF
+
+echo "[0851] Spatial Desktop configured."

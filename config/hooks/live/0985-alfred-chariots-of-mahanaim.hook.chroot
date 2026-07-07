@@ -1,0 +1,36 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# 1001-alfred-chariots-of-mahanaim.hook.chroot
+# The Chariots of Mahanaim: Quantum-Resistant Tunneling
+set +e
+
+echo "[1001] Configuring The Chariots of Mahanaim (Post-Quantum Cryptography)"
+
+# Standard TLS/SSH uses RSA/ECC which will be broken by Quantum Computers using Shor's algorithm.
+# We configure the OS to use OpenSSH with post-quantum lattice-based algorithms
+# (sntrup761x25519-sha512@openssh.com) ensuring our mesh communications are immune
+# to "Store Now, Decrypt Later" dragnet surveillance.
+
+cat << 'EOF' > /etc/ssh/ssh_config.d/99-alfred-post-quantum.conf
+# Enforce Post-Quantum Key Exchange
+KexAlgorithms sntrup761x25519-sha512@openssh.com,curve25519-sha256@libssh.org
+# Enforce Post-Quantum Host Keys
+HostKeyAlgorithms ssh-ed25519-cert-v01@openssh.com,ssh-ed25519
+# Enforce highly secure Ciphers and MACs
+Ciphers chacha20-poly1305@openssh.com,aes256-gcm@openssh.com
+MACs hmac-sha2-512-etm@openssh.com,hmac-sha2-256-etm@openssh.com
+EOF
+
+cat << 'EOF' > /etc/ssh/sshd_config.d/99-alfred-post-quantum.conf
+# Enforce Post-Quantum Key Exchange for incoming connections
+KexAlgorithms sntrup761x25519-sha512@openssh.com,curve25519-sha256@libssh.org
+HostKeyAlgorithms ssh-ed25519-cert-v01@openssh.com,ssh-ed25519
+Ciphers chacha20-poly1305@openssh.com,aes256-gcm@openssh.com
+MACs hmac-sha2-512-etm@openssh.com,hmac-sha2-256-etm@openssh.com
+EOF
+
+echo "[1001] The Chariots of Mahanaim have arrived."
+
+exit 0

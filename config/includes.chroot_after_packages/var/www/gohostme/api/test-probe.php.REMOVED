@@ -1,0 +1,1 @@
+<?php file_put_contents("/tmp/test-php-probe.txt", "PROBED at " . date("Y-m-d H:i:s") . " file=" . __FILE__ . " docroot=" . $_SERVER["DOCUMENT_ROOT"]); echo json_encode(["ok" => true, "file" => __FILE__, "opcache" => function_exists("opcache_get_status") ? opcache_get_status(false) : "n/a"]); 

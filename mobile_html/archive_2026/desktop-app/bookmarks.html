@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bookmarks — Veil Browser</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+:root {
+    --bg: #0a0a14; --surface: #12121e; --surface-2: #1a1a2e;
+    --border: rgba(255,255,255,0.08); --text: #e0e0e0; --text-dim: #888;
+    --accent: #6c5ce7; --accent-light: #a29bfe; --green: #00b894;
+    --red: #e74c3c; --gold: #f1c40f; --cyan: #00cec9;
+}
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+/* Header */
+.bm-header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 20px 32px; display: flex; align-items: center; gap: 16px; }
+.bm-header h1 { font-size: 22px; font-weight: 600; }
+.bm-header h1 i { color: var(--accent); margin-right: 8px; }
+.bm-header-actions { margin-left: auto; display: flex; gap: 8px; }
+.bm-btn { padding: 8px 16px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface-2); color: var(--text); cursor: pointer; font-size: 13px; display: flex; align-items: center; gap: 6px; transition: all 0.2s; }
+.bm-btn:hover { border-color: var(--accent); background: rgba(108,92,231,0.1); }
+.bm-btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+.bm-btn.primary:hover { background: var(--accent-light); }
+.bm-btn.danger { color: var(--red); }
+.bm-btn.danger:hover { border-color: var(--red); background: rgba(231,76,60,0.1); }
+
+/* Search */
+.bm-search { padding: 16px 32px; }
+.bm-search input { width: 100%; padding: 10px 16px 10px 40px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 14px; outline: none; }
+.bm-search input:focus { border-color: var(--accent); }
+.bm-search { position: relative; }
+.bm-search i { position: absolute; left: 48px; top: 50%; transform: translateY(-50%); color: var(--text-dim); }
+
+/* Content */
+.bm-content { padding: 0 32px 32px; }
+
+/* Section */
+.bm-section { margin-bottom: 24px; }
+.bm-section-header { display: flex; align-items: center; gap: 10px; padding: 12px 0; border-bottom: 1px solid var(--border); margin-bottom: 8px; }
+.bm-section-header h2 { font-size: 15px; font-weight: 600; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.5px; }
+.bm-section-header i { color: var(--accent); font-size: 14px; }
+.bm-section-actions { margin-left: auto; display: flex; gap: 6px; }
+.bm-icon-btn { width: 28px; height: 28px; border: none; background: transparent; color: var(--text-dim); cursor: pointer; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 12px; }
+.bm-icon-btn:hover { background: var(--surface-2); color: var(--accent); }
+
+/* Bookmark items */
+.bm-list { list-style: none; }
+.bm-item { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 8px; cursor: pointer; transition: background 0.15s; }
+.bm-item:hover { background: var(--surface-2); }
+.bm-item-icon { width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; color: var(--cyan); font-size: 14px; flex-shrink: 0; }
+.bm-item-info { flex: 1; min-width: 0; }
+.bm-item-title { font-size: 14px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bm-item-url { font-size: 12px; color: var(--text-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px; }
+.bm-item-actions { display: flex; gap: 2px; opacity: 0; transition: opacity 0.15s; }
+.bm-item:hover .bm-item-actions { opacity: 1; }
+.bm-item-date { font-size: 11px; color: var(--text-dim); white-space: nowrap; margin-right: 8px; }
+
+/* Folder */
+.bm-folder { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px; margin-bottom: 16px; }
+.bm-folder-header { display: flex; align-items: center; gap: 10px; padding-bottom: 10px; border-bottom: 1px solid var(--border); margin-bottom: 8px; cursor: pointer; }
+.bm-folder-header i.folder-icon { color: var(--gold); }
+.bm-folder-header .folder-name { font-size: 15px; font-weight: 600; }
+.bm-folder-header .folder-count { font-size: 12px; color: var(--text-dim); margin-left: 4px; }
+.bm-folder-actions { margin-left: auto; display: flex; gap: 4px; }
+
+/* Dialog / Modal */
+.bm-modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 9999; backdrop-filter: blur(4px); }
+.bm-modal { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 24px; width: 420px; max-width: 90vw; }
+.bm-modal h3 { font-size: 18px; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+.bm-modal h3 i { color: var(--accent); }
+.bm-modal label { display: block; font-size: 13px; color: var(--text-dim); margin-bottom: 4px; margin-top: 12px; }
+.bm-modal input, .bm-modal select { width: 100%; padding: 10px 12px; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 14px; outline: none; }
+.bm-modal input:focus, .bm-modal select:focus { border-color: var(--accent); }
+.bm-modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 20px; }
+
+/* Empty state */
+.bm-empty { text-align: center; padding: 40px 20px; color: var(--text-dim); }
+.bm-empty i { font-size: 48px; margin-bottom: 12px; color: var(--accent); opacity: 0.3; }
+.bm-empty p { font-size: 14px; }
+
+/* Stats bar */
+.bm-stats { display: flex; gap: 24px; padding: 12px 32px; background: var(--surface); border-bottom: 1px solid var(--border); }
+.bm-stat { font-size: 13px; color: var(--text-dim); }
+.bm-stat strong { color: var(--text); margin-right: 4px; }
+</style>
+</head>
+<body>
+
+<div class="bm-header">
+    <h1><i class="fas fa-bookmark"></i> Bookmarks</h1>
+    <div class="bm-header-actions">
+        <button class="bm-btn primary" onclick="showAddDialog()"><i class="fas fa-plus"></i> Add Bookmark</button>
+        <button class="bm-btn" onclick="showNewFolderDialog()"><i class="fas fa-folder-plus"></i> New Folder</button>
+        <button class="bm-btn" onclick="goHome()"><i class="fas fa-arrow-left"></i> Back to Browser</button>
+    </div>
+</div>
+
+<div class="bm-stats" id="stats-bar"></div>
+
+<div class="bm-search">
+    <i class="fas fa-search"></i>
+    <input type="text" id="search-input" placeholder="Search bookmarks..." oninput="filterBookmarks(this.value)">
+</div>
+
+<div class="bm-content" id="bookmarks-container"></div>
+
+<!-- Modal container -->
+<div id="modal-container"></div>
+
+<script>
+let allBookmarks = null;
+
+async function init() {
+    allBookmarks = await window.veilDesktop.bookmarks.getAll();
+    render();
+}
+
+function render(filter = '') {
+    const container = document.getElementById('bookmarks-container');
+    const q = filter.toLowerCase();
+
+    // Count total
+    let total = allBookmarks.toolbar.length + allBookmarks.other.length;
+    allBookmarks.folders.forEach(f => total += f.bookmarks.length);
+    document.getElementById('stats-bar').innerHTML =
+        `<span class="bm-stat"><strong>${total}</strong> bookmarks</span>` +
+        `<span class="bm-stat"><strong>${allBookmarks.folders.length}</strong> folders</span>` +
+        `<span class="bm-stat"><strong>${allBookmarks.toolbar.length}</strong> in toolbar</span>`;
+
+    let html = '';
+
+    // Toolbar bookmarks
+    const toolbarFiltered = filterItems(allBookmarks.toolbar, q);
+    if (!q || toolbarFiltered.length > 0) {
+        html += `<div class="bm-section">
+            <div class="bm-section-header">
+                <i class="fas fa-grip-lines"></i>
+                <h2>Bookmark Toolbar</h2>
+            </div>
+            <ul class="bm-list">${toolbarFiltered.map(b => renderItem(b)).join('')}</ul>
+            ${toolbarFiltered.length === 0 ? '<div class="bm-empty"><p>No toolbar bookmarks</p></div>' : ''}
+        </div>`;
+    }
+
+    // Folders
+    allBookmarks.folders.forEach(folder => {
+        const folderItems = filterItems(folder.bookmarks, q);
+        if (!q || folderItems.length > 0) {
+            html += `<div class="bm-folder">
+                <div class="bm-folder-header">
+                    <i class="fas fa-folder folder-icon"></i>
+                    <span class="folder-name">${esc(folder.name)}</span>
+                    <span class="folder-count">(${folder.bookmarks.length})</span>
+                    <div class="bm-folder-actions">
+                        <button class="bm-icon-btn" title="Rename" onclick="event.stopPropagation(); renameFolderDialog('${folder.id}', '${esc(folder.name)}')"><i class="fas fa-pen"></i></button>
+                        <button class="bm-icon-btn" title="Delete folder" onclick="event.stopPropagation(); deleteFolder('${folder.id}')"><i class="fas fa-trash"></i></button>
+                    </div>
+                </div>
+                <ul class="bm-list">${folderItems.map(b => renderItem(b)).join('')}</ul>
+                ${folderItems.length === 0 ? '<div class="bm-empty"><p>Empty folder</p></div>' : ''}
+            </div>`;
+        }
+    });
+
+    // Other bookmarks
+    const otherFiltered = filterItems(allBookmarks.other, q);
+    if ((!q && allBookmarks.other.length > 0) || otherFiltered.length > 0) {
+        html += `<div class="bm-section">
+            <div class="bm-section-header">
+                <i class="fas fa-bookmark"></i>
+                <h2>Other Bookmarks</h2>
+            </div>
+            <ul class="bm-list">${otherFiltered.map(b => renderItem(b)).join('')}</ul>
+        </div>`;
+    }
+
+    if (!html) {
+        html = '<div class="bm-empty"><i class="fas fa-bookmark"></i><p>No bookmarks match your search</p></div>';
+    }
+
+    container.innerHTML = html;
+}
+
+function renderItem(b) {
+    const date = new Date(b.createdAt).toLocaleDateString();
+    return `<li class="bm-item" ondblclick="navigateTo('${esc(b.url)}')">
+        <div class="bm-item-icon"><i class="${b.icon || 'fas fa-globe'}"></i></div>
+        <div class="bm-item-info">
+            <div class="bm-item-title">${esc(b.title)}</div>
+            <div class="bm-item-url">${esc(b.url)}</div>
+        </div>
+        <span class="bm-item-date">${date}</span>
+        <div class="bm-item-actions">
+            <button class="bm-icon-btn" title="Open" onclick="event.stopPropagation(); navigateTo('${esc(b.url)}')"><i class="fas fa-external-link-alt"></i></button>
+            <button class="bm-icon-btn" title="Edit" onclick="event.stopPropagation(); showEditDialog('${b.id}', '${esc(b.title)}', '${esc(b.url)}')"><i class="fas fa-pen"></i></button>
+            <button class="bm-icon-btn" title="Delete" onclick="event.stopPropagation(); removeBookmark('${b.id}')"><i class="fas fa-trash"></i></button>
+        </div>
+    </li>`;
+}
+
+function filterItems(items, q) {
+    if (!q) return items;
+    return items.filter(b => b.title.toLowerCase().includes(q) || b.url.toLowerCase().includes(q));
+}
+
+function filterBookmarks(val) { render(val); }
+
+function esc(str) {
+    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
+function navigateTo(url) {
+    window.veilDesktop.navigate(url.replace('https://gositeme.com', ''));
+}
+
+function goHome() {
+    window.veilDesktop.navigate('/');
+}
+
+// Add bookmark dialog
+function showAddDialog(prefillTitle, prefillUrl) {
+    const folderOptions = allBookmarks.folders.map(f =>
+        `<option value="${f.id}">${esc(f.name)}</option>`
+    ).join('');
+
+    document.getElementById('modal-container').innerHTML = `
+    <div class="bm-modal-overlay" onclick="if(event.target===this) closeModal()">
+        <div class="bm-modal">
+            <h3><i class="fas fa-bookmark"></i> Add Bookmark</h3>
+            <label>Title</label>
+            <input type="text" id="add-title" value="${esc(prefillTitle || '')}" placeholder="Page title">
+            <label>URL</label>
+            <input type="url" id="add-url" value="${esc(prefillUrl || '')}" placeholder="https://">
+            <label>Save to</label>
+            <select id="add-folder">
+                <option value="toolbar">Bookmark Toolbar</option>
+                ${folderOptions}
+                <option value="">Other Bookmarks</option>
+            </select>
+            <div class="bm-modal-actions">
+                <button class="bm-btn" onclick="closeModal()">Cancel</button>
+                <button class="bm-btn primary" onclick="doAdd()">Save</button>
+            </div>
+        </div>
+    </div>`;
+    document.getElementById('add-title').focus();
+}
+
+async function doAdd() {
+    const title = document.getElementById('add-title').value.trim();
+    const url = document.getElementById('add-url').value.trim();
+    const folder = document.getElementById('add-folder').value || null;
+    if (!title || !url) return;
+    allBookmarks = await window.veilDesktop.bookmarks.add(title, url, folder);
+    closeModal();
+    render(document.getElementById('search-input').value);
+}
+
+// Edit bookmark dialog
+function showEditDialog(id, title, url) {
+    document.getElementById('modal-container').innerHTML = `
+    <div class="bm-modal-overlay" onclick="if(event.target===this) closeModal()">
+        <div class="bm-modal">
+            <h3><i class="fas fa-pen"></i> Edit Bookmark</h3>
+            <label>Title</label>
+            <input type="text" id="edit-title" value="${esc(title)}">
+            <label>URL</label>
+            <input type="url" id="edit-url" value="${esc(url)}">
+            <div class="bm-modal-actions">
+                <button class="bm-btn" onclick="closeModal()">Cancel</button>
+                <button class="bm-btn primary" onclick="doEdit('${id}')">Save</button>
+            </div>
+        </div>
+    </div>`;
+    document.getElementById('edit-title').focus();
+}
+
+async function doEdit(id) {
+    const title = document.getElementById('edit-title').value.trim();
+    const url = document.getElementById('edit-url').value.trim();
+    if (!title || !url) return;
+    allBookmarks = await window.veilDesktop.bookmarks.edit(id, title, url);
+    closeModal();
+    render(document.getElementById('search-input').value);
+}
+
+// New folder dialog
+function showNewFolderDialog() {
+    document.getElementById('modal-container').innerHTML = `
+    <div class="bm-modal-overlay" onclick="if(event.target===this) closeModal()">
+        <div class="bm-modal">
+            <h3><i class="fas fa-folder-plus"></i> New Folder</h3>
+            <label>Folder Name</label>
+            <input type="text" id="folder-name" placeholder="My Bookmarks">
+            <div class="bm-modal-actions">
+                <button class="bm-btn" onclick="closeModal()">Cancel</button>
+                <button class="bm-btn primary" onclick="doCreateFolder()">Create</button>
+            </div>
+        </div>
+    </div>`;
+    document.getElementById('folder-name').focus();
+}
+
+async function doCreateFolder() {
+    const name = document.getElementById('folder-name').value.trim();
+    if (!name) return;
+    allBookmarks = await window.veilDesktop.bookmarks.createFolder(name);
+    closeModal();
+    render(document.getElementById('search-input').value);
+}
+
+// Rename folder dialog
+function renameFolderDialog(folderId, currentName) {
+    document.getElementById('modal-container').innerHTML = `
+    <div class="bm-modal-overlay" onclick="if(event.target===this) closeModal()">
+        <div class="bm-modal">
+            <h3><i class="fas fa-pen"></i> Rename Folder</h3>
+            <label>Folder Name</label>
+            <input type="text" id="rename-folder" value="${esc(currentName)}">
+            <div class="bm-modal-actions">
+                <button class="bm-btn" onclick="closeModal()">Cancel</button>
+                <button class="bm-btn primary" onclick="doRenameFolder('${folderId}')">Save</button>
+            </div>
+        </div>
+    </div>`;
+    document.getElementById('rename-folder').focus();
+}
+
+async function doRenameFolder(folderId) {
+    const name = document.getElementById('rename-folder').value.trim();
+    if (!name) return;
+    allBookmarks = await window.veilDesktop.bookmarks.renameFolder(folderId, name);
+    closeModal();
+    render(document.getElementById('search-input').value);
+}
+
+async function deleteFolder(folderId) {
+    allBookmarks = await window.veilDesktop.bookmarks.removeFolder(folderId);
+    render(document.getElementById('search-input').value);
+}
+
+async function removeBookmark(id) {
+    allBookmarks = await window.veilDesktop.bookmarks.remove(id);
+    render(document.getElementById('search-input').value);
+}
+
+function closeModal() {
+    document.getElementById('modal-container').innerHTML = '';
+}
+
+// Keyboard shortcuts
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeModal();
+    if (e.key === 'Enter' && document.querySelector('.bm-modal')) {
+        const saveBtn = document.querySelector('.bm-modal .bm-btn.primary');
+        if (saveBtn) saveBtn.click();
+    }
+});
+
+// Listen for Ctrl+D from main process
+if (window.veilDesktop && window.veilDesktop.bookmarks) {
+    window.veilDesktop.bookmarks.onShowDialog((data) => {
+        showAddDialog(data.title, data.url);
+    });
+}
+
+init();
+</script>
+</body>
+</html>

@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cache Test - Avocat.Quebec</title>
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 50px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            min-height: 100vh;
+            margin: 0;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 30px;
+            border-radius: 10px;
+            backdrop-filter: blur(10px);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        .timestamp {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+            font-family: monospace;
+            font-size: 1.2em;
+        }
+        .status {
+            color: #4CAF50;
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Cache Test - Avocat.Quebec</h1>
+        <div class="status">✅ Cache-busting is working!</div>
+        <div class="timestamp">
+            Generated: <?php echo date('Y-m-d H:i:s T'); ?>
+        </div>
+        <p>If you see the current timestamp above, caching is disabled.</p>
+        <p>If the timestamp doesn't update when you refresh, there's still a caching issue.</p>
+        <a href="https://lavocat.ca" style="color: white; background: rgba(255,255,255,0.2); padding: 10px 20px; text-decoration: none; border-radius: 5px;">
+            ← Back to Avocat.Quebec
+        </a>
+    </div>
+    
+    <script>
+        // Force reload every 10 seconds for testing
+        console.log('Cache test page loaded at:', new Date().toLocaleString());
+    </script>
+</body>
+</html> 

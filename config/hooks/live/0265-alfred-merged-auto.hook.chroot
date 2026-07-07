@@ -1,0 +1,343 @@
+#!/bin/bash
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# ═══════════════════════════════════════════════════════════════
+# 0265-alfred-containers.hook.chroot — "The Armory"
+# ═══════════════════════════════════════════════════════════════
+# Ubuntu: "install Docker from this sketchy script"
+# Fedora: "use Podman but also Docker but also..."
+# Alfred: Podman + Buildah + kubectl + helm + k9s. Day one.
+# Rootless containers by default. More secure than Docker.
+#
+# Optional: ALFRED_ALLOW_HOOK_NETWORK_DOWNLOADS=1 allows kubectl/k9s/Helm fallbacks,
+# Hashicorp repo bootstrap when /build-assets has no staged binaries, and pip podman-compose.
+# ═══════════════════════════════════════════════════════════════
+set +e
+# Fix /tmp permissions (may be restricted by earlier hooks in chroot)
+chmod 1777 /tmp 2>/dev/null || true
+
+echo "═══════════════════════════════════════════════════════"
+echo "  ALFRED CONTAINER & CLOUD ARMORY"
+echo "═══════════════════════════════════════════════════════"
+
+export DEBIAN_FRONTEND=noninteractive
+# ── apt_nonfatal helpers (injected: apt-swallow observability) ──
+apt_update_nonfatal() {
+    local tag="$1"
+    mkdir -p /var/lib/alfred/build-flags || true
+    if ! DEBIAN_FRONTEND=noninteractive apt-get update -qq 2>/dev/null; then
+        echo "[WARN] apt-get update (${tag}) failed (nonfatal)" >&2 || true
+        echo "${tag}_update_failed=$(date -Is)" >> /var/lib/alfred/build-flags/${tag}-apt-failed || true
+    fi
+}
+apt_nonfatal() {
+    local tag="$1"; shift
+    mkdir -p /var/lib/alfred/build-flags || true
+    if ! DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends "$@" 2>/dev/null; then
+        echo "[WARN] ${tag} install failed (nonfatal)" >&2 || true
+        echo "${tag}_install_failed=$(date -Is)" >> /var/lib/alfred/build-flags/${tag}-apt-failed || true
+    fi
+}
+ARCH=$(dpkg --print-architecture)
+
+# ── 1. Podman — Rootless containers (more secure than Docker) ──
+echo "[CLOUD] Installing Podman..."
+apt-get install -y --no-install-recommends \
+    podman \
+    buildah \
+    skopeo \
+    crun \
+    slirp4netns \
+    fuse-overlayfs \
+    || true
+
+# Configure rootless Podman for all users
+mkdir -p /etc/containers || true
+cat > /etc/containers/registries.conf.d/alfred.conf << 'REGISTRIES'
+# Alfred Linux — Container Registries
+# Podman will search these registries when pulling images
+unqualified-search-registries = ["docker.io", "ghcr.io", "quay.io"]
+REGISTRIES
+
+# Docker compatibility alias
+cat > /usr/local/bin/docker << 'DOCKER_COMPAT'
+#!/bin/bash
+# Alfred Linux uses Podman (rootless, daemonless, more secure)
+# This alias provides Docker CLI compatibility
+exec podman "$@"
+DOCKER_COMPAT
+chmod +x /usr/local/bin/docker || true
+
+# docker-compose → podman-compose
+if [[ "${ALFRED_ALLOW_HOOK_NETWORK_DOWNLOADS:-}" == "1" ]]; then
+    pip3 install --break-system-packages --no-cache-dir podman-compose 2>/dev/null || true
+else
+    echo "[CLOUD] WARN: skipping podman-compose pip install (set ALFRED_ALLOW_HOOK_NETWORK_DOWNLOADS=1)." >&2 || true
+fi
+
+# ── 2. kubectl ──
+echo "[CLOUD] Installing kubectl..."
+if [ "$ARCH" = "amd64" ]; then
+    if [ -f /build-assets/kubectl ]; then
+        echo "[CLOUD] Using pre-staged kubectl (air-gap safe)"
+        install -m 755 /build-assets/kubectl /usr/local/bin/kubectl
+    elif [[ "${ALFRED_ALLOW_HOOK_NETWORK_DOWNLOADS:-}" == "1" ]]; then
+        KUBE_VERSION=$(curl -fsSL https://dl.k8s.io/release/stable.txt 2>/dev/null || echo "v1.32.0")
+        curl -fsSL "https://dl.k8s.io/release/${KUBE_VERSION}/bin/linux/amd64/kubectl" \
+            -o /usr/local/bin/kubectl 2>/dev/null \
+            && chmod +x /usr/local/bin/kubectl || true
+    else
+        echo "[CLOUD] WARN: skipping kubectl download (stage /build-assets/kubectl or set ALFRED_ALLOW_HOOK_NETWORK_DOWNLOADS=1)." >&2 || true
+    fi
+fi
+
+# kubectl autocomplete
+mkdir -p /etc/bash_completion.d || true
+kubectl completion bash > /etc/bash_completion.d/kubectl 2>/dev/null || true
+
+# ── 3. Helm ──
+echo "[CLOUD] Installing Helm..."
+# MILITARY: Pre-staged binary preferred (air-gap safe)
+if [ -f /build-assets/helm ]; then
+    echo "[CLOUD] Using pre-staged Helm (air-gap safe)"
+    install -m 755 /build-assets/helm /usr/local/bin/helm
+elif [ "$ARCH" = "amd64" ] && [[ "${ALFRED_ALLOW_HOOK_NETWORK_DOWNLOADS:-}" == "1" ]]; then
+    HELM_VERSION="4.2.0"
+    HELM_TAR_URL="https://get.helm.sh/helm-v${HELM_VERSION}-linux-amd64.tar.gz"
+    HELM_SHA_URL="https://get.helm.sh/helm-v${HELM_VERSION}-linux-amd64.tar.gz.sha256sum"
+    HELM_TMP_TAR="$(mktemp /tmp/helm.XXXXXX.tar.gz)"
+    HELM_TMP_SHA="$(mktemp /tmp/helm.XXXXXX.sha256)"
+    HELM_TMP_DIR="$(mktemp -d /tmp/helm-extract.XXXXXX)"
+    if wget -qO "$HELM_TMP_TAR" "$HELM_TAR_URL" && wget -qO "$HELM_TMP_SHA" "$HELM_SHA_URL"; then
+        HELM_EXPECTED_SHA="$(awk '{print $1; exit}' "$HELM_TMP_SHA")"
+        HELM_ACTUAL_SHA="$(sha256sum "$HELM_TMP_TAR" | awk '{print $1}')"
+        if [ -n "$HELM_EXPECTED_SHA" ] && [ "$HELM_EXPECTED_SHA" = "$HELM_ACTUAL_SHA" ]; then
+            tar xzf "$HELM_TMP_TAR" -C "$HELM_TMP_DIR" linux-amd64/helm || true
+            install -m 755 "$HELM_TMP_DIR/linux-amd64/helm" /usr/local/bin/helm
+        else
+            echo "[CLOUD] WARN: Helm checksum mismatch; skipping install." >&2 || true
+        fi
+    else
+        echo "[CLOUD] WARN: Helm download/checksum fetch failed; skipping install." >&2 || true
+    fi
+    # DISABLED-v14.14: rm -rf "$HELM_TMP_TAR" "$HELM_TMP_SHA" "$HELM_TMP_DIR" || true
+elif [ "$ARCH" = "amd64" ]; then
+    echo "[CLOUD] WARN: skipping Helm download (stage /build-assets/helm or set ALFRED_ALLOW_HOOK_NETWORK_DOWNLOADS=1)." >&2 || true
+fi
+
+# ── 4. k9s (Kubernetes TUI) ──
+echo "[CLOUD] Installing k9s..."
+if [ "$ARCH" = "amd64" ] && [[ "${ALFRED_ALLOW_HOOK_NETWORK_DOWNLOADS:-}" == "1" ]]; then
+    K9S_VERSION="0.50.18"
+    wget -qO /tmp/k9s.tar.gz \
+        "https://github.com/derailed/k9s/releases/download/v${K9S_VERSION}/k9s_Linux_amd64.tar.gz" \
+        && tar xzf /tmp/k9s.tar.gz -C /usr/local/bin/ k9s \
+        && rm -f /tmp/k9s.tar.gz || true
+elif [ "$ARCH" = "amd64" ]; then
+    echo "[CLOUD] WARN: skipping k9s GitHub fetch (set ALFRED_ALLOW_HOOK_NETWORK_DOWNLOADS=1 or stage /build-assets/k9s)." >&2 || true
+fi
+
+# ── 5. Terraform ──
+echo "[CLOUD] Installing Terraform..."
+if [[ "${ALFRED_ALLOW_HOOK_NETWORK_DOWNLOADS:-}" == "1" ]]; then
+    (
+        wget -qO- https://apt.releases.hashicorp.com/gpg \
+            | gpg --dearmor --yes -o /usr/share/keyrings/hashicorp-archive-keyring.gpg 2>/dev/null
+        # NOTE: do NOT use $VERSION_CODENAME — Alfred branding overrides it to "sovereign".
+        # Hardcode the Debian base codename so the hashicorp repo resolves.
+        echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com trixie main" \
+            | tee /etc/apt/sources.list.d/hashicorp.list > /dev/null
+        apt_update_nonfatal containers-terraform
+        apt-get install -y --no-install-recommends terraform || true
+    ) || echo "[CLOUD] Terraform install failed (non-fatal)"
+else
+    echo "[CLOUD] WARN: skipping Terraform Hashicorp repo (set ALFRED_ALLOW_HOOK_NETWORK_DOWNLOADS=1)." >&2 || true
+fi
+
+# ── 6. Ansible ──
+echo "[CLOUD] Installing Ansible..."
+apt_nonfatal containers-ansible ansible
+
+echo "═══════════════════════════════════════════════════════"
+echo "  CONTAINER & CLOUD ARMORY COMPLETE"
+echo "  Podman + Buildah + kubectl + Helm + k9s + Terraform"
+echo "═══════════════════════════════════════════════════════"
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+# [Genesis Forge] Granular Kernel Matrix: net.ipv4.ip_local_port_range="24224 65535"
+# Extremely deep low-level kernel protection.
+echo "[Genesis Forge] Applying granular sysctl: net.ipv4.ip_local_port_range="24224 65535""
+echo "net.ipv4.ip_local_port_range="24224 65535"" > /etc/sysctl.d/99-alfred-143.conf || true
+sysctl -w net.ipv4.ip_local_port_range="24224 65535" > /dev/null 2>&1 || true
+
+
+# --- BEGIN MERGED CONTENT FROM: 0265-alfred-containers.hook.chroot ---
+#!/bin/bash
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# ═══════════════════════════════════════════════════════════════
+# 0265-alfred-containers.hook.chroot — "The Armory"
+# ═══════════════════════════════════════════════════════════════
+# Ubuntu: "install Docker from this sketchy script"
+# Fedora: "use Podman but also Docker but also..."
+# Alfred: Podman + Buildah + kubectl + helm + k9s. Day one.
+# Rootless containers by default. More secure than Docker.
+#
+# Optional: ALFRED_ALLOW_HOOK_NETWORK_DOWNLOADS=1 allows kubectl/k9s/Helm fallbacks,
+# Hashicorp repo bootstrap when /build-assets has no staged binaries, and pip podman-compose.
+# ═══════════════════════════════════════════════════════════════
+set +e
+# Fix /tmp permissions (may be restricted by earlier hooks in chroot)
+[ -e /tmp ] && chmod 1777 /tmp 2>/dev/null || true
+
+echo "═══════════════════════════════════════════════════════"
+echo "  ALFRED CONTAINER & CLOUD ARMORY"
+echo "═══════════════════════════════════════════════════════"
+
+export DEBIAN_FRONTEND=noninteractive
+# ── apt_nonfatal helpers (injected: apt-swallow observability) ──
+apt_update_nonfatal() {
+    local tag="$1"
+    mkdir -p /var/lib/alfred/build-flags || true
+    if ! DEBIAN_FRONTEND=noninteractive apt-get update -qq 2>/dev/null; then
+        echo "[WARN] apt-get update (${tag}) failed (nonfatal)" >&2 || true
+        echo "${tag}_update_failed=$(date -Is)" >> /var/lib/alfred/build-flags/${tag}-apt-failed || true
+    fi
+}
+apt_nonfatal() {
+    local tag="$1"; shift
+    mkdir -p /var/lib/alfred/build-flags || true
+ if ! DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends "$@" 2>/dev/null; then
+        echo "[WARN] ${tag} install failed (nonfatal)" >&2 || true
+        echo "${tag}_install_failed=$(date -Is)" >> /var/lib/alfred/build-flags/${tag}-apt-failed || true
+    fi
+}
+ARCH=$(dpkg --print-architecture)
+
+# ── 1. Podman — Rootless containers (more secure than Docker) ──
+echo "[CLOUD] Installing Podman..."
+apt-get install -y --no-install-recommends \
+    podman \
+    buildah \
+    skopeo \
+    crun \
+    slirp4netns \
+    fuse-overlayfs \
+    || true
+
+# Configure rootless Podman for all users
+mkdir -p /etc/containers || true
+cat > /etc/containers/registries.conf.d/alfred.conf << 'REGISTRIES'
+# Alfred Linux — Container Registries
+# Podman will search these registries when pulling images
+unqualified-search-registries = ["docker.io", "ghcr.io", "quay.io"]
+REGISTRIES
+
+# Docker compatibility alias
+cat > /usr/local/bin/docker << 'DOCKER_COMPAT'
+#!/bin/bash
+# Alfred Linux uses Podman (rootless, daemonless, more secure)
+# This alias provides Docker CLI compatibility
+exec podman "$@"
+DOCKER_COMPAT
+[ -e /usr/local/bin/docker ] && chmod +x /usr/local/bin/docker || true
+
+# docker-compose → podman-compose
+if [[ "${ALFRED_ALLOW_HOOK_NETWORK_DOWNLOADS:-}" == "1" ]]; then
+    pip3 install --break-system-packages --no-cache-dir podman-compose 2>/dev/null || true
+else
+    echo "[CLOUD] WARN: skipping podman-compose pip install --break-system-packages (set ALFRED_ALLOW_HOOK_NETWORK_DOWNLOADS=1)." >&2 || true
+fi
+
+# ── 2. kubectl ──
+echo "[CLOUD] Installing kubectl..."
+if [ "$ARCH" = "amd64" ]; then
+    if [ -f /build-assets/kubectl ]; then
+        echo "[CLOUD] Using pre-staged kubectl (air-gap safe)"
+        install -m 755 /build-assets/kubectl /usr/local/bin/kubectl
+    elif [[ "${ALFRED_ALLOW_HOOK_NETWORK_DOWNLOADS:-}" == "1" ]]; then
+        KUBE_VERSION=$(curl -fsSL https://dl.k8s.io/release/stable.txt 2>/dev/null || echo "v1.32.0")
+        curl -fsSL "https://dl.k8s.io/release/${KUBE_VERSION}/bin/linux/amd64/kubectl" \
+            -o /usr/local/bin/kubectl 2>/dev/null \
+            && chmod +x /usr/local/bin/kubectl || true
+    else
+        echo "[CLOUD] WARN: skipping kubectl download (stage /build-assets/kubectl or set ALFRED_ALLOW_HOOK_NETWORK_DOWNLOADS=1)." >&2 || true
+    fi
+fi
+
+# kubectl autocomplete
+mkdir -p /etc/bash_completion.d || true
+kubectl completion bash > /etc/bash_completion.d/kubectl 2>/dev/null || true
+
+# ── 3. Helm ──
+echo "[CLOUD] Installing Helm..."
+# MILITARY: Pre-staged binary preferred (air-gap safe)
+if [ -f /build-assets/helm ]; then
+    echo "[CLOUD] Using pre-staged Helm (air-gap safe)"
+    install -m 755 /build-assets/helm /usr/local/bin/helm
+elif [ "$ARCH" = "amd64" ] && [[ "${ALFRED_ALLOW_HOOK_NETWORK_DOWNLOADS:-}" == "1" ]]; then
+    HELM_VERSION="4.2.0"
+    HELM_TAR_URL="https://get.helm.sh/helm-v${HELM_VERSION}-linux-amd64.tar.gz"
+    HELM_SHA_URL="https://get.helm.sh/helm-v${HELM_VERSION}-linux-amd64.tar.gz.sha256sum"
+    HELM_TMP_TAR="$(mktemp /tmp/helm.XXXXXX.tar.gz)"
+    HELM_TMP_SHA="$(mktemp /tmp/helm.XXXXXX.sha256)"
+    HELM_TMP_DIR="$(mktemp -d /tmp/helm-extract.XXXXXX)"
+    if wget -qO "$HELM_TMP_TAR" "$HELM_TAR_URL" && wget -qO "$HELM_TMP_SHA" "$HELM_SHA_URL"; then
+        HELM_EXPECTED_SHA="$(awk '{print $1; exit}' "$HELM_TMP_SHA")"
+        HELM_ACTUAL_SHA="$(sha256sum "$HELM_TMP_TAR" | awk '{print $1}')"
+        if [ -n "$HELM_EXPECTED_SHA" ] && [ "$HELM_EXPECTED_SHA" = "$HELM_ACTUAL_SHA" ]; then
+            tar xzf "$HELM_TMP_TAR" -C "$HELM_TMP_DIR" linux-amd64/helm || true
+            install -m 755 "$HELM_TMP_DIR/linux-amd64/helm" /usr/local/bin/helm
+        else
+            echo "[CLOUD] WARN: Helm checksum mismatch; skipping install." >&2 || true
+        fi
+    else
+        echo "[CLOUD] WARN: Helm download/checksum fetch failed; skipping install." >&2 || true
+    fi
+    # DISABLED-v14.14: rm -rf "$HELM_TMP_TAR" "$HELM_TMP_SHA" "$HELM_TMP_DIR" || true
+elif [ "$ARCH" = "amd64" ]; then
+    echo "[CLOUD] WARN: skipping Helm download (stage /build-assets/helm or set ALFRED_ALLOW_HOOK_NETWORK_DOWNLOADS=1)." >&2 || true
+fi
+
+# ── 4. k9s (Kubernetes TUI) ──
+echo "[CLOUD] Installing k9s..."
+if [ "$ARCH" = "amd64" ] && [[ "${ALFRED_ALLOW_HOOK_NETWORK_DOWNLOADS:-}" == "1" ]]; then
+    K9S_VERSION="0.50.18"
+    wget -qO /tmp/k9s.tar.gz \
+        "https://github.com/derailed/k9s/releases/download/v${K9S_VERSION}/k9s_Linux_amd64.tar.gz" \
+        && tar xzf /tmp/k9s.tar.gz -C /usr/local/bin/ k9s \
+        && rm -f /tmp/k9s.tar.gz || true
+elif [ "$ARCH" = "amd64" ]; then
+    echo "[CLOUD] WARN: skipping k9s GitHub fetch (set ALFRED_ALLOW_HOOK_NETWORK_DOWNLOADS=1 or stage /build-assets/k9s)." >&2 || true
+fi
+
+# ── 5. Terraform ──
+echo "[CLOUD] Installing Terraform..."
+if [[ "${ALFRED_ALLOW_HOOK_NETWORK_DOWNLOADS:-}" == "1" ]]; then
+    (
+        wget -qO- https://apt.releases.hashicorp.com/gpg \
+            | gpg --dearmor --yes -o /usr/share/keyrings/hashicorp-archive-keyring.gpg 2>/dev/null
+        # NOTE: do NOT use $VERSION_CODENAME — Alfred branding overrides it to "sovereign".
+        # Hardcode the Debian base codename so the hashicorp repo resolves.
+        echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com trixie main" \
+            | tee /etc/apt/sources.list.d/hashicorp.list > /dev/null
+        apt_update_nonfatal containers-terraform
+ apt-get install -y --no-install-recommends terraform || true
+    ) || echo "[CLOUD] Terraform install failed (non-fatal)"
+else
+    echo "[CLOUD] WARN: skipping Terraform Hashicorp repo (set ALFRED_ALLOW_HOOK_NETWORK_DOWNLOADS=1)." >&2 || true
+fi
+
+# ── 6. Ansible ──
+echo "[CLOUD] Installing Ansible..."
+apt_nonfatal containers-ansible ansible
+
+echo "═══════════════════════════════════════════════════════"
+echo "  CONTAINER & CLOUD ARMORY COMPLETE"
+echo "  Podman + Buildah + kubectl + Helm + k9s + Terraform"
+echo "═══════════════════════════════════════════════════════"
+
+# --- END MERGED CONTENT FROM: 0265-alfred-containers.hook.chroot ---
+
+

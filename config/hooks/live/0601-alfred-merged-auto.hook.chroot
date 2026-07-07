@@ -1,0 +1,155 @@
+#!/bin/bash
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# 0601-alfred-installer-overrides — runs AFTER 0600 installs calamares.
+# Merges staged Alfred LUKS/FDE overrides into /etc/calamares/modules/
+# without triggering dpkg conffile prompts.
+set +euo pipefail
+echo "[0601] Merging Alfred Calamares overrides..."
+
+STAGE=/usr/share/alfred/calamares-overrides
+TARGET=/etc/calamares/modules
+
+if [[ ! -d "$STAGE/modules" ]]; then
+    echo "[0601] No staged overrides at $STAGE — skipping (FDE hook 0170 may not have run)"
+
+fi
+if [[ ! -d "$TARGET" ]]; then
+    echo "[0601] WARN: /etc/calamares/modules missing — calamares-settings-debian not installed?"
+    echo "[0601] Creating target dir; overrides will land there for runtime."
+    mkdir -p "$TARGET" || true
+fi
+
+cp -fv "$STAGE/modules/"*.conf "$TARGET/" || true
+echo "[0601] Merge complete — calamares modules now Alfred-tuned."
+#!/bin/bash
+set +e
+echo "================================================="
+echo "==== ALFRED PROPHET (Offline RAG Oracle) ========"
+echo "================================================="
+
+export DEBIAN_FRONTEND=noninteractive
+
+if [ -f /build-assets/meilisearch ]; then
+    cp /build-assets/meilisearch /usr/local/bin/
+    chmod +x /usr/local/bin/meilisearch
+
+    cat << 'EOF' > /etc/systemd/system/meilisearch.service
+[Unit]
+Description=Meilisearch Prophet RAG Node
+After=network.target
+
+[Service]
+ExecStart=/usr/local/bin/meilisearch --env production
+Restart=on-failure
+User=gositeme
+
+[Install]
+WantedBy=multi-user.target
+EOF
+    systemctl enable meilisearch || true || true.service
+    
+    # Auto-index the bible directory on boot if not indexed
+    cat << 'EOF' > /usr/local/bin/prophet-index.sh
+#!/bin/bash
+sleep 10
+if [ -d /build-assets/bible ]; then
+    # Pseudo-code for adding texts to meilisearch
+    curl -X POST 'http://127.0.0.1:7700/indexes/bible/documents' \
+      -H 'Content-Type: application/json' \
+      --data-binary @/build-assets/bible/index.json || true
+fi
+EOF
+    chmod +x /usr/local/bin/prophet-index.sh
+fi
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+# [Genesis Forge] Systemd Hardening: alfred-daemon-127.service
+# Enforces deep PrivateTmp, ProtectSystem, and ProtectHome on native daemons.
+echo "[Genesis Forge] Hardening systemd service: alfred-daemon-127.service"
+mkdir -p /etc/systemd/system/alfred-daemon-127.service.d/ || true
+cat > /etc/systemd/system/alfred-daemon-127.service.d/override.conf << 'EOF'
+[Service]
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=read-only
+NoNewPrivileges=yes
+RestrictRealtime=yes
+EOF
+
+
+# --- BEGIN MERGED CONTENT FROM: 0601-alfred-installer-overrides.hook.chroot ---
+#!/bin/bash
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# 0601-alfred-installer-overrides — runs AFTER 0600 installs calamares.
+# Merges staged Alfred LUKS/FDE overrides into /etc/calamares/modules/
+# without triggering dpkg conffile prompts.
+set +e
+echo "[0601] Merging Alfred Calamares overrides..."
+
+STAGE=/usr/share/alfred/calamares-overrides
+TARGET=/etc/calamares/modules
+
+if [[ ! -d "$STAGE/modules" ]]; then
+    echo "[0601] No staged overrides at $STAGE — skipping (FDE hook 0170 may not have run)"
+
+fi
+if [[ ! -d "$TARGET" ]]; then
+    echo "[0601] WARN: /etc/calamares/modules missing — calamares-settings-debian not installed?"
+    echo "[0601] Creating target dir; overrides will land there for runtime."
+    mkdir -p "$TARGET" || true
+fi
+
+cp -fv "$STAGE/modules/"*.conf "$TARGET/" 2>/dev/null || true
+echo "[0601] Merge complete — calamares modules now Alfred-tuned."
+
+# --- END MERGED CONTENT FROM: 0601-alfred-installer-overrides.hook.chroot ---
+
+
+# --- BEGIN MERGED CONTENT FROM: 0601-alfred-prophet-rag.hook.chroot ---
+#!/bin/bash
+set +e
+echo "================================================="
+echo "==== ALFRED PROPHET (Offline RAG Oracle) ========"
+echo "================================================="
+
+export DEBIAN_FRONTEND=noninteractive
+
+if [ -f /build-assets/meilisearch ]; then
+    [ -e "/build-assets/meilisearch" ] && cp /build-assets/meilisearch /usr/local/bin/
+    [ -e "/usr/local/bin/meilisearch" ] && chmod +x /usr/local/bin/meilisearch
+
+    cat << 'EOF' > /etc/systemd/system/meilisearch.service
+[Unit]
+Description=Meilisearch Prophet RAG Node
+After=network.target
+
+[Service]
+ExecStart=/usr/local/bin/meilisearch --env production
+Restart=on-failure
+User=gositeme
+
+[Install]
+WantedBy=multi-user.target
+EOF
+    systemctl enable meilisearch || true || true.service
+    
+    # Auto-index the bible directory on boot if not indexed
+    cat << 'EOF' > /usr/local/bin/prophet-index.sh
+#!/bin/bash
+sleep 10
+if [ -d /build-assets/bible ]; then
+    # Pseudo-code for adding texts to meilisearch
+    curl -X POST 'http://127.0.0.1:7700/indexes/bible/documents' \
+      -H 'Content-Type: application/json' \
+      --data-binary @/build-assets/bible/index.json || true
+fi
+EOF
+    [ -e "/usr/local/bin/prophet-index.sh" ] && chmod +x /usr/local/bin/prophet-index.sh
+fi
+
+# --- END MERGED CONTENT FROM: 0601-alfred-prophet-rag.hook.chroot ---
+
+

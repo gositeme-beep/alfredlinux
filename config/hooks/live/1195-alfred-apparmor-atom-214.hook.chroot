@@ -1,0 +1,75 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+
+echo "[Genesis Forge] Engineering Seccomp System Call Decimation for 214..."
+
+# Compile a basic seccomp wrapper in C
+apt-get install -y --fix-broken -y gcc libseccomp-dev || true
+
+mkdir -p /etc/apparmor.d/alfred-isolated/ || true
+
+# Strict AppArmor Mode (Enforce)
+cat > /etc/apparmor.d/alfred-isolated/profile-214 << 'EOF'
+profile alfred-sandbox-214 /usr/local/bin/alfred-util-201 flags=(enforce) {
+  #include <abstractions/base>
+  /usr/local/bin/alfred-util-201 rmix,
+  /dev/null rw,
+}
+EOF
+
+# Inject Seccomp Wrapper C code
+mkdir -p /opt/alfred-seccomp || true
+cat > /opt/alfred-seccomp/seccomp_wrapper.c << 'EOF'
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <seccomp.h>
+
+int main(int argc, char *argv[]) {
+    if (argc < 2) return 1;
+
+    // Initialize seccomp filter: Default action is ALLOW
+    scmp_filter_ctx ctx;
+    ctx = seccomp_init(SCMP_ACT_ALLOW);
+    if (ctx == NULL) return 1;
+
+    // Blacklist dangerous syscalls (SIGKILL on attempt)
+    // Prevent creating new processes
+    seccomp_rule_add(ctx, SCMP_ACT_KILL, SCMP_SYS(execve), 0);
+    seccomp_rule_add(ctx, SCMP_ACT_KILL, SCMP_SYS(fork), 0);
+    seccomp_rule_add(ctx, SCMP_ACT_KILL, SCMP_SYS(vfork), 0);
+    seccomp_rule_add(ctx, SCMP_ACT_KILL, SCMP_SYS(clone), 0);
+    
+    // Prevent network socket creation
+    seccomp_rule_add(ctx, SCMP_ACT_KILL, SCMP_SYS(socket), 0);
+    
+    // Prevent process tracing/injection
+    seccomp_rule_add(ctx, SCMP_ACT_KILL, SCMP_SYS(ptrace), 0);
+
+    // Load the filter
+    seccomp_load(ctx);
+    seccomp_release(ctx);
+
+    // Execute target
+    execv(argv[1], &argv[1]);
+    
+    return 1;
+}
+EOF
+
+gcc /opt/alfred-seccomp/seccomp_wrapper.c -o /opt/alfred-seccomp/seccomp_wrapper -lseccomp || true
+
+cat > /usr/local/bin/alfred-util-201-seccomp-wrapper << 'EOF'
+#!/bin/bash
+# Seccomp System Call Decimation
+# Blacklists fork, execve, socket, and ptrace at the kernel level.
+exec /opt/alfred-seccomp/seccomp_wrapper /usr/local/bin/alfred-util-201 "$@"
+EOF
+
+[ -e "+x" ] && chmod +x /usr/local/bin/alfred-util-201-seccomp-wrapper || true
+
+echo "[Genesis Forge] Seccomp System Call Decimation Integrated."
+exit 0

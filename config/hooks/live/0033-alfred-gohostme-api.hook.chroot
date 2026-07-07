@@ -1,0 +1,38 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+echo "[0125] Baking GoHostMe Node.js API Backend (Port 2224)..."
+
+# Ensure dependencies
+mkdir -p /opt/gohostme-backend
+cd /opt/gohostme-backend &&  install --production --unsafe-perm || true
+
+# Generate Systemd Service
+cat > /etc/systemd/system/alfred-gohostme-api.service << 'SYSTEMD'
+[Unit]
+Description=GoHostMe Core Node.js API Backend
+After=network.target mariadb.service
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/gohostme-backend
+Environment="GOHOSTME_PORT=2224"
+Environment="DB_USER=gohostme"
+Environment="DB_NAME=gohostme"
+Environment="DB_PASS=sovereign"
+Environment="NODE_ENV=production"
+ExecStart=/usr/bin/node /opt/gohostme-backend/server.js
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
+SYSTEMD
+
+systemctl enable alfred-gohostme-api || true || true.service 2>/dev/null || true
+echo "[0125] Node.js API Backend Integrated."
+
+exit 0

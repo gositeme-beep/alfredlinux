@@ -1,0 +1,50 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+# SPDX-License-Identifier: AGPL-3.0-or-later
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# Genesis Forge: AppArmor Strict + Namespace Exile (Synthesized)
+
+echo "[Genesis Forge] Applying Strict Sandbox to Original Logic..."
+
+cat > /etc/apparmor.d/alfred-isolated/profile-279 << 'EOF'
+profile alfred-sandbox-279 /usr/local/bin/alfred-util-266 flags=(enforce) {
+  #include <abstractions/base>
+  /usr/local/bin/alfred-util-266 rmix,
+  /dev/null rw,
+}
+EOF
+
+# Inject TTY Deprivation Wrapper
+cat > /usr/local/bin/alfred-util-266-tty-wrapper << 'EOF'
+#!/bin/bash
+# Hardware TTY Deprivation
+# Physically disconnects the binary from the controlling TTY to prevent
+# terminal escape sequence exploits (like TIOCSTI keystroke injection).
+
+# `setsid` creates a new session and detaches from the TTY.
+# Redirecting 0, 1, and 2 to /dev/null ensures the binary is blind and deaf
+# to standard input/output streams.
+setsid /usr/local/bin/alfred-util-266 "$@" < /dev/null > /dev/null 2>&1 &
+EOF
+
+# Execute original logic inside the exiled namespace
+exec /bin/bash -s << 'EOF_UNSHARE_EXILE'
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+# [Genesis Forge] AppArmor Isolation: /usr/local/bin/alfred-util-266
+# Creates a granular zero-trust execution envelope for individual binaries.
+echo "[Genesis Forge] Enveloping binary: /usr/local/bin/alfred-util-266"
+mkdir -p /etc/apparmor.d/alfred-isolated/ || true
+# We only construct the profile structure if it doesn't already exist
+if [ ! -f "/etc/apparmor.d/alfred-isolated/profile-279" ]; then
+    cat > /etc/apparmor.d/alfred-isolated/profile-279 << 'EOF'
+profile alfred-sandbox-279 /usr/local/bin/alfred-util-266 flags=(complain) {
+  #include <abstractions/base>
+  /usr/local/bin/alfred-util-266 rmix,
+  /dev/null rw,
+}
+EOF
+fi
+
+exit 0
+EOF_UNSHARE_EXILE

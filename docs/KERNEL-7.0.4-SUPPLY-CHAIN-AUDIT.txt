@@ -1,0 +1,31 @@
+Alfred Linux - Kernel 7.0.4 Supply-Chain Audit
+==============================================
+
+Status
+------
+Current staged kernel package set in config/packages.chroot/ is 7.0.4-1alfred.
+This note records the package identities currently advertised by the generated
+apt metadata used for ISO staging.
+
+Artifacts
+---------
+linux-image-7.0.4_7.0.4-1alfred_amd64.deb
+SHA256: 846e8efbe6bd814f5424a3b626ae2f0f6834b28cc9bb5751b8ce076546fdc95d
+
+linux-headers-7.0.4_7.0.4-1alfred_amd64.deb
+SHA256: 7c8cafe56dd36160ee85c05912d9400227efbc4a78e2843433824e62eef7ef9e
+
+linux-libc-dev_7.0.4-1alfred_amd64.deb
+SHA256: 24163df33edb8007ecf4fadc6e1d36dc19a8af105960a909855ebf9c8f6f4555
+
+Source and staging path
+-----------------------
+- Download helper: scripts/kernel-download-7.0.4.sh
+- Archive staging dir: build-assets/kernel-7.0.4-debs/
+- Archive name: linux-7.0.4-debs-for-iso.tar.gz
+- Package staging dir: config/packages.chroot/
+
+Verification intent
+-------------------
+- The live-build staging metadata must describe only kernel debs actually present in config/packages.chroot/.
+- Older kernel references remain intentional only in explicit forbidden-version guards.

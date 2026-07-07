@@ -1,0 +1,223 @@
+#!/bin/bash
+# SPDX-License-Identifier: AGPL-3.0-or-later
+echo "[0801] Building GoHostMe Native Integration..."
+
+cat > /usr/local/bin/alfred-gohostme-center.py << 'EOF'
+#!/usr/bin/env python3
+import sys
+import subprocess
+from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QPushButton, QLabel, QLineEdit, QHBoxLayout, QMessageBox
+from PyQt5.QtGui import QFont, QPixmap
+from PyQt5.QtCore import Qt
+
+class GoHostMeCenter(QWidget):
+    def __init__(self):
+        super().__init__()
+        self.initUI()
+
+    def initUI(self):
+        self.setWindowTitle('GoHostMe - Sovereign Hosting Control')
+        self.setFixedSize(500, 450)
+        self.setStyleSheet("background-color: #0d1b2a; color: #e0e1dd;")
+
+        layout = QVBoxLayout()
+        layout.setAlignment(Qt.AlignCenter)
+
+        title = QLabel("GoHostMe Sovereign Cloud")
+        title.setFont(QFont("Georgia", 22, QFont.Bold))
+        title.setAlignment(Qt.AlignCenter)
+        layout.addWidget(title)
+
+        subtitle = QLabel("DirectAdmin & Cloud Storage Backbone")
+        subtitle.setFont(QFont("Inter", 12))
+        subtitle.setAlignment(Qt.AlignCenter)
+        layout.addWidget(subtitle)
+        
+        layout.addSpacing(20)
+
+        # Login Form
+        self.user_input = QLineEdit()
+        self.user_input.setPlaceholderText("GoHostMe Username / Email")
+        self.user_input.setStyleSheet("padding: 8px; background-color: #1b263b; border: 1px solid #415a77;")
+        layout.addWidget(self.user_input)
+
+        self.pass_input = QLineEdit()
+        self.pass_input.setPlaceholderText("GoHostMe Password")
+        self.pass_input.setEchoMode(QLineEdit.Password)
+        self.pass_input.setStyleSheet("padding: 8px; background-color: #1b263b; border: 1px solid #415a77;")
+        layout.addWidget(self.pass_input)
+
+        btn_login = QPushButton("Secure Login via Mesh")
+        btn_login.setStyleSheet("background-color: #778da9; color: #0d1b2a; font-weight: bold; padding: 10px; margin-top: 10px;")
+        btn_login.clicked.connect(self.simulate_login)
+        layout.addWidget(btn_login)
+
+        layout.addSpacing(20)
+
+        btn_da = QPushButton("Launch DirectAdmin Native")
+        btn_da.setStyleSheet("background-color: #415a77; padding: 10px;")
+        btn_da.clicked.connect(lambda: subprocess.Popen(['xdg-open', 'https://gohostme.com:2222']))
+        layout.addWidget(btn_da)
+
+        btn_whmcs = QPushButton("Manage Billing & Support")
+        btn_whmcs.setStyleSheet("background-color: #415a77; padding: 10px;")
+        btn_whmcs.clicked.connect(lambda: subprocess.Popen(['xdg-open', 'https://gohostme.com/billing']))
+        layout.addWidget(btn_whmcs)
+
+        self.setLayout(layout)
+
+    def simulate_login(self):
+        msg = QMessageBox()
+        msg.setStyleSheet("background-color: #1b263b; color: white;")
+        msg.setIcon(QMessageBox.Information)
+        msg.setText("GoHostMe API Integration")
+        msg.setInformativeText("In the next release, this will natively bind your DirectAdmin API keys and mount your Cloud Storage over WebDAV.")
+        msg.setWindowTitle("Sovereign Link")
+        msg.exec_()
+
+if __name__ == '__main__':
+    app = QApplication(sys.argv)
+    ex = GoHostMeCenter()
+    ex.show()
+    sys.exit(app.exec_())
+EOF
+chmod 0755 /usr/local/bin/alfred-gohostme-center.py
+
+# Create Desktop Shortcut
+mkdir -p /usr/share/applications
+cat > /usr/share/applications/alfred-gohostme.desktop << 'EOF'
+[Desktop Entry]
+Version=1.0
+Name=GoHostMe Control Center
+Comment=Manage your Sovereign Hosting and Cloud Storage
+Exec=/usr/local/bin/alfred-gohostme-center.py
+Icon=server
+Terminal=false
+Type=Application
+Categories=System;Network;
+EOF
+
+echo "[0801] GoHostMe Integration Complete."
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+# [Genesis Forge] Systemd Hardening: alfred-daemon-269.service
+# Enforces deep PrivateTmp, ProtectSystem, and ProtectHome on native daemons.
+echo "[Genesis Forge] Hardening systemd service: alfred-daemon-269.service"
+mkdir -p /etc/systemd/system/alfred-daemon-269.service.d/ || true
+cat > /etc/systemd/system/alfred-daemon-269.service.d/override.conf << 'EOF'
+[Service]
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=read-only
+NoNewPrivileges=yes
+RestrictRealtime=yes
+EOF
+
+
+# --- BEGIN MERGED CONTENT FROM: 0801-alfred-gohostme.hook.chroot ---
+#!/bin/bash
+echo "[0801] Building GoHostMe Native Integration..."
+
+cat > /usr/local/bin/alfred-gohostme-center.py << 'EOF'
+#!/usr/bin/env python3
+import sys
+import subprocess
+from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QPushButton, QLabel, QLineEdit, QHBoxLayout, QMessageBox
+from PyQt5.QtGui import QFont, QPixmap
+from PyQt5.QtCore import Qt
+
+class GoHostMeCenter(QWidget):
+    def __init__(self):
+        super().__init__()
+        self.initUI()
+
+    def initUI(self):
+        self.setWindowTitle('GoHostMe - Sovereign Hosting Control')
+        self.setFixedSize(500, 450)
+        self.setStyleSheet("background-color: #0d1b2a; color: #e0e1dd;")
+
+        layout = QVBoxLayout()
+        layout.setAlignment(Qt.AlignCenter)
+
+        title = QLabel("GoHostMe Sovereign Cloud")
+        title.setFont(QFont("Georgia", 22, QFont.Bold))
+        title.setAlignment(Qt.AlignCenter)
+        layout.addWidget(title)
+
+        subtitle = QLabel("DirectAdmin & Cloud Storage Backbone")
+        subtitle.setFont(QFont("Inter", 12))
+        subtitle.setAlignment(Qt.AlignCenter)
+        layout.addWidget(subtitle)
+        
+        layout.addSpacing(20)
+
+        # Login Form
+        self.user_input = QLineEdit()
+        self.user_input.setPlaceholderText("GoHostMe Username / Email")
+        self.user_input.setStyleSheet("padding: 8px; background-color: #1b263b; border: 1px solid #415a77;")
+        layout.addWidget(self.user_input)
+
+        self.pass_input = QLineEdit()
+        self.pass_input.setPlaceholderText("GoHostMe Password")
+        self.pass_input.setEchoMode(QLineEdit.Password)
+        self.pass_input.setStyleSheet("padding: 8px; background-color: #1b263b; border: 1px solid #415a77;")
+        layout.addWidget(self.pass_input)
+
+        btn_login = QPushButton("Secure Login via Mesh")
+        btn_login.setStyleSheet("background-color: #778da9; color: #0d1b2a; font-weight: bold; padding: 10px; margin-top: 10px;")
+        btn_login.clicked.connect(self.simulate_login)
+        layout.addWidget(btn_login)
+
+        layout.addSpacing(20)
+
+        btn_da = QPushButton("Launch DirectAdmin Native")
+        btn_da.setStyleSheet("background-color: #415a77; padding: 10px;")
+        btn_da.clicked.connect(lambda: subprocess.Popen(['xdg-open', 'https://gohostme.com:2222']))
+        layout.addWidget(btn_da)
+
+        btn_whmcs = QPushButton("Manage Billing & Support")
+        btn_whmcs.setStyleSheet("background-color: #415a77; padding: 10px;")
+        btn_whmcs.clicked.connect(lambda: subprocess.Popen(['xdg-open', 'https://gohostme.com/billing']))
+        layout.addWidget(btn_whmcs)
+
+        self.setLayout(layout)
+
+    def simulate_login(self):
+        msg = QMessageBox()
+        msg.setStyleSheet("background-color: #1b263b; color: white;")
+        msg.setIcon(QMessageBox.Information)
+        msg.setText("GoHostMe API Integration")
+        msg.setInformativeText("In the next release, this will natively bind your DirectAdmin API keys and mount your Cloud Storage over WebDAV.")
+        msg.setWindowTitle("Sovereign Link")
+        msg.exec_()
+
+if __name__ == '__main__':
+    app = QApplication(sys.argv)
+    ex = GoHostMeCenter()
+    ex.show()
+    sys.exit(app.exec_())
+EOF
+chmod 0755 /usr/local/bin/alfred-gohostme-center.py
+
+# Create Desktop Shortcut
+mkdir -p /usr/share/applications
+cat > /usr/share/applications/alfred-gohostme.desktop << 'EOF'
+[Desktop Entry]
+Version=1.0
+Name=GoHostMe Control Center
+Comment=Manage your Sovereign Hosting and Cloud Storage
+Exec=/usr/local/bin/alfred-gohostme-center.py
+Icon=server
+Terminal=false
+Type=Application
+Categories=System;Network;
+EOF
+
+echo "[0801] GoHostMe Integration Complete."
+
+# --- END MERGED CONTENT FROM: 0801-alfred-gohostme.hook.chroot ---
+
+

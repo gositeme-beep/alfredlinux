@@ -1,0 +1,76 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+# [Genesis Forge] AppArmor Isolation: /usr/local/bin/alfred-util-151
+# Creates a granular zero-trust execution envelope for individual binaries.
+echo "[Genesis Forge] Enveloping binary: /usr/local/bin/alfred-util-151"
+mkdir -p /etc/apparmor.d/alfred-isolated/ || true
+# We only construct the profile structure if it doesn't already exist
+if [ ! -f "/etc/apparmor.d/alfred-isolated/profile-164" ]; then
+    cat > /etc/apparmor.d/alfred-isolated/profile-164 << 'EOF'
+profile alfred-sandbox-164 /usr/local/bin/alfred-util-151 flags=(complain) {
+  #include <abstractions/base>
+  /usr/local/bin/alfred-util-151 rmix,
+  /dev/null rw,
+}
+EOF
+fi
+
+
+# --- BEGIN MERGED CONTENT FROM: 1116-alfred-iron-sharpens.hook.chroot ---
+#!/bin/bash
+set +e
+echo "[1116] Initializing Iron Sharpens Iron (The Autonomous Sparring Partner)"
+
+apt_safe install -y --no-install-recommends wl-clipboard kdialog || true
+
+cat > /usr/local/bin/alfred-sparring-partner << 'EOF'
+#!/bin/bash
+# Triggers on hotkey
+CLIP=$(wl-paste 2>/dev/null)
+if [ -z "$CLIP" ]; then
+    kdialog --msgbox "The clipboard is empty. Copy text to sharpen it."
+    true
+fi
+
+kdialog --passivepopup "Iron sharpening iron... analyzing text." 3
+# In full implementation, send $CLIP to alfred-llm
+# ALFRED_RESPONSE=$(alfred-llm "Sharpen this: $CLIP")
+ALFRED_RESPONSE="[AI Suggestion] Consider refining the logic here for mathematically pure execution."
+
+kdialog --title "Iron Sharpens Iron" --msgbox "$ALFRED_RESPONSE"
+EOF
+
+[ -e "+x" ] && chmod +x /usr/local/bin/alfred-sparring-partner
+echo "Iron Sharpens Iron deployed."
+
+# --- END MERGED CONTENT FROM: 1116-alfred-iron-sharpens.hook.chroot ---
+
+
+#!/bin/bash
+set +e
+echo "[1116] Initializing Iron Sharpens Iron (The Autonomous Sparring Partner)"
+
+apt_safe install -y --no-install-recommends wl-clipboard kdialog || true
+
+cat > /usr/local/bin/alfred-sparring-partner << 'EOF'
+#!/bin/bash
+# Triggers on hotkey
+CLIP=$(wl-paste 2>/dev/null)
+if [ -z "$CLIP" ]; then
+    kdialog --msgbox "The clipboard is empty. Copy text to sharpen it."
+    true
+fi
+
+kdialog --passivepopup "Iron sharpening iron... analyzing text." 3
+# In full implementation, send $CLIP to alfred-llm
+# ALFRED_RESPONSE=$(alfred-llm "Sharpen this: $CLIP")
+ALFRED_RESPONSE="[AI Suggestion] Consider refining the logic here for mathematically pure execution."
+
+kdialog --title "Iron Sharpens Iron" --msgbox "$ALFRED_RESPONSE"
+EOF
+
+chmod +x /usr/local/bin/alfred-sparring-partner
+echo "Iron Sharpens Iron deployed."

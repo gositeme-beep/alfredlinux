@@ -1,0 +1,71 @@
+Alfred / GoSiteMe — Content manifest format v1 (MANIFEST-v1)
+=============================================================
+Purpose: describe a release or bundle with cryptographic identity (CIDs)
+and signatures so clients can verify without trusting a single CDN.
+
+Scope: blobs live on IPFS (or HTTPS mirror); this document is the logical
+schema. On-disk encoding SHOULD be JSON (UTF-8, no BOM), one canonical
+object per release, optionally minified.
+
+Top-level fields (required unless noted)
+----------------------------------------
+manifest_version   string   Always "1"
+product            string   e.g. "alfred-linux-iso", "gositeme-static-bundle"
+release_id         string   Opaque id (e.g. git tag, build id)
+created_utc        string   RFC3339 UTC timestamp
+
+root_cid           string   IPFS CIDv1 (or v0) of Merkle root or archive root
+files              array    Optional; each element:
+                         path   string   POSIX-style relative path
+                         cid    string   Content-address of that file
+                         size   int      Octet length (optional)
+                         sha256 string   Hex sha256 of raw bytes (optional)
+
+signatures         array    One or more detached claims over a canonical hash
+                         of the manifest **without** the signatures array
+                         (implementations MUST define exact serialization).
+  Each signature object:
+    type             string   e.g. "minisign", "openpgp", "ml-dsa" (future)
+    key_id           string   Identifier of public key / fingerprint
+    payload_sha256   string   Hex hash of the bytes that were signed
+    signature_b64    string   Base64 signature (or armored ASCII for OpenPGP)
+
+Optional fields
+----------------
+previous_release_id  string   For upgrade / delta chains
+chain_anchor         string   Optional: tx id or block height on QGSM when live
+notes                string   Human operator notes (non-security)
+
+Verification algorithm (normative intent)
+-----------------------------------------
+1. Fetch manifest by HTTPS or out-of-band.
+2. Verify each signature against published trust keys (out-of-band).
+3. Verify root_cid resolves to content matching files[] if present.
+4. Optionally verify chain_anchor on ledger when deployed.
+
+Security notes
+--------------
+- Never put large blobs inside the manifest; only CIDs and hashes.
+- Rotate signing keys with overlap; document key hierarchy in repo.
+- Treat chain_anchor as advisory until consensus rules are defined.
+
+Example (illustrative JSON shape — not a live signature)
+---------------------------------------------------------
+{
+  "manifest_version": "1",
+  "product": "example-bundle",
+  "release_id": "2026.04.29+build.42",
+  "created_utc": "2026-04-29T12:00:00Z",
+  "root_cid": "bafy…",
+  "files": [
+    {"path": "index.html", "cid": "bafk…", "size": 1204}
+  ],
+  "signatures": [
+    {
+      "type": "minisign",
+      "key_id": "RWRx…",
+      "payload_sha256": "abc…",
+      "signature_b64": "…"
+    }
+  ]
+}

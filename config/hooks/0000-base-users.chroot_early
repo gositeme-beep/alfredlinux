@@ -1,0 +1,32 @@
+#!/bin/sh
+set -e
+echo "[EARLY HOOK] Pre-creating standard service users/groups to prevent dpkg unpack failures..."
+
+# Core Debian system groups
+groupadd -f -g 8 mail || true
+groupadd -f -g 33 www-data || true
+groupadd -f -g 34 backup || true
+groupadd -f -g 43 utmp || true
+groupadd -f -g 44 video || true
+groupadd -f -g 46 plugdev || true
+groupadd -f -g 50 staff || true
+groupadd -f -g 104 kvm || true
+groupadd -f -g 107 render || true
+
+# Pre-create users for major services being installed
+useradd -u 8 -g mail -d /var/mail -s /usr/sbin/nologin -c "mail" mail 2>/dev/null || true
+useradd -u 33 -g www-data -d /var/www -s /usr/sbin/nologin -c "www-data" www-data 2>/dev/null || true
+
+# Application specific users that packages might expect to create or rely on
+useradd --system --home-dir /var/spool/exim4 --shell /usr/sbin/nologin --user-group Debian-exim 2>/dev/null || true
+useradd --system --home-dir /var/lib/mysql --shell /usr/sbin/nologin --user-group mysql 2>/dev/null || true
+useradd --system --home-dir /var/lib/redis --shell /usr/sbin/nologin --user-group redis 2>/dev/null || true
+useradd --system --home-dir /var/lib/clamav --shell /usr/sbin/nologin --user-group clamav 2>/dev/null || true
+useradd --system --home-dir /var/lib/libvirt --shell /usr/sbin/nologin --user-group libvirt-qemu 2>/dev/null || true
+
+# Force update-passwd just to be safe if binary exists
+if [ -x /usr/sbin/update-passwd ]; then
+    /usr/sbin/update-passwd
+fi
+
+echo "[EARLY HOOK] Done pre-creating users/groups."

@@ -1,0 +1,77 @@
+# GoForge Actions — canonical workflow for Alfred Linux (production: https://alfredlinux.com/forge/)
+# On-disk path: .gitea/workflows/ (Forgejo/GoForge Actions). Mirror: ../.forgejo/workflows/ — run:
+#   bash scripts/sync-forgejo-actions-yaml.sh
+# Requires: Actions enabled + act_runner with ubuntu-latest (or edit runs-on below).
+# See: docs/GOFORGE-INFRASTRUCTURE-UPGRADE.txt
+name: security-audit
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  workflow_dispatch:
+    inputs:
+      law_root:
+        description: Optional LAW_ROOT for audit-law-wrappers.sh (blank uses default path)
+        required: false
+        default: ''
+      shellcheck_all:
+        description: Set to 1 for ALFRED_SHELLCHECK_ALL=1 (full shellcheck sweep)
+        required: false
+        default: '0'
+      repo_health_json:
+        description: Set to 1 to run alfred-repo-health.sh in JSON mode (validates wrapper; re-runs gates)
+        required: false
+        default: '0'
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: .forgejo mirror matches GoForge canonical (.gitea/workflows) copy
+        run: |
+          bash scripts/sync-forgejo-actions-yaml.sh
+          git diff --exit-code .forgejo/workflows/security-audit.yml
+
+      - name: Canonical → build (hooks + lists + packages.chroot + build-assets)
+        run: |
+          mkdir -p build/config/hooks build/config/package-lists build/config/packages.chroot \
+            build/config/includes.chroot/build-assets
+          bash scripts/sync-canonical-to-build.sh
+          for f in config/hooks/live/*.hook.chroot; do
+            b=$(basename "$f")
+            test -f "build/config/hooks/live/$b" || { echo "missing hook after sync: $b" >&2; exit 1; }
+          done
+          for f in config/package-lists/*.list.chroot; do
+            b=$(basename "$f")
+            test -f "build/config/package-lists/$b" || { echo "missing package list after sync: $b" >&2; exit 1; }
+          done
+          cmp -s config/package-lists/alfred.list.chroot build/config/package-lists/alfred.list.chroot
+
+      - name: Repo metadata (bible_tongues vs languages.conf)
+        run: bash scripts/release-integrity.sh check-repo
+
+      - name: Install shellcheck
+        run: sudo apt-get update -qq && sudo apt-get install -y --no-install-recommends shellcheck
+
+      - name: Run scripts/security-audit.sh
+        env:
+          ALFRED_SHELLCHECK_ALL: ${{ inputs.shellcheck_all }}
+        run: bash scripts/security-audit.sh
+
+      - name: Run scripts/audit-law-wrappers.sh (optional LAW_ROOT)
+        env:
+          LAW_ROOT: ${{ inputs.law_root }}
+        run: bash scripts/audit-law-wrappers.sh
+
+      - name: Alfred repo-health JSON (optional workflow_dispatch)
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.repo_health_json == '1' }}
+        env:
+          ALFRED_REPO_HEALTH_JSON: '1'
+          ALFRED_REPO_HEALTH_SHELLCHECK_ALL: ${{ inputs.shellcheck_all }}
+        run: |
+          set -euo pipefail
+          bash scripts/alfred-repo-health.sh 2>/dev/null | python3 -c 'import json,sys; d=json.load(sys.stdin); assert d.get("status")=="ok", d; print("repo-health JSON ok", d.get("seconds"))'

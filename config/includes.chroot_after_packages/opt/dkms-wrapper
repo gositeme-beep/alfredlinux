@@ -1,0 +1,29 @@
+#!/bin/bash
+# Sentinel Auto-Heal V12 — Dynamic NVIDIA Detection
+# No longer hardcoded to 610.43.02 — finds ANY nvidia-current-* source
+
+echo "[Sentinel Auto-Heal V12] Intercepting DKMS build for Nvidia..."
+
+export KBUILD_MODPOST_WARN=1
+
+# Dynamically find the NVIDIA source directory
+SRC=""
+for d in /usr/src/nvidia-current-*; do
+    if [ -d "$d" ]; then
+        SRC="$d"
+        break
+    fi
+done
+
+if [ -z "$SRC" ]; then
+    echo "[Sentinel Auto-Heal V12] No NVIDIA source found in /usr/src/ — skipping patches"
+else
+    echo "[Sentinel Auto-Heal V12] Found NVIDIA source: $SRC"
+    if [ -f "/opt/patch_nvidia.py" ]; then
+        python3 /opt/patch_nvidia.py "$SRC"
+    else
+        echo "[Sentinel Auto-Heal V12] ERROR: patch_nvidia.py not found!"
+    fi
+fi
+
+exec /usr/sbin/dkms.real "$@"

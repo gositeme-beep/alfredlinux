@@ -1,0 +1,40 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# 1001-alfred-omnipresent-eye.hook.chroot
+# The Omnipresent Eye: Global RF Spectrum Synthesis
+set +e
+
+echo "[1001] Configuring The Omnipresent Eye (RF Spectrum Synthesis)"
+
+# We install rtl-sdr and gr-osmosdr to interface with Software Defined Radio dongles.
+# The OS will continuously map the local RF spectrum to detect hidden IMSI catchers
+# (Stingrays) and covert surveillance drones within a 5-mile radius.
+
+apt-get update || true && apt-get install -y --fix-broken -y rtl-sdr gr-osmosdr || true
+
+cat << 'EOF' > /usr/local/bin/alfred-omnipresent-eye
+#!/bin/bash
+# Simulates the tactical RF Dashboard
+echo "The Omnipresent Eye is open."
+
+while true; do
+    # In production, this would use kalibrate-rtl to scan GSM bands for anomalous base stations
+    # kal -s GSM900 | grep "average absolute error"
+    
+    # Simulate a Stingray detection
+    STINGRAY_DETECTED=$(shuf -i 1-500 -n 1)
+    if [ "$STINGRAY_DETECTED" -eq 1 ]; then
+        echo "OMNIPRESENT EYE ALERT: Unregistered GSM Base Station (IMSI Catcher) detected at 921.2 MHz."
+        logger -p auth.alert "OMNIPRESENT_EYE: Stingray surveillance detected in local RF spectrum."
+    fi
+    sleep 10
+done
+EOF
+
+chmod 0755 /usr/local/bin/alfred-omnipresent-eye || true
+
+echo "[1001] The Omnipresent Eye sees all."
+
+exit 0

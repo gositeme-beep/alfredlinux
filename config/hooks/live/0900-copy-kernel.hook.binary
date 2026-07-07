@@ -1,0 +1,56 @@
+#!/bin/bash
+# Description: Copy kernel and initrd from chroot to binary/live since LB_LINUX_PACKAGES=none
+# This hook runs during lb binary_hooks.
+set -eu
+echo "[0900] Manually staging kernel to binary/live because LB_LINUX_PACKAGES=none..."
+
+LIVE_DIR="/work/build/binary/live"
+
+# Find the chroot with the kernel — fast build uses /work/cache/bootstrap or /work/chroot
+KERNEL_SRC=""
+for candidate in /work/build/chroot/boot /work/cache/bootstrap/boot /work/chroot/boot chroot/boot build/chroot/boot; do
+  if ls ${candidate}/vmlinuz-7* >/dev/null 2>&1; then
+    KERNEL_SRC="$candidate"
+    break
+  fi
+done
+
+if [ -z "$KERNEL_SRC" ]; then
+  echo "[0900] WARNING: No vmlinuz-7* found in any chroot/boot location."
+  echo "[0900] Attempting extraction from kernel .deb package..."
+  KERNEL_DEB=""
+  for deb in /work/config/packages.chroot/linux-image-7*.deb config/packages.chroot/linux-image-7*.deb; do
+    if [ -f "$deb" ]; then
+      KERNEL_DEB="$deb"
+      break
+    fi
+  done
+  if [ -n "$KERNEL_DEB" ]; then
+    mkdir -p "$LIVE_DIR"
+    TMPDIR=$(mktemp -d)
+    dpkg-deb -x "$KERNEL_DEB" "$TMPDIR"
+    cp -a "$TMPDIR"/boot/vmlinuz-7* "$LIVE_DIR/" 2>/dev/null || true
+    rm -rf "$TMPDIR"
+    echo "[0900] Extracted kernel from $KERNEL_DEB"
+    # initrd must be generated — check if one exists anywhere
+    for initrd_candidate in /work/build/chroot/boot /work/cache/bootstrap/boot /work/chroot/boot chroot/boot build/chroot/boot; do
+      if ls ${initrd_candidate}/initrd.img-7* >/dev/null 2>&1; then
+        cp -a ${initrd_candidate}/initrd.img-7* "$LIVE_DIR/"
+        echo "[0900] Copied initrd from $initrd_candidate"
+        break
+      fi
+    done
+  else
+    echo "[0900] ERROR: No kernel .deb found either. Cannot stage kernel." >&2
+    exit 1
+  fi
+else
+  echo "[0900] Found kernel at: $KERNEL_SRC"
+  mkdir -p "$LIVE_DIR"
+  cp -a ${KERNEL_SRC}/vmlinuz-7* "$LIVE_DIR/"
+  cp -a ${KERNEL_SRC}/initrd.img-7* "$LIVE_DIR/" 2>/dev/null || true
+fi
+
+echo "[0900] $LIVE_DIR contents:"
+ls -la "$LIVE_DIR/" 2>/dev/null || echo "[0900] WARNING: $LIVE_DIR is empty!"
+echo "[0900] Kernel staging complete."

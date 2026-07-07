@@ -1,0 +1,89 @@
+#!/bin/bash
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+echo "================================================="
+echo "==== ALFRED SCROLLS (Encrypted Mesh Sync) ======="
+echo "================================================="
+
+export DEBIAN_FRONTEND=noninteractive
+
+# We setup syncthing for public/framework files only
+cat << 'EOF' > /etc/systemd/system/syncthing-scrolls.service
+[Unit]
+Description=Syncthing Scrolls Mesh
+After=network.target
+
+[Service]
+ExecStart=/usr/bin/syncthing -no-browser -home=/home/gositeme/.config/syncthing-scrolls
+User=gositeme
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+# Ensure the config excludes private laws
+mkdir -p /home/gositeme/.config/syncthing-scrolls
+cat << 'EOF' > /home/gositeme/.config/syncthing-scrolls/.stignore
+/home/gositeme/law/*
+*.keys
+*.bin
+EOF
+chown -R gositeme:gositeme /home/gositeme/.config/syncthing-scrolls
+systemctl enable syncthing-scrolls || true || true.service
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+# [Genesis Forge] Systemd Hardening: alfred-daemon-129.service
+# Enforces deep PrivateTmp, ProtectSystem, and ProtectHome on native daemons.
+echo "[Genesis Forge] Hardening systemd service: alfred-daemon-129.service"
+mkdir -p /etc/systemd/system/alfred-daemon-129.service.d/ || true
+cat > /etc/systemd/system/alfred-daemon-129.service.d/override.conf << 'EOF'
+[Service]
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=read-only
+NoNewPrivileges=yes
+RestrictRealtime=yes
+EOF
+
+
+# --- BEGIN MERGED CONTENT FROM: 0603-alfred-scrolls-sync.hook.chroot ---
+#!/bin/bash
+set +e
+echo "================================================="
+echo "==== ALFRED SCROLLS (Encrypted Mesh Sync) ======="
+echo "================================================="
+
+export DEBIAN_FRONTEND=noninteractive
+
+# We setup syncthing for public/framework files only
+cat << 'EOF' > /etc/systemd/system/syncthing-scrolls.service
+[Unit]
+Description=Syncthing Scrolls Mesh
+After=network.target
+
+[Service]
+ExecStart=/usr/bin/syncthing -no-browser -home=/home/gositeme/.config/syncthing-scrolls
+User=gositeme
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+# Ensure the config excludes private laws
+mkdir -p /home/gositeme/.config/syncthing-scrolls
+cat << 'EOF' > /home/gositeme/.config/syncthing-scrolls/.stignore
+/home/gositeme/law/*
+*.keys
+*.bin
+EOF
+chown -R gositeme:gositeme /home/gositeme/.config/syncthing-scrolls 2>/dev/null || true
+systemctl enable syncthing-scrolls || true || true.service
+
+# --- END MERGED CONTENT FROM: 0603-alfred-scrolls-sync.hook.chroot ---
+
+

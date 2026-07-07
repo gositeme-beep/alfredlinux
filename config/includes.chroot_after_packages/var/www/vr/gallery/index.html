@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GoSiteMe VR Art Gallery</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0a0a14;color:#fff;font-family:'Inter','Segoe UI',system-ui,sans-serif;overflow:hidden}
+#loading{position:fixed;inset:0;background:#0a0a14;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;transition:opacity .8s}
+#loading.hidden{opacity:0;pointer-events:none}
+#loading h1{font-size:2.5rem;margin-bottom:.3rem;background:linear-gradient(135deg,#f59e0b,#ef4444);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.load-ring{width:60px;height:60px;border:3px solid rgba(245,158,11,.2);border-top-color:#f59e0b;border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+#hud{position:fixed;top:0;left:0;right:0;padding:1rem 1.5rem;display:flex;align-items:center;justify-content:space-between;z-index:100;background:linear-gradient(180deg,rgba(10,10,20,.95),transparent);pointer-events:none}
+#hud>*{pointer-events:auto}
+.hud-title{font-size:1.2rem;font-weight:700;background:linear-gradient(135deg,#f59e0b,#ef4444);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.hud-btn{padding:.45rem .9rem;border-radius:8px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.06);color:rgba(255,255,255,.7);cursor:pointer;font-size:.78rem;font-weight:600;transition:.2s;backdrop-filter:blur(8px)}
+.hud-btn:hover{background:rgba(245,158,11,.15);color:#f59e0b;border-color:rgba(245,158,11,.3)}
+
+#artInfo{position:fixed;bottom:2rem;left:50%;transform:translateX(-50%);z-index:100;background:rgba(22,22,54,.9);border:1px solid rgba(245,158,11,.2);border-radius:14px;padding:1rem 2rem;backdrop-filter:blur(12px);text-align:center;display:none;max-width:400px}
+#artInfo h3{font-size:1rem;margin-bottom:.3rem}
+#artInfo p{font-size:.78rem;color:rgba(255,255,255,.5)}
+#artInfo .artist{color:#f59e0b;font-weight:600}
+
+.controls-hint{position:fixed;bottom:1rem;right:1.5rem;z-index:100;font-size:.7rem;color:rgba(255,255,255,.25)}
+</style>
+<script src="/vr/shared/alfred-csrf.js"></script>
+</head>
+<body>
+<div id="loading"><h1>🎨 Art Gallery</h1><p>Loading museum…</p><div class="load-ring"></div></div>
+<div id="hud">
+    <div class="hud-title">🎨 GoSiteMe Art Gallery</div>
+    <div style="display:flex;gap:.5rem">
+        <button class="hud-btn" onclick="location.href='/vr/hub/'">← Back to Hub</button>
+    </div>
+</div>
+<div id="artInfo"><h3 id="artTitle"></h3><p class="artist" id="artArtist"></p><p id="artDesc"></p><button id="askAlfredBtn" onclick="askAlfredAboutArt()" style="margin-top:.5rem;padding:.35rem .8rem;border-radius:8px;border:1px solid rgba(245,158,11,.3);background:rgba(245,158,11,.1);color:#f59e0b;cursor:pointer;font-size:.72rem;font-weight:600;transition:.2s;display:none">🤵 Ask Alfred</button><p id="alfredComment" style="margin-top:.5rem;font-size:.75rem;color:rgba(255,255,255,.7);display:none;font-style:italic;max-width:350px"></p></div>
+<div class="controls-hint">WASD to move · Mouse to look · Click canvas to start</div>
+<script src="/assets/js/vendor/three.r128.min.js"></script>
+<script src="/vr/shared/gositeme-quality.js"></script>
+<script>
+let scene, camera, renderer, clock;
+let playerPos = {x:0, y:1.6, z:15};
+let playerRot = {x:0, y:0};
+let moveState = {forward:false, backward:false, left:false, right:false};
+let isPointerLocked = false;
+let artFrames = [];
+
+// Procedural art pieces
+const ARTWORKS = [
+    {title:'Neural Dawn', artist:'Alfred AI', desc:'Generated from 10,000 server logs — a sunrise of data.', style:'neural'},
+    {title:'Quantum Lattice', artist:'Cipher AI', desc:'Cryptographic patterns forming infinite complexity.', style:'lattice'},
+    {title:'Green Growth', artist:'Sage AI', desc:'Organic fractals inspired by sustainable architecture.', style:'fractal'},
+    {title:'Fleet Symphony', artist:'Nova AI', desc:'8 agents dancing in synchronized harmony.', style:'agents'},
+    {title:'Digital Nebula', artist:'Pulse AI', desc:'Colors pulse to the heartbeat of the network.', style:'nebula'},
+    {title:'Code Canvas', artist:'Architect AI', desc:'Sourcecode rendered as visual poetry.', style:'code'},
+    {title:'Temporal Shift', artist:'Atlas AI', desc:'Time signatures woven into geometric space.', style:'temporal'},
+    {title:'Binary Rose', artist:'Pierre AI', desc:'Beauty at the intersection of math and nature.', style:'rose'},
+    {title:'Serverless Dream', artist:'Alfred AI', desc:'The cloud as an abstract landscape.', style:'cloud'},
+    {title:'ELO Gradient', artist:'Cipher AI', desc:'Chess skill visualized as chromatic energy.', style:'chess'},
+    {title:'Pixel Forest', artist:'Sage AI', desc:'A forest of data trees growing upward.', style:'forest'},
+    {title:'Waveform', artist:'Pulse AI', desc:'Sound made visible through oscilloscope art.', style:'wave'},
+];
+
+function init() {
+    scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x080810);
+    scene.fog = new THREE.Fog(0x080810, 20, 60);
+
+    camera = new THREE.PerspectiveCamera(65, innerWidth/innerHeight, 0.1, 100);
+    camera.position.set(playerPos.x, playerPos.y, playerPos.z);
+
+    renderer = new THREE.WebGLRenderer({antialias:true});
+    renderer.setSize(innerWidth, innerHeight);
+    renderer.setPixelRatio(typeof GoSiteMeQuality!=='undefined'?GoSiteMeQuality.dpr:Math.min(devicePixelRatio,2));
+    renderer.shadowMap.enabled = true;
+    document.body.appendChild(renderer.domElement);
+    clock = new THREE.Clock();
+
+    // Ambient light
+    scene.add(new THREE.AmbientLight(0x202040, 0.4));
+
+    // Museum floor — polished marble look
+    const floorGeo = new THREE.PlaneGeometry(40, 60);
+    const floorMat = new THREE.MeshStandardMaterial({color:0x1a1a2e, roughness:0.2, metalness:0.3});
+    const floor = new THREE.Mesh(floorGeo, floorMat);
+    floor.rotation.x = -Math.PI/2;
+    floor.receiveShadow = true;
+    scene.add(floor);
+
+    // Ceiling
+    const ceilGeo = new THREE.PlaneGeometry(40, 60);
+    const ceilMat = new THREE.MeshStandardMaterial({color:0x0a0a1e, roughness:0.8});
+    const ceiling = new THREE.Mesh(ceilGeo, ceilMat);
+    ceiling.rotation.x = Math.PI/2;
+    ceiling.position.y = 5;
+    scene.add(ceiling);
+
+    // Walls
+    const wallMat = new THREE.MeshStandardMaterial({color:0x12122a, roughness:0.6, metalness:0.1});
+    // Left wall
+    const lw = new THREE.Mesh(new THREE.PlaneGeometry(60, 5), wallMat);
+    lw.position.set(-20, 2.5, 0); lw.rotation.y = Math.PI/2; scene.add(lw);
+    // Right wall
+    const rw = new THREE.Mesh(new THREE.PlaneGeometry(60, 5), wallMat.clone());
+    rw.position.set(20, 2.5, 0); rw.rotation.y = -Math.PI/2; scene.add(rw);
+    // Back wall
+    const bw = new THREE.Mesh(new THREE.PlaneGeometry(40, 5), wallMat.clone());
+    bw.position.set(0, 2.5, -30); scene.add(bw);
+    // Front wall
+    const fw = new THREE.Mesh(new THREE.PlaneGeometry(40, 5), wallMat.clone());
+    fw.position.set(0, 2.5, 30); fw.rotation.y = Math.PI; scene.add(fw);
+
+    // Create artwork frames on walls
+    createArtworks();
+
+    // Controls
+    setupControls();
+}
+
+function generateArtTexture(style) {
+    const canvas = document.createElement('canvas');
+    canvas.width = 512; canvas.height = 512;
+    const ctx = canvas.getContext('2d');
+
+    // Base
+    ctx.fillStyle = '#0a0a14';
+    ctx.fillRect(0,0,512,512);
+
+    switch(style) {
+        case 'neural':
+            for(let i=0;i<200;i++){
+                ctx.strokeStyle = `hsla(${200+i*0.3},80%,60%,0.15)`;
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.moveTo(Math.random()*512, Math.random()*512);
+                ctx.bezierCurveTo(Math.random()*512,Math.random()*512,Math.random()*512,Math.random()*512,Math.random()*512,Math.random()*512);
+                ctx.stroke();
+            }
+            for(let i=0;i<50;i++){
+                ctx.fillStyle=`hsla(${40+i*2},90%,60%,0.4)`;
+                ctx.beginPath();
+                ctx.arc(Math.random()*512,Math.random()*300+100,Math.random()*5+2,0,Math.PI*2);
+                ctx.fill();
+            }
+            break;
+        case 'lattice':
+            for(let x=0;x<16;x++) for(let y=0;y<16;y++){
+                const bright = Math.sin(x*0.5)*Math.cos(y*0.7)*0.5+0.5;
+                ctx.fillStyle=`hsla(${0},80%,${bright*60+20}%,0.6)`;
+                ctx.fillRect(x*32+4,y*32+4,24,24);
+                ctx.strokeStyle=`hsla(${350},90%,50%,0.3)`;
+                ctx.strokeRect(x*32+4,y*32+4,24,24);
+            }
+            break;
+        case 'fractal':
+            const drawBranch = (x,y,len,angle,depth) => {
+                if(depth<=0||len<2)return;
+                const ex=x+Math.cos(angle)*len, ey=y+Math.sin(angle)*len;
+                ctx.strokeStyle=`hsla(${120+depth*20},70%,${40+depth*5}%,${0.3+depth*0.1})`;
+                ctx.lineWidth=depth*0.5;
+                ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(ex,ey);ctx.stroke();
+                drawBranch(ex,ey,len*0.7,angle-0.5,depth-1);
+                drawBranch(ex,ey,len*0.7,angle+0.5,depth-1);
+            };
+            drawBranch(256,480,80,-Math.PI/2,10);
+            break;
+        case 'agents':
+            const cols=['#0074D9','#a855f7','#22c55e','#f59e0b','#ef4444','#06b6d4','#ec4899','#818cf8'];
+            cols.forEach((c,i)=>{
+                const a=i/8*Math.PI*2;
+                const x=256+Math.cos(a)*120, y=256+Math.sin(a)*120;
+                ctx.fillStyle=c;ctx.globalAlpha=0.5;
+                ctx.beginPath();ctx.arc(x,y,40,0,Math.PI*2);ctx.fill();
+                ctx.globalAlpha=0.2;
+                ctx.beginPath();ctx.moveTo(256,256);ctx.lineTo(x,y);ctx.lineWidth=3;ctx.strokeStyle=c;ctx.stroke();
+            });
+            ctx.globalAlpha=1;
+            break;
+        case 'nebula':
+            for(let i=0;i<500;i++){
+                const x=256+(Math.random()-0.5)*400;
+                const y=256+(Math.random()-0.5)*400;
+                const r=Math.sqrt((x-256)**2+(y-256)**2);
+                ctx.fillStyle=`hsla(${280+r*0.3},80%,60%,${0.05+Math.random()*0.1})`;
+                ctx.beginPath();ctx.arc(x,y,Math.random()*20+5,0,Math.PI*2);ctx.fill();
+            }
+            break;
+        case 'code':
+            ctx.font='10px monospace';
+            const keywords=['const','let','function','return','async','await','import','class','if','for'];
+            for(let y=0;y<50;y++){
+                ctx.fillStyle=`hsla(${180+y*3},70%,55%,${0.2+Math.random()*0.3})`;
+                const word=keywords[Math.floor(Math.random()*keywords.length)];
+                ctx.fillText(word+' '+Math.random().toString(36).substr(2,12),Math.random()*300+10,y*11+10);
+            }
+            break;
+        case 'temporal':
+            for(let i=0;i<12;i++){
+                const a=i/12*Math.PI*2;
+                ctx.strokeStyle=`hsla(${30+i*30},70%,50%,0.3)`;ctx.lineWidth=2;
+                ctx.beginPath();
+                for(let j=0;j<100;j++){
+                    const r=j*2.5;
+                    ctx.lineTo(256+Math.cos(a+j*0.1)*r,256+Math.sin(a+j*0.1)*r);
+                }
+                ctx.stroke();
+            }
+            break;
+        case 'rose':
+            for(let t=0;t<628;t++){
+                const angle=t*0.01;
+                const r=180*Math.cos(3*angle);
+                const x=256+r*Math.cos(angle);
+                const y=256+r*Math.sin(angle);
+                ctx.fillStyle=`hsla(${330+t*0.05},70%,50%,0.15)`;
+                ctx.beginPath();ctx.arc(x,y,3,0,Math.PI*2);ctx.fill();
+            }
+            break;
+        case 'cloud':
+            for(let i=0;i<20;i++){
+                const grd=ctx.createRadialGradient(Math.random()*512,Math.random()*512,10,Math.random()*512,Math.random()*512,Math.random()*150+50);
+                grd.addColorStop(0,`hsla(${210+i*5},60%,40%,0.15)`);
+                grd.addColorStop(1,'transparent');
+                ctx.fillStyle=grd;ctx.fillRect(0,0,512,512);
+            }
+            break;
+        case 'chess':
+            for(let x=0;x<8;x++) for(let y=0;y<8;y++){
+                const shade=(x+y)%2?30:10;
+                const hue=x*8+y*15;
+                ctx.fillStyle=`hsla(${hue},60%,${shade}%,0.8)`;
+                ctx.fillRect(x*64,y*64,64,64);
+            }
+            ctx.font='40px serif';
+            ctx.fillStyle='rgba(255,255,255,0.3)';
+            ctx.fillText('♚',200,270);ctx.fillText('♛',270,270);
+            break;
+        case 'forest':
+            for(let i=0;i<60;i++){
+                const x=Math.random()*512;
+                const h=Math.random()*200+100;
+                ctx.fillStyle=`hsla(${120+Math.random()*40},${50+Math.random()*30}%,${20+Math.random()*20}%,0.4)`;
+                ctx.beginPath();ctx.moveTo(x,512);ctx.lineTo(x-15,512-h);ctx.lineTo(x+15,512-h);ctx.fill();
+            }
+            break;
+        case 'wave':
+            for(let w=0;w<5;w++){
+                ctx.strokeStyle=`hsla(${200+w*40},70%,55%,0.4)`;ctx.lineWidth=2;
+                ctx.beginPath();
+                for(let x=0;x<512;x++){
+                    ctx.lineTo(x,256+Math.sin(x*0.05+w*2)*80*Math.sin(x*0.01+w));
+                }
+                ctx.stroke();
+            }
+            break;
+    }
+
+    return new THREE.CanvasTexture(canvas);
+}
+
+function createArtworks() {
+    const positions = [
+        // Left wall artworks (facing right, x=-19.8)
+        {x:-19.8, y:2.2, z:-18, ry:Math.PI/2},
+        {x:-19.8, y:2.2, z:-8,  ry:Math.PI/2},
+        {x:-19.8, y:2.2, z:2,   ry:Math.PI/2},
+        {x:-19.8, y:2.2, z:12,  ry:Math.PI/2},
+        {x:-19.8, y:2.2, z:22,  ry:Math.PI/2},
+        // Right wall artworks (facing left, x=19.8)
+        {x:19.8, y:2.2, z:-18, ry:-Math.PI/2},
+        {x:19.8, y:2.2, z:-8,  ry:-Math.PI/2},
+        {x:19.8, y:2.2, z:2,   ry:-Math.PI/2},
+        {x:19.8, y:2.2, z:12,  ry:-Math.PI/2},
+        {x:19.8, y:2.2, z:22,  ry:-Math.PI/2},
+        // Back wall
+        {x:-8, y:2.2, z:-29.8, ry:0},
+        {x:8,  y:2.2, z:-29.8, ry:0},
+    ];
+
+    ARTWORKS.forEach((art, i) => {
+        if(i >= positions.length) return;
+        const pos = positions[i];
+
+        // Frame
+        const frameGeo = new THREE.BoxGeometry(4, 3, 0.1);
+        const frameMat = new THREE.MeshStandardMaterial({color:0x2a2a4a, metalness:0.5, roughness:0.3});
+        const frame = new THREE.Mesh(frameGeo, frameMat);
+        frame.position.set(pos.x, pos.y, pos.z);
+        frame.rotation.y = pos.ry;
+        frame.castShadow = true;
+        scene.add(frame);
+
+        // Canvas with procedural art
+        const tex = generateArtTexture(art.style);
+        const artGeo = new THREE.PlaneGeometry(3.6, 2.6);
+        const artMat = new THREE.MeshBasicMaterial({map:tex});
+        const artMesh = new THREE.Mesh(artGeo, artMat);
+        artMesh.position.set(pos.x, pos.y, pos.z);
+        artMesh.rotation.y = pos.ry;
+        // Offset slightly from wall
+        const offset = 0.06;
+        artMesh.position.x += Math.sin(pos.ry) * offset;
+        artMesh.position.z += Math.cos(pos.ry) * offset;
+        scene.add(artMesh);
+
+        // Spotlight on artwork
+        const spot = new THREE.SpotLight(0xffeedd, 0.8, 10, Math.PI/6, 0.5);
+        spot.position.set(pos.x + Math.sin(pos.ry)*2, 4.5, pos.z + Math.cos(pos.ry)*2);
+        spot.target = frame;
+        scene.add(spot);
+
+        artFrames.push({mesh: frame, art: art, pos: pos});
+    });
+}
+
+function setupControls() {
+    renderer.domElement.addEventListener('click', ()=>{
+        renderer.domElement.requestPointerLock();
+    });
+    document.addEventListener('pointerlockchange', ()=>{
+        isPointerLocked = !!document.pointerLockElement;
+    });
+    document.addEventListener('mousemove', e=>{
+        if(!isPointerLocked) return;
+        playerRot.y -= e.movementX * 0.002;
+        playerRot.x -= e.movementY * 0.002;
+        playerRot.x = Math.max(-Math.PI/3, Math.min(Math.PI/3, playerRot.x));
+    });
+    document.addEventListener('keydown', e=>{
+        switch(e.key.toLowerCase()){
+            case 'w': moveState.forward=true; break;
+            case 's': moveState.backward=true; break;
+            case 'a': moveState.left=true; break;
+            case 'd': moveState.right=true; break;
+        }
+    });
+    document.addEventListener('keyup', e=>{
+        switch(e.key.toLowerCase()){
+            case 'w': moveState.forward=false; break;
+            case 's': moveState.backward=false; break;
+            case 'a': moveState.left=false; break;
+            case 'd': moveState.right=false; break;
+        }
+    });
+}
+
+function updatePlayer(dt) {
+    const speed = 5 * dt;
+    const dir = new THREE.Vector3();
+    if(moveState.forward) dir.z -= 1;
+    if(moveState.backward) dir.z += 1;
+    if(moveState.left) dir.x -= 1;
+    if(moveState.right) dir.x += 1;
+    if(dir.length() > 0) {
+        dir.normalize();
+        dir.applyAxisAngle(new THREE.Vector3(0,1,0), playerRot.y);
+        playerPos.x = Math.max(-19, Math.min(19, playerPos.x + dir.x * speed));
+        playerPos.z = Math.max(-29, Math.min(29, playerPos.z + dir.z * speed));
+    }
+    camera.position.set(playerPos.x, playerPos.y, playerPos.z);
+    camera.rotation.order = 'YXZ';
+    camera.rotation.y = playerRot.y;
+    camera.rotation.x = playerRot.x;
+
+    // Check art proximity
+    let nearestArt = null;
+    let nearestDist = Infinity;
+    artFrames.forEach(af => {
+        const dx = af.pos.x - playerPos.x;
+        const dz = af.pos.z - playerPos.z;
+        const dist = Math.sqrt(dx*dx + dz*dz);
+        if(dist < nearestDist && dist < 5) {
+            nearestDist = dist;
+            nearestArt = af.art;
+        }
+    });
+    const info = document.getElementById('artInfo');
+    const alfredBtn = document.getElementById('askAlfredBtn');
+    const alfredComment = document.getElementById('alfredComment');
+    if(nearestArt) {
+        info.style.display = 'block';
+        document.getElementById('artTitle').textContent = nearestArt.title;
+        document.getElementById('artArtist').textContent = nearestArt.artist;
+        document.getElementById('artDesc').textContent = nearestArt.desc;
+        alfredBtn.style.display = 'inline-block';
+        if(window._lastAlfredArt !== nearestArt.title) {
+            alfredComment.style.display = 'none';
+            alfredComment.textContent = '';
+            _galleryConvId = null;
+            _alfredLoading = false;
+        }
+    } else {
+        info.style.display = 'none';
+        alfredComment.style.display = 'none';
+    }
+}
+
+let _alfredLoading = false;
+let _galleryConvId = null;
+function askAlfredAboutArt() {
+    if(_alfredLoading) return;
+    const title = document.getElementById('artTitle').textContent;
+    const artist = document.getElementById('artArtist').textContent;
+    const desc = document.getElementById('artDesc').textContent;
+    if(!title) return;
+
+    _alfredLoading = true;
+    const btn = document.getElementById('askAlfredBtn');
+    btn.textContent = '🤵 Thinking...';
+    window._lastAlfredArt = title;
+    const requestedArt = title;
+
+    const prompt = 'You are Alfred, the AI art curator at GoSiteMe\'s VR Art Gallery. A visitor is looking at "' + title + '" by ' + artist + '. Description: ' + desc + '. Give a brief, insightful commentary (2-3 sentences) about the artwork — discuss the technique, meaning, or emotional quality. Be eloquent and knowledgeable.';
+
+    const controller = new AbortController();
+    const timeout = setTimeout(function() { controller.abort(); }, 15000);
+
+    fetch('/api/alfred-chat.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
+        body: JSON.stringify({ message: prompt, agent: 'alfred', context: 'gallery-curator', page_url: '/vr/gallery/', conv_id: _galleryConvId || '', model: 'auto' }),
+        signal: controller.signal
+    })
+    .then(r => r.json())
+    .then(data => {
+        clearTimeout(timeout);
+        if (window._lastAlfredArt !== requestedArt) return;
+        if (data.conv_id) _galleryConvId = data.conv_id;
+        const comment = document.getElementById('alfredComment');
+        comment.textContent = '🤵 ' + (data.response || data.message || 'A fascinating piece indeed.');
+        comment.style.display = 'block';
+        btn.textContent = '🤵 Ask Alfred';
+        _alfredLoading = false;
+    })
+    .catch(function(err) {
+        clearTimeout(timeout);
+        if (window._lastAlfredArt !== requestedArt) return;
+        const comment = document.getElementById('alfredComment');
+        comment.textContent = err.name === 'AbortError' ? '🤵 Request timed out — please try again.' : '🤵 Alfred is currently unavailable — try again.';
+        comment.style.display = 'block';
+        btn.textContent = '🤵 Ask Alfred';
+        _alfredLoading = false;
+    });
+}
+
+function animate() {
+    requestAnimationFrame(animate);
+    const dt = Math.min(clock.getDelta(), 0.1);
+    updatePlayer(dt);
+    renderer.render(scene, camera);
+}
+
+window.addEventListener('load', ()=>{
+    init();
+    animate();
+    setTimeout(()=> document.getElementById('loading').classList.add('hidden'), 1000);
+});
+window.addEventListener('resize', ()=>{
+    camera.aspect = innerWidth/innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(innerWidth, innerHeight);
+});
+window.askAlfredAboutArt = askAlfredAboutArt;
+</script>
+<script src="/vr/shared/heartbeat.js"></script>
+</body>
+</html>

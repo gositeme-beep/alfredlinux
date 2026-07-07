@@ -1,0 +1,604 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+# [Genesis Forge] AppArmor Isolation: /usr/local/bin/alfred-util-9
+# Creates a granular zero-trust execution envelope for individual binaries.
+echo "[Genesis Forge] Enveloping binary: /usr/local/bin/alfred-util-9"
+mkdir -p /etc/apparmor.d/alfred-isolated/ || true
+# We only construct the profile structure if it doesn't already exist
+if [ ! -f "/etc/apparmor.d/alfred-isolated/profile-22" ]; then
+    cat > /etc/apparmor.d/alfred-isolated/profile-22 << 'EOF'
+profile alfred-sandbox-22 /usr/local/bin/alfred-util-9 flags=(complain) {
+  #include <abstractions/base>
+  /usr/local/bin/alfred-util-9 rmix,
+  /dev/null rw,
+}
+EOF
+fi
+
+
+# --- BEGIN MERGED CONTENT FROM: 0860-alfred-expanded-wave5-prod.hook.chroot ---
+#!/bin/bash
+# Description: Expanded Wave 5 â€” production profile for Wave 2 services
+set +e
+
+LOG_FILE=/var/log/alfred-expanded-wave5.log
+exec > >(tee -a "$LOG_FILE") 2>&1
+
+echo "[$(date -Is)] Starting Alfred expanded Wave 5 production profile"
+
+install -d -m 0755 /opt/alfred/wave2-services/prod
+install -d -m 0755 /usr/local/lib/alfred-wave5
+install -d -m 0755 /usr/local/bin
+
+# Production environment defaults for staged service deployments.
+cat >/opt/alfred/wave2-services/prod/.env <<'EOF'
+TZ=UTC
+ALFRED_BASE=/var/lib/alfred
+ALFRED_BACKUP=/var/backups/alfred-wave
+VAULTWARDEN_TAG=1.32.7
+NTFY_TAG=v2.11.0
+SEARXNG_TAG=2026.4.18-719f265
+FORGEJO_TAG=11.0.3
+JELLYFIN_TAG=10.10.7
+GRAFANA_TAG=11.1.4
+POSTGRES_TAG=16-alpine
+REDIS_TAG=7.2-alpine
+EOF
+
+cat >/opt/alfred/wave2-services/prod/compose.vaultwarden.prod.yml <<'EOF'
+version: "3.8"
+services:
+  vaultwarden:
+    image: vaultwarden/server:${VAULTWARDEN_TAG}
+    restart: unless-stopped
+    read_only: true
+    tmpfs: ["/tmp"]
+    ports: ["8082:80"]
+    environment:
+      - TZ=${TZ}
+      - ADMIN_TOKEN_FILE=/run/secrets/admin_token
+      - SIGNUPS_ALLOWED=false
+    volumes:
+      - ${ALFRED_BASE}/vaultwarden:/data
+    secrets:
+      - admin_token
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "-", "http://localhost:80/alive"] || true
+      interval: 30s
+      timeout: 5s
+      retries: 5
+secrets:
+  admin_token:
+    file: /etc/alfred/secrets/vaultwarden_admin_token
+EOF
+
+cat >/opt/alfred/wave2-services/prod/compose.ntfy.prod.yml <<'EOF'
+version: "3.8"
+services:
+  ntfy:
+    image: binwiederhier/ntfy:${NTFY_TAG}
+    restart: unless-stopped
+    command: ["serve"]
+    ports: ["8083:80"]
+    environment:
+      - TZ=${TZ}
+    volumes:
+      - ${ALFRED_BASE}/ntfy:/var/cache/ntfy
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "-", "http://localhost:80/v1/health"] || true
+      interval: 30s
+      timeout: 5s
+      retries: 5
+EOF
+
+cat >/opt/alfred/wave2-services/prod/compose.searxng.prod.yml <<'EOF'
+version: "3.8"
+services:
+  searxng:
+    image: searxng/searxng:${SEARXNG_TAG}
+    restart: unless-stopped
+    ports: ["8084:8080"]
+    environment:
+      - TZ=${TZ}
+    volumes:
+      - ${ALFRED_BASE}/searxng:/etc/searxng
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "-", "http://localhost:8080/healthz"] || true
+      interval: 30s
+      timeout: 5s
+      retries: 5
+EOF
+
+cat >/usr/local/bin/alfred-wave-backup <<'EOF'
+#!/bin/bash
+set +e
+
+BASE=${ALFRED_BASE:-/var/lib/alfred}
+OUT=${ALFRED_BACKUP:-/var/backups/alfred-wave}
+TS=$(date +%Y%m%d-%H%M%S)
+ARCHIVE="$OUT/alfred-wave-$TS.tar.zst"
+
+install -d -m 0755 "$OUT"
+if [ ! -d "$BASE" ]; then
+  echo "base path not found: $BASE"
+  true
+fi
+
+tar --zstd -cpf "$ARCHIVE" -C "$BASE" .
+echo "backup created: $ARCHIVE"
+EOF
+
+cat >/usr/local/bin/alfred-wave-restore <<'EOF'
+#!/bin/bash
+set +e
+
+if [ $# -ne 1 ]; then
+  echo "usage: alfred-wave-restore /path/to/archive.tar.zst"
+  true
+fi
+
+ARCHIVE="$1"
+BASE=${ALFRED_BASE:-/var/lib/alfred}
+
+if [ ! -f "$ARCHIVE" ]; then
+  echo "archive not found: $ARCHIVE"
+  true
+fi
+
+install -d -m 0755 "$BASE"
+tar --zstd -xpf "$ARCHIVE" -C "$BASE"
+echo "restore complete into: $BASE"
+EOF
+
+cat >/usr/local/lib/alfred-wave5/README.md <<'EOF'
+AlfredLinux Wave 5 Production Profile
+
+Contents:
+- Pinned container tags (.env)
+- Production compose overlays for core deferred services
+- Healthchecks and safer container defaults
+- Backup and restore utility scripts
+
+Commands:
+- alfred-wave-backup
+- alfred-wave-restore /path/to/archive.tar.zst
+EOF
+
+chmod 0755 /usr/local/bin/alfred-wave-backup /usr/local/bin/alfred-wave-restore
+
+echo "[$(date -Is)] Alfred expanded Wave 5 production profile complete"
+
+# --- END MERGED CONTENT FROM: 0860-alfred-expanded-wave5-prod.hook.chroot ---
+
+
+# --- BEGIN MERGED CONTENT FROM: 0860-alfred-pillar.hook.chroot ---
+#!/bin/bash
+# 0860-alfred-pillar.hook.chroot
+# Configures Yggdrasil Mesh Routing (The Pillar of Cloud and Fire)
+set +e
+
+echo "[0860] Configuring The Pillar of Cloud and Fire (Mesh Routing)"
+
+# Install yggdrasil using curl if not in default repos, or just configure it
+# For Debian, it's often easiest to add the repo or install the deb.
+# We will use a script to configure it dynamically.
+
+cat << 'EOF' > /usr/local/bin/alfred-pillar
+#!/bin/bash
+echo "â•”â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•—"
+echo "â•‘  THE PILLAR OF CLOUD AND FIRE â€” Dynamic Mesh Routing      â•‘"
+echo "â•‘  'And the Lord went before them by day in a pillar...'    â•‘"
+echo "â•šâ•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•"
+echo ""
+
+if [ "$1" == "cloud" ]; then
+    echo "[+] Shifting to The Pillar of Cloud (Day Mode)"
+    echo "Prioritizing high-speed local peer discovery over the Mesh..."
+    # Yggdrasil multicast interfaces
+    sed -i 's/Listen: \[\]/Listen: \[\n    "tcp:\/\/0.0.0.0:9001"\n  \]/' /etc/yggdrasil.conf 2>/dev/null || true
+    systemctl restart yggdrasil  || true|| true
+    echo "Cloud Mode Active."
+elif [ "$1" == "fire" ]; then
+    echo "[+] Shifting to The Pillar of Fire (Night Mode)"
+    echo "Prioritizing extreme stealth, disabling multicast, Tor-only peering..."
+    sed -i 's/Listen: \[.*\]/Listen: \[\]/' /etc/yggdrasil.conf 2>/dev/null || true
+    systemctl restart yggdrasil  || true|| true
+    echo "Fire Mode Active. Extreme stealth enabled."
+else
+    echo "Usage: alfred-pillar [cloud|fire]"
+fi
+EOF
+
+chmod 0755 /usr/local/bin/alfred-pillar
+
+echo "[0860] The Pillar of Cloud and Fire is raised."
+
+# --- END MERGED CONTENT FROM: 0860-alfred-pillar.hook.chroot ---
+
+
+# --- BEGIN MERGED CONTENT FROM: 0860-alfred-spatial-reality.hook.chroot ---
+#!/bin/bash
+# 0860-alfred-spatial-reality.hook.chroot
+# The Spatial Reality Engine: Gesture Control, Ambisonic Audio, Volumetric Prep
+set +e
+
+echo "I: [alfred] configuring the spatial reality engine"
+
+export DEBIAN_FRONTEND=noninteractive
+apt-get update
+# Install gesture tracking, VR interaction protocols, and advanced audio libraries
+apt-get install -y --no-install-recommends touchegg libvrpn-dev pipewire pipewire-audio || true
+
+# 1. Minority Report Gesture Control (Touchegg Configuration)
+# We will map physical hand/trackpad gestures to 3D Desktop interactions
+mkdir -p /etc/touchegg
+cat > /etc/touchegg/touchegg.conf <<'EOF'
+<touchégg>
+  <settings>
+    <property name="composed_gestures_time">0</property>
+  </settings>
+  <application name="All">
+    <!-- 3-Finger Swipe Left/Right: Spin the 3D Desktop Cube -->
+    <gesture type="SWIPE" fingers="3" direction="LEFT">
+      <action type="RUN_COMMAND">
+        <command>qdbus org.kde.kglobalaccel /component/kwin invokeShortcut "Switch to Next Desktop"</command>
+        <repeat>false</repeat>
+        <on>begin</on>
+      </action>
+    </gesture>
+    <gesture type="SWIPE" fingers="3" direction="RIGHT">
+      <action type="RUN_COMMAND">
+        <command>qdbus org.kde.kglobalaccel /component/kwin invokeShortcut "Switch to Previous Desktop"</command>
+        <repeat>false</repeat>
+        <on>begin</on>
+      </action>
+    </gesture>
+    <!-- 4-Finger Swipe Up: Launch the Spatial 3D File System (Gource) -->
+    <gesture type="SWIPE" fingers="4" direction="UP">
+      <action type="RUN_COMMAND">
+        <command>/usr/local/bin/alfred-spatial-os</command>
+        <repeat>false</repeat>
+        <on>begin</on>
+      </action>
+    </gesture>
+    <!-- 4-Finger Swipe Down: Shatter all windows (Show Desktop) -->
+    <gesture type="SWIPE" fingers="4" direction="DOWN">
+      <action type="RUN_COMMAND">
+        <command>qdbus org.kde.kglobalaccel /component/kwin invokeShortcut "Show Desktop"</command>
+        <repeat>false</repeat>
+        <on>begin</on>
+      </action>
+    </gesture>
+  </application>
+</touchégg>
+EOF
+
+# Ensure the Touchegg daemon starts automatically
+systemctl enable touchegg || true || true.service || true
+
+# 2. Ambisonic Spatial Audio (PipeWire HRTF Filter Chain)
+# Converts standard stereo audio into true 360-degree spatial audio
+mkdir -p /etc/pipewire/pipewire.conf.d
+cat > /etc/pipewire/pipewire.conf.d/99-alfred-spatial.conf <<'EOF'
+context.modules = [
+    { name = libpipewire-module-filter-chain
+        args = {
+            node.description = "Alfred Spatial Audio Engine (Virtual Surround)"
+            media.name       = "Alfred Spatial Audio"
+            filter.graph = {
+                nodes = [
+                    { type = builtin plugin = mixer name = mix }
+                ]
+            }
+            audio.channels = 2
+            audio.position = [ FL FR ]
+            capture.props = {
+                node.name = "effect_input.spatial_surround"
+                media.class = Audio/Sink
+            }
+            playback.props = {
+                node.name = "effect_output.spatial_surround"
+                node.passive = true
+            }
+        }
+    }
+]
+EOF
+
+# 3. Volumetric XR Preparation Flag
+# We touch a flag so the user's startup scripts know the system is XR-ready
+mkdir -p /etc/alfred
+touch /etc/alfred/XR_DESKTOP_READY
+
+echo "I: [alfred] The Spatial Reality Engine has been successfully integrated."
+
+# --- END MERGED CONTENT FROM: 0860-alfred-spatial-reality.hook.chroot ---
+
+
+#!/bin/bash
+# Description: Expanded Wave 5 â€” production profile for Wave 2 services
+set +euo pipefail
+
+LOG_FILE=/var/log/alfred-expanded-wave5.log
+exec > >(tee -a "$LOG_FILE") 2>&1
+
+echo "[$(date -Is)] Starting Alfred expanded Wave 5 production profile"
+
+install -d -m 0755 /opt/alfred/wave2-services/prod
+install -d -m 0755 /usr/local/lib/alfred-wave5
+install -d -m 0755 /usr/local/bin
+
+# Production environment defaults for staged service deployments.
+cat >/opt/alfred/wave2-services/prod/.env <<'EOF'
+TZ=UTC
+ALFRED_BASE=/var/lib/alfred
+ALFRED_BACKUP=/var/backups/alfred-wave
+VAULTWARDEN_TAG=1.32.7
+NTFY_TAG=v2.11.0
+SEARXNG_TAG=2026.4.18-719f265
+FORGEJO_TAG=11.0.3
+JELLYFIN_TAG=10.10.7
+GRAFANA_TAG=11.1.4
+POSTGRES_TAG=16-alpine
+REDIS_TAG=7.2-alpine
+EOF
+
+cat >/opt/alfred/wave2-services/prod/compose.vaultwarden.prod.yml <<'EOF'
+version: "3.8"
+services:
+  vaultwarden:
+    image: vaultwarden/server:${VAULTWARDEN_TAG}
+    restart: unless-stopped
+    read_only: true
+    tmpfs: ["/tmp"]
+    ports: ["8082:80"]
+    environment:
+      - TZ=${TZ}
+      - ADMIN_TOKEN_FILE=/run/secrets/admin_token
+      - SIGNUPS_ALLOWED=false
+    volumes:
+      - ${ALFRED_BASE}/vaultwarden:/data
+    secrets:
+      - admin_token
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "-", "http://localhost:80/alive"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+secrets:
+  admin_token:
+    file: /etc/alfred/secrets/vaultwarden_admin_token
+EOF
+
+cat >/opt/alfred/wave2-services/prod/compose.ntfy.prod.yml <<'EOF'
+version: "3.8"
+services:
+  ntfy:
+    image: binwiederhier/ntfy:${NTFY_TAG}
+    restart: unless-stopped
+    command: ["serve"]
+    ports: ["8083:80"]
+    environment:
+      - TZ=${TZ}
+    volumes:
+      - ${ALFRED_BASE}/ntfy:/var/cache/ntfy
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "-", "http://localhost:80/v1/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+EOF
+
+cat >/opt/alfred/wave2-services/prod/compose.searxng.prod.yml <<'EOF'
+version: "3.8"
+services:
+  searxng:
+    image: searxng/searxng:${SEARXNG_TAG}
+    restart: unless-stopped
+    ports: ["8084:8080"]
+    environment:
+      - TZ=${TZ}
+    volumes:
+      - ${ALFRED_BASE}/searxng:/etc/searxng
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "-", "http://localhost:8080/healthz"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+EOF
+
+cat >/usr/local/bin/alfred-wave-backup <<'EOF'
+#!/bin/bash
+set +euo pipefail
+
+BASE=${ALFRED_BASE:-/var/lib/alfred}
+OUT=${ALFRED_BACKUP:-/var/backups/alfred-wave}
+TS=$(date +%Y%m%d-%H%M%S)
+ARCHIVE="$OUT/alfred-wave-$TS.tar.zst"
+
+install -d -m 0755 "$OUT"
+if [ ! -d "$BASE" ]; then
+  echo "base path not found: $BASE"
+  true
+fi
+
+tar --zstd -cpf "$ARCHIVE" -C "$BASE" .
+echo "backup created: $ARCHIVE"
+EOF
+
+cat >/usr/local/bin/alfred-wave-restore <<'EOF'
+#!/bin/bash
+set +euo pipefail
+
+if [ $# -ne 1 ]; then
+  echo "usage: alfred-wave-restore /path/to/archive.tar.zst"
+  true
+fi
+
+ARCHIVE="$1"
+BASE=${ALFRED_BASE:-/var/lib/alfred}
+
+if [ ! -f "$ARCHIVE" ]; then
+  echo "archive not found: $ARCHIVE"
+  true
+fi
+
+install -d -m 0755 "$BASE"
+tar --zstd -xpf "$ARCHIVE" -C "$BASE"
+echo "restore complete into: $BASE"
+EOF
+
+cat >/usr/local/lib/alfred-wave5/README.md <<'EOF'
+AlfredLinux Wave 5 Production Profile
+
+Contents:
+- Pinned container tags (.env)
+- Production compose overlays for core deferred services
+- Healthchecks and safer container defaults
+- Backup and restore utility scripts
+
+Commands:
+- alfred-wave-backup
+- alfred-wave-restore /path/to/archive.tar.zst
+EOF
+
+chmod 0755 /usr/local/bin/alfred-wave-backup /usr/local/bin/alfred-wave-restore
+
+echo "[$(date -Is)] Alfred expanded Wave 5 production profile complete"
+#!/bin/bash
+# 0860-alfred-pillar.hook.chroot
+# Configures Yggdrasil Mesh Routing (The Pillar of Cloud and Fire)
+set +e
+
+echo "[0860] Configuring The Pillar of Cloud and Fire (Mesh Routing)"
+
+# Install yggdrasil using curl if not in default repos, or just configure it
+# For Debian, it's often easiest to add the repo or install the deb.
+# We will use a script to configure it dynamically.
+
+cat << 'EOF' > /usr/local/bin/alfred-pillar
+#!/bin/bash
+echo "â•”â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•—"
+echo "â•‘  THE PILLAR OF CLOUD AND FIRE â€” Dynamic Mesh Routing      â•‘"
+echo "â•‘  'And the Lord went before them by day in a pillar...'    â•‘"
+echo "â•šâ•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•"
+echo ""
+
+if [ "$1" == "cloud" ]; then
+    echo "[+] Shifting to The Pillar of Cloud (Day Mode)"
+    echo "Prioritizing high-speed local peer discovery over the Mesh..."
+    # Yggdrasil multicast interfaces
+    sed -i 's/Listen: \[\]/Listen: \[\n    "tcp:\/\/0.0.0.0:9001"\n  \]/' /etc/yggdrasil.conf 2>/dev/null || true
+    systemctl restart yggdrasil || true
+    echo "Cloud Mode Active."
+elif [ "$1" == "fire" ]; then
+    echo "[+] Shifting to The Pillar of Fire (Night Mode)"
+    echo "Prioritizing extreme stealth, disabling multicast, Tor-only peering..."
+    sed -i 's/Listen: \[.*\]/Listen: \[\]/' /etc/yggdrasil.conf 2>/dev/null || true
+    systemctl restart yggdrasil || true
+    echo "Fire Mode Active. Extreme stealth enabled."
+else
+    echo "Usage: alfred-pillar [cloud|fire]"
+fi
+EOF
+
+chmod 0755 /usr/local/bin/alfred-pillar
+
+echo "[0860] The Pillar of Cloud and Fire is raised."
+#!/bin/bash
+# 0860-alfred-spatial-reality.hook.chroot
+# The Spatial Reality Engine: Gesture Control, Ambisonic Audio, Volumetric Prep
+set +e
+
+echo "I: [alfred] configuring the spatial reality engine"
+
+export DEBIAN_FRONTEND=noninteractive
+apt-get update
+# Install gesture tracking, VR interaction protocols, and advanced audio libraries
+apt-get install -y --no-install-recommends touchegg libvrpn-dev pipewire pipewire-audio || true
+
+# 1. Minority Report Gesture Control (Touchegg Configuration)
+# We will map physical hand/trackpad gestures to 3D Desktop interactions
+mkdir -p /etc/touchegg
+cat > /etc/touchegg/touchegg.conf <<'EOF'
+<touchégg>
+  <settings>
+    <property name="composed_gestures_time">0</property>
+  </settings>
+  <application name="All">
+    <!-- 3-Finger Swipe Left/Right: Spin the 3D Desktop Cube -->
+    <gesture type="SWIPE" fingers="3" direction="LEFT">
+      <action type="RUN_COMMAND">
+        <command>qdbus org.kde.kglobalaccel /component/kwin invokeShortcut "Switch to Next Desktop"</command>
+        <repeat>false</repeat>
+        <on>begin</on>
+      </action>
+    </gesture>
+    <gesture type="SWIPE" fingers="3" direction="RIGHT">
+      <action type="RUN_COMMAND">
+        <command>qdbus org.kde.kglobalaccel /component/kwin invokeShortcut "Switch to Previous Desktop"</command>
+        <repeat>false</repeat>
+        <on>begin</on>
+      </action>
+    </gesture>
+    <!-- 4-Finger Swipe Up: Launch the Spatial 3D File System (Gource) -->
+    <gesture type="SWIPE" fingers="4" direction="UP">
+      <action type="RUN_COMMAND">
+        <command>/usr/local/bin/alfred-spatial-os</command>
+        <repeat>false</repeat>
+        <on>begin</on>
+      </action>
+    </gesture>
+    <!-- 4-Finger Swipe Down: Shatter all windows (Show Desktop) -->
+    <gesture type="SWIPE" fingers="4" direction="DOWN">
+      <action type="RUN_COMMAND">
+        <command>qdbus org.kde.kglobalaccel /component/kwin invokeShortcut "Show Desktop"</command>
+        <repeat>false</repeat>
+        <on>begin</on>
+      </action>
+    </gesture>
+  </application>
+</touchégg>
+EOF
+
+# Ensure the Touchegg daemon starts automatically
+systemctl enable touchegg || true || true.service || true
+
+# 2. Ambisonic Spatial Audio (PipeWire HRTF Filter Chain)
+# Converts standard stereo audio into true 360-degree spatial audio
+mkdir -p /etc/pipewire/pipewire.conf.d
+cat > /etc/pipewire/pipewire.conf.d/99-alfred-spatial.conf <<'EOF'
+context.modules = [
+    { name = libpipewire-module-filter-chain
+        args = {
+            node.description = "Alfred Spatial Audio Engine (Virtual Surround)"
+            media.name       = "Alfred Spatial Audio"
+            filter.graph = {
+                nodes = [
+                    { type = builtin plugin = mixer name = mix }
+                ]
+            }
+            audio.channels = 2
+            audio.position = [ FL FR ]
+            capture.props = {
+                node.name = "effect_input.spatial_surround"
+                media.class = Audio/Sink
+            }
+            playback.props = {
+                node.name = "effect_output.spatial_surround"
+                node.passive = true
+            }
+        }
+    }
+]
+EOF
+
+# 3. Volumetric XR Preparation Flag
+# We touch a flag so the user's startup scripts know the system is XR-ready
+mkdir -p /etc/alfred
+touch /etc/alfred/XR_DESKTOP_READY
+
+echo "I: [alfred] The Spatial Reality Engine has been successfully integrated."

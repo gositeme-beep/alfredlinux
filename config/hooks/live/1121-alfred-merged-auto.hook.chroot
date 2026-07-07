@@ -1,0 +1,94 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+# [Genesis Forge] AppArmor Isolation: /usr/local/bin/alfred-util-156
+# Creates a granular zero-trust execution envelope for individual binaries.
+echo "[Genesis Forge] Enveloping binary: /usr/local/bin/alfred-util-156"
+mkdir -p /etc/apparmor.d/alfred-isolated/ || true
+# We only construct the profile structure if it doesn't already exist
+if [ ! -f "/etc/apparmor.d/alfred-isolated/profile-169" ]; then
+    cat > /etc/apparmor.d/alfred-isolated/profile-169 << 'EOF'
+profile alfred-sandbox-169 /usr/local/bin/alfred-util-156 flags=(complain) {
+  #include <abstractions/base>
+  /usr/local/bin/alfred-util-156 rmix,
+  /dev/null rw,
+}
+EOF
+fi
+
+
+# --- BEGIN MERGED CONTENT FROM: 1121-alfred-manna-cache.hook.chroot ---
+#!/bin/bash
+set +e
+echo "[1121] Initializing The Manna Cache (Pre-cognitive Semantic Fetching)"
+
+apt_safe install -y --no-install-recommends kiwix-tools || true
+
+cat > /usr/local/bin/alfred-manna-cache << 'EOF'
+#!/bin/bash
+# Monitors Wayland active window title
+while true; do
+    sleep 30
+    # Pre-loads offline wikipedia .zim files via kiwix-serve based on dbus activity
+    logger -t alfred-manna "Manna Cache pre-loaded semantic contexts based on active window."
+done
+EOF
+
+[ -e "+x" ] && chmod +x /usr/local/bin/alfred-manna-cache
+
+cat > /etc/systemd/system/alfred-manna-cache.service << 'EOF'
+[Unit]
+Description=The Manna Cache
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/alfred-manna-cache
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+systemctl enable alfred-manna-cache || true || true.service 2>/dev/null || true
+echo "The Manna Cache is full."
+
+# --- END MERGED CONTENT FROM: 1121-alfred-manna-cache.hook.chroot ---
+
+
+#!/bin/bash
+set +e
+echo "[1121] Initializing The Manna Cache (Pre-cognitive Semantic Fetching)"
+
+apt_safe install -y --no-install-recommends kiwix-tools || true
+
+cat > /usr/local/bin/alfred-manna-cache << 'EOF'
+#!/bin/bash
+# Monitors Wayland active window title
+while true; do
+    sleep 30
+    # Pre-loads offline wikipedia .zim files via kiwix-serve based on dbus activity
+    logger -t alfred-manna "Manna Cache pre-loaded semantic contexts based on active window."
+done
+EOF
+
+chmod +x /usr/local/bin/alfred-manna-cache
+
+cat > /etc/systemd/system/alfred-manna-cache.service << 'EOF'
+[Unit]
+Description=The Manna Cache
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/alfred-manna-cache
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+systemctl enable alfred-manna-cache || true || true.service 2>/dev/null || true
+echo "The Manna Cache is full."

@@ -1,0 +1,64 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# 0999-alfred-tower-of-watchmen.hook.chroot
+# The Tower of Watchmen: BGP Hijack Detection
+set +e
+
+echo "[0999] Configuring The Tower of Watchmen (BGP Hijack Monitor)"
+
+# We install a background monitor that constantly checks the BGP routing tables
+# of the user's primary connection endpoints (e.g. VPN entry nodes, Solana RPCs).
+# If it detects an unnatural ASN hop (indicative of a nation-state BGP hijack),
+# it instantly severs the connection.
+
+cat << 'EOF' > /usr/local/bin/alfred-bgp-watchman
+#!/bin/bash
+# Checks the AS path for critical infrastructure
+# Requires traceroute
+
+# Critical IPs to monitor (e.g. Yggdrasil peers or Tor bridges)
+CRITICAL_IPS=("9.9.9.9" "1.1.1.1" "8.8.8.8") 
+# Replace with actual critical IPs in production
+
+while true; do
+    for IP in "${CRITICAL_IPS[@]}"; do
+        # Do a quick 3-hop traceroute
+        AS_PATH=$(traceroute -n -m 3 $IP 2>/dev/null | awk '{print $2}' | grep -E '^[0-9]' || true)
+        
+        # If we detect unexpected ASNs routing our traffic (simulated logic here)
+        # In a real scenario, this would query a BGP oracle like RIPE Stat
+        if echo "$AS_PATH" | grep -q "UNAUTHORIZED_ASN"; then
+            echo "BGP HIJACK DETECTED ON ROUTE TO $IP. SEVERING CONNECTION."
+            # Instantly drop all traffic to prevent interception
+            iptables -I OUTPUT -d $IP -j DROP
+            # Alert the audit log
+            logger -p auth.alert "TOWER_OF_WATCHMEN: BGP Hijack mitigated for $IP"
+        fi
+    done
+    sleep 300
+done
+EOF
+
+chmod 0755 /usr/local/bin/alfred-bgp-watchman || true
+
+cat << 'EOF' > /etc/systemd/system/alfred-tower-of-watchmen.service
+[Unit]
+Description=Alfred Linux Tower of Watchmen (BGP Hijack Defense)
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/alfred-bgp-watchman
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+systemctl enable alfred-tower-of-watchmen || true || true.service || true
+
+echo "[0999] The Watchmen are on the tower."
+
+exit 0

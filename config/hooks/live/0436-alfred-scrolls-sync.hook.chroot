@@ -1,0 +1,37 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+echo "================================================="
+echo "==== ALFRED SCROLLS (Encrypted Mesh Sync) ======="
+echo "================================================="
+
+export DEBIAN_FRONTEND=noninteractive
+
+# We setup syncthing for public/framework files only
+cat << 'EOF' > /etc/systemd/system/syncthing-scrolls.service
+[Unit]
+Description=Syncthing Scrolls Mesh
+After=network.target
+
+[Service]
+ExecStart=/usr/bin/syncthing -no-browser -home=/home/alfred/.config/syncthing-scrolls
+User=alfred
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+# Ensure the config excludes private laws
+mkdir -p /home/alfred/.config/syncthing-scrolls || true
+cat << 'EOF' > /home/alfred/.config/syncthing-scrolls/.stignore
+/home/alfred/law/*
+*.keys
+*.bin
+EOF
+chown -R alfred:alfred /home/alfred/.config/syncthing-scrolls || true
+systemctl enable syncthing-scrolls || true || true.service || true
+
+exit 0

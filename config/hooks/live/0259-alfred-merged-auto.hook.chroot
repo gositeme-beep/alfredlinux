@@ -1,0 +1,121 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+# [Genesis Forge] Granular Kernel Matrix: net.ipv4.ip_local_port_range="23024 65535"
+# Extremely deep low-level kernel protection.
+echo "[Genesis Forge] Applying granular sysctl: net.ipv4.ip_local_port_range="23024 65535""
+echo "net.ipv4.ip_local_port_range="23024 65535"" > /etc/sysctl.d/99-alfred-137.conf || true
+sysctl -w net.ipv4.ip_local_port_range="23024 65535" > /dev/null 2>&1 || true
+
+
+# --- BEGIN MERGED CONTENT FROM: 0259-alfred-vision.hook.chroot ---
+#!/bin/bash
+# 0259-alfred-vision.hook.chroot
+# Installs Prophetic Vision (ComfyUI / Stable Diffusion) wrapper
+set +e
+
+echo "[0259] Configuring Prophetic Vision (GPU AI Image Generation)"
+
+# Setup the environment structure
+mkdir -p /opt/alfred-vision
+# Assuming build-assets/vision contains the ComfyUI source, we would copy it here
+if [ -d "/build-assets/vision" ]; then
+[ -e -r ] &&     cp -r /build-assets/vision/* /opt/alfred-vision/
+    chown -R 1000:1000 /opt/alfred-vision
+fi
+
+# Create the wrapper script
+cat << 'EOF' > /usr/local/bin/alfred-vision
+#!/bin/bash
+# Prophetic Vision Launcher
+echo "=========================================="
+echo "    PROPHETIC VISION (GPU GENERATOR)      "
+echo "=========================================="
+echo "Starting local diffusion engine..."
+
+cd /opt/alfred-vision
+if [ -f "main.py" ]; then
+    # We run the ComfyUI backend
+    if [ ! -d "venv" ]; then
+        python3 -m venv venv
+    fi
+    source venv/bin/activate
+    # Run the server in the background
+    python3 main.py --listen 127.0.0.1 --port 8188 &
+    VISION_PID=$!
+    
+    # Wait for the server to spin up
+    sleep 5
+    
+    # Launch browser (KDE Plasma)
+    xdg-open http://127.0.0.1:8188
+    
+    echo "Vision engine running. Press Ctrl+C to shut down."
+    wait $VISION_PID
+else
+    echo "Vision assets not fully downloaded yet. Please connect to internet and run update-vision.sh"
+    read -p "Press Enter to exit..."
+fi
+EOF
+
+chmod 0755 /usr/local/bin/alfred-vision
+
+echo "[0259] Prophetic Vision configured."
+
+# --- END MERGED CONTENT FROM: 0259-alfred-vision.hook.chroot ---
+
+
+#!/bin/bash
+# 0259-alfred-vision.hook.chroot
+# Installs Prophetic Vision (ComfyUI / Stable Diffusion) wrapper
+set +e
+
+echo "[0259] Configuring Prophetic Vision (GPU AI Image Generation)"
+
+# Setup the environment structure
+mkdir -p /opt/alfred-vision
+# Assuming build-assets/vision contains the ComfyUI source, we would copy it here
+if [ -d "/build-assets/vision" ]; then
+    cp -r /build-assets/vision/* /opt/alfred-vision/
+    chown -R 1000:1000 /opt/alfred-vision
+fi
+
+# Create the wrapper script
+cat << 'EOF' > /usr/local/bin/alfred-vision
+#!/bin/bash
+# Prophetic Vision Launcher
+echo "=========================================="
+echo "    PROPHETIC VISION (GPU GENERATOR)      "
+echo "=========================================="
+echo "Starting local diffusion engine..."
+
+cd /opt/alfred-vision
+if [ -f "main.py" ]; then
+    # We run the ComfyUI backend
+    if [ ! -d "venv" ]; then
+        python3 -m venv venv
+    fi
+    source venv/bin/activate
+    # Run the server in the background
+    python3 main.py --listen 127.0.0.1 --port 8188 &
+    VISION_PID=$!
+    
+    # Wait for the server to spin up
+    sleep 5
+    
+    # Launch browser (KDE Plasma)
+    xdg-open http://127.0.0.1:8188
+    
+    echo "Vision engine running. Press Ctrl+C to shut down."
+    wait $VISION_PID
+else
+    echo "Vision assets not fully downloaded yet. Please connect to internet and run update-vision.sh"
+    read -p "Press Enter to exit..."
+fi
+EOF
+
+chmod 0755 /usr/local/bin/alfred-vision
+
+echo "[0259] Prophetic Vision configured."

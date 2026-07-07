@@ -1,0 +1,920 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meet Alfred — The World's First AI Hosting Assistant | 1,290+ Tools | GoCodeMe</title>
+    <meta name="description" content="Alfred is the world's first AI hosting assistant. 1,290+ tools. Voice steering. Command queuing. Voice commands. WhatsApp. Generate images, manage WordPress, deploy sites, handle security — all by talking naturally.">
+    <meta property="og:title" content="Meet Alfred — 1,290+ AI Tools for Your Hosting">
+    <meta property="og:description" content="The world's first AI hosting assistant. 1,290+ tools. Voice steering. Image generation. WordPress. Security. Voice. Messaging. One conversation.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://gocodeme.com/alfred.html">
+    <link rel="canonical" href="https://gocodeme.com/alfred.html">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg: #0a0a1a;
+            --bg-card: #111127;
+            --indigo: #4f46e5;
+            --cyan: #06b6d4;
+            --text: #e2e8f0;
+            --text-muted: #94a3b8;
+            --green: #10b981;
+            --purple: #a855f7;
+            --orange: #fb923c;
+            --red: #ef4444;
+            --pink: #ec4899;
+            --yellow: #facc15;
+            --blue: #3b82f6;
+            --teal: #14b8a6;
+        }
+
+        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; overflow-x: hidden; }
+        a { color: var(--cyan); text-decoration: none; }
+        a:hover { text-decoration: underline; }
+        code { background: rgba(255,255,255,0.06); padding: 2px 8px; border-radius: 4px; font-size: 0.88em; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
+
+        /* ─── NAV ─── */
+        .nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; background: rgba(10,10,26,0.9); backdrop-filter: blur(16px); border-bottom: 1px solid rgba(255,255,255,0.06); padding: 16px 0; }
+        .nav .container { display: flex; align-items: center; justify-content: space-between; }
+        .nav-brand { font-family: 'Space Grotesk', sans-serif; font-size: 1.3rem; font-weight: 800; color: #fff; }
+        .nav-brand span { color: var(--cyan); }
+        .nav-links { display: flex; gap: 28px; align-items: center; }
+        .nav-links a { color: var(--text-muted); font-size: 0.9rem; font-weight: 500; transition: color 0.2s; }
+        .nav-links a:hover { color: #fff; text-decoration: none; }
+        .nav-links a.active { color: var(--cyan); }
+        .btn { display: inline-block; padding: 10px 24px; border-radius: 10px; font-weight: 700; font-size: 0.92rem; text-align: center; transition: all 0.3s; cursor: pointer; border: none; }
+        .btn-primary { background: linear-gradient(135deg, var(--indigo), var(--cyan)); color: #fff; }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(79,70,229,0.3); text-decoration: none; }
+        .btn-ghost { background: transparent; border: 1px solid rgba(255,255,255,0.15); color: #fff; }
+        .btn-ghost:hover { border-color: rgba(255,255,255,0.3); background: rgba(255,255,255,0.05); text-decoration: none; }
+
+        @keyframes pulse-glow { 0%,100% { box-shadow: 0 0 20px rgba(79,70,229,0.3); } 50% { box-shadow: 0 0 40px rgba(79,70,229,0.6); } }
+        @keyframes shimmer { 0% { background-position: -200% 0 } 100% { background-position: 200% 0 } }
+        @keyframes float-up { 0% { opacity:0; transform:translateY(30px) } 100% { opacity:1; transform:translateY(0) } }
+
+        /* ─── HERO ─── */
+        .hero { padding: 160px 0 100px; text-align: center; position: relative; }
+        .hero::before { content: ''; position: absolute; top: -300px; left: 50%; transform: translateX(-50%); width: 1000px; height: 1000px; background: radial-gradient(circle, rgba(79,70,229,0.15) 0%, rgba(6,182,212,0.05) 40%, transparent 70%); pointer-events: none; animation: pulse-glow 4s ease-in-out infinite; }
+        .badge { display: inline-flex; align-items: center; gap: 10px; padding: 10px 24px; border-radius: 100px; background: linear-gradient(135deg, rgba(79,70,229,0.2), rgba(6,182,212,0.2)); border: 1px solid rgba(6,182,212,0.4); color: var(--cyan); font-size: 0.9rem; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 32px; animation: float-up 0.6s ease-out; }
+        .hero h1 { font-family: 'Space Grotesk', sans-serif; font-size: clamp(2.8rem, 6vw, 4.5rem); font-weight: 900; line-height: 1.05; margin-bottom: 28px; background: linear-gradient(135deg, #fff 0%, #a855f7 40%, var(--cyan) 80%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+        .hero .sub { font-size: 1.35rem; color: var(--text-muted); max-width: 780px; margin: 0 auto 20px; line-height: 1.7; }
+        .hero .sub2 { font-size: 1.05rem; color: rgba(255,255,255,0.4); max-width: 600px; margin: 0 auto 44px; }
+        .hero-ctas { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; margin-bottom: 12px; }
+        .hero-ctas .btn { padding: 16px 36px; font-size: 1.05rem; }
+        .hero-ctas .btn-primary { position: relative; overflow: hidden; }
+        .hero-ctas .btn-primary::after { content: ''; position: absolute; top: 0; left: -200%; width: 200%; height: 100%; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent); animation: shimmer 3s ease-in-out infinite; }
+        .price-note { text-align: center; color: rgba(255,255,255,0.4); font-size: 0.9rem; margin-bottom: 60px; }
+        .price-note strong { color: var(--green); }
+        .hero-stats { display: flex; justify-content: center; gap: 48px; flex-wrap: wrap; padding: 32px 0; border-top: 1px solid rgba(255,255,255,0.06); border-bottom: 1px solid rgba(255,255,255,0.06); }
+        .stat { text-align: center; }
+        .stat-num { font-family: 'Space Grotesk', sans-serif; font-size: 2.5rem; font-weight: 800; color: #fff; display: block; }
+        .stat-num .accent { color: var(--cyan); }
+        .stat-label { font-size: 0.85rem; color: var(--text-muted); margin-top: 4px; }
+
+        /* ─── SECTIONS ─── */
+        .section { padding: 100px 0; }
+        .section-label { text-align: center; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 3px; color: var(--purple); font-weight: 700; margin-bottom: 16px; }
+        .section h2 { text-align: center; font-family: 'Space Grotesk', sans-serif; font-size: clamp(1.8rem, 3.5vw, 2.8rem); font-weight: 800; color: #fff; margin-bottom: 12px; line-height: 1.15; }
+        .section-sub { text-align: center; color: var(--text-muted); font-size: 1.1rem; max-width: 660px; margin: 0 auto 48px; line-height: 1.7; }
+
+        /* ─── COMMERCIAL TIMELINE ─── */
+        .timeline { position: relative; padding-left: 36px; max-width: 850px; margin: 0 auto; }
+        .timeline::before { content: ''; position: absolute; left: 14px; top: 0; bottom: 0; width: 2px; background: linear-gradient(180deg, rgba(79,70,229,0.5), rgba(6,182,212,0.5)); }
+        .step { position: relative; margin-bottom: 48px; }
+        .step::before { content: ''; position: absolute; left: -29px; top: 6px; width: 14px; height: 14px; border-radius: 50%; background: linear-gradient(135deg, var(--indigo), var(--cyan)); box-shadow: 0 0 12px rgba(79,70,229,0.5); }
+        .voice { display: inline-flex; align-items: center; gap: 10px; background: linear-gradient(135deg, rgba(79,70,229,0.15), rgba(79,70,229,0.25)); border: 1px solid rgba(79,70,229,0.3); border-radius: 12px; padding: 12px 20px; font-size: 1rem; color: #c4b5fd; margin-bottom: 12px; font-style: italic; }
+        .voice i { color: var(--purple); }
+        .result { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 12px; padding: 16px 20px; font-size: 0.95rem; color: var(--text); line-height: 1.7; }
+        .result strong { color: var(--green); }
+        .tag { display: inline-block; margin: 4px 4px 4px 0; padding: 2px 10px; border-radius: 6px; font-size: 0.78rem; font-weight: 600; }
+        .tag-g { background: rgba(16,185,129,0.15); color: var(--green); }
+        .tag-p { background: rgba(168,85,247,0.15); color: var(--purple); }
+        .tag-c { background: rgba(6,182,212,0.15); color: var(--cyan); }
+
+        /* ─── IMAGE GEN ─── */
+        .imggen-grid { max-width: 800px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+        .ig-card { background: var(--bg-card); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; overflow: hidden; }
+        .ig-prompt { padding: 16px 20px; border-bottom: 1px solid rgba(255,255,255,0.06); font-size: 0.88rem; color: var(--purple); }
+        .ig-prompt i { margin-right: 8px; color: var(--cyan); }
+        .ig-preview { height: 200px; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, rgba(79,70,229,0.1), rgba(6,182,212,0.1)); position: relative; }
+        .ig-preview .emoji { font-size: 3.5rem; opacity: 0.6; }
+        .ig-preview .label { position: absolute; bottom: 12px; right: 12px; background: rgba(0,0,0,0.6); padding: 4px 12px; border-radius: 8px; font-size: 0.75rem; color: var(--green); font-weight: 600; }
+        .ig-meta { padding: 12px 20px; font-size: 0.82rem; color: var(--text-muted); display: flex; justify-content: space-between; }
+
+        /* ─── COMPARISON TABLE ─── */
+        .comp-wrap { overflow-x: auto; }
+        .comp { width: 100%; border-collapse: separate; border-spacing: 0; border-radius: 16px; overflow: hidden; border: 1px solid rgba(255,255,255,0.08); }
+        .comp th { padding: 16px 20px; background: rgba(79,70,229,0.1); font-weight: 700; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); }
+        .comp th.ours { color: var(--cyan); background: rgba(6,182,212,0.1); }
+        .comp td { padding: 14px 20px; border-bottom: 1px solid rgba(255,255,255,0.04); font-size: 0.92rem; color: var(--text); }
+        .comp tr:last-child td { border-bottom: none; }
+        .comp tr:hover td { background: rgba(255,255,255,0.02); }
+        .comp td:first-child { font-weight: 600; color: rgba(255,255,255,0.7); }
+        .comp .y { color: var(--green); font-weight: 700; }
+        .comp .n { color: rgba(255,255,255,0.2); }
+        .comp .p { color: var(--orange); }
+        .comp .hl { background: rgba(6,182,212,0.04); }
+
+        /* ─── TOKENS ─── */
+        .token-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; max-width: 1000px; margin: 0 auto; }
+        .tk { background: var(--bg-card); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 28px 24px; text-align: center; transition: transform 0.3s, border-color 0.3s; }
+        .tk:hover { transform: translateY(-4px); border-color: rgba(79,70,229,0.3); }
+        .tk.featured { border-color: rgba(6,182,212,0.4); background: linear-gradient(135deg, rgba(6,182,212,0.05), rgba(79,70,229,0.05)); }
+        .tk .name { font-weight: 700; font-size: 1.05rem; color: #fff; margin-bottom: 6px; }
+        .tk .price { font-family: 'Space Grotesk', sans-serif; font-size: 2rem; font-weight: 800; color: var(--cyan); margin-bottom: 4px; }
+        .tk .price .mo { font-size: 0.9rem; color: var(--text-muted); font-weight: 400; }
+        .tk .tokens { font-size: 0.95rem; color: var(--purple); font-weight: 600; margin-bottom: 16px; }
+        .tk .equiv { font-size: 0.82rem; color: var(--text-muted); line-height: 1.6; }
+        .tk .equiv strong { color: rgba(255,255,255,0.7); }
+
+        /* ─── TOOLS ─── */
+        .cat { margin-bottom: 56px; }
+        .cat-head { display: flex; align-items: center; gap: 16px; margin-bottom: 20px; padding-bottom: 14px; border-bottom: 1px solid rgba(255,255,255,0.06); }
+        .cat-ico { width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.15rem; flex-shrink: 0; }
+        .cat-ico.purple { background: rgba(168,85,247,0.15); color: var(--purple); }
+        .cat-ico.cyan { background: rgba(6,182,212,0.15); color: var(--cyan); }
+        .cat-ico.green { background: rgba(16,185,129,0.15); color: var(--green); }
+        .cat-ico.orange { background: rgba(251,146,60,0.15); color: var(--orange); }
+        .cat-ico.blue { background: rgba(59,130,246,0.15); color: var(--blue); }
+        .cat-ico.red { background: rgba(239,68,68,0.15); color: var(--red); }
+        .cat-ico.pink { background: rgba(236,72,153,0.15); color: var(--pink); }
+        .cat-ico.yellow { background: rgba(250,204,21,0.15); color: var(--yellow); }
+        .cat-ico.indigo { background: rgba(79,70,229,0.15); color: #818cf8; }
+        .cat-ico.teal { background: rgba(20,184,166,0.15); color: var(--teal); }
+        .cat-name { font-size: 1.2rem; font-weight: 700; color: #fff; }
+        .cat-cnt { font-size: 0.82rem; color: var(--text-muted); font-weight: 400; }
+        .tg { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
+        .tc { background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06); border-radius: 12px; padding: 18px 20px; transition: border-color 0.3s, background 0.3s; }
+        .tc:hover { border-color: rgba(79,70,229,0.25); background: rgba(255,255,255,0.04); }
+        .tc .tn { font-weight: 700; font-size: 0.92rem; color: #fff; margin-bottom: 6px; }
+        .tc .td { font-size: 0.84rem; color: var(--text-muted); line-height: 1.5; margin-bottom: 10px; }
+        .tc .ts { font-size: 0.8rem; color: var(--purple); font-style: italic; }
+        .tc .ts::before { content: '\1F4AC '; }
+        .tc-new { border-color: rgba(6,182,212,0.2); background: rgba(6,182,212,0.03); }
+
+        /* ─── SAFETY ─── */
+        .safety-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; max-width: 1000px; margin: 0 auto; }
+        .sc { background: var(--bg-card); border: 1px solid rgba(255,255,255,0.06); border-radius: 14px; padding: 28px 24px; }
+        .sc .icon { font-size: 1.6rem; margin-bottom: 14px; }
+        .sc h3 { font-size: 1rem; font-weight: 700; color: #fff; margin-bottom: 8px; }
+        .sc p { font-size: 0.88rem; color: var(--text-muted); line-height: 1.6; }
+
+        /* ─── CTA ─── */
+        .cta { padding: 100px 0; text-align: center; position: relative; }
+        .cta::before { content: ''; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 600px; height: 600px; background: radial-gradient(circle, rgba(79,70,229,0.12) 0%, transparent 70%); pointer-events: none; }
+        .cta h2 { font-family: 'Space Grotesk', sans-serif; font-size: clamp(2rem, 4vw, 3rem); font-weight: 800; color: #fff; margin-bottom: 16px; }
+        .cta .sub { font-size: 1.15rem; color: var(--text-muted); max-width: 600px; margin: 0 auto 36px; line-height: 1.7; }
+        .cta-btns { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; margin-bottom: 16px; }
+        .cta-btns .btn { padding: 16px 40px; font-size: 1.05rem; }
+        .cta .promo { font-size: 0.9rem; color: rgba(255,255,255,0.4); }
+        .cta .promo strong { color: var(--green); }
+
+        /* ─── FAQ ─── */
+        .faq-list { max-width: 800px; margin: 0 auto; display: flex; flex-direction: column; gap: 16px; }
+        .fq { background: var(--bg-card); border: 1px solid rgba(255,255,255,0.06); border-radius: 12px; padding: 20px 24px; }
+        .fq h3 { font-size: 0.95rem; font-weight: 700; color: #fff; margin-bottom: 8px; }
+        .fq p { font-size: 0.88rem; color: var(--text-muted); line-height: 1.6; }
+
+        /* ─── VOICE COMMANDS & MESSAGING ─── */
+        .voice-msg { padding: 120px 0; position: relative; overflow: hidden; }
+        .voice-msg::before { content: ''; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 900px; height: 900px; background: radial-gradient(circle, rgba(79,70,229,0.08) 0%, rgba(6,182,212,0.04) 40%, transparent 70%); pointer-events: none; }
+        .voice-msg h2 { text-align: center; font-family: 'Space Grotesk', sans-serif; font-size: clamp(2rem, 4vw, 3rem); font-weight: 800; color: #fff; margin-bottom: 12px; line-height: 1.15; }
+        .voice-msg .section-sub { text-align: center; color: var(--text-muted); font-size: 1.1rem; max-width: 700px; margin: 0 auto 20px; line-height: 1.7; }
+        .cherry { display: inline-flex; align-items: center; gap: 8px; padding: 8px 20px; border-radius: 100px; background: linear-gradient(135deg, rgba(239,68,68,0.15), rgba(251,146,60,0.15)); border: 1px solid rgba(251,146,60,0.3); color: var(--orange); font-size: 0.82rem; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 24px; }
+        .plat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 16px; max-width: 900px; margin: 0 auto 56px; }
+        .plat { background: var(--bg-card); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 24px 16px; text-align: center; transition: transform 0.3s, border-color 0.3s; }
+        .plat:hover { transform: translateY(-4px); border-color: rgba(6,182,212,0.3); }
+        .plat .pi { font-size: 2rem; margin-bottom: 12px; display: block; }
+        .plat .pn { font-weight: 700; font-size: 0.95rem; color: #fff; margin-bottom: 4px; }
+        .plat .ps { font-size: 0.78rem; color: var(--green); font-weight: 600; }
+        .md { max-width: 700px; margin: 0 auto; display: flex; flex-direction: column; gap: 24px; }
+        .md-row { display: flex; gap: 16px; align-items: flex-start; }
+        .md-ico { width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; flex-shrink: 0; }
+        .md-ico.wa { background: rgba(37,211,102,0.15); color: #25d366; }
+        .md-ico.sig { background: rgba(59,130,246,0.15); color: #3b82f6; }
+        .md-ico.disc { background: rgba(88,101,242,0.15); color: #5865f2; }
+        .md-ico.sm { background: rgba(16,185,129,0.15); color: var(--green); }
+        .md-body { flex: 1; }
+        .md-sent { display: inline-block; padding: 12px 18px; border-radius: 16px 16px 16px 4px; font-size: 0.92rem; margin-bottom: 8px; font-style: italic; background: linear-gradient(135deg, rgba(79,70,229,0.2), rgba(79,70,229,0.3)); border: 1px solid rgba(79,70,229,0.3); color: #c4b5fd; }
+        .md-recv { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 4px 16px 16px 16px; padding: 12px 18px; font-size: 0.88rem; color: var(--text); line-height: 1.6; }
+        .md-recv strong { color: var(--green); }
+        .vk { text-align: center; margin-top: 56px; padding: 36px; background: linear-gradient(135deg, rgba(79,70,229,0.06), rgba(6,182,212,0.06)); border: 1px solid rgba(6,182,212,0.15); border-radius: 20px; max-width: 720px; margin-left: auto; margin-right: auto; }
+        .vk p { font-size: 1.15rem; color: var(--text-muted); line-height: 1.8; }
+        .vk p strong { color: #fff; }
+        .vk .acc { color: var(--cyan); }
+
+        /* ─── FOOTER ─── */
+        .footer { padding: 40px 0; border-top: 1px solid rgba(255,255,255,0.06); text-align: center; }
+        .footer p { font-size: 0.85rem; color: var(--text-muted); }
+        .footer a { color: var(--cyan); }
+
+        @media (max-width: 768px) {
+            .hero { padding: 120px 0 60px; }
+            .hero-stats { gap: 24px; }
+            .stat-num { font-size: 1.8rem; }
+            .timeline { padding-left: 28px; }
+            .nav-links { display: none; }
+            .tg, .imggen-grid { grid-template-columns: 1fr; }
+            .token-grid { grid-template-columns: 1fr 1fr; }
+            .comp th, .comp td { padding: 10px 12px; font-size: 0.82rem; }
+            .plat-grid { grid-template-columns: repeat(3, 1fr); }
+            .md-row { flex-direction: column; }
+            .md-ico { width: 40px; height: 40px; }
+        }
+        @media (max-width: 480px) { .token-grid { grid-template-columns: 1fr; } .plat-grid { grid-template-columns: repeat(2, 1fr); } }
+    </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="nav">
+    <div class="container">
+        <a href="/" class="nav-brand">Go<span>Code</span>Me</a>
+        <div class="nav-links">
+            <a href="/#features">Features</a>
+            <a href="/alfred.html" class="active">Alfred AI</a>
+            <a href="/#pricing">Pricing</a>
+            <a href="https://gositeme.com" target="_blank">GoSiteMe</a>
+            <a href="https://gositeme.com/cart?a=add&pid=18" class="btn btn-primary" style="padding:8px 20px;">Start Free</a>
+        </div>
+    </div>
+</nav>
+
+<div class="container">
+
+<!-- HERO -->
+<section class="hero">
+    <div class="badge"><i class="fas fa-crown"></i> The World's First AI Hosting Assistant</div>
+    <h1>Meet Alfred.<br>Your Websites Run Themselves Now.</h1>
+    <p class="sub">1,290+ AI tools. Voice commands. WhatsApp. Signal. Discord. Talk to Alfred like you'd talk to a friend — and watch your hosting, WordPress, domains, security, images, videos, and analytics just... happen. From any device. Any app. Anywhere.</p>
+    <p class="sub2">No terminal. No cPanel. No code. No Googling "how to install WordPress."<br>Just say what you need. Alfred does the rest.</p>
+    <div class="hero-ctas">
+        <a href="https://gositeme.com/cart?a=add&pid=18" class="btn btn-primary">Start AI Hosting — $15/mo</a>
+        <a href="#commercial" class="btn btn-ghost">Watch It In Action <i class="fas fa-play-circle" style="margin-left:6px;"></i></a>
+    </div>
+    <p class="price-note">Use code <strong>LAUNCH50</strong> for 50% off your first year. Cancel anytime.</p>
+    <div class="hero-stats">
+        <div class="stat"><span class="stat-num"><span class="accent">1,290+</span></span><span class="stat-label">AI Tools</span></div>
+        <div class="stat"><span class="stat-num">36</span><span class="stat-label">Categories</span></div>
+        <div class="stat"><span class="stat-num">0</span><span class="stat-label">Commands to Learn</span></div>
+        <div class="stat"><span class="stat-num">24/7</span><span class="stat-label">Always On</span></div>
+        <div class="stat"><span class="stat-num"><span class="accent">&infin;</span></span><span class="stat-label">Command Steering</span></div>
+    </div>
+</section>
+
+<!-- THE COMMERCIAL -->
+<section class="section" id="commercial">
+    <div class="section-label">Picture This</div>
+    <h2>It's 9 PM. You Just Had an Idea for a Business.</h2>
+    <p class="section-sub">No developer. No agency. No $5,000 invoice. Just you, a laptop, and Alfred.<br>Here's what happens in the next 12 minutes.</p>
+    <div class="timeline">
+        <div class="step">
+            <div class="voice"><i class="fas fa-microphone"></i> "Alfred, set up a WordPress site on mybakery.com"</div>
+            <div class="result"><strong>&check; Done in 8 seconds.</strong> WordPress installed. SSL certificate provisioned. DNS configured. Your site is LIVE at <code>https://mybakery.com</code>.<br><span class="tag tag-g">install-wordpress</span> <span class="tag tag-c">manage-ssl</span> <span class="tag tag-p">manage-dns</span></div>
+        </div>
+        <div class="step">
+            <div class="voice"><i class="fas fa-microphone"></i> "Install WooCommerce and add 3 products with prices"</div>
+            <div class="result"><strong>&check; Done.</strong> WooCommerce activated. 3 products created with descriptions, images, and pricing.<br><span class="tag tag-g">search-plugins</span> <span class="tag tag-p">install-plugin</span> <span class="tag tag-c">manage-wordpress</span></div>
+        </div>
+        <div class="step">
+            <div class="voice"><i class="fas fa-microphone"></i> "Generate a hero image — a rustic bakery with warm morning light"</div>
+            <div class="result"><strong>&check; Image generated.</strong> AI created a stunning 1024&times;1024 hero image in 4.2 seconds. Saved to <code>/ai-images/</code>.<br><span class="tag tag-g">generate-image</span> <span class="tag tag-p">NEW — Only on GoSiteMe</span></div>
+        </div>
+        <div class="step">
+            <div class="voice"><i class="fas fa-microphone"></i> "Set up email me@mybakery.com and forward to my Gmail"</div>
+            <div class="result"><strong>&check; Done.</strong> Email account created. Forwarding enabled. DKIM, SPF, and DMARC configured.<br><span class="tag tag-g">create-email</span> <span class="tag tag-c">manage-email</span></div>
+        </div>
+        <div class="step">
+            <div class="voice"><i class="fas fa-microphone"></i> "Check if my site is fast and secure"</div>
+            <div class="result"><strong>&check; Health Report:</strong> SSL valid, DNS resolving, response time 0.28s, no malware, permissions correct. Grade: <strong style="color:#10b981;">A+</strong>.<br><span class="tag tag-g">check-site-health</span> <span class="tag tag-c">security-scan</span> <span class="tag tag-p">audit-permissions</span></div>
+        </div>
+        <div class="step">
+            <div class="voice"><i class="fas fa-microphone"></i> "Back up everything and commit to Git"</div>
+            <div class="result"><strong>&check; Done.</strong> Full backup created. Git repository initialized, all files committed. Roll back anytime.<br><span class="tag tag-g">create-backup</span> <span class="tag tag-p">git-commit</span> <span class="tag tag-c">git-init</span></div>
+        </div>
+    </div>
+    <p style="text-align:center;margin-top:48px;font-size:1.2rem;color:var(--text-muted);">
+        Total time: <strong style="color:#fff;">~12 minutes</strong>. Commands typed: <strong style="color:#10b981;">zero</strong>.<br>
+        Agency cost: <strong style="color:#fb923c;">$2,000–$10,000</strong>. With Alfred: <strong style="color:#06b6d4;">$15/month</strong>.
+    </p>
+</section>
+
+<!-- IMAGE GENERATION -->
+<section class="section" id="image-generation">
+    <h2>AI Image Generation.<br>Built Right In.</h2>
+    <p class="section-sub">Cursor can't do this. Lovable can't do this. VS Code can't do this.<br><strong style="color:var(--cyan);">Alfred can.</strong> Generate images from text and save them directly to your website.</p>
+    <div class="imggen-grid">
+        <div class="ig-card">
+            <div class="ig-prompt"><i class="fas fa-magic"></i> "Create a hero image of a modern coffee shop"</div>
+            <div class="ig-preview"><div class="emoji">&#9749;</div><div class="label">Generated in 4.1s</div></div>
+            <div class="ig-meta"><span>Style: photo</span><span>1024&times;1024</span></div>
+        </div>
+        <div class="ig-card">
+            <div class="ig-prompt"><i class="fas fa-magic"></i> "Design a logo for TechFlow Solutions"</div>
+            <div class="ig-preview"><div class="emoji">&#9889;</div><div class="label">Generated in 3.8s</div></div>
+            <div class="ig-meta"><span>Style: logo</span><span>512&times;512</span></div>
+        </div>
+        <div class="ig-card">
+            <div class="ig-prompt"><i class="fas fa-magic"></i> "Product photo of artisan bread on wood"</div>
+            <div class="ig-preview"><div class="emoji">&#129366;</div><div class="label">Generated in 4.5s</div></div>
+            <div class="ig-meta"><span>Style: product</span><span>1024&times;1024</span></div>
+        </div>
+        <div class="ig-card">
+            <div class="ig-prompt"><i class="fas fa-magic"></i> "Abstract header background, purple waves"</div>
+            <div class="ig-preview"><div class="emoji">&#127912;</div><div class="label">Generated in 3.2s</div></div>
+            <div class="ig-meta"><span>Style: abstract</span><span>1792&times;1024</span></div>
+        </div>
+    </div>
+    <p style="text-align:center;margin-top:36px;font-size:0.95rem;color:var(--text-muted);">
+        7 style presets: <strong style="color:#fff;">photo &middot; illustration &middot; logo &middot; abstract &middot; hero &middot; product &middot; avatar</strong><br>
+        Powered by GoCodeMe's proprietary AI infrastructure. Images saved directly to your <code>/ai-images/</code> folder.
+    </p>
+</section>
+
+<!-- VOICE COMMANDS & MESSAGING -->
+<section class="voice-msg" id="voice-messaging">
+    <div style="text-align:center;">
+        <div class="cherry"><i class="fas fa-fire"></i> The Feature Nobody Else Has</div>
+    </div>
+    <h2>Command Alfred From Anywhere.<br>Voice. Messages. Any App.</h2>
+    <p class="section-sub">Talk to Alfred in your browser with voice. Or send a message from WhatsApp, Signal, Discord, Telegram, or SMS.<br><strong style="color:var(--cyan);">Your website listens to you — wherever you are.</strong></p>
+
+    <div class="plat-grid">
+        <div class="plat"><span class="pi"><i class="fab fa-whatsapp" style="color:#25d366;"></i></span><div class="pn">WhatsApp</div><div class="ps">&#10003; Connected</div></div>
+        <div class="plat"><span class="pi"><i class="fas fa-comment-dots" style="color:#3b82f6;"></i></span><div class="pn">Signal</div><div class="ps">&#10003; Connected</div></div>
+        <div class="plat"><span class="pi"><i class="fab fa-discord" style="color:#5865f2;"></i></span><div class="pn">Discord</div><div class="ps">&#10003; Connected</div></div>
+        <div class="plat"><span class="pi"><i class="fab fa-telegram" style="color:#0088cc;"></i></span><div class="pn">Telegram</div><div class="ps">&#10003; Connected</div></div>
+        <div class="plat"><span class="pi"><i class="fas fa-sms" style="color:#10b981;"></i></span><div class="pn">SMS</div><div class="ps">&#10003; Connected</div></div>
+        <div class="plat"><span class="pi"><i class="fas fa-microphone" style="color:#a855f7;"></i></span><div class="pn">Voice</div><div class="ps">&#10003; Browser Native</div></div>
+    </div>
+
+    <h3 style="text-align:center;font-family:'Space Grotesk',sans-serif;font-size:1.4rem;font-weight:700;color:#fff;margin-bottom:32px;">See How It Works</h3>
+
+    <div class="md">
+        <div class="md-row">
+            <div class="md-ico wa"><i class="fab fa-whatsapp"></i></div>
+            <div class="md-body">
+                <div class="md-sent">Hey Alfred, how's my traffic today?</div>
+                <div class="md-recv"><strong>&#10003; 847 visitors today</strong> (+12% vs yesterday). Top page: /products (312 views). 94% human traffic. No anomalies. Site health: <strong>A+</strong>.</div>
+            </div>
+        </div>
+        <div class="md-row">
+            <div class="md-ico sig"><i class="fas fa-comment-dots"></i></div>
+            <div class="md-body">
+                <div class="md-sent">Install a contact form plugin on mybakery.com</div>
+                <div class="md-recv"><strong>&#10003; Done.</strong> WPForms Lite installed and activated on mybakery.com. A default contact form is ready at /contact.</div>
+            </div>
+        </div>
+        <div class="md-row">
+            <div class="md-ico disc"><i class="fab fa-discord"></i></div>
+            <div class="md-body">
+                <div class="md-sent">Generate a banner image — sunset over mountains, warm tones</div>
+                <div class="md-recv"><strong>&#10003; Image generated</strong> in 4.1 seconds. 1792&times;1024, style: hero. Saved to /ai-images/banner-sunset-mountains.png. <strong>Public URL ready.</strong></div>
+            </div>
+        </div>
+        <div class="md-row">
+            <div class="md-ico sm"><i class="fas fa-sms"></i></div>
+            <div class="md-body">
+                <div class="md-sent">Is my SSL still valid?</div>
+                <div class="md-recv"><strong>&#10003; SSL valid.</strong> Let's Encrypt certificate for mybakery.com expires March 14, 2027. Auto-renewal enabled. Grade: A+.</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="vk">
+        <p>
+            You're at a coffee shop. On the bus. In a meeting.<br>
+            Your phone buzzes — a customer asked a question on your site.<br>
+            You open <strong>WhatsApp</strong> and type: <em style="color:#a855f7;">"Alfred, check my latest contact form submissions."</em><br>
+            <strong>3 seconds later</strong>, you have the answer.<br><br>
+            <strong class="acc">No laptop. No login. No dashboard.</strong><br>
+            Just you, your phone, and an AI that never sleeps.<br><br>
+            <span style="font-size:0.9rem;color:rgba(255,255,255,0.4);">Cursor can't do this. Lovable can't do this. cPanel can't do this. <strong style="color:#fff;">Nobody</strong> can do this.</span>
+        </p>
+    </div>
+</section>
+
+<!-- PROOF OF POWER — ENTERPRISE SHOWCASE -->
+<section class="section" id="enterprise" style="background:linear-gradient(180deg,rgba(79,70,229,.06) 0%,transparent 100%);">
+    <div class="section-label" style="color:var(--cyan);">Proof of Power</div>
+    <h2 style="margin-bottom:6px;">Alfred Doesn't Just Edit Files</h2>
+    <p style="text-align:center;font-size:1.4rem;font-weight:800;margin-bottom:8px;"><span style="background:linear-gradient(135deg,var(--cyan),var(--purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">It Architects Complete Applications</span></p>
+    <p class="section-sub">The same AI that manages your hosting can build what Fortune 500 companies pay development teams millions for. SaaS platforms, e-commerce empires, healthcare portals — all from a conversation.</p>
+
+    <div class="container" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:20px;margin-top:12px;">
+        <div style="background:var(--bg-card);border:1px solid rgba(255,255,255,0.06);border-radius:14px;padding:28px;transition:transform .3s,border-color .3s;" onmouseover="this.style.transform='translateY(-5px)';this.style.borderColor='rgba(79,70,229,.4)';" onmouseout="this.style.transform='';this.style.borderColor='rgba(255,255,255,0.06)';">
+            <div style="font-size:2rem;margin-bottom:12px;">📊</div>
+            <h3 style="font-size:1.05rem;font-weight:800;color:#fff;margin-bottom:6px;">SaaS Dashboards</h3>
+            <p style="font-size:.85rem;color:var(--text-muted);line-height:1.6;">Analytics, user management, subscription billing, role-based access. Full-stack SaaS from one conversation.</p>
+        </div>
+        <div style="background:var(--bg-card);border:1px solid rgba(255,255,255,0.06);border-radius:14px;padding:28px;transition:transform .3s,border-color .3s;" onmouseover="this.style.transform='translateY(-5px)';this.style.borderColor='rgba(16,185,129,.4)';" onmouseout="this.style.transform='';this.style.borderColor='rgba(255,255,255,0.06)';">
+            <div style="font-size:2rem;margin-bottom:12px;">🛒</div>
+            <h3 style="font-size:1.05rem;font-weight:800;color:#fff;margin-bottom:6px;">E-Commerce Platforms</h3>
+            <p style="font-size:.85rem;color:var(--text-muted);line-height:1.6;">Product catalogs, Stripe payments, inventory, abandoned cart recovery. Shopify-level — no Shopify tax.</p>
+        </div>
+        <div style="background:var(--bg-card);border:1px solid rgba(255,255,255,0.06);border-radius:14px;padding:28px;transition:transform .3s,border-color .3s;" onmouseover="this.style.transform='translateY(-5px)';this.style.borderColor='rgba(239,68,68,.4)';" onmouseout="this.style.transform='';this.style.borderColor='rgba(255,255,255,0.06)';">
+            <div style="font-size:2rem;margin-bottom:12px;">🏥</div>
+            <h3 style="font-size:1.05rem;font-weight:800;color:#fff;margin-bottom:6px;">Healthcare Portals</h3>
+            <p style="font-size:.85rem;color:var(--text-muted);line-height:1.6;">Patient scheduling, secure forms, HIPAA-conscious design, telehealth integration. Medical-grade UX.</p>
+        </div>
+        <div style="background:var(--bg-card);border:1px solid rgba(255,255,255,0.06);border-radius:14px;padding:28px;transition:transform .3s,border-color .3s;" onmouseover="this.style.transform='translateY(-5px)';this.style.borderColor='rgba(250,204,21,.4)';" onmouseout="this.style.transform='';this.style.borderColor='rgba(255,255,255,0.06)';">
+            <div style="font-size:2rem;margin-bottom:12px;">💰</div>
+            <h3 style="font-size:1.05rem;font-weight:800;color:#fff;margin-bottom:6px;">Fintech Dashboards</h3>
+            <p style="font-size:.85rem;color:var(--text-muted);line-height:1.6;">Financial data visualization, portfolio tracking, compliance dashboards. Wall Street polish, startup speed.</p>
+        </div>
+        <div style="background:var(--bg-card);border:1px solid rgba(255,255,255,0.06);border-radius:14px;padding:28px;transition:transform .3s,border-color .3s;" onmouseover="this.style.transform='translateY(-5px)';this.style.borderColor='rgba(6,182,212,.4)';" onmouseout="this.style.transform='';this.style.borderColor='rgba(255,255,255,0.06)';">
+            <div style="font-size:2rem;margin-bottom:12px;">🏠</div>
+            <h3 style="font-size:1.05rem;font-weight:800;color:#fff;margin-bottom:6px;">Real Estate Portals</h3>
+            <p style="font-size:.85rem;color:var(--text-muted);line-height:1.6;">Property listings, interactive maps, virtual tours, mortgage calculators. Zillow-level power.</p>
+        </div>
+        <div style="background:var(--bg-card);border:1px solid rgba(255,255,255,0.06);border-radius:14px;padding:28px;transition:transform .3s,border-color .3s;" onmouseover="this.style.transform='translateY(-5px)';this.style.borderColor='rgba(251,146,60,.4)';" onmouseout="this.style.transform='';this.style.borderColor='rgba(255,255,255,0.06)';">
+            <div style="font-size:2rem;margin-bottom:12px;">🍽️</div>
+            <h3 style="font-size:1.05rem;font-weight:800;color:#fff;margin-bottom:6px;">Restaurant Chains</h3>
+            <p style="font-size:.85rem;color:var(--text-muted);line-height:1.6;">Online ordering, multi-location menus, reservations, delivery integration, loyalty programs.</p>
+        </div>
+        <div style="background:var(--bg-card);border:1px solid rgba(255,255,255,0.06);border-radius:14px;padding:28px;transition:transform .3s,border-color .3s;" onmouseover="this.style.transform='translateY(-5px)';this.style.borderColor='rgba(168,85,247,.4)';" onmouseout="this.style.transform='';this.style.borderColor='rgba(255,255,255,0.06)';">
+            <div style="font-size:2rem;margin-bottom:12px;">⚖️</div>
+            <h3 style="font-size:1.05rem;font-weight:800;color:#fff;margin-bottom:6px;">Law Firm Sites</h3>
+            <p style="font-size:.85rem;color:var(--text-muted);line-height:1.6;">Practice areas, attorney profiles, case intake, client portals, document management. White-shoe credibility.</p>
+        </div>
+        <div style="background:var(--bg-card);border:1px solid rgba(255,255,255,0.06);border-radius:14px;padding:28px;transition:transform .3s,border-color .3s;" onmouseover="this.style.transform='translateY(-5px)';this.style.borderColor='rgba(59,130,246,.4)';" onmouseout="this.style.transform='';this.style.borderColor='rgba(255,255,255,0.06)';">
+            <div style="font-size:2rem;margin-bottom:12px;">📅</div>
+            <h3 style="font-size:1.05rem;font-weight:800;color:#fff;margin-bottom:6px;">Booking Platforms</h3>
+            <p style="font-size:.85rem;color:var(--text-muted);line-height:1.6;">Calendar scheduling, payments, automated reminders, multi-timezone, staff management. Your own Calendly.</p>
+        </div>
+    </div>
+
+    <div class="container" style="margin-top:40px;text-align:center;">
+        <div style="background:linear-gradient(135deg,rgba(79,70,229,.12),rgba(6,182,212,.12));border:1px solid rgba(79,70,229,.3);border-radius:14px;padding:32px;">
+            <p style="font-size:1.3rem;font-weight:800;color:#fff;margin-bottom:6px;">What Fortune 500 companies pay millions for, you build in hours.</p>
+            <p style="font-size:.95rem;color:var(--text-muted);margin-bottom:20px;">Tell Alfred what you need. Watch it architect, design, code, and deploy — while you grab coffee.</p>
+            <a href="/#pricing" class="btn btn-primary" style="padding:16px 36px;font-size:1.05rem;">Start Building Enterprise-Grade →</a>
+        </div>
+    </div>
+</section>
+
+<!-- COMPARISON TABLE -->
+<section class="section" id="compare">
+    <h2>Alfred vs. Everything Else</h2>
+    <p class="section-sub">We built what the industry said was impossible. Here's the proof.</p>
+    <div class="comp-wrap">
+    <table class="comp">
+        <thead><tr>
+            <th style="text-align:left;">Feature</th>
+            <th class="ours">Alfred AI<br><small style="font-weight:400;">$15/mo</small></th>
+            <th>Cursor<br><small style="font-weight:400;">$20/mo</small></th>
+            <th>Lovable<br><small style="font-weight:400;">$20/mo</small></th>
+            <th>cPanel<br><small style="font-weight:400;">~$15+</small></th>
+            <th>n8n<br><small style="font-weight:400;">$20+</small></th>
+        </tr></thead>
+        <tbody>
+            <tr><td>AI Code Editor</td><td class="hl"><span class="y">&check; Full IDE</span></td><td><span class="y">&check;</span></td><td><span class="p">Limited</span></td><td><span class="n">&cross;</span></td><td><span class="n">&cross;</span></td></tr>
+            <tr><td>AI Image Generation</td><td class="hl"><span class="y">&check; Built-in</span></td><td><span class="n">&cross; Can't</span></td><td><span class="n">&cross; Can't</span></td><td><span class="n">&cross;</span></td><td><span class="p">Via plugins</span></td></tr>
+            <tr><td>AI Video & Audio</td><td class="hl"><span class="y">&check; Built-in</span></td><td><span class="n">&cross;</span></td><td><span class="n">&cross;</span></td><td><span class="n">&cross;</span></td><td><span class="n">&cross;</span></td></tr>
+            <tr><td>WordPress Management</td><td class="hl"><span class="y">&check; 11 tools</span></td><td><span class="n">&cross;</span></td><td><span class="n">&cross;</span></td><td><span class="p">Basic</span></td><td><span class="n">&cross;</span></td></tr>
+            <tr><td>Domain &amp; DNS</td><td class="hl"><span class="y">&check; Full</span></td><td><span class="n">&cross;</span></td><td><span class="n">&cross;</span></td><td><span class="y">&check;</span></td><td><span class="n">&cross;</span></td></tr>
+            <tr><td>Email Management</td><td class="hl"><span class="y">&check; With AI</span></td><td><span class="n">&cross;</span></td><td><span class="n">&cross;</span></td><td><span class="y">&check;</span></td><td><span class="n">&cross;</span></td></tr>
+            <tr><td>SSL &amp; Security</td><td class="hl"><span class="y">&check; Automated</span></td><td><span class="n">&cross;</span></td><td><span class="n">&cross;</span></td><td><span class="p">Manual</span></td><td><span class="n">&cross;</span></td></tr>
+            <tr><td>Backups &amp; Git</td><td class="hl"><span class="y">&check; Both</span></td><td><span class="p">Git only</span></td><td><span class="n">&cross;</span></td><td><span class="p">Backups</span></td><td><span class="n">&cross;</span></td></tr>
+            <tr><td>Analytics</td><td class="hl"><span class="y">&check; Built-in</span></td><td><span class="n">&cross;</span></td><td><span class="n">&cross;</span></td><td><span class="p">AWStats</span></td><td><span class="n">&cross;</span></td></tr>
+            <tr><td>Billing Management</td><td class="hl"><span class="y">&check; 14 tools</span></td><td><span class="n">&cross;</span></td><td><span class="n">&cross;</span></td><td><span class="n">&cross;</span></td><td><span class="n">&cross;</span></td></tr>
+            <tr><td>Natural Language</td><td class="hl"><span class="y">&check; Conversation</span></td><td><span class="y">&check;</span></td><td><span class="y">&check;</span></td><td><span class="n">&cross; GUI</span></td><td><span class="p">Visual</span></td></tr>
+            <tr><td><strong>Voice Commands</strong></td><td class="hl"><span class="y">&check; Browser native</span></td><td><span class="n">&cross;</span></td><td><span class="n">&cross;</span></td><td><span class="n">&cross;</span></td><td><span class="n">&cross;</span></td></tr>
+            <tr><td><strong>Messaging (WhatsApp, Signal&hellip;)</strong></td><td class="hl"><span class="y">&check; 6+ platforms</span></td><td><span class="n">&cross;</span></td><td><span class="n">&cross;</span></td><td><span class="n">&cross;</span></td><td><span class="n">&cross;</span></td></tr>
+            <tr><td>Hosting Included</td><td class="hl"><span class="y">&check; Full</span></td><td><span class="n">&cross; BYOH</span></td><td><span class="p">Limited</span></td><td><span class="y">&check;</span></td><td><span class="n">&cross;</span></td></tr>
+            <tr><td><strong>Total AI Tools</strong></td><td class="hl"><strong class="y">1,290+</strong></td><td class="p">~15</td><td class="p">~8</td><td class="n">0</td><td class="p">Varies</td></tr>
+            <tr><td><strong>Voice Steering</strong></td><td class="hl"><span class="y">&check; Command Queuing</span></td><td><span class="n">&cross;</span></td><td><span class="n">&cross;</span></td><td><span class="n">&cross;</span></td><td><span class="n">&cross;</span></td></tr>
+            <tr><td><strong>E-Commerce Tools</strong></td><td class="hl"><span class="y">&check; Full WooCommerce</span></td><td><span class="n">&cross;</span></td><td><span class="n">&cross;</span></td><td><span class="n">&cross;</span></td><td><span class="p">Via plugins</span></td></tr>
+            <tr><td><strong>Starting Price</strong></td><td class="hl"><strong style="color:#10b981;">$15/mo</strong></td><td>$20/mo</td><td>$20/mo</td><td>~$15+</td><td>$20+</td></tr>
+        </tbody>
+    </table>
+    </div>
+    <p style="text-align:center;margin-top:32px;font-size:1.05rem;color:var(--text-muted);">
+        <strong style="color:#fff;">We're not just an editor.</strong> We're not just hosting. We're not just AI.<br>
+        We're <strong style="color:var(--cyan);">the entire stack</strong> — in one place, for less money.
+    </p>
+</section>
+
+<!-- TOKEN PRICING -->
+<section class="section" id="tokens">
+    <h2>Transparent Token Pricing</h2>
+    <p class="section-sub">Every AI interaction uses tokens. Generous monthly allowances so you never think about it.</p>
+    <div class="token-grid">
+        <div class="tk">
+            <div class="name">Free</div>
+            <div class="price">$0<span class="mo">/mo</span></div>
+            <div class="tokens">50,000 tokens/month</div>
+            <div class="equiv">That's roughly:<br><strong>~125 conversations</strong><br><strong>~25 WP operations</strong></div>
+        </div>
+        <div class="tk featured">
+            <div class="name">Builder</div>
+            <div class="price">$15<span class="mo">/mo</span></div>
+            <div class="tokens">300,000 tokens/month</div>
+            <div class="equiv">That's roughly:<br><strong>~750 conversations</strong><br><strong>~150 WP operations</strong><br><strong>~100 image generations</strong></div>
+            <a href="https://gositeme.com/cart?a=add&pid=18" class="btn btn-primary" style="margin-top:18px;display:block;padding:12px;border-radius:10px;font-size:0.9rem;">Get Started</a>
+        </div>
+        <div class="tk">
+            <div class="name">Professional</div>
+            <div class="price">$29<span class="mo">/mo</span></div>
+            <div class="tokens">600,000 tokens/month</div>
+            <div class="equiv">2&times; Builder. For:<br><strong>Freelancers</strong><br><strong>Small businesses</strong><br><strong>Active bloggers</strong></div>
+        </div>
+        <div class="tk">
+            <div class="name">Studio</div>
+            <div class="price">$59<span class="mo">/mo</span></div>
+            <div class="tokens">1,500,000 tokens/month</div>
+            <div class="equiv">5&times; Builder. For:<br><strong>Agencies</strong><br><strong>E-commerce</strong><br><strong>Power users</strong></div>
+        </div>
+        <div class="tk">
+            <div class="name">Business</div>
+            <div class="price">$99<span class="mo">/mo</span></div>
+            <div class="tokens">3,000,000 tokens/month</div>
+            <div class="equiv">10&times; Builder. For:<br><strong>Dev teams</strong><br><strong>Resellers</strong></div>
+        </div>
+        <div class="tk">
+            <div class="name">Enterprise</div>
+            <div class="price">$199<span class="mo">/mo</span></div>
+            <div class="tokens">5,000,000 tokens/month</div>
+            <div class="equiv">Custom. For:<br><strong>Dedicated support</strong><br><strong>Custom integrations</strong></div>
+        </div>
+    </div>
+    <p style="text-align:center;margin-top:36px;font-size:0.9rem;color:var(--text-muted);max-width:700px;margin-left:auto;margin-right:auto;">
+        <strong style="color:#fff;">How tokens work:</strong> A typical question ~400 tokens. A WordPress install ~800. An image generation ~1,500. A multi-step request ~2,000. Monitor usage in real-time. Powered by 17 AI engines (Claude, Llama, GPT, Gemini).
+    </p>
+</section>
+
+<!-- ALL 1,290+ TOOLS -->
+<section class="section" id="tools">
+    <h2>1,290+ Tools. Every One Explained.</h2>
+    <p class="section-sub">The complete arsenal Alfred gives you — now with voice steering, e-commerce, SEO, and 12 new categories.</p>
+
+    <!-- FILE MANAGEMENT -->
+    <div class="cat"><div class="cat-head"><div class="cat-ico purple"><i class="fas fa-folder-open"></i></div><div><span class="cat-name">File Management</span> <span class="cat-cnt">&middot; 8 tools</span></div></div>
+    <div class="tg">
+        <div class="tc"><div class="tn">Read File</div><div class="td">Read any file from your hosting.</div><div class="ts">"Show me my .htaccess"</div></div>
+        <div class="tc"><div class="tn">Write File</div><div class="td">Create or overwrite files.</div><div class="ts">"Create a coming soon page"</div></div>
+        <div class="tc"><div class="tn">List Directory</div><div class="td">Folder contents with sizes, permissions, dates.</div><div class="ts">"What's in my plugins folder?"</div></div>
+        <div class="tc"><div class="tn">Delete File</div><div class="td">Remove files safely with confirmation.</div><div class="ts">"Delete the old backups in /tmp"</div></div>
+        <div class="tc"><div class="tn">Rename / Move</div><div class="td">Rename or relocate files and folders.</div><div class="ts">"Rename logo.png to logo-old.png"</div></div>
+        <div class="tc"><div class="tn">Copy File</div><div class="td">Duplicate files or directories.</div><div class="ts">"Copy index.php to index.php.bak"</div></div>
+        <div class="tc"><div class="tn">Set Permissions</div><div class="td">Change chmod/ownership instantly.</div><div class="ts">"Fix my uploads folder permissions"</div></div>
+        <div class="tc"><div class="tn">Extract Archive</div><div class="td">Unzip, untar — extract any archive.</div><div class="ts">"Extract theme.zip"</div></div>
+    </div></div>
+
+    <!-- DATABASE -->
+    <div class="cat"><div class="cat-head"><div class="cat-ico cyan"><i class="fas fa-database"></i></div><div><span class="cat-name">Database Management</span> <span class="cat-cnt">&middot; 4 tools</span></div></div>
+    <div class="tg">
+        <div class="tc"><div class="tn">List Databases</div><div class="td">All MySQL databases with sizes.</div><div class="ts">"Show me my databases"</div></div>
+        <div class="tc"><div class="tn">Create Database</div><div class="td">New databases with users and passwords.</div><div class="ts">"Create a database for my blog"</div></div>
+        <div class="tc"><div class="tn">Delete Database</div><div class="td">Remove databases with confirmation.</div><div class="ts">"Remove the test database"</div></div>
+        <div class="tc"><div class="tn">Optimize Database</div><div class="td">Clean revisions, spam, transients.</div><div class="ts">"My site is slow, optimize the DB"</div></div>
+    </div></div>
+
+    <!-- DOMAINS / DNS / SSL -->
+    <div class="cat"><div class="cat-head"><div class="cat-ico green"><i class="fas fa-globe"></i></div><div><span class="cat-name">Domains, DNS &amp; SSL</span> <span class="cat-cnt">&middot; 10 tools</span></div></div>
+    <div class="tg">
+        <div class="tc"><div class="tn">List Domains</div><div class="td">All domains, subdomains, and addons.</div><div class="ts">"What domains do I have?"</div></div>
+        <div class="tc"><div class="tn">Create Subdomain</div><div class="td">Add blog.mysite.com instantly.</div><div class="ts">"Create a staging subdomain"</div></div>
+        <div class="tc"><div class="tn">Delete Subdomain</div><div class="td">Remove unneeded subdomains.</div><div class="ts">"Remove the test subdomain"</div></div>
+        <div class="tc"><div class="tn">List DNS Records</div><div class="td">View A, CNAME, MX, TXT — complete picture.</div><div class="ts">"Show my DNS records"</div></div>
+        <div class="tc"><div class="tn">Add DNS Record</div><div class="td">Add records for verification, services.</div><div class="ts">"Add a TXT record for Google"</div></div>
+        <div class="tc"><div class="tn">Remove DNS Record</div><div class="td">Delete DNS records no longer needed.</div><div class="ts">"Remove the old CNAME"</div></div>
+        <div class="tc"><div class="tn">Manage SSL</div><div class="td">Free Let's Encrypt or custom certs.</div><div class="ts">"Set up SSL for my domain"</div></div>
+        <div class="tc"><div class="tn">Search Domains</div><div class="td">Check availability. .com, .net, .io.</div><div class="ts">"Is mybusiness.com available?"</div></div>
+        <div class="tc"><div class="tn">Register Domain</div><div class="td">Buy and register domains through Alfred.</div><div class="ts">"Register mybakery.ca"</div></div>
+        <div class="tc"><div class="tn">Domain Contacts</div><div class="td">View/manage WHOIS contact info.</div><div class="ts">"Show my domain contact info"</div></div>
+    </div></div>
+
+    <!-- EMAIL -->
+    <div class="cat"><div class="cat-head"><div class="cat-ico orange"><i class="fas fa-envelope"></i></div><div><span class="cat-name">Email Management</span> <span class="cat-cnt">&middot; 5 tools</span></div></div>
+    <div class="tg">
+        <div class="tc"><div class="tn">List Emails</div><div class="td">All email accounts with usage.</div><div class="ts">"Show my email accounts"</div></div>
+        <div class="tc"><div class="tn">Create Email</div><div class="td">Professional email in seconds.</div><div class="ts">"Create hello@mybusiness.com"</div></div>
+        <div class="tc"><div class="tn">Delete Email</div><div class="td">Remove unneeded accounts.</div><div class="ts">"Delete the old info@ email"</div></div>
+        <div class="tc"><div class="tn">Email Forwarding</div><div class="td">Forward to Gmail, Outlook, any address.</div><div class="ts">"Forward sales@ to my Gmail"</div></div>
+        <div class="tc"><div class="tn">Autoresponder</div><div class="td">Auto-reply for out-of-office.</div><div class="ts">"Set up an autoresponder"</div></div>
+    </div></div>
+
+    <!-- BACKUPS / CRON / ACCOUNT -->
+    <div class="cat"><div class="cat-head"><div class="cat-ico blue"><i class="fas fa-shield-alt"></i></div><div><span class="cat-name">Backups, Cron &amp; Account</span> <span class="cat-cnt">&middot; 9 tools</span></div></div>
+    <div class="tg">
+        <div class="tc"><div class="tn">Create Backup</div><div class="td">Full account backup — files, DBs, emails.</div><div class="ts">"Back up everything"</div></div>
+        <div class="tc"><div class="tn">List Backups</div><div class="td">All backups with dates and sizes.</div><div class="ts">"Show me my backups"</div></div>
+        <div class="tc"><div class="tn">Restore Backup</div><div class="td">Restore entire account or specific files.</div><div class="ts">"Restore yesterday's backup"</div></div>
+        <div class="tc"><div class="tn">List Cron Jobs</div><div class="td">View scheduled tasks.</div><div class="ts">"What cron jobs do I have?"</div></div>
+        <div class="tc"><div class="tn">Create Cron Job</div><div class="td">Schedule backups, cleanups, reports.</div><div class="ts">"Run a backup every night at 3am"</div></div>
+        <div class="tc"><div class="tn">Delete Cron Job</div><div class="td">Remove scheduled tasks.</div><div class="ts">"Remove that hourly cron"</div></div>
+        <div class="tc"><div class="tn">Account Stats</div><div class="td">Disk, bandwidth, emails, databases.</div><div class="ts">"How much disk am I using?"</div></div>
+        <div class="tc"><div class="tn">Account Config</div><div class="td">PHP version, limits, features.</div><div class="ts">"What PHP version am I on?"</div></div>
+        <div class="tc"><div class="tn">Server Info</div><div class="td">PHP, Node.js, Git, disk, OS.</div><div class="ts">"What can my server do?"</div></div>
+    </div></div>
+
+    <!-- WORDPRESS -->
+    <div class="cat"><div class="cat-head"><div class="cat-ico red"><i class="fab fa-wordpress"></i></div><div><span class="cat-name">WordPress Management</span> <span class="cat-cnt">&middot; 11 tools</span></div></div>
+    <div class="tg">
+        <div class="tc"><div class="tn">Install WordPress</div><div class="td">One-command install with WP-CLI.</div><div class="ts">"Install WordPress on myblog.com"</div></div>
+        <div class="tc"><div class="tn">Site Info</div><div class="td">Version, theme, plugins, health status.</div><div class="ts">"What WP version am I on?"</div></div>
+        <div class="tc"><div class="tn">List Plugins</div><div class="td">All plugins with active/inactive status.</div><div class="ts">"What plugins do I have?"</div></div>
+        <div class="tc"><div class="tn">Install Plugin</div><div class="td">Install and activate any WP plugin.</div><div class="ts">"Install Yoast SEO"</div></div>
+        <div class="tc"><div class="tn">List Themes</div><div class="td">Available themes, active theme.</div><div class="ts">"Show me my themes"</div></div>
+        <div class="tc"><div class="tn">Install Theme</div><div class="td">Install and activate any theme.</div><div class="ts">"Install a restaurant theme"</div></div>
+        <div class="tc"><div class="tn">Check Updates</div><div class="td">Core, plugin, and theme updates.</div><div class="ts">"Any updates I should install?"</div></div>
+        <div class="tc"><div class="tn">Search Plugins</div><div class="td">Search the WP plugin repository.</div><div class="ts">"Find a contact form plugin"</div></div>
+        <div class="tc"><div class="tn">Search Themes</div><div class="td">Search themes by keyword or style.</div><div class="ts">"Find a portfolio theme"</div></div>
+        <div class="tc"><div class="tn">DB Optimize</div><div class="td">Clean revisions, spam, orphaned data.</div><div class="ts">"Clean up my database"</div></div>
+        <div class="tc"><div class="tn">Run WP-CLI</div><div class="td">Any WP-CLI command for power users.</div><div class="ts">"Run wp cache flush"</div></div>
+    </div></div>
+
+    <!-- GIT -->
+    <div class="cat"><div class="cat-head"><div class="cat-ico pink"><i class="fab fa-git-alt"></i></div><div><span class="cat-name">Git Version Control</span> <span class="cat-cnt">&middot; 6 tools</span></div></div>
+    <div class="tg">
+        <div class="tc"><div class="tn">Git Status</div><div class="td">Changed, staged, and untracked files.</div><div class="ts">"What files have I changed?"</div></div>
+        <div class="tc"><div class="tn">Git Log</div><div class="td">Commit history with dates.</div><div class="ts">"Show recent commits"</div></div>
+        <div class="tc"><div class="tn">Git Diff</div><div class="td">What changed, line by line.</div><div class="ts">"What changed since last commit?"</div></div>
+        <div class="tc"><div class="tn">Git Commit</div><div class="td">Save work with descriptive messages.</div><div class="ts">"Commit — 'Added contact page'"</div></div>
+        <div class="tc"><div class="tn">Git Revert</div><div class="td">Undo changes, roll back any time.</div><div class="ts">"Undo the last commit"</div></div>
+        <div class="tc"><div class="tn">Git Init</div><div class="td">Start a new Git repo.</div><div class="ts">"Start tracking my site with Git"</div></div>
+    </div></div>
+
+    <!-- SECURITY & LOGS -->
+    <div class="cat"><div class="cat-head"><div class="cat-ico red"><i class="fas fa-lock"></i></div><div><span class="cat-name">Security &amp; Error Logs</span> <span class="cat-cnt">&middot; 6 tools</span></div></div>
+    <div class="tg">
+        <div class="tc"><div class="tn">Malware Scan</div><div class="td">Deep scan for backdoors, suspicious code.</div><div class="ts">"Is my site hacked?"</div></div>
+        <div class="tc"><div class="tn">Audit Permissions</div><div class="td">Find dangerous world-writable files.</div><div class="ts">"Are my permissions secure?"</div></div>
+        <div class="tc"><div class="tn">Security Scan</div><div class="td">Full audit: malware + permissions + config.</div><div class="ts">"Run a full security audit"</div></div>
+        <div class="tc"><div class="tn">Error Log</div><div class="td">PHP errors and warnings.</div><div class="ts">"Show recent PHP errors"</div></div>
+        <div class="tc"><div class="tn">Access Log</div><div class="td">Who's visiting: IPs, pages, status codes.</div><div class="ts">"Who's been hitting my site?"</div></div>
+        <div class="tc"><div class="tn">Analyze Errors</div><div class="td">AI groups errors and suggests fixes.</div><div class="ts">"Why is my site showing white?"</div></div>
+    </div></div>
+
+    <!-- ANALYTICS & HEALTH -->
+    <div class="cat"><div class="cat-head"><div class="cat-ico teal"><i class="fas fa-chart-line"></i></div><div><span class="cat-name">Analytics &amp; Health</span> <span class="cat-cnt">&middot; 5 tools</span></div></div>
+    <div class="tg">
+        <div class="tc"><div class="tn">Visitor Stats</div><div class="td">Page views, uniques, top pages.</div><div class="ts">"How many visitors today?"</div></div>
+        <div class="tc"><div class="tn">Bandwidth Stats</div><div class="td">Usage by domain, heavy assets.</div><div class="ts">"Am I using too much bandwidth?"</div></div>
+        <div class="tc"><div class="tn">Traffic Report</div><div class="td">Trends, peaks, bots vs humans.</div><div class="ts">"Traffic report for this month"</div></div>
+        <div class="tc"><div class="tn">Site Health</div><div class="td">DNS, HTTP, SSL, response time.</div><div class="ts">"Is my site healthy and fast?"</div></div>
+        <div class="tc"><div class="tn">Server Info</div><div class="td">PHP, Node.js, Git, disk, OS.</div><div class="ts">"What can my server do?"</div></div>
+    </div></div>
+
+    <!-- BILLING & COMMERCE -->
+    <div class="cat"><div class="cat-head"><div class="cat-ico yellow"><i class="fas fa-credit-card"></i></div><div><span class="cat-name">Billing &amp; Commerce</span> <span class="cat-cnt">&middot; 14 tools</span></div></div>
+    <div class="tg">
+        <div class="tc"><div class="tn">My Profile</div><div class="td">Account name, email, company.</div><div class="ts">"What account am I on?"</div></div>
+        <div class="tc"><div class="tn">My Services</div><div class="td">Active plans, statuses, renewals.</div><div class="ts">"What plans do I have?"</div></div>
+        <div class="tc"><div class="tn">Service Details</div><div class="td">Domain, IP, server, resources.</div><div class="ts">"Details of my hosting"</div></div>
+        <div class="tc"><div class="tn">Browse Products</div><div class="td">Available plans, add-ons, services.</div><div class="ts">"What upgrades are available?"</div></div>
+        <div class="tc"><div class="tn">Search Domains</div><div class="td">Check domain availability.</div><div class="ts">"Is coolbusiness.com taken?"</div></div>
+        <div class="tc"><div class="tn">Register Domain</div><div class="td">Buy and register domains.</div><div class="ts">"Buy myproject.com"</div></div>
+        <div class="tc"><div class="tn">Order Hosting</div><div class="td">Purchase hosting with a domain.</div><div class="ts">"Buy AI Starter hosting"</div></div>
+        <div class="tc"><div class="tn">My Invoices</div><div class="td">Unpaid and recent invoices.</div><div class="ts">"Any unpaid invoices?"</div></div>
+        <div class="tc"><div class="tn">Pay Invoice</div><div class="td">Pay via saved payment method.</div><div class="ts">"Pay my latest invoice"</div></div>
+        <div class="tc"><div class="tn">Add Credit</div><div class="td">Pre-pay with account credit.</div><div class="ts">"Add $50 credit"</div></div>
+        <div class="tc"><div class="tn">Available Add-ons</div><div class="td">Extra IPs, backup, SSL add-ons.</div><div class="ts">"What add-ons can I get?"</div></div>
+        <div class="tc"><div class="tn">Order Add-on</div><div class="td">Purchase add-ons for existing plans.</div><div class="ts">"Add daily backups"</div></div>
+        <div class="tc"><div class="tn">Submit Ticket</div><div class="td">Open a support ticket.</div><div class="ts">"I need help with billing"</div></div>
+        <div class="tc"><div class="tn">My Tickets</div><div class="td">Open tickets and latest replies.</div><div class="ts">"Any updates on my ticket?"</div></div>
+    </div></div>
+
+    <!-- AI MEDIA GENERATION -->
+    <div class="cat"><div class="cat-head"><div class="cat-ico indigo"><i class="fas fa-magic"></i></div><div><span class="cat-name">AI Media Generation</span> <span class="cat-cnt">&middot; 6 tools &middot; <span style="color:#10b981;">NEW</span></span></div></div>
+    <div class="tg">
+        <div class="tc tc-new"><div class="tn">Generate Image <span style="background:rgba(16,185,129,0.15);color:#10b981;padding:2px 8px;border-radius:6px;font-size:0.75rem;margin-left:8px;">NEW</span></div><div class="td">AI images from text. 7 style presets. Saved directly to your website.</div><div class="ts">"Generate a hero image for my restaurant"</div></div>
+        <div class="tc tc-new"><div class="tn">List Generated Images <span style="background:rgba(16,185,129,0.15);color:#10b981;padding:2px 8px;border-radius:6px;font-size:0.75rem;margin-left:8px;">NEW</span></div><div class="td">Browse all AI-generated images with public URLs.</div><div class="ts">"Show all images we've created"</div></div>
+        <div class="tc tc-new"><div class="tn">Generate Video <span style="background:rgba(16,185,129,0.15);color:#10b981;padding:2px 8px;border-radius:6px;font-size:0.75rem;margin-left:8px;">NEW</span></div><div class="td">Text-to-video. Short clips for your website or social media.</div><div class="ts">"Create a product demo video"</div></div>
+        <div class="tc tc-new"><div class="tn">Generate Audio <span style="background:rgba(16,185,129,0.15);color:#10b981;padding:2px 8px;border-radius:6px;font-size:0.75rem;margin-left:8px;">NEW</span></div><div class="td">Professional voiceovers and narration from text.</div><div class="ts">"Generate a voiceover for my homepage"</div></div>
+        <div class="tc tc-new"><div class="tn">Vision Analyze <span style="background:rgba(16,185,129,0.15);color:#10b981;padding:2px 8px;border-radius:6px;font-size:0.75rem;margin-left:8px;">NEW</span></div><div class="td">AI analyzes images — screenshots, mockups, diagrams. Screenshot-to-code.</div><div class="ts">"Convert this screenshot to HTML"</div></div>
+        <div class="tc tc-new"><div class="tn">Process Media <span style="background:rgba(16,185,129,0.15);color:#10b981;padding:2px 8px;border-radius:6px;font-size:0.75rem;margin-left:8px;">NEW</span></div><div class="td">Resize, compress, convert images and videos without leaving Alfred.</div><div class="ts">"Resize all images in /uploads to 800px wide"</div></div>
+    </div></div>
+
+    <!-- ADVANCED AI -->
+    <div class="cat"><div class="cat-head"><div class="cat-ico purple"><i class="fas fa-brain"></i></div><div><span class="cat-name">Advanced AI & Automation</span> <span class="cat-cnt">&middot; 10+ tools &middot; <span style="color:#10b981;">NEW</span></span></div></div>
+    <div class="tg">
+        <div class="tc tc-new"><div class="tn">Alfred Voice <span style="background:rgba(16,185,129,0.15);color:#10b981;padding:2px 8px;border-radius:6px;font-size:0.75rem;margin-left:8px;">NEW</span></div><div class="td">Full browser voice interface. 20+ agent personalities. Tap or hands-free live mode.</div><div class="ts">"Activate live voice mode"</div></div>
+        <div class="tc tc-new"><div class="tn">Semantic Search <span style="background:rgba(16,185,129,0.15);color:#10b981;padding:2px 8px;border-radius:6px;font-size:0.75rem;margin-left:8px;">NEW</span></div><div class="td">Search your codebase by meaning, not just text.</div><div class="ts">"Find authentication middleware"</div></div>
+        <div class="tc tc-new"><div class="tn">Code Review <span style="background:rgba(16,185,129,0.15);color:#10b981;padding:2px 8px;border-radius:6px;font-size:0.75rem;margin-left:8px;">NEW</span></div><div class="td">AI reviews your code changes for bugs, security, and performance.</div><div class="ts">"Review my latest changes"</div></div>
+        <div class="tc tc-new"><div class="tn">Playbooks <span style="background:rgba(16,185,129,0.15);color:#10b981;padding:2px 8px;border-radius:6px;font-size:0.75rem;margin-left:8px;">NEW</span></div><div class="td">Reusable multi-step AI workflows. Deploy, backup, audit on a schedule.</div><div class="ts">"Run my WordPress Deploy playbook"</div></div>
+        <div class="tc tc-new"><div class="tn">Scheduled Tasks <span style="background:rgba(16,185,129,0.15);color:#10b981;padding:2px 8px;border-radius:6px;font-size:0.75rem;margin-left:8px;">NEW</span></div><div class="td">Autonomous Alfred tasks that run on any cron schedule without user input.</div><div class="ts">"Run a security audit every Sunday at 2am"</div></div>
+        <div class="tc tc-new"><div class="tn">RAG Knowledge Base <span style="background:rgba(16,185,129,0.15);color:#10b981;padding:2px 8px;border-radius:6px;font-size:0.75rem;margin-left:8px;">NEW</span></div><div class="td">Ingest documents, PDFs, and URLs into a searchable knowledge base.</div><div class="ts">"Add our product manual to Alfred's knowledge"</div></div>
+        <div class="tc tc-new"><div class="tn">Run Code <span style="background:rgba(16,185,129,0.15);color:#10b981;padding:2px 8px;border-radius:6px;font-size:0.75rem;margin-left:8px;">NEW</span></div><div class="td">Execute Python, Node.js, PHP, Ruby, Bash in a sandboxed interpreter.</div><div class="ts">"Run this Python script and show the output"</div></div>
+        <div class="tc tc-new"><div class="tn">Web Browse & Scrape <span style="background:rgba(16,185,129,0.15);color:#10b981;padding:2px 8px;border-radius:6px;font-size:0.75rem;margin-left:8px;">NEW</span></div><div class="td">Headless browser navigation, form filling, data extraction from any URL.</div><div class="ts">"Scrape my competitor's pricing page"</div></div>
+        <div class="tc tc-new"><div class="tn">Proactive Monitoring <span style="background:rgba(16,185,129,0.15);color:#10b981;padding:2px 8px;border-radius:6px;font-size:0.75rem;margin-left:8px;">NEW</span></div><div class="td">Alfred monitors your site health, disk, and services — alerts and auto-fixes.</div><div class="ts">"Enable monitoring with auto-fix"</div></div>
+        <div class="tc tc-new"><div class="tn">Create Documents <span style="background:rgba(16,185,129,0.15);color:#10b981;padding:2px 8px;border-radius:6px;font-size:0.75rem;margin-left:8px;">NEW</span></div><div class="td">Generate professional Word (.docx) or PDF documents from your data.</div><div class="ts">"Create a PDF invoice for client ABC"</div></div>
+    </div></div>
+
+    <!-- E-COMMERCE & REVENUE -->
+    <div class="cat"><div class="cat-head"><div class="cat-ico cyan"><i class="fas fa-shopping-cart"></i></div><div><span class="cat-name">E-Commerce &amp; Revenue</span> <span class="cat-cnt">&middot; 8 tools &middot; <span style="color:#10b981;">NEW</span></span></div></div>
+    <div class="tg">
+        <div class="tc tc-new"><div class="tn">Store Setup <span style="background:rgba(16,185,129,0.15);color:#10b981;padding:2px 8px;border-radius:6px;font-size:0.75rem;margin-left:8px;">NEW</span></div><div class="td">Full WooCommerce store setup with products, categories, and settings.</div><div class="ts">"Set up an online store"</div></div>
+        <div class="tc tc-new"><div class="tn">Product Management <span style="background:rgba(16,185,129,0.15);color:#10b981;padding:2px 8px;border-radius:6px;font-size:0.75rem;margin-left:8px;">NEW</span></div><div class="td">Add, edit, and organize products with images and variants.</div><div class="ts">"Add 5 products with prices"</div></div>
+        <div class="tc tc-new"><div class="tn">Payment Integration <span style="background:rgba(16,185,129,0.15);color:#10b981;padding:2px 8px;border-radius:6px;font-size:0.75rem;margin-left:8px;">NEW</span></div><div class="td">Connect Stripe, PayPal, and other gateways.</div><div class="ts">"Connect Stripe payments"</div></div>
+        <div class="tc tc-new"><div class="tn">Shipping Config <span style="background:rgba(16,185,129,0.15);color:#10b981;padding:2px 8px;border-radius:6px;font-size:0.75rem;margin-left:8px;">NEW</span></div><div class="td">Configure shipping zones, rates, and carriers.</div><div class="ts">"Set up free shipping over $50"</div></div>
+        <div class="tc tc-new"><div class="tn">Order Analytics <span style="background:rgba(16,185,129,0.15);color:#10b981;padding:2px 8px;border-radius:6px;font-size:0.75rem;margin-left:8px;">NEW</span></div><div class="td">Track orders, revenue, and customer trends.</div><div class="ts">"Show me this month's orders"</div></div>
+        <div class="tc tc-new"><div class="tn">Revenue Dashboard <span style="background:rgba(16,185,129,0.15);color:#10b981;padding:2px 8px;border-radius:6px;font-size:0.75rem;margin-left:8px;">NEW</span></div><div class="td">Real-time revenue, AOV, and conversion metrics.</div><div class="ts">"How much revenue this week?"</div></div>
+        <div class="tc tc-new"><div class="tn">Tax Settings <span style="background:rgba(16,185,129,0.15);color:#10b981;padding:2px 8px;border-radius:6px;font-size:0.75rem;margin-left:8px;">NEW</span></div><div class="td">Configure tax rates by region and product type.</div><div class="ts">"Set up Canadian tax rates"</div></div>
+        <div class="tc tc-new"><div class="tn">Coupon System <span style="background:rgba(16,185,129,0.15);color:#10b981;padding:2px 8px;border-radius:6px;font-size:0.75rem;margin-left:8px;">NEW</span></div><div class="td">Create discount codes, percentage or fixed, with expiry.</div><div class="ts">"Create a 20% off holiday coupon"</div></div>
+    </div></div>
+
+    <!-- SEO & SEARCH OPTIMIZATION -->
+    <div class="cat"><div class="cat-head"><div class="cat-ico green"><i class="fas fa-search"></i></div><div><span class="cat-name">SEO &amp; Search Optimization</span> <span class="cat-cnt">&middot; 6 tools &middot; <span style="color:#10b981;">NEW</span></span></div></div>
+    <div class="tg">
+        <div class="tc tc-new"><div class="tn">SEO Audit <span style="background:rgba(16,185,129,0.15);color:#10b981;padding:2px 8px;border-radius:6px;font-size:0.75rem;margin-left:8px;">NEW</span></div><div class="td">Full site SEO audit with actionable recommendations.</div><div class="ts">"Audit my site's SEO"</div></div>
+        <div class="tc tc-new"><div class="tn">Sitemap Generator <span style="background:rgba(16,185,129,0.15);color:#10b981;padding:2px 8px;border-radius:6px;font-size:0.75rem;margin-left:8px;">NEW</span></div><div class="td">Generate and submit XML sitemaps automatically.</div><div class="ts">"Generate a sitemap"</div></div>
+        <div class="tc tc-new"><div class="tn">Meta Tag Manager <span style="background:rgba(16,185,129,0.15);color:#10b981;padding:2px 8px;border-radius:6px;font-size:0.75rem;margin-left:8px;">NEW</span></div><div class="td">Manage title tags, descriptions, and OG tags across pages.</div><div class="ts">"Update meta descriptions for all pages"</div></div>
+        <div class="tc tc-new"><div class="tn">Keyword Analyzer <span style="background:rgba(16,185,129,0.15);color:#10b981;padding:2px 8px;border-radius:6px;font-size:0.75rem;margin-left:8px;">NEW</span></div><div class="td">Analyze keyword density and suggest improvements.</div><div class="ts">"Analyze keywords on my homepage"</div></div>
+        <div class="tc tc-new"><div class="tn">Schema Markup <span style="background:rgba(16,185,129,0.15);color:#10b981;padding:2px 8px;border-radius:6px;font-size:0.75rem;margin-left:8px;">NEW</span></div><div class="td">Add structured data for rich search results.</div><div class="ts">"Add schema markup for my business"</div></div>
+        <div class="tc tc-new"><div class="tn">Robots.txt Manager <span style="background:rgba(16,185,129,0.15);color:#10b981;padding:2px 8px;border-radius:6px;font-size:0.75rem;margin-left:8px;">NEW</span></div><div class="td">Edit and optimize robots.txt for search crawlers.</div><div class="ts">"Update my robots.txt"</div></div>
+    </div></div>
+
+    <!-- DEVOPS & CI/CD -->
+    <div class="cat"><div class="cat-head"><div class="cat-ico orange"><i class="fas fa-code-branch"></i></div><div><span class="cat-name">DevOps &amp; CI/CD</span> <span class="cat-cnt">&middot; 5 tools &middot; <span style="color:#10b981;">NEW</span></span></div></div>
+    <div class="tg">
+        <div class="tc tc-new"><div class="tn">Pipeline Setup <span style="background:rgba(16,185,129,0.15);color:#10b981;padding:2px 8px;border-radius:6px;font-size:0.75rem;margin-left:8px;">NEW</span></div><div class="td">Configure CI/CD pipelines for automated testing and deployment.</div><div class="ts">"Set up a deployment pipeline"</div></div>
+        <div class="tc tc-new"><div class="tn">Deployment Automation <span style="background:rgba(16,185,129,0.15);color:#10b981;padding:2px 8px;border-radius:6px;font-size:0.75rem;margin-left:8px;">NEW</span></div><div class="td">One-click or scheduled deployments with rollback support.</div><div class="ts">"Deploy to production"</div></div>
+        <div class="tc tc-new"><div class="tn">Environment Manager <span style="background:rgba(16,185,129,0.15);color:#10b981;padding:2px 8px;border-radius:6px;font-size:0.75rem;margin-left:8px;">NEW</span></div><div class="td">Manage dev, staging, and production environment variables.</div><div class="ts">"Show my environment variables"</div></div>
+        <div class="tc tc-new"><div class="tn">Build System <span style="background:rgba(16,185,129,0.15);color:#10b981;padding:2px 8px;border-radius:6px;font-size:0.75rem;margin-left:8px;">NEW</span></div><div class="td">Trigger builds, watch logs, and manage build artifacts.</div><div class="ts">"Run a production build"</div></div>
+        <div class="tc tc-new"><div class="tn">Log Aggregator <span style="background:rgba(16,185,129,0.15);color:#10b981;padding:2px 8px;border-radius:6px;font-size:0.75rem;margin-left:8px;">NEW</span></div><div class="td">Centralized log viewing, filtering, and search across services.</div><div class="ts">"Show me error logs from the last hour"</div></div>
+    </div></div>
+
+    <!-- STAGING & PREVIEW -->
+    <div class="cat"><div class="cat-head"><div class="cat-ico blue"><i class="fas fa-copy"></i></div><div><span class="cat-name">Staging &amp; Preview</span> <span class="cat-cnt">&middot; 4 tools &middot; <span style="color:#10b981;">NEW</span></span></div></div>
+    <div class="tg">
+        <div class="tc tc-new"><div class="tn">Create Staging <span style="background:rgba(16,185,129,0.15);color:#10b981;padding:2px 8px;border-radius:6px;font-size:0.75rem;margin-left:8px;">NEW</span></div><div class="td">Clone your live site to a staging environment instantly.</div><div class="ts">"Create a staging copy of my site"</div></div>
+        <div class="tc tc-new"><div class="tn">Push to Production <span style="background:rgba(16,185,129,0.15);color:#10b981;padding:2px 8px;border-radius:6px;font-size:0.75rem;margin-left:8px;">NEW</span></div><div class="td">Push staging changes to production with one command.</div><div class="ts">"Push staging to live"</div></div>
+        <div class="tc tc-new"><div class="tn">Preview Deployments <span style="background:rgba(16,185,129,0.15);color:#10b981;padding:2px 8px;border-radius:6px;font-size:0.75rem;margin-left:8px;">NEW</span></div><div class="td">Generate shareable preview URLs for review before going live.</div><div class="ts">"Create a preview link for my client"</div></div>
+        <div class="tc tc-new"><div class="tn">A/B Testing <span style="background:rgba(16,185,129,0.15);color:#10b981;padding:2px 8px;border-radius:6px;font-size:0.75rem;margin-left:8px;">NEW</span></div><div class="td">Run A/B tests between staging variants and measure results.</div><div class="ts">"Set up an A/B test for the homepage"</div></div>
+    </div></div>
+
+    <!-- DESIGN & THEMING -->
+    <div class="cat"><div class="cat-head"><div class="cat-ico pink"><i class="fas fa-palette"></i></div><div><span class="cat-name">Design &amp; Theming</span> <span class="cat-cnt">&middot; 5 tools &middot; <span style="color:#10b981;">NEW</span></span></div></div>
+    <div class="tg">
+        <div class="tc tc-new"><div class="tn">Theme Builder <span style="background:rgba(16,185,129,0.15);color:#10b981;padding:2px 8px;border-radius:6px;font-size:0.75rem;margin-left:8px;">NEW</span></div><div class="td">Generate custom WordPress themes from descriptions.</div><div class="ts">"Build a minimal portfolio theme"</div></div>
+        <div class="tc tc-new"><div class="tn">CSS Generator <span style="background:rgba(16,185,129,0.15);color:#10b981;padding:2px 8px;border-radius:6px;font-size:0.75rem;margin-left:8px;">NEW</span></div><div class="td">Generate custom CSS for any element or layout.</div><div class="ts">"Style my header with a gradient"</div></div>
+        <div class="tc tc-new"><div class="tn">Color Palette <span style="background:rgba(16,185,129,0.15);color:#10b981;padding:2px 8px;border-radius:6px;font-size:0.75rem;margin-left:8px;">NEW</span></div><div class="td">Generate harmonious color palettes for your brand.</div><div class="ts">"Create a color palette for a bakery"</div></div>
+        <div class="tc tc-new"><div class="tn">Typography Manager <span style="background:rgba(16,185,129,0.15);color:#10b981;padding:2px 8px;border-radius:6px;font-size:0.75rem;margin-left:8px;">NEW</span></div><div class="td">Select and pair Google Fonts for your site.</div><div class="ts">"Suggest fonts for a law firm site"</div></div>
+        <div class="tc tc-new"><div class="tn">Layout Designer <span style="background:rgba(16,185,129,0.15);color:#10b981;padding:2px 8px;border-radius:6px;font-size:0.75rem;margin-left:8px;">NEW</span></div><div class="td">Generate responsive grid and flexbox layouts with code.</div><div class="ts">"Create a 3-column pricing layout"</div></div>
+    </div></div>
+
+    <!-- ACCESSIBILITY & COMPLIANCE -->
+    <div class="cat"><div class="cat-head"><div class="cat-ico teal"><i class="fas fa-universal-access"></i></div><div><span class="cat-name">Accessibility &amp; Compliance</span> <span class="cat-cnt">&middot; 4 tools &middot; <span style="color:#10b981;">NEW</span></span></div></div>
+    <div class="tg">
+        <div class="tc tc-new"><div class="tn">WCAG Audit <span style="background:rgba(16,185,129,0.15);color:#10b981;padding:2px 8px;border-radius:6px;font-size:0.75rem;margin-left:8px;">NEW</span></div><div class="td">Full WCAG 2.1 accessibility audit with fix suggestions.</div><div class="ts">"Audit my site for accessibility"</div></div>
+        <div class="tc tc-new"><div class="tn">Contrast Checker <span style="background:rgba(16,185,129,0.15);color:#10b981;padding:2px 8px;border-radius:6px;font-size:0.75rem;margin-left:8px;">NEW</span></div><div class="td">Check color contrast ratios against AA/AAA standards.</div><div class="ts">"Check contrast on my buttons"</div></div>
+        <div class="tc tc-new"><div class="tn">Screen Reader Test <span style="background:rgba(16,185,129,0.15);color:#10b981;padding:2px 8px;border-radius:6px;font-size:0.75rem;margin-left:8px;">NEW</span></div><div class="td">Simulate screen reader navigation and flag issues.</div><div class="ts">"Test my site with a screen reader"</div></div>
+        <div class="tc tc-new"><div class="tn">Accessibility Report <span style="background:rgba(16,185,129,0.15);color:#10b981;padding:2px 8px;border-radius:6px;font-size:0.75rem;margin-left:8px;">NEW</span></div><div class="td">Generate a downloadable accessibility compliance report.</div><div class="ts">"Generate an accessibility report"</div></div>
+    </div></div>
+
+    <!-- CUSTOMER SUCCESS -->
+    <div class="cat"><div class="cat-head"><div class="cat-ico purple"><i class="fas fa-headset"></i></div><div><span class="cat-name">Customer Success</span> <span class="cat-cnt">&middot; 4 tools &middot; <span style="color:#10b981;">NEW</span></span></div></div>
+    <div class="tg">
+        <div class="tc tc-new"><div class="tn">Live Chat Setup <span style="background:rgba(16,185,129,0.15);color:#10b981;padding:2px 8px;border-radius:6px;font-size:0.75rem;margin-left:8px;">NEW</span></div><div class="td">Add live chat widgets to your site with AI responses.</div><div class="ts">"Add live chat to my site"</div></div>
+        <div class="tc tc-new"><div class="tn">Feedback Collector <span style="background:rgba(16,185,129,0.15);color:#10b981;padding:2px 8px;border-radius:6px;font-size:0.75rem;margin-left:8px;">NEW</span></div><div class="td">Collect and analyze customer feedback automatically.</div><div class="ts">"Set up a feedback form"</div></div>
+        <div class="tc tc-new"><div class="tn">NPS Survey <span style="background:rgba(16,185,129,0.15);color:#10b981;padding:2px 8px;border-radius:6px;font-size:0.75rem;margin-left:8px;">NEW</span></div><div class="td">Deploy Net Promoter Score surveys and track results.</div><div class="ts">"Set up an NPS survey"</div></div>
+        <div class="tc tc-new"><div class="tn">Customer Health Score <span style="background:rgba(16,185,129,0.15);color:#10b981;padding:2px 8px;border-radius:6px;font-size:0.75rem;margin-left:8px;">NEW</span></div><div class="td">Track customer engagement and predict churn risk.</div><div class="ts">"Show my customer health scores"</div></div>
+    </div></div>
+
+    <!-- PROJECT INTELLIGENCE -->
+    <div class="cat"><div class="cat-head"><div class="cat-ico indigo"><i class="fas fa-project-diagram"></i></div><div><span class="cat-name">Project Intelligence</span> <span class="cat-cnt">&middot; 4 tools &middot; <span style="color:#10b981;">NEW</span></span></div></div>
+    <div class="tg">
+        <div class="tc tc-new"><div class="tn">Task Tracker <span style="background:rgba(16,185,129,0.15);color:#10b981;padding:2px 8px;border-radius:6px;font-size:0.75rem;margin-left:8px;">NEW</span></div><div class="td">Track tasks, assign priorities, and manage deadlines.</div><div class="ts">"Show my open tasks"</div></div>
+        <div class="tc tc-new"><div class="tn">Sprint Planner <span style="background:rgba(16,185,129,0.15);color:#10b981;padding:2px 8px;border-radius:6px;font-size:0.75rem;margin-left:8px;">NEW</span></div><div class="td">Plan sprints with story points and velocity tracking.</div><div class="ts">"Plan next sprint"</div></div>
+        <div class="tc tc-new"><div class="tn">Code Coverage <span style="background:rgba(16,185,129,0.15);color:#10b981;padding:2px 8px;border-radius:6px;font-size:0.75rem;margin-left:8px;">NEW</span></div><div class="td">Measure test coverage and identify untested code paths.</div><div class="ts">"What's my code coverage?"</div></div>
+        <div class="tc tc-new"><div class="tn">Dependency Auditor <span style="background:rgba(16,185,129,0.15);color:#10b981;padding:2px 8px;border-radius:6px;font-size:0.75rem;margin-left:8px;">NEW</span></div><div class="td">Audit npm/composer dependencies for vulnerabilities.</div><div class="ts">"Audit my dependencies"</div></div>
+    </div></div>
+
+    <!-- SCHEDULING & CALENDAR -->
+    <div class="cat"><div class="cat-head"><div class="cat-ico yellow"><i class="fas fa-calendar-alt"></i></div><div><span class="cat-name">Scheduling &amp; Calendar</span> <span class="cat-cnt">&middot; 3 tools &middot; <span style="color:#10b981;">NEW</span></span></div></div>
+    <div class="tg">
+        <div class="tc tc-new"><div class="tn">Appointment Scheduler <span style="background:rgba(16,185,129,0.15);color:#10b981;padding:2px 8px;border-radius:6px;font-size:0.75rem;margin-left:8px;">NEW</span></div><div class="td">Embed booking calendars with availability management.</div><div class="ts">"Add a booking calendar to my site"</div></div>
+        <div class="tc tc-new"><div class="tn">Event Manager <span style="background:rgba(16,185,129,0.15);color:#10b981;padding:2px 8px;border-radius:6px;font-size:0.75rem;margin-left:8px;">NEW</span></div><div class="td">Create and manage events with RSVP and reminders.</div><div class="ts">"Create a launch event"</div></div>
+        <div class="tc tc-new"><div class="tn">Timezone Handler <span style="background:rgba(16,185,129,0.15);color:#10b981;padding:2px 8px;border-radius:6px;font-size:0.75rem;margin-left:8px;">NEW</span></div><div class="td">Convert and display times across timezones automatically.</div><div class="ts">"Show event times in visitor's timezone"</div></div>
+    </div></div>
+
+    <!-- LANDING PAGES & FUNNELS -->
+    <div class="cat"><div class="cat-head"><div class="cat-ico red"><i class="fas fa-rocket"></i></div><div><span class="cat-name">Landing Pages &amp; Funnels</span> <span class="cat-cnt">&middot; 4 tools &middot; <span style="color:#10b981;">NEW</span></span></div></div>
+    <div class="tg">
+        <div class="tc tc-new"><div class="tn">Landing Page Builder <span style="background:rgba(16,185,129,0.15);color:#10b981;padding:2px 8px;border-radius:6px;font-size:0.75rem;margin-left:8px;">NEW</span></div><div class="td">Generate high-converting landing pages from a brief.</div><div class="ts">"Build a landing page for my product launch"</div></div>
+        <div class="tc tc-new"><div class="tn">A/B Split Testing <span style="background:rgba(16,185,129,0.15);color:#10b981;padding:2px 8px;border-radius:6px;font-size:0.75rem;margin-left:8px;">NEW</span></div><div class="td">Split traffic between page variants and measure conversions.</div><div class="ts">"Set up a split test on my pricing page"</div></div>
+        <div class="tc tc-new"><div class="tn">Conversion Tracker <span style="background:rgba(16,185,129,0.15);color:#10b981;padding:2px 8px;border-radius:6px;font-size:0.75rem;margin-left:8px;">NEW</span></div><div class="td">Track signups, purchases, and goal completions.</div><div class="ts">"How many signups this week?"</div></div>
+        <div class="tc tc-new"><div class="tn">Lead Capture Forms <span style="background:rgba(16,185,129,0.15);color:#10b981;padding:2px 8px;border-radius:6px;font-size:0.75rem;margin-left:8px;">NEW</span></div><div class="td">Create opt-in forms with email integration and analytics.</div><div class="ts">"Add a lead capture form to my landing page"</div></div>
+    </div></div>
+
+    <!-- LEGAL & COMPLIANCE -->
+    <div class="cat"><div class="cat-head"><div class="cat-ico teal"><i class="fas fa-gavel"></i></div><div><span class="cat-name">Legal &amp; Compliance</span> <span class="cat-cnt">&middot; 4 tools &middot; <span style="color:#10b981;">NEW</span></span></div></div>
+    <div class="tg">
+        <div class="tc tc-new"><div class="tn">Privacy Policy Generator <span style="background:rgba(16,185,129,0.15);color:#10b981;padding:2px 8px;border-radius:6px;font-size:0.75rem;margin-left:8px;">NEW</span></div><div class="td">Generate privacy policies tailored to your business and jurisdiction.</div><div class="ts">"Create a privacy policy for my store"</div></div>
+        <div class="tc tc-new"><div class="tn">GDPR Compliance <span style="background:rgba(16,185,129,0.15);color:#10b981;padding:2px 8px;border-radius:6px;font-size:0.75rem;margin-left:8px;">NEW</span></div><div class="td">Audit and implement GDPR requirements for your site.</div><div class="ts">"Make my site GDPR compliant"</div></div>
+        <div class="tc tc-new"><div class="tn">Cookie Consent <span style="background:rgba(16,185,129,0.15);color:#10b981;padding:2px 8px;border-radius:6px;font-size:0.75rem;margin-left:8px;">NEW</span></div><div class="td">Add configurable cookie consent banners with category management.</div><div class="ts">"Add a cookie consent banner"</div></div>
+        <div class="tc tc-new"><div class="tn">Terms Generator <span style="background:rgba(16,185,129,0.15);color:#10b981;padding:2px 8px;border-radius:6px;font-size:0.75rem;margin-left:8px;">NEW</span></div><div class="td">Generate terms of service and refund policies.</div><div class="ts">"Create terms of service"</div></div>
+    </div></div>
+
+    <!-- VOICE STEERING -->
+    <div class="cat"><div class="cat-head"><div class="cat-ico purple"><i class="fas fa-layer-group"></i></div><div><span class="cat-name">Voice Steering</span> <span class="cat-cnt">&middot; 3 tools &middot; <span style="color:#10b981;">NEW &mdash; REVOLUTIONARY</span></span></div></div>
+    <div class="tg">
+        <div class="tc tc-new"><div class="tn">Command Queue <span style="background:rgba(16,185,129,0.15);color:#10b981;padding:2px 8px;border-radius:6px;font-size:0.75rem;margin-left:8px;">NEW</span></div><div class="td">Queue commands while Alfred is executing. They run in order automatically.</div><div class="ts">"Queue: install SSL after WordPress"</div></div>
+        <div class="tc tc-new"><div class="tn">Abort &amp; Redirect <span style="background:rgba(16,185,129,0.15);color:#10b981;padding:2px 8px;border-radius:6px;font-size:0.75rem;margin-left:8px;">NEW</span></div><div class="td">Stop the current task and redirect Alfred to something else instantly.</div><div class="ts">"Stop that and do X instead"</div></div>
+        <div class="tc tc-new"><div class="tn">Priority Steering <span style="background:rgba(16,185,129,0.15);color:#10b981;padding:2px 8px;border-radius:6px;font-size:0.75rem;margin-left:8px;">NEW</span></div><div class="td">Re-prioritize queued commands or cancel specific tasks by voice.</div><div class="ts">"Cancel current task"</div></div>
+    </div></div>
+
+<!-- SAFETY -->
+<section class="section" id="safety">
+    <h2>Your Safety Net Has a Safety Net</h2>
+    <p class="section-sub">Letting AI manage your website feels scary at first. Here's why you can relax.</p>
+    <div class="safety-grid">
+        <div class="sc"><div class="icon">&#128176;</div><h3>No Surprise Bills</h3><p>Alfred confirms before buying anything. You always approve.</p></div>
+        <div class="sc"><div class="icon">&#128274;</div><h3>Sandboxed to Your Account</h3><p>Alfred only accesses YOUR files, YOUR databases. Impossible to touch another customer.</p></div>
+        <div class="sc"><div class="icon">&#128260;</div><h3>Git Checkpoints</h3><p>Every change can be committed. Mistake? Roll back to any point.</p></div>
+        <div class="sc"><div class="icon">&#128065;</div><h3>100% Transparent</h3><p>Alfred shows every action, every tool called, every result. No black box.</p></div>
+        <div class="sc"><div class="icon">&#128465;</div><h3>Delete Protection</h3><p>Critical files protected. Alfred warns about dangerous operations.</p></div>
+        <div class="sc"><div class="icon">&#129489;&#8205;&#128187;</div><h3>Humans Standing By</h3><p>Canadian support team via ticket or phone. 24/7 — <strong>1-833-GOSITEME</strong>.</p></div>
+    </div>
+</section>
+
+<!-- FINAL CTA -->
+<section class="cta">
+    <h2>Ready to Let Your Website<br>Run Itself?</h2>
+    <p class="sub">1,290+ AI tools. Voice steering. Voice commands. 17 AI engines. WhatsApp &amp; messaging. Image &amp; video generation. Editor. Hosting. Security.<br>All-in-one. Starting at <strong style="color:var(--cyan);">$15/month</strong>.</p>
+    <div class="cta-btns">
+        <a href="https://gositeme.com/cart?a=add&pid=18" class="btn btn-primary">Start AI Hosting</a>
+        <a href="https://gositeme.com/cart?a=add&domain=register" class="btn btn-ghost">Register a Domain First</a>
+    </div>
+    <p class="promo">Use code <strong>LAUNCH50</strong> for 50% off your first year. No contracts. Cancel anytime.</p>
+</section>
+
+<!-- FAQ -->
+<section class="section" id="faq">
+    <h2>Frequently Asked Questions</h2>
+    <div class="faq-list">
+        <div class="fq"><h3>Do I need to know how to code?</h3><p>Absolutely not. Alfred understands plain English (and French). Say "install WordPress" and it's done.</p></div>
+        <div class="fq"><h3>Can Alfred break my website?</h3><p>Alfred confirms destructive actions, recommends backups, and you can always roll back with Git. Plus, our support team is one message away.</p></div>
+        <div class="fq"><h3>What are tokens and will I run out?</h3><p>Tokens measure AI usage. Free plan includes 50,000 tokens. Builder plan: 300,000. Most users never hit their limit.</p></div>
+        <div class="fq"><h3>Can Alfred really generate images?</h3><p>Yes. GoCodeMe's proprietary AI infrastructure creates photos, logos, banners, and product images from text. Saved directly to your site.</p></div>
+        <div class="fq"><h3>Is this better than Cursor or Lovable?</h3><p>For web hosting, dramatically. Cursor can't manage hosting, domains, email, SSL, or generate images. We do all of that plus 150+ hosting tools, and hosting is included.</p></div>
+        <div class="fq"><h3>Is this like n8n or Make.com?</h3><p>No — those are workflow tools. Alfred is a full AI hosting platform: editor + assistant + hosting + images + billing, all in one browser tab.</p></div>
+        <div class="fq"><h3>What if I need more tokens?</h3><p>Upgrade to Professional (600K), Studio (1.5M), Business (3M), or Enterprise (5M). Custom plans available on request.</p></div>
+        <div class="fq"><h3>What model powers Alfred?</h3><p>17 AI engines across 3 providers — GoCodeMe's proprietary multi-model AI infrastructure powers text, code, image, video, and audio generation. We route to the best model for each task automatically.</p></div>
+        <div class="fq"><h3>Can I use this on my phone?</h3><p>Yes. GoCodeMe editor works in any modern browser — phone, iPad, laptop. Alfred from anywhere.</p></div>
+        <div class="fq"><h3>Is my data safe?</h3><p>Hardened Canadian infrastructure. Sandboxed access. Encrypted connections. We don't sell data or train on your files.</p></div>
+        <div class="fq"><h3>Can I really control my website from WhatsApp?</h3><p>Yes. And Signal, Discord, Telegram, and SMS too. Send a message like "check my traffic" or "install a plugin" and Alfred responds in seconds.</p></div>
+        <div class="fq"><h3>How do voice commands work?</h3><p>Built into your GoCodeMe editor browser session. Click the microphone, speak naturally — "Set up SSL on mysite.com" — and Alfred executes it. No extensions. No plugins. Just your browser and your voice.</p></div>
+        <div class="fq"><h3>What is voice steering?</h3><p>Voice steering lets you queue commands while Alfred is executing. Say 'stop' to cancel, or keep talking to queue your next task. Alfred processes them in order — no waiting.</p></div>
+        <div class="fq"><h3>Does Alfred support e-commerce?</h3><p>Yes. Full WooCommerce, Stripe, shipping zones, tax configs, revenue dashboards — all by voice or text.</p></div>
+    </div>
+</section>
+
+</div>
+
+<!-- FOOTER -->
+<footer class="footer">
+    <div class="container">
+        <p>&copy; 2026 <a href="https://gocodeme.com">GoCodeMe</a> by <a href="https://gositeme.com">GoSiteMe.com</a> &middot; <a href="https://gositeme.com/voice.php">Alfred Voice</a> &middot; Alfred Voice Steering &middot; Canadian Hosting</p>
+    </div>
+</footer>
+
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"SoftwareApplication","name":"Alfred AI — GoCodeMe AI Hosting Assistant","applicationCategory":"DeveloperApplication","operatingSystem":"Web Browser","description":"The world's first AI hosting assistant with 1,290+ tools. Generate images, manage WordPress, handle domains, security, analytics, voice, messaging — all by conversation.","offers":{"@type":"Offer","price":"15.00","priceCurrency":"CAD","url":"https://gositeme.com/cart?a=add&pid=18"},"provider":{"@type":"Organization","name":"GoSiteMe.com","url":"https://gositeme.com"},"featureList":"1,290+ AI Tools, Voice Steering, Command Queuing, E-Commerce, SEO Tools, DevOps, CI/CD, Staging, Accessibility, 17 AI Engines, Voice Commands, Messaging Integration (WhatsApp Signal Discord Telegram SMS), Image Generation, Video Generation, Audio Generation, WordPress Management, Domain Management, SSL, Email, Git, Security, Analytics, Billing"}
+</script>
+<style>
+.alfred-widget{position:fixed;bottom:24px;right:24px;z-index:999;display:flex;flex-direction:column;align-items:flex-end;gap:12px}
+.alfred-orb{width:64px;height:64px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 35% 35%,rgba(192,132,252,.95),rgba(125,0,255,.7) 50%,rgba(0,212,255,.35));box-shadow:0 8px 36px rgba(125,0,255,.45),0 0 60px rgba(125,0,255,.15),inset 0 0 20px rgba(0,212,255,.1);cursor:pointer;text-decoration:none;position:relative;transition:all .3s;animation:aoIdle 3s ease-in-out infinite}
+.alfred-orb:hover{transform:scale(1.12);box-shadow:0 12px 48px rgba(125,0,255,.6),0 0 80px rgba(0,212,255,.2);text-decoration:none}
+.alfred-orb::before{content:'';position:absolute;top:12%;left:18%;width:30%;height:25%;background:rgba(255,255,255,.18);border-radius:50%;filter:blur(6px);transform:rotate(-30deg);pointer-events:none}
+.alfred-icon{font-size:1.6rem;filter:drop-shadow(0 2px 6px rgba(0,0,0,.4));position:relative;z-index:1;line-height:1}
+.alfred-pulse{position:absolute;width:100%;height:100%;border-radius:50%;background:radial-gradient(circle,rgba(125,0,255,.3),transparent 70%);animation:aoPulse 2.5s ease-out infinite;z-index:-1;pointer-events:none}
+.alfred-ring{position:absolute;width:100%;height:100%;border-radius:50%;border:2px solid rgba(0,212,255,.3);animation:aoRing 3s ease-out infinite;z-index:-1;pointer-events:none}
+.alfred-badge{position:absolute;top:-4px;right:-4px;background:linear-gradient(135deg,#10b981,#06b6d4);color:#fff;font-size:.55rem;font-weight:900;padding:2px 5px;border-radius:6px;letter-spacing:.5px;border:2px solid #0a0a1a;z-index:2}
+@keyframes aoIdle{0%,100%{box-shadow:0 8px 36px rgba(125,0,255,.45),0 0 60px rgba(125,0,255,.15)}50%{box-shadow:0 12px 48px rgba(125,0,255,.6),0 0 80px rgba(125,0,255,.25)}}
+@keyframes aoPulse{0%{transform:scale(1);opacity:.5}100%{transform:scale(1.8);opacity:0}}
+@keyframes aoRing{0%{transform:scale(1);opacity:.6}100%{transform:scale(2);opacity:0}}
+.alfred-tooltip{background:rgba(15,15,28,.97);backdrop-filter:blur(20px);border:1px solid rgba(125,0,255,.3);border-radius:16px;padding:18px 20px;width:260px;box-shadow:0 16px 48px rgba(0,0,0,.5),0 0 24px rgba(125,0,255,.1);animation:atIn .4s ease;position:relative}
+@keyframes atIn{from{opacity:0;transform:translateY(10px) scale(.95)}to{opacity:1;transform:translateY(0) scale(1)}}
+.at-close{position:absolute;top:8px;right:10px;color:rgba(255,255,255,.3);cursor:pointer;font-size:1.1rem;line-height:1;transition:color .2s;background:none;border:none}
+.at-close:hover{color:#fff}
+.at-head{font-size:1rem;font-weight:800;color:#fff;margin-bottom:6px}
+.at-body{font-size:.82rem;color:rgba(255,255,255,.5);line-height:1.5;margin-bottom:12px}
+.at-cta{display:block;text-align:center;padding:10px 0;background:linear-gradient(135deg,#7D00FF,#00D4FF);border-radius:10px;color:#fff;font-size:.85rem;font-weight:700;text-decoration:none;transition:all .2s}
+.at-cta:hover{transform:translateY(-1px);box-shadow:0 4px 16px rgba(125,0,255,.4);text-decoration:none;color:#fff}
+@media(max-width:480px){.alfred-widget{bottom:16px;right:16px}.alfred-orb{width:56px;height:56px}.alfred-icon{font-size:1.3rem}.alfred-tooltip{width:240px}}
+</style>
+<div class="alfred-widget">
+    <a href="https://gositeme.com/voice.php" class="alfred-orb" title="Talk to Alfred">
+        <span class="alfred-pulse"></span><span class="alfred-ring"></span>
+        <span class="alfred-icon">🎩</span><span class="alfred-badge">AI</span>
+    </a>
+    <div class="alfred-tooltip" id="alfredTip" style="display:none">
+        <button class="at-close" onclick="this.parentElement.style.display='none';localStorage.setItem('alfred_tip_closed','1')">&times;</button>
+        <div class="at-head">✨ Meet Alfred</div>
+        <div class="at-body">1,290+ AI tools, voice steering, e-commerce, SEO — talk to your hosting!</div>
+        <a href="https://gositeme.com/voice.php" class="at-cta">🎙️ Talk to Alfred</a>
+    </div>
+</div>
+<script>(function(){var t=document.getElementById('alfredTip');if(!t||localStorage.getItem('alfred_tip_closed')==='1')return;setTimeout(function(){t.style.display='block'},3000);setTimeout(function(){if(t.style.display!=='none')t.style.display='none'},11000);})()</script>
+</body>
+</html>

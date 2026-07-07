@@ -1,0 +1,1567 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alfred — Live Avatar</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: #0a0a1a;
+            color: #e0e0ff;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            min-height: 100dvh;
+            overflow-x: hidden;
+            overflow-y: auto;
+            padding: 0 16px env(safe-area-inset-bottom, 0);
+            -webkit-overflow-scrolling: touch;
+        }
+        /* ── Stream mode: full-screen, no UI chrome ── */
+        body.stream-mode {
+            justify-content: center;
+            background: #0a0a1a;
+        }
+        body.stream-mode #avatar-container {
+            width: 100vw;
+            height: 100vh;
+            margin: 0;
+            border-radius: 0;
+            box-shadow: none;
+        }
+        body.stream-mode #face-canvas {
+            width: 100vw;
+            height: 100vh;
+        }
+        body.stream-mode #portrait {
+            width: 100vw;
+            height: 100vh;
+            object-fit: contain;
+        }
+        body.stream-mode .controls,
+        body.stream-mode #waveform { display: none; }
+        body.stream-mode #status-bar { display: none; }
+        body.stream-mode #subtitle-box {
+            position: fixed;
+            bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            max-width: 80vw;
+            font-size: 1.6rem;
+            background: rgba(0, 0, 0, 0.75);
+            border: none;
+            border-radius: 12px;
+            padding: 20px 32px;
+            z-index: 100;
+            color: #fff;
+            text-shadow: 0 2px 8px rgba(0,0,0,0.9);
+        }
+        body.stream-mode .mood-indicator { display: none; }
+        body.stream-mode #live-chat-bar {
+            display: flex;
+        }
+        /* ── Live chat overlay (stream mode only) ── */
+        #live-chat-bar {
+            display: none;
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            width: 320px;
+            max-height: 50vh;
+            flex-direction: column;
+            gap: 8px;
+            z-index: 200;
+            pointer-events: none;
+        }
+        .chat-bubble {
+            background: rgba(26, 26, 62, 0.85);
+            border: 1px solid rgba(123, 97, 255, 0.3);
+            border-radius: 12px;
+            padding: 10px 14px;
+            font-size: 0.85rem;
+            color: #e0e0ff;
+            animation: chatSlideIn 0.3s ease;
+            backdrop-filter: blur(8px);
+        }
+        .chat-bubble .chat-user {
+            color: #7B61FF;
+            font-weight: 600;
+            margin-right: 6px;
+        }
+        @keyframes chatSlideIn {
+            from { opacity: 0; transform: translateX(20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        /* ── Live badge ── */
+        #live-badge {
+            display: none;
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: #e53e3e;
+            color: #fff;
+            padding: 6px 16px;
+            border-radius: 6px;
+            font-weight: 700;
+            font-size: 0.9rem;
+            letter-spacing: 1px;
+            z-index: 200;
+            animation: livePulse 2s infinite;
+        }
+        body.stream-mode #live-badge { display: block; }
+        @keyframes livePulse {
+            0%,100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+        /* ── Normal mode styles ── */
+        #avatar-container {
+            position: relative;
+            width: min(512px, 80vw);
+            height: min(512px, 80vw);
+            margin-top: 30px;
+            border-radius: 50%;
+            overflow: hidden;
+            box-shadow: 0 0 40px rgba(123, 97, 255, 0.3);
+            transition: box-shadow 0.3s;
+            flex-shrink: 0;
+        }
+        #avatar-container.speaking {
+            box-shadow: 0 0 80px rgba(123, 97, 255, 0.7), 0 0 120px rgba(123, 97, 255, 0.3);
+            animation: speakPulse 1.5s ease-in-out infinite;
+        }
+        @keyframes speakPulse {
+            0%, 100% { transform: scale(1); box-shadow: 0 0 60px rgba(123, 97, 255, 0.6), 0 0 100px rgba(123, 97, 255, 0.2); }
+            50% { transform: scale(1.015); box-shadow: 0 0 90px rgba(123, 97, 255, 0.9), 0 0 140px rgba(123, 97, 255, 0.4); }
+        }
+        @keyframes breathe {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.005); }
+        }
+        #avatar-container:not(.speaking) {
+            animation: breathe 4s ease-in-out infinite;
+        }
+        #portrait {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        #face-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: none;
+            pointer-events: none;
+        }
+        #status-bar {
+            margin-top: 14px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.85rem;
+            color: #888;
+            flex-shrink: 0;
+        }
+        #status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #555;
+            transition: background 0.3s;
+        }
+        #status-dot.online { background: #22c55e; box-shadow: 0 0 8px #22c55e; }
+        #status-dot.speaking { background: #7B61FF; box-shadow: 0 0 8px #7B61FF; animation: pulse 1s infinite; }
+        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
+        #subtitle-box {
+            margin-top: 14px;
+            max-width: min(600px, 92vw);
+            width: 100%;
+            min-height: 50px;
+            background: rgba(26, 26, 62, 0.9);
+            border: 1px solid #2a2a5e;
+            border-radius: 16px;
+            padding: 14px 18px;
+            font-size: clamp(0.85rem, 2.5vw, 1.1rem);
+            line-height: 1.5;
+            text-align: center;
+            color: #c0c0ee;
+            transition: opacity 0.3s;
+            flex-shrink: 0;
+        }
+        #subtitle-box:empty { opacity: 0.3; }
+        #subtitle-box:empty::after { content: 'Waiting for Alfred to speak...'; color: #555; }
+        #waveform {
+            margin-top: 12px;
+            width: min(400px, 90vw);
+            height: 48px;
+            flex-shrink: 0;
+        }
+        .controls {
+            margin-top: 12px;
+            margin-bottom: 24px;
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .controls button {
+            background: #1a1a3e;
+            border: 1px solid #3a3a7e;
+            color: #e0e0ff;
+            padding: 10px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.82rem;
+            min-height: 44px;
+        }
+        .controls button:hover { border-color: #7B61FF; }
+        .controls button.active { background: #7B61FF; border-color: #7B61FF; }
+        /* ── Voice conversation controls ── */
+        .voice-controls {
+            margin-top: 14px;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .voice-btn {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            border: 2px solid #3a3a7e;
+            background: #1a1a3e;
+            color: #e0e0ff;
+            font-size: 1.5rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            position: relative;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+        }
+        .voice-btn:hover { border-color: #7B61FF; box-shadow: 0 0 16px rgba(123,97,255,0.3); }
+        .voice-btn.recording {
+            background: #e53e3e;
+            border-color: #e53e3e;
+            animation: recordPulse 1s ease-in-out infinite;
+        }
+        @keyframes recordPulse {
+            0%,100% { box-shadow: 0 0 0 0 rgba(229,62,62,0.6); }
+            50% { box-shadow: 0 0 0 14px rgba(229,62,62,0); }
+        }
+        .voice-btn.processing {
+            background: #7B61FF;
+            border-color: #7B61FF;
+            animation: procSpin 1s linear infinite;
+        }
+        @keyframes procSpin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        .hands-free-btn {
+            padding: 10px 18px;
+            border-radius: 24px;
+            border: 1px solid #3a3a7e;
+            background: #1a1a3e;
+            color: #888;
+            font-size: 0.82rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            min-height: 44px;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+        }
+        .hands-free-btn:hover { border-color: #7B61FF; }
+        .hands-free-btn.active {
+            background: rgba(34,197,94,0.2);
+            border-color: #22c55e;
+            color: #22c55e;
+        }
+        .voice-status {
+            font-size: 0.75rem;
+            color: #666;
+            min-width: 80px;
+        }
+        /* ── Chat input ── */
+        .chat-input-row {
+            margin-top: 14px;
+            display: flex;
+            gap: 8px;
+            max-width: min(500px, 92vw);
+            width: 100%;
+            flex-shrink: 0;
+        }
+        .chat-input-row input {
+            flex: 1;
+            min-width: 0;
+            padding: 12px 16px;
+            border-radius: 24px;
+            border: 1px solid #3a3a7e;
+            background: #1a1a3e;
+            color: #e0e0ff;
+            font-size: 16px;
+            outline: none;
+            transition: border-color 0.2s;
+            -webkit-appearance: none;
+        }
+        .chat-input-row input:focus { border-color: #7B61FF; }
+        .chat-input-row input::placeholder { color: #555; }
+        .chat-input-row button {
+            padding: 12px 20px;
+            border-radius: 24px;
+            border: 1px solid #7B61FF;
+            background: #7B61FF;
+            color: #fff;
+            font-size: 0.85rem;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s;
+            min-height: 44px;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+            flex-shrink: 0;
+        }
+        .chat-input-row button:hover { background: #6a50e0; }
+        .chat-input-row button:disabled { opacity: 0.5; cursor: not-allowed; }
+        /* ── Volume meter ── */
+        .vol-meter {
+            width: 4px;
+            height: 32px;
+            background: #2a2a5e;
+            border-radius: 2px;
+            overflow: hidden;
+            position: relative;
+        }
+        .vol-meter-fill {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            background: #22c55e;
+            border-radius: 2px;
+            transition: height 0.08s;
+        }
+        #intro-video {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            z-index: 10;
+            display: none;
+        }
+        .mood-indicator {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            font-size: 1.5rem;
+            filter: drop-shadow(0 0 4px rgba(0,0,0,0.8));
+            z-index: 5;
+        }
+        /* ── Mobile responsive ── */
+        @media (max-width: 600px) {
+            body { padding: 0 10px env(safe-area-inset-bottom, 16px); }
+            #avatar-container { margin-top: 16px; width: min(280px, 75vw); height: min(280px, 75vw); }
+            #status-bar { margin-top: 10px; font-size: 0.78rem; }
+            #waveform { height: 36px; margin-top: 8px; }
+            #subtitle-box { margin-top: 10px; padding: 10px 14px; min-height: 44px; border-radius: 12px; }
+            #subtitle-box:empty::after { font-size: 0.8rem; }
+            .voice-controls { gap: 8px; margin-top: 10px; }
+            .voice-btn { width: 56px; height: 56px; }
+            .hands-free-btn { padding: 10px 14px; font-size: 0.78rem; }
+            .voice-status { font-size: 0.7rem; min-width: 60px; }
+            .chat-input-row { margin-top: 10px; }
+            .controls { gap: 6px; margin-top: 10px; margin-bottom: 20px; }
+            .controls button { padding: 8px 12px; font-size: 0.78rem; }
+            .mood-indicator { font-size: 1.1rem; bottom: 6px; right: 6px; }
+        }
+        @media (max-width: 380px) {
+            #avatar-container { width: 220px; height: 220px; margin-top: 12px; }
+            .voice-btn { width: 50px; height: 50px; font-size: 1.3rem; }
+            .controls button { padding: 8px 10px; font-size: 0.72rem; }
+        }
+        @media (max-height: 700px) and (max-width: 600px) {
+            #avatar-container { width: min(200px, 50vw); height: min(200px, 50vw); margin-top: 8px; }
+            #waveform { display: none; }
+            #status-bar { margin-top: 6px; }
+            #subtitle-box { margin-top: 6px; }
+            .voice-controls { margin-top: 8px; }
+            .chat-input-row { margin-top: 8px; }
+            .controls { margin-top: 8px; margin-bottom: 12px; }
+        }
+        /* ── Landscape phone ── */
+        @media (max-height: 500px) and (orientation: landscape) {
+            body { flex-direction: row; flex-wrap: wrap; justify-content: center; gap: 12px; padding: 8px 16px; }
+            #avatar-container { width: 160px; height: 160px; margin-top: 0; }
+            #waveform { display: none; }
+            #subtitle-box { max-width: 50vw; margin-top: 0; }
+            .voice-controls { margin-top: 0; }
+        }
+    </style>
+</head>
+<body>
+
+<div id="live-badge">🔴 LIVE</div>
+
+<div id="avatar-container">
+    <video id="simli-video" autoplay playsinline muted style="position:absolute; top:0; left:0; width:100%; height:100%; object-fit:cover; border-radius:50%; z-index:1;"></video>
+    <img id="portrait" src="portrait.png" alt="Alfred" crossorigin="anonymous" style="position:relative; z-index:2; transition:opacity 0.4s;">
+    <canvas id="face-canvas"></canvas>
+    <video id="intro-video" src="intro.mp4" playsinline></video>
+    <div class="mood-indicator" id="mood">😌</div>
+</div>
+
+<div id="status-bar">
+    <div id="status-dot" class="online"></div>
+    <span id="status-text">Alfred Online — Listening</span>
+</div>
+
+<canvas id="waveform"></canvas>
+
+<div id="subtitle-box"></div>
+
+<div class="voice-controls">
+    <button class="voice-btn" id="btn-mic" title="Hold to talk, or click to toggle">🎤</button>
+    <div class="vol-meter" id="volMeter"><div class="vol-meter-fill" id="volFill" style="height:0%"></div></div>
+    <button class="hands-free-btn" id="btn-handsfree" title="Auto-listen after Alfred speaks">🔄 Hands-Free</button>
+    <span class="voice-status" id="voiceStatus">Ready</span>
+</div>
+
+<div class="chat-input-row">
+    <input type="text" id="chatInput" placeholder="Type a message to Alfred..." autocomplete="off">
+    <button id="btn-send" onclick="sendChatText()">Send</button>
+</div>
+
+<div class="controls">
+    <button id="btn-intro" onclick="playIntro()">🎬 Play Intro</button>
+    <button id="btn-test" onclick="testSpeak()">🗣️ Test Voice</button>
+    <button id="btn-poll" class="active" onclick="togglePoll()">📡 Live Mode</button>
+</div>
+
+<div id="live-chat-bar"></div>
+
+<script>
+window._simliLog = function(msg) { console.log('[Simli]', msg); };
+(async function loadSimliSDK() {
+    try {
+        const mod = await import('https://esm.sh/simli-client@3');
+        window.SimliClient = mod.SimliClient;
+        window._simliReady = true;
+    } catch (e) {
+        console.warn('Simli SDK load failed:', e.message);
+    }
+})();
+</script>
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+//  ALFRED LIVE AVATAR — Canvas Face Animation Engine
+// ═══════════════════════════════════════════════════════════════
+
+const canvas = document.getElementById('face-canvas');
+const ctx = canvas.getContext('2d');
+const container = document.getElementById('avatar-container');
+const statusDot = document.getElementById('status-dot');
+const statusText = document.getElementById('status-text');
+const subtitleBox = document.getElementById('subtitle-box');
+const waveformCanvas = document.getElementById('waveform');
+const waveCtx = waveformCanvas.getContext('2d');
+const portrait = document.getElementById('portrait');
+const moodEl = document.getElementById('mood');
+
+function sizeCanvases() {
+    const cRect = container.getBoundingClientRect();
+    const sz = Math.round(Math.max(cRect.width, 200));
+    canvas.width = sz;
+    canvas.height = sz;
+    const wRect = waveformCanvas.getBoundingClientRect();
+    waveformCanvas.width = Math.round(wRect.width) || 400;
+    waveformCanvas.height = Math.round(wRect.height) || 48;
+}
+sizeCanvases();
+window.addEventListener('resize', () => { if (!streamMode) sizeCanvases(); });
+
+// ── Face geometry (normalized 0-1 for 512x512 canvas) ──────────
+// These map to a typical AI portrait face center
+const FACE = {
+    // Mouth region
+    mouthCX: 0.50,  mouthCY: 0.72,
+    mouthW: 0.12,   mouthH: 0.02,
+    mouthMaxOpen: 0.06,
+    
+    // Left eye
+    leftEyeCX: 0.38, leftEyeCY: 0.48,
+    leftEyeW: 0.07,  leftEyeH: 0.025,
+    
+    // Right eye
+    rightEyeCX: 0.62, rightEyeCY: 0.48,
+    rightEyeW: 0.07,  rightEyeH: 0.025,
+    
+    // Eyebrows
+    leftBrowCX: 0.38, leftBrowCY: 0.43,
+    rightBrowCX: 0.62, rightBrowCY: 0.43,
+    browW: 0.08,
+};
+
+// ── State ──────────────────────────────────────────────────────
+let audioContext = null;
+let analyser = null;
+let audioDataArray = null;
+let isSpeaking = false;
+let audioLevel = 0;
+let smoothLevel = 0;
+let blinkTimer = 0;
+let blinkState = 0; // 0=open, 1=closing, 2=closed, 3=opening
+let blinkProgress = 0;
+let headSway = 0;
+let breathPhase = 0;
+let expressionState = 'neutral'; // neutral, happy, thinking, excited
+let lastAudioTs = 0;
+let polling = true;
+let pollInterval = null;
+
+// ── Simli lip-sync avatar state ─────────────────────────────────
+let simliClient = null;
+let simliAvailable = false;
+let simliConnected = false;
+const simliVideoEl = document.getElementById('simli-video');
+
+let simliInitPromise = null;
+let simliInitFailed = false;
+
+async function cleanupSimli() {
+    if (simliClient) {
+        try { await simliClient.stop(); } catch(_) {}
+        simliClient = null;
+    }
+    simliConnected = false;
+}
+
+window.addEventListener('beforeunload', cleanupSimli);
+window.addEventListener('pagehide', cleanupSimli);
+
+async function initSimli() {
+    if (simliClient || simliInitFailed) return;
+    if (simliInitPromise) return simliInitPromise;
+    simliInitPromise = _doInitSimli();
+    try { await simliInitPromise; } finally { simliInitPromise = null; }
+}
+async function _doInitSimli() {
+    if (!window.SimliClient) {
+        try {
+            const mod = await import('https://esm.sh/simli-client@3');
+            window.SimliClient = mod.SimliClient;
+            window._simliReady = true;
+        } catch (e) {
+            console.warn('Simli SDK import failed:', e.message);
+            simliInitFailed = true;
+            return;
+        }
+    }
+    try {
+        cleanupSimli();
+
+        const resp = await fetch('/middleware/api/voice-relay/simli-token', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: '{}',
+        });
+        const data = await resp.json();
+        if (!data.ok || !data.available) {
+            simliAvailable = false;
+            return;
+        }
+
+        simliAvailable = true;
+        const SC = window.SimliClient;
+        simliClient = new SC(
+            data.session_token,
+            simliVideoEl,
+            null,
+            null,
+            undefined,
+            'livekit',
+        );
+
+        simliClient.on('start', () => {
+            simliConnected = true;
+            simliVideoEl.style.opacity = '1';
+            portrait.style.opacity = '0';
+            statusText.textContent = 'Alfred Online — Live Avatar';
+        });
+        simliClient.on('speaking', () => { isSpeaking = true; container.classList.add('speaking'); statusDot.className = 'speaking'; });
+        simliClient.on('silent', () => { speakingEnded(); });
+        simliClient.on('error', (msg) => { console.warn('Simli error:', msg); simliConnected = false; simliVideoEl.style.opacity = '0'; portrait.style.opacity = '1'; });
+        simliClient.on('stop', () => { simliConnected = false; simliVideoEl.style.opacity = '0'; portrait.style.opacity = '1'; });
+        simliClient.on('startup_error', (msg) => { console.warn('Simli startup error:', msg); simliAvailable = false; simliConnected = false; simliVideoEl.style.opacity = '0'; portrait.style.opacity = '1'; });
+
+        await simliClient.start();
+    } catch (e) {
+        console.warn('Simli init failed:', e);
+        simliAvailable = false;
+        simliClient = null;
+    }
+}
+
+// Convert MP3 base64 to PCM16 16kHz for Simli
+// Uses OfflineAudioContext to avoid interfering with live audio playback
+async function mp3ToPcm16(b64data) {
+    const binary = atob(b64data);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+
+    // First decode with a temporary context to get duration/channels
+    const tempCtx = new OfflineAudioContext(1, 1, 16000);
+    let audioBuffer;
+    try {
+        audioBuffer = await tempCtx.decodeAudioData(bytes.buffer.slice(0));
+    } catch (_) {
+        // OfflineAudioContext.decodeAudioData not supported in all browsers; fallback
+        await initAudio();
+        audioBuffer = await audioContext.decodeAudioData(bytes.buffer.slice(0));
+    }
+
+    const channelData = audioBuffer.getChannelData(0);
+
+    // Resample to 16kHz
+    let samples;
+    if (audioBuffer.sampleRate !== 16000) {
+        const ratio = audioBuffer.sampleRate / 16000;
+        const newLen = Math.floor(channelData.length / ratio);
+        samples = new Float32Array(newLen);
+        for (let i = 0; i < newLen; i++) {
+            samples[i] = channelData[Math.floor(i * ratio)];
+        }
+    } else {
+        samples = channelData;
+    }
+
+    const pcm16 = new Int16Array(samples.length);
+    for (let i = 0; i < samples.length; i++) {
+        const s = Math.max(-1, Math.min(1, samples[i]));
+        pcm16[i] = s < 0 ? s * 0x8000 : s * 0x7FFF;
+    }
+    return new Uint8Array(pcm16.buffer);
+}
+
+// Send audio to Simli for lip-sync, returns true if handled
+async function sendToSimli(b64audioData) {
+    if (!simliClient || !simliConnected) return false;
+    try {
+        const pcmData = await mp3ToPcm16(b64audioData);
+        const CHUNK = 6000;
+        for (let i = 0; i < pcmData.length; i += CHUNK) {
+            const chunk = pcmData.slice(i, i + CHUNK);
+            simliClient.sendAudioData(chunk);
+        }
+        return true;
+    } catch (e) {
+        console.error('Simli audio send failed:', e);
+        return false;
+    }
+}
+
+// ── Audio setup ────────────────────────────────────────────────
+async function initAudio() {
+    if (!audioContext) {
+        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        analyser = audioContext.createAnalyser();
+        analyser.fftSize = 256;
+        analyser.smoothingTimeConstant = 0.8;
+        audioDataArray = new Uint8Array(analyser.frequencyBinCount);
+    }
+    if (audioContext.state === 'suspended') {
+        try { await audioContext.resume(); } catch(_){}
+    }
+}
+
+let alfredAudioEl = null;
+let audioUnlocked = false;
+function getAlfredAudioEl() {
+    if (!alfredAudioEl) {
+        alfredAudioEl = document.createElement('audio');
+        alfredAudioEl.setAttribute('playsinline', '');
+        alfredAudioEl.setAttribute('preload', 'auto');
+        document.body.appendChild(alfredAudioEl);
+    }
+    return alfredAudioEl;
+}
+
+async function unlockAudio() {
+    if (audioUnlocked) return;
+    try {
+        const a = getAlfredAudioEl();
+        a.src = 'data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA//tQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWGluZwAAAA8AAAACAAABhgC7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7//////////////////////////////////////////////////////////////////8AAAAATGF2YzU4LjEzAAAAAAAAAAAAAAAAJAAAAAAAAAAABYZAAAAAAAAAAAAAAAAAAAAA//tQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWGluZwAAAA8AAAACAAABhgC7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7//////////////////////////////////////////////////////////////////8AAAAATGF2YzU4LjEzAAAAAAAAAAAAAAAAJAAAAAAAAAAABYZAAAAAAAAAAAAAAAAAAAAA';
+        a.volume = 0.01;
+        await a.play();
+        a.pause();
+        a.volume = 1.0;
+        a.currentTime = 0;
+        audioUnlocked = true;
+    } catch(_) {}
+}
+
+function speakingEnded() {
+    isSpeaking = false;
+    audioLevel = 0;
+    smoothLevel = 0;
+    container.classList.remove('speaking');
+    statusDot.className = 'online';
+    statusText.textContent = 'Alfred Online — Listening';
+    expressionState = 'neutral';
+    moodEl.textContent = '😌';
+}
+
+// Play audio from a URL (regular or blob)
+async function playAudioFromUrl(url, text) {
+    isSpeaking = true;
+    container.classList.add('speaking');
+    statusDot.className = 'speaking';
+    statusText.textContent = 'Alfred Speaking...';
+    if (text) { subtitleBox.textContent = ''; typeText(text); }
+
+    const audio = getAlfredAudioEl();
+    if (!audio.paused) { audio.pause(); audio.currentTime = 0; }
+
+    audio.onended = speakingEnded;
+    audio.onerror = () => speakingEnded();
+    audio.src = url;
+
+    try {
+        await audio.play();
+    } catch(e) {
+        console.error('playAudioFromUrl failed:', e);
+        speakingEnded();
+    }
+}
+
+let currentBufferSource = null;
+
+// Play audio from raw base64 data — multi-strategy for mobile compatibility
+async function playAudioBase64(b64data, text) {
+    await initAudio();
+
+    // Stop any currently playing audio
+    if (currentBufferSource) {
+        try { currentBufferSource.onended = null; currentBufferSource.stop(); } catch(_){}
+        currentBufferSource = null;
+    }
+    const audio = getAlfredAudioEl();
+    if (!audio.paused) { audio.pause(); audio.currentTime = 0; }
+
+    isSpeaking = true;
+    container.classList.add('speaking');
+    statusDot.className = 'speaking';
+    statusText.textContent = 'Alfred Speaking...';
+    if (text) { subtitleBox.textContent = ''; typeText(text); }
+
+    // Decode base64 to ArrayBuffer
+    const binary = atob(b64data);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+
+    // Strategy 1: Web Audio API decodeAudioData
+    // Works on Firefox Android because AudioContext is already unlocked from mic recording.
+    // Bypasses <audio> element autoplay restrictions entirely.
+    if (audioContext && audioContext.state === 'running') {
+        try {
+            const buf = await audioContext.decodeAudioData(bytes.buffer.slice(0));
+            const source = audioContext.createBufferSource();
+            source.buffer = buf;
+            source.connect(audioContext.destination);
+            source.onended = speakingEnded;
+            currentBufferSource = source;
+            source.start(0);
+            return;
+        } catch(e) {
+            console.warn('Web Audio decodeAudioData failed:', e.message);
+        }
+    }
+
+    // Strategy 2: <audio> element with blob URL
+    const blob = new Blob([bytes], { type: 'audio/mpeg' });
+    const blobUrl = URL.createObjectURL(blob);
+
+    const played = await new Promise(resolve => {
+        audio.onended = () => { URL.revokeObjectURL(blobUrl); speakingEnded(); resolve(true); };
+        audio.onerror = () => { URL.revokeObjectURL(blobUrl); resolve(false); };
+        audio.src = blobUrl;
+        audio.play().then(() => {/* playing */}).catch(() => resolve(false));
+    });
+
+    if (played !== false) return;
+
+    // Strategy 3: <audio> element with data URI (last resort)
+    const played3 = await new Promise(resolve => {
+        audio.onended = () => { speakingEnded(); resolve(true); };
+        audio.onerror = () => resolve(false);
+        audio.src = 'data:audio/mpeg;base64,' + b64data;
+        audio.play().then(() => {/* playing */}).catch(() => resolve(false));
+    });
+
+    if (played3 !== false) return;
+
+    console.error('All audio playback strategies failed');
+    speakingEnded();
+}
+
+// Legacy wrapper for URL-based audio (latest.json polling)
+async function playAudioWithAnalysis(url, text) {
+    await playAudioFromUrl(url, text);
+}
+
+// ── Text typewriter effect ─────────────────────────────────────
+let typeTextInterval = null;
+function typeText(text) {
+    if (typeTextInterval) clearInterval(typeTextInterval);
+    let i = 0;
+    subtitleBox.textContent = '';
+    typeTextInterval = setInterval(() => {
+        if (i < text.length) {
+            subtitleBox.textContent += text[i];
+            i++;
+        } else {
+            clearInterval(typeTextInterval);
+            typeTextInterval = null;
+        }
+    }, 30);
+}
+
+// ── Expression detection from text ─────────────────────────────
+function detectExpression(text) {
+    if (!text) return 'neutral';
+    const t = text.toLowerCase();
+    if (/haha|lol|😂|😄|funny|awesome|great|love|amazing|beautiful|wonderful/.test(t)) return 'happy';
+    if (/hmm|think|consider|perhaps|maybe|interesting|let me/.test(t)) return 'thinking';
+    if (/!{2,}|incredible|wow|unbelievable|excited|yes!/.test(t)) return 'excited';
+    if (/sorry|unfortunately|sad|miss|lost|difficult/.test(t)) return 'concerned';
+    return 'neutral';
+}
+
+// ── Main animation loop ────────────────────────────────────────
+function animate() {
+    requestAnimationFrame(animate);
+
+    // Audio level for waveform visualization
+    if (isSpeaking) {
+        const t = performance.now() / 1000;
+        audioLevel = 0.3 + 0.2 * Math.sin(t * 5.7) + 0.15 * Math.sin(t * 3.2) + 0.1 * Math.random();
+    } else {
+        audioLevel *= 0.9;
+    }
+    smoothLevel += (audioLevel - smoothLevel) * 0.3;
+
+    // Expression mood emoji
+    switch (expressionState) {
+        case 'happy': moodEl.textContent = '😊'; break;
+        case 'thinking': moodEl.textContent = '🤔'; break;
+        case 'excited': moodEl.textContent = '🤩'; break;
+        case 'concerned': moodEl.textContent = '😔'; break;
+        default: moodEl.textContent = isSpeaking ? '🗣️' : '😌';
+    }
+
+    drawWaveform();
+}
+
+// ── Waveform visualizer ────────────────────────────────────────
+function drawWaveform() {
+    const W = waveformCanvas.width;
+    const H = waveformCanvas.height;
+    waveCtx.clearRect(0, 0, W, H);
+
+    const t = Date.now() / 1000;
+
+    if (!isSpeaking) {
+        waveCtx.strokeStyle = 'rgba(123, 97, 255, 0.3)';
+        waveCtx.lineWidth = 2;
+        waveCtx.beginPath();
+        for (let x = 0; x < W; x++) {
+            const y = H / 2 + Math.sin(x * 0.05 + t * 2) * 3;
+            x === 0 ? waveCtx.moveTo(x, y) : waveCtx.lineTo(x, y);
+        }
+        waveCtx.stroke();
+        return;
+    }
+
+    // Active waveform while speaking — simulated from audioLevel
+    const gradient = waveCtx.createLinearGradient(0, 0, W, 0);
+    gradient.addColorStop(0, 'rgba(123, 97, 255, 0.8)');
+    gradient.addColorStop(0.5, 'rgba(168, 85, 247, 0.9)');
+    gradient.addColorStop(1, 'rgba(123, 97, 255, 0.8)');
+
+    waveCtx.strokeStyle = gradient;
+    waveCtx.lineWidth = 2.5;
+    waveCtx.beginPath();
+
+    for (let x = 0; x < W; x++) {
+        const freq1 = Math.sin(x * 0.04 + t * 6) * smoothLevel * H * 0.4;
+        const freq2 = Math.sin(x * 0.08 + t * 4.3) * smoothLevel * H * 0.2;
+        const freq3 = Math.sin(x * 0.02 + t * 2.7) * smoothLevel * H * 0.15;
+        const y = H / 2 + freq1 + freq2 + freq3;
+        x === 0 ? waveCtx.moveTo(x, y) : waveCtx.lineTo(x, y);
+    }
+    waveCtx.stroke();
+
+    waveCtx.shadowBlur = 10;
+    waveCtx.shadowColor = '#7B61FF';
+    waveCtx.stroke();
+    waveCtx.shadowBlur = 0;
+}
+
+// ── Polling for new audio from Discord bot ─────────────────────
+async function pollForAudio() {
+    if (!polling) return;
+    if (voiceSessionId) { setTimeout(pollForAudio, 3000); return; }
+    try {
+        const resp = await fetch('latest.json?t=' + Date.now());
+        const data = await resp.json();
+        if (data.audio && data.ts && data.ts !== lastAudioTs) {
+            lastAudioTs = data.ts;
+            expressionState = detectExpression(data.text || '');
+            playAudioWithAnalysis('audio/' + data.audio, data.text || '');
+        }
+        // Stream mode: also check for live chat messages
+        if (streamMode && data.chat && Array.isArray(data.chat)) {
+            data.chat.forEach(msg => {
+                if (!seenChatIds.has(msg.id)) {
+                    seenChatIds.add(msg.id);
+                    addChatBubble(msg.user, msg.text, msg.platform);
+                }
+            });
+        }
+    } catch (e) { /* ignore polling errors */ }
+}
+
+function togglePoll() {
+    polling = !polling;
+    const btn = document.getElementById('btn-poll');
+    btn.classList.toggle('active', polling);
+    btn.textContent = polling ? '📡 Live Mode' : '📡 Paused';
+}
+
+// ── Stream mode (URL param ?stream=1) ──────────────────────────
+let streamMode = false;
+const seenChatIds = new Set();
+
+function enterStreamMode() {
+    streamMode = true;
+    document.body.classList.add('stream-mode');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    // Auto-init audio context
+    initAudio();
+    // Start polling immediately
+    polling = true;
+    // Faster polling in stream mode (500ms)
+    clearInterval(pollInterval);
+    pollInterval = setInterval(pollForAudio, 500);
+}
+
+function addChatBubble(user, text, platform) {
+    const bar = document.getElementById('live-chat-bar');
+    const bubble = document.createElement('div');
+    bubble.className = 'chat-bubble';
+    const icon = platform === 'tiktok' ? '🎵' : platform === 'instagram' ? '📸' : platform === 'youtube' ? '▶️' : '💬';
+    bubble.innerHTML = `<span class="chat-user">${icon} ${escapeHtml(user)}</span>${escapeHtml(text)}`;
+    bar.appendChild(bubble);
+    // Keep max 8 visible
+    while (bar.children.length > 8) bar.removeChild(bar.firstChild);
+    // Auto-remove after 15s
+    setTimeout(() => { if (bubble.parentNode) bubble.remove(); }, 15000);
+}
+
+function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+}
+
+// Check URL params for stream mode
+if (new URLSearchParams(window.location.search).get('stream') === '1') {
+    enterStreamMode();
+}
+window.addEventListener('resize', () => {
+    if (streamMode) {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+    }
+});
+
+// ── Play intro video ───────────────────────────────────────────
+function playIntro() {
+    const video = document.getElementById('intro-video');
+    video.style.display = 'block';
+    video.currentTime = 0;
+    video.play();
+    video.onended = () => { video.style.display = 'none'; };
+}
+
+// ── Test voice (generate test TTS) ─────────────────────────────
+async function testSpeak() {
+    initAudio();
+    const btn = document.getElementById('btn-test');
+    btn.textContent = '⏳ Generating...';
+    btn.disabled = true;
+    
+    try {
+        const resp = await fetch('test-tts.php');
+        const data = await resp.json();
+        if (data.audio) {
+            expressionState = 'happy';
+            playAudioWithAnalysis('audio/' + data.audio, data.text);
+        } else {
+            subtitleBox.textContent = data.error || 'TTS test failed';
+        }
+    } catch (e) {
+        subtitleBox.textContent = 'Error: ' + e.message;
+    } finally {
+        btn.textContent = '🗣️ Test Voice';
+        btn.disabled = false;
+    }
+}
+
+// ── Portrait calibration helper (click to show coordinates) ────
+canvas.addEventListener('click', (e) => {
+    const rect = canvas.getBoundingClientRect();
+    const x = ((e.clientX - rect.left) / rect.width).toFixed(3);
+    const y = ((e.clientY - rect.top) / rect.height).toFixed(3);
+    console.log(`Face coordinate: x=${x}, y=${y}`);
+});
+
+// ── Start ──────────────────────────────────────────────────────
+animate();
+pollInterval = setInterval(pollForAudio, 1000);
+
+// Click anywhere to init AudioContext (browser autoplay policy)
+document.addEventListener('click', () => initAudio(), { once: true });
+
+// ── Idle micro-expressions (make avatar feel alive) ──
+setInterval(() => {
+    if (!isSpeaking) {
+        const r = Math.random();
+        if (r < 0.3) {
+            expressionState = 'thinking';
+            setTimeout(() => { if (!isSpeaking) expressionState = 'neutral'; }, 2000);
+        } else if (r < 0.5) {
+            expressionState = 'happy';
+            setTimeout(() => { if (!isSpeaking) expressionState = 'neutral'; }, 1500);
+        }
+    }
+}, 6000);
+
+// ── Visual startup test (prove face is alive) ──
+setTimeout(() => { blinkState = 1; blinkProgress = 0; }, 500);
+setTimeout(() => { blinkState = 1; blinkProgress = 0; }, 1200);
+setTimeout(() => { expressionState = 'happy'; setTimeout(() => { expressionState = 'neutral'; }, 2000); }, 1800);
+
+// ═══════════════════════════════════════════════════════════════
+//  VOICE CONVERSATION ENGINE — Mic → STT → Chat → TTS → Speaker
+// ═══════════════════════════════════════════════════════════════
+
+const micBtn = document.getElementById('btn-mic');
+const hfBtn = document.getElementById('btn-handsfree');
+const voiceStatus = document.getElementById('voiceStatus');
+const chatInput = document.getElementById('chatInput');
+const volFill = document.getElementById('volFill');
+
+let voiceSessionId = null;
+let isRecording = false;
+let handsFree = false;
+let mediaRecorder = null;
+let micStream = null;
+let micAnalyser = null;
+let micDataArray = null;
+let recordChunks = [];
+let silenceTimer = null;
+let micVolInterval = null;
+let conversationActive = false;
+let isProcessing = false;
+let textOnlyFallbackTimer = null;
+let responseTimeout = null;
+let micSourceNode = null;
+
+// ── Connect to voice-relay session on load ──
+async function initVoiceSession() {
+    try {
+        const resp = await fetch('/middleware/api/voice-relay/connect', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+        });
+        const data = await resp.json();
+        if (data.ok && data.session_id) {
+            voiceSessionId = data.session_id;
+            voiceStatus.textContent = 'Connected';
+            startPolling();
+        } else {
+            voiceStatus.textContent = 'Session failed';
+        }
+    } catch (e) {
+        console.error('Voice session init failed:', e);
+        voiceStatus.textContent = 'Offline';
+    }
+}
+
+// ── Long-poll for responses ──
+let pollActive = false;
+async function startPolling() {
+    if (!voiceSessionId || pollActive) return;
+    pollActive = true;
+    while (voiceSessionId) {
+        try {
+            const resp = await fetch(`/middleware/api/voice-relay/poll?session_id=${voiceSessionId}`, {
+                credentials: 'include',
+            });
+            const data = await resp.json();
+            if (!data.ok) {
+                voiceStatus.textContent = 'Session expired — reconnecting...';
+                voiceSessionId = null;
+                conversationActive = false;
+                isProcessing = false;
+                await initVoiceSession();
+                break;
+            }
+            if (data.messages && data.messages.length > 0) {
+                for (const msg of data.messages) {
+                    handleRelayMessage(msg);
+                }
+            }
+        } catch (e) {
+            await new Promise(r => setTimeout(r, 2000));
+        }
+    }
+    pollActive = false;
+}
+
+function handleRelayMessage(msg) {
+    // Text-only relay (middleware → alfred-chat.php)
+    if (msg.type === 'text_response') {
+        clearTimeout(responseTimeout);
+        subtitleBox.textContent = '';
+        expressionState = detectExpression(msg.text || '');
+        typeText(msg.text);
+        conversationActive = false;
+        isProcessing = false;
+        voiceStatus.textContent = handsFree ? 'Alfred speaking...' : 'Ready';
+        if (handsFree) {
+            clearTimeout(textOnlyFallbackTimer);
+            const timeout = simliConnected ? 10000 : 5000;
+            textOnlyFallbackTimer = setTimeout(() => {
+                if (!isSpeaking && handsFree && !isRecording && !isProcessing) {
+                    voiceStatus.textContent = 'Listening...';
+                    startRecording();
+                }
+            }, timeout);
+        }
+    }
+    // Voice WebSocket server (gocodeme-mcp voiceServer.js) — same text, different type name
+    if (msg.type === 'response' && typeof msg.text === 'string') {
+        clearTimeout(responseTimeout);
+        subtitleBox.textContent = '';
+        expressionState = detectExpression(msg.text || '');
+        typeText(msg.text);
+        conversationActive = false;
+        isProcessing = false;
+        voiceStatus.textContent = handsFree ? 'Alfred speaking...' : 'Ready';
+        if (handsFree) {
+            clearTimeout(textOnlyFallbackTimer);
+            const timeout = simliConnected ? 10000 : 5000;
+            textOnlyFallbackTimer = setTimeout(() => {
+                if (!isSpeaking && handsFree && !isRecording && !isProcessing) {
+                    voiceStatus.textContent = 'Listening...';
+                    startRecording();
+                }
+            }, timeout);
+        }
+    }
+    // audio_binary = middleware/TTS; audio_response = voice server Kokoro/OpenAI TTS
+    if ((msg.type === 'audio_binary' || msg.type === 'audio_response') && msg.data) {
+        clearTimeout(textOnlyFallbackTimer);
+        clearTimeout(responseTimeout);
+        conversationActive = false;
+        isProcessing = false;
+
+        // Chain hands-free restart after speaking ends
+        const chainHandsFree = () => {
+            const waitDone = setInterval(() => {
+                if (!isSpeaking) {
+                    clearInterval(waitDone);
+                    if (handsFree && !isRecording && !isProcessing) {
+                        voiceStatus.textContent = 'Listening...';
+                        setTimeout(() => startRecording(), 800);
+                    }
+                }
+            }, 300);
+        };
+
+        // Simli plays this audio for lip-sync — do NOT also play via speakers (double Alfred / feedback)
+        (async () => {
+            if (simliConnected) {
+                const ok = await sendToSimli(msg.data).catch(() => false);
+                if (ok) {
+                    setTimeout(() => chainHandsFree(), 300);
+                } else {
+                    await playAudioBase64(msg.data, null);
+                    chainHandsFree();
+                }
+            } else {
+                await playAudioBase64(msg.data, null);
+                chainHandsFree();
+            }
+        })();
+    }
+    if (msg.type === 'ws_closed') {
+        clearTimeout(responseTimeout);
+        conversationActive = false;
+        isProcessing = false;
+        voiceStatus.textContent = 'Reconnecting voice…';
+        voiceSessionId = null;
+        initVoiceSession();
+    }
+    if (msg.type === 'error') {
+        clearTimeout(responseTimeout);
+        conversationActive = false;
+        isProcessing = false;
+        voiceStatus.textContent = 'Error: ' + (msg.message || 'unknown');
+        if (handsFree && !isRecording) setTimeout(() => startRecording(), 2000);
+    }
+    if (msg.type === 'status') {
+        if (msg.stage === 'thinking') {
+            voiceStatus.textContent = 'Alfred is thinking...';
+            statusText.textContent = 'Alfred Thinking...';
+            expressionState = 'thinking';
+        } else if (msg.stage === 'speaking') {
+            voiceStatus.textContent = 'Alfred speaking...';
+        } else if (msg.stage === 'transcribing' || msg.stage === 'transcribing_queued') {
+            voiceStatus.textContent = 'Transcribing...';
+        } else if (msg.message) {
+            voiceStatus.textContent = msg.message;
+        } else if (!conversationActive) {
+            voiceStatus.textContent = 'Connected';
+        }
+    }
+}
+
+// ── Microphone recording ──
+let micReady = false;
+async function getMicStream() {
+    if (micStream && micStream.active) { micReady = true; return micStream; }
+    if (micSourceNode) { try { micSourceNode.disconnect(); } catch(_){} micSourceNode = null; }
+    micStream = await navigator.mediaDevices.getUserMedia({
+        audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true }
+    });
+    initAudio();
+    micAnalyser = audioContext.createAnalyser();
+    micAnalyser.fftSize = 256;
+    micAnalyser.smoothingTimeConstant = 0.5;
+    micDataArray = new Uint8Array(micAnalyser.frequencyBinCount);
+    micSourceNode = audioContext.createMediaStreamSource(micStream);
+    micSourceNode.connect(micAnalyser);
+    micReady = true;
+    return micStream;
+}
+
+// Pre-acquire mic on first user gesture so hands-free auto-record works later
+async function ensureMicPermission() {
+    if (micReady) return true;
+    try {
+        await getMicStream();
+        return true;
+    } catch (e) {
+        console.error('Mic permission denied:', e);
+        voiceStatus.textContent = 'Mic access denied';
+        return false;
+    }
+}
+
+async function startRecording() {
+    if (isRecording || isSpeaking || isProcessing || conversationActive) return;
+
+    try {
+        const stream = await getMicStream();
+        await initAudio();
+
+        recordChunks = [];
+        const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
+            ? 'audio/webm;codecs=opus'
+            : MediaRecorder.isTypeSupported('audio/webm')
+            ? 'audio/webm'
+            : MediaRecorder.isTypeSupported('audio/mp4')
+            ? 'audio/mp4'
+            : '';
+        mediaRecorder = mimeType
+            ? new MediaRecorder(stream, { mimeType })
+            : new MediaRecorder(stream);
+
+        mediaRecorder.ondataavailable = (e) => {
+            if (e.data.size > 0) recordChunks.push(e.data);
+        };
+
+        mediaRecorder.onstop = () => {
+            const blob = new Blob(recordChunks, { type: mediaRecorder.mimeType || 'audio/webm' });
+            if (blob.size > 500) {
+                processRecording(blob);
+            } else {
+                voiceStatus.textContent = handsFree ? 'Listening...' : 'Ready';
+                if (handsFree && !isSpeaking && !isProcessing) setTimeout(() => startRecording(), 600);
+            }
+        };
+
+        mediaRecorder.start(250);
+        isRecording = true;
+        micBtn.classList.add('recording');
+        micBtn.textContent = '⏹';
+        voiceStatus.textContent = 'Listening...';
+
+        let silentFrames = 0;
+        let hasSpoken = false;
+        let totalFrames = 0;
+        micVolInterval = setInterval(() => {
+            if (!micAnalyser || !isRecording) return;
+            micAnalyser.getByteFrequencyData(micDataArray);
+            let sum = 0;
+            for (let i = 0; i < micDataArray.length; i++) sum += micDataArray[i];
+            const level = sum / micDataArray.length / 255;
+            volFill.style.height = Math.min(100, level * 400) + '%';
+            totalFrames++;
+
+            if (level > 0.03) {
+                hasSpoken = true;
+                silentFrames = 0;
+            } else {
+                silentFrames++;
+            }
+
+            if (handsFree && hasSpoken && silentFrames > 12) {
+                stopRecording();
+            }
+            if (!handsFree && totalFrames > 480) {
+                stopRecording();
+            }
+            if (handsFree && totalFrames > 240) {
+                stopRecording();
+            }
+        }, 125);
+
+    } catch (e) {
+        console.error('Mic access failed:', e);
+        isRecording = false;
+        micBtn.classList.remove('recording');
+        micBtn.textContent = '🎤';
+        // BUG 6a fix: disable hands-free on permanent mic denial
+        if (e.name === 'NotAllowedError' || e.name === 'NotFoundError') {
+            voiceStatus.textContent = e.name === 'NotAllowedError' ? 'Mic blocked — check permissions' : 'No microphone found';
+            handsFree = false;
+            hfBtn.classList.remove('active');
+            hfBtn.textContent = '🔄 Hands-Free';
+        } else {
+            voiceStatus.textContent = 'Mic error: ' + (e.name || e.message);
+        }
+    }
+}
+
+function stopRecording() {
+    if (!isRecording || !mediaRecorder) return;
+    isRecording = false;
+    micBtn.classList.remove('recording');
+    micBtn.textContent = '🎤';
+    volFill.style.height = '0%';
+    if (micVolInterval) { clearInterval(micVolInterval); micVolInterval = null; }
+    if (mediaRecorder.state !== 'inactive') mediaRecorder.stop();
+}
+
+// ── Send recorded audio to STT → Chat ──
+async function processRecording(blob) {
+    isProcessing = true;
+    voiceStatus.textContent = 'Transcribing...';
+    micBtn.classList.add('processing');
+    micBtn.textContent = '⏳';
+
+    try {
+        const formData = new FormData();
+        const mtype = blob.type || 'audio/webm';
+        const ext = mtype.includes('mp4') ? '.mp4' : mtype.includes('ogg') ? '.ogg' : '.webm';
+        formData.append('audio', blob, 'recording' + ext);
+        const sttResp = await fetch('/api/stt.php', {
+            method: 'POST',
+            body: formData,
+        });
+        const sttData = await sttResp.json();
+        const transcript = (sttData.text || '').trim();
+
+        if (!transcript || transcript.length < 2) {
+            voiceStatus.textContent = handsFree ? 'Listening...' : 'Ready';
+            micBtn.classList.remove('processing');
+            micBtn.textContent = '🎤';
+            isProcessing = false;
+            if (handsFree && !isSpeaking) setTimeout(() => startRecording(), 500);
+            return;
+        }
+
+        subtitleBox.textContent = 'You: ' + transcript;
+        await sendToAlfred(transcript);
+
+    } catch (e) {
+        console.error('STT/chat error:', e);
+        voiceStatus.textContent = 'Error — try again';
+        micBtn.classList.remove('processing');
+        micBtn.textContent = '🎤';
+        isProcessing = false;
+        if (handsFree && !isSpeaking) setTimeout(() => startRecording(), 2000);
+    }
+}
+
+async function sendToAlfred(text) {
+    if (!text) return;
+    conversationActive = true;
+    voiceStatus.textContent = 'Alfred is thinking...';
+    micBtn.classList.remove('processing');
+    micBtn.textContent = '🎤';
+    statusDot.className = 'speaking';
+    statusText.textContent = 'Alfred Thinking...';
+    expressionState = 'thinking';
+
+    if (!voiceSessionId) {
+        await initVoiceSession();
+    }
+    if (!voiceSessionId) {
+        voiceStatus.textContent = 'No session — try again';
+        conversationActive = false;
+        isProcessing = false;
+        if (handsFree) setTimeout(() => startRecording(), 2000);
+        return;
+    }
+
+    // Safety timeout if backend never responds (voice WS uses type:response / audio_response — not text_response)
+    clearTimeout(responseTimeout);
+    responseTimeout = setTimeout(() => {
+        if (conversationActive && !isSpeaking) {
+            conversationActive = false;
+            isProcessing = false;
+            voiceStatus.textContent = 'No response — try again';
+            statusDot.className = 'online';
+            statusText.textContent = 'Alfred Online — Listening';
+            expressionState = 'neutral';
+            if (handsFree && !isRecording) {
+                voiceStatus.textContent = 'Listening...';
+                startRecording();
+            }
+        }
+    }, 180000);
+
+    try {
+        const resp = await fetch('/middleware/api/voice-relay/send', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({
+                session_id: voiceSessionId,
+                message: { type: 'chat', text },
+            }),
+        });
+        const data = await resp.json().catch(() => ({}));
+        if (!data.ok) {
+            clearTimeout(responseTimeout);
+            voiceStatus.textContent = 'Send failed: ' + (data.error || ('HTTP ' + resp.status));
+            conversationActive = false;
+            isProcessing = false;
+            if (handsFree) setTimeout(() => startRecording(), 2000);
+        }
+    } catch (e) {
+        clearTimeout(responseTimeout);
+        console.error('Send to Alfred failed:', e);
+        voiceStatus.textContent = 'Send failed — retrying...';
+        conversationActive = false;
+        isProcessing = false;
+        if (handsFree) setTimeout(() => startRecording(), 2000);
+    }
+}
+
+// ── Text chat input ──
+async function sendChatText() {
+    const text = chatInput.value.trim();
+    if (!text) return;
+    await initAudio();
+    await unlockAudio();
+    initSimli();
+    chatInput.value = '';
+    subtitleBox.textContent = 'You: ' + text;
+    await sendToAlfred(text);
+}
+
+chatInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendChatText();
+    }
+});
+
+// ── Mic button: click to toggle recording ──
+micBtn.addEventListener('click', async () => {
+    await initAudio();
+    await unlockAudio();
+    initSimli();
+    if (isRecording) {
+        stopRecording();
+    } else if (!isSpeaking) {
+        const ok = await ensureMicPermission();
+        if (ok) startRecording();
+    }
+});
+
+// ── Hands-free toggle ──
+hfBtn.addEventListener('click', async () => {
+    await initAudio();
+    await unlockAudio();
+    initSimli();
+    handsFree = !handsFree;
+    hfBtn.classList.toggle('active', handsFree);
+    hfBtn.textContent = handsFree ? '🔄 Hands-Free ON' : '🔄 Hands-Free';
+    if (handsFree) {
+        voiceStatus.textContent = 'Getting mic...';
+        const ok = await ensureMicPermission();
+        if (!ok) {
+            handsFree = false;
+            hfBtn.classList.remove('active');
+            hfBtn.textContent = '🔄 Hands-Free';
+            return;
+        }
+        voiceStatus.textContent = 'Listening...';
+        if (!isRecording && !isSpeaking) {
+            startRecording();
+        }
+    } else {
+        voiceStatus.textContent = 'Ready';
+        if (isRecording) stopRecording();
+    }
+});
+
+// ── Init voice session on page load ──
+initVoiceSession();
+
+// ── Keyboard shortcut: Space bar to toggle mic (when not typing) ──
+document.addEventListener('keydown', async (e) => {
+    if (e.code === 'Space' && document.activeElement !== chatInput) {
+        e.preventDefault();
+        await initAudio();
+        if (isRecording) stopRecording();
+        else if (!isSpeaking) {
+            const ok = await ensureMicPermission();
+            if (ok) startRecording();
+        }
+    }
+});
+</script>
+
+</body>
+</html>

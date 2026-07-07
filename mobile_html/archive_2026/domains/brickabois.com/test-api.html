@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Free Village Network - API Test</title>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+            background: #1a1a2e;
+            color: #fff;
+        }
+        .endpoint {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        .endpoint h3 {
+            margin-top: 0;
+            color: #e94560;
+        }
+        button {
+            background: #e94560;
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        button:hover {
+            background: #ff6b6b;
+        }
+        pre {
+            background: rgba(0,0,0,0.3);
+            padding: 1rem;
+            border-radius: 6px;
+            overflow-x: auto;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .status {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 4px;
+            font-size: 0.875rem;
+            margin-left: 1rem;
+        }
+        .status.success { background: #10b981; }
+        .status.error { background: #ef4444; }
+    </style>
+</head>
+<body>
+    <h1>🌐 Free Village Network - API Test</h1>
+    <p>Test the API endpoints to verify everything is working.</p>
+
+    <div class="endpoint">
+        <h3>API Info <span id="info-status"></span></h3>
+        <button onclick="testEndpoint('/api', 'info-result', 'info-status')">Test</button>
+        <pre id="info-result">Click "Test" to see results</pre>
+    </div>
+
+    <div class="endpoint">
+        <h3>The Land - Villages <span id="villages-status"></span></h3>
+        <button onclick="testEndpoint('/api/land/villages', 'villages-result', 'villages-status')">Test</button>
+        <pre id="villages-result">Click "Test" to see results</pre>
+    </div>
+
+    <div class="endpoint">
+        <h3>The Commons - Posts <span id="posts-status"></span></h3>
+        <button onclick="testEndpoint('/api/commons/posts', 'posts-result', 'posts-status')">Test</button>
+        <pre id="posts-result">Click "Test" to see results</pre>
+    </div>
+
+    <div class="endpoint">
+        <h3>The Commons - Events <span id="events-status"></span></h3>
+        <button onclick="testEndpoint('/api/commons/events', 'events-result', 'events-status')">Test</button>
+        <pre id="events-result">Click "Test" to see results</pre>
+    </div>
+
+    <div class="endpoint">
+        <h3>The Ledger - Proposals <span id="proposals-status"></span></h3>
+        <button onclick="testEndpoint('/api/ledger/proposals', 'proposals-result', 'proposals-status')">Test</button>
+        <pre id="proposals-result">Click "Test" to see results</pre>
+    </div>
+
+    <div class="endpoint">
+        <h3>The Ledger - Treasury <span id="treasury-status"></span></h3>
+        <button onclick="testEndpoint('/api/ledger/treasury', 'treasury-result', 'treasury-status')">Test</button>
+        <pre id="treasury-result">Click "Test" to see results</pre>
+    </div>
+
+    <script>
+        async function testEndpoint(endpoint, resultId, statusId) {
+            const resultEl = document.getElementById(resultId);
+            const statusEl = document.getElementById(statusId);
+            
+            resultEl.textContent = 'Loading...';
+            statusEl.textContent = '';
+            statusEl.className = 'status';
+            
+            try {
+                const response = await fetch(endpoint);
+                const data = await response.json();
+                
+                resultEl.textContent = JSON.stringify(data, null, 2);
+                
+                if (response.ok) {
+                    statusEl.textContent = '✓ Success';
+                    statusEl.className = 'status success';
+                } else {
+                    statusEl.textContent = '✗ Error';
+                    statusEl.className = 'status error';
+                }
+            } catch (error) {
+                resultEl.textContent = 'Error: ' + error.message;
+                statusEl.textContent = '✗ Error';
+                statusEl.className = 'status error';
+            }
+        }
+    </script>
+</body>
+</html>
+

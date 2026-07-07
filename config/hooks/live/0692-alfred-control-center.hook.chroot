@@ -1,0 +1,67 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# 0809-alfred-control-center.hook.chroot
+# Installs a centralized GUI dashboard
+
+set +e
+
+echo "[0809] Installing Kingdom Control Center..."
+DEBIAN_FRONTEND=noninteractive apt-get install -y --fix-broken -y --no-install-recommends python3-tk || true
+
+mkdir -p /usr/local/bin || true
+cat << 'EOF' > /usr/local/bin/alfred-control-center
+#!/usr/bin/env python3
+import tkinter as tk
+from tkinter import ttk
+import os
+
+def launch_app(cmd):
+    os.system(f"{cmd} &")
+
+root = tk.Tk()
+root.title("God's Kingdom Control Center")
+root.geometry("600x400")
+root.configure(bg="#1a1a2e")
+
+style = ttk.Style()
+style.theme_use('clam')
+style.configure("TLabel", background="#1a1a2e", foreground="gold", font=("Helvetica", 14))
+style.configure("TButton", background="gold", foreground="black", font=("Helvetica", 12, "bold"))
+
+ttk.Label(root, text="God's Kingdom Control Center", font=("Helvetica", 18, "bold")).pack(pady=20)
+
+tools = [
+    ("Kingdom App Store", "alfred-store-gui"),
+    ("Digital Ark (Backup)", "alfred-ark-sync"),
+    ("Watchman AI (Chat)", "konsole -e 'ollama run phi3:mini'"),
+    ("Toggle Holographic Scriptures", "killall conky || conky -d -p 1")
+]
+
+frame = tk.Frame(root, bg="#1a1a2e")
+frame.pack(fill=tk.BOTH, expand=True, padx=20)
+
+for name, cmd in tools:
+    row = tk.Frame(frame, bg="#1a1a2e")
+    row.pack(fill=tk.X, pady=10)
+    ttk.Label(row, text=name).pack(side=tk.LEFT)
+    ttk.Button(row, text="Launch", command=lambda c=cmd: launch_app(c)).pack(side=tk.RIGHT)
+
+root.mainloop()
+EOF
+[ -e /usr/local/bin/alfred-control-center ] && chmod +x /usr/local/bin/alfred-control-center || true
+
+mkdir -p /usr/share/applications || true
+cat << 'EOF' > /usr/share/applications/alfred-control-center.desktop
+[Desktop Entry]
+Name=Kingdom Control Center
+Exec=/usr/local/bin/alfred-control-center
+Icon=preferences-system
+Type=Application
+Categories=Settings;System;
+EOF
+
+echo "[0809] Control Center installed successfully."
+
+exit 0

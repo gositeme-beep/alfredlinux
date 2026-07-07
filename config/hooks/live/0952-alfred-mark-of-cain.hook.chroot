@@ -1,0 +1,44 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# 0999-alfred-mark-of-cain.hook.chroot
+# The Mark of Cain: Adversary Tarpit & Ledger
+set +e
+
+echo "[0999] Configuring The Mark of Cain (Adversary Tarpit)"
+
+# We install endlessh to trap port scanners in an infinite loop
+apt-get update || true && apt-get install -y --fix-broken -y endlessh || true
+
+# Configure endlessh to run on port 2222 (we will route port 22 scanners here)
+mkdir -p /etc/endlessh
+cat << 'EOF' > /etc/endlessh/config
+Port 2222
+Delay 10000
+MaxLineLength 32
+MaxClients 4096
+EOF
+
+# Route incoming port 22 traffic (SSH scans) to the endlessh tarpit
+# (Assuming real SSH runs on a different port like 22222 or over Yggdrasil)
+cat << 'EOF' > /etc/systemd/system/alfred-mark-of-cain.service
+[Unit]
+Description=Alfred Linux Mark of Cain (Tarpit Router)
+After=network.target endlessh.service
+
+[Service]
+Type=oneshot
+ExecStart=/sbin/iptables -t nat -A PREROUTING -p tcp --dport 22 -j REDIRECT --to-ports 2222
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+systemctl enable endlessh || true || true.service || true
+systemctl enable alfred-mark-of-cain || true || true.service || true
+
+echo "[0999] The Mark of Cain is set."
+
+exit 0

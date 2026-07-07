@@ -1,0 +1,53 @@
+# =============================================================================
+# GoCodeMe OpenClaw – systemd service unit
+# =============================================================================
+#
+# INSTALL (root / sudo):
+#   cp gocodeme-openclaw.service /etc/systemd/system/
+#   systemctl daemon-reload
+#   systemctl enable gocodeme-openclaw
+#   systemctl start  gocodeme-openclaw
+#
+# INSTALL (non-root user systemd):
+#   cp gocodeme-openclaw.service ~/.config/systemd/user/
+#   systemctl --user daemon-reload
+#   systemctl --user enable gocodeme-openclaw
+#   systemctl --user start  gocodeme-openclaw
+#
+# CHECK STATUS:
+#   systemctl status gocodeme-openclaw
+#   journalctl -u gocodeme-openclaw -f
+# =============================================================================
+
+[Unit]
+Description=GoCodeMe OpenClaw (Channel Integration Bridge)
+Documentation=https://gositeme.com/gocodeme/
+After=network.target redis.service gocodeme-middleware.service
+Wants=redis.service
+
+[Service]
+Type=simple
+User=gositeme
+Group=gositeme
+
+WorkingDirectory=/home/gositeme/domains/gositeme.com/public_html/gocodeme/openclaw
+
+EnvironmentFile=/home/gositeme/domains/gositeme.com/public_html/gocodeme/openclaw/.env
+
+ExecStart=/usr/bin/node src/server.js
+
+Restart=on-failure
+RestartSec=5
+StartLimitIntervalSec=60
+StartLimitBurst=3
+
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=gocodeme-openclaw
+
+NoNewPrivileges=true
+ProtectSystem=full
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

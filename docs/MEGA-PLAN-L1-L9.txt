@@ -1,0 +1,83 @@
+GoSiteMe / Alfred / QGSM — Ecosystem Mega Plan (canonical L1–L9)
+================================================================
+Single source of truth for strategy depth. Web mirror: gositeme.com
+/mega-plan-ecosystem.php (gated). SPDX context: AGPL ecosystem docs.
+
+Level 1 — Charter (north star)
+--------------------------------
+Goal: One stack where Alfred Linux, GoSiteMe / meta-dome, and QGSM/GSM
+reinforce each other: trustworthy OS artifacts, fair agent economics,
+verifiable releases and large blobs — without forcing every machine to
+run a validator.
+
+Rules: IPFS (or similar) remains the blob layer; the chain attests roots,
+policy, incentives, and governance. Default OS updates stay boring (HTTPS +
+signatures + mirrors). Large protocol claims ship only behind testnet,
+audit, and incident gates.
+
+Level 2 — Nine strategic pillars
+---------------------------------
+1  OS trust & supply chain     Signed releases, CI gates, SBOM / advisory hygiene
+2  Platform security           Domains, APIs, DB, hooks — same bar as Alfred
+3  QGSM core protocol          PQ L1 + DPoC + VM: spec → code → testnet → audits
+4  Bridges & liquidity         GSM ↔ QGSM and externals: limits, audits, breakers
+5  IPFS + chain                CID manifests, optional pinning / treasury pins
+6  Identity & compliance       Passport-linked flows; no surveillance-by-default OS
+7  Economics & governance      Tokenomics, treasuries, voting; legal where ramps touch
+8  Ops & SRE                   Nodes, gateways, monitoring, runbooks
+9  Story & ecosystem           Docs and portals match what is actually shipped
+
+Level 3 — Programs
+------------------
+Trust factory — release signing, public manifest story, repo-health-class gates.
+Content network — IPFS cluster / pin partners; gateways; GC and SLAs.
+Chain factory — client, consensus, PQ libs, fuzzing, formal methods where ROI is high.
+Bridge factory — one boring bridge first (e.g. Solana GSM), then expand.
+Product factory — wallets, payouts, marketplace escrow; feature-flagged by maturity.
+
+Level 4 — Workstreams
+---------------------
+Protocol engineering · Cryptography · Contracts / state machine · IPFS &
+distribution · OS integration (Alfred) · Web + meta-dome · Security & audits
+· Data & analytics · Legal / compliance.
+
+Level 5 — Phased roadmap (adjustable)
+--------------------------------------
+0 Foundations   0–6 mo    Harden Alfred + web; IPFS↔QGSM boundary; MANIFEST v1
+1 Anchoring     6–12 mo   CID roots; optional OS index; verify without token
+2 QGSM testnet  12–18 mo  Partner validators; no mainnet money; capped bridges
+3 IPFS incentives 18–24 mo Optional staking/treasury for pinners; caps; slashing
+4 Mainnet       post-audit Migration, bridge limits, war room
+5 Scale         ongoing   Exchanges, ramps — only after mainnet is boring at 3 a.m.
+
+Level 6 — Deliverables
+----------------------
+Specs: MANIFEST-v1, bridge threat models. Code: node, contracts, Alfred
+integration. Ops: systemd/k8s, dashboards, backups. User-facing: whitepaper
+content-addressing section; “verify this ISO” one-pager.
+
+Level 7 — Trust architecture
+-----------------------------
+Publishers push blobs to IPFS; roots and policy on QGSM (or interim signed
+JSON). Clients verify (attestation) AND (CID matches content). Gateways and
+mirrors are performance layers, not the sole root of trust.
+
+Level 8 — Quality gates
+-----------------------
+No production bridge without external audit + red team + circuit breaker.
+Default OS update path works without wallet or chain sync.
+IPFS path degrades to HTTPS mirror with same root hash.
+PQ claims match deployed algorithms (FIPS 203/204 naming).
+Governance can emergency-stop bridges and pinning contracts independently.
+
+Level 9 — Next 90 days (execution)
+-----------------------------------
+1. Publish MANIFEST-v1 (see docs/MANIFEST-v1.txt).
+2. One pipeline: one artifact or site bundle → CID + signed JSON.
+3. Whitepaper: content addressing & distribution (IPFS vs chain vs HTTPS).
+4. Security sweep: domains/ + Alfred hooks/scripts.
+5. Choose IPFS ops model; document SLA.
+6. QGSM spike: block size vs PQ signature volume vs published TPS targets.
+7. Bridge roadmap: Solana GSM only until one bridge is boring.
+8. Incident playbook: bridge pause, key compromise, bad CID.
+9. Quarterly pillar scorecard (green / yellow / red).

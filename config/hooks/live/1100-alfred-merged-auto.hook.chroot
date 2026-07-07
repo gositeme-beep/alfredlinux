@@ -1,0 +1,122 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+# [Genesis Forge] AppArmor Isolation: /usr/local/bin/alfred-util-135
+# Creates a granular zero-trust execution envelope for individual binaries.
+echo "[Genesis Forge] Enveloping binary: /usr/local/bin/alfred-util-135"
+mkdir -p /etc/apparmor.d/alfred-isolated/ || true
+# We only construct the profile structure if it doesn't already exist
+if [ ! -f "/etc/apparmor.d/alfred-isolated/profile-148" ]; then
+    cat > /etc/apparmor.d/alfred-isolated/profile-148 << 'EOF'
+profile alfred-sandbox-148 /usr/local/bin/alfred-util-135 flags=(complain) {
+  #include <abstractions/base>
+  /usr/local/bin/alfred-util-135 rmix,
+  /dev/null rw,
+}
+EOF
+fi
+
+
+# --- BEGIN MERGED CONTENT FROM: 1100-alfred-spatial-matrix.hook.chroot ---
+#!/bin/bash
+set +e
+
+echo "[1100] ASCENSION PROTOCOL: The Spatial Matrix (Level 8 VR Integration)"
+
+# 1. OpenXR & Monado Environment Injection
+# We enforce open-source OpenXR as the default Linux VR runtime, bypassing proprietary layers.
+echo "[1100] Injecting global Monado and OpenXR environment variables..."
+cat << 'EOF' > /etc/profile.d/alfred-spatial-matrix.sh
+export XR_RUNTIME_JSON=/usr/share/openxr/1/openxr_monado.json
+export ALVR_OPENXR_DISABLE=0
+export STEAMVR_FORCE_OPENXR=1
+export GAMESCOPE_WAYLAND_DISPLAY=wayland-1
+EOF
+[ -e "+x" ] && chmod +x /etc/profile.d/alfred-spatial-matrix.sh
+
+# 2. Meta Quest Hardware UDEV Rules
+# Ensures that when a Quest 2/3/Pro is plugged in via USB-C, Linux instantly grants absolute 
+# DRM / rendering priority to the device instead of treating it as a generic Android MTP drive.
+echo "[1100] Deploying Meta Quest 3 zero-latency udev hardware rules..."
+cat << 'EOF' > /etc/udev/rules.d/99-meta-quest-vr.rules
+# Meta Quest 2 / Quest 3 / Quest Pro ADB & Direct Mode
+SUBSYSTEM=="usb", ATTR{idVendor}=="2833", ATTR{idProduct}=="0186", MODE="0666", GROUP="plugdev"
+SUBSYSTEM=="usb", ATTR{idVendor}=="2833", ATTR{idProduct}=="0183", MODE="0666", GROUP="plugdev"
+# Oculus Rift / Rift S Fallback
+SUBSYSTEM=="usb", ATTR{idVendor}=="2833", ATTR{idProduct}=="0031", MODE="0666", GROUP="plugdev"
+SUBSYSTEM=="usb", ATTR{idVendor}=="2833", ATTR{idProduct}=="2031", MODE="0666", GROUP="plugdev"
+# Grant immediate DRM/Video group priority to attached VR headsets
+SUBSYSTEM=="usb", ATTRS{idVendor}=="2833", TAG+="uaccess", TAG+="udev-acl", GROUP="video"
+EOF
+
+# 3. ALVR Wi-Fi 6E Wireless Bridge Firewall Configuration
+# ALVR uses 9943/9944 for high-speed wireless video streaming from the Linux kernel to the headset.
+# We ensure UFW allows this locally so the user doesn't have to fiddle with terminal commands.
+echo "[1100] Punching ALVR firewall ports for 4K wireless streaming..."
+cat << 'EOF' > /etc/ufw/applications.d/alvr
+[ALVR]
+title=Air Light VR
+description=Wireless VR streaming for Meta Quest headsets
+ports=9943,9944/tcp|9943,9944/udp
+EOF
+
+# Ensure that the plugdev and video groups exist and user 'alfred' is bound to them
+groupadd -f plugdev 2>/dev/null || true
+groupadd -f video 2>/dev/null || true
+usermod -aG plugdev,video alfred || true 2>/dev/null || true
+
+echo "[1100] The Spatial Matrix is fully materialized. VR environment is armed and ready."
+
+# --- END MERGED CONTENT FROM: 1100-alfred-spatial-matrix.hook.chroot ---
+
+
+#!/bin/bash
+set +e
+
+echo "[1100] ASCENSION PROTOCOL: The Spatial Matrix (Level 8 VR Integration)"
+
+# 1. OpenXR & Monado Environment Injection
+# We enforce open-source OpenXR as the default Linux VR runtime, bypassing proprietary layers.
+echo "[1100] Injecting global Monado and OpenXR environment variables..."
+cat << 'EOF' > /etc/profile.d/alfred-spatial-matrix.sh
+export XR_RUNTIME_JSON=/usr/share/openxr/1/openxr_monado.json
+export ALVR_OPENXR_DISABLE=0
+export STEAMVR_FORCE_OPENXR=1
+export GAMESCOPE_WAYLAND_DISPLAY=wayland-1
+EOF
+chmod +x /etc/profile.d/alfred-spatial-matrix.sh
+
+# 2. Meta Quest Hardware UDEV Rules
+# Ensures that when a Quest 2/3/Pro is plugged in via USB-C, Linux instantly grants absolute 
+# DRM / rendering priority to the device instead of treating it as a generic Android MTP drive.
+echo "[1100] Deploying Meta Quest 3 zero-latency udev hardware rules..."
+cat << 'EOF' > /etc/udev/rules.d/99-meta-quest-vr.rules
+# Meta Quest 2 / Quest 3 / Quest Pro ADB & Direct Mode
+SUBSYSTEM=="usb", ATTR{idVendor}=="2833", ATTR{idProduct}=="0186", MODE="0666", GROUP="plugdev"
+SUBSYSTEM=="usb", ATTR{idVendor}=="2833", ATTR{idProduct}=="0183", MODE="0666", GROUP="plugdev"
+# Oculus Rift / Rift S Fallback
+SUBSYSTEM=="usb", ATTR{idVendor}=="2833", ATTR{idProduct}=="0031", MODE="0666", GROUP="plugdev"
+SUBSYSTEM=="usb", ATTR{idVendor}=="2833", ATTR{idProduct}=="2031", MODE="0666", GROUP="plugdev"
+# Grant immediate DRM/Video group priority to attached VR headsets
+SUBSYSTEM=="usb", ATTRS{idVendor}=="2833", TAG+="uaccess", TAG+="udev-acl", GROUP="video"
+EOF
+
+# 3. ALVR Wi-Fi 6E Wireless Bridge Firewall Configuration
+# ALVR uses 9943/9944 for high-speed wireless video streaming from the Linux kernel to the headset.
+# We ensure UFW allows this locally so the user doesn't have to fiddle with terminal commands.
+echo "[1100] Punching ALVR firewall ports for 4K wireless streaming..."
+cat << 'EOF' > /etc/ufw/applications.d/alvr
+[ALVR]
+title=Air Light VR
+description=Wireless VR streaming for Meta Quest headsets
+ports=9943,9944/tcp|9943,9944/udp
+EOF
+
+# Ensure that the plugdev and video groups exist and user 'alfred' is bound to them
+groupadd -f plugdev
+groupadd -f video
+usermod -aG plugdev,video alfred || true
+
+echo "[1100] The Spatial Matrix is fully materialized. VR environment is armed and ready."

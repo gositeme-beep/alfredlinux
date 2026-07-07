@@ -1,0 +1,41 @@
+# =============================================================================
+# GoCodeMe – .htaccess  (Apache 2.4+, shared/managed hosting)
+# =============================================================================
+# This file proxies  /gocodeme/*  to the Node services running on localhost.
+#
+# Requirements (ask your host / DA admin to enable):
+#   mod_proxy, mod_proxy_http, mod_headers, mod_rewrite
+#
+# If mod_proxy is NOT available on your shared host, use the Node middleware
+# to serve the dashboard directly on port 3001 and configure a port forward
+# through the hosting control panel instead.
+# =============================================================================
+
+Options -Indexes +FollowSymLinks
+AllowOverride All
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteBase /gocodeme/
+
+    # -----------------------------------------------------------------------
+    # Route all /gocodeme/* requests to the middleware on 3001
+    # -----------------------------------------------------------------------
+    # MCP / SSE streams → port 3005
+    RewriteRule ^mcp/(.*)$  http://127.0.0.1:3005/$1  [P,L]
+
+    # OpenClaw → port 3004
+    RewriteRule ^oc/(.*)$   http://127.0.0.1:3004/$1  [P,L]
+
+    # Everything else (API + dashboard) → middleware port 3001
+    RewriteRule ^(.*)$      http://127.0.0.1:3001/$1  [P,L]
+</IfModule>
+
+<IfModule mod_proxy.c>
+    ProxyRequests Off
+    ProxyPreserveHost On
+</IfModule>
+
+<IfModule mod_headers.c>
+    RequestHeader set X-Forwarded-Proto "https"
+</IfModule>

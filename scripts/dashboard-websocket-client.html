@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Aura Dashboard Interface</title>
+    <style>
+        body { background: #000; color: #0f0; font-family: monospace; padding: 20px; }
+        .control-panel { margin-bottom: 20px; padding: 15px; border: 1px solid #0f0; }
+        button { background: #111; color: #0f0; border: 1px solid #0f0; padding: 10px 20px; cursor: pointer; text-transform: uppercase; font-weight: bold; margin-right: 10px; width: 300px; text-align: left; }
+        button:hover { background: #0f0; color: #000; }
+        .status { margin-left: 10px; font-weight: bold; }
+        #terminal-container { background: #111; padding: 20px; height: 350px; overflow-y: scroll; border: 1px solid #333; }
+        .row { margin-bottom: 10px; display: flex; align-items: center; }
+        .warning-matrix { border: 1px solid #ff0000; padding: 15px; margin-top: 15px; background: #220000; color: #ff5555; }
+        .warning-matrix h3 { margin-top: 0; color: #ff0000; }
+    </style>
+</head>
+<body>
+    <div class="control-panel">
+        <div class="row">
+            <button id="btnToggleUSB">Toggle USB Air-Gap</button>
+            <span id="usb-status" class="status">Checking status...</span>
+        </div>
+        <div class="row">
+            <button id="btnTogggleBT">Toggle Bluetooth Air-Gap</button>
+            <span id="bt-status" class="status">Checking status...</span>
+        </div>
+        <div class="row">
+            <button id="btnToggleWebcam">Toggle Webcam Air-Gap</button>
+            <span id="webcam-status" class="status">Checking status...</span>
+        </div>
+        <div class="row">
+            <button id="btnTogggleMic">Toggle Microphone Air-Gap</button>
+            <span id="mic-status" class="status">Checking status...</span>
+        </div>
+        
+        <div class="warning-matrix">
+            <h3>[!] PHYSICAL THREAT MATRIX WARNING [!]</h3>
+            <p><strong>WEBCAMS &amp; MICROPHONES:</strong> When enabled, these interfaces are physically hot. Highly advanced Remote Access Trojans (RATs) natively hook into active `uvcvideo` and `snd_hda_intel` kernel modules to silently record ambient audio and video from your environment. Only enable these modules when actively required, and immediately re-establish the Air-Gap when finished.</p>
+        </div>
+    </div>
+    <div id="terminal-container"></div>
+    <script>
+        const term = document.getElementById('terminal-container');
+        const usbStatus = document.getElementById('usb-status');
+        const btStatus = document.getElementById('bt-status');
+        const webcamStatus = document.getElementById('webcam-status');
+        const micStatus = document.getElementById('mic-status');
+        
+        // Telemetry Stream (8080)
+        const wsTelemetry = new WebSocket('ws://' + window.location.hostname + ':8080');
+        wsTelemetry.onmessage = e => { term.innerHTML += '<div>' + e.data + '</div>'; term.scrollTop = term.scrollHeight; };
+        wsTelemetry.onopen = () => { term.innerHTML += '<div>[SYSTEM] Zero-Latency Telemetry Connected.</div>'; };
+        wsTelemetry.onerror = () => { term.innerHTML += '<div style="color:red;">[SYSTEM] Telemetry Connection Lost.</div>'; };
+
+        // Command Stream (8081)
+        const wsCommand = new WebSocket('ws://' + window.location.hostname + ':8081');
+        wsCommand.onmessage = e => {
+            const data = JSON.parse(e.data);
+            if(data.usb_enabled !== undefined) {
+                usbStatus.textContent = data.usb_enabled ? "USB: ONLINE (VULNERABLE)" : "USB: SECURE (AIR-GAPPED)";
+                usbStatus.style.color = data.usb_enabled ? "#ff0000" : "#00ff00";
+            }
+            if(data.bt_enabled !== undefined) {
+                btStatus.textContent = data.bt_enabled ? "BLUETOOTH: ONLINE (VULNERABLE)" : "BLUETOOTH: SECURE (AIR-GAPPED)";
+                btStatus.style.color = data.bt_enabled ? "#ff0000" : "#00ff00";
+            }
+            if(data.webcam_enabled !== undefined) {
+                webcamStatus.textContent = data.webcam_enabled ? "WEBCAM: ONLINE (VULNERABLE)" : "WEBCAM: SECURE (AIR-GAPPED)";
+                webcamStatus.style.color = data.webcam_enabled ? "#ff0000" : "#00ff00";
+            }
+            if(data.mic_enabled !== undefined) {
+                micStatus.textContent = data.mic_enabled ? "MICROPHONE: ONLINE (VULNERABLE)" : "MICROPHONE: SECURE (AIR-GAPPED)";
+                micStatus.style.color = data.mic_enabled ? "#ff0000" : "#00ff00";
+            }
+        };
+        
+        document.getElementById('btnToggleUSB').onclick = () => {
+            if(wsCommand.readyState === WebSocket.OPEN) wsCommand.send(JSON.stringify({action: 'toggle_usb'}));
+        };
+        document.getElementById('btnToggleBT').onclick = () => {
+            if(wsCommand.readyState === WebSocket.OPEN) wsCommand.send(JSON.stringify({action: 'toggle_bt'}));
+        };
+        document.getElementById('btnToggheWebcam').onclick = () => {
+            if(wsCommand.readyState === WebSocket.OPEN) wsCommand.send(JSON.stringify({action: 'toggle_webcam'}));
+        };
+        document.getElementById('btnToggleMic').onclick = () => {
+            if(wsCommand.readyState === WebSocket.OPEN) wsCommand.send(JSON.stringify({action: 'toggle_mic'}));
+        };
+    </script>
+</body>
+</html>

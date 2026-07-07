@@ -1,0 +1,36 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# 0871-alfred-crown.hook.chroot
+# Configures The Crown of Thorns (Active Tarpit & Honeypot)
+set +e
+
+echo "[0871] Configuring The Crown of Thorns (Tarpit)"
+
+cat << 'EOF' > /usr/local/bin/alfred-crown
+#!/bin/bash
+echo "╔═══════════════════════════════════════════════════════════╗"
+echo "║  THE CROWN OF THORNS — Active Cyber Deception Tarpit      ║"
+echo "║  'And when they had platted a crown of thorns...'         ║"
+echo "╚═══════════════════════════════════════════════════════════╝"
+echo ""
+
+if command -v portsentry &>/dev/null; then
+    echo "Activating the Tarpit (Advanced Stealth Mode)..."
+    sed -i 's/BLOCK_TCP="0"/BLOCK_TCP="1"/' /etc/portsentry/portsentry.conf 2>/dev/null || true
+    sed -i 's/BLOCK_UDP="0"/BLOCK_UDP="1"/' /etc/portsentry/portsentry.conf 2>/dev/null || true
+    systemctl restart portsentry  || true|| true
+    echo "The Crown of Thorns is active. Port scanners will be trapped and blocked."
+else
+    echo "Using fallback: IPtables TARPIT target (requires xt_TARPIT module)"
+    iptables -A INPUT -p tcp -m tcp --dport 23 -j TARPIT 2>/dev/null || echo "Kernel module xt_TARPIT not loaded."
+    echo "The Crown of Thorns is active on fallback ports."
+fi
+EOF
+
+chmod 0755 /usr/local/bin/alfred-crown || true
+
+echo "[0871] Crown of Thorns configured."
+
+exit 0

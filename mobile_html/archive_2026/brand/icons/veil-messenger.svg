@@ -1,0 +1,91 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <!-- Background gradient: deep purple to dark violet -->
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#1a0a2e"/>
+      <stop offset="50%" stop-color="#2d1b69"/>
+      <stop offset="100%" stop-color="#16082e"/>
+    </linearGradient>
+    <!-- Accent gradient: violet to magenta-pink -->
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#a855f7"/>
+      <stop offset="100%" stop-color="#ec4899"/>
+    </linearGradient>
+    <!-- Secondary accent: deeper purple -->
+    <linearGradient id="accent2" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#c084fc"/>
+      <stop offset="100%" stop-color="#7c3aed"/>
+    </linearGradient>
+    <!-- Glow -->
+    <radialGradient id="glow" cx="0.5" cy="0.4" r="0.5">
+      <stop offset="0%" stop-color="#a855f7" stop-opacity="0.2"/>
+      <stop offset="100%" stop-color="#1a0a2e" stop-opacity="0"/>
+    </radialGradient>
+    <!-- Shadow -->
+    <filter id="shadow" x="-10%" y="-10%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="3" stdDeviation="8" flood-color="#000" flood-opacity="0.5"/>
+    </filter>
+    <filter id="glow-filter" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="6" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <!-- Background rounded square -->
+  <rect x="16" y="16" width="480" height="480" rx="96" ry="96" fill="url(#bg)"/>
+  <rect x="16" y="16" width="480" height="480" rx="96" ry="96" fill="url(#glow)"/>
+
+  <!-- Shield shape (main element) -->
+  <path d="M256 90 L370 145 L370 270 C370 340 320 400 256 430 C192 400 142 340 142 270 L142 145 Z"
+        fill="none" stroke="url(#accent)" stroke-width="4" opacity="0.6"/>
+  <path d="M256 100 L362 152 L362 268 C362 333 315 390 256 418 C197 390 150 333 150 268 L150 152 Z"
+        fill="url(#accent)" opacity="0.08"/>
+
+  <!-- Lock body -->
+  <rect x="220" y="235" width="72" height="60" rx="8" fill="url(#accent)" opacity="0.9" filter="url(#shadow)"/>
+
+  <!-- Lock shackle -->
+  <path d="M232 235 L232 210 C232 190 243 178 256 178 C269 178 280 190 280 210 L280 235"
+        fill="none" stroke="url(#accent2)" stroke-width="8" stroke-linecap="round" filter="url(#shadow)"/>
+
+  <!-- Keyhole -->
+  <circle cx="256" cy="258" r="8" fill="#1a0a2e"/>
+  <rect x="253" y="260" width="6" height="14" rx="2" fill="#1a0a2e"/>
+
+  <!-- Chat bubble (left) -->
+  <g transform="translate(-60, -20)" opacity="0.7">
+    <path d="M175 160 L175 200 C175 208 181 214 189 214 L205 214 L215 228 L218 214 L235 214 C243 214 249 208 249 200 L249 160 C249 152 243 146 235 146 L189 146 C181 146 175 152 175 160Z"
+          fill="url(#accent)" opacity="0.5"/>
+    <!-- Dots in bubble -->
+    <circle cx="199" cy="180" r="4" fill="#fff" opacity="0.7"/>
+    <circle cx="215" cy="180" r="4" fill="#fff" opacity="0.7"/>
+    <circle cx="231" cy="180" r="4" fill="#fff" opacity="0.7"/>
+  </g>
+
+  <!-- Chat bubble (right) -->
+  <g transform="translate(60, 10)" opacity="0.7">
+    <path d="M275 140 L275 175 C275 182 281 188 289 188 L298 188 L295 200 L308 188 L335 188 C343 188 349 182 349 175 L349 140 C349 133 343 127 335 127 L289 127 C281 127 275 133 275 140Z"
+          fill="url(#accent2)" opacity="0.5"/>
+    <circle cx="299" cy="158" r="4" fill="#fff" opacity="0.7"/>
+    <circle cx="315" cy="158" r="4" fill="#fff" opacity="0.7"/>
+    <circle cx="331" cy="158" r="4" fill="#fff" opacity="0.7"/>
+  </g>
+
+  <!-- Encryption lines (decorative) -->
+  <g opacity="0.2" stroke="url(#accent)" stroke-width="1">
+    <line x1="100" y1="340" x2="190" y2="340"/>
+    <line x1="100" y1="350" x2="170" y2="350"/>
+    <line x1="100" y1="360" x2="185" y2="360"/>
+    <line x1="322" y1="340" x2="412" y2="340"/>
+    <line x1="342" y1="350" x2="412" y2="350"/>
+    <line x1="327" y1="360" x2="412" y2="360"/>
+  </g>
+
+  <!-- Bottom text: VEIL -->
+  <text x="256" y="440" font-family="'SF Pro Display', 'Segoe UI', 'Helvetica Neue', Arial, sans-serif"
+        font-size="48" font-weight="700" fill="#ffffff" text-anchor="middle"
+        letter-spacing="18" opacity="0.85">VEIL</text>
+
+  <!-- Subtle bottom accent line -->
+  <line x1="185" y1="458" x2="327" y2="458" stroke="url(#accent)" stroke-width="2" opacity="0.4" stroke-linecap="round"/>
+</svg>

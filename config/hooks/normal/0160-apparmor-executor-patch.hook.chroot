@@ -1,0 +1,16 @@
+#!/bin/sh
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set -e
+
+echo "I: [alfred] Patching AppArmor profile for systemd-executor bypass in live-build overlayfs"
+
+mkdir -p /etc/apparmor.d/
+cat > /etc/apparmor.d/usr.lib.systemd.systemd-executor << 'PROFILE'
+# Alfred Linux targeted bypass for Debian Trixie systemd overlayfs bug
+abi <abi/4.0>,
+include <tunables/global>
+
+/usr/lib/systemd/systemd-executor unconfined,
+PROFILE
+
+echo "I: [alfred] AppArmor patch deployed successfully"

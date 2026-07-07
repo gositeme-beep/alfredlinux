@@ -1,0 +1,36 @@
+# =============================================================================
+# GoCodeMe MCP Server – systemd service unit
+# =============================================================================
+
+[Unit]
+Description=GoCodeMe MCP Server (Model Context Protocol)
+Documentation=https://gositeme.com/gocodeme/
+After=network.target redis.service gocodeme-middleware.service
+Wants=redis.service
+
+[Service]
+Type=simple
+User=gositeme
+Group=gositeme
+
+WorkingDirectory=/home/gositeme/domains/gositeme.com/public_html/gocodeme/mcp-server
+
+EnvironmentFile=/home/gositeme/domains/gositeme.com/public_html/gocodeme/mcp-server/.env
+
+ExecStart=/usr/bin/node src/server.js
+
+Restart=on-failure
+RestartSec=5
+StartLimitIntervalSec=60
+StartLimitBurst=3
+
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=gocodeme-mcp
+
+NoNewPrivileges=true
+ProtectSystem=full
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

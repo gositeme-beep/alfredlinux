@@ -1,0 +1,70 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# 0998-alfred-furnace-of-affliction.hook.chroot
+# The Furnace of Affliction: Thermal Attack Mitigation (Cold Boot)
+set +e
+
+echo "[0998] Configuring The Furnace of Affliction (Thermal Defense)"
+
+# We will install a script that continuously reads motherboard thermals.
+# If the temperature drops at an unnatural rate (indicative of liquid nitrogen or freeze spray),
+# it instantly triggers an infinite loop of max-load AVX-512 instructions to burn the RAM/CPU.
+
+cat << 'EOF' > /usr/local/bin/alfred-furnace-daemon
+#!/bin/bash
+# Requires lm-sensors package
+
+LAST_TEMP=50
+
+while true; do
+    # Get highest CPU temp
+    CURRENT_TEMP=$(sensors 2>/dev/null | grep 'Core' | awk '{print $3}' | sed 's/[+°C]//g' | sort -nr | head -n 1 | cut -d. -f1)
+    
+    if [ -n "$CURRENT_TEMP" ] && [ -n "$LAST_TEMP" ]; then
+        DROP=$((LAST_TEMP - CURRENT_TEMP))
+        # If temp drops by more than 15 degrees in 1 second, trigger the Furnace
+        if [ "$DROP" -gt 15 ]; then
+            echo "THERMAL ATTACK DETECTED. IGNITING FURNACE."
+            
+            # Wipe LUKS keys
+            keyctl clear @s || true
+            
+            # Spawn infinite max-load processes to generate massive heat
+            for i in $(seq 1 $(nproc)); do
+                # Generate random data and hash it infinitely
+                cat /dev/urandom | sha512sum &
+            done
+            
+            # Wait 3 seconds for heat generation, then kernel panic
+            sleep 3
+            echo c > /proc/sysrq-trigger || true
+        fi
+        LAST_TEMP=$CURRENT_TEMP
+    fi
+    sleep 1
+done
+EOF
+
+chmod 0755 /usr/local/bin/alfred-furnace-daemon || true
+
+cat << 'EOF' > /etc/systemd/system/alfred-furnace.service
+[Unit]
+Description=Alfred Linux Furnace of Affliction (Thermal Defense)
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/alfred-furnace-daemon
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+systemctl enable alfred-furnace || true || true.service || true
+
+echo "[0998] The Furnace of Affliction is stoked."
+
+exit 0

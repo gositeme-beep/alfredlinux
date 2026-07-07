@@ -1,0 +1,36 @@
+#!/bin/sh
+set -e
+. config/kernel.env
+export MKSQUASHFS_OPTIONS="-b 4194304 -comp zstd -Xcompression-level 22 -processors 4"
+lb config noauto \
+  --mode debian \
+  --architectures amd64 \
+  --distribution trixie \
+  --debian-installer none \
+  --archive-areas "main contrib non-free non-free-firmware" \
+  --bootappend-live "boot=live components quiet nvidia-drm.modeset=1 tomoyo=0 console=tty0 console=ttyS0,115200n8 username=alfred user-default-groups=audio,video,render,dialout,docker,sudo,adm,netdev,plugdev persistence overlay-size=90% systemd.gpt_auto=no systemd.mask=udisks2.service" \
+  --apt-indices false \
+  --apt-secure false \
+  --apt-recommends true \
+  --apt-source-archives false \
+  --apt-options "-y -o Dpkg::Options::=--force-confdef -o Dpkg::Options::=--force-confold" \
+  --binary-images iso-hybrid \
+  --bootloader grub-efi \
+  --linux-flavours none \
+  --linux-packages none \
+  --memtest none \
+  --win32-loader false \
+  --security false \
+  --backports false \
+  --firmware-binary false \
+  --firmware-chroot false \
+  --iso-application "Alfred Linux" \
+  --iso-publisher "alfredlinux.com" \
+  --iso-volume "Alfred 7" \
+  "${@}"
+
+# Force Debian mirrors + bootstrap include in generated files
+sed -i 's#http://archive.root.com/root/#http://deb.debian.org/debian/#g' config/bootstrap
+sed -i 's#http://security.root.com/root/#http://security.debian.org/debian-security/#g' config/bootstrap
+sed -i 's/^LB_BOOTSTRAP_INCLUDE=.*/LB_BOOTSTRAP_INCLUDE="apt-utils gnupg dctrl-tools usrmerge"/' config/bootstrap
+sed -i 's/^LB_SECURITY=.*/LB_SECURITY="false"/' config/chroot

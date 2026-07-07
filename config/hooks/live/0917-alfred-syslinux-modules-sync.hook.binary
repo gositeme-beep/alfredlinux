@@ -1,0 +1,56 @@
+#!/bin/sh
+# 0991-alfred-syslinux-modules-sync.hook.binary
+# ---------------------------------------------------------------
+# Fixes: BIOS boot fails with "Failed to load COM32 file menu.c32"
+#
+# Cause: live-build's binary stage stages an `isolinux.bin` from one
+# package version and `menu.c32` / `vesamenu.c32` from a different
+# `syslinux-common` version. The COM32 ABI changed between syslinux
+# 4.x and 6.x, and the loader rejects mismatched modules.
+#
+# Fix: after live-build has populated binary/isolinux/, replace
+# every .c32 in there with the matching one from the chroot's
+# /usr/lib/syslinux/modules/bios/ directory (which is the same
+# version that produced isolinux.bin).
+#
+# This is a `.binary` hook so it runs during the binary stage,
+# AFTER lb_binary_syslinux has copied files but BEFORE
+# lb_binary_iso assembles the ISO.
+# ---------------------------------------------------------------
+set +e
+
+BIN_ISO=binary/isolinux
+SRC_BIOS=chroot/usr/lib/syslinux/modules/bios
+
+if [ ! -d "$BIN_ISO" ]; then
+  echo "[0991-syslinux-sync] no $BIN_ISO — skipping"
+  exit 0
+fi
+
+if [ ! -d "$SRC_BIOS" ]; then
+  echo "[0991-syslinux-sync] WARN: $SRC_BIOS missing in chroot — syslinux-common not installed?"
+  exit 0
+fi
+
+echo "[0991-syslinux-sync] syncing .c32 modules from $SRC_BIOS -> $BIN_ISO"
+
+count=0
+for base in libcom32.c32 libmenu.c32 libutil.c32 vesamenu.c32 menu.c32 chain.c32 reboot.c32 poweroff.c32; do
+  if [ -f "$SRC_BIOS/$base" ]; then
+    cp -f "$SRC_BIOS/$base" "$BIN_ISO/$base"
+    count=$((count + 1))
+  else
+    echo "[0991-syslinux-sync] WARN: no source for $base in $SRC_BIOS"
+  fi
+done
+
+# Also ensure isolinux.bin matches — some live-build versions pull it
+# from /usr/lib/ISOLINUX/ which is the SAME isolinux package, but
+# double-check by reusing the chroot copy if present.
+if [ -f chroot/usr/lib/ISOLINUX/isolinux.bin ]; then
+  cp -f chroot/usr/lib/ISOLINUX/isolinux.bin "$BIN_ISO/isolinux.bin"
+  echo "[0991-syslinux-sync] re-synced isolinux.bin from chroot"
+fi
+
+echo "[0991-syslinux-sync] replaced $count .c32 modules"
+ls -la "$BIN_ISO"/*.c32 "$BIN_ISO/isolinux.bin" 2>/dev/null | head

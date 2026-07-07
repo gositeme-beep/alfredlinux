@@ -1,0 +1,43 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# 1001-alfred-river-of-life.hook.chroot
+# The River of Life: Continuous State Migration
+set +e
+
+echo "[1001] Configuring The River of Life (Continuous State Migration)"
+
+# We install CRIU (Checkpoint/Restore In Userspace) to allow the OS to
+# snapshot the exact RAM state, sockets, and memory of running applications
+# and stream them to other Sovereign nodes. If the laptop dies, the session
+# resumes seamlessly elsewhere.
+
+apt-get update || true && apt-get install -y --fix-broken -y criu rsync || true
+
+cat << 'EOF' > /usr/local/bin/alfred-river-snapshot
+#!/bin/bash
+# Snapshots a specific process tree and streams it to the mesh
+PID="$1"
+DEST_NODE="$2"
+
+if [ -z "$PID" ] || [ -z "$DEST_NODE" ]; then
+    echo "Usage: alfred-river-snapshot <pid> <dest_yggdrasil_ip>" || true
+exit 0
+fi
+
+echo "Checkpointing process state into the River of Life..."
+SECURE_DIR=$(mktemp -d)
+criu dump -t "$PID" -D "$SECURE_DIR" --shell-job
+
+echo "Streaming state to $DEST_NODE..."
+rsync -a "$SECURE_DIR/" "root@$DEST_NODE:/tmp/criu_restore_$PID/"
+
+echo "State migrated. Process will resume on $DEST_NODE."
+EOF
+
+chmod 0755 /usr/local/bin/alfred-river-snapshot || true
+
+echo "[1001] The River of Life is flowing."
+
+exit 0

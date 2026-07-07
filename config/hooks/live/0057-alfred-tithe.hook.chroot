@@ -1,0 +1,28 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+# 0179-alfred-tithe — local tithing ledger; never networked.
+
+echo "[0179-tithe] begin"
+install -d /var/lib/alfred/tithe
+cat >/usr/sbin/alfred-tithe <<"EOS"
+#!/bin/bash
+
+LEDGER=${ALFRED_TITHE_LEDGER:-$HOME/.alfred/tithe.tsv}
+mkdir -p "$(dirname "$LEDGER")" || true
+[ -f "$LEDGER" ] || printf "ts\tamount\tnote\n" >"$LEDGER"
+case "${1:-}" in
+  add) shift; amt="${1:?amount}"; shift; printf "%s\t%s\t%s\n" "$(date -Is)" "$amt" "$*" >>"$LEDGER"; echo "tithed $amt" ;;
+  total) awk -F"\t" "NR>1{s+=\$2}END{printf \"%.2f\n\",s}" "$LEDGER" ;;
+  show) column -t -s$"\t" "$LEDGER" 2>/dev/null || cat "$LEDGER" ;;
+  suggest) shift; income="${1:?income}"; awk -v i="$income" "BEGIN{printf \"10%% tithe = %.2f\n\", i*0.10}" ;;
+  *) echo "usage: alfred-tithe {add <amt> <note>|total|show|suggest <income>}"; exit 0 ;;
+esac
+EOS
+chmod 0755 /usr/sbin/alfred-tithe || true
+echo "[0179-tithe] done"
+
+
+exit 0

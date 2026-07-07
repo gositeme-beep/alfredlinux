@@ -1,0 +1,27 @@
+[Unit]
+Description=Alfred Gateway — sovereign multi-channel inbox
+Documentation=man:alfred(1)
+After=network-online.target alfred-agent.service alfred-memory.service
+Wants=network-online.target alfred-agent.service alfred-memory.service
+
+[Service]
+Type=simple
+User=alfred
+Group=alfred
+Environment=OPENCLAW_HOME=/var/lib/alfred/gateway
+Environment=ALFRED_BRAND=Alfred
+Environment=ALFRED_AGENT_URL=http://127.0.0.1:0
+Environment=ALFRED_MEMORY_URL=http://127.0.0.1:37777
+ExecStart=/usr/bin/alfred-gateway gateway --port 18789
+Restart=on-failure
+RestartSec=5
+
+# Hardening
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+ReadWritePaths=/var/lib/alfred
+
+[Install]
+WantedBy=multi-user.target

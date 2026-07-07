@@ -1,0 +1,24 @@
+#!/bin/sh
+set -e
+
+export DEBIAN_FRONTEND=noninteractive
+apt-get update || true
+apt-get install -y curl gnupg apt-transport-https lsb-release
+
+echo "I: Installing Jellyfin and Plex..."
+curl -fsSL https://repo.jellyfin.org/jellyfin_team.gpg.key | gpg --dearmor -o /etc/apt/trusted.gpg.d/jellyfin.gpg
+. /etc/os-release
+echo "deb [arch=$( dpkg --print-architecture )] https://repo.jellyfin.org/${ID} ${VERSION_CODENAME} main" > /etc/apt/sources.list.d/jellyfin.list
+curl -fsSL https://downloads.plex.tv/plex-keys/PlexSign.key | gpg --dearmor -o /etc/apt/trusted.gpg.d/plex.gpg
+echo "deb https://downloads.plex.tv/repo/deb public main" > /etc/apt/sources.list.d/plexmediaserver.list
+
+apt-get update || true
+apt-get install -y jellyfin plexmediaserver || true
+systemctl enable jellyfin || true
+systemctl enable plexmediaserver || true
+
+echo "I: Installing Antigravity AI debugging and telemetry toolchain..."
+apt-get install -y htop btop strace gdb tcpdump nmap iotop sysstat dstat lshw inxi jq curl wget git net-tools tmux screen tree ncdu rsync vim
+
+echo "I: Installing extra user applications..."
+apt-get install -y firefox-esr chromium libreoffice gimp p7zip-full unzip file-roller mpv mariadb-server openshot-qt kdenlive shotcut

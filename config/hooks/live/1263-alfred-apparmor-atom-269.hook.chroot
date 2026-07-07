@@ -1,0 +1,62 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+
+echo "[Genesis Forge] Engineering Ptrace Implosion Trap for 269..."
+
+apt-get install -y --fix-broken -y gcc || true
+
+mkdir -p /etc/apparmor.d/alfred-isolated/ || true
+
+# Strict AppArmor Mode (Enforce)
+cat > /etc/apparmor.d/alfred-isolated/profile-269 << 'EOF'
+profile alfred-sandbox-269 /usr/local/bin/alfred-util-256 flags=(enforce) {
+  #include <abstractions/base>
+  /usr/local/bin/alfred-util-256 rmix,
+  /dev/null rw,
+}
+EOF
+
+# Inject the Implosion Trap Wrapper
+cat > /usr/local/bin/alfred-util-256-implosion.c << 'EOF'
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <sys/ptrace.h>
+#include <signal.h>
+#include <pthread.h>
+
+void *watchdog_thread(void *arg) {
+    // Attempt to trace ourselves. If it fails, a debugger is already attached.
+    // In that case, implode instantly.
+    if (ptrace(PTRACE_TRACEME, 0, NULL, NULL) == -1) {
+        // We are being debugged! Implode the process group.
+        kill(0, SIGKILL);
+    }
+    
+    // Detach so the actual program runs normally, but this initial check
+    // prevents attaching before execve.
+    ptrace(PTRACE_DETACH, 0, NULL, NULL);
+    return NULL;
+}
+
+int main(int argc, char *argv[]) {
+    pthread_t thread_id;
+    pthread_create(&thread_id, NULL, watchdog_thread, NULL);
+    pthread_join(thread_id, NULL);
+
+    argv[0] = "/usr/local/bin/alfred-util-256";
+    execv("/usr/local/bin/alfred-util-256", argv);
+    
+    // If execv fails, implode anyway
+    kill(0, SIGKILL);
+    return 1;
+}
+EOF
+
+gcc -O2 -pthread /usr/local/bin/alfred-util-256-implosion.c -o /usr/local/bin/alfred-util-256-implosion-wrapper 2>/dev/null || true
+
+echo "[Genesis Forge] Ptrace Implosion Trap Integrated."
+exit 0

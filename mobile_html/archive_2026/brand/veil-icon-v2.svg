@@ -1,0 +1,73 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <!-- Premium deep background gradient -->
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1a1145"/>
+      <stop offset="40%" style="stop-color:#0d0b2e"/>
+      <stop offset="100%" style="stop-color:#060418"/>
+    </linearGradient>
+    <!-- Vibrant shield/V gradient -->
+    <linearGradient id="main" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#60a5fa"/>
+      <stop offset="40%" style="stop-color:#818cf8"/>
+      <stop offset="70%" style="stop-color:#a78bfa"/>
+      <stop offset="100%" style="stop-color:#c084fc"/>
+    </linearGradient>
+    <!-- Outer ring glow -->
+    <linearGradient id="ring" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#3b82f6"/>
+      <stop offset="50%" style="stop-color:#8b5cf6"/>
+      <stop offset="100%" style="stop-color:#d946ef"/>
+    </linearGradient>
+    <!-- Inner glow filter -->
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="8" result="blur"/>
+      <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+    </filter>
+    <!-- Top highlight -->
+    <radialGradient id="shine" cx="50%" cy="25%" r="50%">
+      <stop offset="0%" style="stop-color:rgba(255,255,255,0.15)"/>
+      <stop offset="100%" style="stop-color:rgba(255,255,255,0)"/>
+    </radialGradient>
+    <!-- Shield accent -->
+    <linearGradient id="accent" x1="50%" y1="0%" x2="50%" y2="100%">
+      <stop offset="0%" style="stop-color:#38bdf8"/>
+      <stop offset="100%" style="stop-color:#818cf8"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background circle with thick vibrant ring -->
+  <circle cx="256" cy="256" r="248" fill="url(#bg)"/>
+  <circle cx="256" cy="256" r="244" fill="none" stroke="url(#ring)" stroke-width="8" opacity="0.9"/>
+  <circle cx="256" cy="256" r="236" fill="none" stroke="url(#ring)" stroke-width="1.5" opacity="0.3"/>
+
+  <!-- Shield shape (modern rounded shield) -->
+  <path d="M256 90 L370 145 C380 150 385 162 385 175 L385 285 C385 340 330 390 256 420 C182 390 127 340 127 285 L127 175 C127 162 132 150 142 145 Z"
+        fill="none" stroke="url(#main)" stroke-width="6" opacity="0.25" filter="url(#glow)"/>
+
+  <!-- Bold V letterform — sharp, confident, centered -->
+  <path d="M168 145 L256 370 L344 145"
+        fill="none" stroke="url(#main)" stroke-width="28"
+        stroke-linecap="round" stroke-linejoin="round" filter="url(#glow)"/>
+
+  <!-- Horizontal scan line (data/tech feel) -->
+  <line x1="195" y1="215" x2="317" y2="215" stroke="url(#accent)" stroke-width="4" opacity="0.5" stroke-linecap="round"/>
+
+  <!-- Small lock icon centered on scan line (privacy symbol) -->
+  <g transform="translate(256, 215)" opacity="0.6">
+    <rect x="-8" y="-3" width="16" height="12" rx="2" fill="none" stroke="url(#accent)" stroke-width="2"/>
+    <path d="M-5 -3 L-5 -8 C-5 -14 5 -14 5 -8 L5 -3" fill="none" stroke="url(#accent)" stroke-width="2" stroke-linecap="round"/>
+    <circle cx="0" cy="4" r="1.5" fill="url(#accent)"/>
+  </g>
+
+  <!-- Subtle top shine -->
+  <circle cx="256" cy="256" r="244" fill="url(#shine)"/>
+
+  <!-- Corner dots (network nodes) -->
+  <circle cx="160" cy="140" r="3" fill="#60a5fa" opacity="0.4"/>
+  <circle cx="352" cy="140" r="3" fill="#a78bfa" opacity="0.4"/>
+  <circle cx="256" cy="380" r="3" fill="#c084fc" opacity="0.4"/>
+  <line x1="160" y1="140" x2="256" y2="380" stroke="#818cf8" stroke-width="0.5" opacity="0.15"/>
+  <line x1="352" y1="140" x2="256" y2="380" stroke="#818cf8" stroke-width="0.5" opacity="0.15"/>
+  <line x1="160" y1="140" x2="352" y2="140" stroke="#818cf8" stroke-width="0.5" opacity="0.15"/>
+</svg>

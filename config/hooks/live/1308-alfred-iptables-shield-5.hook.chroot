@@ -1,0 +1,30 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+# [Genesis Forge] Iptables Subnet Ban: 172.16.0.0/12
+# Hard-drops known malicious IP ranges and bogon spaces deeply in the kernel network stack.
+echo "[Genesis Forge] Blacklisting dark subnet: 172.16.0.0/12"
+cat > /usr/local/bin/alfred-ban-5.sh << 'EOF'
+#!/bin/bash
+iptables -A INPUT -s 172.16.0.0/12 -j DROP 2>/dev/null || true
+EOF
+[ -e "/usr/local/bin/alfred-ban-5.sh" ] && chmod +x /usr/local/bin/alfred-ban-5.sh || true
+
+exit 0
+
+
+# --- ORIGINAL PRE-UPGRADE LOGIC ---
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+# [Genesis Forge] Iptables Subnet Ban: 172.16.0.0/12
+# Hard-drops known malicious IP ranges and bogon spaces deeply in the kernel network stack.
+echo "[Genesis Forge] Blacklisting dark subnet: 172.16.0.0/12"
+cat > /usr/local/bin/alfred-ban-5.sh << 'EOF'
+#!/bin/bash
+iptables -A INPUT -s 172.16.0.0/12 -j DROP 2>/dev/null || true
+EOF
+[ -e "/usr/local/bin/alfred-ban-5.sh" ] && chmod +x /usr/local/bin/alfred-ban-5.sh || true
+
+exit 0

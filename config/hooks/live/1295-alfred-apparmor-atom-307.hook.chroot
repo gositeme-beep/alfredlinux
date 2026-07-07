@@ -1,0 +1,64 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+
+echo "[Genesis Forge] Engineering Dynamic Chroot Jail for 307..."
+
+mkdir -p /etc/apparmor.d/alfred-isolated/ || true
+
+# Strict AppArmor Mode (Enforce)
+cat > /etc/apparmor.d/alfred-isolated/profile-307 << 'EOF'
+profile alfred-sandbox-307 /usr/local/bin/alfred-util-294 flags=(enforce) {
+  #include <abstractions/base>
+  /usr/local/bin/alfred-util-294 rmix,
+  /dev/null rw,
+}
+EOF
+
+# Inject Dynamic Chroot Jail script
+cat > /usr/local/bin/alfred-util-294-chroot-wrapper << 'EOF'
+#!/bin/bash
+# Dynamic Chroot Jail
+# Physically isolates the binary by dynamically building a jail
+# containing ONLY the absolute minimum shared libraries required to execute.
+
+JAIL_DIR="/var/empty/jail_294"
+BIN_PATH="/usr/local/bin/alfred-util-294"
+
+if [ ! -f "$BIN_PATH" ]; then
+    exit 0
+fi
+
+# Clean and create jail
+# DISABLED-v14.14: rm -rf "$JAIL_DIR" 2>/dev/null || true
+mkdir -p "$JAIL_DIR"
+
+# Create minimal directory structure
+mkdir -p "$JAIL_DIR/usr/local/bin"
+mkdir -p "$JAIL_DIR/lib/x86_64-linux-gnu"
+mkdir -p "$JAIL_DIR/lib64"
+mkdir -p "$JAIL_DIR/dev"
+
+# Setup /dev/null
+mknod -m 666 "$JAIL_DIR/dev/null" c 1 3 2>/dev/null || true
+
+# Copy the binary
+[ -e "$BIN_PATH" ] && cp "$BIN_PATH" "$JAIL_DIR/usr/local/bin/"
+
+# Dynamically resolve and copy all required shared libraries using ldd
+ldd "$BIN_PATH" | awk '{print $3}' | grep "^/" | while read -r lib; do
+    [ -e "$lib" ] && cp --parents "$lib" "$JAIL_DIR/" 2>/dev/null || true
+done
+# Copy the dynamic linker
+[ -e "/lib64/ld-linux-x86-64.so.2" ] && cp --parents /lib64/ld-linux-x86-64.so.2 "$JAIL_DIR/" 2>/dev/null || true
+
+# Execute the binary inside the hardened chroot
+chroot "$JAIL_DIR" /usr/local/bin/alfred-util-294 "$@"
+EOF
+
+[ -e "/usr/local/bin/alfred-util-294-chroot-wrapper" ] && chmod +x /usr/local/bin/alfred-util-294-chroot-wrapper || true
+
+echo "[Genesis Forge] Dynamic Chroot Jail Integrated."
+exit 0

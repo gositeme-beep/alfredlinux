@@ -1,0 +1,130 @@
+Alfred Linux — Kernel 7.0.1 supply-chain & “trojan” audit (repo scope)
+========================================================================
+Last reviewed: 2026-04-25  
+Public summary (website): https://alfredlinux.com/security-kernel — deploy `security-kernel.php` from repo root with `apps.php`.
+
+Scope: **This git repository only.** The upstream **linux-7.0.1** source tree is
+**not** vendored here; a full static analysis of Linus’s tree belongs on the
+build host after `tar xf` (sparse / coccinelle / your own SBOM), not in Alfred’s
+hooks repo alone.
+
+──────────────────────────────────────────────────────────────────────────────
+What we **cannot** prove from this repo
+──────────────────────────────────────────────────────────────────────────────
+  • No trojan / backdoor **inside** `vmlinux` or millions of lines of kernel
+    sources — those files are **not** committed.
+
+  • No guarantee that **future** tarballs at the same URL are unchanged (kernel.org
+    compromise) — that is an **organizational** trust boundary; we reduce **blind
+    byte trust** with checksum verification (below).
+
+──────────────────────────────────────────────────────────────────────────────
+Deep scan — **Alfred-controlled** kernel path (findings)
+──────────────────────────────────────────────────────────────────────────────
+  1) **Download URLs** (`scripts/kernel-download-7.0.1.sh`)
+     • Uses **HTTPS** `https://cdn.kernel.org/pub/linux/kernel/v7.x/` only — no
+       typosquat hosts found in-tree.
+     • **No** `curl … | sh` / `wget … | sh` on the kernel path.
+     • **Hardening added:** after fetch, **SHA256** of `linux-7.0.1.tar.xz` and
+       `patch-7.0.1.xz` is checked with **`sha256sum -c`** against lines extracted
+       from **`sha256sums.asc`** on the same CDN path. Mismatch **fails the script**
+       (skip only with `ALFRED_SKIP_KERNEL_SHA256_VERIFY=1`, loud WARN — not for
+       production ISO builds).
+     • **Optional stronger:** import kernel.org PGP keys and `gpg --verify
+       sha256sums.asc` before trusting extracted lines (maintainer procedure).
+
+  2) **Docker kernel build** (`scripts/kernel-docker-bindeb.sh`,
+     `scripts/kernel-docker-inner-bindeb.sh`)
+     • Bind-mounts **`KERNEL_WORK`** into `/work` — if the **host directory** is
+       writable by untrusted users, they could swap `linux-7.0.1.tar.xz` or
+       `docker-inner-bindeb.sh` **before** docker runs. Mitigation: **root-owned**
+       `kernel-7.0.1-work`, tight permissions, run from trusted CI.
+     • Inner script runs **`make … bindeb-pkg`** — supply chain is then **Debian
+       container + your tree**, not random curl from hooks.
+
+  3) **Host `bindeb-pkg` nohup** (`scripts/kernel-bindeb-pkg-nohup.sh`)
+     • If **`ALFRED_KERNEL_CONFIG`** unset, uses **`x86_64_defconfig`** — that is
+       **upstream generic**, not Alfred’s hardened `.config`; security **relevance**
+       is **Kconfig posture**, not malware. Prefer shipping Alfred’s `.config` for
+       reproducible hardening.
+
+  4) **`.deb` copy** (`scripts/copy-kernel-debs-to-chroot.sh`)
+     • Copies whatever matches `linux-image-7.0.1*.deb` from **`KERNEL_WORK`** —
+       trojan if **WORK** is poisoned. Same host-trust model as (2).
+
+  5) **Hooks / pre-build gates**
+     • **iso-preflight + staging** — fail before `lb` if `linux-image-7.0.1*.deb` is absent (no fetch).
+     • **0160** — sysctl / audit / module policy (reduces exploitability; not
+       source scanning).
+     • **0166** — builds **liboqs / oqs-provider** from **staged tarballs** under
+       `/build-assets/` in chroot; those tarballs must be **trusted artifacts**
+       (verify upstream hashes for liboqs/oqs-provider releases separately).
+
+  6) **Gitignored binaries** (`config/packages.chroot/*.deb`)
+     • Not scanned by `git`; integrity is **organizational** (who built, where
+       copied). Pair with **published SHA256** for released ISO kernel debs.
+
+──────────────────────────────────────────────────────────────────────────────
+“Anything else dirty” — grep-style sweep (this repo)
+──────────────────────────────────────────────────────────────────────────────
+  • Kernel-related scripts: **no** `eval `, **no** `curl|sh`, **no** `http://`
+    kernel URLs in the paths above.
+  • Broader hook sweep for supply chain remains **`scripts/security-audit.sh`**
+    (Wave 2) on `config/hooks/live/*.hook.chroot`.
+
+──────────────────────────────────────────────────────────────────────────────
+Recommended next steps (outside this doc)
+──────────────────────────────────────────────────────────────────────────────
+  • On extracted `linux-7.0.1/`: `make checkstack` / sparse / your distro’s kernel
+    hardening checklist; track **stable@** / CVE list for **7.0.y** and rebuild.
+  • Sign **published** `linux-image-7.0.1*.deb` or publish **SBOM** + hashes next
+    to ISO (already aligned with release-integrity story).
+
+──────────────────────────────────────────────────────────────────────────────
+The bigger picture: “upgrade GoForge” vs **where** kernel audit runs
+──────────────────────────────────────────────────────────────────────────────
+  **GoForge (Git-compatible forge)** does not, by itself, understand the Linux
+  kernel. A **forge UI upgrade** (themes, navigation, issue UX) does **not** replace
+  **CI you author** that checks out or unpacks `linux-7.0.1` and runs real scanners.
+
+  What “upgrade GoForge” helps with, when you mean infrastructure, is **capacity to
+  run that CI**: Actions / Woodpecker / Drone, **large runners** (disk + RAM), **artifact
+  storage**, and maybe **LFS** if you host a kernel mirror in git form — plus a **second
+  repo** (or branch policy) so heavy jobs do not block the Alfred integration tree.
+
+  **Product ambition (Alfred / GoForge):** match or exceed the **practical** bar users
+  expect from GitHub-class SaaS — **without** renting their infra — by shipping
+  **runner scale**, **native pipelines**, **artifacts**, and **release/signing hooks**
+  that kernel and distro maintainers actually need. That bar is **proven in CI logs**,
+  not in marketing copy alone.
+
+  **Separation of repos (normal industry pattern):**
+    • **Alfred Linux** — OS hooks, live-build, policy (this tree). It **points at**
+      upstream tarballs and ships **policy + gates** (iso-preflight/staging, 0160, download SHA256).
+    • **Kernel line** — millions of lines, huge `cc` graph. Most teams either:
+        (a) keep **`KERNEL_WORK`** on a **private build host** and run scanners there, or
+        (b) open a **second forge repo** (e.g. `linux-alfred-7.0`) that tracks a **tag
+        or branch** of the tree you build, and attach **heavy CI** only to that repo:
+        `make check`, `checkstack`, sparse, Smatch/Coccinelle smoke, reproducible
+        `allnoconfig`/`allyesconfig` spot checks, publish **SBOM** + signed `.deb`
+        artifacts back to Alfred’s release pipeline.
+
+  **What you were “not seeing”:** expecting the **Alfred** repo to contain or CI-scan
+  the full kernel is the wrong shape. The right shape is **two pipelines** (or one
+  pipeline with a **checkout step** that pulls linux into CI cache — still heavy):
+    1) **Transport + identity:** verified tarball (done in `kernel-download-7.0.1.sh`)
+       + optional **GPG** on `sha256sums.asc`.
+    2) **Source + build integrity:** runs **where the tree exists** (builder or
+       kernel-mirror repo CI), not implied by “upgrade forge UI” alone.
+
+  **Practical GoForge upgrade checklist** (if you want forge-driven audit):
+    • Enable / scale **CI runners** with **≥ free space for full `linux-7.0.1` tree +
+      ccache** and enough RAM for parallel `make`.
+    • Add a **workflow** on a **kernel mirror repo** (or scheduled job) that:
+      fetch verified tag → `make CHECK=check` subset or your distro’s checklist →
+      archive logs + SARIF if tools emit it.
+    • Keep **Alfred** CI **light** (hooks, metadata, small sync) so PRs stay fast;
+      link releases to **kernel job** artifact hashes in **COMMANDER** / release notes.
+
+  **Operator runbook (enable runners, Actions, artifacts, sizing):**
+    docs/GOFORGE-INFRASTRUCTURE-UPGRADE.txt

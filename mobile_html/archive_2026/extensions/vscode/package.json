@@ -1,0 +1,90 @@
+{
+  "name": "alfred-ai",
+  "displayName": "Alfred AI Assistant",
+  "description": "AI-powered coding assistant with 1,290+ tools. Chat, voice commands, code review, refactoring, test generation, and deployment — all powered by Alfred AI.",
+  "version": "1.0.0",
+  "publisher": "gositeme",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/gositeme/alfred-vscode"
+  },
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": ["AI", "Chat", "Programming Languages", "Snippets", "Other"],
+  "keywords": ["ai", "assistant", "alfred", "coding", "voice", "tools", "gositeme"],
+  "icon": "media/icon.png",
+  "activationEvents": ["onStartupFinished"],
+  "main": "./src/extension.js",
+  "contributes": {
+    "commands": [
+      {"command": "alfred.chat", "title": "Alfred: Open Chat Panel", "icon": "$(comment-discussion)"},
+      {"command": "alfred.explain", "title": "Alfred: Explain Selected Code"},
+      {"command": "alfred.refactor", "title": "Alfred: Refactor Selected Code"},
+      {"command": "alfred.test", "title": "Alfred: Generate Tests"},
+      {"command": "alfred.document", "title": "Alfred: Generate Documentation"},
+      {"command": "alfred.review", "title": "Alfred: Code Review"},
+      {"command": "alfred.fix", "title": "Alfred: Fix Error"},
+      {"command": "alfred.optimize", "title": "Alfred: Optimize Code"},
+      {"command": "alfred.ask", "title": "Alfred: Ask a Question"}
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "alfred-sidebar",
+          "title": "Alfred AI",
+          "icon": "media/icon.svg"
+        }
+      ]
+    },
+    "views": {
+      "alfred-sidebar": [
+        {
+          "type": "webview",
+          "id": "alfred.chatView",
+          "name": "Alfred Chat"
+        }
+      ]
+    },
+    "menus": {
+      "editor/context": [
+        {"command": "alfred.explain", "group": "alfred@1", "when": "editorHasSelection"},
+        {"command": "alfred.refactor", "group": "alfred@2", "when": "editorHasSelection"},
+        {"command": "alfred.test", "group": "alfred@3", "when": "editorHasSelection"},
+        {"command": "alfred.document", "group": "alfred@4", "when": "editorHasSelection"},
+        {"command": "alfred.review", "group": "alfred@5", "when": "editorHasSelection"},
+        {"command": "alfred.fix", "group": "alfred@6"},
+        {"command": "alfred.optimize", "group": "alfred@7", "when": "editorHasSelection"}
+      ]
+    },
+    "configuration": {
+      "title": "Alfred AI",
+      "properties": {
+        "alfred.apiKey": {
+          "type": "string",
+          "default": "",
+          "description": "Your Alfred AI API key (get one at gositeme.com/developer-portal)"
+        },
+        "alfred.apiUrl": {
+          "type": "string",
+          "default": "https://gositeme.com/api/v1",
+          "description": "Alfred API endpoint URL"
+        },
+        "alfred.model": {
+          "type": "string",
+          "default": "auto",
+          "enum": ["auto", "fast", "balanced", "powerful"],
+          "description": "AI model tier for responses"
+        }
+      }
+    },
+    "keybindings": [
+      {"command": "alfred.chat", "key": "ctrl+shift+a", "mac": "cmd+shift+a"},
+      {"command": "alfred.ask", "key": "ctrl+shift+q", "mac": "cmd+shift+q"}
+    ]
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.85.0"
+  }
+}

@@ -1,0 +1,100 @@
+:root {
+  --bg: #07101a;
+  --panel: #0f1e2d;
+  --panel-2: #0b1724;
+  --line: #1b3654;
+  --text: #e8f4ff;
+  --muted: #91aac4;
+  --accent: #2ad1a3;
+  --accent-2: #36c3ff;
+  --warn: #ffb14a;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  color: var(--text);
+  font-family: "Segoe UI", "Avenir Next", sans-serif;
+  background: radial-gradient(1200px 700px at 85% -20%, #124a68 0%, transparent 65%), var(--bg);
+}
+.bg-glow {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(180deg, rgba(42, 209, 163, 0.08), rgba(0, 0, 0, 0));
+}
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  gap: 24px;
+  align-items: flex-start;
+  padding: 24px;
+}
+.topbar h1 { margin: 0; font-size: 28px; letter-spacing: 0.3px; }
+.topbar p { margin: 6px 0 0; color: var(--muted); }
+.pill {
+  padding: 8px 12px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--accent);
+  background: rgba(42, 209, 163, 0.08);
+}
+.grid {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 14px;
+  padding: 0 24px 24px;
+}
+.card {
+  grid-column: span 6;
+  background: linear-gradient(180deg, var(--panel), var(--panel-2));
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 16px;
+}
+.card.hero { grid-column: span 8; }
+.card.full { grid-column: 1 / -1; }
+.label {
+  margin: 0 0 10px;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--muted);
+}
+h2 { margin: 0; font-size: 30px; }
+.hero p { color: var(--muted); }
+.meter {
+  height: 14px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  overflow: hidden;
+  margin: 16px 0;
+  background: #091522;
+}
+#progressBar {
+  height: 100%;
+  width: 0;
+  background: linear-gradient(90deg, var(--accent), var(--accent-2));
+  transition: width 0.8s ease;
+}
+.hero-stats, .row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+.k {
+  display: block;
+  color: var(--muted);
+  font-size: 12px;
+}
+strong { font-size: 18px; }
+.list {
+  margin: 0;
+  padding-left: 18px;
+  color: var(--text);
+}
+.list li { margin: 8px 0; }
+.fine { color: var(--warn); font-size: 13px; }
+@media (max-width: 900px) {
+  .card, .card.hero { grid-column: 1 / -1; }
+  .hero-stats, .row { grid-template-columns: 1fr; }
+}

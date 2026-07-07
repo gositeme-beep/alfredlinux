@@ -1,0 +1,67 @@
+#!/bin/bash
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+echo "================================================="
+echo "==== ALFRED ALTAR (Burner RAM-Disk) ============="
+echo "================================================="
+
+export DEBIAN_FRONTEND=noninteractive
+apt-get update
+apt-get install -y secure-delete || true
+
+# Add tmpfs mount to fstab
+echo "tmpfs /mnt/altar tmpfs defaults,noatime,mode=1777,size=512m 0 0" >> /etc/fstab
+
+# Create cron script to shred files older than 5 minutes
+mkdir -p /mnt/altar
+mkdir -p /etc/cron.minute
+cat << 'EOF' > /etc/cron.minute/altar-shred
+#!/bin/bash
+find /mnt/altar -type f -mmin +5 -exec srm -f {} \;
+EOF
+chmod +x /etc/cron.minute/altar-shred
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+# [Genesis Forge] Systemd Hardening: alfred-daemon-132.service
+# Enforces deep PrivateTmp, ProtectSystem, and ProtectHome on native daemons.
+echo "[Genesis Forge] Hardening systemd service: alfred-daemon-132.service"
+mkdir -p /etc/systemd/system/alfred-daemon-132.service.d/ || true
+cat > /etc/systemd/system/alfred-daemon-132.service.d/override.conf << 'EOF'
+[Service]
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=read-only
+NoNewPrivileges=yes
+RestrictRealtime=yes
+EOF
+
+
+# --- BEGIN MERGED CONTENT FROM: 0606-alfred-altar-ramfs.hook.chroot ---
+#!/bin/bash
+set +e
+echo "================================================="
+echo "==== ALFRED ALTAR (Burner RAM-Disk) ============="
+echo "================================================="
+
+export DEBIAN_FRONTEND=noninteractive
+apt-get update
+apt-get install -y secure-delete || true
+
+# Add tmpfs mount to fstab
+echo "tmpfs /mnt/altar tmpfs defaults,noatime,mode=1777,size=512m 0 0" >> /etc/fstab
+
+# Create cron script to shred files older than 5 minutes
+mkdir -p /mnt/altar
+mkdir -p /etc/cron.minute
+cat << 'EOF' > /etc/cron.minute/altar-shred
+#!/bin/bash
+find /mnt/altar -type f -mmin +5 -exec srm -f {} \;
+EOF
+[ -e "/etc/cron.minute/altar-shred" ] && chmod +x /etc/cron.minute/altar-shred
+
+# --- END MERGED CONTENT FROM: 0606-alfred-altar-ramfs.hook.chroot ---
+
+

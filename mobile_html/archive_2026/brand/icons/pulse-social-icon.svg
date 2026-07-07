@@ -1,0 +1,78 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0a1628"/>
+      <stop offset="50%" stop-color="#0d2137"/>
+      <stop offset="100%" stop-color="#071320"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#06b6d4"/>
+      <stop offset="100%" stop-color="#10b981"/>
+    </linearGradient>
+    <linearGradient id="accent2" x1="0" y1="0.5" x2="1" y2="0.5">
+      <stop offset="0%" stop-color="#22d3ee"/>
+      <stop offset="50%" stop-color="#06b6d4"/>
+      <stop offset="100%" stop-color="#0891b2"/>
+    </linearGradient>
+    <linearGradient id="ring" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#06b6d4"/>
+      <stop offset="50%" stop-color="#10b981"/>
+      <stop offset="100%" stop-color="#34d399"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.5" cy="0.45" r="0.4">
+      <stop offset="0%" stop-color="#06b6d4" stop-opacity="0.18"/>
+      <stop offset="100%" stop-color="#0a1628" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="3" stdDeviation="8" flood-color="#000" flood-opacity="0.5"/>
+    </filter>
+    <filter id="pulse-glow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="5" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect x="0" y="0" width="512" height="512" rx="108" ry="108" fill="url(#bg)"/>
+  <rect x="0" y="0" width="512" height="512" rx="108" ry="108" fill="url(#glow)"/>
+
+  <!-- Outer ring -->
+  <circle cx="256" cy="256" r="170" fill="none" stroke="url(#ring)" stroke-width="3" opacity="0.25"/>
+
+  <!-- Inner ring -->
+  <circle cx="256" cy="256" r="125" fill="none" stroke="url(#ring)" stroke-width="2.5" opacity="0.18"/>
+
+  <!-- Pulse waveform -->
+  <g filter="url(#pulse-glow)">
+    <polyline points="55,270 110,270 140,270 170,270 190,270 210,195 232,345 254,170 276,360 298,205 315,280 335,255 360,270 390,270 430,270 457,270"
+              fill="none" stroke="url(#accent2)" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"
+              filter="url(#shadow)"/>
+  </g>
+
+  <!-- Decorative small pulse (upper) -->
+  <polyline points="150,165 168,165 180,148 192,182 204,155 216,175 235,165 255,165"
+            fill="none" stroke="url(#accent)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" opacity="0.22"/>
+
+  <!-- Decorative small pulse (lower) -->
+  <polyline points="258,355 276,355 288,338 300,372 312,350 324,368 343,355 363,355"
+            fill="none" stroke="url(#accent)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" opacity="0.22"/>
+
+  <!-- Center pulsing dots -->
+  <circle cx="256" cy="256" r="22" fill="url(#accent)" opacity="0.15"/>
+  <circle cx="256" cy="256" r="12" fill="url(#accent)" opacity="0.35"/>
+  <circle cx="256" cy="256" r="6" fill="#fff" opacity="0.9"/>
+
+  <!-- Connection nodes -->
+  <g opacity="0.45">
+    <circle cx="256" cy="110" r="9" fill="url(#accent)" opacity="0.6"/>
+    <line x1="256" y1="119" x2="256" y2="240" stroke="url(#accent)" stroke-width="1.2" opacity="0.2"/>
+    <circle cx="400" cy="210" r="8" fill="url(#accent)" opacity="0.5"/>
+    <line x1="392" y1="215" x2="270" y2="250" stroke="url(#accent)" stroke-width="1.2" opacity="0.2"/>
+    <circle cx="115" cy="215" r="8" fill="url(#accent)" opacity="0.5"/>
+    <line x1="123" y1="219" x2="244" y2="252" stroke="url(#accent)" stroke-width="1.2" opacity="0.2"/>
+    <circle cx="155" cy="380" r="7" fill="url(#accent)" opacity="0.4"/>
+    <line x1="161" y1="374" x2="249" y2="264" stroke="url(#accent)" stroke-width="1" opacity="0.15"/>
+    <circle cx="362" cy="375" r="7" fill="url(#accent)" opacity="0.4"/>
+    <line x1="356" y1="369" x2="263" y2="264" stroke="url(#accent)" stroke-width="1" opacity="0.15"/>
+  </g>
+</svg>

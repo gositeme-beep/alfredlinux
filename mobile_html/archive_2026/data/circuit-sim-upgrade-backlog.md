@@ -1,0 +1,571 @@
+# Circuit Simulator — Agent Upgrade Backlog
+# ═══════════════════════════════════════════
+# 10 Streams (A–J) | ~3,400+ tasks for mass agent deployment
+# Format: UPGRADE_BACKLOG.md compatible for orchestrator import
+# Task IDs: CSA-001 through CSJ-350
+
+---
+
+## Stream A: MNA Engine & Core Simulation [P0]
+
+- CSA-001 — [feature] Implement sparse matrix data structure for MNA stamping — `assets/js/circuit-engine.js`
+- CSA-002 — [feature] Build Gaussian elimination with partial pivoting for MNA solver — `assets/js/circuit-engine.js`
+- CSA-003 — [feature] Implement LU decomposition solver as alternative to Gaussian — `assets/js/circuit-engine.js`
+- CSA-004 — [feature] Build netlist generator from wire topology graph — `assets/js/circuit-engine.js`
+- CSA-005 — [feature] Create node assignment algorithm from wire connectivity — `assets/js/circuit-engine.js`
+- CSA-006 — [feature] Implement MNA stamp for resistor (conductance matrix) — `assets/js/circuit-engine.js`
+- CSA-007 — [feature] Implement MNA stamp for independent voltage source — `assets/js/circuit-engine.js`
+- CSA-008 — [feature] Implement MNA stamp for independent current source — `assets/js/circuit-engine.js`
+- CSA-009 — [feature] Implement MNA stamp for capacitor (companion model) — `assets/js/circuit-engine.js`
+- CSA-010 — [feature] Implement MNA stamp for inductor (companion model) — `assets/js/circuit-engine.js`
+- CSA-011 — [feature] Implement MNA stamp for VCVS (voltage-controlled voltage source) — `assets/js/circuit-engine.js`
+- CSA-012 — [feature] Implement MNA stamp for VCCS (voltage-controlled current source) — `assets/js/circuit-engine.js`
+- CSA-013 — [feature] Implement MNA stamp for CCVS (current-controlled voltage source) — `assets/js/circuit-engine.js`
+- CSA-014 — [feature] Implement MNA stamp for CCCS (current-controlled current source) — `assets/js/circuit-engine.js`
+- CSA-015 — [feature] Implement Newton-Raphson iteration for nonlinear devices — `assets/js/circuit-engine.js`
+- CSA-016 — [feature] Add convergence checking with configurable tolerance — `assets/js/circuit-engine.js`
+- CSA-017 — [feature] Implement DC operating point analysis — `assets/js/circuit-engine.js`
+- CSA-018 — [feature] Implement AC small-signal analysis (frequency sweep per node) — `assets/js/circuit-engine.js`
+- CSA-019 — [feature] Replace forward Euler with trapezoidal integration — `assets/js/circuit-engine.js`
+- CSA-020 — [feature] Implement Gear integration method (BDF) for stiff circuits — `assets/js/circuit-engine.js`
+- CSA-021 — [feature] Add adaptive timestep control based on LTE — `assets/js/circuit-engine.js`
+- CSA-022 — [feature] Implement source stepping for convergence aid — `assets/js/circuit-engine.js`
+- CSA-023 — [feature] Implement GMIN stepping for convergence aid — `assets/js/circuit-engine.js`
+- CSA-024 — [feature] Build voltage limiting for diode/BJT convergence — `assets/js/circuit-engine.js`
+- CSA-025 — [feature] Implement initial condition (IC) support for transient — `assets/js/circuit-engine.js`
+- CSA-026 — [feature] Build nodal voltage extraction per component terminal — `assets/js/circuit-engine.js`
+- CSA-027 — [feature] Implement branch current calculation per wire segment — `assets/js/circuit-engine.js`
+- CSA-028 — [feature] Add power dissipation tracking per component — `assets/js/circuit-engine.js`
+- CSA-029 — [feature] Implement frequency-domain impedance matrix — `assets/js/circuit-engine.js`
+- CSA-030 — [feature] Build transfer function H(s) extraction from MNA — `assets/js/circuit-engine.js`
+- CSA-031 — [feature] Implement pole-zero analysis from transfer function — `assets/js/circuit-engine.js`
+- CSA-032 — [feature] Add noise analysis (thermal, shot, flicker) — `assets/js/circuit-engine.js`
+- CSA-033 — [feature] Implement sensitivity analysis (dOutput/dParam) — `assets/js/circuit-engine.js`
+- CSA-034 — [feature] Build Monte Carlo analysis engine with parameter distributions — `assets/js/circuit-engine.js`
+- CSA-035 — [feature] Implement parametric sweep (vary one param, plot result) — `assets/js/circuit-engine.js`
+- CSA-036 — [feature] Add worst-case analysis (corner analysis) — `assets/js/circuit-engine.js`
+- CSA-037 — [feature] Implement temperature coefficient modeling — `assets/js/circuit-engine.js`
+- CSA-038 — [feature] Build circuit matrix condition number checker — `assets/js/circuit-engine.js`
+- CSA-039 — [feature] Add simulation progress callback for long runs — `assets/js/circuit-engine.js`
+- CSA-040 — [feature] Implement Web Worker for simulation (non-blocking UI) — `assets/js/circuit-engine.js`
+- CSA-041 — [feature] Add simulation pause/resume/step functionality — `assets/js/circuit-engine.js`
+- CSA-042 — [feature] Implement simulation breakpoints (stop at voltage threshold) — `assets/js/circuit-engine.js`
+- CSA-043 — [feature] Build waveform data storage with efficient ring buffer — `assets/js/circuit-engine.js`
+- CSA-044 — [feature] Implement multi-rate simulation (fast/slow parts) — `assets/js/circuit-engine.js`
+- CSA-045 — [feature] Add event-driven simulation for digital components — `assets/js/circuit-engine.js`
+- CSA-046 — [feature] Implement mixed-signal interface (analog↔digital boundary) — `assets/js/circuit-engine.js`
+- CSA-047 — [feature] Build supernode detection and handling in MNA — `assets/js/circuit-engine.js`
+- CSA-048 — [feature] Implement dependent source linearization — `assets/js/circuit-engine.js`
+- CSA-049 — [feature] Add mutual inductance (coupled inductors) MNA stamp — `assets/js/circuit-engine.js`
+- CSA-050 — [feature] Build ideal transformer MNA stamp — `assets/js/circuit-engine.js`
+- CSA-051 — [feature] Implement transmission line model (lossless) — `assets/js/circuit-engine.js`
+- CSA-052 — [feature] Add lossy transmission line model — `assets/js/circuit-engine.js`
+- CSA-053 — [feature] Implement S-parameter analysis — `assets/js/circuit-engine.js`
+- CSA-054 — [feature] Build Smith chart data from S-parameters — `assets/js/circuit-engine.js`
+- CSA-055 — [feature] Implement harmonic balance for RF circuits — `assets/js/circuit-engine.js`
+- CSA-056 — [feature] Add phase noise analysis — `assets/js/circuit-engine.js`
+- CSA-057 — [feature] Implement envelope simulation — `assets/js/circuit-engine.js`
+- CSA-058 — [feature] Build stability analysis (loop gain, phase margin) — `assets/js/circuit-engine.js`
+- CSA-059 — [feature] Add step response analysis — `assets/js/circuit-engine.js`
+- CSA-060 — [feature] Implement impulse response analysis — `assets/js/circuit-engine.js`
+- CSA-061 — [feature] Build simulation error estimation per timestep — `assets/js/circuit-engine.js`
+- CSA-062 — [feature] Add circuit topology validation before simulation — `assets/js/circuit-engine.js`
+- CSA-063 — [feature] Implement floating node detection and warning — `assets/js/circuit-engine.js`
+- CSA-064 — [feature] Build short circuit detection — `assets/js/circuit-engine.js`
+- CSA-065 — [feature] Add inductor loop detection (missing resistance warning) — `assets/js/circuit-engine.js`
+- CSA-066 — [feature] Implement capacitor cutset detection — `assets/js/circuit-engine.js`
+- CSA-067 — [feature] Build simulation result cross-reference (KVL/KCL verification) — `assets/js/circuit-engine.js`
+- CSA-068 — [feature] Add energy conservation check in simulation — `assets/js/circuit-engine.js`
+- CSA-069 — [feature] Implement charge conservation check for capacitors — `assets/js/circuit-engine.js`
+- CSA-070 — [feature] Build flux conservation check for inductors — `assets/js/circuit-engine.js`
+
+## Stream B: Component Models & SPICE Library [P1]
+
+- CSB-001 — [feature] Implement Shockley diode model in MNA (IS, N, RS, BV) — `assets/js/circuit-engine.js`
+- CSB-002 — [feature] Implement Zener diode model with breakdown region — `assets/js/circuit-engine.js`
+- CSB-003 — [feature] Implement Schottky diode model — `assets/js/circuit-engine.js`
+- CSB-004 — [feature] Implement LED model with wavelength-dependent Vf — `assets/js/circuit-engine.js`
+- CSB-005 — [feature] Implement photodiode model (light-dependent current) — `assets/js/circuit-engine.js`
+- CSB-006 — [feature] Implement tunnel diode model with NDR region — `assets/js/circuit-engine.js`
+- CSB-007 — [feature] Implement Ebers-Moll BJT model (NPN) — `assets/js/circuit-engine.js`
+- CSB-008 — [feature] Implement Ebers-Moll BJT model (PNP) — `assets/js/circuit-engine.js`
+- CSB-009 — [feature] Implement Gummel-Poon BJT model — `assets/js/circuit-engine.js`
+- CSB-010 — [feature] Implement VBIC BJT model — `assets/js/circuit-engine.js`
+- CSB-011 — [feature] Implement MOSFET Level 1 model (Shichman-Hodges) — `assets/js/circuit-engine.js`
+- CSB-012 — [feature] Implement MOSFET Level 3 model — `assets/js/circuit-engine.js`
+- CSB-013 — [feature] Implement BSIM3 MOSFET model (simplified) — `assets/js/circuit-engine.js`
+- CSB-014 — [feature] Implement BSIM4 MOSFET model (simplified) — `assets/js/circuit-engine.js`
+- CSB-015 — [feature] Implement JFET model (N-channel) — `assets/js/circuit-engine.js`
+- CSB-016 — [feature] Implement JFET model (P-channel) — `assets/js/circuit-engine.js`
+- CSB-017 — [feature] Implement IGBT model — `assets/js/circuit-engine.js`
+- CSB-018 — [feature] Implement SCR (thyristor) model with gate triggering — `assets/js/circuit-engine.js`
+- CSB-019 — [feature] Implement TRIAC model — `assets/js/circuit-engine.js`
+- CSB-020 — [feature] Implement DIAC model — `assets/js/circuit-engine.js`
+- CSB-021 — [feature] Implement ideal op-amp model (infinite gain) — `assets/js/circuit-engine.js`
+- CSB-022 — [feature] Implement realistic op-amp model (finite gain, GBW, slew rate) — `assets/js/circuit-engine.js`
+- CSB-023 — [feature] Implement op-amp output saturation — `assets/js/circuit-engine.js`
+- CSB-024 — [feature] Implement op-amp input offset voltage — `assets/js/circuit-engine.js`
+- CSB-025 — [feature] Implement op-amp input bias current — `assets/js/circuit-engine.js`
+- CSB-026 — [feature] Implement op-amp CMRR — `assets/js/circuit-engine.js`
+- CSB-027 — [feature] Implement comparator model (rail-to-rail output) — `assets/js/circuit-engine.js`
+- CSB-028 — [feature] Implement instrumentation amplifier model — `assets/js/circuit-engine.js`
+- CSB-029 — [feature] Implement voltage regulator model (LDO) — `assets/js/circuit-engine.js`
+- CSB-030 — [feature] Implement 555 timer behavioral model — `assets/js/circuit-engine.js`
+- CSB-031 — [feature] Implement crystal oscillator model (BVD equivalent) — `assets/js/circuit-engine.js`
+- CSB-032 — [feature] Implement varactor model (voltage-dependent capacitance) — `assets/js/circuit-engine.js`
+- CSB-033 — [feature] Implement thermistor model (NTC/PTC) — `assets/js/circuit-engine.js`
+- CSB-034 — [feature] Implement photoresistor (LDR) model — `assets/js/circuit-engine.js`
+- CSB-035 — [feature] Implement relay model with coil/contact — `assets/js/circuit-engine.js`
+- CSB-036 — [feature] Implement ideal switch model — `assets/js/circuit-engine.js`
+- CSB-037 — [feature] Implement DPDT switch model — `assets/js/circuit-engine.js`
+- CSB-038 — [feature] Implement rotary switch model — `assets/js/circuit-engine.js`
+- CSB-039 — [feature] Implement potentiometer model with wiper position — `assets/js/circuit-engine.js`
+- CSB-040 — [feature] Implement fuse model with blow characteristic — `assets/js/circuit-engine.js`
+- CSB-041 — [feature] Implement current sense resistor model — `assets/js/circuit-engine.js`
+- CSB-042 — [feature] Implement piezoelectric sensor/actuator model — `assets/js/circuit-engine.js`
+- CSB-043 — [feature] Implement Hall effect sensor model — `assets/js/circuit-engine.js`
+- CSB-044 — [feature] Implement strain gauge model — `assets/js/circuit-engine.js`
+- CSB-045 — [feature] Implement thermocouple model — `assets/js/circuit-engine.js`
+- CSB-046 — [feature] Implement current mirror model — `assets/js/circuit-engine.js`
+- CSB-047 — [feature] Implement bandgap reference model — `assets/js/circuit-engine.js`
+- CSB-048 — [feature] Implement DAC model (R-2R ladder) — `assets/js/circuit-engine.js`
+- CSB-049 — [feature] Implement ADC model (SAR) — `assets/js/circuit-engine.js`
+- CSB-050 — [feature] Implement PLL behavioral model — `assets/js/circuit-engine.js`
+- CSB-051 — [feature] Build SPICE .model parser for diode parameters — `assets/js/circuit-engine.js`
+- CSB-052 — [feature] Build SPICE .model parser for BJT parameters — `assets/js/circuit-engine.js`
+- CSB-053 — [feature] Build SPICE .model parser for MOSFET parameters — `assets/js/circuit-engine.js`
+- CSB-054 — [feature] Build SPICE .model parser for JFET parameters — `assets/js/circuit-engine.js`
+- CSB-055 — [feature] Build SPICE .subckt parser for subcircuit definitions — `assets/js/circuit-engine.js`
+- CSB-056 — [feature] Build SPICE .lib file loader and catalog — `assets/js/circuit-engine.js`
+- CSB-057 — [feature] Create manufacturer model library (ON Semi, TI, Analog Devices) — `assets/js/circuit-engine.js`
+- CSB-058 — [feature] Add component aging/degradation model — `assets/js/circuit-engine.js`
+- CSB-059 — [feature] Add parasitic capacitance model per component — `assets/js/circuit-engine.js`
+- CSB-060 — [feature] Add parasitic inductance model per component — `assets/js/circuit-engine.js`
+- CSB-061 — [feature] Add ESR model for capacitors — `assets/js/circuit-engine.js`
+- CSB-062 — [feature] Add ESL model for capacitors — `assets/js/circuit-engine.js`
+- CSB-063 — [feature] Add wire resistance model (AWG gauge lookup) — `assets/js/circuit-engine.js`
+- CSB-064 — [feature] Add PCB trace impedance model — `assets/js/circuit-engine.js`
+- CSB-065 — [feature] Implement PWM source waveform — `assets/js/circuit-engine.js`
+- CSB-066 — [feature] Implement square wave source — `assets/js/circuit-engine.js`
+- CSB-067 — [feature] Implement triangle wave source — `assets/js/circuit-engine.js`
+- CSB-068 — [feature] Implement sawtooth wave source — `assets/js/circuit-engine.js`
+- CSB-069 — [feature] Implement pulse source with rise/fall times — `assets/js/circuit-engine.js`
+- CSB-070 — [feature] Implement piece-wise linear (PWL) source — `assets/js/circuit-engine.js`
+- CSB-071 — [feature] Implement SFFM (single-frequency FM) source — `assets/js/circuit-engine.js`
+- CSB-072 — [feature] Implement noise source (white, pink, 1/f) — `assets/js/circuit-engine.js`
+- CSB-073 — [feature] Implement arbitrary math expression source — `assets/js/circuit-engine.js`
+- CSB-074 — [feature] Build component parameter editor with datasheet links — `circuit-simulator.php`
+- CSB-075 — [feature] Implement component tolerance setting (1%, 5%, 10%, 20%) — `assets/js/circuit-engine.js`
+- CSB-076 — [feature] Add E-series preferred value selector (E12, E24, E96) — `circuit-simulator.php`
+- CSB-077 — [feature] Implement power rating for resistors — `assets/js/circuit-engine.js`
+- CSB-078 — [feature] Add voltage rating for capacitors — `assets/js/circuit-engine.js`
+- CSB-079 — [feature] Implement current rating for inductors — `assets/js/circuit-engine.js`
+- CSB-080 — [feature] Build component search by part number — `circuit-simulator.php`
+
+## Stream C: Schematic Rendering & Symbols [P1]
+
+- CSC-001 — [feature] Create IEEE/IEC standard resistor symbol (rectangular) — `circuit-simulator.php`
+- CSC-002 — [feature] Create IEC standard resistor symbol (box) — `circuit-simulator.php`
+- CSC-003 — [feature] Create IEEE standard capacitor symbol (parallel lines) — `circuit-simulator.php`
+- CSC-004 — [feature] Create electrolytic capacitor symbol (curved plate) — `circuit-simulator.php`
+- CSC-005 — [feature] Create IEEE standard inductor symbol (loopy) — `circuit-simulator.php`
+- CSC-006 — [feature] Create iron-core inductor symbol — `circuit-simulator.php`
+- CSC-007 — [feature] Create variable inductor symbol — `circuit-simulator.php`
+- CSC-008 — [feature] Create IEEE diode symbol with proper triangle — `circuit-simulator.php`
+- CSC-009 — [feature] Create Zener diode symbol with bent cathode — `circuit-simulator.php`
+- CSC-010 — [feature] Create Schottky diode symbol — `circuit-simulator.php`
+- CSC-011 — [feature] Create LED symbol with arrows — `circuit-simulator.php`
+- CSC-012 — [feature] Create photodiode symbol with incoming arrows — `circuit-simulator.php`
+- CSC-013 — [feature] Create NPN BJT symbol with arrow on emitter — `circuit-simulator.php`
+- CSC-014 — [feature] Create PNP BJT symbol with arrow on emitter — `circuit-simulator.php`
+- CSC-015 — [feature] Create N-channel MOSFET symbol (enhancement) — `circuit-simulator.php`
+- CSC-016 — [feature] Create P-channel MOSFET symbol (enhancement) — `circuit-simulator.php`
+- CSC-017 — [feature] Create N-channel MOSFET symbol (depletion) — `circuit-simulator.php`
+- CSC-018 — [feature] Create N-channel JFET symbol — `circuit-simulator.php`
+- CSC-019 — [feature] Create P-channel JFET symbol — `circuit-simulator.php`
+- CSC-020 — [feature] Create op-amp symbol (triangle with +/- inputs) — `circuit-simulator.php`
+- CSC-021 — [feature] Create comparator symbol — `circuit-simulator.php`
+- CSC-022 — [feature] Create transformer symbol with proper dots — `circuit-simulator.php`
+- CSC-023 — [feature] Create center-tap transformer symbol — `circuit-simulator.php`
+- CSC-024 — [feature] Create current source symbol (circle with arrow) — `circuit-simulator.php`
+- CSC-025 — [feature] Create voltage source symbol (circle with +/-) — `circuit-simulator.php`
+- CSC-026 — [feature] Create AC source symbol (circle with sine wave) — `circuit-simulator.php`
+- CSC-027 — [feature] Create ground symbol (standard 3-line) — `circuit-simulator.php`
+- CSC-028 — [feature] Create chassis ground symbol — `circuit-simulator.php`
+- CSC-029 — [feature] Create earth ground symbol — `circuit-simulator.php`
+- CSC-030 — [feature] Create VCC/VDD power rail symbol — `circuit-simulator.php`
+- CSC-031 — [feature] Create fuse symbol — `circuit-simulator.php`
+- CSC-032 — [feature] Create switch (SPST) symbol — `circuit-simulator.php`
+- CSC-033 — [feature] Create switch (SPDT) symbol — `circuit-simulator.php`
+- CSC-034 — [feature] Create push button symbol — `circuit-simulator.php`
+- CSC-035 — [feature] Create relay symbol (coil + contacts) — `circuit-simulator.php`
+- CSC-036 — [feature] Create crystal oscillator symbol — `circuit-simulator.php`
+- CSC-037 — [feature] Create voltmeter symbol — `circuit-simulator.php`
+- CSC-038 — [feature] Create ammeter symbol — `circuit-simulator.php`
+- CSC-039 — [feature] Create motor symbol — `circuit-simulator.php`
+- CSC-040 — [feature] Create speaker/buzzer symbol — `circuit-simulator.php`
+- CSC-041 — [feature] Create antenna symbol — `circuit-simulator.php`
+- CSC-042 — [feature] Create test point symbol — `circuit-simulator.php`
+- CSC-043 — [feature] Create connector symbol (generic pin header) — `circuit-simulator.php`
+- CSC-044 — [feature] Implement component rotation at 90° increments — `circuit-simulator.php`
+- CSC-045 — [feature] Implement component mirroring (horizontal/vertical) — `circuit-simulator.php`
+- CSC-046 — [feature] Add component value labels (e.g. "10kΩ", "100nF") — `circuit-simulator.php`
+- CSC-047 — [feature] Add component reference designators (R1, C1, U1) — `circuit-simulator.php`
+- CSC-048 — [feature] Implement auto-numbering for reference designators — `circuit-simulator.php`
+- CSC-049 — [feature] Add draggable label positioning — `circuit-simulator.php`
+- CSC-050 — [feature] Implement connection pins with snap points — `circuit-simulator.php`
+- CSC-051 — [feature] Add pin labels (e.g. "IN", "OUT", "+", "-") — `circuit-simulator.php`
+- CSC-052 — [feature] Implement junction dot rendering (wire intersections) — `circuit-simulator.php`
+- CSC-053 — [feature] Add net labels/names on wires — `circuit-simulator.php`
+- CSC-054 — [feature] Implement bus wire rendering (thick line, label) — `circuit-simulator.php`
+- CSC-055 — [feature] Add wire color coding by net — `circuit-simulator.php`
+- CSC-056 — [feature] Implement voltage heat map overlay on wires — `circuit-simulator.php`
+- CSC-057 — [feature] Implement current flow animation arrows — `circuit-simulator.php`
+- CSC-058 — [feature] Add component highlight on hover — `circuit-simulator.php`
+- CSC-059 — [feature] Implement rubber-band wire routing — `circuit-simulator.php`
+- CSC-060 — [feature] Add auto-routing for wire placement — `circuit-simulator.php`
+- CSC-061 — [feature] Implement Manhattan (90°) wire routing — `circuit-simulator.php`
+- CSC-062 — [feature] Add diagonal wire segments option — `circuit-simulator.php`
+- CSC-063 — [feature] Implement wire corner rounding — `circuit-simulator.php`
+- CSC-064 — [feature] Add wire crossover display (arc at crossing) — `circuit-simulator.php`
+- CSC-065 — [feature] Implement zoom-dependent detail levels (LOD) — `circuit-simulator.php`
+- CSC-066 — [feature] Add mini-map navigator for large schematics — `circuit-simulator.php`
+- CSC-067 — [feature] Implement print-quality SVG export — `circuit-simulator.php`
+- CSC-068 — [feature] Add PDF export with title block — `circuit-simulator.php`
+- CSC-069 — [feature] Implement dark/light theme toggle for schematics — `circuit-simulator.php`
+- CSC-070 — [feature] Add custom color scheme for components — `circuit-simulator.php`
+- CSC-071 — [feature] Create component symbol editor (custom symbols) — `circuit-simulator.php`
+- CSC-072 — [feature] Add component bounding box visualization — `circuit-simulator.php`
+- CSC-073 — [feature] Implement snap-to-pin for wire endpoints — `circuit-simulator.php`
+- CSC-074 — [feature] Add grid dot/line toggle — `circuit-simulator.php`
+- CSC-075 — [feature] Implement measurement probe visualization — `circuit-simulator.php`
+- CSC-076 — [feature] Add schematic border/title block — `circuit-simulator.php`
+- CSC-077 — [feature] Implement schematic page numbering (multi-page) — `circuit-simulator.php`
+- CSC-078 — [feature] Add component drag shadow (ghost preview) — `circuit-simulator.php`
+- CSC-079 — [feature] Implement retina/HiDPI canvas rendering — `circuit-simulator.php`
+- CSC-080 — [feature] Add WebGL renderer for large schematics — `circuit-simulator.php`
+
+## Stream D: Oscilloscope & Instruments [P1]
+
+- CSD-001 — [feature] Implement multi-channel oscilloscope (4 channels) — `assets/js/circuit-engine.js`
+- CSD-002 — [feature] Add channel color coding (CH1=yellow, CH2=cyan, CH3=magenta, CH4=green) — `circuit-simulator.php`
+- CSD-003 — [feature] Implement vertical scale per channel (V/div) — `circuit-simulator.php`
+- CSD-004 — [feature] Implement horizontal timebase control (s/div) — `circuit-simulator.php`
+- CSD-005 — [feature] Add channel offset knob — `circuit-simulator.php`
+- CSD-006 — [feature] Implement trigger level control with visual indicator — `circuit-simulator.php`
+- CSD-007 — [feature] Add trigger modes: auto, normal, single — `circuit-simulator.php`
+- CSD-008 — [feature] Implement rising/falling edge trigger selection — `circuit-simulator.php`
+- CSD-009 — [feature] Add trigger holdoff control — `circuit-simulator.php`
+- CSD-010 — [feature] Implement measurement cursors (vertical) — `circuit-simulator.php`
+- CSD-011 — [feature] Implement measurement cursors (horizontal) — `circuit-simulator.php`
+- CSD-012 — [feature] Add cursor readout panel (ΔV, Δt, frequency) — `circuit-simulator.php`
+- CSD-013 — [feature] Implement auto-measurements (Vpp, Vrms, freq, duty cycle) — `assets/js/circuit-engine.js`
+- CSD-014 — [feature] Add rise time measurement — `assets/js/circuit-engine.js`
+- CSD-015 — [feature] Add fall time measurement — `assets/js/circuit-engine.js`
+- CSD-016 — [feature] Implement overshoot/undershoot measurement — `assets/js/circuit-engine.js`
+- CSD-017 — [feature] Add math channel (CH1+CH2, CH1-CH2, CH1*CH2) — `assets/js/circuit-engine.js`
+- CSD-018 — [feature] Implement FFT channel (frequency spectrum view) — `assets/js/circuit-engine.js`
+- CSD-019 — [feature] Add XY display mode (Lissajous figures) — `circuit-simulator.php`
+- CSD-020 — [feature] Implement scope persistence display (phosphor effect) — `circuit-simulator.php`
+- CSD-021 — [feature] Add scope roll mode for slow signals — `circuit-simulator.php`
+- CSD-022 — [feature] Implement scope zoom/pan on captured waveform — `circuit-simulator.php`
+- CSD-023 — [feature] Add waveform screenshot/export — `circuit-simulator.php`
+- CSD-024 — [feature] Implement CSV waveform data export — `circuit-simulator.php`
+- CSD-025 — [feature] Add scope probe attenuation setting (1x/10x/100x) — `circuit-simulator.php`
+- CSD-026 — [feature] Implement AC/DC coupling selector — `circuit-simulator.php`
+- CSD-027 — [feature] Add bandwidth limit filter — `circuit-simulator.php`
+- CSD-028 — [feature] Implement segmented memory acquisition — `assets/js/circuit-engine.js`
+- CSD-029 — [feature] Add protocol decode (I2C) on scope channel — `assets/js/circuit-engine.js`
+- CSD-030 — [feature] Add protocol decode (SPI) on scope channel — `assets/js/circuit-engine.js`
+- CSD-031 — [feature] Add protocol decode (UART) on scope channel — `assets/js/circuit-engine.js`
+- CSD-032 — [feature] Implement spectrum analyzer with waterfall display — `circuit-simulator.php`
+- CSD-033 — [feature] Add spectrum analyzer RBW/VBW controls — `circuit-simulator.php`
+- CSD-034 — [feature] Implement spectrum peak detection and markers — `circuit-simulator.php`
+- CSD-035 — [feature] Add spectrum channel power measurement — `assets/js/circuit-engine.js`
+- CSD-036 — [feature] Implement network analyzer (magnitude + phase vs frequency) — `circuit-simulator.php`
+- CSD-037 — [feature] Add Bode plot cursor with gain/phase readout — `circuit-simulator.php`
+- CSD-038 — [feature] Implement gain margin / phase margin markers on Bode — `circuit-simulator.php`
+- CSD-039 — [feature] Add Nyquist plot — `circuit-simulator.php`
+- CSD-040 — [feature] Implement Smith chart with interactive markers — `circuit-simulator.php`
+- CSD-041 — [feature] Add impedance analyzer display — `circuit-simulator.php`
+- CSD-042 — [feature] Implement logic analyzer (8-channel digital waveform) — `circuit-simulator.php`
+- CSD-043 — [feature] Add logic analyzer bus decode and value display — `circuit-simulator.php`
+- CSD-044 — [feature] Implement pattern generator — `circuit-simulator.php`
+- CSD-045 — [feature] Add function generator controls UI (integrated with sources) — `circuit-simulator.php`
+- CSD-046 — [feature] Implement power supply emulator UI — `circuit-simulator.php`
+- CSD-047 — [feature] Add DMM (digital multimeter) virtual instrument — `circuit-simulator.php`
+- CSD-048 — [feature] Implement LCR meter virtual instrument — `circuit-simulator.php`
+- CSD-049 — [feature] Add component curve tracer (I-V characteristic) — `circuit-simulator.php`
+- CSD-050 — [feature] Implement thermal camera overlay (power dissipation heatmap) — `circuit-simulator.php`
+
+## Stream E: File I/O & Interoperability [P2]
+
+- CSE-001 — [feature] Implement SPICE netlist export (basic elements) — `assets/js/circuit-engine.js`
+- CSE-002 — [feature] Implement SPICE netlist import/parser — `assets/js/circuit-engine.js`
+- CSE-003 — [feature] Add LTspice .asc file import — `assets/js/circuit-engine.js`
+- CSE-004 — [feature] Add LTspice .asc file export — `assets/js/circuit-engine.js`
+- CSE-005 — [feature] Implement KiCad schematic import (.kicad_sch) — `assets/js/circuit-engine.js`
+- CSE-006 — [feature] Implement KiCad schematic export (.kicad_sch) — `assets/js/circuit-engine.js`
+- CSE-007 — [feature] Add Altium Designer import (basic) — `assets/js/circuit-engine.js`
+- CSE-008 — [feature] Implement OrCAD netlist export — `assets/js/circuit-engine.js`
+- CSE-009 — [feature] Add EAGLE .sch import — `assets/js/circuit-engine.js`
+- CSE-010 — [feature] Implement Verilog-A model export — `assets/js/circuit-engine.js`
+- CSE-011 — [feature] Add Touchstone S-parameter file import (.s2p) — `assets/js/circuit-engine.js`
+- CSE-012 — [feature] Add Touchstone S-parameter file export (.s2p) — `assets/js/circuit-engine.js`
+- CSE-013 — [feature] Implement bill of materials (BOM) generation — `circuit-simulator.php`
+- CSE-014 — [feature] Add BOM export to CSV — `circuit-simulator.php`
+- CSE-015 — [feature] Add BOM export to Excel (XLSX) — `circuit-simulator.php`
+- CSE-016 — [feature] Implement BOM with supplier cross-reference (DigiKey, Mouser) — `circuit-simulator.php`
+- CSE-017 — [feature] Add BOM cost estimation — `circuit-simulator.php`
+- CSE-018 — [feature] Implement schematic PDF export with title block — `circuit-simulator.php`
+- CSE-019 — [feature] Add multi-page PDF export — `circuit-simulator.php`
+- CSE-020 — [feature] Implement SVG schematic export — `circuit-simulator.php`
+- CSE-021 — [feature] Add DXF export for CAD integration — `circuit-simulator.php`
+- CSE-022 — [feature] Implement waveform data export (CSV with time column) — `circuit-simulator.php`
+- CSE-023 — [feature] Add waveform data export (VCD for logic) — `circuit-simulator.php`
+- CSE-024 — [feature] Implement simulation report generation (HTML) — `circuit-simulator.php`
+- CSE-025 — [feature] Add simulation report generation (PDF) — `circuit-simulator.php`
+- CSE-026 — [feature] Implement design rule check (DRC) report — `assets/js/circuit-engine.js`
+- CSE-027 — [feature] Add electrical rule check (ERC) report — `assets/js/circuit-engine.js`
+- CSE-028 — [feature] Implement auto-save with versioning — `circuit-simulator.php`
+- CSE-029 — [feature] Add cloud save via circuit-designer API — `api/circuit-designer.php`
+- CSE-030 — [feature] Implement design version history with diff view — `api/circuit-designer.php`
+- CSE-031 — [feature] Add design forking (copy someone's shared design) — `api/circuit-designer.php`
+- CSE-032 — [feature] Implement design sharing with permissions — `api/circuit-designer.php`
+- CSE-033 — [feature] Add public design gallery — `api/circuit-designer.php`
+- CSE-034 — [feature] Implement design embedding (iframe share code) — `circuit-simulator.php`
+- CSE-035 — [feature] Add design thumbnail generation for gallery — `api/circuit-designer.php`
+- CSE-036 — [feature] Implement import of SPICE .lib model libraries — `assets/js/circuit-engine.js`
+- CSE-037 — [feature] Add component library import from manufacturer — `assets/js/circuit-engine.js`
+- CSE-038 — [feature] Implement schematic template library (filters, amps, power supplies) — `api/circuit-designer.php`
+- CSE-039 — [feature] Add circuit clipboard (copy/paste between browser tabs) — `circuit-simulator.php`
+- CSE-040 — [feature] Implement design backup/restore from server — `api/circuit-designer.php`
+
+## Stream F: UI/UX & Interaction [P2]
+
+- CSF-001 — [feature] Implement snap-to-pin for component connections — `circuit-simulator.php`
+- CSF-002 — [feature] Add magnetic snap guides when dragging components — `circuit-simulator.php`
+- CSF-003 — [feature] Implement alignment guides (horizontal/vertical) — `circuit-simulator.php`
+- CSF-004 — [feature] Add distribute evenly function (H/V) — `circuit-simulator.php`
+- CSF-005 — [feature] Implement component alignment toolbar (left/center/right/top/bottom) — `circuit-simulator.php`
+- CSF-006 — [feature] Add rubber-band selection for multi-select — `circuit-simulator.php`
+- CSF-007 — [feature] Implement group/ungroup for component clusters — `circuit-simulator.php`
+- CSF-008 — [feature] Add move selection with arrow keys — `circuit-simulator.php`
+- CSF-009 — [feature] Implement undo timeline with thumbnails — `circuit-simulator.php`
+- CSF-010 — [feature] Add branch undo (undo tree instead of linear) — `circuit-simulator.php`
+- CSF-011 — [feature] Implement command palette (Ctrl+Shift+P) for simulator — `circuit-simulator.php`
+- CSF-012 — [feature] Add keyboard shortcut customization — `circuit-simulator.php`
+- CSF-013 — [feature] Implement right-click context menu per component type — `circuit-simulator.php`
+- CSF-014 — [feature] Add quick-edit inline value editing (double-click on label) — `circuit-simulator.php`
+- CSF-015 — [feature] Implement property panel with slider controls — `circuit-simulator.php`
+- CSF-016 — [feature] Add unit converter in property panel — `circuit-simulator.php`
+- CSF-017 — [feature] Implement component search with fuzzy matching — `circuit-simulator.php`
+- CSF-018 — [feature] Add recently used components section — `circuit-simulator.php`
+- CSF-019 — [feature] Implement favorites/pinned components — `circuit-simulator.php`
+- CSF-020 — [feature] Add component category icons — `circuit-simulator.php`
+- CSF-021 — [feature] Implement drag-from-palette (not just click-to-place) — `circuit-simulator.php`
+- CSF-022 — [feature] Add touch gesture support (pinch zoom, two-finger pan) — `circuit-simulator.php`
+- CSF-023 — [feature] Implement touch-optimized component palette for tablets — `circuit-simulator.php`
+- CSF-024 — [feature] Add split-screen view (schematic + scope side by side) — `circuit-simulator.php`
+- CSF-025 — [feature] Implement floating/dockable panels — `circuit-simulator.php`
+- CSF-026 — [feature] Add panel layout save/restore — `circuit-simulator.php`
+- CSF-027 — [feature] Implement fullscreen mode — `circuit-simulator.php`
+- CSF-028 — [feature] Add breadcrumb navigation for hierarchical designs — `circuit-simulator.php`
+- CSF-029 — [feature] Implement zoom-to-fit selection — `circuit-simulator.php`
+- CSF-030 — [feature] Add zoom-to-component (double-click in component list) — `circuit-simulator.php`
+- CSF-031 — [feature] Implement simulation speed control slider — `circuit-simulator.php`
+- CSF-032 — [feature] Add real-time parameter adjustment during simulation — `circuit-simulator.php`
+- CSF-033 — [feature] Implement interactive potentiometer knob during sim — `circuit-simulator.php`
+- CSF-034 — [feature] Add interactive switch toggle during sim — `circuit-simulator.php`
+- CSF-035 — [feature] Implement drag-to-adjust voltage source value — `circuit-simulator.php`
+- CSF-036 — [feature] Add guided tutorial/walkthrough overlay — `circuit-simulator.php`
+- CSF-037 — [feature] Implement tooltip help on hover for every control — `circuit-simulator.php`
+- CSF-038 — [feature] Add circuit wizard (auto-generate from specs) — `circuit-simulator.php`
+- CSF-039 — [feature] Implement circuit challenge mode (build a circuit to meet specs) — `circuit-simulator.php`
+- CSF-040 — [feature] Add dark/light/solarized theme options — `circuit-simulator.php`
+- CSF-041 — [feature] Implement status bar with sim info (nodes, components, sim time) — `circuit-simulator.php`
+- CSF-042 — [feature] Add notification system for sim warnings/errors — `circuit-simulator.php`
+- CSF-043 — [feature] Implement drag-drop from external (file drop to import) — `circuit-simulator.php`
+- CSF-044 — [feature] Add clipboard paste support (paste schematic images) — `circuit-simulator.php`
+- CSF-045 — [feature] Implement connection validation visual feedback — `circuit-simulator.php`
+- CSF-046 — [feature] Add wire routing preview during placement — `circuit-simulator.php`
+- CSF-047 — [feature] Implement net highlighting (click wire, all connected wires highlight) — `circuit-simulator.php`
+- CSF-048 — [feature] Add component info popup (datasheet summary on hover) — `circuit-simulator.php`
+- CSF-049 — [feature] Implement measurement probe drag-to-place — `circuit-simulator.php`
+- CSF-050 — [feature] Add probe readout overlay on schematic — `circuit-simulator.php`
+
+## Stream G: Backend API & Data [P2]
+
+- CSG-001 — [feature] Implement circuit design CRUD API (create/read/update/delete) — `api/circuit-designer.php`
+- CSG-002 — [feature] Add list designs endpoint with pagination — `api/circuit-designer.php`
+- CSG-003 — [feature] Implement design search endpoint (by title, category, tags) — `api/circuit-designer.php`
+- CSG-004 — [feature] Add design tagging system — `api/circuit-designer.php`
+- CSG-005 — [feature] Implement design categories API — `api/circuit-designer.php`
+- CSG-006 — [feature] Add design version history endpoint — `api/circuit-designer.php`
+- CSG-007 — [feature] Implement design diff API (compare two versions) — `api/circuit-designer.php`
+- CSG-008 — [feature] Add design sharing permissions API — `api/circuit-designer.php`
+- CSG-009 — [feature] Implement design fork endpoint — `api/circuit-designer.php`
+- CSG-010 — [feature] Add design star/favorite endpoint — `api/circuit-designer.php`
+- CSG-011 — [feature] Implement design comments API — `api/circuit-designer.php`
+- CSG-012 — [feature] Add design collaboration (real-time via WebSocket) — `api/circuit-designer.php`
+- CSG-013 — [feature] Implement component library management API — `api/circuit-designer.php`
+- CSG-014 — [feature] Add custom component upload endpoint — `api/circuit-designer.php`
+- CSG-015 — [feature] Implement simulation results storage API — `api/circuit-designer.php`
+- CSG-016 — [feature] Add simulation comparison API (compare two runs) — `api/circuit-designer.php`
+- CSG-017 — [feature] Implement waveform data storage and retrieval — `api/circuit-designer.php`
+- CSG-018 — [feature] Add design export API (generate PDF/SVG server-side) — `api/circuit-designer.php`
+- CSG-019 — [feature] Implement BOM API with supplier lookups — `api/circuit-designer.php`
+- CSG-020 — [feature] Add design template gallery API — `api/circuit-designer.php`
+- CSG-021 — [feature] Implement design analytics (views, forks, stars) — `api/circuit-designer.php`
+- CSG-022 — [feature] Add SPICE model library management API — `api/circuit-designer.php`
+- CSG-023 — [feature] Implement manufacturer parts database API — `api/circuit-designer.php`
+- CSG-024 — [feature] Add design validation API (check before simulate) — `api/circuit-designer.php`
+- CSG-025 — [feature] Implement batch simulation API — `api/circuit-designer.php`
+- CSG-026 — [feature] Add parametric sweep API — `api/circuit-designer.php`
+- CSG-027 — [feature] Implement Monte Carlo batch API — `api/circuit-designer.php`
+- CSG-028 — [feature] Add thermal simulation API — `api/circuit-designer.php`
+- CSG-029 — [feature] Implement design statistics dashboard API — `api/circuit-designer.php`
+- CSG-030 — [feature] Add Redis caching for component library queries — `api/circuit-designer.php`
+
+## Stream H: Architecture & Refactoring [P2]
+
+- CSH-001 — [debt] Extract component rendering into separate module — `assets/js/circuit-renderer.js`
+- CSH-002 — [debt] Extract component palette/library into separate module — `assets/js/circuit-palette.js`
+- CSH-003 — [debt] Extract wire routing into separate module — `assets/js/circuit-wires.js`
+- CSH-004 — [debt] Extract property panel into separate module — `assets/js/circuit-properties.js`
+- CSH-005 — [debt] Extract undo/redo system into separate module — `assets/js/circuit-history.js`
+- CSH-006 — [debt] Extract keyboard/mouse handlers into separate module — `assets/js/circuit-input.js`
+- CSH-007 — [debt] Extract analysis panels into separate module — `assets/js/circuit-analysis.js`
+- CSH-008 — [debt] Extract export/import into separate module — `assets/js/circuit-io.js`
+- CSH-009 — [debt] Extract simulation controller into separate module — `assets/js/circuit-controller.js`
+- CSH-010 — [debt] Create component base class with common interface — `assets/js/circuit-engine.js`
+- CSH-011 — [debt] Create component registry with plugin pattern — `assets/js/circuit-engine.js`
+- CSH-012 — [debt] Implement event bus for module communication — `assets/js/circuit-events.js`
+- CSH-013 — [debt] Create state management store for simulator — `assets/js/circuit-store.js`
+- CSH-014 — [debt] Implement dependency injection for modules — `assets/js/circuit-engine.js`
+- CSH-015 — [debt] Extract CSS into separate stylesheet — `assets/css/circuit-simulator.css`
+- CSH-016 — [debt] Extract inline JS from PHP into ES module files — `circuit-simulator.php`
+- CSH-017 — [debt] Create TypeScript type definitions for circuit engine — `assets/js/circuit-engine.d.ts`
+- CSH-018 — [debt] Consolidate tools/circuit-designer.php with circuit-simulator.php — `circuit-simulator.php`
+- CSH-019 — [debt] Remove duplicate code between circuit-designer and circuit-simulator — `circuit-simulator.php`
+- CSH-020 — [debt] Implement circuit engine unit test suite — `tests/circuit-engine.test.js`
+- CSH-021 — [debt] Add integration tests for MNA solver — `tests/mna-solver.test.js`
+- CSH-022 — [debt] Add rendering tests with canvas mock — `tests/circuit-renderer.test.js`
+- CSH-023 — [debt] Add file I/O tests (import/export cycle verification) — `tests/circuit-io.test.js`
+- CSH-024 — [debt] Implement performance benchmarks for simulation — `tests/circuit-perf.test.js`
+- CSH-025 — [debt] Add circuit topology verification tests (KVL/KCL) — `tests/circuit-topology.test.js`
+- CSH-026 — [debt] Create JSDoc documentation for circuit engine — `assets/js/circuit-engine.js`
+- CSH-027 — [debt] Create user documentation for circuit simulator — `docs/circuit-simulator.md`
+- CSH-028 — [debt] Create API documentation for circuit-designer.php — `docs/circuit-designer-api.md`
+- CSH-029 — [debt] Create component model reference documentation — `docs/circuit-components.md`
+- CSH-030 — [debt] Create keyboard shortcut reference card — `docs/circuit-shortcuts.md`
+
+## Stream I: Digital & Mixed-Signal [P3]
+
+- CSI-001 — [feature] Implement AND gate model — `assets/js/circuit-engine.js`
+- CSI-002 — [feature] Implement OR gate model — `assets/js/circuit-engine.js`
+- CSI-003 — [feature] Implement NOT gate (inverter) model — `assets/js/circuit-engine.js`
+- CSI-004 — [feature] Implement NAND gate model — `assets/js/circuit-engine.js`
+- CSI-005 — [feature] Implement NOR gate model — `assets/js/circuit-engine.js`
+- CSI-006 — [feature] Implement XOR gate model — `assets/js/circuit-engine.js`
+- CSI-007 — [feature] Implement XNOR gate model — `assets/js/circuit-engine.js`
+- CSI-008 — [feature] Implement buffer/driver model — `assets/js/circuit-engine.js`
+- CSI-009 — [feature] Implement tri-state buffer model — `assets/js/circuit-engine.js`
+- CSI-010 — [feature] Implement D flip-flop model — `assets/js/circuit-engine.js`
+- CSI-011 — [feature] Implement JK flip-flop model — `assets/js/circuit-engine.js`
+- CSI-012 — [feature] Implement SR latch model — `assets/js/circuit-engine.js`
+- CSI-013 — [feature] Implement T flip-flop model — `assets/js/circuit-engine.js`
+- CSI-014 — [feature] Implement 4-bit counter model — `assets/js/circuit-engine.js`
+- CSI-015 — [feature] Implement 4-bit shift register model — `assets/js/circuit-engine.js`
+- CSI-016 — [feature] Implement multiplexer (4:1) model — `assets/js/circuit-engine.js`
+- CSI-017 — [feature] Implement demultiplexer (1:4) model — `assets/js/circuit-engine.js`
+- CSI-018 — [feature] Implement decoder (2:4) model — `assets/js/circuit-engine.js`
+- CSI-019 — [feature] Implement encoder (4:2) model — `assets/js/circuit-engine.js`
+- CSI-020 — [feature] Implement full adder model — `assets/js/circuit-engine.js`
+- CSI-021 — [feature] Implement comparator (digital, magnitude) model — `assets/js/circuit-engine.js`
+- CSI-022 — [feature] Implement 7-segment display model — `circuit-simulator.php`
+- CSI-023 — [feature] Implement 7-segment decoder (BCD) model — `assets/js/circuit-engine.js`
+- CSI-024 — [feature] Implement clock generator model — `assets/js/circuit-engine.js`
+- CSI-025 — [feature] Implement RAM (4x4 bit) model — `assets/js/circuit-engine.js`
+- CSI-026 — [feature] Implement ROM (lookup table) model — `assets/js/circuit-engine.js`
+- CSI-027 — [feature] Create logic gate schematic symbols (IEEE/ANSI) — `circuit-simulator.php`
+- CSI-028 — [feature] Create flip-flop schematic symbols — `circuit-simulator.php`
+- CSI-029 — [feature] Create digital IC package symbols (DIP, QFP) — `circuit-simulator.php`
+- CSI-030 — [feature] Implement digital signal propagation delay — `assets/js/circuit-engine.js`
+- CSI-031 — [feature] Add setup/hold time violation detection — `assets/js/circuit-engine.js`
+- CSI-032 — [feature] Implement digital test vector input — `circuit-simulator.php`
+- CSI-033 — [feature] Add truth table generator from circuit — `assets/js/circuit-engine.js`
+- CSI-034 — [feature] Implement timing diagram generator — `circuit-simulator.php`
+- CSI-035 — [feature] Add state machine editor and simulator — `circuit-simulator.php`
+- CSI-036 — [feature] Implement Verilog HDL netlist export — `assets/js/circuit-engine.js`
+- CSI-037 — [feature] Implement VHDL netlist export — `assets/js/circuit-engine.js`
+- CSI-038 — [feature] Add digital-to-analog converter integration — `assets/js/circuit-engine.js`
+- CSI-039 — [feature] Add analog-to-digital converter integration — `assets/js/circuit-engine.js`
+- CSI-040 — [feature] Implement mixed-signal simulation boundary handling — `assets/js/circuit-engine.js`
+
+## Stream J: Accessibility, Security, Performance [P2]
+
+- CSJ-001 — [security] Add CSRF token to all circuit designer API calls — `api/circuit-designer.php`
+- CSJ-002 — [security] Validate all component property values server-side — `api/circuit-designer.php`
+- CSJ-003 — [security] Rate limit design save/load endpoints — `api/circuit-designer.php`
+- CSJ-004 — [security] Sanitize design titles and descriptions — `api/circuit-designer.php`
+- CSJ-005 — [security] Validate JSON schema of saved circuit data — `api/circuit-designer.php`
+- CSJ-006 — [security] Add Content-Security-Policy headers — `circuit-simulator.php`
+- CSJ-007 — [security] Validate file uploads for model import — `api/circuit-designer.php`
+- CSJ-008 — [security] Audit SPICE netlist parser for injection — `assets/js/circuit-engine.js`
+- CSJ-009 — [security] Add max circuit complexity limit — `assets/js/circuit-engine.js`
+- CSJ-010 — [security] Implement simulation timeout to prevent DoS — `assets/js/circuit-engine.js`
+- CSJ-011 — [feature] Add ARIA labels to canvas elements — `circuit-simulator.php`
+- CSJ-012 — [feature] Implement screen reader announcements for sim state — `circuit-simulator.php`
+- CSJ-013 — [feature] Add keyboard-only navigation for component placement — `circuit-simulator.php`
+- CSJ-014 — [feature] Implement focus management for panels — `circuit-simulator.php`
+- CSJ-015 — [feature] Add high-contrast mode for visually impaired — `circuit-simulator.php`
+- CSJ-016 — [feature] Implement colorblind-safe color schemes — `circuit-simulator.php`
+- CSJ-017 — [feature] Add text descriptions for all schematic symbols — `circuit-simulator.php`
+- CSJ-018 — [feature] Implement skip-to-content links — `circuit-simulator.php`
+- CSJ-019 — [feature] Add reduced-motion mode (disable animations) — `circuit-simulator.php`
+- CSJ-020 — [feature] Implement font size scaling for readability — `circuit-simulator.php`
+- CSJ-021 — [feature] Optimize canvas rendering with dirty rectangles — `circuit-simulator.php`
+- CSJ-022 — [feature] Implement spatial indexing for large schematics — `circuit-simulator.php`
+- CSJ-023 — [feature] Add component culling (don't render off-screen) — `circuit-simulator.php`
+- CSJ-024 — [feature] Optimize wire intersection detection with R-tree — `circuit-simulator.php`
+- CSJ-025 — [feature] Implement lazy loading for component library — `circuit-simulator.php`
+- CSJ-026 — [feature] Add requestAnimationFrame throttling for 60fps — `circuit-simulator.php`
+- CSJ-027 — [feature] Implement sparse matrix optimization for large circuits — `assets/js/circuit-engine.js`
+- CSJ-028 — [feature] Add WASM compilation target for engine (future) — `assets/js/circuit-engine.js`
+- CSJ-029 — [feature] Implement simulation result caching — `assets/js/circuit-engine.js`
+- CSJ-030 — [feature] Add progressive rendering for plot data — `circuit-simulator.php`
+- CSJ-031 — [feature] Implement IndexedDB for local design storage — `circuit-simulator.php`
+- CSJ-032 — [feature] Add service worker for offline simulator use — `circuit-simulator.php`
+- CSJ-033 — [feature] Implement design auto-recovery from browser crash — `circuit-simulator.php`
+- CSJ-034 — [feature] Add performance monitoring panel (FPS, sim time, memory) — `circuit-simulator.php`
+- CSJ-035 — [feature] Implement memory usage tracking and optimization — `circuit-simulator.php`
+- CSJ-036 — [feature] Add circuit complexity indicator (node/component count) — `circuit-simulator.php`
+- CSJ-037 — [feature] Implement simulation warm-up optimization — `assets/js/circuit-engine.js`
+- CSJ-038 — [feature] Add matrix reuse for consecutive timesteps — `assets/js/circuit-engine.js`
+- CSJ-039 — [feature] Implement object pooling for circuit components — `assets/js/circuit-engine.js`
+- CSJ-040 — [feature] Add typed arrays for simulation data — `assets/js/circuit-engine.js`
+
+---
+
+## Summary
+
+| Stream | Topic | Tasks | Priority |
+|--------|-------|-------|----------|
+| A | MNA Engine & Core Simulation | 70 | P0 |
+| B | Component Models & SPICE Library | 80 | P1 |
+| C | Schematic Rendering & Symbols | 80 | P1 |
+| D | Oscilloscope & Instruments | 50 | P1 |
+| E | File I/O & Interoperability | 40 | P2 |
+| F | UI/UX & Interaction | 50 | P2 |
+| G | Backend API & Data | 30 | P2 |
+| H | Architecture & Refactoring | 30 | P2 |
+| I | Digital & Mixed-Signal | 40 | P3 |
+| J | Accessibility, Security, Performance | 40 | P2 |
+| **Total** | | **510** | |
+
+Scale to 10,000 agents by:
+- Parallelizing independent tasks within each stream
+- Each agent handles one task (one file, one feature)
+- Streams A-D run first (foundation), then E-J layer on top
+- Sub-tasks can be generated from each task (e.g., CSB-007 "Implement Ebers-Moll BJT" becomes 5+ tasks: base-emitter junction, base-collector junction, current gain, saturation model, unit tests)

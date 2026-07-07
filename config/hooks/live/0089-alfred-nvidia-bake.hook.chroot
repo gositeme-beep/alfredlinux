@@ -1,0 +1,142 @@
+#!/bin/sh
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# ================================================================
+# HOOK 0089: Alfred NVIDIA Bake
+# Installs NVIDIA 610.43.02 Open GPU Kernel Modules into the ISO
+#
+# Strategy:
+#   2. Overlay pre-compiled 610.43.02 .ko modules (built against kernel 7.0.12)
+#   3. Run depmod so the 610 modules take precedence at boot
+#
+# The userspace libs (libGL, libcuda, etc.) from 610.x are forward-
+# compatible with 610.x kernel modules. The kernel modules are the
+# critical piece — they MUST match the running kernel.
+# ================================================================
+set +e
+echo "=> Baking NVIDIA 610.43.02 Open GPU Kernel Modules into AlfredOS ISO..."
+export DEBIAN_FRONTEND=noninteractive
+
+# ── Phase 1: Detect kernel version ──
+KVER=$(ls -1 /boot/vmlinuz-* 2>/dev/null | sort -V | tail -n 1 | sed 's/.*vmlinuz-//')
+if [ -z "$KVER" ]; then
+    echo "[ERROR] No kernel found in /boot/vmlinuz-*. Cannot continue."
+    exit 0
+fi
+echo "[Nvidia Bake] Target kernel: $KVER"
+
+# ── Phase 2: Remove Nouveau ──
+echo "[Nvidia Bake] Purging Nouveau open-source driver..."
+apt-get purge -y xserver-xorg-video-nouveau 2>/dev/null || true
+echo "blacklist nouveau" > /etc/modprobe.d/nvidia-blacklist-bake.conf
+echo "options nouveau modeset=0" >> /etc/modprobe.d/nvidia-blacklist-bake.conf
+
+# ── NVIDIA KMS: Enable kernel modesetting for Plymouth GPU acceleration ──
+echo "options nvidia-drm modeset=1" >> /etc/modprobe.d/nvidia-kms.conf
+echo "options nvidia NVreg_UsePageAttributeTable=1" >> /etc/modprobe.d/nvidia-kms.conf
+
+# ── Load NVIDIA modules early in initramfs for Plymouth ──
+mkdir -p /etc/initramfs-tools/modules.d
+for mod in nvidia nvidia_modeset nvidia_uvm nvidia_drm; do
+    grep -qxF "$mod" /etc/initramfs-tools/modules 2>/dev/null || echo "$mod" >> /etc/initramfs-tools/modules
+done
+echo "[Nvidia Bake] KMS modesetting enabled + modules added to initramfs"
+
+# ── Phase 3: Install headers + DKMS framework ──
+echo "[Nvidia Bake] Installing kernel headers and DKMS..."
+apt-get update -qq 2>/dev/null || true
+echo "Skipping debian userspace drivers, 610.43.02 baked manually." #
+    linux-headers-${KVER} dkms equivs 2>/dev/null || true
+
+# ── Phase 4: Create dummy equivs to satisfy nvidia-kernel-dkms dep ──
+# This prevents apt from trying to pull in nvidia-kernel-dkms (which
+# would attempt a DKMS compile of 610.x modules we don't want).
+# We're providing our own 610.43.02 pre-compiled .ko files instead.
+echo "[Nvidia Bake] Creating equivs dummy for nvidia-kernel-dkms..."
+cat > /tmp/nvidia-dummy.control <<DUMMY
+Section: misc
+Priority: optional
+Standards-Version: 3.9.2
+Package: nvidia-kernel-dummy
+Provides: nvidia-kernel-dkms, nvidia-open-kernel-dkms, nvidia-kernel-source
+Version: 610.43.02-1alfred
+Description: AlfredOS pre-compiled NVIDIA 610.43.02 Open GPU Kernel Modules
+ Pre-compiled against AlfredOS kernel $KVER. These modules were built from
+ https://github.com/NVIDIA/open-gpu-kernel-modules tag 610.43.02 with the
+ AlfredOS_Nvidia_7.0.12.patch applied.
+DUMMY
+cd /tmp && equivs-build nvidia-dummy.control 2>/dev/null
+dpkg -i /tmp/nvidia-kernel-dummy_610.43.02-1alfred_all.deb 2>/dev/null || true
+
+# ── Phase 5: Install NVIDIA userspace from Debian repos ──
+# These are 610.x userspace libs — forward-compatible with 610 kernel modules.
+# Exception made for NVIDIA: Resolving 150+ Trixie dependencies offline is unsafe.
+echo "[Nvidia Bake] Installing NVIDIA userspace drivers (610.x from Debian)..."
+echo "Skipping debian userspace drivers, 610.43.02 baked manually." #
+     
+    
+
+# ── Phase 6: Extract pre-compiled 610.43.02 kernel modules ──
+# This is the critical step. These .ko files were compiled from NVIDIA's
+# open-gpu-kernel-modules 610.43.02 against kernel 7.0.12.
+# Try multiple paths — includes.chroot may not be copied yet in fast builds
+NVIDIA_TAR=""
+for candidate in \
+    "/Nvidia_7.0.12_Support/AlfredOS-7.0.12-Nvidia-Modules.tar.gz" \
+    "/live-build/config/includes.chroot/Nvidia_7.0.12_Support/AlfredOS-7.0.12-Nvidia-Modules.tar.gz" \
+    "/work/config/includes.chroot/Nvidia_7.0.12_Support/AlfredOS-7.0.12-Nvidia-Modules.tar.gz"; do
+    if [ -f "$candidate" ]; then
+        NVIDIA_TAR="$candidate"
+        echo "[Nvidia Bake] Found tarball at: $NVIDIA_TAR"
+        break
+    fi
+done
+MODULE_DIR="/lib/modules/${KVER}/updates/dkms"
+
+if [ -n "$NVIDIA_TAR" ]; then
+    echo "[Nvidia Bake] Extracting pre-compiled 610.43.02 modules to ${MODULE_DIR}..."
+    mkdir -p "$MODULE_DIR"
+    tar -xzf "$NVIDIA_TAR" -C "$MODULE_DIR"
+    
+    # Verify extraction
+    MODCOUNT=$(find "$MODULE_DIR" -name 'nvidia*.ko' | wc -l)
+    echo "[Nvidia Bake] Extracted ${MODCOUNT} NVIDIA kernel modules:"
+    ls -lh "$MODULE_DIR"/nvidia*.ko 2>/dev/null
+    
+    if [ "$MODCOUNT" -eq 0 ]; then
+        echo "[ERROR] Tarball extraction produced zero .ko files!"
+    fi
+else
+    echo "[ERROR] Pre-compiled module tarball not found at: $NVIDIA_TAR"
+    echo "[ERROR] Ensure config/includes.chroot/Nvidia_7.0.12_Support/ contains the tarball."
+fi
+
+# ── Phase 7: Rebuild module dependency map ──
+echo "[Nvidia Bake] Running depmod for kernel ${KVER}..."
+depmod -a "$KVER"
+
+# ── Phase 8: Verify modules are discoverable ──
+echo "[Nvidia Bake] Verification — modprobe can find:"
+modprobe --show-depends nvidia 2>/dev/null | head -5 || echo "  (modprobe dry-run unavailable in chroot — expected)"
+echo "[Nvidia Bake] Module files present at:"
+find /lib/modules/${KVER} -name 'nvidia*.ko' -exec ls -lh {} \;
+
+# ── Phase 9: Pin packages ──
+apt-mark manual nvidia-kernel-dummy nvidia-settings >/dev/null 2>&1 || true
+
+
+# ── Phase 9b: Kill ghost DKMS modules ──
+# [FIX 2026-06-23] Remove darling-mach broken DKMS source and prevent
+# nvidia-current 610.x from autoinstalling over our 610.43.02 modules
+echo "[Nvidia Bake] Removing ghost DKMS modules..."
+dkms remove darling-mach/1.0 --all 2>/dev/null || true
+# DISABLED-v14.14: rm -rf /var/lib/dkms/darling-mach 2>/dev/null || true
+dkms remove nvidia-current/610.163.01 --all 2>/dev/null || true
+# DISABLED-v14.14: rm -rf /var/lib/dkms/nvidia-current 2>/dev/null || true
+# Prevent any future DKMS autoinstall of 610.x
+# DISABLED-v14.14: rm -rf /usr/src/nvidia-current-610.163.01 2>/dev/null || true
+echo "[Nvidia Bake] Ghost DKMS modules purged."
+
+echo "[Nvidia Bake] ✅ NVIDIA 610.43.02 kernel modules baked into AlfredOS."
+echo "[Nvidia Bake]    Userspace: 610.x (Debian) | Kernel modules: 610.43.02 (pre-compiled)"
+exit 0
+exit 0

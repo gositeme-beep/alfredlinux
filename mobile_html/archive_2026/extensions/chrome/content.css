@@ -1,0 +1,54 @@
+/* ==========================================================
+   Alfred AI Chrome Extension — Content Script Styles
+   ========================================================== */
+
+#alfred-floating-btn {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 2147483647;
+  width: 52px;
+  height: 52px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #6c5ce7, #0984e3);
+  box-shadow: 0 4px 24px rgba(108, 92, 231, 0.45), 0 0 0 3px rgba(108, 92, 231, 0.15);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+#alfred-floating-btn:hover {
+  transform: scale(1.08);
+  box-shadow: 0 6px 32px rgba(108, 92, 231, 0.6), 0 0 0 4px rgba(108, 92, 231, 0.2);
+}
+
+#alfred-floating-btn:active {
+  transform: scale(0.96);
+}
+
+.alfred-btn-icon {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 1.3rem;
+  font-weight: 800;
+  color: #ffffff;
+  line-height: 1;
+  pointer-events: none;
+}
+
+/* Pulse animation on idle */
+@keyframes alfredPulse {
+  0%, 100% { box-shadow: 0 4px 24px rgba(108, 92, 231, 0.45), 0 0 0 3px rgba(108, 92, 231, 0.15); }
+  50%      { box-shadow: 0 4px 32px rgba(108, 92, 231, 0.6), 0 0 0 6px rgba(108, 92, 231, 0.08); }
+}
+
+#alfred-floating-btn {
+  animation: alfredPulse 3s ease-in-out infinite;
+}
+
+#alfred-floating-btn:hover {
+  animation: none;
+}

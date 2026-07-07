@@ -1,0 +1,57 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+
+echo "[Genesis Forge] Engineering LD_PRELOAD Socket Blackhole for 260..."
+
+apt-get install -y --fix-broken -y gcc || true
+
+mkdir -p /etc/apparmor.d/alfred-isolated/ || true
+
+# Strict AppArmor Mode (Enforce)
+cat > /etc/apparmor.d/alfred-isolated/profile-260 << 'EOF'
+profile alfred-sandbox-260 /usr/local/bin/alfred-util-247 flags=(enforce) {
+  #include <abstractions/base>
+  /usr/local/bin/alfred-util-247 rmix,
+  /dev/null rw,
+}
+EOF
+
+mkdir -p /usr/lib/alfred-illusions/ || true
+
+# The LD_PRELOAD Socket Blackhole Source
+cat > /usr/lib/alfred-illusions/socket_blackhole.c << 'EOF'
+#define _GNU_SOURCE
+#include <errno.h>
+#include <sys/socket.h>
+
+// Physically intercept the socket() syscall and instantly return Network Unreachable
+int socket(int domain, int type, int protocol) {
+    errno = ENETUNREACH;
+    return -1;
+}
+
+// Physically intercept connect()
+int connect(int sockfd, const struct sockaddr *addr, socklen_t addrlen) {
+    errno = ENETUNREACH;
+    return -1;
+}
+EOF
+
+gcc -shared -fPIC -O2 /usr/lib/alfred-illusions/socket_blackhole.c -o /usr/lib/alfred-illusions/socket_blackhole.so -ldl 2>/dev/null || true
+
+# Wrapper script
+cat > /usr/local/bin/alfred-util-247-socket-wrapper << 'EOF'
+#!/bin/bash
+# LD_PRELOAD Socket Blackhole
+# Blinds the application to the network layer entirely within user-space.
+export LD_PRELOAD="/usr/lib/alfred-illusions/socket_blackhole.so"
+exec /usr/local/bin/alfred-util-247 "$@"
+EOF
+
+[ -e "/usr/local/bin/alfred-util-247-socket-wrapper" ] && chmod +x /usr/local/bin/alfred-util-247-socket-wrapper || true
+
+echo "[Genesis Forge] LD_PRELOAD Socket Blackhole Integrated."
+exit 0

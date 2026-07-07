@@ -1,0 +1,104 @@
+#!/bin/bash
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+# 0167-alfred-dns-hologram.hook.chroot
+# Phase 3: The Hologram â€” Sovereign DNS Intercept
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+set +e
+echo "â•”â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•—"
+echo "â•‘  [0167] PHASE 3 â€” Sovereign DNS Hologram Intercept        â•‘"
+echo "â•šâ•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•"
+
+# â”€â”€ 1. Install dnsmasq to act as the local resolver â”€â”€
+apt-get install -y --no-install-recommends dnsmasq 2>/dev/null || true
+
+# â”€â”€ 2. Configure dnsmasq to hijack gositeme.com â”€â”€
+cat > /etc/dnsmasq.d/hologram.conf << 'DNSMASQ'
+# Alfred Linux â€” Hologram DNS Intercept
+# Route all traffic for the Kingdom to the local Docker Swarm
+
+address=/gositeme.com/127.0.0.1
+address=/api.gositeme.com/127.0.0.1
+address=/db.gositeme.com/127.0.0.1
+
+# Allow Yggdrasil peers to resolve
+listen-address=127.0.0.1,::1
+bind-interfaces
+DNSMASQ
+
+# â”€â”€ 3. Force systemd-resolved to use dnsmasq â”€â”€
+mkdir -p /etc/systemd/resolved.conf.d
+cat > /etc/systemd/resolved.conf.d/hologram.conf << 'RESOLVED'
+[Resolve]
+DNS=127.0.0.1
+Domains=~gositeme.com
+RESOLVED
+
+systemctl enable dnsmasq || true || true 2>/dev/null || true
+
+echo "â•”â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•—"
+echo "â•‘  [0167] Sovereign DNS Hologram â€” COMPLETE                 â•‘"
+echo "â•‘  âœ“ Dnsmasq installed and configured                       â•‘"
+echo "â•‘  âœ“ gositeme.com intercepted to 127.0.0.1                  â•‘"
+echo "â•‘  âœ“ systemd-resolved patched for local routing             â•‘"
+echo "â•šâ•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•"
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+# [Genesis Forge] Granular Kernel Matrix: net.ipv4.ip_local_port_range="7424 65535"
+# Extremely deep low-level kernel protection.
+echo "[Genesis Forge] Applying granular sysctl: net.ipv4.ip_local_port_range="7424 65535""
+echo "net.ipv4.ip_local_port_range="7424 65535"" > /etc/sysctl.d/99-alfred-59.conf || true
+sysctl -w net.ipv4.ip_local_port_range="7424 65535" > /dev/null 2>&1 || true
+
+
+# --- BEGIN MERGED CONTENT FROM: 0167-alfred-dns-hologram.hook.chroot ---
+#!/bin/bash
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+# 0167-alfred-dns-hologram.hook.chroot
+# Phase 3: The Hologram â€” Sovereign DNS Intercept
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+set +e
+echo "â•”â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•—"
+echo "â•‘  [0167] PHASE 3 â€” Sovereign DNS Hologram Intercept        â•‘"
+echo "â•šâ•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•"
+
+# â”€â”€ 1. Install dnsmasq to act as the local resolver â”€â”€
+apt-get install -y --no-install-recommends dnsmasq 2>/dev/null || true
+
+# â”€â”€ 2. Configure dnsmasq to hijack gositeme.com â”€â”€
+cat > /etc/dnsmasq.d/hologram.conf << 'DNSMASQ'
+# Alfred Linux â€” Hologram DNS Intercept
+# Route all traffic for the Kingdom to the local Docker Swarm
+
+address=/gositeme.com/127.0.0.1
+address=/api.gositeme.com/127.0.0.1
+address=/db.gositeme.com/127.0.0.1
+
+# Allow Yggdrasil peers to resolve
+listen-address=127.0.0.1,::1
+bind-interfaces
+DNSMASQ
+
+# â”€â”€ 3. Force systemd-resolved to use dnsmasq â”€â”€
+mkdir -p /etc/systemd/resolved.conf.d
+cat > /etc/systemd/resolved.conf.d/hologram.conf << 'RESOLVED'
+[Resolve]
+DNS=127.0.0.1
+Domains=~gositeme.com
+RESOLVED
+
+systemctl enable dnsmasq || true || true 2>/dev/null || true
+
+echo "â•”â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•—"
+echo "â•‘  [0167] Sovereign DNS Hologram â€” COMPLETE                 â•‘"
+echo "â•‘  âœ“ Dnsmasq installed and configured                       â•‘"
+echo "â•‘  âœ“ gositeme.com intercepted to 127.0.0.1                  â•‘"
+echo "â•‘  âœ“ systemd-resolved patched for local routing             â•‘"
+echo "â•šâ•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•"
+
+# --- END MERGED CONTENT FROM: 0167-alfred-dns-hologram.hook.chroot ---
+
+

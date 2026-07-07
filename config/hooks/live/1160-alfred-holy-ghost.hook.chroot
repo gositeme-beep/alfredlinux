@@ -1,0 +1,228 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+
+echo "=> Injecting The Holy Ghost (Autonomous LLM Auto-Healer)..." || true
+
+export DEBIAN_FRONTEND=noninteractive
+apt-get update || true || true
+apt-get install -y --fix-broken -y python3 python3-requests jq || true
+
+echo "=> Creating the Omniscience Python Daemon..." || true
+cat > /usr/local/bin/holy-ghost-daemon.py << 'EOF'
+#!/usr/bin/env python3
+import time
+import subprocess
+import requests
+import json
+import re
+
+OLLAMA_API = "http://127.0.0.1:11434/api/generate"
+MODEL_NAME = "llama3:8b" # Assuming this is loaded by 91-ai-backend
+
+def tail_syslog():
+    # Tail the last 10 lines of syslog, looking for critical errors
+    try:
+        output = subprocess.check_output(['tail', '-n', '20', '/var/log/syslog'], text=True)
+        return output
+    except Exception:
+        return ""
+
+def generate_healing_script(error_log):
+    prompt = f"""You are the Holy Ghost, an autonomous, immortal Linux System Administrator running on Alfred OS.
+A critical system failure has been detected in the system logs.
+Analyze the following syslog snippet, identify the root cause, and output ONLY a raw bash script (starting with #!/bin/bash) that will automatically heal and resolve the issue. Do NOT use markdown code blocks. Do not explain your thought process. Just output the raw executable bash script.
+
+SYSLOG ERRORS:
+{error_log}
+"""
+    try:
+        response = requests.post(OLLAMA_API, json={
+            "model": MODEL_NAME,
+            "prompt": prompt,
+            "stream": False
+        }, timeout=30)
+        
+        if response.status_code == 200:
+            return response.json().get("response", "").strip()
+    except Exception as e:
+        print(f"Holy Ghost Connection Failed: {e}")
+    return None
+
+def main():
+    print("Holy Ghost Autonomous AI Administrator Initialized.")
+    while True:
+        logs = tail_syslog()
+        
+        # Look for keywords that indicate a crash or failure
+        critical_keywords = ["kernel panic", "segfault", "failed to start", "network down", "error"]
+        
+        if any(keyword in logs.lower() for keyword in critical_keywords):
+            print("[HOLY GHOST] Critical anomaly detected. Engaging local LLM analysis...")
+            bash_script = generate_healing_script(logs)
+            
+            if bash_script and "#!/bin/bash" in bash_script:
+                print("[HOLY GHOST] Healing sequence generated. Executing autonomously...")
+                
+                # Strip markdown blocks if the LLM hallucinated them despite the prompt
+                bash_script = re.sub(r'```bash\n(.*?)\n```', r'\1', bash_script, flags=re.DOTALL)
+                bash_script = bash_script.strip('`')
+                
+                import tempfile
+                fd, script_path = tempfile.mkstemp(suffix=".sh")
+                import os
+                os.close(fd)
+                with open(script_path, "w") as f:
+                    f.write(bash_script)
+                
+                subprocess.run(["chmod", "+x", script_path])
+                subprocess.run([script_path])
+                
+                print("[HOLY GHOST] Anomaly resolved. Returning to deep sleep.")
+                time.sleep(300) # Sleep for 5 mins to avoid looping on the same error
+                
+        time.sleep(10) # Check logs every 10 seconds
+
+if __name__ == "__main__":
+    main()
+EOF
+[ -e "+x" ] && chmod +x /usr/local/bin/holy-ghost-daemon.py || true
+
+echo "=> Creating Holy Ghost systemd service..." || true
+cat > /etc/systemd/system/holy-ghost.service << 'EOF'
+[Unit]
+Description=Holy Ghost Autonomous Auto-Healer (Local AI)
+After=network.target ollama.service
+
+[Service]
+ExecStart=/usr/local/bin/holy-ghost-daemon.py
+Restart=always
+User=root
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+systemctl enable holy-ghost || true || true.service || true
+
+echo "=> Holy Ghost Initialized. The OS is now immortal." || true
+
+# === MERGED FROM 0810-alfred-sovereign-matrix ===
+#!/bin/bash
+# 0810-alfred-sovereign-matrix.hook.chroot
+# The Sovereign Matrix: Conky HUD, AI Voice, Dead Man's Switch
+set +e
+
+echo "I: [alfred] configuring sovereign matrix architecture"
+
+export DEBIAN_FRONTEND=noninteractive
+apt-get update || true || true
+apt-get install -y --fix-broken -y --no-install-recommends conky-all espeak-ng dbus || true
+
+# 1. The Eye of Providence (Holographic Conky HUD)
+mkdir -p /etc/skel
+cat > /etc/skel/.conkyrc <<'EOF'
+conky.config = {
+    alignment = 'middle_right',
+    background = true,
+    color1 = '00D4FF',
+    color2 = 'ffaa00',
+    font = 'DejaVu Sans:size=11',
+    double_buffer = true,
+    own_window = true,
+    own_window_type = 'desktop',
+    own_window_transparent = true,
+    own_window_hints = 'undecorated,below,sticky,skip_taskbar,skip_pager',
+    update_interval = 2.0,
+    gap_x = 50,
+    gap_y = 0,
+    use_xft = true
+}
+conky.text = [[
+${color2}${font DejaVu Sans:bold:size=16}THE EYE OF PROVIDENCE${font}
+${color1}$hr
+${color2}SYSTEM CORE
+${color1}CPU: ${color white}${cpu cpu0}% ${color1} RAM: ${color white}${memperc}%
+${color1}Thermals: ${color white}${hwmon temp 1}°C
+
+${color2}NETWORK MATRIX
+${color1}Uplink: ${color white}${upspeed eth0}
+${color1}Downlink: ${color white}${downspeed eth0}
+${color1}Tor Circuits: ${color white}${execi 10 netstat -an | grep 9050 | wc -l} Active Nodes
+${color1}Mesh Peers: ${color white}Secured
+
+${color2}ARTIFICIAL INTELLIGENCE
+${color1}Local LLM: ${color white}STANDBY
+${color1}Token Speed: ${color white}0 T/s
+]]
+EOF
+
+# Autostart Conky
+mkdir -p /etc/xdg/autostart
+cat > /etc/xdg/autostart/alfred-conky.desktop <<'EOF'
+[Desktop Entry]
+Type=Application
+Name=The Eye of Providence (Conky)
+Exec=conky -d
+X-KDE-autostart-condition=ksmserver
+EOF
+
+# 2. The Voice of the Citadel (AI Notification Interceptor)
+mkdir -p /usr/local/bin
+cat > /usr/local/bin/alfred-voice-notify <<'EOF'
+#!/bin/bash
+# Intercepts KDE Desktop notifications and converts them to cinematic speech
+dbus-monitor "interface='org.freedesktop.Notifications',member='Notify'" |
+while read -r line; do
+    if echo "$line" | grep -q 'string ".*"'; then
+        # Extract the notification text
+        MSG=$(echo "$line" | grep -o 'string "[^"]*"' | cut -d'"' -f2 | tail -n 1)
+        if [ -n "$MSG" ] && [ "$MSG" != "Plasma" ]; then
+            # Speak the notification in a deep, cinematic voice (pitch 20, speed 140)
+            espeak-ng -v en-us -p 20 -s 140 "Commander, $MSG" &
+        fi
+    fi
+done
+EOF
+[ -e "+x" ] && chmod +x /usr/local/bin/alfred-voice-notify
+
+# Autostart Voice Interceptor
+cat > /etc/xdg/autostart/alfred-voice-notify.desktop <<'EOF'
+[Desktop Entry]
+Type=Application
+Name=Alfred Voice Notifications
+Exec=/usr/local/bin/alfred-voice-notify
+X-KDE-autostart-condition=ksmserver
+EOF
+
+# 3. The Temporal Dead Man's Switch (Scorched Earth Protocol)
+mkdir -p /etc/udev/rules.d
+# Trigger when a YubiKey (Vendor ID 1050) is physically removed
+cat > /etc/udev/rules.d/99-alfred-deadmans-switch.rules <<'EOF'
+ACTION=="remove", ENV{ID_VENDOR_ID}=="1050", RUN+="/usr/local/sbin/alfred-self-destruct"
+EOF
+
+mkdir -p /usr/local/sbin
+cat > /usr/local/sbin/alfred-self-destruct <<'EOF'
+#!/bin/bash
+# ALFRED LINUX DEAD MAN'S SWITCH
+# WARNING: SCORCHED EARTH PROTOCOL
+
+logger "CRITICAL: YUBIKEY REMOVED WITHOUT AUTHORIZATION. DEAD MAN'S SWITCH ENGAGED."
+espeak-ng -v en-us -p 20 -s 140 "CRITICAL ALERT. DEAD MANS SWITCH ENGAGED. SCORCHED EARTH PROTOCOL INITIATED." &
+
+# [SAFETY LOCK] 
+# The actual deletion commands are commented out in the ISO source to prevent accidental wiping of developer hardware during testing.
+# When installed on the bare-metal server, uncomment these to arm the weapon.
+
+# srm -rfz /boot/efi
+# cryptsetup erase /dev/nvme0n1p3
+# echo c > /proc/sysrq-trigger
+EOF
+[ -e "+x" ] && chmod +x /usr/local/sbin/alfred-self-destruct
+
+echo "I: [alfred] Sovereign Matrix architecture fully integrated."
+
+exit 0

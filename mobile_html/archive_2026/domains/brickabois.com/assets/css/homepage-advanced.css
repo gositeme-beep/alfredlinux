@@ -1,0 +1,409 @@
+/**
+ * Free Village Network - Advanced Homepage Graphics
+ * Next-level visual effects
+ */
+
+/* ============================================
+   ADVANCED HERO SECTION
+   ============================================ */
+.hero-section-advanced {
+    position: relative;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    background: radial-gradient(ellipse at bottom, #1a1a2e 0%, #0f0f1e 100%);
+    z-index: 1; /* Ensure it's above background but below content */
+}
+
+.hero-background-canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+    opacity: 0.6;
+}
+
+/* Morphing Background Shapes */
+.morph-shapes {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 0;
+    overflow: hidden;
+    pointer-events: none;
+}
+
+.morph-shape {
+    position: absolute;
+    will-change: transform;
+}
+
+/* 3D Scene */
+.scene-3d {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 0;
+    opacity: 0.4;
+    pointer-events: none;
+}
+
+.canvas-3d {
+    width: 100%;
+    height: 100%;
+}
+
+/* Floating Icons */
+.floating-icons {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+    pointer-events: none;
+    overflow: hidden;
+}
+
+.floating-icon {
+    position: absolute;
+    will-change: transform;
+    filter: drop-shadow(0 0 10px rgba(212, 165, 116, 0.5));
+}
+
+/* Hero Content */
+.hero-content-advanced {
+    position: relative;
+    z-index: 10;
+    text-align: center;
+    max-width: 1200px;
+    padding: 0 2rem;
+}
+
+.hero-title-advanced {
+    font-size: clamp(3rem, 10vw, 7rem);
+    font-weight: 900;
+    margin-bottom: 2rem;
+    background: linear-gradient(135deg, #d4a574 0%, #e8c9a0 50%, #ffd700 100%);
+    background-size: 200% 200%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: gradientShift 5s ease infinite;
+    text-shadow: 0 0 40px rgba(212, 165, 116, 0.5);
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+}
+
+@keyframes gradientShift {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+}
+
+.hero-subtitle-advanced {
+    font-size: clamp(1.25rem, 3vw, 2.5rem);
+    color: rgba(255, 255, 255, 0.9);
+    margin-bottom: 1rem;
+    text-shadow: 0 2px 20px rgba(0, 0, 0, 0.5);
+}
+
+.hero-tagline-advanced {
+    font-size: clamp(1rem, 2vw, 1.5rem);
+    color: rgba(212, 165, 116, 0.9);
+    font-style: italic;
+    margin-bottom: 3rem;
+    text-shadow: 0 2px 10px rgba(212, 165, 116, 0.3);
+}
+
+/* Glow Effect */
+.glow-effect {
+    position: relative;
+    --glow-x: 50%;
+    --glow-y: 50%;
+}
+
+.glow-effect::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: radial-gradient(
+        circle 300px at var(--glow-x) var(--glow-y),
+        rgba(212, 165, 116, 0.2),
+        transparent 70%
+    );
+    opacity: 0;
+    transition: opacity 0.3s;
+    pointer-events: none;
+    z-index: -1;
+}
+
+.glow-effect:hover::before {
+    opacity: 1;
+}
+
+/* ============================================
+   INTERACTIVE 3D CARDS
+   ============================================ */
+.interactive-card-3d {
+    position: relative;
+    transform-style: preserve-3d;
+    transition: transform 0.1s ease-out;
+    will-change: transform;
+}
+
+.interactive-card-3d::before {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    right: -2px;
+    bottom: -2px;
+    background: linear-gradient(45deg, 
+        rgba(212, 165, 116, 0.5),
+        rgba(233, 69, 96, 0.5),
+        rgba(212, 165, 116, 0.5)
+    );
+    background-size: 200% 200%;
+    border-radius: inherit;
+    z-index: -1;
+    opacity: 0;
+    transition: opacity 0.3s;
+    animation: borderGlow 3s ease infinite;
+}
+
+.interactive-card-3d:hover::before {
+    opacity: 1;
+}
+
+@keyframes borderGlow {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+}
+
+/* ============================================
+   PARALLAX LAYERS
+   ============================================ */
+.parallax-layer {
+    will-change: transform;
+}
+
+/* ============================================
+   SCROLL REVEAL
+   ============================================ */
+.reveal-on-scroll {
+    opacity: 1 !important; /* Make visible by default */
+    transform: translateY(0) !important; /* No initial offset */
+    transition: opacity 0.8s ease, transform 0.8s ease;
+}
+
+.reveal-on-scroll.revealed {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* ============================================
+   ANIMATED GRADIENTS
+   ============================================ */
+.animated-gradient {
+    background-size: 200% 200%;
+    animation: gradientMove 5s ease infinite;
+}
+
+@keyframes gradientMove {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+}
+
+/* ============================================
+   STATS SECTION WITH GLOW
+   ============================================ */
+.stats-section-advanced {
+    position: relative;
+    padding: 6rem 0;
+    background: linear-gradient(135deg, rgba(26, 26, 46, 0.8) 0%, rgba(15, 15, 30, 0.9) 100%);
+    overflow: visible; /* Changed from hidden */
+    z-index: 2; /* Ensure it's visible */
+}
+
+.stats-section-advanced::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: 
+        radial-gradient(circle at 20% 50%, rgba(212, 165, 116, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 80% 50%, rgba(233, 69, 96, 0.1) 0%, transparent 50%);
+    animation: pulseGlow 4s ease-in-out infinite;
+}
+
+@keyframes pulseGlow {
+    0%, 100% { opacity: 0.5; }
+    50% { opacity: 1; }
+}
+
+.stat-card-advanced {
+    position: relative;
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(212, 165, 116, 0.2);
+    border-radius: 20px;
+    padding: 2.5rem;
+    text-align: center;
+    transition: all 0.3s ease;
+    overflow: hidden;
+}
+
+.stat-card-advanced::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(212, 165, 116, 0.1) 0%, transparent 70%);
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+.stat-card-advanced:hover {
+    transform: translateY(-10px) scale(1.05);
+    border-color: rgba(212, 165, 116, 0.5);
+    box-shadow: 0 20px 40px rgba(212, 165, 116, 0.3);
+}
+
+.stat-card-advanced:hover::before {
+    opacity: 1;
+}
+
+.stat-number-advanced {
+    font-size: clamp(2.5rem, 5vw, 4rem);
+    font-weight: 900;
+    background: linear-gradient(135deg, #d4a574 0%, #e8c9a0 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 0.5rem;
+    display: block;
+}
+
+/* ============================================
+   DIMENSIONS SECTION
+   ============================================ */
+.dimensions-section-advanced {
+    position: relative;
+    padding: 8rem 0;
+    background: linear-gradient(180deg, rgba(15, 15, 30, 1) 0%, rgba(26, 26, 46, 1) 100%);
+    overflow: visible;
+    z-index: 2;
+    transform: none !important; /* Prevent parallax from breaking scrolling */
+}
+
+.dimension-card-advanced {
+    position: relative;
+    background: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(20px);
+    border: 2px solid rgba(212, 165, 116, 0.2);
+    border-radius: 30px;
+    padding: 3rem;
+    height: 100%;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    overflow: hidden;
+}
+
+.dimension-card-advanced::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    background: radial-gradient(circle, rgba(212, 165, 116, 0.3) 0%, transparent 70%);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    transition: width 0.6s, height 0.6s;
+    pointer-events: none;
+    z-index: 0;
+}
+
+.dimension-card-advanced:hover::after {
+    width: 400px;
+    height: 400px;
+}
+
+.dimension-card-advanced:hover {
+    transform: translateY(-20px) scale(1.02);
+    border-color: rgba(212, 165, 116, 0.6);
+    box-shadow: 0 30px 60px rgba(212, 165, 116, 0.4);
+}
+
+.dimension-card-advanced > * {
+    position: relative;
+    z-index: 1;
+}
+
+.dimension-icon-advanced {
+    font-size: 5rem;
+    margin-bottom: 1.5rem;
+    display: inline-block;
+    animation: floatIcon 3s ease-in-out infinite;
+    filter: drop-shadow(0 0 20px rgba(212, 165, 116, 0.5));
+}
+
+@keyframes floatIcon {
+    0%, 100% { transform: translateY(0) rotate(0deg); }
+    50% { transform: translateY(-15px) rotate(5deg); }
+}
+
+/* ============================================
+   RESPONSIVE
+   ============================================ */
+@media (max-width: 768px) {
+    .hero-title-advanced {
+        font-size: clamp(2rem, 8vw, 4rem);
+    }
+
+    .stat-card-advanced {
+        padding: 1.5rem;
+    }
+
+    .dimension-card-advanced {
+        padding: 2rem;
+    }
+
+    .dimension-icon-advanced {
+        font-size: 3rem;
+    }
+}
+
+/* ============================================
+   PERFORMANCE OPTIMIZATIONS
+   ============================================ */
+.hero-section-advanced,
+.morph-shapes,
+.scene-3d,
+.floating-icons {
+    will-change: transform;
+}
+
+/* GPU Acceleration */
+.interactive-card-3d,
+.stat-card-advanced,
+.dimension-card-advanced {
+    transform: translateZ(0);
+    backface-visibility: hidden;
+    perspective: 1000px;
+}
+

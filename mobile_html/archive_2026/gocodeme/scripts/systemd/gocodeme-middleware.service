@@ -1,0 +1,59 @@
+# =============================================================================
+# GoCodeMe Middleware – systemd service unit
+# =============================================================================
+#
+# INSTALL (root / sudo):
+#   cp gocodeme-middleware.service /etc/systemd/system/
+#   systemctl daemon-reload
+#   systemctl enable gocodeme-middleware
+#   systemctl start  gocodeme-middleware
+#
+# INSTALL (non-root user systemd – uid=1004 / gositeme):
+#   mkdir -p ~/.config/systemd/user/
+#   cp gocodeme-middleware.service ~/.config/systemd/user/
+#   systemctl --user daemon-reload
+#   systemctl --user enable gocodeme-middleware
+#   systemctl --user start  gocodeme-middleware
+#   loginctl enable-linger gositeme   # keep service alive after logout (needs root once)
+#
+# CHECK STATUS:
+#   systemctl status gocodeme-middleware
+#   journalctl -u gocodeme-middleware -f
+# =============================================================================
+
+[Unit]
+Description=GoCodeMe Middleware (Node.js API + Dashboard)
+Documentation=https://gositeme.com/gocodeme/
+After=network.target redis.service
+Wants=redis.service
+
+[Service]
+Type=simple
+User=gositeme
+Group=gositeme
+
+WorkingDirectory=/home/gositeme/domains/gositeme.com/public_html/gocodeme/middleware
+
+# Load .env file (requires systemd 240+ for EnvironmentFile with =)
+EnvironmentFile=/home/gositeme/domains/gositeme.com/public_html/gocodeme/middleware/.env
+
+ExecStart=/usr/bin/node src/server.js
+
+# Restart on crash, but not on clean exit (exit 0)
+Restart=on-failure
+RestartSec=5
+StartLimitIntervalSec=60
+StartLimitBurst=3
+
+# Logging – output goes to journald
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=gocodeme-middleware
+
+# Security hardening (optional, remove if causing issues)
+NoNewPrivileges=true
+ProtectSystem=full
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

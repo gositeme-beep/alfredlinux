@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0c0c1a"/>
+      <stop offset="100%" stop-color="#151530"/>
+    </linearGradient>
+    <linearGradient id="shield" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#5b9cf5"/>
+      <stop offset="50%" stop-color="#7c5cfc"/>
+      <stop offset="100%" stop-color="#a855f7"/>
+    </linearGradient>
+    <linearGradient id="glow" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#5b9cf5" stop-opacity="0.3"/>
+      <stop offset="100%" stop-color="#a855f7" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="aGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#7cb8ff"/>
+      <stop offset="100%" stop-color="#c084fc"/>
+    </linearGradient>
+    <filter id="outerGlow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="8" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <!-- Background circle -->
+  <circle cx="256" cy="256" r="248" fill="url(#bg)" stroke="url(#shield)" stroke-width="4"/>
+
+  <!-- Ambient glow -->
+  <circle cx="256" cy="220" r="140" fill="url(#glow)"/>
+
+  <!-- Shield shape -->
+  <path d="M256 72 L392 138 L392 270 C392 350 330 408 256 440 C182 408 120 350 120 270 L120 138 Z"
+        fill="none" stroke="url(#shield)" stroke-width="6" stroke-linejoin="round" opacity="0.7"/>
+
+  <!-- Inner shield fill (very subtle) -->
+  <path d="M256 88 L380 148 L380 268 C380 342 322 396 256 426 C190 396 132 342 132 268 L132 148 Z"
+        fill="url(#shield)" opacity="0.06"/>
+
+  <!-- The 'A' letterform — bold, geometric, sovereign -->
+  <g filter="url(#outerGlow)">
+    <!-- Left leg of A -->
+    <path d="M192 360 L256 148 L260 148 L210 360 Z" fill="url(#aGrad)"/>
+    <!-- Right leg of A -->
+    <path d="M320 360 L256 148 L252 148 L302 360 Z" fill="url(#aGrad)"/>
+    <!-- Crossbar -->
+    <rect x="210" y="280" width="92" height="8" rx="4" fill="url(#aGrad)" opacity="0.8"/>
+  </g>
+
+  <!-- Crown detail (3 dots above A) — sovereignty marker -->
+  <circle cx="230" cy="118" r="5" fill="#5b9cf5" opacity="0.6"/>
+  <circle cx="256" cy="108" r="6" fill="#7c5cfc" opacity="0.8"/>
+  <circle cx="282" cy="118" r="5" fill="#a855f7" opacity="0.6"/>
+
+  <!-- Orbital ring -->
+  <ellipse cx="256" cy="256" rx="200" ry="40" fill="none" stroke="url(#shield)" stroke-width="1.5" opacity="0.15" transform="rotate(-20 256 256)"/>
+</svg>

@@ -1,0 +1,73 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/sh
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+# Description: Expanded Wave 3 — repo/bootstrap tooling and deterministic install scripts
+
+
+LOG_FILE=/var/log/alfred-expanded-wave3.log
+exec > "$LOG_FILE" 2>&1
+
+echo "[$(date -Is)] Starting Alfred expanded Wave 3"
+export DEBIAN_FRONTEND=noninteractive
+
+apt-get update || true || true
+
+# Wave 3 installs repo/bootstrap tooling and writes deterministic install scripts.
+APT_PACKAGES="ca-certificates curl gnupg lsb-release apt-transport-https jq"
+
+for pkg in $APT_PACKAGES; do
+  if apt-cache show "$pkg" >/dev/null 2>&1; then
+    echo "[wave3] installing $pkg"
+    apt-get install -y --fix-broken -y --no-install-recommends "$pkg" || echo "[wave3] warn: failed apt install $pkg" || true
+  else
+    echo "[wave3] skip: not available in repo metadata -> $pkg" || true
+  fi
+done
+
+install -d -m 0755 /usr/local/lib/alfred-wave3/repos
+
+cat >/usr/local/lib/alfred-wave3/repos/grafana-repo.sh <<'EOF'
+#!/bin/bash
+
+install -d -m 0755 /etc/apt/keyrings
+curl -m 900 -fsSL https://apt.grafana.com/gpg.key | gpg --dearmor >/etc/apt/keyrings/grafana.gpg || true
+echo "deb [signed-by=/etc/apt/keyrings/grafana.gpg] https://apt.grafana.com stable main" >/etc/apt/sources.list.d/grafana.list || true
+apt-get update || true || true
+apt-get install -y --fix-broken -y grafana || true
+EOF
+
+cat >/usr/local/lib/alfred-wave3/repos/caddy-repo.sh <<'EOF'
+#!/bin/bash
+
+install -d -m 0755 /etc/apt/keyrings
+curl -m 900 -fsSL https://dl.cloudsmith.io/public/caddy/stable/gpg.key | gpg --dearmor >/etc/apt/keyrings/caddy-stable.gpg || true
+curl -m 900 -fsSL https://dl.cloudsmith.io/public/caddy/stable/debian.deb.txt >/etc/apt/sources.list.d/caddy-stable.list || true
+apt-get update || true || true
+apt-get install -y --fix-broken -y caddy || true
+EOF
+
+cat >/usr/local/lib/alfred-wave3/repos/headscale-manual.sh <<'EOF'
+#!/bin/bash
+
+echo "Headscale control plane is deferred to container/manual path for deterministic version pinning."
+exit 0
+EOF
+
+chmod 0755 /usr/local/lib/alfred-wave3/repos/*.sh || true
+
+cat >/usr/local/share/alfred-wave3-plan.md <<'EOF'
+# AlfredLinux Wave 3 Plan
+
+Wave 3 focuses on reproducible upstream/manual channels for deferred targets:
+- caddy (upstream repo)
+- grafana (upstream repo)
+- headscale (container/manual)
+- prusaslicer (AppImage/manual)
+- linuxcnc (manual path)
+
+Scripts generated under /usr/local/lib/alfred-wave3/repos are intentionally not auto-executed during build.
+EOF
+
+echo "[$(date -Is)] Alfred expanded Wave 3 complete"
+
+exit 0

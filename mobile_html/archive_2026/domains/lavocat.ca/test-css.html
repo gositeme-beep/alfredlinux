@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CSS Test</title>
+    <style>
+        .test-tailwind {
+            @apply bg-blue-500 text-white p-4 rounded-lg;
+        }
+        .test-basic {
+            background-color: red;
+            color: white;
+            padding: 1rem;
+            border-radius: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-basic">
+        This should be red with white text (basic CSS)
+    </div>
+    <div class="test-tailwind">
+        This should be blue with white text (Tailwind CSS)
+    </div>
+    <div class="bg-green-500 text-white p-4 rounded-lg">
+        This should be green with white text (direct Tailwind classes)
+    </div>
+</body>
+</html> 

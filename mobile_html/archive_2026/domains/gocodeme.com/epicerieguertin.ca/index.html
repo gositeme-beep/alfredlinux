@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Épicerie GUERTIN | Sorel-Tracy, Québec</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    
+    <div class="lang-switch">
+        <button class="lang" data-lang="fr" id="btn-fr">FR</button>
+        <button class="lang active" data-lang="en" id="btn-en">EN</button>
+    </div>
+
+    <div class="site">
+        <header class="header">
+            <h1 class="title" data-fr="Épicerie GUERTIN" data-en="GUERTIN Grocery">Épicerie GUERTIN</h1>
+            <p class="subtitle" data-fr="Qualité, fraîcheur et savoir-faire depuis toujours" data-en="Quality, freshness and know-how for generations">Qualité, fraîcheur et savoir-faire depuis toujours</p>
+        </header>
+
+        <nav class="menu">
+            <button class="menu-btn active" data-panel="home" data-fr="Accueil" data-en="Home">Accueil</button>
+            <button class="menu-btn" data-panel="about" data-fr="À Propos" data-en="About">À Propos</button>
+            <button class="menu-btn" data-panel="services" data-fr="Services" data-en="Services">Services</button>
+            <button class="menu-btn" data-panel="contact" data-fr="Contact" data-en="Contact">Contact</button>
+        </nav>
+
+        <main class="content">
+            <section class="panel active" id="home">
+                <div class="box">
+                    <h2 class="heading" data-fr="Bienvenue dans notre épicerie de quartier" data-en="Welcome to our neighborhood grocery store">Bienvenue dans notre épicerie de quartier</h2>
+                    <p class="text" data-fr="Des produits frais, locaux et de qualité supérieure, avec le service personnalisé qui fait notre réputation" data-en="Fresh, local and superior quality products, with the personalized service that makes our reputation">Des produits frais, locaux et de qualité supérieure, avec le service personnalisé qui fait notre réputation</p>
+                </div>
+            </section>
+
+            <section class="panel" id="about">
+                <div class="box">
+                    <h2 class="heading" data-fr="Notre Histoire" data-en="Our Story">Notre Histoire</h2>
+                    <div class="text-block">
+                        <p class="big" data-fr="Depuis des générations, nous servons la communauté de Sorel-Tracy avec fierté et dévouement." data-en="For generations, we have served the Sorel-Tracy community with pride and dedication.">Depuis des générations, nous servons la communauté de Sorel-Tracy avec fierté et dévouement.</p>
+                        <p data-fr="Notre épicerie est un pilier de la communauté locale, offrant des produits de qualité supérieure sélectionnés avec soin. Nous croyons en l'importance des relations humaines et du service personnalisé qui font de chaque visite une expérience chaleureuse." data-en="Our grocery store is a pillar of the local community, offering superior quality products carefully selected. We believe in the importance of human relationships and personalized service that make every visit a warm experience.">Notre épicerie est un pilier de la communauté locale, offrant des produits de qualité supérieure sélectionnés avec soin. Nous croyons en l'importance des relations humaines et du service personnalisé qui font de chaque visite une expérience chaleureuse.</p>
+                        <p data-fr="Chaque produit est choisi pour sa fraîcheur et sa qualité. C'est notre engagement envers vous, nos clients et voisins." data-en="Every product is chosen for its freshness and quality. This is our commitment to you, our customers and neighbors.">Chaque produit est choisi pour sa fraîcheur et sa qualité. C'est notre engagement envers vous, nos clients et voisins.</p>
+                    </div>
+                </div>
+            </section>
+
+            <section class="panel" id="services">
+                <div class="box">
+                    <h2 class="heading" data-fr="Nos Services" data-en="Our Services">Nos Services</h2>
+                    <div class="grid">
+                        <div class="item">
+                            <div class="icon">🛒</div>
+                            <h3 data-fr="Épicerie Complète" data-en="Full Grocery">Épicerie Complète</h3>
+                            <p data-fr="Large sélection de produits frais, locaux et de qualité pour tous vos besoins quotidiens." data-en="Wide selection of fresh, local and quality products for all your daily needs.">Large sélection de produits frais, locaux et de qualité pour tous vos besoins quotidiens.</p>
+                        </div>
+                        <div class="item">
+                            <div class="icon">🥬</div>
+                            <h3 data-fr="Produits Frais" data-en="Fresh Products">Produits Frais</h3>
+                            <p data-fr="Fruits, légumes et produits frais de qualité supérieure, sélectionnés quotidiennement." data-en="Fruits, vegetables and superior quality fresh products, selected daily.">Fruits, légumes et produits frais de qualité supérieure, sélectionnés quotidiennement.</p>
+                        </div>
+                        <div class="item">
+                            <div class="icon">🤝</div>
+                            <h3 data-fr="Service Personnalisé" data-en="Personalized Service">Service Personnalisé</h3>
+                            <p data-fr="Conseils personnalisés et attention particulière à chaque client. Votre satisfaction est notre priorité." data-en="Personalized advice and special attention to each customer. Your satisfaction is our priority.">Conseils personnalisés et attention particulière à chaque client. Votre satisfaction est notre priorité.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="panel" id="contact">
+                <div class="box">
+                    <h2 class="heading" data-fr="Nous Contacter" data-en="Contact Us">Nous Contacter</h2>
+                    <div class="grid">
+                        <div class="item">
+                            <div class="icon">📍</div>
+                            <h3 data-fr="Adresse" data-en="Address">Adresse</h3>
+                            <p>387 chemin des patriotes<br>Sorel-Tracy, Québec<br>J3P 2M4</p>
+                        </div>
+                        <div class="item">
+                            <div class="icon">📞</div>
+                            <h3 data-fr="Téléphone" data-en="Phone">Téléphone</h3>
+                            <p><a href="tel:450-742-5151">450-742-5151</a></p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <footer class="footer">
+            <p data-fr="© 2025 Épicerie GUERTIN. Tous droits réservés." data-en="© 2025 GUERTIN Grocery. All rights reserved.">© 2025 Épicerie GUERTIN. Tous droits réservés.</p>
+            <p class="credit" data-fr="Site web créé avec excellence par GoSiteMe.com - Les meilleurs dans le domaine du développement web professionnel" data-en="Website created with excellence by GoSiteMe.com - The best in professional web development">Site web créé avec excellence par GoSiteMe.com - Les meilleurs dans le domaine du développement web professionnel</p>
+        </footer>
+    </div>
+
+    <script src="particles.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
+

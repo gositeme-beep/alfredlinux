@@ -1,0 +1,1649 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GoCodeMe — Usage</title>
+  <link rel="stylesheet" href="/assets/css/fonts.css">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --brand:       #0ea5e9;
+      --brand-dark:  #0284c7;
+      --brand-glow:  rgba(14,165,233,.18);
+      --accent:      #8b5cf6;
+      --accent-glow: rgba(139,92,246,.15);
+      --bg:          #0b1120;
+      --bg2:         #111827;
+      --surface:     rgba(30,41,59,.55);
+      --surface-solid: #1e293b;
+      --surface2:    #283548;
+      --border:      rgba(51,65,85,.6);
+      --border-light:rgba(71,85,105,.4);
+      --fg:          #f1f5f9;
+      --text:        #f1f5f9;
+      --muted:       #94a3b8;
+      --green:       #22c55e;
+      --yellow:      #eab308;
+      --red:         #ef4444;
+      --orange:      #f97316;
+      --radius:      14px;
+      --radius-sm:   8px;
+    }
+
+    body {
+      font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+    }
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      background:
+        radial-gradient(ellipse 80% 50% at 20% 20%, rgba(14,165,233,.08), transparent),
+        radial-gradient(ellipse 60% 60% at 80% 60%, rgba(139,92,246,.06), transparent);
+    }
+
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 99px; }
+
+    /* -- Header -- */
+    header {
+      background: rgba(17,24,39,.75);
+      backdrop-filter: blur(16px) saturate(1.5);
+      border-bottom: 1px solid var(--border);
+      padding: 0 2rem;
+      height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+    .logo {
+      font-size: 1.4rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, var(--brand), var(--accent));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-decoration: none;
+    }
+    .logo span { -webkit-text-fill-color: var(--fg); }
+    .nav-links { display: flex; gap: 1.5rem; align-items: center; }
+    .nav-links a {
+      color: var(--muted);
+      text-decoration: none;
+      font-size: .85rem;
+      font-weight: 500;
+      transition: color .2s;
+    }
+    .nav-links a:hover, .nav-links a.active { color: var(--brand); }
+
+    /* -- Main -- */
+    main {
+      flex: 1;
+      max-width: 1200px;
+      width: 100%;
+      margin: 2rem auto;
+      padding: 0 1.5rem;
+    }
+
+    .page-title-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: .25rem;
+      flex-wrap: wrap;
+      gap: .75rem;
+    }
+    h1 {
+      font-size: 1.8rem;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+    }
+    .subtitle {
+      color: var(--muted);
+      font-size: .9rem;
+      margin-bottom: 1.5rem;
+    }
+
+    /* -- Filter bar -- */
+    .filter-bar {
+      display: flex;
+      align-items: center;
+      gap: .75rem;
+      flex-wrap: wrap;
+      margin-bottom: 1.5rem;
+    }
+    .pill-select {
+      display: inline-flex;
+      align-items: center;
+      gap: .35rem;
+      padding: .4rem .9rem;
+      font-size: .78rem;
+      font-weight: 600;
+      border-radius: 999px;
+      background: rgba(51,65,85,.35);
+      color: var(--text);
+      border: 1px solid var(--border);
+      cursor: pointer;
+      font-family: inherit;
+      transition: all .2s;
+    }
+    .pill-select:hover { border-color: var(--brand); }
+    .pill-select.active { background: var(--brand); color: #fff; border-color: var(--brand); }
+    .pill-select option { background: var(--surface-solid); color: var(--text); }
+
+    .month-nav {
+      display: inline-flex;
+      align-items: center;
+      gap: .25rem;
+      background: rgba(51,65,85,.35);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: .3rem .5rem;
+    }
+    .month-nav button {
+      width: 28px; height: 28px;
+      display: flex; align-items: center; justify-content: center;
+      border: none;
+      background: transparent;
+      color: var(--muted);
+      cursor: pointer;
+      border-radius: 50%;
+      font-family: inherit;
+      font-size: .85rem;
+      transition: all .15s;
+    }
+    .month-nav button:hover { background: rgba(51,65,85,.5); color: var(--text); }
+    .month-nav .month-label {
+      font-size: .82rem;
+      font-weight: 600;
+      min-width: 120px;
+      text-align: center;
+    }
+
+    /* -- Hero Stats -- */
+    .hero-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+    @media (max-width: 600px) { .hero-grid { grid-template-columns: 1fr; } }
+
+    .hero-card {
+      background: var(--surface);
+      backdrop-filter: blur(20px);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.5rem 1.75rem;
+      transition: border-color .25s, box-shadow .25s;
+    }
+    .hero-card:hover { border-color: var(--border-light); box-shadow: 0 4px 24px rgba(0,0,0,.15); }
+    .hero-label {
+      font-size: .72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: var(--muted);
+      margin-bottom: .6rem;
+    }
+    .hero-value {
+      font-size: 2.4rem;
+      font-weight: 800;
+      font-family: 'JetBrains Mono', monospace;
+      letter-spacing: -1px;
+      line-height: 1.1;
+    }
+
+    /* -- Summary strip -- */
+    .summary-strip {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+    @media (max-width: 900px) { .summary-strip { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 500px) { .summary-strip { grid-template-columns: 1fr; } }
+
+    .strip-card {
+      background: var(--surface);
+      backdrop-filter: blur(20px);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1rem 1.25rem;
+    }
+    .strip-label {
+      font-size: .68rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: var(--muted);
+      margin-bottom: .35rem;
+    }
+    .strip-value {
+      font-size: 1.25rem;
+      font-weight: 800;
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .strip-sub {
+      font-size: .72rem;
+      color: var(--muted);
+      margin-top: .15rem;
+    }
+
+    /* -- Card (generic) -- */
+    .card {
+      background: var(--surface);
+      backdrop-filter: blur(20px);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+      transition: border-color .25s;
+    }
+    .card:hover { border-color: var(--border-light); }
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.25rem;
+      flex-wrap: wrap;
+      gap: .5rem;
+    }
+    .card-title {
+      font-size: .82rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+    .card-subtitle {
+      font-size: .75rem;
+      color: var(--muted);
+      margin-top: .15rem;
+    }
+
+    /* -- Chart -- */
+    .chart-wrap {
+      position: relative;
+      overflow: hidden;
+    }
+    .chart-y-axis {
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 24px;
+      width: 55px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      pointer-events: none;
+    }
+    .chart-y-label {
+      font-size: .6rem;
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--muted);
+      text-align: right;
+      padding-right: 8px;
+    }
+    .chart-grid-lines {
+      position: absolute;
+      left: 60px;
+      right: 0;
+      top: 0;
+      bottom: 24px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      pointer-events: none;
+    }
+    .chart-grid-line {
+      border-top: 1px dashed rgba(51,65,85,.35);
+      width: 100%;
+    }
+    .chart-bars-area {
+      margin-left: 60px;
+      display: flex;
+      align-items: flex-end;
+      gap: 3px;
+      height: 220px;
+      padding: 0 2px;
+    }
+    .chart-col {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      min-width: 6px;
+      cursor: default;
+      position: relative;
+    }
+    .chart-col:hover .chart-tooltip { display: block; }
+    .chart-seg {
+      width: 100%;
+      border-radius: 2px 2px 0 0;
+      transition: height .6s cubic-bezier(.4,0,.2,1);
+      min-height: 0;
+    }
+    .chart-seg:first-child { border-radius: 3px 3px 0 0; }
+    .chart-seg:hover { opacity: .85; }
+    .chart-tooltip {
+      display: none;
+      position: absolute;
+      bottom: calc(100% + 8px);
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--surface-solid);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: .55rem .8rem;
+      font-size: .72rem;
+      white-space: nowrap;
+      z-index: 20;
+      pointer-events: none;
+      box-shadow: 0 8px 24px rgba(0,0,0,.3);
+    }
+    .chart-tooltip strong { display: block; margin-bottom: .2rem; font-size: .78rem; }
+    .chart-tooltip-row {
+      display: flex;
+      align-items: center;
+      gap: .4rem;
+      padding: .08rem 0;
+    }
+    .chart-tooltip-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .chart-x-labels {
+      margin-left: 60px;
+      display: flex;
+      justify-content: space-between;
+      margin-top: .5rem;
+      font-size: .62rem;
+      color: var(--muted);
+      padding: 0 2px;
+    }
+
+    /* -- Legend -- */
+    .chart-legend {
+      display: flex;
+      gap: 1.25rem;
+      flex-wrap: wrap;
+      padding: .75rem 0 0;
+      border-top: 1px solid rgba(51,65,85,.25);
+      margin-top: .75rem;
+    }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: .4rem;
+      font-size: .75rem;
+      color: var(--muted);
+      cursor: default;
+    }
+    .legend-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 3px;
+      flex-shrink: 0;
+    }
+
+    /* -- Gauge -- */
+    .gauge-section {
+      display: flex;
+      align-items: center;
+      gap: 2.5rem;
+    }
+    @media (max-width: 600px) { .gauge-section { flex-direction: column; text-align: center; } }
+    .gauge-wrap {
+      position: relative;
+      width: 140px; height: 140px;
+      flex-shrink: 0;
+    }
+    .gauge-svg { width: 140px; height: 140px; transform: rotate(-90deg); }
+    .gauge-track { fill: none; stroke: var(--border); stroke-width: 10; }
+    .gauge-fill {
+      fill: none;
+      stroke: url(#g-grad);
+      stroke-width: 10;
+      stroke-linecap: round;
+      stroke-dasharray: 377;
+      stroke-dashoffset: 377;
+      transition: stroke-dashoffset 1.2s cubic-bezier(.4,0,.2,1);
+    }
+    .gauge-center {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    .gauge-pct { font-size: 1.8rem; font-weight: 800; font-family: 'JetBrains Mono', monospace; color: var(--green); }
+    .gauge-lbl { font-size: .68rem; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
+
+    .gauge-stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: .8rem 1rem;
+      flex: 1;
+    }
+    .gs-label { font-size: .68rem; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; margin-bottom: .15rem; }
+    .gs-value { font-size: 1.1rem; font-weight: 700; font-family: 'JetBrains Mono', monospace; }
+    .gs-value.green { color: var(--green); }
+    .gs-value.red { color: var(--red); }
+    .gs-value.brand { color: var(--brand); }
+
+    /* -- Progress bar (thin) -- */
+    .usage-bar-wrap { margin-top: 1.25rem; }
+    .usage-bar-top {
+      display: flex;
+      justify-content: space-between;
+      font-size: .78rem;
+      margin-bottom: .35rem;
+    }
+    .usage-bar {
+      background: rgba(51,65,85,.4);
+      border-radius: 6px;
+      height: 8px;
+      overflow: hidden;
+    }
+    .usage-bar-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--brand), var(--accent));
+      border-radius: 6px;
+      transition: width .8s cubic-bezier(.4,0,.2,1);
+    }
+
+    /* -- Model breakdown (horizontal bars) -- */
+    .model-row {
+      display: flex;
+      align-items: center;
+      gap: .75rem;
+      padding: .65rem 0;
+      border-bottom: 1px solid rgba(51,65,85,.25);
+    }
+    .model-row:last-child { border-bottom: none; }
+    .model-color-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 3px;
+      flex-shrink: 0;
+    }
+    .model-info {
+      min-width: 160px;
+    }
+    .model-name {
+      font-size: .82rem;
+      font-weight: 600;
+    }
+    .model-id {
+      font-size: .65rem;
+      color: var(--muted);
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .model-bar-wrap {
+      flex: 1;
+      background: rgba(51,65,85,.25);
+      border-radius: 4px;
+      height: 18px;
+      overflow: hidden;
+      position: relative;
+    }
+    .model-bar-fill {
+      height: 100%;
+      border-radius: 4px;
+      transition: width .8s cubic-bezier(.4,0,.2,1);
+      display: flex;
+      align-items: center;
+      padding-left: 6px;
+    }
+    .model-bar-label {
+      font-size: .62rem;
+      font-weight: 700;
+      color: #fff;
+      white-space: nowrap;
+      text-shadow: 0 1px 2px rgba(0,0,0,.3);
+    }
+    .model-stats {
+      display: flex;
+      gap: 1rem;
+      min-width: 200px;
+      justify-content: flex-end;
+    }
+    .model-stat {
+      text-align: right;
+    }
+    .model-stat-label {
+      font-size: .6rem;
+      text-transform: uppercase;
+      color: var(--muted);
+      letter-spacing: .04em;
+    }
+    .model-stat-value {
+      font-size: .82rem;
+      font-weight: 700;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* -- Tab pills -- */
+    .tab-row {
+      display: flex;
+      gap: .5rem;
+      margin-bottom: 1.25rem;
+      flex-wrap: wrap;
+    }
+    .tab-pill {
+      padding: .4rem 1rem;
+      font-size: .78rem;
+      font-weight: 600;
+      border-radius: 999px;
+      background: rgba(51,65,85,.3);
+      color: var(--muted);
+      cursor: pointer;
+      border: 1px solid transparent;
+      transition: all .2s;
+      font-family: inherit;
+    }
+    .tab-pill:hover { color: var(--text); }
+    .tab-pill.active {
+      background: linear-gradient(135deg, var(--brand), var(--accent));
+      color: #fff;
+    }
+
+    /* -- Tables -- */
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: .82rem;
+    }
+    .data-table th {
+      text-align: left;
+      padding: .55rem .65rem;
+      font-size: .68rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      color: var(--muted);
+      border-bottom: 1px solid var(--border);
+    }
+    .data-table td {
+      padding: .55rem .65rem;
+      border-bottom: 1px solid rgba(51,65,85,.25);
+    }
+    .data-table tr:last-child td { border-bottom: none; }
+    .mono { font-family: 'JetBrains Mono', monospace; }
+
+    .tier-badge {
+      font-size: .62rem;
+      font-weight: 700;
+      padding: .12rem .5rem;
+      border-radius: 999px;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+    }
+    .tier-standard { background: rgba(34,197,94,.12); color: var(--green); }
+    .tier-premium { background: rgba(249,115,22,.12); color: var(--orange); }
+
+    /* -- Buttons -- */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: .4rem;
+      padding: .5rem 1rem;
+      font-size: .8rem;
+      font-weight: 600;
+      font-family: inherit;
+      border-radius: var(--radius-sm);
+      border: none;
+      cursor: pointer;
+      transition: all .2s;
+      text-decoration: none;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, var(--brand), var(--accent));
+      color: #fff;
+    }
+    .btn-primary:hover { filter: brightness(1.1); }
+    .btn-outline {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text);
+    }
+    .btn-outline:hover { border-color: var(--brand); color: var(--brand); }
+    .btn-sm { padding: .35rem .75rem; font-size: .72rem; }
+
+    /* -- Alerts -- */
+    .alert-banner {
+      padding: .85rem 1.25rem;
+      border-radius: var(--radius-sm);
+      font-size: .85rem;
+      font-weight: 600;
+      margin-bottom: 1rem;
+      display: none;
+    }
+    .alert-warning { background: rgba(234,179,8,.08); border: 1px solid rgba(234,179,8,.3); color: var(--yellow); }
+    .alert-critical { background: rgba(239,68,68,.08); border: 1px solid rgba(239,68,68,.3); color: var(--red); }
+    .alert-overage { background: rgba(249,115,22,.08); border: 1px solid rgba(249,115,22,.3); color: var(--orange); }
+
+    /* -- Footer -- */
+    footer {
+      text-align: center;
+      padding: 1.75rem;
+      color: var(--muted);
+      font-size: .75rem;
+      border-top: 1px solid var(--border);
+    }
+    footer a { color: var(--brand); text-decoration: none; }
+
+    /* -- Animations -- */
+    .animate-in { opacity: 0; transform: translateY(16px); animation: fadeUp .5s ease forwards; }
+    @keyframes fadeUp { to { opacity: 1; transform: none; } }
+    .d1 { animation-delay: .04s; }
+    .d2 { animation-delay: .08s; }
+    .d3 { animation-delay: .12s; }
+    .d4 { animation-delay: .16s; }
+    .d5 { animation-delay: .2s; }
+    .d6 { animation-delay: .24s; }
+    .d7 { animation-delay: .28s; }
+
+    /* -- Loading shimmer -- */
+    .shimmer {
+      background: linear-gradient(90deg, var(--surface) 25%, var(--surface2) 50%, var(--surface) 75%);
+      background-size: 400% 100%;
+      animation: shimmer 1.5s ease infinite;
+      border-radius: 4px;
+    }
+    @keyframes shimmer { 0% { background-position: 100% 0; } 100% { background-position: -100% 0; } }
+
+    .empty-state {
+      text-align: center;
+      padding: 2.5rem 1rem;
+      color: var(--muted);
+    }
+    .empty-state-icon {
+      font-size: 2rem;
+      margin-bottom: .5rem;
+      opacity: .5;
+    }
+  </style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute">
+  <defs>
+    <linearGradient id="g-grad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0ea5e9"/>
+      <stop offset="100%" stop-color="#8b5cf6"/>
+    </linearGradient>
+  </defs>
+</svg>
+
+<header>
+  <a href="dashboard" class="logo">GoCode<span>Me</span></a>
+  <nav class="nav-links">
+    <a href="dashboard">Dashboard</a>
+    <a href="usage" class="active">Usage</a>
+  </nav>
+</header>
+
+<main>
+  <div class="page-title-row animate-in">
+    <h1>Usage</h1>
+  </div>
+
+  <!-- Filter Bar -->
+  <div class="filter-bar animate-in d1">
+    <div class="month-nav">
+      <button onclick="changeMonth(-1)" title="Previous month">&#8249;</button>
+      <span class="month-label" id="month-label">February 2026</span>
+      <button onclick="changeMonth(1)" title="Next month">&#8250;</button>
+    </div>
+    <select class="pill-select" id="filter-model" onchange="applyFilters()">
+      <option value="all">All Models</option>
+    </select>
+    <select class="pill-select" id="filter-group" onchange="applyFilters()">
+      <option value="model">Group by: Model</option>
+      <option value="day">Group by: Day</option>
+    </select>
+    <button class="btn btn-sm btn-outline" onclick="exportCSV()" style="margin-left:auto">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+      Export
+    </button>
+  </div>
+
+  <!-- Alerts -->
+  <div id="alert-warning" class="alert-banner alert-warning">Warning: You have used <span id="alert-pct">80</span>% of your monthly token allowance.</div>
+  <div id="alert-critical" class="alert-banner alert-critical">Monthly token limit reached. Overage charges apply.</div>
+  <div id="alert-overage" class="alert-banner alert-overage">Overage: <span id="alert-overage-tokens">0</span> tokens over limit - $<span id="alert-overage-cost">0.00</span></div>
+
+  <!-- Hero: Total Tokens In / Out -->
+  <div class="hero-grid animate-in d2">
+    <div class="hero-card">
+      <div class="hero-label">Total tokens in</div>
+      <div class="hero-value" id="hero-in">0</div>
+    </div>
+    <div class="hero-card">
+      <div class="hero-label">Total tokens out</div>
+      <div class="hero-value" id="hero-out">0</div>
+    </div>
+  </div>
+
+  <!-- Summary Strip -->
+  <div class="summary-strip animate-in d2">
+    <div class="strip-card">
+      <div class="strip-label">Total Cost</div>
+      <div class="strip-value" id="strip-cost" style="color:var(--brand)">$0.00</div>
+    </div>
+    <div class="strip-card">
+      <div class="strip-label">API Requests</div>
+      <div class="strip-value" id="strip-requests">0</div>
+    </div>
+    <div class="strip-card">
+      <div class="strip-label">Models Used</div>
+      <div class="strip-value" id="strip-models">0</div>
+    </div>
+    <div class="strip-card">
+      <div class="strip-label">Avg Tokens / Request</div>
+      <div class="strip-value" id="strip-avg">0</div>
+    </div>
+  </div>
+
+  <!-- Token Usage Chart (stacked by model) -->
+  <div class="card animate-in d3">
+    <div class="card-header">
+      <div>
+        <div class="card-title">Token usage</div>
+        <div class="card-subtitle">Daily usage breakdown by model</div>
+      </div>
+    </div>
+    <div class="chart-wrap" id="chart-wrap" style="height:260px">
+      <div class="chart-y-axis" id="chart-y-axis"></div>
+      <div class="chart-grid-lines" id="chart-grid-lines"></div>
+      <div class="chart-bars-area" id="chart-bars"></div>
+    </div>
+    <div class="chart-x-labels" id="chart-x-labels"></div>
+    <div class="chart-legend" id="chart-legend"></div>
+  </div>
+
+  <!-- Plan Limit Gauge -->
+  <div class="card animate-in d4">
+    <div class="card-header">
+      <div>
+        <div class="card-title">Plan usage</div>
+        <div class="card-subtitle" id="plan-label">-</div>
+      </div>
+      <a href="/whmcs/cart.php?gid=6" class="btn btn-sm btn-outline">Upgrade Plan</a>
+    </div>
+    <div class="gauge-section">
+      <div class="gauge-wrap">
+        <svg class="gauge-svg" viewBox="0 0 140 140">
+          <circle class="gauge-track" cx="70" cy="70" r="60"/>
+          <circle class="gauge-fill" id="gauge-arc" cx="70" cy="70" r="60"/>
+        </svg>
+        <div class="gauge-center">
+          <div class="gauge-pct" id="gauge-pct">0%</div>
+          <div class="gauge-lbl">Used</div>
+        </div>
+      </div>
+      <div class="gauge-stats">
+        <div><div class="gs-label">Used</div><div class="gs-value brand" id="gs-used">-</div></div>
+        <div><div class="gs-label">Limit</div><div class="gs-value" id="gs-limit">-</div></div>
+        <div><div class="gs-label">Remaining</div><div class="gs-value green" id="gs-remaining">-</div></div>
+        <div>
+          <div class="gs-label">Cost</div>
+          <div class="gs-value" id="gs-cost" style="color:var(--brand)">$0.00</div>
+        </div>
+      </div>
+    </div>
+    <div class="usage-bar-wrap">
+      <div class="usage-bar-top">
+        <span style="color:var(--muted)">Plan usage</span>
+        <span id="bar-pct" style="font-weight:700">0%</span>
+      </div>
+      <div class="usage-bar">
+        <div class="usage-bar-fill" id="usage-bar-fill"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Model breakdown (visual bars) -->
+  <div class="card animate-in d5">
+    <div class="card-header">
+      <div>
+        <div class="card-title">Usage by model</div>
+        <div class="card-subtitle">Token consumption per model this billing period</div>
+      </div>
+    </div>
+    <div id="model-bars">
+      <div class="empty-state"><div class="empty-state-icon">Loading model data...</div></div>
+    </div>
+  </div>
+
+  <!-- Tabs: Detailed Table / History / Pricing -->
+  <div class="tab-row animate-in d6">
+    <button class="tab-pill active" data-tab="detail" onclick="switchTab('detail')">Detailed Table</button>
+    <button class="tab-pill" data-tab="history" onclick="switchTab('history')">Request History</button>
+    <button class="tab-pill" data-tab="pricing" onclick="switchTab('pricing')">Pricing</button>
+  </div>
+
+  <!-- TAB: Detailed model table -->
+  <div class="card animate-in d6" id="tab-detail">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Model</th>
+          <th>Tier</th>
+          <th>Input Tokens</th>
+          <th>Output Tokens</th>
+          <th>Total Tokens</th>
+          <th>Requests</th>
+          <th>Cost</th>
+        </tr>
+      </thead>
+      <tbody id="detail-tbody">
+        <tr><td colspan="7" class="empty-state">Loading...</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- TAB: Request History -->
+  <div class="card" id="tab-history" style="display:none">
+    <div style="overflow-x:auto">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Time</th>
+            <th>Model</th>
+            <th>Input</th>
+            <th>Output</th>
+            <th>Total</th>
+            <th>Cost</th>
+          </tr>
+        </thead>
+        <tbody id="history-tbody">
+          <tr><td colspan="6" class="empty-state">Loading...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- TAB: Pricing -->
+  <div class="card" id="tab-pricing" style="display:none">
+    <p style="color:var(--muted);font-size:.85rem;margin-bottom:1rem">
+      Prices per 1 million tokens. All models are included in your plan token allowance.
+    </p>
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Model</th>
+          <th>Tier</th>
+          <th>Input / 1M tokens</th>
+          <th>Output / 1M tokens</th>
+        </tr>
+      </thead>
+      <tbody id="pricing-tbody">
+        <tr><td colspan="4" class="empty-state">Loading...</td></tr>
+      </tbody>
+    </table>
+    <div style="margin-top:2rem">
+      <div class="card-title" style="margin-bottom:.75rem">Plan token allowances</div>
+      <table class="data-table">
+        <thead><tr><th>Plan</th><th>Monthly Allowance</th><th>Overage</th></tr></thead>
+        <tbody id="plans-tbody">
+          <tr><td colspan="3" class="empty-state">Loading...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Invoices -->
+  <div class="card animate-in d7">
+    <div class="card-header">
+      <div class="card-title">Recent invoices</div>
+      <a href="/whmcs/clientarea.php?action=invoices" class="btn btn-sm btn-outline">View All</a>
+    </div>
+    <table class="data-table">
+      <thead><tr><th>#</th><th>Date</th><th>Amount</th><th>Status</th></tr></thead>
+      <tbody id="invoices-tbody">
+        <tr><td colspan="4" class="empty-state">Loading...</td></tr>
+      </tbody>
+    </table>
+  </div>
+</main>
+
+<footer>GoCodeMe &copy; 2025 - <a href="https://gositeme.com">GoSiteMe</a></footer>
+
+<script>
+  // Globals
+  const TOKEN_KEY = 'gcm_session';
+  const API_BASE  = window.location.pathname.replace(/\/usage$/, '');
+  let sessionToken = null;
+  let _summaryData = null;
+  let _dailyRaw    = [];
+  let _viewMonth   = new Date().getMonth();
+  let _viewYear    = new Date().getFullYear();
+
+  // Model color palette
+  const MODEL_COLORS = {};
+  const PALETTE = [
+    '#8b5cf6','#0ea5e9','#22c55e','#f59e0b','#ef4444',
+    '#ec4899','#14b8a6','#f97316','#6366f1','#a855f7',
+    '#10b981','#3b82f6','#e879f9','#facc15','#fb7185'
+  ];
+  let _colorIdx = 0;
+
+  function getModelColor(model) {
+    if (!MODEL_COLORS[model]) {
+      MODEL_COLORS[model] = PALETTE[_colorIdx % PALETTE.length];
+      _colorIdx++;
+    }
+    return MODEL_COLORS[model];
+  }
+
+  // Init
+  document.addEventListener('DOMContentLoaded', function() {
+    var hash = {};
+    location.hash.replace('#', '').split('&').filter(Boolean).forEach(function(p) {
+      var kv = p.split('=');
+      hash[decodeURIComponent(kv[0])] = decodeURIComponent(kv[1] || '');
+    });
+
+    if (hash.token) {
+      sessionToken = hash.token;
+      sessionStorage.setItem(TOKEN_KEY, sessionToken);
+      history.replaceState(null, '', location.pathname);
+    } else {
+      sessionToken = sessionStorage.getItem(TOKEN_KEY);
+    }
+
+    if (!sessionToken) {
+      window.location.href = API_BASE + '/dashboard';
+      return;
+    }
+
+    updateMonthLabel();
+    loadAll();
+  });
+
+  // API helper
+  async function api(path, opts) {
+    opts = opts || {};
+    var url = path.startsWith('http') ? path : API_BASE + path;
+    var res = await fetch(url, Object.assign({}, opts, {
+      headers: Object.assign({
+        'Content-Type': 'application/json',
+        Authorization: 'Bearer ' + sessionToken,
+      }, opts.headers || {}),
+    }));
+    if (!res.ok) {
+      var body = {};
+      try { body = await res.json(); } catch(e) {}
+      throw new Error(body.error || 'HTTP ' + res.status);
+    }
+    return res.json();
+  }
+
+  // Load Everything
+  async function loadAll() {
+    try {
+      var results = await Promise.all([
+        api('/api/usage/summary').catch(function() { return null; }),
+        api('/api/billing/invoices?limit=8').catch(function() { return { invoices: [] }; }),
+        api('/api/usage/pricing').catch(function() { return null; }),
+      ]);
+
+      var summary = results[0];
+      var invoiceData = results[1];
+      var pricingData = results[2];
+
+      _summaryData = summary;
+      if (summary) renderSummary(summary);
+      renderInvoices((invoiceData && invoiceData.invoices) ? invoiceData.invoices : []);
+      if (pricingData) renderPricing(pricingData);
+
+      // Load history separately
+      api('/api/usage/history?limit=100').then(function(d) {
+        if (d.ok) renderHistory(d.history);
+      }).catch(function() {});
+
+    } catch (e) {
+      console.error('Failed to load usage data:', e);
+    }
+  }
+
+  // Month Navigation
+  function updateMonthLabel() {
+    var dt = new Date(_viewYear, _viewMonth, 1);
+    document.getElementById('month-label').textContent =
+      dt.toLocaleDateString('en', { month: 'long', year: 'numeric' });
+  }
+
+  function changeMonth(delta) {
+    _viewMonth += delta;
+    if (_viewMonth > 11) { _viewMonth = 0; _viewYear++; }
+    if (_viewMonth < 0) { _viewMonth = 11; _viewYear--; }
+    updateMonthLabel();
+
+    // Fetch daily data for the selected month
+    var now = new Date();
+    var isCurrentMonth = (_viewYear === now.getFullYear() && _viewMonth === now.getMonth());
+
+    if (isCurrentMonth) {
+      // Current month — reload full summary
+      loadAll();
+    } else {
+      // Historical month — fetch daily data for that month
+      api('/api/usage/daily?year=' + _viewYear + '&month=' + (_viewMonth + 1))
+        .then(function(data) {
+          if (!data.ok || !data.daily) return;
+          var daily = data.daily;
+          // Build chart data from daily response
+          var chartData = daily.map(function(d) {
+            return {
+              date: d.date,
+              tokens: (d.total.input || 0) + (d.total.output || 0),
+              cost: Math.round((d.total.cost || 0) * 1000000) / 1000000,
+              requests: d.total.requests || 0
+            };
+          });
+          // Collect models from daily data
+          var modelSet = {};
+          daily.forEach(function(d) {
+            Object.keys(d.models).forEach(function(m) { modelSet[m] = true; });
+          });
+          var models = Object.keys(modelSet).map(function(m) {
+            return { model: m, displayName: m };
+          });
+          renderChart(chartData, models);
+        })
+        .catch(function(e) {
+          console.error('Failed to load month data:', e);
+        });
+    }
+  }
+
+  // Render Summary
+  function renderSummary(data) {
+    var b = data.billing;
+    var models = data.models || [];
+
+    // Hero stats
+    var totalIn  = models.reduce(function(a, m) { return a + (m.inputTokens || 0); }, 0);
+    var totalOut = models.reduce(function(a, m) { return a + (m.outputTokens || 0); }, 0);
+    var totalReq = models.reduce(function(a, m) { return a + (m.requests || 0); }, 0);
+    var totalTok = totalIn + totalOut;
+
+    animateNumber('hero-in', totalIn);
+    animateNumber('hero-out', totalOut);
+
+    // Summary strip
+    document.getElementById('strip-cost').textContent = fmtCost(b.totalCost || 0);
+    document.getElementById('strip-requests').textContent = fmtNum(totalReq);
+    document.getElementById('strip-models').textContent = models.length;
+    document.getElementById('strip-avg').textContent = totalReq > 0 ? fmtCompact(Math.round(totalTok / totalReq)) : '0';
+
+    // Populate model filter
+    var sel = document.getElementById('filter-model');
+    sel.innerHTML = '<option value="all">All Models</option>';
+    models.forEach(function(m) {
+      var opt = document.createElement('option');
+      opt.value = m.model;
+      opt.textContent = m.displayName;
+      sel.appendChild(opt);
+    });
+
+    // Gauge
+    var pct = Math.min(b.percentUsed, 100);
+    var pctEl = document.getElementById('gauge-pct');
+    pctEl.textContent = b.percentUsed + '%';
+    if (b.percentUsed >= 100) pctEl.style.color = 'var(--red)';
+    else if (b.percentUsed >= 80) pctEl.style.color = 'var(--yellow)';
+    else pctEl.style.color = 'var(--green)';
+
+    var arc = document.getElementById('gauge-arc');
+    arc.style.strokeDashoffset = 377 - (377 * pct / 100);
+
+    document.getElementById('gs-used').textContent = fmtNum(b.tokensUsed);
+    document.getElementById('gs-limit').textContent = b.tokenLimit > 0 ? fmtNum(b.tokenLimit) : 'Unlimited';
+    document.getElementById('gs-remaining').textContent = b.tokenLimit > 0
+      ? fmtNum(Math.max(0, b.tokenLimit - b.tokensUsed)) : 'Unlimited';
+    document.getElementById('gs-cost').textContent = fmtCost(b.totalCost || 0);
+    document.getElementById('plan-label').textContent =
+      (b.plan || 'Free') + ' - ' + (b.periodStart || '') + ' to ' + (b.periodEnd || '');
+
+    // Progress bar
+    var barFill = document.getElementById('usage-bar-fill');
+    barFill.style.width = pct + '%';
+    if (b.percentUsed >= 100) barFill.style.background = '#ef4444';
+    else if (b.percentUsed >= 80) barFill.style.background = 'linear-gradient(90deg, var(--yellow), var(--orange))';
+    document.getElementById('bar-pct').textContent = b.percentUsed + '%';
+
+    // Alerts
+    if (b.percentUsed >= 100) {
+      document.getElementById('alert-critical').style.display = 'block';
+    } else if (b.percentUsed >= 80) {
+      document.getElementById('alert-warning').style.display = 'block';
+      document.getElementById('alert-pct').textContent = b.percentUsed;
+    }
+    if (b.overageTokens > 0) {
+      document.getElementById('alert-overage').style.display = 'block';
+      document.getElementById('alert-overage-tokens').textContent = fmtNum(b.overageTokens);
+      document.getElementById('alert-overage-cost').textContent = b.overageCost.toFixed(4);
+    }
+
+    // Chart
+    renderChart(data.chart || [], models);
+
+    // Model bars
+    renderModelBars(models);
+
+    // Detail table
+    renderDetailTable(models);
+  }
+
+  // Stacked Bar Chart by Model
+  function renderChart(chartData, models) {
+    var barsEl   = document.getElementById('chart-bars');
+    var labelsEl = document.getElementById('chart-x-labels');
+    var legendEl = document.getElementById('chart-legend');
+    var yAxisEl  = document.getElementById('chart-y-axis');
+    var gridEl   = document.getElementById('chart-grid-lines');
+
+    if (!chartData || chartData.length === 0) {
+      barsEl.innerHTML = '<div class="empty-state"><div class="empty-state-icon">No usage data yet this period</div></div>';
+      labelsEl.innerHTML = '';
+      legendEl.innerHTML = '';
+      yAxisEl.innerHTML = '';
+      gridEl.innerHTML = '';
+      return;
+    }
+
+    // Build color mapping for all models
+    models.forEach(function(m) { getModelColor(m.model); });
+
+    // Determine max tokens for Y axis
+    var maxTokens = Math.max.apply(null, chartData.map(function(d) { return d.tokens; }).concat([1]));
+
+    // Y axis labels (5 lines)
+    var ySteps = 5;
+    yAxisEl.innerHTML = '';
+    gridEl.innerHTML = '';
+    for (var i = 0; i <= ySteps; i++) {
+      var val = maxTokens * (1 - i / ySteps);
+      var lbl = document.createElement('div');
+      lbl.className = 'chart-y-label';
+      lbl.textContent = fmtCompact(val);
+      yAxisEl.appendChild(lbl);
+
+      var line = document.createElement('div');
+      line.className = 'chart-grid-line';
+      gridEl.appendChild(line);
+    }
+
+    // Single-color bars (fallback before daily per-model data loads)
+    barsEl.innerHTML = chartData.map(function(d) {
+      var h = Math.max(2, (d.tokens / maxTokens) * 210);
+      var dt = new Date(d.date);
+      var label = dt.toLocaleDateString('en', { month: 'short', day: 'numeric' });
+
+      var tooltipHTML =
+        '<div class="chart-tooltip">' +
+          '<strong>' + label + '</strong>' +
+          '<div class="chart-tooltip-row"><span style="color:var(--muted)">' + fmtNum(d.tokens) + ' tokens</span></div>' +
+          '<div class="chart-tooltip-row"><span style="color:var(--muted)">' + d.requests + ' requests</span></div>' +
+          '<div class="chart-tooltip-row"><span style="color:var(--brand)">' + fmtCost(d.cost) + '</span></div>' +
+        '</div>';
+
+      return '<div class="chart-col">' +
+        '<div class="chart-seg" style="height:' + h + 'px;background:linear-gradient(to top, var(--brand), var(--accent))"></div>' +
+        tooltipHTML +
+      '</div>';
+    }).join('');
+
+    // X labels
+    var maxLabels = window.innerWidth < 600 ? 4 : 7;
+    var step = Math.max(1, Math.floor(chartData.length / maxLabels));
+    labelsEl.innerHTML = chartData
+      .filter(function(_, i) { return i === 0 || i === chartData.length - 1 || i % step === 0; })
+      .map(function(d) {
+        var dt = new Date(d.date);
+        return '<span>' + dt.toLocaleDateString('en', { month: 'short', day: 'numeric' }) + '</span>';
+      }).join('');
+
+    // Legend (placeholder before daily model data arrives)
+    legendEl.innerHTML = models.map(function(m) {
+      var c = getModelColor(m.model);
+      return '<div class="legend-item">' +
+        '<div class="legend-dot" style="background:' + c + '"></div>' +
+        esc(m.displayName) +
+      '</div>';
+    }).join('');
+
+    // Now try to load per-model daily data for proper stacked chart
+    loadDailyModelData(chartData, models, barsEl, maxTokens);
+  }
+
+  async function loadDailyModelData(chartData, models, barsEl, _maxTokens) {
+    try {
+      var data = await api('/api/usage/daily?days=30');
+      if (!data.ok || !data.daily) return;
+
+      var daily = data.daily.reverse(); // oldest first
+
+      // Collect all model names
+      var allModels = [];
+      var modelSet = {};
+      daily.forEach(function(d) {
+        Object.keys(d.models).forEach(function(m) {
+          if (!modelSet[m]) {
+            modelSet[m] = true;
+            allModels.push(m);
+          }
+        });
+      });
+
+      if (allModels.length === 0) return;
+
+      // Assign colors
+      allModels.forEach(function(m) { getModelColor(m); });
+
+      // Recalculate max
+      var maxTokens = 0;
+      daily.forEach(function(d) {
+        var dayTotal = 0;
+        allModels.forEach(function(m) {
+          if (d.models[m]) dayTotal += (d.models[m].input || 0) + (d.models[m].output || 0);
+        });
+        if (dayTotal > maxTokens) maxTokens = dayTotal;
+      });
+      if (maxTokens === 0) maxTokens = 1;
+
+      // Update Y axis
+      var yAxisEl = document.getElementById('chart-y-axis');
+      yAxisEl.innerHTML = '';
+      for (var i = 0; i <= 5; i++) {
+        var val = maxTokens * (1 - i / 5);
+        var lbl = document.createElement('div');
+        lbl.className = 'chart-y-label';
+        lbl.textContent = fmtCompact(val);
+        yAxisEl.appendChild(lbl);
+      }
+
+      // Rebuild bars as stacked
+      barsEl.innerHTML = daily.map(function(d) {
+        var dt = new Date(d.date);
+        var label = dt.toLocaleDateString('en', { month: 'short', day: 'numeric' });
+
+        var segments = '';
+        var tooltipRows = '';
+        var dayTotal = 0;
+
+        allModels.forEach(function(m) {
+          var md = d.models[m];
+          if (!md) return;
+          var tokens = (md.input || 0) + (md.output || 0);
+          if (tokens === 0) return;
+          dayTotal += tokens;
+          var h = Math.max(1, (tokens / maxTokens) * 210);
+          var c = getModelColor(m);
+          segments += '<div class="chart-seg" style="height:' + h + 'px;background:' + c + '"></div>';
+
+          var displayName = m;
+          if (_summaryData && _summaryData.models) {
+            var found = _summaryData.models.find(function(x) { return x.model === m; });
+            if (found) displayName = found.displayName;
+          }
+          tooltipRows += '<div class="chart-tooltip-row">' +
+            '<div class="chart-tooltip-dot" style="background:' + c + '"></div>' +
+            '<span>' + esc(displayName) + ': ' + fmtNum(tokens) + '</span>' +
+          '</div>';
+        });
+
+        if (!segments) {
+          segments = '<div class="chart-seg" style="height:2px;background:var(--border)"></div>';
+        }
+
+        return '<div class="chart-col">' +
+          segments +
+          '<div class="chart-tooltip">' +
+            '<strong>' + label + '</strong>' +
+            tooltipRows +
+            '<div style="border-top:1px solid var(--border);margin-top:.2rem;padding-top:.2rem;font-weight:700">' +
+              'Total: ' + fmtNum(dayTotal) +
+            '</div>' +
+          '</div>' +
+        '</div>';
+      }).join('');
+
+      // Update x labels
+      var labelsEl = document.getElementById('chart-x-labels');
+      var maxLabels = window.innerWidth < 600 ? 4 : 7;
+      var step = Math.max(1, Math.floor(daily.length / maxLabels));
+      labelsEl.innerHTML = daily
+        .filter(function(_, i) { return i === 0 || i === daily.length - 1 || i % step === 0; })
+        .map(function(d) {
+          var dt = new Date(d.date);
+          return '<span>' + dt.toLocaleDateString('en', { month: 'short', day: 'numeric' }) + '</span>';
+        }).join('');
+
+      // Update legend
+      var legendEl = document.getElementById('chart-legend');
+      legendEl.innerHTML = allModels.map(function(m) {
+        var c = getModelColor(m);
+        var displayName = m;
+        if (_summaryData && _summaryData.models) {
+          var found = _summaryData.models.find(function(x) { return x.model === m; });
+          if (found) displayName = found.displayName;
+        }
+        return '<div class="legend-item">' +
+          '<div class="legend-dot" style="background:' + c + '"></div>' +
+          esc(displayName) +
+        '</div>';
+      }).join('');
+
+    } catch (e) {
+      console.warn('Could not load per-model daily data:', e);
+    }
+  }
+
+  // Model Breakdown Bars
+  function renderModelBars(models) {
+    var container = document.getElementById('model-bars');
+    if (!models || models.length === 0) {
+      container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">No model usage data yet</div></div>';
+      return;
+    }
+
+    models.sort(function(a, b) { return b.totalTokens - a.totalTokens; });
+    var maxTokens = (models[0] && models[0].totalTokens) || 1;
+
+    container.innerHTML = models.map(function(m) {
+      var c = getModelColor(m.model);
+      var pct = Math.max(2, (m.totalTokens / maxTokens) * 100);
+      return '<div class="model-row">' +
+        '<div class="model-color-dot" style="background:' + c + '"></div>' +
+        '<div class="model-info">' +
+          '<div class="model-name">' + esc(m.displayName) + '</div>' +
+          '<div class="model-id">' + esc(m.model) + '</div>' +
+        '</div>' +
+        '<div class="model-bar-wrap">' +
+          '<div class="model-bar-fill" style="width:' + pct + '%;background:' + c + '">' +
+            '<span class="model-bar-label">' + fmtNum(m.totalTokens) + '</span>' +
+          '</div>' +
+        '</div>' +
+        '<div class="model-stats">' +
+          '<div class="model-stat">' +
+            '<div class="model-stat-label">In</div>' +
+            '<div class="model-stat-value">' + fmtCompact(m.inputTokens) + '</div>' +
+          '</div>' +
+          '<div class="model-stat">' +
+            '<div class="model-stat-label">Out</div>' +
+            '<div class="model-stat-value">' + fmtCompact(m.outputTokens) + '</div>' +
+          '</div>' +
+          '<div class="model-stat">' +
+            '<div class="model-stat-label">Cost</div>' +
+            '<div class="model-stat-value" style="color:var(--brand)">' + fmtCost(m.cost) + '</div>' +
+          '</div>' +
+        '</div>' +
+      '</div>';
+    }).join('');
+  }
+
+  // Detail Table
+  function renderDetailTable(models) {
+    var tbody = document.getElementById('detail-tbody');
+    if (!models || models.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="7" class="empty-state">No usage data yet</td></tr>';
+      return;
+    }
+
+    models.sort(function(a, b) { return b.cost - a.cost; });
+    tbody.innerHTML = models.map(function(m) {
+      return '<tr>' +
+        '<td>' +
+          '<div style="display:flex;align-items:center;gap:.5rem">' +
+            '<div style="width:8px;height:8px;border-radius:2px;background:' + getModelColor(m.model) + ';flex-shrink:0"></div>' +
+            '<div>' +
+              '<div style="font-weight:600">' + esc(m.displayName) + '</div>' +
+              '<div style="font-size:.65rem;color:var(--muted);font-family:JetBrains Mono,monospace">' + esc(m.model) + '</div>' +
+            '</div>' +
+          '</div>' +
+        '</td>' +
+        '<td><span class="tier-badge tier-' + m.tier + '">' + m.tier + '</span></td>' +
+        '<td class="mono">' + fmtNum(m.inputTokens) + '</td>' +
+        '<td class="mono">' + fmtNum(m.outputTokens) + '</td>' +
+        '<td class="mono" style="font-weight:700">' + fmtNum(m.totalTokens) + '</td>' +
+        '<td class="mono">' + m.requests + '</td>' +
+        '<td class="mono" style="font-weight:700;color:var(--brand)">' + fmtCost(m.cost) + '</td>' +
+      '</tr>';
+    }).join('');
+
+    // Totals
+    var totalIn  = models.reduce(function(a, m) { return a + m.inputTokens; }, 0);
+    var totalOut = models.reduce(function(a, m) { return a + m.outputTokens; }, 0);
+    var totalTok = models.reduce(function(a, m) { return a + m.totalTokens; }, 0);
+    var totalReq = models.reduce(function(a, m) { return a + m.requests; }, 0);
+    var totalCost = models.reduce(function(a, m) { return a + m.cost; }, 0);
+
+    tbody.innerHTML +=
+      '<tr style="font-weight:800;border-top:2px solid var(--border)">' +
+        '<td colspan="2" style="padding-top:.75rem">TOTAL</td>' +
+        '<td class="mono" style="padding-top:.75rem">' + fmtNum(totalIn) + '</td>' +
+        '<td class="mono" style="padding-top:.75rem">' + fmtNum(totalOut) + '</td>' +
+        '<td class="mono" style="padding-top:.75rem">' + fmtNum(totalTok) + '</td>' +
+        '<td class="mono" style="padding-top:.75rem">' + totalReq + '</td>' +
+        '<td class="mono" style="padding-top:.75rem;color:var(--brand)">' + fmtCost(totalCost) + '</td>' +
+      '</tr>';
+  }
+
+  // History
+  function renderHistory(history) {
+    var tbody = document.getElementById('history-tbody');
+    if (!history || history.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="6" class="empty-state">No request history yet</td></tr>';
+      return;
+    }
+    tbody.innerHTML = history.map(function(h) {
+      var dt = new Date(h.ts);
+      var timeStr = dt.toLocaleString('en', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+      var total = (h.input || 0) + (h.output || 0);
+      var c = getModelColor(h.model || 'unknown');
+      return '<tr>' +
+        '<td class="mono" style="font-size:.75rem;white-space:nowrap">' + timeStr + '</td>' +
+        '<td style="font-size:.78rem">' +
+          '<div style="display:flex;align-items:center;gap:.4rem">' +
+            '<div style="width:6px;height:6px;border-radius:2px;background:' + c + '"></div>' +
+            esc(h.model || 'unknown') +
+          '</div>' +
+        '</td>' +
+        '<td class="mono">' + fmtNum(h.input || 0) + '</td>' +
+        '<td class="mono">' + fmtNum(h.output || 0) + '</td>' +
+        '<td class="mono" style="font-weight:600">' + fmtNum(total) + '</td>' +
+        '<td class="mono" style="color:var(--brand)">' + fmtCost(h.cost || 0) + '</td>' +
+      '</tr>';
+    }).join('');
+  }
+
+  // Invoices
+  function renderInvoices(invoices) {
+    var tbody = document.getElementById('invoices-tbody');
+    if (!invoices || invoices.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="4" class="empty-state">No invoices</td></tr>';
+      return;
+    }
+    tbody.innerHTML = invoices.map(function(inv) {
+      var sc = inv.status === 'Paid' ? 'var(--green)' : inv.status === 'Unpaid' ? 'var(--red)' : 'var(--muted)';
+      var sb = inv.status === 'Paid' ? 'rgba(34,197,94,.12)' : inv.status === 'Unpaid' ? 'rgba(239,68,68,.12)' : 'rgba(148,163,184,.08)';
+      return '<tr>' +
+        '<td class="mono" style="color:var(--brand);font-size:.78rem">#' + inv.id + '</td>' +
+        '<td>' + (inv.date || '-') + '</td>' +
+        '<td class="mono" style="font-weight:600">$' + parseFloat(inv.total || 0).toFixed(2) + '</td>' +
+        '<td><span style="padding:.15rem .5rem;border-radius:999px;font-size:.7rem;font-weight:600;background:' + sb + ';color:' + sc + '">' + inv.status + '</span></td>' +
+      '</tr>';
+    }).join('');
+  }
+
+  // Pricing
+  function renderPricing(data) {
+    var tbody = document.getElementById('pricing-tbody');
+    if (data.models && data.models.length > 0) {
+      var sorted = data.models.slice().sort(function(a, b) { return (a.deprecated ? 1 : 0) - (b.deprecated ? 1 : 0); });
+      tbody.innerHTML = sorted.map(function(m) {
+        return '<tr' + (m.deprecated ? ' style="opacity:.5"' : '') + '>' +
+          '<td>' +
+            '<div style="font-weight:600">' + esc(m.displayName) + (m.deprecated ? ' <span style="font-size:.6rem;color:var(--muted)">(deprecated)</span>' : '') + '</div>' +
+            '<div style="font-size:.62rem;color:var(--muted);font-family:JetBrains Mono,monospace">' + esc(m.modelId) + '</div>' +
+          '</td>' +
+          '<td><span class="tier-badge tier-' + m.tier + '">' + m.tier + '</span></td>' +
+          '<td class="mono">$' + m.inputPer1M.toFixed(2) + '</td>' +
+          '<td class="mono">$' + m.outputPer1M.toFixed(2) + '</td>' +
+        '</tr>';
+      }).join('');
+    }
+
+    var plansTbody = document.getElementById('plans-tbody');
+    if (data.plans && data.plans.length > 0) {
+      plansTbody.innerHTML = data.plans.map(function(p) {
+        return '<tr>' +
+          '<td style="font-weight:600">AI ' + p.name + '</td>' +
+          '<td class="mono">' + p.tokenLimitFormatted + ' tokens</td>' +
+          '<td class="mono">$' + data.overagePriceUsd.toFixed(2) + ' per ' + fmtCompact(data.overageTokenBlock) + '</td>' +
+        '</tr>';
+      }).join('');
+    }
+  }
+
+  // Tab switching
+  function switchTab(tab) {
+    document.querySelectorAll('.tab-pill').forEach(function(p) {
+      p.classList.toggle('active', p.dataset.tab === tab);
+    });
+    ['detail', 'history', 'pricing'].forEach(function(t) {
+      var el = document.getElementById('tab-' + t);
+      if (el) el.style.display = t === tab ? '' : 'none';
+    });
+  }
+
+  // Filter apply — re-render chart and model bars with selected filter
+  function applyFilters() {
+    if (!_summaryData) return;
+
+    var filterModel = document.getElementById('filter-model').value;
+    var filterGroup = document.getElementById('filter-group').value;
+
+    // Filter models
+    var models = _summaryData.models || [];
+    if (filterModel !== 'all') {
+      models = models.filter(function(m) { return m.model === filterModel; });
+    }
+
+    // Filter chart data — if a specific model is selected, we need per-model daily data
+    if (filterModel !== 'all') {
+      // Fetch per-model daily data and rebuild chart
+      api('/api/usage/daily?days=30').then(function(data) {
+        if (!data.ok || !data.daily) return;
+        var daily = data.daily.reverse();
+        var chartData = daily.map(function(d) {
+          var md = d.models[filterModel] || {};
+          return {
+            date: d.date,
+            tokens: (md.input || 0) + (md.output || 0),
+            cost: Math.round((md.cost || 0) * 1000000) / 1000000,
+            requests: md.requests || 0
+          };
+        });
+        renderChart(chartData, models);
+      }).catch(function() {});
+    } else {
+      renderChart(_summaryData.chart || [], models);
+    }
+
+    // Re-render model bars and detail table with filtered models
+    renderModelBars(models);
+    renderDetailTable(models);
+  }
+
+  // Export CSV
+  function exportCSV() {
+    if (!_summaryData || !_summaryData.models) return;
+    var models = _summaryData.models;
+    var csv = 'Model,Tier,Input Tokens,Output Tokens,Total Tokens,Requests,Cost\n';
+    models.forEach(function(m) {
+      csv += '"' + m.displayName + '",' + m.tier + ',' + m.inputTokens + ',' + m.outputTokens + ',' + m.totalTokens + ',' + m.requests + ',' + m.cost.toFixed(6) + '\n';
+    });
+
+    var blob = new Blob([csv], { type: 'text/csv' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = 'gocodeme-usage-' + new Date().toISOString().slice(0,10) + '.csv';
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  // Number animation
+  function animateNumber(id, target) {
+    var el = document.getElementById(id);
+    if (!el) return;
+    var duration = 1200;
+    var start = performance.now();
+
+    function step(now) {
+      var elapsed = now - start;
+      var progress = Math.min(elapsed / duration, 1);
+      var eased = 1 - Math.pow(1 - progress, 3);
+      var current = Math.round(target * eased);
+      el.textContent = current.toLocaleString('en-US');
+      if (progress < 1) requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+  }
+
+  // Helpers
+  function fmtNum(n) {
+    if (n == null || isNaN(n)) return '-';
+    return Number(n).toLocaleString('en-US');
+  }
+
+  function fmtCompact(n) {
+    if (n == null || isNaN(n)) return '-';
+    n = Number(n);
+    if (n >= 1000000000) return (n / 1000000000).toFixed(1) + 'B';
+    if (n >= 1000000) return (n / 1000000).toFixed(1) + 'M';
+    if (n >= 1000) return (n / 1000).toFixed(1) + 'K';
+    return Math.round(n).toString();
+  }
+
+  function fmtCost(n) {
+    if (n == null || isNaN(n)) return '$0.00';
+    n = Number(n);
+    if (n === 0) return '$0.00';
+    if (n >= 1) return '$' + n.toFixed(2);
+    if (n >= 0.01) return '$' + n.toFixed(2);
+    if (n >= 0.001) return '$' + n.toFixed(3);
+    if (n >= 0.0001) return '$' + n.toFixed(4);
+    return '<$0.0001';
+  }
+
+  function esc(s) {
+    var d = document.createElement('div');
+    d.textContent = s || '';
+    return d.innerHTML;
+  }
+</script>
+
+</body>
+</html>

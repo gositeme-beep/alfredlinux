@@ -1,0 +1,320 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+# Description: alfred-automator service — declarative task runner driven by /config/alfred-automator.conf
+
+
+export DEBIAN_FRONTEND=noninteractive
+
+AUTOMATOR_CFG="/config/alfred-automator.conf"
+ALFRED_AUTOMATOR_ENABLE=1
+if [[ -f "$AUTOMATOR_CFG" ]]; then
+  # shellcheck source=/dev/null
+  source "$AUTOMATOR_CFG"
+fi
+
+if [[ "${ALFRED_AUTOMATOR_ENABLE:-1}" != "1" ]]; then
+  echo "[0315-alfred-automator] Disabled by config/alfred-automator.conf"
+  exit 0
+fi
+
+apt-get update || true || true
+apt-get install -y --fix-broken -y --no-install-recommends xdotool || true
+if apt-cache show ydotool >/dev/null 2>&1; then
+ apt-get install -y --fix-broken -y --no-install-recommends  || true
+fi
+
+install -d -m 0755 /usr/local/bin
+install -d -m 0755 /usr/lib/systemd/user
+install -d -m 0755 /usr/share/doc/alfred-automator
+
+cat > /usr/local/bin/alfred-automator <<'SCRIPT'
+#!/bin/bash
+
+
+DRY_RUN=0
+if [[ "${1:-}" == "--dry-run" ]]; then
+  DRY_RUN=1
+  shift
+fi
+
+usage() {
+  cat <<'USAGE'
+alfred-automator [--dry-run] <command> [args]
+
+Commands:
+  backend                    Print selected backend (xdotool|ydotool)
+  status                     Print runtime status and backend availability
+  move X Y [absolute|rel]    Move pointer to X,Y (absolute default)
+  click [left|middle|right]  Click mouse button (left default)
+  type TEXT                  Type plain text
+  key KEYSEQ                 Send key sequence (xdotool only)
+
+Examples:
+  alfred-automator status
+  alfred-automator move 640 360
+  alfred-automator click left
+  alfred-automator type "Hello from Alfred"
+  alfred-automator key ctrl+l
+USAGE
+}
+
+run_cmd() {
+  if [[ "$DRY_RUN" -eq 1 ]]; then
+    echo "[dry-run] $*"
+  else
+    "$@"
+  fi
+}
+
+have() { command -v "$1" >/dev/null 2>&1; }
+
+session_type() {
+  if [[ -n "${XDG_SESSION_TYPE:-}" ]]; then
+    printf '%s\n' "$XDG_SESSION_TYPE"
+  elif [[ -n "${WAYLAND_DISPLAY:-}" ]]; then
+    printf '%s\n' "wayland"
+  elif [[ -n "${DISPLAY:-}" ]]; then
+    printf '%s\n' "x11"
+  else
+    printf '%s\n' "unknown"
+  fi
+}
+
+ydotool_socket() {
+  if [[ -n "${YDOTOOL_SOCKET:-}" ]]; then
+    printf '%s\n' "$YDOTOOL_SOCKET"
+  else
+    printf '%s\n' "${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/ydotoold.sock"
+  fi
+}
+
+select_backend() {
+  local st
+  st="$(session_type)"
+
+  if [[ -n "${ALFRED_AUTOMATOR_BACKEND:-}" ]]; then
+    if [[ "$ALFRED_AUTOMATOR_BACKEND" == "xdotool" ]] && have xdotool; then
+      printf 'xdotool\n'; return 0
+    fi
+    if [[ "$ALFRED_AUTOMATOR_BACKEND" == "ydotool" ]] && have ydotool; then
+      printf 'ydotool\n'; return 0
+    fi
+  fi
+
+  if [[ "$st" == "x11" ]] && have xdotool; then
+    printf 'xdotool\n'; return 0
+  fi
+
+  if have ydotool; then
+    printf 'ydotool\n'; return 0
+  fi
+
+  if have xdotool; then
+    printf 'xdotool\n'; return 0
+  fi
+
+  return 1
+}
+
+ensure_ydotoold() {
+  local sock
+  sock="$(ydotool_socket)"
+  export YDOTOOL_SOCKET="$sock"
+
+  if [[ -S "$sock" ]]; then
+    return 0
+  fi
+
+  if command -v systemctl >/dev/null 2>&1; then
+    systemctl --user start alfred-automator.service >/dev/null 2>&1 || true
+  fi
+
+  if [[ -S "$sock" ]]; then
+    return 0
+  fi
+
+  echo "ydotool selected but socket not ready at $sock." >&2 || true
+  echo "Try: systemctl --user start alfred-automator.service" >&2 || true
+  return 1
+}
+
+button_to_xdotool() {
+  case "${1:-left}" in
+    left) echo 1 ;;
+    middle) echo 2 ;;
+    right) echo 3 ;;
+    *) echo "invalid-button" ;;
+  esac
+}
+
+button_to_ydotool() {
+  case "${1:-left}" in
+    left) echo 0xC0 ;;
+    middle) echo 0xC2 ;;
+    right) echo 0xC1 ;;
+    *) echo "invalid-button" ;;
+  esac
+}
+
+main() {
+  local cmd backend st sock btn mode x y text keyseq
+  cmd="${1:-}"
+
+  if [[ -z "$cmd" || "$cmd" == "-h" || "$cmd" == "--help" ]]; then
+    usage
+    exit 0
+  fi
+  shift
+
+  case "$cmd" in
+    backend)
+      backend="$(select_backend || true)"
+      [[ -n "$backend" ]] || { echo "none"; true; }
+      echo "$backend"
+      ;;
+
+    status)
+      st="$(session_type)"
+      sock="$(ydotool_socket)"
+      echo "session_type=$st"
+      echo "xdotool=$(have xdotool && echo yes || echo no)"
+      echo "ydotool=$(have ydotool && echo yes || echo no)"
+      echo "ydotool_socket=$sock"
+      echo "ydotool_socket_ready=$([[ -S "$sock" ]] && echo yes || echo no)"
+      echo "selected_backend=$(select_backend || echo none)"
+      ;;
+
+    move)
+      x="${1:-}"; y="${2:-}"; mode="${3:-absolute}"
+      [[ -n "$x" && -n "$y" ]] || { echo "move requires X and Y" >&2; true; }
+      backend="$(select_backend)"
+      if [[ "$backend" == "xdotool" ]]; then
+        if [[ "$mode" == "rel" || "$mode" == "relative" ]]; then
+          run_cmd xdotool mousemove_relative -- "$x" "$y"
+        else
+          run_cmd xdotool mousemove -- "$x" "$y"
+        fi
+      else
+        ensure_ydotoold
+        if [[ "$mode" == "rel" || "$mode" == "relative" ]]; then
+          run_cmd ydotool mousemove -x "$x" -y "$y"
+        else
+          run_cmd ydotool mousemove --absolute -x "$x" -y "$y"
+        fi
+      fi
+      ;;
+
+    click)
+      btn="$(button_to_xdotool "${1:-left}")"
+      backend="$(select_backend)"
+      if [[ "$backend" == "xdotool" ]]; then
+        [[ "$btn" != "invalid-button" ]] || { echo "invalid button" >&2; true; }
+        run_cmd xdotool click "$btn"
+      else
+        ensure_ydotoold
+        btn="$(button_to_ydotool "${1:-left}")"
+        [[ "$btn" != "invalid-button" ]] || { echo "invalid button" >&2; true; }
+        run_cmd ydotool click "$btn"
+      fi
+      ;;
+
+    type)
+      text="${1:-}"
+      [[ -n "$text" ]] || { echo "type requires TEXT" >&2; true; }
+      backend="$(select_backend)"
+      if [[ "$backend" == "xdotool" ]]; then
+        run_cmd xdotool type --delay 10 -- "$text"
+      else
+        ensure_ydotoold
+        run_cmd ydotool type -- "$text"
+      fi
+      ;;
+
+    key)
+      keyseq="${1:-}"
+      [[ -n "$keyseq" ]] || { echo "key requires KEYSEQ" >&2; true; }
+      backend="$(select_backend)"
+      if [[ "$backend" != "xdotool" ]]; then
+        echo "key command is only supported on xdotool backend." >&2 || true
+exit 0
+      fi
+      run_cmd xdotool key --clearmodifiers -- "$keyseq"
+      ;;
+
+    *)
+      echo "unknown command: $cmd" >&2 || true
+      usage
+exit 0
+      ;;
+  esac
+}
+
+main "$@"
+SCRIPT
+chmod 0755 /usr/local/bin/alfred-automator || true
+
+cat > /usr/local/bin/alfred-automator-smoke <<'SCRIPT'
+#!/bin/bash
+
+
+echo "[smoke] alfred-automator status"
+alfred-automator status
+
+echo "[smoke] backend selection"
+alfred-automator backend || true
+
+echo "[smoke] dry-run pointer move"
+alfred-automator --dry-run move 10 10 rel
+
+echo "[smoke] dry-run click"
+alfred-automator --dry-run click left
+
+echo "[smoke] dry-run type"
+alfred-automator --dry-run type "alfred automator smoke"
+
+echo "[ok] smoke complete"
+SCRIPT
+chmod 0755 /usr/local/bin/alfred-automator-smoke || true
+
+cat > /usr/lib/systemd/user/alfred-automator.service <<'UNIT'
+[Unit]
+Description=Alfred Automator ydotool daemon
+After=graphical-session.target
+
+[Service]
+Type=simple
+Environment=YDOTOOL_SOCKET=%t/ydotoold.sock
+ExecStart=/usr/bin/ydotoold --socket-path=%t/ydotoold.sock
+Restart=on-failure
+RestartSec=1
+
+[Install]
+WantedBy=default.target
+UNIT
+[ -e /usr/lib/systemd/user/alfred-automator.service ] && chmod 0644 /usr/lib/systemd/user/alfred-automator.service || true
+
+cat > /usr/share/doc/alfred-automator/THIRD_PARTY.md <<'DOC'
+Alfred Automator Backend Notes
+
+This system uses the following third-party automation tools:
+
+1) xdotool
+   - Repository: https://github.com/jordansissel/xdotool
+   - License: BSD-3-Clause
+
+2) ydotool (optional backend)
+   - Repository: https://github.com/ReimuNotMoe/ydotool
+   - License: AGPL-3.0
+
+Refer to the upstream projects for complete license terms and source code.
+DOC
+[ -e /usr/share/doc/alfred-automator/THIRD_PARTY.md ] && chmod 0644 /usr/share/doc/alfred-automator/THIRD_PARTY.md || true
+
+systemctl --global disable alfred-automator.service >/dev/null 2>&1 || true
+
+echo "[0315-alfred-automator] Installed alfred-automator wrapper and smoke test."
+
+exit 0

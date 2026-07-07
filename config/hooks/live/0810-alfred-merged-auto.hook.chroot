@@ -1,0 +1,427 @@
+#!/bin/bash
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# 0810-alfred-holy-veil-widget.hook.chroot
+# Creates a desktop toggle for the strict firewall
+
+set +e
+
+echo "[0810] Installing Holy Veil Toggle..."
+DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends kdialog ufw || true
+
+mkdir -p /usr/local/bin
+cat << 'EOF' > /usr/local/bin/alfred-veil-toggle
+#!/bin/bash
+STATUS=$(ufw status | grep -i active)
+if [ -z "$STATUS" ]; then
+    pkexec ufw enable
+    kdialog --title "The Holy Veil" --passivepopup "Holy Veil (Strict Lockdown Mode) is now ACTIVE." 5
+else
+    pkexec ufw disable
+    kdialog --title "The Holy Veil" --passivepopup "Holy Veil is now DEACTIVATED (Standard Mode)." 5
+fi
+EOF
+chmod +x /usr/local/bin/alfred-veil-toggle
+
+mkdir -p /usr/share/applications
+cat << 'EOF' > /usr/share/applications/alfred-holy-veil.desktop
+[Desktop Entry]
+Name=Toggle Holy Veil
+Exec=/usr/local/bin/alfred-veil-toggle
+Icon=security-high
+Type=Application
+Categories=System;Security;
+EOF
+
+# Put it on the user's desktop for quick access
+mkdir -p /etc/skel/Desktop
+cp /usr/share/applications/alfred-holy-veil.desktop /etc/skel/Desktop/
+chmod +x /etc/skel/Desktop/alfred-holy-veil.desktop
+
+echo "[0810] Holy Veil configured."
+#!/bin/bash
+# 0810-alfred-sovereign-matrix.hook.chroot
+# The Sovereign Matrix: Conky HUD, AI Voice, Dead Man's Switch
+set +e
+
+echo "I: [alfred] configuring sovereign matrix architecture"
+
+export DEBIAN_FRONTEND=noninteractive
+apt-get update
+apt-get install -y --no-install-recommends conky-all espeak-ng dbus || true
+
+# 1. The Eye of Providence (Holographic Conky HUD)
+mkdir -p /etc/skel
+cat > /etc/skel/.conkyrc <<'EOF'
+conky.config = {
+    alignment = 'middle_right',
+    background = true,
+    color1 = '00D4FF',
+    color2 = 'ffaa00',
+    font = 'DejaVu Sans:size=11',
+    double_buffer = true,
+    own_window = true,
+    own_window_type = 'desktop',
+    own_window_transparent = true,
+    own_window_hints = 'undecorated,below,sticky,skip_taskbar,skip_pager',
+    update_interval = 2.0,
+    gap_x = 50,
+    gap_y = 0,
+    use_xft = true
+}
+conky.text = [[
+${color2}${font DejaVu Sans:bold:size=16}THE EYE OF PROVIDENCE${font}
+${color1}$hr
+${color2}SYSTEM CORE
+${color1}CPU: ${color white}${cpu cpu0}% ${color1} RAM: ${color white}${memperc}%
+${color1}Thermals: ${color white}${hwmon temp 1}°C
+
+${color2}NETWORK MATRIX
+${color1}Uplink: ${color white}${upspeed eth0}
+${color1}Downlink: ${color white}${downspeed eth0}
+${color1}Tor Circuits: ${color white}${execi 10 netstat -an | grep 9050 | wc -l} Active Nodes
+${color1}Mesh Peers: ${color white}Secured
+
+${color2}ARTIFICIAL INTELLIGENCE
+${color1}Local LLM: ${color white}STANDBY
+${color1}Token Speed: ${color white}0 T/s
+]]
+EOF
+
+# Autostart Conky
+mkdir -p /etc/xdg/autostart
+cat > /etc/xdg/autostart/alfred-conky.desktop <<'EOF'
+[Desktop Entry]
+Type=Application
+Name=The Eye of Providence (Conky)
+Exec=conky -d
+X-KDE-autostart-condition=ksmserver
+EOF
+
+# 2. The Voice of the Citadel (AI Notification Interceptor)
+mkdir -p /usr/local/bin
+cat > /usr/local/bin/alfred-voice-notify <<'EOF'
+#!/bin/bash
+# Intercepts KDE Desktop notifications and converts them to cinematic speech
+dbus-monitor "interface='org.freedesktop.Notifications',member='Notify'" |
+while read -r line; do
+    if echo "$line" | grep -q 'string ".*"'; then
+        # Extract the notification text
+        MSG=$(echo "$line" | grep -o 'string "[^"]*"' | cut -d'"' -f2 | tail -n 1)
+        if [ -n "$MSG" ] && [ "$MSG" != "Plasma" ]; then
+            # Speak the notification in a deep, cinematic voice (pitch 20, speed 140)
+            espeak-ng -v en-us -p 20 -s 140 "Commander, $MSG" &
+        fi
+    fi
+done
+EOF
+chmod +x /usr/local/bin/alfred-voice-notify
+
+# Autostart Voice Interceptor
+cat > /etc/xdg/autostart/alfred-voice-notify.desktop <<'EOF'
+[Desktop Entry]
+Type=Application
+Name=Alfred Voice Notifications
+Exec=/usr/local/bin/alfred-voice-notify
+X-KDE-autostart-condition=ksmserver
+EOF
+
+# 3. The Temporal Dead Man's Switch (Scorched Earth Protocol)
+mkdir -p /etc/udev/rules.d
+# Trigger when a YubiKey (Vendor ID 1050) is physically removed
+cat > /etc/udev/rules.d/99-alfred-deadmans-switch.rules <<'EOF'
+ACTION=="remove", ENV{ID_VENDOR_ID}=="1050", RUN+="/usr/local/sbin/alfred-self-destruct"
+EOF
+
+mkdir -p /usr/local/sbin
+cat > /usr/local/sbin/alfred-self-destruct <<'EOF'
+#!/bin/bash
+# ALFRED LINUX DEAD MAN'S SWITCH
+# WARNING: SCORCHED EARTH PROTOCOL
+
+logger "CRITICAL: YUBIKEY REMOVED WITHOUT AUTHORIZATION. DEAD MAN'S SWITCH ENGAGED."
+espeak-ng -v en-us -p 20 -s 140 "CRITICAL ALERT. DEAD MANS SWITCH ENGAGED. SCORCHED EARTH PROTOCOL INITIATED." &
+
+# [SAFETY LOCK] 
+# The actual deletion commands are commented out in the ISO source to prevent accidental wiping of developer hardware during testing.
+# When installed on the bare-metal server, uncomment these to arm the weapon.
+
+# srm -rfz /boot/efi
+# cryptsetup erase /dev/nvme0n1p3
+# echo c > /proc/sysrq-trigger
+EOF
+chmod +x /usr/local/sbin/alfred-self-destruct
+
+echo "I: [alfred] Sovereign Matrix architecture fully integrated."
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+# [Genesis Forge] Systemd Hardening: alfred-daemon-276.service
+# Enforces deep PrivateTmp, ProtectSystem, and ProtectHome on native daemons.
+echo "[Genesis Forge] Hardening systemd service: alfred-daemon-276.service"
+mkdir -p /etc/systemd/system/alfred-daemon-276.service.d/ || true
+cat > /etc/systemd/system/alfred-daemon-276.service.d/override.conf << 'EOF'
+[Service]
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=read-only
+NoNewPrivileges=yes
+RestrictRealtime=yes
+EOF
+
+
+# --- BEGIN MERGED CONTENT FROM: 0810-alfred-holy-veil-widget.hook.chroot ---
+#!/bin/bash
+# 0810-alfred-holy-veil-widget.hook.chroot
+# Creates a desktop toggle for the strict firewall
+
+set +e
+
+echo "[0810] Installing Holy Veil Toggle..."
+DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends kdialog ufw || true
+
+mkdir -p /usr/local/bin
+cat << 'EOF' > /usr/local/bin/alfred-veil-toggle
+#!/bin/bash
+STATUS=$(ufw status | grep -i active)
+if [ -z "$STATUS" ]; then
+    pkexec ufw enable
+    kdialog --title "The Holy Veil" --passivepopup "Holy Veil (Strict Lockdown Mode) is now ACTIVE." 5
+else
+    pkexec ufw disable
+    kdialog --title "The Holy Veil" --passivepopup "Holy Veil is now DEACTIVATED (Standard Mode)." 5
+fi
+EOF
+[ -e "/usr/local/bin/alfred-veil-toggle" ] && chmod +x /usr/local/bin/alfred-veil-toggle
+
+mkdir -p /usr/share/applications
+cat << 'EOF' > /usr/share/applications/alfred-holy-veil.desktop
+[Desktop Entry]
+Name=Toggle Holy Veil
+Exec=/usr/local/bin/alfred-veil-toggle
+Icon=security-high
+Type=Application
+Categories=System;Security;
+EOF
+
+# Put it on the user's desktop for quick access
+mkdir -p /etc/skel/Desktop
+[ -e "/usr/share/applications/alfred-holy-veil.desktop" ] && cp /usr/share/applications/alfred-holy-veil.desktop /etc/skel/Desktop/
+[ -e "/etc/skel/Desktop/alfred-holy-veil.desktop" ] && chmod +x /etc/skel/Desktop/alfred-holy-veil.desktop
+
+echo "[0810] Holy Veil configured."
+
+# --- END MERGED CONTENT FROM: 0810-alfred-holy-veil-widget.hook.chroot ---
+
+
+# --- BEGIN MERGED CONTENT FROM: 0810-alfred-sovereign-matrix.hook.chroot ---
+#!/bin/bash
+# 0810-alfred-sovereign-matrix.hook.chroot
+# The Sovereign Matrix: Conky HUD, AI Voice, Dead Man's Switch
+set +e
+
+echo "I: [alfred] configuring sovereign matrix architecture"
+
+export DEBIAN_FRONTEND=noninteractive
+apt-get update
+apt-get install -y --no-install-recommends conky-all espeak-ng dbus || true
+
+# 1. The Eye of Providence (Holographic Conky HUD)
+mkdir -p /etc/skel
+cat > /etc/skel/.conkyrc <<'EOF'
+conky.config = {
+    alignment = 'middle_right',
+    background = true,
+    color1 = '00D4FF',
+    color2 = 'ffaa00',
+    font = 'DejaVu Sans:size=11',
+    double_buffer = true,
+    own_window = true,
+    own_window_type = 'desktop',
+    own_window_transparent = true,
+    own_window_hints = 'undecorated,below,sticky,skip_taskbar,skip_pager',
+    update_interval = 2.0,
+    gap_x = 50,
+    gap_y = 0,
+    use_xft = true
+}
+conky.text = [[
+${color2}${font DejaVu Sans:bold:size=16}THE EYE OF PROVIDENCE${font}
+${color1}$hr
+${color2}SYSTEM CORE
+${color1}CPU: ${color white}${cpu cpu0}% ${color1} RAM: ${color white}${memperc}%
+${color1}Thermals: ${color white}${hwmon temp 1}°C
+
+${color2}NETWORK MATRIX
+${color1}Uplink: ${color white}${upspeed eth0}
+${color1}Downlink: ${color white}${downspeed eth0}
+${color1}Tor Circuits: ${color white}${execi 10 netstat -an | grep 9050 | wc -l} Active Nodes
+${color1}Mesh Peers: ${color white}Secured
+
+${color2}ARTIFICIAL INTELLIGENCE
+${color1}Local LLM: ${color white}STANDBY
+${color1}Token Speed: ${color white}0 T/s
+]]
+EOF
+
+# Autostart Conky
+mkdir -p /etc/xdg/autostart
+cat > /etc/xdg/autostart/alfred-conky.desktop <<'EOF'
+[Desktop Entry]
+Type=Application
+Name=The Eye of Providence (Conky)
+Exec=conky -d
+X-KDE-autostart-condition=ksmserver
+EOF
+
+# 2. The Voice of the Citadel (AI Notification Interceptor)
+mkdir -p /usr/local/bin
+cat > /usr/local/bin/alfred-voice-notify <<'EOF'
+#!/bin/bash
+# Intercepts KDE Desktop notifications and converts them to cinematic speech
+dbus-monitor "interface='org.freedesktop.Notifications',member='Notify'" |
+while read -r line; do
+    if echo "$line" | grep -q 'string ".*"'; then
+        # Extract the notification text
+        MSG=$(echo "$line" | grep -o 'string "[^"]*"' | cut -d'"' -f2 | tail -n 1)
+        if [ -n "$MSG" ] && [ "$MSG" != "Plasma" ]; then
+            # Speak the notification in a deep, cinematic voice (pitch 20, speed 140)
+            espeak-ng -v en-us -p 20 -s 140 "Commander, $MSG" &
+        fi
+    fi
+done
+EOF
+[ -e "/usr/local/bin/alfred-voice-notify" ] && chmod +x /usr/local/bin/alfred-voice-notify
+
+# Autostart Voice Interceptor
+cat > /etc/xdg/autostart/alfred-voice-notify.desktop <<'EOF'
+[Desktop Entry]
+Type=Application
+Name=Alfred Voice Notifications
+Exec=/usr/local/bin/alfred-voice-notify
+X-KDE-autostart-condition=ksmserver
+EOF
+
+# 3. The Temporal Dead Man's Switch (Scorched Earth Protocol)
+mkdir -p /etc/udev/rules.d
+# Trigger when a YubiKey (Vendor ID 1050) is physically removed
+cat > /etc/udev/rules.d/99-alfred-deadmans-switch.rules <<'EOF'
+ACTION=="remove", ENV{ID_VENDOR_ID}=="1050", RUN+="/usr/local/sbin/alfred-self-destruct"
+EOF
+
+mkdir -p /usr/local/sbin
+cat > /usr/local/sbin/alfred-self-destruct <<'EOF'
+#!/bin/bash
+# ALFRED LINUX DEAD MAN'S SWITCH
+# WARNING: SCORCHED EARTH PROTOCOL
+
+logger "CRITICAL: YUBIKEY REMOVED WITHOUT AUTHORIZATION. DEAD MAN'S SWITCH ENGAGED."
+espeak-ng -v en-us -p 20 -s 140 "CRITICAL ALERT. DEAD MANS SWITCH ENGAGED. SCORCHED EARTH PROTOCOL INITIATED." &
+
+# [SAFETY LOCK] 
+# The actual deletion commands are commented out in the ISO source to prevent accidental wiping of developer hardware during testing.
+# When installed on the bare-metal server, uncomment these to arm the weapon.
+
+# srm -rfz /boot/efi
+# cryptsetup erase /dev/nvme0n1p3
+# echo c > /proc/sysrq-trigger
+EOF
+[ -e "/usr/local/sbin/alfred-self-destruct" ] && chmod +x /usr/local/sbin/alfred-self-destruct
+
+echo "I: [alfred] Sovereign Matrix architecture fully integrated."
+
+# --- END MERGED CONTENT FROM: 0810-alfred-sovereign-matrix.hook.chroot ---
+
+
+# --- BEGIN MERGED CONTENT FROM: 0810-ark-protocol.hook.chroot ---
+#!/usr/bin/env bash
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# 0810-ark-protocol.hook.chroot
+# Installs direwolf and ax25-tools for Omni-Node Mesh radio packet transmission.
+
+set +e
+
+echo "I: [Genesis Phase II] Engaging The Ark Protocol (Orbital Radio Mesh)..."
+
+# Install HAM radio dependencies
+apt-get update
+apt-get install -y --no-install-recommends direwolf ax25-tools ax25-apps || true
+
+# Configure Direwolf for AFSK 1200 baud
+cat > /etc/direwolf.conf << 'EOF'
+ADEVICE sysdefault sysdefault
+CHANNEL 0
+MYCALL ALFRED-1
+MODEM 1200
+AGWPORT 8000
+KISSPORT 8001
+EOF
+
+# Create the Ark Protocol systemd service
+cat > /etc/systemd/system/ark-protocol.service << 'EOF'
+[Unit]
+Description=Alfred Ark Protocol (AX.25 Mesh Radio)
+After=network.target yggdrasil.service
+
+[Service]
+Type=simple
+User=root
+ExecStart=/usr/bin/direwolf -c /etc/direwolf.conf
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+systemctl enable ark-protocol || true || true.service
+
+echo "I: [Genesis Phase II] Ark Protocol armed. AX.25 packet radio transmission is ready."
+
+# --- END MERGED CONTENT FROM: 0810-ark-protocol.hook.chroot ---
+
+
+#!/usr/bin/env bash
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# 0810-ark-protocol.hook.chroot
+# Installs direwolf and ax25-tools for Omni-Node Mesh radio packet transmission.
+
+set +euo pipefail
+
+echo "I: [Genesis Phase II] Engaging The Ark Protocol (Orbital Radio Mesh)..."
+
+# Install HAM radio dependencies
+apt-get update
+apt-get install -y --no-install-recommends direwolf ax25-tools ax25-apps || true
+
+# Configure Direwolf for AFSK 1200 baud
+cat > /etc/direwolf.conf << 'EOF'
+ADEVICE sysdefault sysdefault
+CHANNEL 0
+MYCALL ALFRED-1
+MODEM 1200
+AGWPORT 8000
+KISSPORT 8001
+EOF
+
+# Create the Ark Protocol systemd service
+cat > /etc/systemd/system/ark-protocol.service << 'EOF'
+[Unit]
+Description=Alfred Ark Protocol (AX.25 Mesh Radio)
+After=network.target yggdrasil.service
+
+[Service]
+Type=simple
+User=root
+ExecStart=/usr/bin/direwolf -c /etc/direwolf.conf
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+systemctl enable ark-protocol || true || true.service
+
+echo "I: [Genesis Phase II] Ark Protocol armed. AX.25 packet radio transmission is ready."

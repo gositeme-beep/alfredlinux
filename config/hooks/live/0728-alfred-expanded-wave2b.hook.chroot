@@ -1,0 +1,110 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/sh
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+# Description: Expanded Wave 2b — container + service primitives for deferred apps
+
+
+LOG_FILE=/var/log/alfred-expanded-wave2b.log
+exec > "$LOG_FILE" 2>&1
+
+echo "[$(date -Is)] Starting Alfred expanded Wave 2b"
+export DEBIAN_FRONTEND=noninteractive
+
+apt-get update || true || true
+
+# Wave 2b lays down container and service primitives for deferred apps.
+APT_PACKAGES="docker.io docker-compose-v2 docker-compose-plugin podman buildah skopeo sqlite3 redis-server postgresql nginx apache2-utils ufw fail2ban"
+
+for pkg in $APT_PACKAGES; do
+  if apt-cache show "$pkg" >/dev/null 2>&1; then
+    echo "[wave2b] installing $pkg"
+    apt-get install -y --fix-broken -y --no-install-recommends "$pkg" || echo "[wave2b] warn: failed apt install $pkg" || true
+  else
+    echo "[wave2b] skip: not available in repo metadata -> $pkg" || true
+  fi
+done
+
+install -d -m 0755 /opt/alfred/wave2-services
+
+cat >/opt/alfred/wave2-services/compose.vaultwarden.yml <<'EOF'
+version: "3.8"
+services:
+  vaultwarden:
+    image: vaultwarden/server:latest
+    restart: unless-stopped
+    ports:
+      - "8082:80"
+    volumes:
+      - /var/lib/alfred/vaultwarden:/data
+EOF
+
+cat >/opt/alfred/wave2-services/compose.ntfy.yml <<'EOF'
+version: "3.8"
+services:
+  ntfy:
+    image: binwiederhier/ntfy:latest
+    restart: unless-stopped
+    command: ["serve"]
+    ports:
+      - "8083:80"
+    volumes:
+      - /var/lib/alfred/ntfy:/var/cache/ntfy
+EOF
+
+cat >/opt/alfred/wave2-services/compose.searxng.yml <<'EOF'
+version: "3.8"
+services:
+  searxng:
+    image: searxng/searxng:latest
+    restart: unless-stopped
+    ports:
+      - "8084:8080"
+    volumes:
+      - /var/lib/alfred/searxng:/etc/searxng
+EOF
+
+cat >/opt/alfred/wave2-services/compose.forgejo.yml <<'EOF'
+version: "3.8"
+services:
+  forgejo:
+    image: codeberg.org/forgejo/forgejo:latest
+    restart: unless-stopped
+    ports:
+      - "8085:3000"
+    volumes:
+      - /var/lib/alfred/forgejo:/data
+EOF
+
+cat >/opt/alfred/wave2-services/compose.jellyfin.yml <<'EOF'
+version: "3.8"
+services:
+  jellyfin:
+    image: jellyfin/jellyfin:latest
+    restart: unless-stopped
+    ports:
+      - "8096:8096"
+    volumes:
+      - /var/lib/alfred/jellyfin/config:/config
+      - /var/lib/alfred/jellyfin/cache:/cache
+      - /srv/media:/media
+EOF
+
+cat >/opt/alfred/wave2-services/README.md <<'EOF'
+AlfredLinux Wave 2b service templates
+
+These compose files are staged for post-install activation.
+They are not auto-started in build chroot.
+
+Planned deferred targets:
+- vaultwarden
+- ntfy
+- searxng
+- forgejo
+- jellyfin
+- kanboard
+- headscale
+EOF
+
+echo "[$(date -Is)] Alfred expanded Wave 2b complete"
+
+exit 0

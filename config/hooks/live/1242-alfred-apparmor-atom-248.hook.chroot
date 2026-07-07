@@ -1,0 +1,48 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+
+echo "[Genesis Forge] Engineering Polymorphic Execution Wrapper for 248..."
+
+mkdir -p /etc/apparmor.d/alfred-isolated/ || true
+
+# Strict AppArmor Mode (Enforce)
+cat > /etc/apparmor.d/alfred-isolated/profile-248 << 'EOF'
+profile alfred-sandbox-248 /usr/local/bin/alfred-util-235 flags=(enforce) {
+  #include <abstractions/base>
+  /usr/local/bin/alfred-util-235 rmix,
+  /dev/null rw,
+}
+EOF
+
+# Inject Polymorphic Wrapper
+cat > /usr/local/bin/alfred-util-235-poly-wrapper << 'EOF'
+#!/bin/bash
+# Polymorphic Execution Wrapper
+# Copies the payload to a randomly named tmpfs location, executes it, and deletes it.
+
+# Mount a private tmpfs for this specific execution
+TMP_DIR="/tmp/poly_$$_$RANDOM"
+mkdir -p "$TMP_DIR"
+mount -t tmpfs -o size=10m tmpfs "$TMP_DIR"
+
+# Generate random binary name
+RANDOM_NAME=$(mcookie)
+[ -e "/usr/local/bin/alfred-util-235" ] && cp /usr/local/bin/alfred-util-235 "$TMP_DIR/$RANDOM_NAME"
+[ -e "$TMP_DIR/$RANDOM_NAME" ] && chmod +x "$TMP_DIR/$RANDOM_NAME"
+
+# Execute polymorphic clone
+"$TMP_DIR/$RANDOM_NAME" "$@"
+
+# Cleanup
+rm -f "$TMP_DIR/$RANDOM_NAME"
+umount -f "$TMP_DIR"
+rmdir "$TMP_DIR"
+EOF
+
+[ -e "/usr/local/bin/alfred-util-235-poly-wrapper" ] && chmod +x /usr/local/bin/alfred-util-235-poly-wrapper || true
+
+echo "[Genesis Forge] Polymorphic Execution Wrapper Integrated."
+exit 0

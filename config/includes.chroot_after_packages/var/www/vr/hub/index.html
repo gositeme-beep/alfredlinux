@@ -1,0 +1,1525 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GoSiteMe VR World</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0a0a14;color:#fff;font-family:'Inter','Segoe UI',system-ui,sans-serif;overflow:hidden}
+
+/* Debug Panel */
+#debugPanel{position:fixed;top:0;left:0;z-index:10000;background:rgba(0,0,0,.85);border:1px solid #f00;padding:.5rem;max-width:400px;max-height:300px;overflow-y:auto;font-family:monospace;font-size:.7rem;color:#0f0;display:none}
+#debugPanel.show{display:block}
+#debugPanel.error{border-color:#f00;color:#f00}
+#debugToggle{position:fixed;top:.5rem;left:.5rem;z-index:10001;width:20px;height:20px;background:#f00;border:none;cursor:pointer;font-size:.7rem;color:#fff}
+.debug-entry{margin:.2rem 0;padding:.2rem;border-bottom:1px solid rgba(0,255,0,.2)}
+.debug-entry.error{color:#f00}
+
+/* Loading */
+#loading{position:fixed;inset:0;background:#0a0a14;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;transition:opacity .8s}
+#loading.hidden{opacity:0;pointer-events:none}
+#loading h1{font-size:2.5rem;margin-bottom:.3rem;background:linear-gradient(135deg,#0074D9,#7D00FF);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+#loading p{color:rgba(255,255,255,.4);margin-bottom:2rem;font-size:.9rem}
+.load-ring{width:60px;height:60px;border:3px solid rgba(125,0,255,.2);border-top-color:#7D00FF;border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* HUD */
+#hud{position:fixed;top:0;left:0;right:0;padding:1rem 1.5rem;display:flex;align-items:center;justify-content:space-between;z-index:100;background:linear-gradient(180deg,rgba(10,10,20,.95),transparent);pointer-events:none}
+#hud>*{pointer-events:auto}
+.hud-title{font-size:1.2rem;font-weight:700;background:linear-gradient(135deg,#0074D9,#7D00FF);-webkit-background-clip:text;-webkit-text-fill-color:transparent;display:flex;align-items:center;gap:.5rem}
+.hud-btn{padding:.45rem .9rem;border-radius:8px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.06);color:rgba(255,255,255,.7);cursor:pointer;font-size:.78rem;font-weight:600;transition:.2s;backdrop-filter:blur(8px)}
+.hud-btn:hover{background:rgba(0,168,255,.15);color:#00A8FF;border-color:rgba(0,168,255,.3)}
+.hud-btn.vr{background:linear-gradient(135deg,rgba(125,0,255,.35),rgba(0,116,217,.35));border-color:rgba(125,0,255,.4);color:#fff}
+.hud-right{display:flex;gap:.5rem}
+
+/* Minimap */
+#minimap{position:fixed;bottom:1.5rem;right:1.5rem;z-index:100}
+#minimapCanvas{border-radius:14px;border:1px solid rgba(255,255,255,.1);background:rgba(22,22,54,.8);backdrop-filter:blur(8px)}
+
+/* Info Panel */
+#infoPanel{position:fixed;left:1.5rem;bottom:1.5rem;z-index:100;width:260px;background:rgba(22,22,54,.9);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:1.2rem;backdrop-filter:blur(12px);display:none}
+#infoPanel h4{font-size:.9rem;margin-bottom:.5rem}
+#infoPanel .info-type{font-size:.68rem;text-transform:uppercase;letter-spacing:1px;padding:2px 8px;border-radius:6px;display:inline-block;margin-bottom:.5rem}
+#infoPanel .info-type.arena{background:rgba(239,68,68,.15);color:#ef4444}
+#infoPanel .info-type.residential{background:rgba(0,168,255,.15);color:#00A8FF}
+#infoPanel .info-type.commercial{background:rgba(245,158,11,.15);color:#f59e0b}
+#infoPanel .info-type.park{background:rgba(34,197,94,.15);color:#22c55e}
+#infoPanel .info-type.landmark{background:rgba(168,85,247,.15);color:#a855f7}
+.info-row{display:flex;justify-content:space-between;font-size:.78rem;padding:.2rem 0;color:rgba(255,255,255,.5)}
+.info-row .val{color:#fff;font-weight:600}
+.info-btn{width:100%;padding:.5rem;border-radius:8px;border:1px solid rgba(0,168,255,.3);background:rgba(0,168,255,.1);color:#00A8FF;cursor:pointer;font-size:.78rem;font-weight:600;margin-top:.75rem;transition:.2s}
+.info-btn:hover{background:rgba(0,168,255,.2)}
+
+/* Portal labels */
+.portal-label{position:absolute;background:rgba(22,22,54,.9);border:1px solid rgba(125,0,255,.3);border-radius:10px;padding:.4rem .8rem;font-size:.72rem;font-weight:600;pointer-events:none;white-space:nowrap;backdrop-filter:blur(8px)}
+
+/* Player count badge */
+#playerCount{position:fixed;top:5rem;left:1.5rem;z-index:100;background:rgba(22,22,54,.9);border:1px solid rgba(34,197,94,.3);border-radius:10px;padding:.4rem .8rem;font-size:.78rem;color:#22c55e;backdrop-filter:blur(8px)}
+#playerCount .dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:#22c55e;margin-right:6px;animation:blink 1.5s infinite}
+@keyframes blink{50%{opacity:.3}}
+
+/* Compass */
+#compass{position:fixed;top:5rem;right:1.5rem;z-index:100;width:60px;height:60px}
+#compassCanvas{border-radius:50%;border:1px solid rgba(255,255,255,.1);background:rgba(22,22,54,.6)}
+
+/* Crosshair */
+#crosshair{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:50;width:20px;height:20px;pointer-events:none;opacity:.4}
+#crosshair::before,#crosshair::after{content:'';position:absolute;background:rgba(0,168,255,.6)}
+#crosshair::before{width:2px;height:100%;left:50%;transform:translateX(-50%)}
+#crosshair::after{height:2px;width:100%;top:50%;transform:translateY(-50%)}
+
+/* Toast */
+#toast{position:fixed;top:5rem;left:50%;transform:translateX(-50%);z-index:200;padding:.5rem 1.2rem;border-radius:10px;background:rgba(22,22,54,.95);border:1px solid rgba(0,168,255,.3);color:#00A8FF;font-size:.8rem;font-weight:600;opacity:0;transition:opacity .3s;pointer-events:none}
+#toast.visible{opacity:1}
+/* Ecosystem Stats Panel */
+#ecoPanel{position:fixed;left:1.5rem;top:7rem;z-index:100;width:220px;background:rgba(22,22,54,.9);border:1px solid rgba(125,0,255,.2);border-radius:14px;padding:1rem;backdrop-filter:blur(12px)}
+#ecoPanel h4{font-size:.65rem;text-transform:uppercase;letter-spacing:1px;color:rgba(255,255,255,.3);margin-bottom:.6rem}
+.eco-row{display:flex;justify-content:space-between;font-size:.78rem;padding:.25rem 0;color:rgba(255,255,255,.5)}
+.eco-row .eco-v{color:#7D00FF;font-weight:700}
+.eco-agents-mini{display:flex;gap:3px;flex-wrap:wrap;margin-top:.5rem}
+.eco-agents-mini .agent-dot{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.65rem;cursor:pointer;transition:.2s;border:1px solid rgba(255,255,255,.1)}
+.eco-agents-mini .agent-dot:hover{transform:scale(1.2);border-color:rgba(125,0,255,.4)}
+
+/* Alfred Chat Panel */
+#alfredPanel{position:fixed;bottom:1.5rem;right:6rem;width:320px;max-height:420px;background:rgba(22,22,54,.95);border:1px solid rgba(0,116,217,.25);border-radius:16px;z-index:300;display:none;flex-direction:column;backdrop-filter:blur(12px)}
+#alfredPanel.open{display:flex}
+#alfredPanel .ap-hdr{display:flex;align-items:center;justify-content:space-between;padding:.75rem 1rem;border-bottom:1px solid rgba(255,255,255,.06);cursor:pointer}
+#alfredPanel .ap-hdr span{font-weight:700;font-size:.85rem;background:linear-gradient(135deg,#0074D9,#7D00FF);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+#alfredPanel .ap-hdr button{background:none;border:none;color:rgba(255,255,255,.4);cursor:pointer;font-size:1.1rem}
+#alfredMsgs{flex:1;overflow-y:auto;padding:.75rem;display:flex;flex-direction:column;gap:.5rem;max-height:280px}
+.amsg{padding:.5rem .75rem;border-radius:10px;font-size:.78rem;line-height:1.4;max-width:88%;word-wrap:break-word}
+.amsg.user{background:rgba(0,116,217,.15);color:#8ecdf7;align-self:flex-end;border:1px solid rgba(0,116,217,.2)}
+.amsg.alfred{background:rgba(125,0,255,.1);color:rgba(255,255,255,.85);align-self:flex-start;border:1px solid rgba(125,0,255,.15)}
+#alfredInput{display:flex;gap:.4rem;padding:.6rem .75rem;border-top:1px solid rgba(255,255,255,.06)}
+#alfredInput input{flex:1;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:.4rem .6rem;color:#fff;font-size:.78rem;outline:none}
+#alfredInput button{background:linear-gradient(135deg,#0074D9,#7D00FF);border:none;border-radius:8px;padding:.4rem .7rem;color:#fff;cursor:pointer;font-size:.75rem;font-weight:600}
+#alfredToggle{position:fixed;bottom:1.5rem;right:1.5rem;width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#0074D9,#7D00FF);border:none;color:#fff;font-size:1.3rem;cursor:pointer;z-index:300;box-shadow:0 4px 15px rgba(0,116,217,.3)}
+
+/* Agent Profile Modal (Hub) */
+#hubAgentModal{position:fixed;inset:0;background:rgba(10,10,20,.92);z-index:500;display:none;align-items:center;justify-content:center;backdrop-filter:blur(8px)}
+#hubAgentModal.show{display:flex}
+.hub-agent-card{background:rgba(22,22,54,.95);border:1px solid rgba(125,0,255,.2);border-radius:20px;padding:2rem;max-width:420px;width:90%;text-align:center}
+.hub-agent-card .ap-avatar{width:64px;height:64px;border-radius:50%;margin:0 auto .75rem;display:flex;align-items:center;justify-content:center;font-size:2rem}
+.hub-agent-card .ap-name{font-size:1.2rem;font-weight:700}
+.hub-agent-card .ap-title{font-size:.72rem;color:rgba(255,255,255,.4);margin:.2rem 0 .8rem}
+.ap-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:.5rem;margin:1rem 0}
+.ap-stat{padding:.5rem;border-radius:10px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06)}
+.ap-stat .val{font-size:1.1rem;font-weight:700;color:#7D00FF}
+.ap-stat .lbl{font-size:.6rem;text-transform:uppercase;letter-spacing:1px;color:rgba(255,255,255,.3);margin-top:.2rem}
+.ap-wallet{display:inline-flex;align-items:center;gap:.4rem;padding:.4rem 1rem;border-radius:10px;background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.2);color:#22c55e;font-weight:700;font-size:.9rem;margin:.8rem 0}
+</style>
+<script src="/vr/shared/alfred-csrf.js"></script>
+</head>
+<body>
+
+<!-- Debug Panel (hidden by default, click red button to toggle) -->
+<button id="debugToggle" title="Toggle Debug Panel">D</button>
+<div id="debugPanel"></div>
+
+<div id="loading">
+    <h1>🌐 GoSiteMe World</h1>
+    <p>Loading virtual world…</p>
+    <div class="load-ring"></div>
+</div>
+
+<div id="hud">
+    <div class="hud-title">🌐 GoSiteMe World</div>
+    <div class="hud-right">
+        <button class="hud-btn" onclick="goToChess()">♟️ Chess Arena</button>
+        <button class="hud-btn" onclick="goToChessMasters()">♚ Chess Masters</button>
+        <button class="hud-btn" onclick="goToExperiences()">✨ VR Experiences</button>
+        <button class="hud-btn" onclick="goToPortal('racing')">🏎️ Racing</button>
+        <button class="hud-btn" onclick="goToPortal('gallery')">🎨 Gallery</button>
+        <button class="hud-btn" onclick="goToPortal('lounge')">🛋️ Lounge</button>
+        <button class="hud-btn" onclick="goToPortal('concert')">🎵 Concert</button>
+        <button class="hud-btn" onclick="goToPortal('checkers')">🏁 Checkers</button>
+        <button class="hud-btn" onclick="goToPortal('pool')">🎱 Pool</button>
+        <button class="hud-btn" onclick="goToPortal('speed-dating')">💕 Speed Dating</button>
+        <button class="hud-btn" onclick="goToPortal('dj-studio')">🎧 DJ Studio</button>
+        <button class="hud-btn" onclick="goToPortal('office')">🏢 Office</button>
+        <button class="hud-btn" onclick="goToPortal('sanctuary')">⛪ Sanctuary</button>
+        <button class="hud-btn" onclick="goToPortal('circuit-lab')">⚡ Circuit Lab</button>
+        <button class="hud-btn" onclick="goToPlots()">🏗️ My Plots</button>
+        <button class="hud-btn vr" id="vrBtn" style="display:none" onclick="enterVR()">🥽 Enter VR</button>
+    </div>
+</div>
+<div id="playerCount"><span class="dot"></span>1 online</div>
+
+<div id="crosshair"></div>
+
+<div id="minimap">
+    <canvas id="minimapCanvas" width="160" height="160"></canvas>
+</div>
+
+<div id="infoPanel">
+    <span class="info-type" id="infoType">Residential</span>
+    <h4 id="infoName">Plot Name</h4>
+    <div class="info-row"><span>Owner</span><span class="val" id="infoOwner">Available</span></div>
+    <div class="info-row"><span>Visitors</span><span class="val" id="infoVisitors">0</span></div>
+    <div class="info-row"><span>Coords</span><span class="val" id="infoCoords">0, 0</span></div>
+    <button class="info-btn" id="infoBtn" onclick="claimPlot()">Claim This Plot</button>
+</div>
+
+<div id="compass">
+    <canvas id="compassCanvas" width="60" height="60"></canvas>
+</div>
+
+<div id="toast"></div>
+
+<!-- Ecosystem Stats Panel -->
+<div id="ecoPanel">
+    <h4>🌐 Kingdom Ecosystem</h4>
+    <div class="eco-row"><span>Total Games</span><span class="eco-v" id="ecoTotalGames">0</span></div>
+    <div class="eco-row"><span>Active Wagers</span><span class="eco-v" id="ecoActiveWagers">0</span></div>
+    <div class="eco-row"><span>Total Wagered</span><span class="eco-v" id="ecoTotalWagered">$0</span></div>
+    <div class="eco-row"><span>Agent Count</span><span class="eco-v" id="ecoAgentCount">8</span></div>
+    <h4 style="margin-top:.75rem">🤖 Agents</h4>
+    <div class="eco-agents-mini" id="ecoAgentDots"></div>
+</div>
+
+<!-- Alfred Chat Panel -->
+<div id="alfredPanel">
+    <div class="ap-hdr" onclick="toggleAlfredPanel()"><span>🤖 Alfred — Hub Guide</span><button onclick="toggleAlfredPanel()">&times;</button></div>
+    <div id="alfredMsgs"><div class="amsg alfred">Welcome to the VR Hub! Ask me about any world, agent stats, or how to navigate the metaverse.</div></div>
+    <div id="alfredInput"><input id="alfredIn" placeholder="Ask Alfred…" onkeydown="if(event.key==='Enter')sendAlfred()"><button onclick="sendAlfred()">Send</button></div>
+</div>
+<button id="alfredToggle" onclick="toggleAlfredPanel()" title="Ask Alfred">🤖</button>
+
+<!-- Hub Agent Profile Modal -->
+<div id="hubAgentModal">
+    <div class="hub-agent-card" id="hubAgentCard">
+        <h2>Agent Profile</h2>
+    </div>
+</div>
+
+<script src="/assets/js/vendor/three.r128.min.js"></script>
+<script src="/vr/shared/gositeme-quality.js"></script>
+<script>
+// ═══════════════════════════════════════════════════════════════════
+// GoSiteMe VR World Hub — Three.js + WebXR
+// ═══════════════════════════════════════════════════════════════════
+
+const API = '/pay/api/vr-world.php';
+let scene, camera, renderer, clock;
+let playerPos = { x: 0, y: 1.6, z: 0 };
+let playerRot = { x: 0, y: 0 };
+let moveState = { forward: false, backward: false, left: false, right: false };
+let plots = [];
+let plotMeshes = {};
+let portalMeshes = [];
+let selectedPlot = null;
+let isPointerLocked = false;
+const PLOT_WORLD_SIZE = 5; // Each grid unit = 5 world units
+const MOVE_SPEED = 8;
+
+// Multiplayer presence
+let wsConn = null;
+const otherPlayers = new Map(); // peerId → { mesh, lastUpdate }
+let myPeerId = 'p_' + Math.random().toString(36).substr(2, 8);
+let lastPosBroadcast = 0;
+
+// Portal positions
+const portalLocations = {
+    chess:    { x: 0,   z: 0,   color: 0x7D00FF, icon: '♟️', label: 'Chess Arena' },
+    racing:   { x: 40,  z: 0,   color: 0xef4444, icon: '🏎️', label: 'Racing Track' },
+    gallery:  { x: 0,   z: 40,  color: 0xf59e0b, icon: '🎨', label: 'Art Gallery' },
+    lounge:   { x: -40, z: 0,   color: 0x22c55e, icon: '🛋️', label: 'Social Lounge' },
+    concert:  { x: 0,   z: -40, color: 0xec4899, icon: '🎵', label: 'Concert Hall' },
+    checkers: { x: 30,  z: 30,  color: 0xfb923c, icon: '🏁', label: 'Checkers Hall' },
+    pool:     { x: -30, z: -30, color: 0x00D4FF, icon: '🎱', label: 'Pool Hall' },
+    'speed-dating': { x: 50, z: 30, color: 0xf472b6, icon: '💕', label: 'Speed Dating' },
+    'dj-studio':    { x: -50, z: 30, color: 0x8b5cf6, icon: '🎧', label: 'DJ Studio' },
+    office:         { x: 50, z: -30, color: 0x06b6d4, icon: '🏢', label: 'Virtual Office' },
+    sanctuary:      { x: -50, z: -30, color: 0xFFD700, icon: '⛪', label: 'The Sanctuary' },
+    kingdom:  { x: -70, z: -70, color: 0xFFD700, icon: '✝️', label: 'The Kingdom of God', hidden: true }
+};
+
+// ── Scene Setup ────────────────────────────────────────────────
+function initWorld() {
+    try {
+        console.log('[initWorld] Creating scene...');
+        scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x060614);
+        scene.fog = new THREE.FogExp2(0x060614, 0.012);
+        clock = new THREE.Clock();
+        console.log('[initWorld] Scene created');
+
+        console.log('[initWorld] Creating camera...');
+        camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 200);
+        camera.position.set(0, 1.6, 0);
+        console.log('[initWorld] Camera created');
+
+        console.log('[initWorld] Creating WebGL renderer...');
+        renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(typeof GoSiteMeQuality!=='undefined'?GoSiteMeQuality.dpr:Math.min(window.devicePixelRatio,2));
+        renderer.shadowMap.enabled = true;
+        renderer.xr.enabled = true;
+        console.log('[initWorld] Renderer created, appending to DOM...');
+        document.body.appendChild(renderer.domElement);
+        console.log('[initWorld] Renderer appended, DOM element:', renderer.domElement);
+    } catch(err) {
+        console.error('[initWorld] Failed to create scene:', err);
+        throw err;
+    }
+
+    // Lighting
+    scene.add(new THREE.AmbientLight(0x303050, 0.8));
+
+    const sun = new THREE.DirectionalLight(0xffffff, 0.4);
+    sun.position.set(40, 60, 30);
+    sun.castShadow = true;
+    scene.add(sun);
+
+    // Colored point lights for atmosphere
+    const lights = [
+        { color: 0x0074D9, pos: [0, 8, 0] },
+        { color: 0x7D00FF, pos: [-30, 5, -30] },
+        { color: 0x22c55e, pos: [30, 5, 30] },
+        { color: 0xf59e0b, pos: [-30, 5, 30] },
+        { color: 0x00A8FF, pos: [30, 5, -30] },
+    ];
+    lights.forEach(l => {
+        const pl = new THREE.PointLight(l.color, 0.6, 60);
+        pl.position.set(...l.pos);
+        scene.add(pl);
+    });
+
+    // Ground
+    const groundGeo = new THREE.PlaneGeometry(200, 200, 50, 50);
+    const groundMat = new THREE.MeshStandardMaterial({
+        color: 0x0a0a1a, roughness: 0.95, metalness: 0.05
+    });
+    const ground = new THREE.Mesh(groundGeo, groundMat);
+    ground.rotation.x = -Math.PI / 2;
+    ground.receiveShadow = true;
+    scene.add(ground);
+
+    // Grid lines
+    const gridHelper = new THREE.GridHelper(200, 80, 0x1a1a3e, 0x111128);
+    gridHelper.position.y = 0.01;
+    scene.add(gridHelper);
+
+    // Sky dome with stars
+    createStarfield();
+
+    // Center portal (chess arena)
+    createArenaPortal();
+
+    // Extra portals
+    createExtraPortal('racing',  portalLocations.racing);
+    createExtraPortal('gallery', portalLocations.gallery);
+    createExtraPortal('lounge',  portalLocations.lounge);
+    createExtraPortal('concert', portalLocations.concert);
+    createExtraPortal('checkers', portalLocations.checkers);
+    createExtraPortal('pool', portalLocations.pool);
+    createExtraPortal('speed-dating', portalLocations['speed-dating']);
+    createExtraPortal('dj-studio', portalLocations['dj-studio']);
+    createExtraPortal('office', portalLocations.office);
+    createExtraPortal('sanctuary', portalLocations.sanctuary);
+
+    // Hidden Kingdom portal — only visible when you walk far enough
+    createKingdomPortal();
+
+    // Roads between plots
+    createRoads();
+
+    // Input
+    setupControls();
+
+    // WebXR check
+    if (navigator.xr) {
+        navigator.xr.isSessionSupported('immersive-vr').then(ok => {
+            if (ok) document.getElementById('vrBtn').style.display = '';
+        });
+    }
+
+    window.addEventListener('resize', () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+}
+
+// ── Starfield ──────────────────────────────────────────────────
+function createStarfield() {
+    const count = 2000;
+    const positions = new Float32Array(count * 3);
+    const colors = new Float32Array(count * 3);
+    for (let i = 0; i < count; i++) {
+        const theta = Math.random() * Math.PI * 2;
+        const phi = Math.acos(Math.random() * 2 - 1);
+        const r = 80 + Math.random() * 20;
+        positions[i*3]     = r * Math.sin(phi) * Math.cos(theta);
+        positions[i*3 + 1] = Math.abs(r * Math.cos(phi)); // Only upper hemisphere
+        positions[i*3 + 2] = r * Math.sin(phi) * Math.sin(theta);
+        const brightness = 0.3 + Math.random() * 0.7;
+        const tint = Math.random();
+        colors[i*3]     = tint > 0.5 ? brightness : brightness * 0.7;
+        colors[i*3 + 1] = brightness * 0.8;
+        colors[i*3 + 2] = tint < 0.5 ? brightness : brightness * 0.7;
+    }
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+    geo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+    const mat = new THREE.PointsMaterial({
+        size: 0.3, vertexColors: true, transparent: true, opacity: 0.8,
+        blending: THREE.AdditiveBlending, depthWrite: false
+    });
+    scene.add(new THREE.Points(geo, mat));
+}
+
+// ── Arena Portal ───────────────────────────────────────────────
+function createArenaPortal() {
+    // Central rotating platform
+    const platformGeo = new THREE.CylinderGeometry(4, 4.5, 0.5, 32);
+    const platformMat = new THREE.MeshStandardMaterial({
+        color: 0x1a1a3e, roughness: 0.3, metalness: 0.8,
+        emissive: 0x0074D9, emissiveIntensity: 0.1
+    });
+    const platform = new THREE.Mesh(platformGeo, platformMat);
+    platform.position.y = 0.25;
+    platform.castShadow = true;
+    scene.add(platform);
+
+    // Portal ring
+    const ringGeo = new THREE.TorusGeometry(3, 0.15, 16, 64);
+    const ringMat = new THREE.MeshBasicMaterial({
+        color: 0x7D00FF, transparent: true, opacity: 0.7
+    });
+    const ring = new THREE.Mesh(ringGeo, ringMat);
+    ring.position.y = 3.5;
+    ring.userData.portal = 'chess';
+    scene.add(ring);
+    portalMeshes.push(ring);
+
+    // Portal inner glow
+    const portalGeo = new THREE.CircleGeometry(2.8, 32);
+    const portalMat = new THREE.MeshBasicMaterial({
+        color: 0x0074D9, transparent: true, opacity: 0.15, side: THREE.DoubleSide
+    });
+    const portal = new THREE.Mesh(portalGeo, portalMat);
+    portal.position.y = 3.5;
+    scene.add(portal);
+
+    // Floating chess icon (king shape)
+    const kingGeo = new THREE.Group();
+    const kBase = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.4, 0.2, 16),
+        new THREE.MeshStandardMaterial({ color: 0xe2e8f0, emissive: 0x0074D9, emissiveIntensity: 0.3 }));
+    const kBody = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.25, 0.8, 16),
+        new THREE.MeshStandardMaterial({ color: 0xe2e8f0, emissive: 0x0074D9, emissiveIntensity: 0.3 }));
+    kBody.position.y = 0.5;
+    const kCross = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.25, 0.06),
+        new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0x7D00FF, emissiveIntensity: 0.5 }));
+    kCross.position.y = 1.05;
+    const kCrossH = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.06, 0.06),
+        new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0x7D00FF, emissiveIntensity: 0.5 }));
+    kCrossH.position.y = 1.1;
+    kingGeo.add(kBase, kBody, kCross, kCrossH);
+    kingGeo.position.y = 5;
+    kingGeo.userData.floatY = 5;
+    scene.add(kingGeo);
+    portalMeshes.push(kingGeo);
+
+    // 4 pillars
+    for (let i = 0; i < 4; i++) {
+        const angle = (i / 4) * Math.PI * 2;
+        const px = Math.cos(angle) * 4.5;
+        const pz = Math.sin(angle) * 4.5;
+
+        const pillarGeo = new THREE.CylinderGeometry(0.15, 0.2, 6, 8);
+        const pillarMat = new THREE.MeshStandardMaterial({
+            color: 0x2a2a4a, roughness: 0.4, metalness: 0.6,
+            emissive: 0x7D00FF, emissiveIntensity: 0.1
+        });
+        const pillar = new THREE.Mesh(pillarGeo, pillarMat);
+        pillar.position.set(px, 3, pz);
+        pillar.castShadow = true;
+        scene.add(pillar);
+
+        // Pillar top light
+        const topLight = new THREE.PointLight(0x7D00FF, 0.3, 8);
+        topLight.position.set(px, 6.5, pz);
+        scene.add(topLight);
+    }
+}
+
+// ── Roads ──────────────────────────────────────────────────────
+function createRoads() {
+    const roadMat = new THREE.MeshStandardMaterial({
+        color: 0x14142a, roughness: 0.8, metalness: 0.1,
+        emissive: 0x0074D9, emissiveIntensity: 0.02
+    });
+
+    // Main roads (cross pattern from center)
+    for (let dir = 0; dir < 4; dir++) {
+        const roadGeo = new THREE.PlaneGeometry(2, 80);
+        const road = new THREE.Mesh(roadGeo, roadMat);
+        road.rotation.x = -Math.PI / 2;
+        road.position.y = 0.02;
+        if (dir < 2) {
+            road.rotation.z = dir * Math.PI / 2;
+        } else {
+            road.rotation.z = (dir - 2) * Math.PI / 2 + Math.PI / 4;
+        }
+        scene.add(road);
+    }
+}
+
+// ── Plot Buildings ─────────────────────────────────────────────
+function renderPlot(plot) {
+    const wx = plot.grid_x * PLOT_WORLD_SIZE;
+    const wz = plot.grid_z * PLOT_WORLD_SIZE;
+
+    // Skip center (arena)
+    if (Math.abs(plot.grid_x) <= 1 && Math.abs(plot.grid_z) <= 1) return;
+
+    const group = new THREE.Group();
+    group.position.set(wx, 0, wz);
+    group.userData = { plot: plot };
+
+    // Plot base platform
+    const colors = {
+        residential: 0x0074D9,
+        commercial: 0xf59e0b,
+        park: 0x22c55e,
+        landmark: 0x7D00FF,
+        arena: 0xef4444
+    };
+    const baseColor = colors[plot.plot_type] || 0x0074D9;
+
+    const baseGeo = new THREE.BoxGeometry(PLOT_WORLD_SIZE * 0.9, 0.15, PLOT_WORLD_SIZE * 0.9);
+    const baseMat = new THREE.MeshStandardMaterial({
+        color: 0x1a1a2e, roughness: 0.5, metalness: 0.3,
+        emissive: baseColor, emissiveIntensity: plot.owner_id ? 0.15 : 0.05
+    });
+    const base = new THREE.Mesh(baseGeo, baseMat);
+    base.position.y = 0.075;
+    base.receiveShadow = true;
+    group.add(base);
+
+    // Border glow
+    const borderGeo = new THREE.BoxGeometry(PLOT_WORLD_SIZE * 0.92, 0.02, PLOT_WORLD_SIZE * 0.92);
+    const borderMat = new THREE.MeshBasicMaterial({
+        color: baseColor, transparent: true, opacity: 0.3
+    });
+    const border = new THREE.Mesh(borderGeo, borderMat);
+    border.position.y = 0.16;
+    group.add(border);
+
+    // Generate building if owned
+    if (plot.owner_id) {
+        const seed = hashCode(plot.plot_id);
+        const buildingHeight = 1.5 + (seed % 5) * 0.8;
+        const buildingWidth = 1.5 + (seed % 3) * 0.5;
+
+        const bGeo = new THREE.BoxGeometry(buildingWidth, buildingHeight, buildingWidth);
+        const bMat = new THREE.MeshStandardMaterial({
+            color: baseColor, roughness: 0.4, metalness: 0.5,
+            emissive: baseColor, emissiveIntensity: 0.1
+        });
+        const building = new THREE.Mesh(bGeo, bMat);
+        building.position.y = buildingHeight / 2 + 0.15;
+        building.castShadow = true;
+        group.add(building);
+
+        // Windows (glowing dots on building)
+        const windowCount = Math.floor(buildingHeight / 0.5);
+        for (let wy = 0; wy < windowCount; wy++) {
+            for (let wx2 = -1; wx2 <= 1; wx2++) {
+                const wGeo = new THREE.PlaneGeometry(0.15, 0.15);
+                const wMat = new THREE.MeshBasicMaterial({
+                    color: 0xffffff, transparent: true,
+                    opacity: Math.random() > 0.3 ? 0.6 : 0.1
+                });
+                const win = new THREE.Mesh(wGeo, wMat);
+                win.position.set(
+                    wx2 * 0.4,
+                    0.5 + wy * 0.5,
+                    buildingWidth / 2 + 0.01
+                );
+                group.add(win);
+            }
+        }
+    } else {
+        // Empty plot — show "available" marker
+        const markerGeo = new THREE.ConeGeometry(0.2, 0.5, 4);
+        const markerMat = new THREE.MeshBasicMaterial({
+            color: baseColor, transparent: true, opacity: 0.4
+        });
+        const marker = new THREE.Mesh(markerGeo, markerMat);
+        marker.position.y = 1;
+        marker.userData.floatY = 1;
+        group.add(marker);
+    }
+
+    scene.add(group);
+    plotMeshes[plot.plot_id] = group;
+}
+
+function hashCode(str) {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+        hash = ((hash << 5) - hash) + str.charCodeAt(i);
+        hash |= 0;
+    }
+    return Math.abs(hash);
+}
+
+// ── Controls ───────────────────────────────────────────────────
+function setupControls() {
+    // Pointer lock for mouselook
+    renderer.domElement.addEventListener('click', () => {
+        renderer.domElement.requestPointerLock();
+    });
+
+    document.addEventListener('pointerlockchange', () => {
+        isPointerLocked = !!document.pointerLockElement;
+    });
+
+    document.addEventListener('mousemove', (e) => {
+        if (!isPointerLocked) return;
+        playerRot.y -= e.movementX * 0.002;
+        playerRot.x -= e.movementY * 0.002;
+        playerRot.x = Math.max(-Math.PI/3, Math.min(Math.PI/3, playerRot.x));
+    });
+
+    document.addEventListener('keydown', (e) => {
+        switch(e.code) {
+            case 'KeyW': case 'ArrowUp':    moveState.forward = true; break;
+            case 'KeyS': case 'ArrowDown':  moveState.backward = true; break;
+            case 'KeyA': case 'ArrowLeft':  moveState.left = true; break;
+            case 'KeyD': case 'ArrowRight': moveState.right = true; break;
+            case 'Escape': 
+                document.exitPointerLock();
+                break;
+            case 'KeyE': // Interact
+                interactWithNearest();
+                break;
+        }
+    });
+
+    document.addEventListener('keyup', (e) => {
+        switch(e.code) {
+            case 'KeyW': case 'ArrowUp':    moveState.forward = false; break;
+            case 'KeyS': case 'ArrowDown':  moveState.backward = false; break;
+            case 'KeyA': case 'ArrowLeft':  moveState.left = false; break;
+            case 'KeyD': case 'ArrowRight': moveState.right = false; break;
+        }
+    });
+}
+
+function updatePlayer(dt) {
+    const speed = MOVE_SPEED * dt;
+    const dir = new THREE.Vector3();
+
+    if (moveState.forward)  dir.z -= 1;
+    if (moveState.backward) dir.z += 1;
+    if (moveState.left)     dir.x -= 1;
+    if (moveState.right)    dir.x += 1;
+
+    if (dir.length() > 0) {
+        dir.normalize();
+        dir.applyAxisAngle(new THREE.Vector3(0, 1, 0), playerRot.y);
+        playerPos.x += dir.x * speed;
+        playerPos.z += dir.z * speed;
+
+        // World bounds
+        playerPos.x = Math.max(-50, Math.min(50, playerPos.x));
+        playerPos.z = Math.max(-50, Math.min(50, playerPos.z));
+    }
+
+    camera.position.set(playerPos.x, playerPos.y, playerPos.z);
+    camera.rotation.order = 'YXZ';
+    camera.rotation.y = playerRot.y;
+    camera.rotation.x = playerRot.x;
+
+    // Check proximity to plots
+    checkPlotProximity();
+}
+
+function checkPlotProximity() {
+    let nearestPlot = null;
+    let nearestDist = Infinity;
+
+    for (const pid in plotMeshes) {
+        const mesh = plotMeshes[pid];
+        const dx = mesh.position.x - playerPos.x;
+        const dz = mesh.position.z - playerPos.z;
+        const dist = Math.sqrt(dx*dx + dz*dz);
+        if (dist < nearestDist && dist < PLOT_WORLD_SIZE) {
+            nearestDist = dist;
+            nearestPlot = mesh.userData.plot;
+        }
+    }
+
+    // Check arena portal proximity
+    const portalDist = Math.sqrt(playerPos.x*playerPos.x + playerPos.z*playerPos.z);
+    if (portalDist < 5) {
+        document.getElementById('infoPanel').style.display = 'block';
+        document.getElementById('infoName').textContent = '♟️ Chess Arena';
+        document.getElementById('infoType').textContent = 'ARENA v11.7';
+        document.getElementById('infoType').className = 'info-type arena';
+        document.getElementById('infoOwner').textContent = 'GoSiteMe';
+        document.getElementById('infoVisitors').textContent = '∞';
+        document.getElementById('infoCoords').textContent = '0, 0';
+        document.getElementById('infoBtn').textContent = 'Enter Arena (E)';
+        document.getElementById('infoBtn').onclick = goToChess;
+        selectedPlot = null;
+        return;
+    }
+
+    // Check extra portal proximity
+    for (const [name, loc] of Object.entries(portalLocations)) {
+        if (name === 'chess') continue; // handled above
+        const dx = playerPos.x - loc.x;
+        const dz = playerPos.z - loc.z;
+        const dist = Math.sqrt(dx*dx + dz*dz);
+        if (dist < 5) {
+            document.getElementById('infoPanel').style.display = 'block';
+            document.getElementById('infoName').textContent = loc.icon + ' ' + loc.label;
+            document.getElementById('infoType').textContent = loc.hidden ? 'SANCTUARY' : name.toUpperCase();
+            document.getElementById('infoType').className = 'info-type ' + (loc.hidden ? 'park' : 'landmark');
+            document.getElementById('infoOwner').textContent = 'GoSiteMe';
+            document.getElementById('infoVisitors').textContent = loc.hidden ? '—' : '∞';
+            document.getElementById('infoCoords').textContent = loc.hidden ? '???, ???' : (loc.x + ', ' + loc.z);
+            document.getElementById('infoBtn').textContent = 'Enter ' + loc.label;
+            document.getElementById('infoBtn').onclick = () => window.location.href = '/vr/' + name + '/';
+            selectedPlot = null;
+            return;
+        }
+    }
+
+    if (nearestPlot) {
+        showPlotInfo(nearestPlot);
+    } else {
+        document.getElementById('infoPanel').style.display = 'none';
+        selectedPlot = null;
+    }
+}
+
+function showPlotInfo(plot) {
+    selectedPlot = plot;
+    const panel = document.getElementById('infoPanel');
+    panel.style.display = 'block';
+    document.getElementById('infoName').textContent = plot.plot_name || 'Unnamed Plot';
+    document.getElementById('infoType').textContent = plot.plot_type.toUpperCase();
+    document.getElementById('infoType').className = 'info-type ' + plot.plot_type;
+    document.getElementById('infoOwner').textContent = plot.owner_id ? 'Owned' : 'Available!';
+    document.getElementById('infoVisitors').textContent = plot.visitors || 0;
+    document.getElementById('infoCoords').textContent = plot.grid_x + ', ' + plot.grid_z;
+
+    const btn = document.getElementById('infoBtn');
+    if (plot.owner_id) {
+        btn.textContent = 'Visit Plot';
+        btn.onclick = () => visitPlot(plot.plot_id);
+    } else {
+        btn.textContent = 'Claim This Plot!';
+        btn.onclick = () => claimPlot();
+    }
+}
+
+// ── Interactions ───────────────────────────────────────────────
+function interactWithNearest() {
+    const portalDist = Math.sqrt(playerPos.x*playerPos.x + playerPos.z*playerPos.z);
+    if (portalDist < 5) {
+        goToChess();
+        return;
+    }
+    if (selectedPlot && !selectedPlot.owner_id) {
+        claimPlot();
+    }
+}
+
+function goToChess() {
+        window.location.href = '/vr/chess/';
+}
+
+function goToChessMasters() {
+        window.location.href = '/vr/chess-masters/';
+}
+
+function goToExperiences() {
+    window.location.href = '/vr/experiences/';
+}
+
+function goToPlots() {
+    showToast('Opening world map… (press Escape to unlock mouse)');
+    // Could open account dashboard in new tab
+    window.open('/account/vr-world', '_blank');
+}
+
+async function claimPlot() {
+    if (!selectedPlot) return;
+    const name = prompt('Name your plot:');
+    if (!name) return;
+
+    try {
+        const r = await fetch(API + '?action=world-claim', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'same-origin',
+            body: JSON.stringify({ plot_id: selectedPlot.plot_id, name: name })
+        });
+        const data = await r.json();
+        if (data.error) {
+            showToast(data.error);
+        } else {
+            showToast('Plot claimed! 🎉');
+            loadPlots(); // Refresh
+        }
+    } catch(e) {
+        showToast('Failed to claim plot');
+    }
+}
+
+function visitPlot(plotId) {
+    showToast('Visiting plot…');
+}
+
+// ── Minimap ────────────────────────────────────────────────────
+function updateMinimap() {
+    const canvas = document.getElementById('minimapCanvas');
+    const ctx = canvas.getContext('2d');
+    const w = canvas.width, h = canvas.height;
+
+    ctx.clearRect(0, 0, w, h);
+
+    // Background
+    ctx.fillStyle = 'rgba(10,10,20,0.9)';
+    ctx.fillRect(0, 0, w, h);
+
+    // Grid
+    ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+    for (let i = 0; i < 16; i++) {
+        const p = (i / 16) * w;
+        ctx.beginPath(); ctx.moveTo(p, 0); ctx.lineTo(p, h); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(0, p); ctx.lineTo(w, p); ctx.stroke();
+    }
+
+    // Plots
+    const scale = w / 100; // World is ~100 units across
+    plots.forEach(p => {
+        if (Math.abs(p.grid_x) <= 1 && Math.abs(p.grid_z) <= 1) return;
+        const px = (p.grid_x * PLOT_WORLD_SIZE + 50) * scale;
+        const py = (p.grid_z * PLOT_WORLD_SIZE + 50) * scale;
+        const size = PLOT_WORLD_SIZE * scale * 0.8;
+
+        const colors = {
+            residential: p.owner_id ? '#0074D9' : '#1a1a3e',
+            commercial: p.owner_id ? '#f59e0b' : '#1a1a3e',
+            park: '#22c55e',
+            landmark: '#7D00FF',
+            arena: '#ef4444'
+        };
+        ctx.fillStyle = colors[p.plot_type] || '#1a1a3e';
+        ctx.globalAlpha = p.owner_id ? 0.6 : 0.2;
+        ctx.fillRect(px - size/2, py - size/2, size, size);
+        ctx.globalAlpha = 1;
+    });
+
+    // Center arena
+    ctx.fillStyle = '#7D00FF';
+    ctx.globalAlpha = 0.5;
+    ctx.beginPath();
+    ctx.arc(w/2, h/2, 5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.globalAlpha = 1;
+
+    // Extra portals on minimap (skip hidden ones)
+    for (const [name, loc] of Object.entries(portalLocations)) {
+        if (name === 'chess' || loc.hidden) continue;
+        const px = (loc.x + 50) * scale;
+        const py = (loc.z + 50) * scale;
+        ctx.fillStyle = '#' + loc.color.toString(16).padStart(6, '0');
+        ctx.globalAlpha = 0.5;
+        ctx.beginPath();
+        ctx.arc(px, py, 4, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.globalAlpha = 1;
+    }
+
+    // Other players on minimap
+    for (const [peerId, entry] of otherPlayers) {
+        const opx = ((entry.mesh.position.x || 0) + 50) * scale;
+        const opy = ((entry.mesh.position.z || 0) + 50) * scale;
+        ctx.fillStyle = '#22c55e';
+        ctx.beginPath();
+        ctx.arc(opx, opy, 2, 0, Math.PI * 2);
+        ctx.fill();
+    }
+
+    // Player dot
+    const ppx = (playerPos.x + 50) * scale;
+    const ppy = (playerPos.z + 50) * scale;
+    ctx.fillStyle = '#00A8FF';
+    ctx.beginPath();
+    ctx.arc(ppx, ppy, 3, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Direction indicator
+    ctx.strokeStyle = '#00A8FF';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(ppx, ppy);
+    ctx.lineTo(ppx + Math.sin(-playerRot.y) * 8, ppy + Math.cos(-playerRot.y) * -8);
+    ctx.stroke();
+}
+
+// ── Compass ────────────────────────────────────────────────────
+function updateCompass() {
+    const canvas = document.getElementById('compassCanvas');
+    const ctx = canvas.getContext('2d');
+    const cx = 30, cy = 30, r = 24;
+
+    ctx.clearRect(0, 0, 60, 60);
+    ctx.fillStyle = 'rgba(22,22,54,0.8)';
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.fill();
+
+    const directions = [
+        { label: 'N', angle: 0,            color: '#ef4444' },
+        { label: 'E', angle: Math.PI / 2,  color: 'rgba(255,255,255,.3)' },
+        { label: 'S', angle: Math.PI,      color: 'rgba(255,255,255,.3)' },
+        { label: 'W', angle: -Math.PI / 2, color: 'rgba(255,255,255,.3)' },
+    ];
+
+    directions.forEach(d => {
+        const a = d.angle + playerRot.y;
+        const dx = Math.sin(a) * (r - 8);
+        const dy = -Math.cos(a) * (r - 8);
+        ctx.fillStyle = d.color;
+        ctx.font = 'bold 10px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(d.label, cx + dx, cy + dy);
+    });
+
+    // Center dot
+    ctx.fillStyle = '#00A8FF';
+    ctx.beginPath();
+    ctx.arc(cx, cy, 2, 0, Math.PI * 2);
+    ctx.fill();
+}
+
+// ── Toast ──────────────────────────────────────────────────────
+function showToast(msg) {
+    const el = document.getElementById('toast');
+    el.textContent = msg;
+    el.classList.add('visible');
+    clearTimeout(el._timer);
+    el._timer = setTimeout(() => el.classList.remove('visible'), 3000);
+}
+
+// ── WebXR ──────────────────────────────────────────────────────
+async function enterVR() {
+    if (!navigator.xr) return;
+    try {
+        const session = await navigator.xr.requestSession('immersive-vr', {
+            optionalFeatures: ['local-floor', 'bounded-floor']
+        });
+        renderer.xr.setSession(session);
+        showToast('Entering VR…');
+    } catch(e) {
+        showToast('VR not available');
+    }
+}
+
+// ── Load Data ──────────────────────────────────────────────────
+async function loadPlots() {
+    try {
+        const r = await fetch(API + '?action=world-plots&per_page=100', { credentials: 'same-origin' });
+        const data = await r.json();
+        if (data.plots) {
+            plots = data.plots;
+            // Clear old meshes
+            Object.values(plotMeshes).forEach(m => scene.remove(m));
+            plotMeshes = {};
+            // Render new
+            plots.forEach(p => renderPlot(p));
+        }
+    } catch(e) {
+        console.error('Failed to load plots:', e);
+    }
+}
+
+// ── The Kingdom of God — Hidden Sanctuary ─────────────────────
+function createKingdomPortal() {
+    const loc = portalLocations.kingdom;
+    const g = new THREE.Group();
+    g.position.set(loc.x, 0, loc.z);
+
+    // Golden platform — larger, sacred geometry
+    const platGeo = new THREE.CylinderGeometry(5, 5.5, 0.3, 12);
+    const platMat = new THREE.MeshStandardMaterial({
+        color: 0x1a1a2e, roughness: 0.2, metalness: 0.9,
+        emissive: 0xFFD700, emissiveIntensity: 0.25
+    });
+    const plat = new THREE.Mesh(platGeo, platMat);
+    plat.position.y = 0.15;
+    g.add(plat);
+
+    // Golden ring — large, warm glow
+    const ringGeo = new THREE.TorusGeometry(4, 0.15, 16, 64);
+    const ringMat = new THREE.MeshBasicMaterial({ color: 0xFFD700, transparent: true, opacity: 0.7 });
+    const ring = new THREE.Mesh(ringGeo, ringMat);
+    ring.position.y = 5;
+    ring.userData.portal = 'kingdom';
+    g.add(ring);
+    portalMeshes.push(ring);
+
+    // Inner warm glow
+    const glowGeo = new THREE.CircleGeometry(3.8, 32);
+    const glowMat = new THREE.MeshBasicMaterial({ color: 0xFFD700, transparent: true, opacity: 0.08, side: THREE.DoubleSide });
+    const glow = new THREE.Mesh(glowGeo, glowMat);
+    glow.position.y = 5;
+    g.add(glow);
+
+    // Cross — the centerpiece
+    const crossV = new THREE.Mesh(
+        new THREE.BoxGeometry(0.15, 2, 0.15),
+        new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0xFFD700, emissiveIntensity: 0.8 })
+    );
+    crossV.position.y = 7;
+    g.add(crossV);
+    const crossH = new THREE.Mesh(
+        new THREE.BoxGeometry(1.2, 0.15, 0.15),
+        new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0xFFD700, emissiveIntensity: 0.8 })
+    );
+    crossH.position.y = 7.6;
+    g.add(crossH);
+
+    // Ascending particles — golden dust rising
+    const partCount = 200;
+    const partPos = new Float32Array(partCount * 3);
+    for (let i = 0; i < partCount; i++) {
+        const a = Math.random() * Math.PI * 2;
+        const r = Math.random() * 5;
+        partPos[i*3] = Math.cos(a) * r;
+        partPos[i*3+1] = Math.random() * 12;
+        partPos[i*3+2] = Math.sin(a) * r;
+    }
+    const partGeo = new THREE.BufferGeometry();
+    partGeo.setAttribute('position', new THREE.BufferAttribute(partPos, 3));
+    const partMat = new THREE.PointsMaterial({
+        color: 0xFFD700, size: 0.12, transparent: true, opacity: 0.6,
+        blending: THREE.AdditiveBlending, depthWrite: false
+    });
+    const particles = new THREE.Points(partGeo, partMat);
+    particles.userData.kingdomParticles = true;
+    g.add(particles);
+
+    // 12 pillars (the apostles)
+    for (let i = 0; i < 12; i++) {
+        const angle = (i / 12) * Math.PI * 2;
+        const px = Math.cos(angle) * 6;
+        const pz = Math.sin(angle) * 6;
+        const pillar = new THREE.Mesh(
+            new THREE.CylinderGeometry(0.1, 0.12, 8, 8),
+            new THREE.MeshStandardMaterial({ color: 0x2a2a4a, emissive: 0xFFD700, emissiveIntensity: 0.08 })
+        );
+        pillar.position.set(px, 4, pz);
+        g.add(pillar);
+    }
+
+    // Warm light
+    const warmLight = new THREE.PointLight(0xFFD700, 1.2, 25);
+    warmLight.position.set(0, 8, 0);
+    g.add(warmLight);
+    const ambientGold = new THREE.PointLight(0xFFAA00, 0.4, 15);
+    ambientGold.position.set(0, 2, 0);
+    g.add(ambientGold);
+
+    scene.add(g);
+}
+
+// ── Extra Portals ──────────────────────────────────────────────
+function createExtraPortal(name, loc) {
+    // Platform
+    const platGeo = new THREE.CylinderGeometry(3, 3.5, 0.4, 24);
+    const platMat = new THREE.MeshStandardMaterial({
+        color: 0x1a1a3e, roughness: 0.3, metalness: 0.8,
+        emissive: loc.color, emissiveIntensity: 0.15
+    });
+    const plat = new THREE.Mesh(platGeo, platMat);
+    plat.position.set(loc.x, 0.2, loc.z);
+    plat.castShadow = true;
+    scene.add(plat);
+
+    // Ring
+    const ringGeo = new THREE.TorusGeometry(2.5, 0.12, 16, 48);
+    const ringMat = new THREE.MeshBasicMaterial({ color: loc.color, transparent: true, opacity: 0.6 });
+    const ring = new THREE.Mesh(ringGeo, ringMat);
+    ring.position.set(loc.x, 3, loc.z);
+    ring.userData.portal = name;
+    scene.add(ring);
+    portalMeshes.push(ring);
+
+    // Inner glow
+    const glowGeo = new THREE.CircleGeometry(2.3, 32);
+    const glowMat = new THREE.MeshBasicMaterial({ color: loc.color, transparent: true, opacity: 0.1, side: THREE.DoubleSide });
+    const glow = new THREE.Mesh(glowGeo, glowMat);
+    glow.position.set(loc.x, 3, loc.z);
+    scene.add(glow);
+
+    // Floating marker
+    const markerGeo = new THREE.OctahedronGeometry(0.5, 0);
+    const markerMat = new THREE.MeshStandardMaterial({ color: loc.color, emissive: loc.color, emissiveIntensity: 0.5 });
+    const marker = new THREE.Mesh(markerGeo, markerMat);
+    marker.position.set(loc.x, 4.5, loc.z);
+    marker.userData.floatY = 4.5;
+    scene.add(marker);
+    portalMeshes.push(marker);
+
+    // Pillar lights
+    for (let i = 0; i < 3; i++) {
+        const a = (i / 3) * Math.PI * 2;
+        const px = loc.x + Math.cos(a) * 3.5;
+        const pz = loc.z + Math.sin(a) * 3.5;
+        const light = new THREE.PointLight(loc.color, 0.25, 8);
+        light.position.set(px, 4, pz);
+        scene.add(light);
+    }
+}
+
+function goToPortal(name) {
+    const loc = portalLocations[name];
+    if (!loc) return;
+    playerPos.x = loc.x;
+    playerPos.z = loc.z + 6;
+    showToast('Teleported to ' + loc.label);
+}
+
+// ── Multiplayer Presence ───────────────────────────────────────
+function initMultiplayer() {
+    const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsUrl = proto + '//' + location.host + '/ws/?token=' + myPeerId;
+    try {
+        wsConn = new WebSocket(wsUrl);
+    } catch(e) {
+        console.log('WebSocket not available, single-player mode');
+        return;
+    }
+
+    wsConn.onopen = () => {
+        wsConn.send(JSON.stringify({ type: 'subscribe', channel: 'vr:presence' }));
+        wsConn.send(JSON.stringify({ type: 'presence', status: 'online' }));
+    };
+
+    wsConn.onmessage = (evt) => {
+        try {
+            const msg = JSON.parse(evt.data);
+            if (msg.type !== 'event' || msg.channel !== 'vr:presence') return;
+            const d = msg.data;
+            if (!d || d.from === myPeerId) return;
+
+            if (d.action === 'move') {
+                updateOtherPlayer(d.from, d.x, d.y, d.z, d.ry);
+            } else if (d.action === 'leave') {
+                removeOtherPlayer(d.from);
+            }
+        } catch(e) {}
+    };
+
+    wsConn.onclose = () => { wsConn = null; };
+    wsConn.onerror = () => { wsConn = null; };
+
+    window.addEventListener('beforeunload', () => {
+        if (wsConn && wsConn.readyState === WebSocket.OPEN) {
+            wsConn.send(JSON.stringify({ type: 'publish', channel: 'vr:presence', data: { action: 'leave', from: myPeerId } }));
+        }
+    });
+}
+
+function broadcastPosition() {
+    if (!wsConn || wsConn.readyState !== WebSocket.OPEN) return;
+    const now = Date.now();
+    if (now - lastPosBroadcast < 100) return; // 10 fps max
+    lastPosBroadcast = now;
+    wsConn.send(JSON.stringify({
+        type: 'publish', channel: 'vr:presence',
+        data: { action: 'move', from: myPeerId, x: playerPos.x, y: playerPos.y, z: playerPos.z, ry: playerRot.y }
+    }));
+}
+
+function updateOtherPlayer(peerId, x, y, z, ry) {
+    let entry = otherPlayers.get(peerId);
+    if (!entry) {
+        // Create simple avatar mesh
+        const group = new THREE.Group();
+        // Body
+        const body = new THREE.Mesh(
+            new THREE.CylinderGeometry(0.2, 0.25, 1, 8),
+            new THREE.MeshStandardMaterial({ color: 0x00A8FF, emissive: 0x0074D9, emissiveIntensity: 0.3 })
+        );
+        body.position.y = 0.7;
+        group.add(body);
+        // Head
+        const head = new THREE.Mesh(
+            new THREE.SphereGeometry(0.2, 8, 8),
+            new THREE.MeshStandardMaterial({ color: 0x00A8FF, emissive: 0x0074D9, emissiveIntensity: 0.4 })
+        );
+        head.position.y = 1.4;
+        group.add(head);
+        // Name tag light
+        const light = new THREE.PointLight(0x00A8FF, 0.2, 3);
+        light.position.y = 1.8;
+        group.add(light);
+
+        scene.add(group);
+        entry = { mesh: group, lastUpdate: Date.now() };
+        otherPlayers.set(peerId, entry);
+        updatePlayerCount();
+    }
+    // Smooth lerp position
+    entry.targetX = x; entry.targetY = y; entry.targetZ = z; entry.targetRY = ry;
+    entry.lastUpdate = Date.now();
+}
+
+function removeOtherPlayer(peerId) {
+    const entry = otherPlayers.get(peerId);
+    if (entry) {
+        scene.remove(entry.mesh);
+        otherPlayers.delete(peerId);
+        updatePlayerCount();
+    }
+}
+
+function updatePlayerCount() {
+    const el = document.getElementById('playerCount');
+    if (el) el.innerHTML = '<span class="dot"></span>' + (otherPlayers.size + 1) + ' online';
+}
+
+function updateMultiplayer(dt) {
+    // Lerp other players toward their target positions
+    for (const [peerId, entry] of otherPlayers) {
+        if (Date.now() - entry.lastUpdate > 10000) {
+            removeOtherPlayer(peerId);
+            continue;
+        }
+        if (entry.targetX !== undefined) {
+            const m = entry.mesh;
+            m.position.x += (entry.targetX - m.position.x) * 5 * dt;
+            m.position.y = 0;
+            m.position.z += (entry.targetZ - m.position.z) * 5 * dt;
+            m.rotation.y = entry.targetRY || 0;
+        }
+    }
+}
+
+// ── Animation Loop ─────────────────────────────────────────────
+function animate() {
+    try {
+        requestAnimationFrame(animate);
+
+        const dt = Math.min(clock.getDelta(), 0.1);
+
+        updatePlayer(dt);
+
+        // Multiplayer
+        broadcastPosition();
+        updateMultiplayer(dt);
+
+        // Animate portals
+        const time = clock.elapsedTime;
+        portalMeshes.forEach(m => {
+            if (m.userData.portal) {
+                m.rotation.y = time * 0.5;
+                m.rotation.z = Math.sin(time) * 0.1;
+            }
+            if (m.userData.floatY !== undefined) {
+                m.position.y = m.userData.floatY + Math.sin(time * 1.5) * 0.3;
+                m.rotation.y = time * 0.8;
+            }
+        });
+
+        // Floating markers on unclaimed plots
+        Object.values(plotMeshes).forEach(group => {
+            group.children.forEach(child => {
+                if (child.userData.floatY !== undefined) {
+                    child.position.y = child.userData.floatY + Math.sin(time * 2 + group.position.x) * 0.2;
+                    child.rotation.y = time;
+                }
+                // Kingdom ascending golden particles
+                if (child.userData.kingdomParticles) {
+                    const pos = child.geometry.attributes.position.array;
+                    for (let i = 1; i < pos.length; i += 3) {
+                        pos[i] += dt * (0.3 + (i % 5) * 0.1);
+                        if (pos[i] > 12) pos[i] = 0;
+                    }
+                    child.geometry.attributes.position.needsUpdate = true;
+                    child.rotation.y = time * 0.2;
+                }
+            });
+        });
+
+        // Update UI
+        if (Math.floor(time * 4) % 2 === 0) { // Every ~0.5s
+            updateMinimap();
+            updateCompass();
+        }
+
+        renderer.render(scene, camera);
+    } catch(err) {
+        console.error('[VR Hub] Animation loop error:', err.message);
+    }
+}
+
+// ── DEBUG SYSTEM ───────────────────────────────────────────────
+try {
+    const debugLogs = [];
+    const maxLogLines = 50;
+    const origLog = console.log;
+    const origError = console.error;
+
+    function debugLog(msg, isError=false) {
+        debugLogs.push({ msg, isError, time: new Date().toLocaleTimeString() });
+        if (debugLogs.length > maxLogLines) debugLogs.shift();
+        
+        const panel = document.getElementById('debugPanel');
+        if (panel && panel.classList.contains('show')) {
+            const entry = document.createElement('div');
+            entry.className = 'debug-entry' + (isError ? ' error' : '');
+            entry.textContent = `[${debugLogs[debugLogs.length-1].time}] ${msg}`;
+            panel.appendChild(entry);
+            panel.scrollTop = panel.scrollHeight;
+        }
+        
+        // Use original console methods to avoid recursion
+        if (isError) {
+            origError.apply(console, [msg]);
+        } else {
+            origLog.apply(console, [msg]);
+        }
+    }
+
+    // Safely attach debug panel toggle event
+    if (document.getElementById('debugToggle')) {
+        document.getElementById('debugToggle').addEventListener('click', () => {
+            const panel = document.getElementById('debugPanel');
+            if (panel) {
+                panel.classList.toggle('show');
+                if (panel.classList.contains('show')) {
+                    panel.innerHTML = '';
+                    debugLogs.forEach(log => {
+                        const entry = document.createElement('div');
+                        entry.className = 'debug-entry' + (log.isError ? ' error' : '');
+                        entry.textContent = `[${log.time}] ${log.msg}`;
+                        panel.appendChild(entry);
+                    });
+                }
+            }
+        });
+    }
+
+    // Override console.log for app initialization messages
+    console.log = function(...args) {
+        origLog.apply(console, args);
+        if (args[0] && args[0].includes('[')) debugLog(args.join(' '));
+    };
+    console.error = function(...args) {
+        origError.apply(console, args);
+        if (args[0]) debugLog(args.join(' '), true);
+    };
+
+    origLog('[DEBUG] VR Hub debug system initialized');
+} catch(debugErr) {
+    // If debug system fails, log to original console and continue
+    console.error('[DEBUG INIT ERROR]', debugErr.message);
+}
+
+// ── Boot ───────────────────────────────────────────────────────
+window.addEventListener('load', async () => {
+    try {
+        console.log('[VR Hub] Boot sequence started');
+        
+        console.log('[VR Hub] Initializing world...');
+        initWorld();
+        console.log('[VR Hub] World initialized, renderer attached');
+        
+        console.log('[VR Hub] Loading plots...');
+        await loadPlots();
+        console.log('[VR Hub] Plots loaded');
+        
+        console.log('[VR Hub] Initializing multiplayer...');
+        initMultiplayer();
+        console.log('[VR Hub] Multiplayer initialized');
+        
+        console.log('[VR Hub] Starting animation loop...');
+        animate();
+        console.log('[VR Hub] Animation loop started');
+        
+        console.log('[VR Hub] Boot complete, hiding loading screen...');
+        setTimeout(() => {
+            document.getElementById('loading').classList.add('hidden');
+            console.log('[VR Hub] Loading screen hidden');
+        }, 1500);
+    } catch(err) {
+        console.error('[VR Hub] FATAL: Boot sequence failed', err);
+        console.error('[VR Hub] Error stack:', err.stack);
+        const loadEl = document.getElementById('loading');
+        if (loadEl) {
+            loadEl.innerHTML = `<h1>Error during initialization</h1><p style="color:red;font-size:0.9rem;max-width:400px;margin-top:1rem;text-align:left;font-family:monospace">${err.message}</p>`;
+        }
+    }
+});
+
+window.addEventListener('error', (e) => {
+    console.error('[VR Hub] Global error:', e.message, e.filename, e.lineno);
+});
+
+window.addEventListener('unhandledrejection', (e) => {
+    console.error('[VR Hub] Unhandled promise rejection:', e.reason);
+});
+
+window.goToChess = goToChess;
+window.goToPlots = goToPlots;
+window.goToPortal = goToPortal;
+window.enterVR = enterVR;
+
+// ── Ecosystem Integration ──────────────────────────────────────
+const HUB_AGENTS = [
+    {id:'alfred', name:'Alfred', color:'#0074D9', elo:1400, specialty:'Positional', emoji:'🤖'},
+    {id:'nova', name:'Nova', color:'#a855f7', elo:1350, specialty:'Aggressive', emoji:'⚡'},
+    {id:'sage', name:'Sage', color:'#22c55e', elo:1250, specialty:'Defensive', emoji:'🌿'},
+    {id:'atlas', name:'Atlas', color:'#f59e0b', elo:1300, specialty:'Tactical', emoji:'🗺️'},
+    {id:'cipher', name:'Cipher', color:'#ef4444', elo:1500, specialty:'Aggressive', emoji:'🔐'},
+    {id:'architect', name:'Architect', color:'#06b6d4', elo:1380, specialty:'Strategic', emoji:'🏛️'},
+    {id:'pulse', name:'Pulse', color:'#ec4899', elo:1200, specialty:'Balanced', emoji:'💗'},
+    {id:'pierre', name:'Pierre', color:'#818cf8', elo:1150, specialty:'Cautious', emoji:'🎭'}
+];
+
+function loadEcosystem() {
+    // Render agent dots
+    const dotsEl = document.getElementById('ecoAgentDots');
+    dotsEl.innerHTML = HUB_AGENTS.map(a =>
+        '<div class="agent-dot" style="background:' + a.color + '" onclick="showHubAgent(\'' + a.id + '\')" title="' + a.name + '">' + a.emoji + '</div>'
+    ).join('');
+
+    // Load ecosystem status from API
+    fetch('/api/game-ecosystem.php?action=ecosystem-status', { credentials: 'same-origin' })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success && data.ecosystem) {
+            const e = data.ecosystem;
+            document.getElementById('ecoTotalGames').textContent = e.total_games || 0;
+            document.getElementById('ecoActiveWagers').textContent = e.active_wagers || 0;
+            document.getElementById('ecoTotalWagered').textContent = '$' + ((e.total_wagered || 0) / 100).toFixed(2);
+            document.getElementById('ecoAgentCount').textContent = e.agent_count || 8;
+        }
+    })
+    .catch(() => {});
+}
+
+window.showHubAgent = function(agentId) {
+    const card = document.getElementById('hubAgentCard');
+    const local = HUB_AGENTS.find(a => a.id === agentId);
+    if (!local) return;
+
+    card.innerHTML = '<div class="ap-avatar" style="background:' + local.color + '">' + local.emoji + '</div>' +
+        '<div class="ap-name">' + local.name + '</div>' +
+        '<div class="ap-title">' + local.specialty + ' · ELO ' + local.elo + '</div>' +
+        '<p style="color:rgba(255,255,255,.4);font-size:.8rem">Loading stats…</p>';
+    document.getElementById('hubAgentModal').classList.add('show');
+
+    fetch('/api/game-ecosystem.php?action=agent-profile&agent_id=' + agentId, { credentials: 'same-origin' })
+    .then(r => r.json())
+    .then(data => {
+        const a = (data.success && data.agent) ? data.agent : local;
+        const winRate = a.games_played > 0 ? ((a.wins / a.games_played) * 100).toFixed(1) : '50.0';
+
+        card.innerHTML =
+            '<div class="ap-avatar" style="background:' + (a.color || local.color) + '">' + (a.emoji || local.emoji) + '</div>' +
+            '<div class="ap-name">' + (a.name || local.name) + '</div>' +
+            '<div class="ap-title">' + (a.specialty || local.specialty) + ' · ELO ' + (a.elo || local.elo) + '</div>' +
+            '<div class="ap-wallet">💰 $' + ((a.wallet || 0) / 100).toFixed(2) + '</div>' +
+            '<div class="ap-stats">' +
+                '<div class="ap-stat"><div class="val">' + (a.wins || 0) + '</div><div class="lbl">Wins</div></div>' +
+                '<div class="ap-stat"><div class="val">' + (a.losses || 0) + '</div><div class="lbl">Losses</div></div>' +
+                '<div class="ap-stat"><div class="val">' + winRate + '%</div><div class="lbl">Win Rate</div></div>' +
+            '</div>' +
+            '<div class="ap-stats">' +
+                '<div class="ap-stat"><div class="val">' + (a.chess_wins || 0) + '</div><div class="lbl">Chess W</div></div>' +
+                '<div class="ap-stat"><div class="val">' + (a.checkers_wins || 0) + '</div><div class="lbl">Checkers W</div></div>' +
+                '<div class="ap-stat"><div class="val">' + (a.pool_wins || 0) + '</div><div class="lbl">Pool W</div></div>' +
+            '</div>' +
+            '<button style="padding:.5rem 1.5rem;border-radius:10px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.05);color:rgba(255,255,255,.6);cursor:pointer;font-size:.78rem;margin-top:.8rem" onclick="closeHubAgent()">Close</button>';
+    })
+    .catch(() => {
+        card.innerHTML += '<p style="color:#ef4444;font-size:.75rem">Could not load full stats</p>' +
+            '<button style="padding:.5rem 1.5rem;border-radius:10px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.05);color:rgba(255,255,255,.6);cursor:pointer;font-size:.78rem;margin-top:.8rem" onclick="closeHubAgent()">Close</button>';
+    });
+};
+
+window.closeHubAgent = function() {
+    document.getElementById('hubAgentModal').classList.remove('show');
+};
+
+setTimeout(loadEcosystem, 2000);
+
+// ── Alfred Chat ─────────────────────────────────────────────────
+window._hubConvId = '';
+window.toggleAlfredPanel = function() {
+    document.getElementById('alfredPanel').classList.toggle('open');
+    if (document.getElementById('alfredPanel').classList.contains('open')) {
+        document.getElementById('alfredIn').focus();
+    }
+};
+window.sendAlfred = function() {
+    var input = document.getElementById('alfredIn');
+    var msg = input.value.trim();
+    if (!msg) return;
+    input.value = '';
+    var msgs = document.getElementById('alfredMsgs');
+    msgs.innerHTML += '<div class="amsg user">' + msg.replace(/</g,'&lt;') + '</div>';
+    msgs.scrollTop = msgs.scrollHeight;
+
+    // Build context
+    var worlds = Object.keys(portalLocations).map(function(k) { return portalLocations[k].label; }).join(', ');
+    var agentNames = HUB_AGENTS.map(function(a) { return a.name + ' (' + a.specialty + ', ELO ' + a.elo + ')'; }).join(', ');
+    var eco = 'Games: ' + (document.getElementById('ecoTotalGames').textContent) +
+             ', Wagers: ' + (document.getElementById('ecoActiveWagers').textContent) +
+             ', Wagered: ' + (document.getElementById('ecoTotalWagered').textContent);
+    var ctx = 'VR Hub — central metaverse portal. Worlds: ' + worlds + '. Agents: ' + agentNames + '. Ecosystem: ' + eco + '. Player position: (' + Math.round(playerPos.x) + ',' + Math.round(playerPos.z) + ').';
+
+    msgs.innerHTML += '<div class="amsg alfred" id="alfredTyping">Thinking…</div>';
+    msgs.scrollTop = msgs.scrollHeight;
+
+    fetch('/api/alfred-chat.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
+        body: JSON.stringify({
+            message: msg,
+            agent: 'alfred',
+            context: ctx,
+            page_url: '/vr/hub/',
+            conv_id: window._hubConvId || '',
+            model: 'auto'
+        })
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        var el = document.getElementById('alfredTyping');
+        if (el) el.remove();
+        if (data.conv_id) window._hubConvId = data.conv_id;
+        var reply = (data.reply || data.response || 'No response').replace(/</g, '&lt;').replace(/\n/g, '<br>');
+        msgs.innerHTML += '<div class="amsg alfred">' + reply + '</div>';
+        msgs.scrollTop = msgs.scrollHeight;
+    })
+    .catch(function() {
+        var el = document.getElementById('alfredTyping');
+        if (el) el.textContent = 'Connection error. Try again.';
+    });
+};
+</script>
+<script src="/assets/js/agent-presence.js" data-game="" defer></script>
+<script>document.addEventListener('DOMContentLoaded', function(){ AgentPresence.init(); });</script>
+<div style="position:fixed;bottom:0;left:0;right:0;text-align:center;padding:4px;font-size:11px;opacity:0.4;z-index:999">
+    <a href="/privacy-policy/" style="color:inherit">Privacy Policy</a> · <a href="/terms-of-service.php" style="color:inherit">Terms of Service</a>
+</div>
+<script src="/vr/shared/heartbeat.js"></script>
+</body>
+</html>

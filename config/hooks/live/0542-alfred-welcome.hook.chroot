@@ -1,0 +1,185 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# HOOK 0700: Alfred Linux 7.77 - Kingdom Welcome Experience (PyQt5)
+
+set +e
+chmod 1777 /tmp 2>/dev/null || true
+
+apt_update_nonfatal() {
+    local tag="${1:-apt-update}"
+    mkdir -p /var/lib/alfred/build-flags || true
+    if ! apt-get update -qq 2>/dev/null || true; then
+        echo "[WELCOME-APT] WARN: update failed (non-fatal): ${tag}" >&2 || true
+        echo "${tag}_update_failed=$(date -Is)" >> /var/lib/alfred/build-flags/welcome-apt-failed || true
+    fi
+}
+
+apt_nonfatal() {
+    local tag="${1:-apt-install}"
+    shift
+    mkdir -p /var/lib/alfred/build-flags || true
+ if ! apt-get install -y --fix-broken -y --no-install-recommends "$@" 2>/dev/null; then
+        echo "[WELCOME-APT] WARN: install failed (non-fatal): ${tag} ($*)" >&2 || true
+        echo "${tag}_install_failed=$(date -Is)" >> /var/lib/alfred/build-flags/welcome-apt-failed || true
+    fi
+}
+
+echo "[0700] Kingdom Welcome Experience (PyQt5)"
+
+apt_update_nonfatal welcome-baseline
+apt_nonfatal welcome-tools zenity xdg-utils python3-pyqt5 software-properties-gtk
+
+install -d -m 0755 /usr/local/bin /var/lib/alfred /usr/share/alfred/welcome /usr/share/wallpapers/Kingdom
+
+# Prefer 8k wallpapers
+WELCOME_SRC=""
+for p in $(find /usr/share/wallpapers/Kingdom -maxdepth 1 -type f \( -iname '*.png' -o -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.webp' \) 2>/dev/null | sort); do
+  WELCOME_SRC="$p"
+  break
+done
+if [ -z "$WELCOME_SRC" ]; then
+  for p in \
+    /build-assets/music/cover-art-zion-2.png \
+    /build-assets/music/cover-art-truth-2.jpeg; do
+    if [ -f "$p" ]; then
+      WELCOME_SRC="$p"
+      break
+    fi
+  done
+fi
+if [ -n "$WELCOME_SRC" ]; then
+  cp -f "$WELCOME_SRC" /usr/share/alfred/welcome/al-2.png || true
+  cp -f "$WELCOME_SRC" /usr/share/wallpapers/Kingdom/kingdom-default.png || true
+fi
+
+# 1) MOTD
+cat > /etc/motd << 'MOTD'
+
+  ==============================================================
+   Alfred Linux 7.77 - Kingdom of God Edition
+   "The LORD is my shepherd; I shall not want." - Psalm 23:1
+  ==============================================================
+
+  Type 'alfred-bible' for the Word of God.
+  Type 'alfred-worship' for sacred music.
+
+MOTD
+
+# 2) Wallpaper setter
+cat > /usr/local/bin/alfred-set-wallpaper.sh << 'EOF'
+#!/bin/bash
+set +e
+IMG="/usr/share/wallpapers/Kingdom/kingdom-default.png"
+[ -f "$IMG" ] || exit 0
+if command -v qdbus >/dev/null 2>&1; then
+  qdbus org.kde.plasmashell /PlasmaShell org.kde.PlasmaShell.evaluateScript "var Desktops = desktops(); for (i=0;i<Desktops.length;i++) { d = Desktops[i]; d.wallpaperPlugin = \"org.kde.image\"; d.currentConfigGroup = Array(\"Wallpaper\", \"org.kde.image\", \"General\"); d.writeConfig(\"Image\", \"file://$IMG\"); }" 2>/dev/null || true
+fi
+EOF
+chmod 0755 /usr/local/bin/alfred-set-wallpaper.sh || true
+
+# 3) The PyQt5 Welcome Center
+cat > /usr/local/bin/alfred-welcome-app.py << 'EOF'
+#!/usr/bin/env python3
+import sys
+import os
+import subprocess
+from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QPushButton, QLabel
+from PyQt5.QtGui import QPixmap, QFont, QIcon
+from PyQt5.QtCore import Qt
+
+class AlfredWelcome(QWidget):
+    def __init__(self):
+        super().__init__()
+        self.initUI()
+
+    def initUI(self):
+        self.setWindowTitle('Welcome to Alfred Linux - Kingdom of God Edition')
+        self.setFixedSize(600, 500)
+        self.setStyleSheet("background-color: #0f1e33; color: #f5e6b3;")
+
+        layout = QVBoxLayout()
+        layout.setAlignment(Qt.AlignCenter)
+
+        # Image
+        img_label = QLabel(self)
+        pixmap = QPixmap('/usr/share/alfred/welcome/al-2.png')
+        if not pixmap.isNull():
+            pixmap = pixmap.scaled(400, 200, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+            img_label.setPixmap(pixmap)
+            img_label.setAlignment(Qt.AlignCenter)
+        layout.addWidget(img_label)
+
+        # Title
+        title = QLabel("Kingdom of God Edition")
+        title.setFont(QFont("Georgia", 24, QFont.Bold))
+        title.setAlignment(Qt.AlignCenter)
+        layout.addWidget(title)
+
+        subtitle = QLabel("Sovereign Computing. No Tracking. Pure Worship.")
+        subtitle.setFont(QFont("Georgia", 12))
+        subtitle.setAlignment(Qt.AlignCenter)
+        layout.addWidget(subtitle)
+        
+        layout.addSpacing(20)
+
+        # Buttons
+        btn_bible = QPushButton("📖 Launch Alfred Bible")
+        btn_bible.setStyleSheet("background-color: #142845; border: 1px solid #d4af37; padding: 10px; font-size: 14px;")
+        btn_bible.clicked.connect(lambda: subprocess.Popen(['alfred-bible']))
+        layout.addWidget(btn_bible)
+
+        btn_drivers = QPushButton("⚙️ Install System Drivers (NVIDIA/Wi-Fi)")
+        btn_drivers.setStyleSheet("background-color: #142845; border: 1px solid #d4af37; padding: 10px; font-size: 14px;")
+        btn_drivers.clicked.connect(lambda: subprocess.Popen(['pkexec', 'software-properties-gtk']))
+        layout.addWidget(btn_drivers)
+
+        btn_snapshot = QPushButton("🔄 Setup System Rollback (Timeshift)")
+        btn_snapshot.setStyleSheet("background-color: #142845; border: 1px solid #d4af37; padding: 10px; font-size: 14px;")
+        btn_snapshot.clicked.connect(lambda: subprocess.Popen(['pkexec', 'timeshift-launcher']))
+        layout.addWidget(btn_snapshot)
+
+        self.setLayout(layout)
+
+if __name__ == '__main__':
+    app = QApplication(sys.argv)
+    ex = AlfredWelcome()
+    ex.show()
+    sys.exit(app.exec_())
+EOF
+chmod 0755 /usr/local/bin/alfred-welcome-app.py || true
+
+# 4) First boot runner
+cat > /usr/local/bin/alfred-first-boot.sh << 'EOF'
+#!/bin/bash
+set +e
+STAMP_FILE="/var/lib/alfred/welcome.done"
+if [[ -f "$STAMP_FILE" ]]; then
+  exit 0
+fi
+/usr/local/bin/alfred-set-wallpaper.sh || true
+/usr/local/bin/alfred-welcome-app.py &
+if command -v paplay &>/dev/null && [ -f /usr/share/sounds/freedesktop/stereo/complete.oga ]; then
+  paplay /usr/share/sounds/freedesktop/stereo/complete.oga 2>/dev/null &
+fi
+touch "$STAMP_FILE"
+exit 0
+EOF
+chmod 0755 /usr/local/bin/alfred-first-boot.sh || true
+
+cat > /etc/xdg/autostart/alfred-first-boot.desktop << 'EOF'
+[Desktop Entry]
+Type=Application
+Name=Alfred First Boot
+Comment=Kingdom of God Edition - first-boot blessing
+Exec=/usr/local/bin/alfred-first-boot.sh
+Terminal=false
+X-GNOME-Autostart-enabled=true
+OnlyShowIn=KDE;GNOME;LXQt;
+EOF
+chmod 0644 /etc/xdg/autostart/alfred-first-boot.desktop || true
+
+echo "[0700] Kingdom Welcome COMPLETE"
+
+exit 0

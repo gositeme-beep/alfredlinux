@@ -1,0 +1,222 @@
+#!/bin/bash
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+echo "=========================================="
+echo "==== ALFRED KINGDOM FEATURES HOOK ===="
+echo "=========================================="
+
+# 1. The Daily Bread fetcher script
+cat > /usr/local/bin/fetch-verse.sh <<'EOF'
+#!/bin/bash
+# Fetches a random verse and formats it for Conky
+json=$(curl -s https://bible-api.com/?random=verse)
+text=$(echo "$json" | jq -r '.text' | tr -d '\n' | sed 's/^ *//;s/ *$//')
+ref=$(echo "$json" | jq -r '.reference')
+# Fold the text so it fits beautifully in Conky
+echo "$text" | fold -s -w 50
+echo ""
+echo "- $ref"
+EOF
+chmod +x /usr/local/bin/fetch-verse.sh
+
+# 2. Conky Configuration
+mkdir -p /etc/skel
+cat > /etc/skel/.conkyrc <<'EOF'
+conky.config = {
+    alignment = 'top_right',
+    background = false,
+    border_width = 1,
+    cpu_avg_samples = 2,
+    default_color = 'white',
+    default_outline_color = 'white',
+    default_shade_color = 'white',
+    double_buffer = true,
+    draw_borders = false,
+    draw_graph_borders = true,
+    draw_outline = false,
+    draw_shades = true,
+    use_xft = true,
+    font = 'Noto Sans:size=12',
+    gap_x = 50,
+    gap_y = 50,
+    minimum_height = 5,
+    minimum_width = 300,
+    net_avg_samples = 2,
+    no_buffers = true,
+    out_to_console = false,
+    out_to_stderr = false,
+    extra_newline = false,
+    own_window = true,
+    own_window_class = 'Conky',
+    own_window_type = 'desktop',
+    own_window_transparent = true,
+    own_window_argb_visual = true,
+    stippled_borders = 0,
+    update_interval = 3600,
+    uppercase = false,
+    use_spacer = 'none',
+    show_graph_scale = false,
+    show_graph_range = false
+}
+
+conky.text = [[
+${font Noto Sans:italic:size=16}Daily Bread${font}
+${hr 2}
+${execpi 3600 /usr/local/bin/fetch-verse.sh}
+]]
+EOF
+
+# 3. Conky Autostart
+mkdir -p /etc/skel/.config/autostart
+cat > /etc/skel/.config/autostart/conky.desktop <<'EOF'
+[Desktop Entry]
+Type=Application
+Exec=conky -d
+Hidden=false
+NoDisplay=false
+X-GNOME-Autostart-enabled=true
+Name=Conky Daily Bread
+Comment=Daily Scripture on Desktop
+EOF
+
+# 4. The 'pray' command
+cat > /usr/local/bin/pray <<'EOF'
+#!/bin/bash
+clear
+echo -e "\033[1;36m==================================================\033[0m"
+echo -e "\033[1;36m                 Daily Prayer                     \033[0m"
+echo -e "\033[1;36m==================================================\033[0m"
+echo ""
+echo -e "\033[1;33mFetching a word of comfort for you...\033[0m"
+echo ""
+json=$(curl -s https://bible-api.com/?random=verse)
+text=$(echo "$json" | jq -r '.text' | tr -d '\n' | sed 's/^ *//;s/ *$//')
+ref=$(echo "$json" | jq -r '.reference')
+echo -e "\033[1;37m\"$text\"\033[0m"
+echo -e "\033[1;32m- $ref\033[0m"
+echo ""
+echo -e "\033[1;36m==================================================\033[0m"
+echo ""
+EOF
+chmod +x /usr/local/bin/pray
+
+echo "Kingdom features successfully configured."
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+# [Genesis Forge] Granular Kernel Matrix: dev.tty.ldisc_autoload=0
+# Extremely deep low-level kernel protection.
+echo "[Genesis Forge] Applying granular sysctl: dev.tty.ldisc_autoload=0"
+echo "dev.tty.ldisc_autoload=0" > /etc/sysctl.d/99-alfred-5.conf || true
+sysctl -w dev.tty.ldisc_autoload=0 > /dev/null 2>&1 || true
+
+
+# --- BEGIN MERGED CONTENT FROM: 0104-alfred-kingdom-features.hook.chroot ---
+#!/bin/bash
+set +e
+echo "=========================================="
+echo "==== ALFRED KINGDOM FEATURES HOOK ===="
+echo "=========================================="
+
+# 1. The Daily Bread fetcher script
+cat > /usr/local/bin/fetch-verse.sh <<'EOF'
+#!/bin/bash
+# Fetches a random verse and formats it for Conky
+json=$(curl -s https://bible-api.com/?random=verse) || true
+text=$(echo "$json" | jq -r '.text' | tr -d '\n' | sed 's/^ *//;s/ *$//')
+ref=$(echo "$json" | jq -r '.reference')
+# Fold the text so it fits beautifully in Conky
+echo "$text" | fold -s -w 50
+echo ""
+echo "- $ref"
+EOF
+[ -e /usr/local/bin/fetch-verse.sh ] && chmod +x /usr/local/bin/fetch-verse.sh
+
+# 2. Conky Configuration
+mkdir -p /etc/skel
+cat > /etc/skel/.conkyrc <<'EOF'
+conky.config = {
+    alignment = 'top_right',
+    background = false,
+    border_width = 1,
+    cpu_avg_samples = 2,
+    default_color = 'white',
+    default_outline_color = 'white',
+    default_shade_color = 'white',
+    double_buffer = true,
+    draw_borders = false,
+    draw_graph_borders = true,
+    draw_outline = false,
+    draw_shades = true,
+    use_xft = true,
+    font = 'Noto Sans:size=12',
+    gap_x = 50,
+    gap_y = 50,
+    minimum_height = 5,
+    minimum_width = 300,
+    net_avg_samples = 2,
+    no_buffers = true,
+    out_to_console = false,
+    out_to_stderr = false,
+    extra_newline = false,
+    own_window = true,
+    own_window_class = 'Conky',
+    own_window_type = 'desktop',
+    own_window_transparent = true,
+    own_window_argb_visual = true,
+    stippled_borders = 0,
+    update_interval = 3600,
+    uppercase = false,
+    use_spacer = 'none',
+    show_graph_scale = false,
+    show_graph_range = false
+}
+
+conky.text = [[
+${font Noto Sans:italic:size=16}Daily Bread${font}
+${hr 2}
+${execpi 3600 /usr/local/bin/fetch-verse.sh}
+]]
+EOF
+
+# 3. Conky Autostart
+mkdir -p /etc/skel/.config/autostart
+cat > /etc/skel/.config/autostart/conky.desktop <<'EOF'
+[Desktop Entry]
+Type=Application
+Exec=conky -d
+Hidden=false
+NoDisplay=false
+X-GNOME-Autostart-enabled=true
+Name=Conky Daily Bread
+Comment=Daily Scripture on Desktop
+EOF
+
+# 4. The 'pray' command
+cat > /usr/local/bin/pray <<'EOF'
+#!/bin/bash
+clear
+echo -e "\033[1;36m==================================================\033[0m"
+echo -e "\033[1;36m                 Daily Prayer                     \033[0m"
+echo -e "\033[1;36m==================================================\033[0m"
+echo ""
+echo -e "\033[1;33mFetching a word of comfort for you...\033[0m"
+echo ""
+json=$(curl -s https://bible-api.com/?random=verse) || true
+text=$(echo "$json" | jq -r '.text' | tr -d '\n' | sed 's/^ *//;s/ *$//')
+ref=$(echo "$json" | jq -r '.reference')
+echo -e "\033[1;37m\"$text\"\033[0m"
+echo -e "\033[1;32m- $ref\033[0m"
+echo ""
+echo -e "\033[1;36m==================================================\033[0m"
+echo ""
+EOF
+[ -e /usr/local/bin/pray ] && chmod +x /usr/local/bin/pray
+
+echo "Kingdom features successfully configured."
+
+# --- END MERGED CONTENT FROM: 0104-alfred-kingdom-features.hook.chroot ---
+
+

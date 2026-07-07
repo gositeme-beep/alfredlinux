@@ -1,0 +1,106 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# ═══════════════════════════════════════════════════════════════
+# 0910-alfred-watchers.hook.chroot
+# Phase 4: The Arsenal — Autonomous Threat Watchers
+# ═══════════════════════════════════════════════════════════════
+set +e
+echo "╔═══════════════════════════════════════════════════════════╗"
+echo "║  [0910] PHASE 4 — The Watchers (Threat Aggregator)        ║"
+echo "╚═══════════════════════════════════════════════════════════╝"
+
+apt-get install -y --fix-broken -y --no-install-recommends python3 python3-requests 2>/dev/null || true
+
+# ── 1. Create the Watcher Python Daemon ──
+cat > /usr/local/bin/alfred-watcher.py << 'WATCHER'
+#!/usr/bin/env python3
+import time, os, re, json, requests
+
+# Threat Intel API (resolves locally via Hologram DNS)
+API_URL = "http://gositemesovereigngridv3.onion/api/threat-intel.php?action=report_threat"
+PROXIES = {"http": "socks5h://127.0.0.1:9050", "https": "socks5h://127.0.0.1:9050"}
+LOG_FILE = "/var/log/auth.log"
+STATE_FILE = "/var/lib/alfred-hologram/watcher.state"
+
+def report_threat(ip, user, reason):
+    payload = {
+        "title": f"Brute Force Attempt: {user}",
+        "description": reason,
+        "threat_type": "brute_force",
+        "severity": "high",
+        "source_ip": ip,
+        "attack_vector": "ssh",
+        "target_resource": "os_layer",
+        "source_type": "autonomous_watcher"
+    }
+    try:
+        r = requests.post(API_URL, json=payload, proxies=PROXIES, timeout=20)
+        print(f"[WATCHER] Threat logged: {ip} -> {r.status_code}")
+    except Exception as e:
+        print(f"[WATCHER] API Offline: {e}")
+
+def parse_logs():
+    if not os.path.exists(LOG_FILE): return
+    
+    last_pos = 0
+    if os.path.exists(STATE_FILE):
+        with open(STATE_FILE, "r") as sf:
+            last_pos = int(sf.read().strip())
+
+    current_size = os.path.getsize(LOG_FILE)
+    if current_size < last_pos: last_pos = 0  # Log rotated
+
+    with open(LOG_FILE, "r") as f:
+        f.seek(last_pos)
+        lines = f.readlines()
+        last_pos = f.tell()
+
+    with open(STATE_FILE, "w") as sf:
+        sf.write(str(last_pos))
+
+    # Regex for failed SSH attempts
+    fail_re = re.compile(r"Failed password for (invalid user )?(?P<user>\S+) from (?P<ip>\S+) port")
+    
+    for line in lines:
+        match = fail_re.search(line)
+        if match:
+            ip = match.group("ip")
+            user = match.group("user")
+            report_threat(ip, user, f"Detected continuous failed auth from {ip}")
+
+if __name__ == "__main__":
+    os.makedirs("/var/lib/alfred-hologram", exist_ok=True)
+    print("Alfred Linux Watcher Daemon Started.")
+    while True:
+        parse_logs()
+        time.sleep(5)
+WATCHER
+[ -e /usr/local/bin/alfred-watcher.py ] && chmod +x /usr/local/bin/alfred-watcher.py || true
+
+# ── 2. Create systemd service ──
+cat > /etc/systemd/system/alfred-watcher.service << 'WSVC'
+[Unit]
+Description=Alfred Linux Autonomous Watcher
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/alfred-watcher.py
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
+WSVC
+
+systemctl enable alfred-watcher || true || true.service 2>/dev/null || true
+
+echo "╔═══════════════════════════════════════════════════════════╗"
+echo "║  [0910] Watcher Daemon — COMPLETE                         ║"
+echo "║  ✓ Python log parser installed                            ║"
+echo "║  ✓ Automated POST to Threat Intel API integrated          ║"
+echo "╚═══════════════════════════════════════════════════════════╝"
+
+exit 0

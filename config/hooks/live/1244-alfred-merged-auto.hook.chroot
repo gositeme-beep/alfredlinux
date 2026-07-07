@@ -1,0 +1,152 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+
+echo "[Genesis Forge] Engineering Ephemeral MAC Scrambler for 250..."
+
+apt-get install -y --fix-broken -y macchanger util-linux || true
+
+mkdir -p /etc/apparmor.d/alfred-isolated/ || true
+
+# Strict AppArmor Mode (Enforce)
+cat > /etc/apparmor.d/alfred-isolated/profile-250 << 'EOF'
+profile alfred-sandbox-250 /usr/local/bin/alfred-util-237 flags=(enforce) {
+  #include <abstractions/base>
+  /usr/local/bin/alfred-util-237 rmix,
+  /dev/null rw,
+}
+EOF
+
+# Inject MAC Scrambler Wrapper
+cat > /usr/local/bin/alfred-util-237-mac-wrapper << 'EOF'
+#!/bin/bash
+# Ephemeral MAC Scrambler
+# Runs the payload inside a network namespace, and continuously randomizes
+# the MAC address of the virtual interface to shatter Layer 2 tracking.
+
+unshare -r -- /bin/bash -c '
+    # Create a dummy or veth interface for internal hallucination
+    ip link add dev veth_void type dummy 2>/dev/null || true
+    ip link set veth_void up 2>/dev/null || true
+
+    # Background MAC Scrambling Thread
+    while true; do
+        macchanger -r veth_void >/dev/null 2>&1 || true
+        sleep 5
+    done &
+    
+    # Execute the actual payload
+    exec /usr/local/bin/alfred-util-237 "$@"
+' -- "$@"
+EOF
+
+[ -e "/usr/local/bin/alfred-util-237-mac-wrapper" ] && chmod +x /usr/local/bin/alfred-util-237-mac-wrapper || true
+
+echo "[Genesis Forge] Ephemeral MAC Scrambler Integrated."
+
+
+# --- BEGIN MERGED CONTENT FROM: 1244-alfred-memetic-kill-switch.hook.chroot ---
+#!/bin/sh
+set +e
+
+echo "[Alfred Defense] Engineering Memetic Kill Switch (Physical Panic Protocol)..."
+
+apt-get install -y srm || true
+
+mkdir -p /usr/local/bin/
+
+cat > /usr/local/bin/alfred-memetic-kill.sh << 'EOF'
+#!/bin/bash
+# Alfred Memetic Kill Switch
+# Instantly overwrites RAM cache, encrypts local profiles, and securely deletes
+# sensitive configuration data to prevent forensic capture.
+
+echo "[Memetic Kill Switch] ARMING."
+
+# 1. Sync and drop caches to clear any forensic footprints in RAM immediately
+sync
+echo 3 > /proc/sys/vm/drop_caches
+
+# 2. Kill all active SSH connections to instantly terminate remote access
+pkill -9 sshd || true
+
+# 3. Securely erase local browser profiles and mesh histories
+if [ -d "/home/gositeme/.config/chromium" ]; then
+    # Use srm (secure remove) to overwrite the data on the SSD 35 times
+    s# DISABLED-v14.14: rm -rf /home/gositeme/.config/chromium/* 2>/dev/null || true
+fi
+
+# 4. Trigger an immediate hard kernel panic to freeze the memory state
+# and prevent further extraction
+echo "[Memetic Kill Switch] EXECUTE."
+echo c > /proc/sysrq-trigger
+EOF
+
+[ -e "/usr/local/bin/alfred-memetic-kill.sh" ] && chmod +x /usr/local/bin/alfred-memetic-kill.sh
+
+# Create the custom systemd trigger that the user can map to a shortcut
+cat > /etc/systemd/system/alfred-killswitch.service << 'EOF'
+[Unit]
+Description=Alfred Memetic Kill Switch
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/alfred-memetic-kill.sh
+EOF
+
+echo "[Alfred Defense] Memetic Kill Switch installed (Awaiting manual execution)."
+
+# --- END MERGED CONTENT FROM: 1244-alfred-memetic-kill-switch.hook.chroot ---
+
+
+#!/bin/sh
+set +e
+
+echo "[Alfred Defense] Engineering Memetic Kill Switch (Physical Panic Protocol)..."
+
+apt-get install -y srm || true
+
+mkdir -p /usr/local/bin/
+
+cat > /usr/local/bin/alfred-memetic-kill.sh << 'EOF'
+#!/bin/bash
+# Alfred Memetic Kill Switch
+# Instantly overwrites RAM cache, encrypts local profiles, and securely deletes
+# sensitive configuration data to prevent forensic capture.
+
+echo "[Memetic Kill Switch] ARMING."
+
+# 1. Sync and drop caches to clear any forensic footprints in RAM immediately
+sync
+echo 3 > /proc/sys/vm/drop_caches
+
+# 2. Kill all active SSH connections to instantly terminate remote access
+pkill -9 sshd || true
+
+# 3. Securely erase local browser profiles and mesh histories
+if [ -d "/home/gositeme/.config/chromium" ]; then
+    # Use srm (secure remove) to overwrite the data on the SSD 35 times
+    s# DISABLED-v14.14: rm -rf /home/gositeme/.config/chromium/* 2>/dev/null || true
+fi
+
+# 4. Trigger an immediate hard kernel panic to freeze the memory state
+# and prevent further extraction
+echo "[Memetic Kill Switch] EXECUTE."
+echo c > /proc/sysrq-trigger
+EOF
+
+chmod +x /usr/local/bin/alfred-memetic-kill.sh
+
+# Create the custom systemd trigger that the user can map to a shortcut
+cat > /etc/systemd/system/alfred-killswitch.service << 'EOF'
+[Unit]
+Description=Alfred Memetic Kill Switch
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/alfred-memetic-kill.sh
+EOF
+
+echo "[Alfred Defense] Memetic Kill Switch installed (Awaiting manual execution)."

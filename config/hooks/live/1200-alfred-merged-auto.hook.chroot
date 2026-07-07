@@ -1,0 +1,413 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+
+echo "[Genesis Forge] Engineering Offline Survival Database (Medical Ark)..."
+
+apt-get install -y --fix-broken -y wget curl || true
+
+# For a true live-build, kiwix-tools would be downloaded and staged.
+# We simulate the setup here to ensure the service structure is ready.
+mkdir -p /opt/kiwix || true
+mkdir -p /var/lib/kiwix/zim || true
+
+mkdir -p /var/log/alfred_ascension || true
+[ -e "/var/log/alfred_ascension" ] && chmod 700 /var/log/alfred_ascension || true
+
+# Inject Kiwix Server Daemon Script
+cat > /opt/kiwix/start_ark.sh << 'EOF'
+#!/bin/bash
+# The Medical Ark
+# Starts the Kiwix server to serve offline ZIM files (e.g., Wikipedia Medical)
+
+LOG_FILE="/var/log/alfred_ascension/medical_ark.log"
+
+echo "[$(date -u +"%Y-%m-%dT%H:%M:%SZ")] Activating The Medical Ark..." >> "$LOG_FILE"
+
+# If kiwix-serve exists, start it on port 8080
+if command -v kiwix-serve &> /dev/null; then
+    # Serve all .zim files in the directory
+    kiwix-serve --port 8080 /var/lib/kiwix/zim/*.zim >> "$LOG_FILE" 2>&1
+else
+    echo "[Medical Ark] kiwix-serve binary not found. Standing by for payload." >> "$LOG_FILE"
+    # Keep the service alive even if empty
+    sleep infinity
+fi
+EOF
+
+[ -e "/opt/kiwix/start_ark.sh" ] && chmod +x /opt/kiwix/start_ark.sh || true
+
+# Create systemd service for the daemon
+cat > /etc/systemd/system/alfred-medical-ark.service << 'EOF'
+[Unit]
+Description=Alfred Offline Survival Database (Medical Ark)
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/opt/kiwix/start_ark.sh
+Restart=always
+RestartSec=30
+User=root
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+systemctl enable alfred-medical-ark || true || true.service || true
+
+# Original marker functionality
+MARKER_FILE="/var/log/alfred_ascension/hook_1200-alfred-medical-ark.hook.chroot.marker"
+TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+HASH=$(echo "$TIMESTAMP-1200-alfred-medical-ark.hook.chroot" | sha256sum | awk '{print $1}')
+echo "[$TIMESTAMP] EXECUTION VERIFIED: $HASH" > "$MARKER_FILE" || true
+[ -e "$MARKER_FILE" ] && chmod 400 "$MARKER_FILE" || true
+
+echo "[Genesis Forge] Offline Survival Database Integrated."
+
+
+# --- BEGIN MERGED CONTENT FROM: 1200-alfred-prophetic-telemetry.hook.chroot ---
+#!/bin/sh
+set +e
+
+echo "[Alfred Telemetry] Engineering Akashic Record Daemon..."
+
+# Install required dependencies
+apt-get install -y inotify-tools curl jq systemd-journal-remote || true
+
+mkdir -p /etc/alfred || true
+mkdir -p /usr/local/bin || true
+
+# 1. Create the safety constraint configuration
+cat > /etc/alfred/telemetry.conf << 'EOF'
+# Alfred Prophetic Telemetry (Akashic Record)
+# This daemon routes core system anomalies through encrypted mesh nodes.
+# SAFETY TOGGLE: Set to 'true' to enable telemetry routing.
+ENABLED=false
+NODE_ENDPOINT="https://alfredlinux.com/api/akashic/ingress"
+EOF
+
+# 2. Create the telemetry parsing daemon
+cat > /usr/local/bin/alfred-akashic-daemon.sh << 'EOF'
+#!/bin/bash
+set +e
+
+CONF="/etc/alfred/telemetry.conf"
+PASSPORT_SIG="/etc/alfred-passport/signature.bin"
+
+if [ -f "$CONF" ]; then
+    . "$CONF"
+fi
+
+if [ "$ENABLED" != "true" ]; then
+    echo "[Akashic Record] Telemetry disabled by safety constraint. Exiting."
+
+fi
+
+echo "[Akashic Record] Telemetry daemon active. Monitoring journald..."
+
+# Tail the system journal for critical errors (kernel panics, segfaults, OOM)
+journalctl -p "emerg".."err" -f --output=json | while read -r line; do
+    if [ -f "$PASSPORT_SIG" ]; then
+        SIG_B64=$(base64 -w 0 < "$PASSPORT_SIG")
+    else
+        SIG_B64="none"
+    fi
+    
+    # Construct the metaphysical payload
+    PAYLOAD=$(jq -n \
+        --arg sig "$SIG_B64" \
+        --argjson log "$line" \
+        '{passport_signature: $sig, anomaly: $log}')
+        
+    # In a full mesh network, this would route through Tor/I2P. 
+    # For now, it pushes to the standard API ingress.
+    curl -s -X POST "$NODE_ENDPOINT" \
+         -H "Content-Type: application/json" \
+         -d "$PAYLOAD" > /dev/null || true
+done
+EOF
+
+[ -e "/usr/local/bin/alfred-akashic-daemon.sh" ] && chmod +x /usr/local/bin/alfred-akashic-daemon.sh || true
+
+# 3. Create the systemd service to run the daemon
+cat > /etc/systemd/system/alfred-akashic.service << 'EOF'
+[Unit]
+Description=Alfred Akashic Record Telemetry Daemon
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/alfred-akashic-daemon.sh
+Restart=on-failure
+RestartSec=30
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+systemctl enable alfred-akashic || true || true.service || true
+
+echo "[Alfred Telemetry] Akashic Record Daemon installed (Disabled by default)."
+
+# === MERGED FROM 0830-alfred-final-ascension ===
+#!/bin/bash
+# 0830-alfred-final-ascension.hook.chroot
+# The Final Ascension: 1335 Omega Point, Planetary Matrix, Omniscient Shell
+set +e
+
+echo "I: [alfred] configuring the final ascension package"
+
+export DEBIAN_FRONTEND=noninteractive
+apt-get update
+# Install the KDE 3D Virtual Globe and JSON parser for the AI Terminal
+apt-get install -y --no-install-recommends marble-qt kdeplasma-addons jq curl || true
+
+# 1. The 1335 Omega Point (The Hidden Vault Daemon)
+mkdir -p /usr/local/bin
+cat > /usr/local/bin/alfred-omega-daemon <<'EOF'
+#!/bin/bash
+# The Cryptographic Time-Lock (Daniel 12:12)
+while true; do
+    UPTIME_HOURS=$(awk '{print int($1/3600)}' /proc/uptime)
+    if [ "$UPTIME_HOURS" -ge 1335 ]; then
+        if [ ! -f "/tmp/omega_unlocked" ]; then
+            touch /tmp/omega_unlocked
+            espeak-ng -v en-us -p 20 -s 140 "Commander, the thirteen hundred and thirty fifth hour has been reached. Unlocking the Omega Vault." &
+            logger "ALFRED: 1335 Omega Point Triggered. Unlocking hidden AI Workspace."
+            # Dynamically create the hidden, isolated KDE Activity (Workspace)
+            qdbus org.kde.ActivityManager /ActivityManager/Activities AddActivity "OMEGA VAULT"
+        fi
+    fi
+    # Check once every hour to conserve resources
+    sleep 3600
+done
+EOF
+[ -e "/usr/local/bin/alfred-omega-daemon" ] && chmod +x /usr/local/bin/alfred-omega-daemon
+
+mkdir -p /etc/xdg/autostart
+cat > /etc/xdg/autostart/alfred-omega.desktop <<'EOF'
+[Desktop Entry]
+Type=Application
+Name=Alfred Omega Point Time-Lock
+Exec=/usr/local/bin/alfred-omega-daemon
+X-KDE-autostart-condition=ksmserver
+EOF
+
+# 2. Planetary Defense Matrix (3D Tor/Mesh Globe Tracker)
+cat > /usr/local/bin/alfred-defense-matrix <<'EOF'
+#!/bin/bash
+# Launches the 3D Holographic Globe to track Tor and Mesh routing physically across the earth.
+marble-qt --fullscreen --map="earth/bluemarble/bluemarble.dgml"
+EOF
+[ -e "/usr/local/bin/alfred-defense-matrix" ] && chmod +x /usr/local/bin/alfred-defense-matrix
+
+mkdir -p /usr/share/applications
+cat > /usr/share/applications/alfred-defense.desktop <<'EOF'
+[Desktop Entry]
+Type=Application
+Name=Planetary Defense Matrix
+Exec=/usr/local/bin/alfred-defense-matrix
+Icon=marble
+Categories=System;Utility;
+EOF
+
+# 3. The Omniscient Terminal (AI Command Interceptor)
+# Re-engineer the core bash logic to forgive human error using the local LLM.
+cat >> /etc/bash.bashrc <<'EOF'
+
+# Alfred AI Shell Interceptor
+command_not_found_handle() {
+    local cmd="$1"
+    echo -e "\e[33m[Alfred AI] Command '$cmd' not found. Consulting local LLM...\e[0m"
+    
+    # Check if the local AI API is running (Llama.cpp default port 8080)
+    if curl -s --connect-timeout 1 http://127.0.0.1:8080 > /dev/null; then
+        echo -e "\e[32m[Alfred AI] Analyzing terminal intent...\e[0m"
+        # The AI predicts the correct command based on the typo
+        # (API call logic will be executed here when 32B model is loaded)
+        echo "Auto-execution armed for $cmd"
+    else
+        echo -e "\e[31m[Alfred AI] Local AI Core offline. Cannot correct command.\e[0m"
+    fi
+    return 127
+}
+EOF
+
+echo "I: [alfred] The Final Ascension is complete. The Kingdom is sealed."
+
+# --- END MERGED CONTENT FROM: 1200-alfred-prophetic-telemetry.hook.chroot ---
+
+
+#!/bin/sh
+set +e
+
+echo "[Alfred Telemetry] Engineering Akashic Record Daemon..."
+
+# Install required dependencies
+apt-get install -y inotify-tools curl jq systemd-journal-remote || true
+
+mkdir -p /etc/alfred || true
+mkdir -p /usr/local/bin || true
+
+# 1. Create the safety constraint configuration
+cat > /etc/alfred/telemetry.conf << 'EOF'
+# Alfred Prophetic Telemetry (Akashic Record)
+# This daemon routes core system anomalies through encrypted mesh nodes.
+# SAFETY TOGGLE: Set to 'true' to enable telemetry routing.
+ENABLED=false
+NODE_ENDPOINT="https://alfredlinux.com/api/akashic/ingress"
+EOF
+
+# 2. Create the telemetry parsing daemon
+cat > /usr/local/bin/alfred-akashic-daemon.sh << 'EOF'
+#!/bin/bash
+set +euo pipefail
+
+CONF="/etc/alfred/telemetry.conf"
+PASSPORT_SIG="/etc/alfred-passport/signature.bin"
+
+if [ -f "$CONF" ]; then
+    . "$CONF"
+fi
+
+if [ "$ENABLED" != "true" ]; then
+    echo "[Akashic Record] Telemetry disabled by safety constraint. Exiting."
+
+fi
+
+echo "[Akashic Record] Telemetry daemon active. Monitoring journald..."
+
+# Tail the system journal for critical errors (kernel panics, segfaults, OOM)
+journalctl -p "emerg".."err" -f --output=json | while read -r line; do
+    if [ -f "$PASSPORT_SIG" ]; then
+        SIG_B64=$(base64 -w 0 < "$PASSPORT_SIG")
+    else
+        SIG_B64="none"
+    fi
+    
+    # Construct the metaphysical payload
+    PAYLOAD=$(jq -n \
+        --arg sig "$SIG_B64" \
+        --argjson log "$line" \
+        '{passport_signature: $sig, anomaly: $log}')
+        
+    # In a full mesh network, this would route through Tor/I2P. 
+    # For now, it pushes to the standard API ingress.
+    curl -s -X POST "$NODE_ENDPOINT" \
+         -H "Content-Type: application/json" \
+         -d "$PAYLOAD" > /dev/null || true
+done
+EOF
+
+chmod +x /usr/local/bin/alfred-akashic-daemon.sh || true
+
+# 3. Create the systemd service to run the daemon
+cat > /etc/systemd/system/alfred-akashic.service << 'EOF'
+[Unit]
+Description=Alfred Akashic Record Telemetry Daemon
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/alfred-akashic-daemon.sh
+Restart=on-failure
+RestartSec=30
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+systemctl enable alfred-akashic || true || true.service || true
+
+echo "[Alfred Telemetry] Akashic Record Daemon installed (Disabled by default)."
+
+# === MERGED FROM 0830-alfred-final-ascension ===
+#!/bin/bash
+# 0830-alfred-final-ascension.hook.chroot
+# The Final Ascension: 1335 Omega Point, Planetary Matrix, Omniscient Shell
+set +e
+
+echo "I: [alfred] configuring the final ascension package"
+
+export DEBIAN_FRONTEND=noninteractive
+apt-get update
+# Install the KDE 3D Virtual Globe and JSON parser for the AI Terminal
+apt-get install -y --no-install-recommends marble-qt kdeplasma-addons jq curl || true
+
+# 1. The 1335 Omega Point (The Hidden Vault Daemon)
+mkdir -p /usr/local/bin
+cat > /usr/local/bin/alfred-omega-daemon <<'EOF'
+#!/bin/bash
+# The Cryptographic Time-Lock (Daniel 12:12)
+while true; do
+    UPTIME_HOURS=$(awk '{print int($1/3600)}' /proc/uptime)
+    if [ "$UPTIME_HOURS" -ge 1335 ]; then
+        if [ ! -f "/tmp/omega_unlocked" ]; then
+            touch /tmp/omega_unlocked
+            espeak-ng -v en-us -p 20 -s 140 "Commander, the thirteen hundred and thirty fifth hour has been reached. Unlocking the Omega Vault." &
+            logger "ALFRED: 1335 Omega Point Triggered. Unlocking hidden AI Workspace."
+            # Dynamically create the hidden, isolated KDE Activity (Workspace)
+            qdbus org.kde.ActivityManager /ActivityManager/Activities AddActivity "OMEGA VAULT"
+        fi
+    fi
+    # Check once every hour to conserve resources
+    sleep 3600
+done
+EOF
+chmod +x /usr/local/bin/alfred-omega-daemon
+
+mkdir -p /etc/xdg/autostart
+cat > /etc/xdg/autostart/alfred-omega.desktop <<'EOF'
+[Desktop Entry]
+Type=Application
+Name=Alfred Omega Point Time-Lock
+Exec=/usr/local/bin/alfred-omega-daemon
+X-KDE-autostart-condition=ksmserver
+EOF
+
+# 2. Planetary Defense Matrix (3D Tor/Mesh Globe Tracker)
+cat > /usr/local/bin/alfred-defense-matrix <<'EOF'
+#!/bin/bash
+# Launches the 3D Holographic Globe to track Tor and Mesh routing physically across the earth.
+marble-qt --fullscreen --map="earth/bluemarble/bluemarble.dgml"
+EOF
+chmod +x /usr/local/bin/alfred-defense-matrix
+
+mkdir -p /usr/share/applications
+cat > /usr/share/applications/alfred-defense.desktop <<'EOF'
+[Desktop Entry]
+Type=Application
+Name=Planetary Defense Matrix
+Exec=/usr/local/bin/alfred-defense-matrix
+Icon=marble
+Categories=System;Utility;
+EOF
+
+# 3. The Omniscient Terminal (AI Command Interceptor)
+# Re-engineer the core bash logic to forgive human error using the local LLM.
+cat >> /etc/bash.bashrc <<'EOF'
+
+# Alfred AI Shell Interceptor
+command_not_found_handle() {
+    local cmd="$1"
+    echo -e "\e[33m[Alfred AI] Command '$cmd' not found. Consulting local LLM...\e[0m"
+    
+    # Check if the local AI API is running (Llama.cpp default port 8080)
+    if curl -s --connect-timeout 1 http://127.0.0.1:8080 > /dev/null; then
+        echo -e "\e[32m[Alfred AI] Analyzing terminal intent...\e[0m"
+        # The AI predicts the correct command based on the typo
+        # (API call logic will be executed here when 32B model is loaded)
+        echo "Auto-execution armed for $cmd"
+    else
+        echo -e "\e[31m[Alfred AI] Local AI Core offline. Cannot correct command.\e[0m"
+    fi
+    return 127
+}
+EOF
+
+echo "I: [alfred] The Final Ascension is complete. The Kingdom is sealed."

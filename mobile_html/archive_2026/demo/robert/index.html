@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Restaurant Zellers - Fine Dining Experience</title>
+    <link rel="stylesheet" href="/assets/fontawesome/css/all.min.css">
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="/assets/css/fonts.css">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-container">
+            <div class="logo">
+                <a href="/">
+                    <img src="images/logo.png" alt="Restaurant Zellers Logo">
+                </a>
+            </div>
+            <nav class="main-nav">
+                <ul>
+                    <li><a href="index.html" class="active" data-lang="nav-home">Accueil</a></li>
+                    <li><a href="menu.html" data-lang="nav-menu">Menu</a></li>
+                    <li><a href="locations.html" data-lang="nav-locations">Emplacements</a></li>
+                </ul>
+            </nav>
+            <div class="header-actions">
+                <button class="menu-toggle">
+                    <i class="fas fa-bars"></i>
+                </button>
+            </div>
+            <button class="lang-toggle" id="langToggle">EN</button>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="hero-slideshow">
+            <!-- Slide 1: Dim Sum Experience -->
+            <div class="hero-slide active" style="background-image: url('https://images.unsplash.com/photo-1585032226651-759b368d7246?q=80&w=2070');">
+                <div class="hero-content">
+                    <h1 class="hero-title">
+                        <span class="title-line" data-lang="hero-welcome">Bienvenue chez</span>
+                        <span class="title-main" data-lang="hero-title-main">Zellers Restaurant</span>
+                        <span class="title-sub" data-lang="hero-subtitle">Une expérience culinaire chinoise authentique</span>
+                    </h1>
+                    <a href="menu.html" class="btn-primary" data-lang="hero-cta">Voir le Menu</a>
+                </div>
+            </div>
+
+            <!-- Slide 2: Peking Duck -->
+            <div class="hero-slide" style="background-image: url('https://images.unsplash.com/photo-1563245372-f21724e3856d?q=80&w=2070');">
+                <div class="hero-content">
+                    <h1 class="hero-title">
+                        <span class="title-line" data-lang="hero-welcome">Bienvenue chez</span>
+                        <span class="title-main" data-lang="hero-title-main-2">Canard Laqué Pékin</span>
+                        <span class="title-sub" data-lang="hero-subtitle-2">Préparé selon la tradition ancestrale</span>
+                    </h1>
+                    <a href="menu.html" class="btn btn-primary" data-lang="hero-cta">Voir le Menu</a>
+                </div>
+            </div>
+
+            <!-- Slide 3: Special Occasions -->
+            <div class="hero-slide" style="background-image: url('https://images.unsplash.com/photo-1552566626-52f8b828add9?q=80&w=2070');">
+                <div class="hero-content">
+                    <h1 class="hero-title">
+                        <span class="title-line" data-lang="hero-welcome">Bienvenue chez</span>
+                        <span class="title-main" data-lang="hero-title-main-3">Pour Toutes Occasions</span>
+                        <span class="title-sub" data-lang="hero-subtitle-3">Du repas décontracté aux célébrations spéciales</span>
+                    </h1>
+                    <a href="locations.html" class="btn btn-primary" data-lang="nav-locations">Trouver un Emplacement</a>
+                </div>
+            </div>
+
+            <!-- Slide 4: Sushi & Seafood -->
+            <div class="hero-slide" style="background-image: url('https://images.unsplash.com/photo-1579871494447-9811cf80d66c?q=80&w=2070');">
+                <div class="hero-content">
+                    <h1 class="hero-title">
+                        <span class="title-line" data-lang="hero-welcome">Bienvenue chez</span>
+                        <span class="title-main" data-lang="hero-title-main-4">Fruits de Mer Frais</span>
+                        <span class="title-sub" data-lang="hero-subtitle-4">Sélection quotidienne de produits de la mer</span>
+                    </h1>
+                    <a href="menu.html" class="btn btn-primary" data-lang="hero-cta">Voir le Menu</a>
+                </div>
+            </div>
+
+            <!-- Slide 5: Noodle Dishes -->
+            <div class="hero-slide" style="background-image: url('https://images.unsplash.com/photo-1551183053-bf91a1d81141?q=80&w=2070');">
+                <div class="hero-content">
+                    <h1 class="hero-title">
+                        <span class="title-line" data-lang="hero-welcome">Bienvenue chez</span>
+                        <span class="title-main" data-lang="hero-title-main-5">Nouilles Artisanales</span>
+                        <span class="title-sub" data-lang="hero-subtitle-5">Préparées à la main selon la tradition</span>
+                    </h1>
+                    <a href="menu.html" class="btn btn-primary" data-lang="hero-cta">Voir le Menu</a>
+                </div>
+            </div>
+
+            <!-- Slide 6: Vegetarian Options -->
+            <div class="hero-slide" style="background-image: url('https://images.unsplash.com/photo-1512621776951-a57141f2eefd?q=80&w=2070');">
+                <div class="hero-content">
+                    <h1 class="hero-title">
+                        <span class="title-line" data-lang="hero-welcome">Bienvenue chez</span>
+                        <span class="title-main" data-lang="hero-title-main-6">Options Végétariennes</span>
+                        <span class="title-sub" data-lang="hero-subtitle-6">Plats végétariens créatifs et savoureux</span>
+                    </h1>
+                    <a href="menu.html" class="btn btn-primary" data-lang="hero-cta">Voir le Menu</a>
+                </div>
+            </div>
+
+            <!-- Slide 7: Family Style -->
+            <div class="hero-slide" style="background-image: url('https://images.unsplash.com/photo-1556911220-bff31c812dba?q=80&w=2070');">
+                <div class="hero-content">
+                    <h1 class="hero-title">
+                        <span class="title-line" data-lang="hero-welcome">Bienvenue chez</span>
+                        <span class="title-main" data-lang="hero-title-main-7">Service Familial</span>
+                        <span class="title-sub" data-lang="hero-subtitle-7">Partagez des plats dans une ambiance conviviale</span>
+                    </h1>
+                    <a href="menu.html" class="btn btn-primary" data-lang="hero-cta">Voir le Menu</a>
+                </div>
+            </div>
+
+            <!-- Slide 8: Takeout & Delivery -->
+            <div class="hero-slide" style="background-image: url('https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?q=80&w=2070');">
+                <div class="hero-content">
+                    <h1 class="hero-title">
+                        <span class="title-line" data-lang="hero-welcome">Bienvenue chez</span>
+                        <span class="title-main" data-lang="hero-title-main-8">Livraison & À Emporter</span>
+                        <span class="title-sub" data-lang="hero-subtitle-8">Commandez en ligne pour une expérience à la maison</span>
+                    </h1>
+                    <a href="menu.html" class="btn btn-primary" data-lang="hero-cta">Voir le Menu</a>
+                </div>
+            </div>
+
+            <!-- Slide 9: Private Events -->
+            <div class="hero-slide" style="background-image: url('https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?q=80&w=2070');">
+                <div class="hero-content">
+                    <h1 class="hero-title">
+                        <span class="title-line" data-lang="hero-welcome">Bienvenue chez</span>
+                        <span class="title-main" data-lang="hero-title-main-9">Événements Privés</span>
+                        <span class="title-sub" data-lang="hero-subtitle-9">Organisez vos célébrations dans un cadre élégant</span>
+                    </h1>
+                    <a href="locations.html" class="btn btn-primary" data-lang="nav-locations">Trouver un Emplacement</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Locations Section -->
+    <section class="locations">
+        <div class="container">
+            <h2 class="section-title" data-lang="locations">Nos Emplacements</h2>
+            <div class="locations-grid">
+                <!-- Vaudreuil Location -->
+                <div class="location-card">
+                    <div class="location-map">
+                        <iframe 
+                            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2800.1234567890123!2d-73.987654321!3d45.4034!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x4cc8a123456789ab%3A0x1234567890abcdef!2sZellers%20Restaurant!5e0!3m2!1sen!2sca!4v1234567890!5m2!1sen!2sca&q=22a-3100+Rte+Harwood,+Vaudreuil-Dorion,+QC+J7V+4G5&markers=color:red%7C45.4034,-73.9877&center=45.4034,-73.9877&zoom=15" 
+                            width="100%" 
+                            height="300" 
+                            style="border:0;" 
+                            allowfullscreen="" 
+                            loading="lazy" 
+                            referrerpolicy="no-referrer-when-downgrade">
+                        </iframe>
+                    </div>
+                    <div class="location-info">
+                        <h3 data-lang="location-vaudreuil">Vaudreuil-Dorion</h3>
+                        <p><i class="fas fa-map-marker-alt"></i> <span data-lang="restaurant-name">Restaurant Zellers</span></p>
+                        <p>22a-3100 Rte Harwood</p>
+                        <p>Vaudreuil-Dorion, Quebec J7V 4G5</p>
+                        <p><i class="fas fa-phone"></i> 450-455-8888</p>
+                        <a href="https://www.google.com/maps/dir//22a-3100+Rte+Harwood,+Vaudreuil-Dorion,+QC+J7V+4G5" class="btn" target="_blank" data-lang="get-directions">Obtenir l'itinéraire</a>
+                    </div>
+                </div>
+
+                <!-- Rigaud Location -->
+                <div class="location-card">
+                    <div class="location-map">
+                        <iframe 
+                            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2800.1234567890123!2d-74.123456789!3d45.4797!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x4cc8a123456789ab%3A0x1234567890abcdef!2sZellers%20Restaurant!5e0!3m2!1sen!2sca!4v1234567890!5m2!1sen!2sca&q=131+Rue+Sainte-Pierre,+Rigaud,+QC+J0P+1P0&markers=color:red%7C45.4797,-74.3019&center=45.4797,-74.3019&zoom=15" 
+                            width="100%" 
+                            height="300" 
+                            style="border:0;" 
+                            allowfullscreen="" 
+                            loading="lazy" 
+                            referrerpolicy="no-referrer-when-downgrade">
+                        </iframe>
+                    </div>
+                    <div class="location-info">
+                        <h3 data-lang="location-rigaud">Rigaud</h3>
+                        <p><i class="fas fa-map-marker-alt"></i> <span data-lang="restaurant-name">Restaurant Zellers</span></p>
+                        <p>131 Rue Sainte-Pierre</p>
+                        <p>Rigaud, Québec J0P 1P0</p>
+                        <p><i class="fas fa-phone"></i> 450-451-9999</p>
+                        <a href="https://www.google.com/maps/dir//131+Rue+Sainte-Pierre,+Rigaud,+QC+J0P+1P0" class="btn" target="_blank" data-lang="get-directions">Obtenir l'itinéraire</a>
+                    </div>
+                </div>
+
+                <!-- Sorel-Tracy Location -->
+                <div class="location-card coming-soon">
+                    <div class="location-map">
+                        <iframe 
+                            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2800.1234567890123!2d-73.123456789!3d46.0417!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x4cc8a123456789ab%3A0x1234567890abcdef!2sZellers%20Restaurant!5e0!3m2!1sen!2sca!4v1234567890!5m2!1sen!2sca&q=62+Rue+Augusta,+Sorel-Tracy,+QC+J3P+1A5&markers=color:yellow%7C46.0417,-73.1139&center=46.0417,-73.1139&zoom=15" 
+                            width="100%" 
+                            height="300" 
+                            style="border:0;" 
+                            allowfullscreen="" 
+                            loading="lazy" 
+                            referrerpolicy="no-referrer-when-downgrade">
+                        </iframe>
+                    </div>
+                    <div class="location-info">
+                        <h3 data-lang="location-sorel">Sorel-Tracy</h3>
+                        <p><i class="fas fa-map-marker-alt"></i> <span data-lang="restaurant-name">Restaurant Zellers</span></p>
+                        <p>62 Rue Augusta</p>
+                        <p>Sorel-Tracy, Quebec J3P 1A5</p>
+                        <p><i class="fas fa-phone"></i> 450-730-0000</p>
+                        <a href="https://www.google.com/maps/dir//62+Rue+Augusta,+Sorel-Tracy,+QC+J3P+1A5" class="btn" target="_blank" data-lang="get-directions">Obtenir l'itinéraire</a>
+                        <div class="coming-soon-badge" data-lang="coming-soon">Bientôt disponible</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Delivery Partners -->
+    <section class="delivery-partners">
+        <div class="container">
+            <h2 class="section-title" data-lang="delivery-partners">Nos Partenaires de Livraison</h2>
+            <p class="section-subtitle" data-lang="delivery-text">Commandez via votre plateforme préférée</p>
+            <div class="delivery-grid">
+                <a href="#" class="delivery-partner">
+                    <img src="images/ubereats.png" alt="Uber Eats">
+                    <span data-lang="delivery-text">Commander sur Uber Eats</span>
+                </a>
+                <a href="#" class="delivery-partner">
+                    <img src="images/skip.png" alt="Skip The Dishes">
+                    <span data-lang="delivery-text">Commander sur Skip The Dishes</span>
+                </a>
+                <a href="#" class="delivery-partner">
+                    <img src="images/foodora.png" alt="Foodora">
+                    <span data-lang="delivery-text">Commander sur Foodora</span>
+                </a>
+                <a href="#" class="delivery-partner">
+                    <img src="images/doordash.jpg" alt="DoorDash">
+                    <span data-lang="delivery-text">Commander sur DoorDash</span>
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Special Offers -->
+    <section class="special-offers">
+        <div class="container">
+            <div class="offer-banner">
+                <div class="offer-content">
+                    <h3 data-lang="special-offer">Offre Spéciale</h3>
+                    <p data-lang="special-offer-text">Profitez de 15% de réduction sur votre première commande en ligne</p>
+                    <a href="menu.html" class="btn" data-lang="special-offer-cta">Commander Maintenant</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Testimonials -->
+    <section class="testimonials">
+        <div class="container">
+            <h2 class="section-title" data-lang="testimonial-title">Ce Que Disent Nos Clients</h2>
+            <div class="testimonial-slider">
+                <div class="testimonial-slide">
+                    <div class="rating">
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                    </div>
+                    <p class="testimonial-text" data-lang="testimonial-text-1">La meilleure cuisine chinoise que j'ai jamais goûtée ! Les saveurs sont authentiques et le service est excellent.</p>
+                    <div class="testimonial-author">
+                        <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop" class="testimonial-image">
+                        <div class="author-info">
+                            <h4 class="author-name" data-lang="testimonial-author-1">Xavier Tremblay</h4>
+                            <p class="author-role" data-lang="testimonial-role-1">Voyageur Culinaire</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="testimonial-slide">
+                    <div class="rating">
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                    </div>
+                    <p class="testimonial-text" data-lang="testimonial-text-2">Une nourriture incroyable et une excellente atmosphère. Le personnel est très sympathique et les portions sont généreuses.</p>
+                    <div class="testimonial-author">
+                        <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&h=200&fit=crop" class="testimonial-image">
+                        <div class="author-info">
+                            <h4 class="author-name" data-lang="testimonial-author-2">Amélie Gagnon</h4>
+                            <p class="author-role" data-lang="testimonial-role-2">Chef Pâtissière</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="testimonial-slide">
+                    <div class="rating">
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                    </div>
+                    <p class="testimonial-text" data-lang="testimonial-text-3">Une nourriture délicieuse et un service rapide. Mon endroit préféré pour la cuisine chinoise authentique.</p>
+                    <div class="testimonial-author">
+                        <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&h=200&fit=crop" class="testimonial-image">
+                        <div class="author-info">
+                            <h4 class="author-name" data-lang="testimonial-author-3">Lucien Roy</h4>
+                            <p class="author-role" data-lang="testimonial-role-3">Critique Gastronomique</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="testimonial-slide">
+                    <div class="rating">
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                    </div>
+                    <p class="testimonial-text" data-lang="testimonial-text-4">Les dim sum ici sont absolument incroyables. Des ingrédients frais et une préparation parfaite à chaque fois.</p>
+                    <div class="testimonial-author">
+                        <img src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=200&h=200&fit=crop" class="testimonial-image">
+                        <div class="author-info">
+                            <h4 class="author-name" data-lang="testimonial-author-4">Sophie Martin</h4>
+                            <p class="author-role" data-lang="testimonial-role-4">Influenceuse Culinaire</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="testimonial-slide">
+                    <div class="rating">
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                    </div>
+                    <p class="testimonial-text" data-lang="testimonial-text-5">Le meilleur restaurant chinois de la ville ! Le canard laqué est à essayer absolument. Toujours frais et savoureux.</p>
+                    <div class="testimonial-author">
+                        <img src="https://images.unsplash.com/photo-1531427186611-ecfd6d936c79?w=200&h=200&fit=crop" class="testimonial-image">
+                        <div class="author-info">
+                            <h4 class="author-name" data-lang="testimonial-author-5">Théo Bouchard</h4>
+                            <p class="author-role" data-lang="testimonial-role-5">Photographe Culinaire</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="testimonial-slide">
+                    <div class="rating">
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                    </div>
+                    <p class="testimonial-text" data-lang="testimonial-text-6">Le service est exceptionnel et la nourriture est toujours excellente. Un véritable joyau de la ville.</p>
+                    <div class="testimonial-author">
+                        <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&h=200&fit=crop" class="testimonial-image">
+                        <div class="author-info">
+                            <h4 class="author-name" data-lang="testimonial-author-6">Camille Fortin</h4>
+                            <p class="author-role" data-lang="testimonial-role-6">Blogueuse Lifestyle</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="testimonial-slide">
+                    <div class="rating">
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                    </div>
+                    <p class="testimonial-text" data-lang="testimonial-text-7">Une expérience culinaire inoubliable ! Les saveurs sont authentiques et le service est impeccable.</p>
+                    <div class="testimonial-author">
+                        <img src="https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=200&h=200&fit=crop" class="testimonial-image">
+                        <div class="author-info">
+                            <h4 class="author-name" data-lang="testimonial-author-7">Raphaël Dubé</h4>
+                            <p class="author-role" data-lang="testimonial-role-7">Voyageur Gourmet</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="testimonial-slide">
+                    <div class="rating">
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                    </div>
+                    <p class="testimonial-text" data-lang="testimonial-text-8">La meilleure soupe aigre-douce que j'ai jamais goûtée ! Un équilibre parfait des saveurs.</p>
+                    <div class="testimonial-author">
+                        <img src="https://images.unsplash.com/photo-1517841905240-472988babdf9?w=200&h=200&fit=crop" class="testimonial-image">
+                        <div class="author-info">
+                            <h4 class="author-name" data-lang="testimonial-author-8">Chloé Lambert</h4>
+                            <p class="author-role" data-lang="testimonial-role-8">Chef de Cuisine</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="testimonial-slide">
+                    <div class="rating">
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                    </div>
+                    <p class="testimonial-text" data-lang="testimonial-text-9">L'atmosphère est parfaite pour les repas décontractés et les occasions spéciales. La nourriture est toujours excellente.</p>
+                    <div class="testimonial-author">
+                        <img src="https://images.unsplash.com/photo-1524250502761-1ac6f2e30d43?w=200&h=200&fit=crop" class="testimonial-image">
+                        <div class="author-info">
+                            <h4 class="author-name" data-lang="testimonial-author-9">Maxime Lavoie</h4>
+                            <p class="author-role" data-lang="testimonial-role-9">Critique Restaurants</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="testimonial-slide">
+                    <div class="rating">
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                    </div>
+                    <p class="testimonial-text" data-lang="testimonial-text-10">Le meilleur restaurant chinois de la région. La qualité de la nourriture et du service est inégalée.</p>
+                    <div class="testimonial-author">
+                        <img src="https://images.unsplash.com/photo-1548142813-c348350df52b?w=200&h=200&fit=crop" class="testimonial-image">
+                        <div class="author-info">
+                            <h4 class="author-name" data-lang="testimonial-author-10">Élodie Dubois</h4>
+                            <p class="author-role" data-lang="testimonial-role-10">Influenceuse Food</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="testimonial-slide">
+                    <div class="rating">
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                    </div>
+                    <p class="testimonial-text" data-lang="testimonial-text-11">Les nouilles sautées sont à tomber ! Une texture parfaite et des saveurs authentiques.</p>
+                    <div class="testimonial-author">
+                        <img src="https://images.unsplash.com/photo-1540569014015-19a7be504e3a?w=200&h=200&fit=crop" class="testimonial-image">
+                        <div class="author-info">
+                            <h4 class="author-name" data-lang="testimonial-author-11">Nicolas Girard</h4>
+                            <p class="author-role" data-lang="testimonial-role-11">Food Blogger</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="testimonial-slide">
+                    <div class="rating">
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                    </div>
+                    <p class="testimonial-text" data-lang="testimonial-text-12">Un véritable voyage culinaire en Chine ! Les plats sont préparés avec passion et expertise.</p>
+                    <div class="testimonial-author">
+                        <img src="https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=200&h=200&fit=crop" class="testimonial-image">
+                        <div class="author-info">
+                            <h4 class="author-name" data-lang="testimonial-author-12">Léa Rousseau</h4>
+                            <p class="author-role" data-lang="testimonial-role-12">Voyageuse Gourmande</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="testimonial-slide">
+                    <div class="rating">
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                    </div>
+                    <p class="testimonial-text" data-lang="testimonial-text-13">Les portions sont généreuses et les prix sont très raisonnables. Un excellent rapport qualité-prix !</p>
+                    <div class="testimonial-author">
+                        <img src="https://images.unsplash.com/photo-1519345182560-3f2917c472ef?w=200&h=200&fit=crop" class="testimonial-image">
+                        <div class="author-info">
+                            <h4 class="author-name" data-lang="testimonial-author-13">Thomas Bergeron</h4>
+                            <p class="author-role" data-lang="testimonial-role-13">Critique Restaurants</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="testimonial-slide">
+                    <div class="rating">
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                    </div>
+                    <p class="testimonial-text" data-lang="testimonial-text-14">Le service est rapide et le personnel est très attentionné. Une expérience culinaire exceptionnelle !</p>
+                    <div class="testimonial-author">
+                        <img src="https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?w=200&h=200&fit=crop" class="testimonial-image">
+                        <div class="author-info">
+                            <h4 class="author-name" data-lang="testimonial-author-14">Emma Moreau</h4>
+                            <p class="author-role" data-lang="testimonial-role-14">Influenceuse Lifestyle</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="testimonial-slide">
+                    <div class="rating">
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                    </div>
+                    <p class="testimonial-text" data-lang="testimonial-text-15">Les plats végétariens sont délicieux et créatifs. Une excellente option pour tous les palais !</p>
+                    <div class="testimonial-author">
+                        <img src="https://images.unsplash.com/photo-1528892952291-009c663ce843?w=200&h=200&fit=crop" class="testimonial-image">
+                        <div class="author-info">
+                            <h4 class="author-name" data-lang="testimonial-author-15">Lucas Pelletier</h4>
+                            <p class="author-role" data-lang="testimonial-role-15">Chef Végétarien</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="testimonial-controls">
+                <button class="prev-testimonial" data-lang="prev-testimonial">Précédent</button>
+                <div class="testimonial-dots"></div>
+                <button class="next-testimonial" data-lang="next-testimonial">Suivant</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Newsletter -->
+    <section class="newsletter">
+        <div class="container">
+            <h2 class="section-title" data-lang="newsletter-title">Inscrivez-vous à Notre Infolettre</h2>
+            <p data-lang="newsletter-text">Recevez nos offres spéciales et mises à jour directement dans votre boîte de réception</p>
+            <form class="newsletter-form">
+                <input type="email" placeholder="Votre adresse courriel" data-lang="newsletter-placeholder" required>
+                <button type="submit" data-lang="newsletter-cta">S'inscrire</button>
+            </form>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>Restaurant Zellers</h3>
+                    <p>200-62 RUE AUGUSTA</p>
+                    <p>SOREL-TRACY, QUEBEC</p>
+                    <p>J3P 1A5</p>
+                    <p>450-746-1233</p>
+                </div>
+                <div class="footer-section">
+                    <h3>WAREHOUSE ZELLERS</h3>
+                    <p>40 RUE PRINCIPALE OUEST</p>
+                    <p>LA TRINITE DES MONTS, QUEBEC</p>
+                    <p>G0K 1B0</p>
+                    <p>CANADA</p>
+                </div>
+                <div class="footer-section">
+                    <h3 data-lang="follow">Follow Us</h3>
+                    <div class="social-links">
+                        <a href="#"><i class="fab fa-facebook"></i></a>
+                        <a href="#"><i class="fab fa-instagram"></i></a>
+                        <a href="#"><i class="fab fa-twitter"></i></a>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2025 Restaurant Zellers. <span data-lang="copyright">All rights reserved.</span></p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="/js/home.js"></script>
+    <script src="/js/language.js"></script>
+    <script>
+        // Hero Slider
+        document.addEventListener('DOMContentLoaded', function() {
+            const slides = document.querySelectorAll('.hero-slide');
+            let currentSlide = 0;
+            const totalSlides = slides.length;
+
+            function showSlide(index) {
+                slides.forEach(slide => slide.classList.remove('active'));
+                slides[index].classList.add('active');
+            }
+
+            function nextSlide() {
+                currentSlide = (currentSlide + 1) % totalSlides;
+                showSlide(currentSlide);
+            }
+
+            // Show first slide immediately
+            showSlide(0);
+
+            // Start slideshow
+            setInterval(nextSlide, 3000);
+        });
+
+        // Testimonial Slider
+        document.addEventListener('DOMContentLoaded', function() {
+            const testimonials = document.querySelectorAll('.testimonial-slide');
+            const dotsContainer = document.querySelector('.testimonial-dots');
+            const prevBtn = document.querySelector('.prev-testimonial');
+            const nextBtn = document.querySelector('.next-testimonial');
+            let currentIndex = 0;
+            let autoAdvance;
+
+            // Create dots based on number of testimonials
+            testimonials.forEach((_, index) => {
+                const dot = document.createElement('span');
+                dot.classList.add('dot');
+                if (index === 0) dot.classList.add('active');
+                dot.addEventListener('click', () => showTestimonial(index));
+                dotsContainer.appendChild(dot);
+            });
+
+            const dots = document.querySelectorAll('.testimonial-dots .dot');
+
+            function showTestimonial(index) {
+                // Hide all testimonials
+                testimonials.forEach(testimonial => {
+                    testimonial.style.display = 'none';
+                    testimonial.classList.remove('active');
+                });
+                
+                // Hide all dots
+                dots.forEach(dot => dot.classList.remove('active'));
+                
+                // Show current testimonial and dot
+                testimonials[index].style.display = 'block';
+                testimonials[index].classList.add('active');
+                dots[index].classList.add('active');
+                currentIndex = index;
+            }
+
+            function nextTestimonial() {
+                let nextIndex = currentIndex + 1;
+                if (nextIndex >= testimonials.length) {
+                    nextIndex = 0;
+                }
+                showTestimonial(nextIndex);
+            }
+
+            function prevTestimonial() {
+                let prevIndex = currentIndex - 1;
+                if (prevIndex < 0) {
+                    prevIndex = testimonials.length - 1;
+                }
+                showTestimonial(prevIndex);
+            }
+
+            // Event listeners for navigation buttons
+            if (nextBtn) nextBtn.addEventListener('click', nextTestimonial);
+            if (prevBtn) prevBtn.addEventListener('click', prevTestimonial);
+
+            // Auto-advance functionality
+            function startAutoAdvance() {
+                autoAdvance = setInterval(nextTestimonial, 5000);
+            }
+
+            function stopAutoAdvance() {
+                clearInterval(autoAdvance);
+            }
+
+            // Start auto-advance
+            startAutoAdvance();
+
+            // Pause auto-advance when hovering over testimonials
+            const testimonialSection = document.querySelector('.testimonials');
+            if (testimonialSection) {
+                testimonialSection.addEventListener('mouseenter', stopAutoAdvance);
+                testimonialSection.addEventListener('mouseleave', startAutoAdvance);
+            }
+
+            // Show first testimonial
+            showTestimonial(0);
+        });
+    </script>
+</body>
+</html> 

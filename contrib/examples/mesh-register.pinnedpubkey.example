@@ -1,0 +1,12 @@
+# Example only — copy to /etc/alfred/mesh-register.pinnedpubkey (single logical line,
+# no spaces) or set env ALFRED_MESH_REGISTER_PINNEDPUBKEY to the same value.
+# Used by hook 0167 curl as: curl --pinnedpubkey '<value>' https://gositeme.com/api/mesh-register.php
+#
+# Derive the real pin (run on a trusted machine):
+#   echo | openssl s_client -servername gositeme.com -connect gositeme.com:443 2>/dev/null \
+#     | openssl x509 -pubkey -noout \
+#     | openssl pkey -pubin -outform der \
+#     | openssl dgst -sha256 -binary | openssl enc -base64 | awk '{print "sha256//"$1}'
+#
+# Placeholder (invalid on purpose — replace before use):
+sha256//REPLACEME_BASE64_FROM_OPENSSL_CHAIN=

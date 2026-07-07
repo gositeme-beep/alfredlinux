@@ -1,0 +1,63 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+
+echo "[Alfred Sacred Geometry] Injecting Fibonacci Sub-Pixel Matrix..."
+
+mkdir -p /usr/share/alfred/geometry/ || true
+mkdir -p /usr/local/bin/ || true
+
+# Overwrite the Sacred Geometry script
+cat > /usr/local/bin/alfred-toggle-sacred-geometry.sh << 'EOF'
+#!/bin/bash
+# Sacred Geometry: Fibonacci Sub-Pixel Matrix
+# Forces the FreeType font renderer to use a Fibonacci-based RGB
+# sub-pixel weight matrix to physically alter LCD light emission.
+
+FLAG_FILE="$HOME/.config/alfred_sacred_geometry_enabled"
+FONT_CONF_DIR="$HOME/.config/fontconfig/conf.d"
+FONT_CONF_FILE="$FONT_CONF_DIR/99-alfred-fibonacci.conf"
+
+if [ -f "$FLAG_FILE" ]; then
+    rm -f "$FLAG_FILE" || true
+    rm -f "$FONT_CONF_FILE" || true
+    echo "Sacred Geometry disabled. Reverting to standard rendering."
+    # Reset Xfce scaling to 1.0
+    xfconf-query -c xsettings -p /Gdk/WindowScalingFactor -s 1 2>/dev/null || true
+else
+    touch "$FLAG_FILE"
+    mkdir -p "$FONT_CONF_DIR"
+
+    # Inject Fibonacci Sub-Pixel Weights
+    cat > "$FONT_CONF_FILE" << 'XML'
+<?xml version="1.0"?>
+<!DOCTYPE fontconfig SYSTEM "fonts.dtd">
+<fontconfig>
+  <!-- Sacred Geometry Fibonacci Rendering Matrix -->
+  <!-- Weights based on sequence: 8, 13, 21, 34, 55 -->
+  <match target="font">
+    <edit name="rgba" mode="assign"><const>rgb</const></edit>
+    <edit name="lcdfilter" mode="assign"><const>lcdlight</const></edit>
+    <!-- Custom Fibonacci Filter Weights: 0x08, 0x15(21), 0x37(55), 0x15(21), 0x08 -->
+    <edit name="lcdfilterweights" mode="assign">
+      <int>8</int>
+      <int>21</int>
+      <int>55</int>
+      <int>21</int>
+      <int>8</int>
+    </edit>
+  </match>
+</fontconfig>
+XML
+
+    echo "Sacred Geometry activated. Fibonacci light emission matrix applied."
+    xfconf-query -c xsettings -p /Gdk/WindowScalingFactor -s 2 2>/dev/null || true
+fi
+EOF
+
+[ -e "/usr/local/bin/alfred-toggle-sacred-geometry.sh" ] && chmod +x /usr/local/bin/alfred-toggle-sacred-geometry.sh || true
+
+echo "[Alfred Sacred Geometry] Fibonacci Sub-Pixel Matrix Integrated."
+exit 0

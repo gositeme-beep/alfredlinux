@@ -1,0 +1,13 @@
+[Unit]
+Description=Handshake Daemon
+After=network.target
+
+[Service]
+Type=simple
+User=root
+ExecStart=/usr/local/bin/hsd --rs-host=0.0.0.0 --rs-port=53 --rs-no-unbound
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

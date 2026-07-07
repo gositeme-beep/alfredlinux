@@ -1,0 +1,42 @@
+--- Alfred Browser Branding Patch ---
+--- Replaces Chromium branding with Alfred branding throughout the UI.
+--- Apply after fetching Chromium source with: git apply patches/branding.patch
+
+--- a/chrome/app/chromium_strings.grd
++++ b/chrome/app/chromium_strings.grd
+# Replace "Chromium" with "Alfred" in all user-visible strings
+# Key strings to change:
+#   IDS_PRODUCT_NAME = "Alfred"
+#   IDS_SHORT_PRODUCT_NAME = "Alfred"
+#   IDS_SXS_SHORTCUT_NAME = "Alfred"
+
+--- a/chrome/app/theme/chromium/BRANDING
++++ b/chrome/app/theme/chromium/BRANDING
+# COMPANY_FULLNAME=GoSiteMe Inc.
+# COMPANY_SHORTNAME=GoSiteMe
+# PRODUCT_FULLNAME=Alfred Browser
+# PRODUCT_SHORTNAME=Alfred
+# PRODUCT_INSTALLER_FULLNAME=Alfred Browser Installer
+# PRODUCT_INSTALLER_SHORTNAME=Alfred Installer
+# COPYRIGHT=Copyright 2026 GoSiteMe Inc. All rights reserved.
+# MAC_BUNDLE_ID=com.gositeme.alfred
+# MAC_CREATOR_CODE=Alfd
+
+--- a/chrome/installer/linux/common/installer.include
++++ b/chrome/installer/linux/common/installer.include
+# Replace package name: chromium-browser -> alfred-browser
+# Replace binary name: chromium -> alfred
+
+--- a/chrome/app/theme/chromium/product_logo_*.png
++++ b/chrome/app/theme/chromium/product_logo_*.png
+# Replace with Alfred logo files from branding/icons/
+# Required sizes: 16, 32, 48, 64, 128, 256
+# Source: branding/icons/alfred-{size}.png
+
+--- a/chrome/app/theme/chromium/win/chromium.ico
++++ b/chrome/app/theme/chromium/win/chromium.ico
+# Replace with branding/icons/alfred.ico
+
+--- a/chrome/app/theme/chromium/mac/app.icns
++++ b/chrome/app/theme/chromium/mac/app.icns
+# Replace with branding/icons/alfred.icns

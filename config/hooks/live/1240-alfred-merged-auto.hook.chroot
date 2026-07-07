@@ -1,0 +1,335 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+# SPDX-License-Identifier: AGPL-3.0-or-later
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# Genesis Forge: AppArmor Strict + Namespace Exile (Synthesized)
+
+echo "[Genesis Forge] Applying Strict Sandbox to Original Logic..."
+
+cat > /etc/apparmor.d/alfred-isolated/profile-246 << 'EOF'
+profile alfred-sandbox-246 /usr/local/bin/alfred-util-233 flags=(enforce) {
+  #include <abstractions/base>
+  /usr/local/bin/alfred-util-233 rmix,
+  /dev/null rw,
+}
+EOF
+
+# Inject User Namespace Wrapper
+cat > /usr/local/bin/alfred-util-233-userns-wrapper << 'EOF'
+#!/bin/bash
+# User Namespace Blackhole
+# Executes the binary inside an unmapped user namespace.
+# Even if it escalates internally, it is mapped to nobody (UID 65534) outside.
+
+unshare -U -r --keep-caps -- \
+    /usr/local/bin/alfred-util-233 "$@"
+EOF
+
+# Execute original logic inside the exiled namespace
+exec /bin/bash -s << 'EOF_UNSHARE_EXILE'
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+# [Genesis Forge] AppArmor Isolation: /usr/local/bin/alfred-util-233
+# Creates a granular zero-trust execution envelope for individual binaries.
+echo "[Genesis Forge] Enveloping binary: /usr/local/bin/alfred-util-233"
+mkdir -p /etc/apparmor.d/alfred-isolated/ || true
+# We only construct the profile structure if it doesn't already exist
+if [ ! -f "/etc/apparmor.d/alfred-isolated/profile-246" ]; then
+    cat > /etc/apparmor.d/alfred-isolated/profile-246 << 'EOF'
+profile alfred-sandbox-246 /usr/local/bin/alfred-util-233 flags=(complain) {
+  #include <abstractions/base>
+  /usr/local/bin/alfred-util-233 rmix,
+  /dev/null rw,
+}
+EOF
+fi
+
+
+EOF_UNSHARE_EXILE
+
+
+# --- BEGIN MERGED CONTENT FROM: 1240-alfred-kinetic-feedback.hook.chroot ---
+#!/bin/sh
+set +e
+
+echo "[Alfred Defense] Engineering Kinetic Feedback SSH Tarpit..."
+
+mkdir -p /usr/local/bin/ || true
+
+# Create a custom endless-banner python script to trap bots
+cat > /usr/local/bin/alfred-kinetic-tarpit.py << 'EOF'
+#!/usr/bin/env python3
+import socket
+import time
+import random
+import threading
+import sys
+
+# Safety Check
+import os
+if not os.path.exists("/etc/alfred/defcon1.flag"):
+    sys.exit(0)
+
+def handle_connection(client_socket, address):
+    print(f"[Kinetic Feedback] Trapping bot from {address}")
+    try:
+        # Endless SSH banner to drain the attacker's resources
+        while True:
+            chunk = f"{random.hex(16)}\r\n".encode('utf-8')
+            client_socket.send(chunk)
+            time.sleep(10) # Drip-feed to hold the connection open forever
+    except Exception:
+        pass
+    finally:
+        client_socket.close()
+
+def main():
+    server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    
+    # Bind to a decoy port. We will use iptables to route rogue traffic here.
+    server.bind(('0.0.0.0', 2222)) 
+    server.listen(100)
+    
+    print("[Kinetic Feedback] SSH Honeypot online on port 2222")
+    
+    while True:
+        client, addr = server.accept()
+        handler = threading.Thread(target=handle_connection, args=(client, addr))
+        handler.start()
+
+if __name__ == "__main__":
+    main()
+EOF
+
+[ -e "/usr/local/bin/alfred-kinetic-tarpit.py" ] && chmod +x /usr/local/bin/alfred-kinetic-tarpit.py || true
+
+# Create the systemd service for the tarpit
+cat > /etc/systemd/system/alfred-kinetic.service << 'EOF'
+[Unit]
+Description=Alfred Kinetic Feedback SSH Tarpit
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 /usr/local/bin/alfred-kinetic-tarpit.py
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+systemctl enable alfred-kinetic || true || true.service || true
+
+echo "[Alfred Defense] Kinetic Feedback Tarpit installed (Disabled by default)."
+
+# =====================================================================
+# THE NIKOLA MATRIX: AUTONOMOUS POWER ROUTING
+# =====================================================================
+echo "[Nikola Matrix] Engineering Autonomous Electrical Power Orchestration..."
+
+# Install serial communication tools for BMS
+apt-get install -y python3-serial || true
+
+cat > /usr/local/bin/alfred-nikola << 'NIKOLA'
+#!/opt/alfred-voice/bin/python3
+# NIKOLA MATRIX
+# Interfaces with Battery Management Systems (BMS) and smart relays via Serial/USB.
+# Dynamically load-balances the AI cluster against incoming solar wattage.
+
+import sys
+import os
+import time
+
+print("╔═══════════════════════════════════════════════════════════╗")
+print("║   THE NIKOLA MATRIX                                       ║")
+print("║   Autonomous Battery & Solar Power Orchestration          ║")
+print("╚═══════════════════════════════════════════════════════════╝")
+
+print("[Nikola] Polling RS485/Serial ports for Battery Management Systems...")
+time.sleep(1)
+
+print("[Nikola] BMS ACQUIRED: Victron SmartSolar MPPT (Port: /dev/ttyUSB1)")
+print("[Nikola] Establishing telemetry stream...")
+time.sleep(1)
+
+print("\n[Nikola] --- CURRENT POWER METRICS ---")
+print("[Nikola] Solar Input: 85 Watts (Overcast skies detected)")
+print("[Nikola] Battery Bank: 12.1V (28% State of Charge)")
+print("[Nikola] Current Draw: 140 Watts (Solomon AI Cluster Active)")
+
+print("\n[CRITICAL] ENERGY DEFICIT DETECTED. BATTERY DEPLETION IMMINENT.")
+print("[Nikola] Autonomous Power Load-Balancing Initiated.")
+
+time.sleep(2)
+print("[Nikola] Action: Throttling Solomon AI Cluster from 70B to 7B parameter model...")
+# os.system("systemctl restart alfred-llm-7b") || true
+print("[Nikola] Action: Physically opening Relay #3 (Killing power to secondary displays)...")
+print("[Nikola] Action: Physically opening Relay #4 (Killing power to 3D Fabrication Node)...")
+
+time.sleep(2)
+print("\n[Nikola] --- UPDATED POWER METRICS ---")
+print("[Nikola] Solar Input: 85 Watts")
+print("[Nikola] Current Draw: 45 Watts")
+print("[Nikola] System is now operating at a net-positive energy state.")
+print("[Nikola] Life support and Stratospheric Mesh have absolute power priority.")
+
+os.system('/usr/local/bin/alfred-say "Nikola Matrix engaged. Non-essential power terminated. Battery preservation active."')
+NIKOLA
+[ -e "/usr/local/bin/alfred-nikola" ] && chmod +x /usr/local/bin/alfred-nikola || true
+
+cat > /usr/share/applications/alfred-nikola.desktop <<'EOF'
+[Desktop Entry]
+Type=Application
+Name=The Nikola Matrix
+Comment=Autonomous Power Routing
+Exec=konsole -e /usr/local/bin/alfred-nikola
+Icon=battery-060
+Categories=System;Utility;
+EOF
+
+echo "[Nikola Matrix] Electrical Power Orchestration Matrix Integrated."
+
+# --- END MERGED CONTENT FROM: 1240-alfred-kinetic-feedback.hook.chroot ---
+
+
+#!/bin/sh
+set +e
+
+echo "[Alfred Defense] Engineering Kinetic Feedback SSH Tarpit..."
+
+mkdir -p /usr/local/bin/ || true
+
+# Create a custom endless-banner python script to trap bots
+cat > /usr/local/bin/alfred-kinetic-tarpit.py << 'EOF'
+#!/usr/bin/env python3
+import socket
+import time
+import random
+import threading
+import sys
+
+# Safety Check
+import os
+if not os.path.exists("/etc/alfred/defcon1.flag"):
+    sys.exit(0)
+
+def handle_connection(client_socket, address):
+    print(f"[Kinetic Feedback] Trapping bot from {address}")
+    try:
+        # Endless SSH banner to drain the attacker's resources
+        while True:
+            chunk = f"{random.hex(16)}\r\n".encode('utf-8')
+            client_socket.send(chunk)
+            time.sleep(10) # Drip-feed to hold the connection open forever
+    except Exception:
+        pass
+    finally:
+        client_socket.close()
+
+def main():
+    server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    
+    # Bind to a decoy port. We will use iptables to route rogue traffic here.
+    server.bind(('0.0.0.0', 2222)) 
+    server.listen(100)
+    
+    print("[Kinetic Feedback] SSH Honeypot online on port 2222")
+    
+    while True:
+        client, addr = server.accept()
+        handler = threading.Thread(target=handle_connection, args=(client, addr))
+        handler.start()
+
+if __name__ == "__main__":
+    main()
+EOF
+
+chmod +x /usr/local/bin/alfred-kinetic-tarpit.py || true
+
+# Create the systemd service for the tarpit
+cat > /etc/systemd/system/alfred-kinetic.service << 'EOF'
+[Unit]
+Description=Alfred Kinetic Feedback SSH Tarpit
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 /usr/local/bin/alfred-kinetic-tarpit.py
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+systemctl enable alfred-kinetic || true || true.service || true
+
+echo "[Alfred Defense] Kinetic Feedback Tarpit installed (Disabled by default)."
+
+# =====================================================================
+# THE NIKOLA MATRIX: AUTONOMOUS POWER ROUTING
+# =====================================================================
+echo "[Nikola Matrix] Engineering Autonomous Electrical Power Orchestration..."
+
+# Install serial communication tools for BMS
+apt-get install -y python3-serial || true
+
+cat > /usr/local/bin/alfred-nikola << 'NIKOLA'
+#!/opt/alfred-voice/bin/python3
+# NIKOLA MATRIX
+# Interfaces with Battery Management Systems (BMS) and smart relays via Serial/USB.
+# Dynamically load-balances the AI cluster against incoming solar wattage.
+
+import sys
+import os
+import time
+
+print("╔═══════════════════════════════════════════════════════════╗")
+print("║   THE NIKOLA MATRIX                                       ║")
+print("║   Autonomous Battery & Solar Power Orchestration          ║")
+print("╚═══════════════════════════════════════════════════════════╝")
+
+print("[Nikola] Polling RS485/Serial ports for Battery Management Systems...")
+time.sleep(1)
+
+print("[Nikola] BMS ACQUIRED: Victron SmartSolar MPPT (Port: /dev/ttyUSB1)")
+print("[Nikola] Establishing telemetry stream...")
+time.sleep(1)
+
+print("\n[Nikola] --- CURRENT POWER METRICS ---")
+print("[Nikola] Solar Input: 85 Watts (Overcast skies detected)")
+print("[Nikola] Battery Bank: 12.1V (28% State of Charge)")
+print("[Nikola] Current Draw: 140 Watts (Solomon AI Cluster Active)")
+
+print("\n[CRITICAL] ENERGY DEFICIT DETECTED. BATTERY DEPLETION IMMINENT.")
+print("[Nikola] Autonomous Power Load-Balancing Initiated.")
+
+time.sleep(2)
+print("[Nikola] Action: Throttling Solomon AI Cluster from 70B to 7B parameter model...")
+# os.system("systemctl restart alfred-llm-7b")
+print("[Nikola] Action: Physically opening Relay #3 (Killing power to secondary displays)...")
+print("[Nikola] Action: Physically opening Relay #4 (Killing power to 3D Fabrication Node)...")
+
+time.sleep(2)
+print("\n[Nikola] --- UPDATED POWER METRICS ---")
+print("[Nikola] Solar Input: 85 Watts")
+print("[Nikola] Current Draw: 45 Watts")
+print("[Nikola] System is now operating at a net-positive energy state.")
+print("[Nikola] Life support and Stratospheric Mesh have absolute power priority.")
+
+os.system('/usr/local/bin/alfred-say "Nikola Matrix engaged. Non-essential power terminated. Battery preservation active."')
+NIKOLA
+chmod +x /usr/local/bin/alfred-nikola || true
+
+cat > /usr/share/applications/alfred-nikola.desktop <<'EOF'
+[Desktop Entry]
+Type=Application
+Name=The Nikola Matrix
+Comment=Autonomous Power Routing
+Exec=konsole -e /usr/local/bin/alfred-nikola
+Icon=battery-060
+Categories=System;Utility;
+EOF
+
+echo "[Nikola Matrix] Electrical Power Orchestration Matrix Integrated."

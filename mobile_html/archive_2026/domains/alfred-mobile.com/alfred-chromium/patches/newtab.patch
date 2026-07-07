@@ -1,0 +1,19 @@
+--- Alfred Browser New Tab Patch ---
+--- Replaces the default new tab page with Alfred's custom new tab extension.
+--- Apply after fetching Chromium source with: git apply patches/newtab.patch
+
+--- a/chrome/browser/ui/webui/ntp/new_tab_ui.cc
++++ b/chrome/browser/ui/webui/ntp/new_tab_ui.cc
+# Override the default NTP to load alfred-newtab extension
+# The extension already declares chrome_url_overrides.newtab in its manifest
+# This patch ensures the extension override takes priority
+
+--- a/chrome/browser/search/instant_service.cc
++++ b/chrome/browser/search/instant_service.cc
+# Disable Google NTP features (doodles, most visited from Google, etc)
+# Remove Google search bar integration
+
+--- a/chrome/browser/ui/webui/ntp/ntp_resource_cache.cc
++++ b/chrome/browser/ui/webui/ntp/ntp_resource_cache.cc
+# Remove Google branding from fallback NTP
+# Replace with Alfred branding

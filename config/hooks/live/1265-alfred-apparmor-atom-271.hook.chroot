@@ -1,0 +1,50 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+
+echo "[Genesis Forge] Engineering Chroot Hard-Link Void for 271..."
+
+mkdir -p /etc/apparmor.d/alfred-isolated/ || true
+
+# AppArmor Mode (Enforce)
+cat > /etc/apparmor.d/alfred-isolated/profile-271 << 'EOF'
+profile alfred-sandbox-271 /usr/local/bin/alfred-util-258 flags=(enforce) {
+  #include <abstractions/base>
+  /usr/local/bin/alfred-util-258 rmix,
+  /dev/null rw,
+}
+EOF
+
+# Setup the Void Directory Structure
+# The wrapper will setup the chroot immediately before execution
+cat > /usr/local/bin/alfred-util-258-void-wrapper << 'EOF'
+#!/bin/bash
+# Chroot Hard-Link Void
+# Traps the binary in a directory filled with recursive hard links.
+# Any attempt to walk the filesystem will result in an infinite loop.
+
+VOID_DIR="/tmp/alfred_void_258"
+mkdir -p "$VOID_DIR"
+
+# Create a self-referencing infinite loop structure
+# (Simulated by creating nested directories that link back to root using mount binds,
+# since hard-linking directories is generally forbidden on modern Linux,
+# we use bind mounts to create infinite loops).
+mkdir -p "$VOID_DIR/dev" "$VOID_DIR/etc" "$VOID_DIR/usr" "$VOID_DIR/bin"
+mount --bind "$VOID_DIR" "$VOID_DIR/usr" 2>/dev/null || true
+mount --bind "$VOID_DIR" "$VOID_DIR/etc" 2>/dev/null || true
+
+# Copy necessary dependencies to the void (minimal statically linked binary assumed)
+[ -e "/usr/local/bin/alfred-util-258" ] && cp /usr/local/bin/alfred-util-258 "$VOID_DIR/" || true
+
+# Execute within the void
+# Using chroot or unshare --root
+unshare -r -m --root="$VOID_DIR" /alfred-util-258 "$@"
+EOF
+
+[ -e "/usr/local/bin/alfred-util-258-void-wrapper" ] && chmod +x /usr/local/bin/alfred-util-258-void-wrapper || true
+
+echo "[Genesis Forge] Chroot Hard-Link Void Integrated."
+exit 0

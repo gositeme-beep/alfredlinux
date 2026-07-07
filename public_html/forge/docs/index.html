@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<title>Alfred Forge Docs</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+:root{--bg:#0a0d12;--panel:#11151c;--ink:#c5c8cc;--accent:#ff7c00;--muted:#8b8f96;--border:#2a2f38}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+header{background:var(--panel);border-bottom:1px solid var(--border);padding:14px 24px;display:flex;align-items:center;gap:14px}
+header a{color:var(--accent);text-decoration:none;font-weight:600;font-size:18px}
+.wrap{max-width:980px;margin:0 auto;padding:32px 24px;display:grid;grid-template-columns:220px 1fr;gap:32px}
+nav{position:sticky;top:24px;align-self:start}
+nav h4{color:var(--muted);text-transform:uppercase;font-size:11px;letter-spacing:1px;margin:0 0 8px}
+nav ul{list-style:none;padding:0;margin:0 0 18px}
+nav li a{color:var(--ink);text-decoration:none;display:block;padding:6px 10px;border-radius:6px}
+nav li a:hover{background:var(--panel);color:var(--accent)}
+main h1{color:#fff;margin:0 0 12px;font-size:28px}
+main h2{color:var(--accent);margin:32px 0 12px;font-size:20px;border-bottom:1px solid var(--border);padding-bottom:6px}
+main h3{color:#fff;margin:24px 0 8px;font-size:16px}
+code,pre{background:#000;color:#ffb766;padding:2px 6px;border-radius:4px;font:13px ui-monospace,Menlo,monospace}
+pre{padding:14px 16px;overflow:auto;border:1px solid var(--border)}
+a{color:var(--accent)}
+section{margin-bottom:24px}
+.note{background:#1a1f28;border-left:3px solid var(--accent);padding:12px 16px;margin:14px 0;border-radius:4px}
+footer{text-align:center;color:var(--muted);padding:32px;font-size:12px;border-top:1px solid var(--border);margin-top:48px}
+</style>
+</head><body>
+<header><a href="/forge/">⚒ Alfred Forge</a> <span style="color:var(--muted)">›</span> <span>Documentation</span></header>
+<div class="wrap">
+<nav>
+  <h4>Getting Started</h4>
+  <ul>
+    <li><a href="#intro">Introduction</a></li>
+    <li><a href="#signin">Sign In</a></li>
+    <li><a href="#repo">Create Repo</a></li>
+  </ul>
+  <h4>Using Forge</h4>
+  <ul>
+    <li><a href="#git">Git Basics</a></li>
+    <li><a href="#hooks">Hooks &amp; Webhooks</a></li>
+    <li><a href="#actions">Actions</a></li>
+    <li><a href="#webhook-faq">Push hook FAQ</a></li>
+  </ul>
+  <h4>Account</h4>
+  <ul>
+    <li><a href="#pin">PIN &amp; Security</a></li>
+    <li><a href="#tokens">API Tokens</a></li>
+  </ul>
+</nav>
+<main>
+<section id="intro">
+  <h1>Alfred Forge Documentation</h1>
+  <p>Alfred Forge is the sovereign source-code platform of the Perez Kingdom — sealed, self-hosted, and free for all humanity. It runs on AKJV-compliant infrastructure under <a href="https://alfredlinux.com">alfredlinux.com</a>.</p>
+  <div class="note"><strong>Single sign-on</strong>: every Forge account is linked to your <a href="https://gositeme.com">GoSiteMe</a> identity. Sign in with Google or GoSiteMe — your PIN is required on every fresh sign-in.</div>
+</section>
+
+<section id="signin">
+  <h2>Signing In</h2>
+  <p>Two providers are available on the <a href="/forge/user/login">login page</a>:</p>
+  <ul>
+    <li><strong>GoSiteMe</strong> — direct OAuth via your GoSiteMe account</li>
+    <li><strong>Google</strong> — Google account, auto-linked to your GoSiteMe identity</li>
+  </ul>
+  <p>After OAuth completes, Forge will ask for your commander PIN before any repository action.</p>
+</section>
+
+<section id="repo">
+  <h2>Creating a Repository</h2>
+  <ol>
+    <li>Click <strong>+ → New Repository</strong> in the top right</li>
+    <li>Choose owner (you or an org), name, and visibility</li>
+    <li>Optionally initialize with README, .gitignore, license</li>
+    <li>Click <strong>Create Repository</strong></li>
+  </ol>
+  <p>Clone over HTTPS:</p>
+  <pre>git clone https://alfredlinux.com/forge/&lt;owner&gt;/&lt;repo&gt;.git</pre>
+  <p>Or SSH (after uploading a key under <a href="/forge/user/settings/keys">Settings → SSH Keys</a>):</p>
+  <pre>git clone git@alfredlinux.com:&lt;owner&gt;/&lt;repo&gt;.git</pre>
+</section>
+
+<section id="git">
+  <h2>Git Basics</h2>
+  <pre>git add .
+git commit -m "covenant: initial work"
+git push origin main</pre>
+  <p>Use <code>git pull</code> to fetch upstream changes before pushing.</p>
+</section>
+
+<section id="hooks">
+  <h2>Hooks &amp; Webhooks</h2>
+  <p>Each repository has three hook types:</p>
+  <ul>
+    <li><strong>Git hooks</strong> — server-side scripts (pre-receive, update, post-receive). Configure under <em>Settings → Git Hooks</em>.</li>
+    <li><strong>Webhooks</strong> — HTTP callbacks fired on push/PR/issue events. Configure under <em>Settings → Webhooks</em>.</li>
+    <li><strong>Deploy keys</strong> — read-only or read-write SSH keys scoped to one repo.</li>
+  </ul>
+</section>
+
+<section id="actions">
+  <h2>Forge Actions</h2>
+  <p>Actions run in <code>.forgejo/workflows/</code> or <code>.gitea/workflows/</code> at the root of your repo. They are CI workflows compatible with the GitHub Actions schema.</p>
+  <p>Enable them under <em>Repository Settings → Actions → Enable Actions</em>.</p>
+</section>
+
+<section id="webhook-faq">
+  <h2>Push hook / Webhook / Actions aren't running?</h2>
+  <p>If you see a banner saying <em>"Git hooks of this repository seem to be broken"</em>, it usually means one of:</p>
+  <ol>
+    <li><strong>Hook scripts are missing</strong> from the bare repo's <code>hooks/</code> directory. Run <code>git update-server-info</code> on the server, or push any commit to refresh.</li>
+    <li><strong>File permissions wrong</strong> — hooks must be executable and owned by the forge user.</li>
+    <li><strong>Repo was imported</strong> from another platform without copying hook scripts.</li>
+  </ol>
+  <p>To force a refresh: push any new commit, or contact a Forge administrator to run <code>gitea admin regenerate hooks</code>.</p>
+</section>
+
+<section id="pin">
+  <h2>PIN &amp; Security</h2>
+  <p>Your commander PIN is set in <a href="https://gositeme.com/commander-vault.php">GoSiteMe → Commander Vault</a>. Forge requires it on every fresh sign-in (the PIN cookie expires after 15 minutes).</p>
+  <p>To change your PIN: GoSiteMe → Commander Vault → Change PIN.</p>
+</section>
+
+<section id="tokens">
+  <h2>API Tokens</h2>
+  <p>Generate personal access tokens under <a href="/forge/user/settings/applications">Settings → Applications</a>. Use them as the password in <code>git clone</code> or in API calls:</p>
+  <pre>curl -H "Authorization: token &lt;your-token&gt;" \
+  https://alfredlinux.com/forge/api/v1/user</pre>
+</section>
+
+</main>
+</div>
+<footer>Alfred Forge Documentation · Sovereign Source of the Perez Kingdom · <a href="/forge/">Back to Forge</a></footer>
+</body></html>

@@ -1,0 +1,824 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alfred Mobile OS | Sovereign Cyber-Security</title>
+    <meta name="description" content="The world's first fully sovereign mobile operating system. No tracking. No telemetry. Complete cryptographic control.">
+    
+    <!-- Modern Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=Outfit:wght@400;700;900&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="styles.css?v=4">
+    <link rel="stylesheet" href="interactive_phone.css">
+    <link rel="stylesheet" href="apps.css">
+</head>
+<body>
+    <!-- Telemetry Mirror (Red Pill Overlay) -->
+    <div id="telemetryOverlay" class="telemetry-overlay">
+        <div class="telemetry-terminal">
+            <div id="telemetryText" class="telemetry-text"></div>
+            <div class="telemetry-cursor"></div>
+        </div>
+    </div>
+
+    <!-- Cinematic Boot Sequence -->
+    <div id="bootSequence" class="boot-sequence" style="display: none;">
+        <div id="bootText" class="boot-text"></div>
+    </div>
+
+    <!-- Archangel Audio Visualizer -->
+    <canvas id="voiceVisualizer" class="voice-visualizer"></canvas>
+
+    <!-- Threat Deflection Toasts -->
+    <div id="toastContainer" class="toast-container"></div>
+
+    <div class="stars"></div>
+    <div class="twinkling"></div>
+    
+    <!-- 100,000x Ascendancy: Biometric Webcam Background -->
+    <video id="webcamBg" autoplay playsinline muted loop></video>
+    <div id="webcamTarget" class="webcam-target" style="display: none;">
+        <div class="crosshair"></div>
+        <div class="target-text">BIOMETRIC LOCK ENGAGED.<br>TARGET ACQUIRED.</div>
+    </div>
+    
+    <nav class="navbar">
+        <div class="logo" style="display: flex; align-items: center;">
+            <img src="alfred-mark.png" alt="Alfred Logo" style="height: 40px; margin-right: 10px;">
+            ALFRED <span class="highlight">MOBILE OS</span>
+        </div>
+        <div class="nav-links">
+            <a href="manifesto.html">The Manifesto</a>
+            <a href="#features">Features</a>
+            <a href="#archangel">The Daemon</a>
+            <a href="#mesh">Yggdrasil Mesh</a>
+            <a href="#download" class="btn-primary">Get the Source</a>
+        </div>
+    </nav>
+
+    <header class="hero">
+        <div class="carousel-container" id="heroCarousel">
+            <div class="carousel-slide active" id="slideMobile">
+                <div class="badge">Samsung S26 Ultra Compatible</div>
+                <h1 class="glitch" data-text="UNPLUG FROM THE MATRIX">UNPLUG FROM THE MATRIX</h1>
+                <p class="subtitle">A mass-produced smartphone forged into a military-grade, ghost-encrypted communication device.</p>
+                <div class="cta-group">
+                    <a href="#download" class="btn-primary large">Download AOSP Manifest</a>
+                    <a href="#features" class="btn-secondary large">View Capabilities</a>
+                </div>
+            </div>
+            
+            <div class="carousel-slide" id="slideDesktop">
+                <div class="badge">Debian 12 Military Core</div>
+                <h1 class="glitch" data-text="THE SOVEREIGN DESKTOP">THE SOVEREIGN DESKTOP</h1>
+                <p class="subtitle">A fortress-grade Linux distribution built for absolute cryptographic dominance and uncrackable anonymity.</p>
+                <div class="cta-group">
+                    <a href="https://alfredlinux.com" class="btn-primary large" style="background:#ffd700; color:#000;">Explore AlfredLinux</a>
+                    <a href="https://alfredlinux.com/source" class="btn-secondary large">View Source</a>
+                </div>
+            </div>
+            
+            <div class="carousel-dots">
+                <div class="dot active" onclick="setSlide(0)"></div>
+                <div class="dot" onclick="setSlide(1)"></div>
+            </div>
+        </div>
+        <div class="hero-visual">
+            <div class="phone-mockup" id="interactivePhone">
+                <div class="screen" id="phoneScreen">
+                    <!-- Boot Sequence -->
+                    <div class="layer active" id="layerBoot">
+                        <div class="boot-sequence">
+                            <p>[OK] Kernel initialized.</p>
+                            <p>[OK] Cryptographic Trust Chain Verified.</p>
+                            <p>[OK] Michael Archangel Daemon Running.</p>
+                            <p>[OK] Yggdrasil IPv6 Mesh Established.</p>
+                            <p class="cursor">_</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Lock Screen -->
+                    <div class="layer" id="layerLock">
+                        <div class="status-bar">
+                            <span class="signal">YGG 5G</span>
+                            <span class="battery">100%</span>
+                        </div>
+                        <div class="clock">
+                            <h2 id="lockTime">11:33</h2>
+                            <p id="lockDate">Mon, Jun 8</p>
+                        </div>
+                        <div class="notifications">
+                            <div class="notif">
+                                <strong>Archangel Daemon</strong>
+                                <span>Blocked location request from hidden service.</span>
+                            </div>
+                        </div>
+                        <div class="swipe-hint" id="swipeArea">
+                            <div class="chevron">^</div>
+                            <p>SWIPE TO UNLOCK</p>
+                        </div>
+                    </div>
+
+                    <!-- Home Screen -->
+                    <div class="layer" id="layerHome">
+                        <div class="status-bar">
+                            <span class="signal">YGG 5G</span>
+                            <span class="battery">100%</span>
+                        </div>
+                        <div class="widgets">
+                            <div class="widget yggdrasil">
+                                <div class="w-header">MESH STATUS</div>
+                                <div class="w-value green">ROUTING SECURE</div>
+                                <div class="w-ip">200:1db8:85a3:0000:0000:8a2e:0370:7334</div>
+                            </div>
+                            <div class="widget daemon">
+                                <div class="w-header">ARCHANGEL DAEMON</div>
+                                <div class="w-value">SHIELD ACTIVE</div>
+                                <div class="w-stat">Threats neutralized: 1,402</div>
+                            </div>
+                        </div>
+                        <div class="app-grid">
+                            <div class="app-icon" data-app="camera"><div class="icon-inner cam"></div><span>Camera</span></div>
+                            <div class="app-icon" data-app="signal"><div class="icon-inner msg"></div><span>Signal</span></div>
+                            <div class="app-icon" data-app="daemon"><div class="icon-inner tor"></div><span>Daemon</span></div>
+                            <div class="app-icon" data-app="terminal"><div class="icon-inner term"></div><span>Terminal</span></div>
+                            <div class="app-icon" data-app="codex"><div class="icon-inner codex"></div><span>Codex</span></div>
+                            <div class="app-icon" data-app="lazarus"><div class="icon-inner lazarus"></div><span>Lazarus</span></div>
+                            <div class="app-icon" data-app="forge"><div class="icon-inner forge"></div><span>Forge</span></div>
+                            <div class="app-icon" data-app="martyr"><div class="icon-inner martyr"></div><span>Martyr</span></div>
+                            <div class="app-icon" data-app="radar"><div class="icon-inner radar"></div><span>Radar</span></div>
+                            <div class="app-icon" data-app="dialer"><div class="icon-inner dialer" style="background:#2ecc71; display:flex; align-items:center; justify-content:center; font-size:1.5rem;">📞</div><span>Phone</span></div>
+                            <div class="app-icon" data-app="browser"><div class="icon-inner browser" style="background:#3498db; display:flex; align-items:center; justify-content:center; font-size:1.5rem;">🌐</div><span>Browser</span></div>
+                            <div class="app-icon" data-app="settings"><div class="icon-inner settings" style="background:#7f8c8d; display:flex; align-items:center; justify-content:center; font-size:1.5rem;">⚙️</div><span>Settings</span></div>
+                            <div class="app-icon" data-app="gallery"><div class="icon-inner gallery" style="background:#f1c40f; display:flex; align-items:center; justify-content:center; font-size:1.5rem;">🖼️</div><span>Gallery</span></div>
+                            <div class="app-icon" data-app="qgsm"><div class="icon-inner qgsm" style="background: linear-gradient(135deg, #00f2fe 0%, #4facfe 50%, #ffd700 100%); display:flex; align-items:center; justify-content:center; font-size:1.5rem; box-shadow: 0 0 15px rgba(0,242,254,0.6);">⚡</div><span style="color:#00f2fe; font-weight:bold;">QGSM</span></div>
+                        </div>
+                    </div>
+
+                    <!-- Terminal App -->
+                    <div class="layer app-layer" id="appTerminal">
+                        <div class="app-header">Terminal</div>
+                        <div class="terminal-content" id="termOutput">
+                            <p>AlfredOS Sovereign Terminal v7.77</p>
+                            <p>Type 'help' for commands.</p>
+                        </div>
+                        <div class="terminal-input-row">
+                            <span class="prompt">root@m3:~#</span>
+                            <input type="text" id="termInput" autocomplete="off" spellcheck="false" autofocus>
+                        </div>
+                        <div class="home-btn" onclick="goHome(this)"></div>
+                    </div>
+
+                    <!-- Daemon App -->
+                    <div class="layer app-layer" id="appDaemon">
+                        <div class="app-header">Archangel Daemon</div>
+                        <div class="daemon-dashboard">
+                            <div class="shield-status active">SHIELD ACTIVE</div>
+                            <div class="threat-log" id="threatLog">
+                                <p><span class="time">11:32</span> <span class="action block">BLOCK</span> <span class="target">com.meta.tracker (Location)</span></p>
+                            </div>
+                        </div>
+                        <div class="home-btn" onclick="goHome(this)"></div>
+                    </div>
+
+                    <!-- Camera App -->
+                    <div class="layer app-layer" id="appCamera">
+                        <video id="cameraAppBg" autoplay playsinline muted loop style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; z-index: 1; filter: grayscale(50%) contrast(120%);"></video>
+                        <div class="camera-viewfinder" style="position: relative; z-index: 2;">
+                            <div class="cam-overlay">
+                                <div class="reticle"></div>
+                                <div class="cam-stats">
+                                    <span>RAW HAL</span>
+                                    <span>200MP</span>
+                                    <span>UNBINNED</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="cam-controls" style="position: relative; z-index: 2;">
+                            <div class="shutter-btn" onclick="playSound('click'); document.getElementById('cameraAppBg').style.filter='brightness(300%)'; setTimeout(()=>document.getElementById('cameraAppBg').style.filter='grayscale(50%) contrast(120%)', 100)"></div>
+                        </div>
+                        <div class="home-btn" onclick="goHome(this)"></div>
+                    </div>
+
+                    <!-- Signal App (Ghost Comms) -->
+                    <div class="layer app-layer" id="appSignal" style="background: #000; color: #fff;">
+                        <div class="app-header" style="background: #111;">Ghost Protocol (P2P)</div>
+                        <div class="chat-container" id="signalChat" style="padding: 10px; font-family: monospace; font-size: 12px; height: calc(100% - 80px); overflow-y: auto;">
+                            <!-- Injected by JS -->
+                        </div>
+                        <div class="home-btn" onclick="goHome(this)"></div>
+                    </div>
+
+                    <!-- Codex App -->
+                    <div class="layer app-layer" id="appCodex" style="background: #000; color: #00ff00;">
+                        <div class="app-header" style="background: #111; color: #00ff00;">Cryptographic Vault</div>
+                        <div id="codexDecryption" style="padding: 20px; font-family: monospace; text-align: center; margin-top: 50%;">
+                            [ DECRYPTING VAULT ]<br><br>
+                            <span id="codexHash">0x00000000</span>
+                        </div>
+                        <div class="home-btn" onclick="goHome(this)"></div>
+                    </div>
+
+                    <!-- Lazarus App -->
+                    <div class="layer app-layer" id="appLazarus" style="background: #0a0a0a;">
+                        <div class="app-header" style="background: #000; color: #00ffff;">Lazarus NPU Core</div>
+                        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%;">
+                            <div class="lazarus-hex"></div>
+                            <p style="color: #00ffff; font-family: monospace; margin-top: 20px;">THERMAL DISSIPATION: <span id="lazTemp">32°C</span></p>
+                            <p style="color: #00ffff; font-family: monospace;">NPU CLOCK: <span id="lazClock">4.2 GHz</span></p>
+                        </div>
+                        <div class="home-btn" onclick="goHome(this)"></div>
+                    </div>
+
+                    <!-- Forge App -->
+                    <div class="layer app-layer" id="appForge" style="background: #000; color: #ffd700;">
+                        <div class="app-header" style="background: #1a1500; color: #ffd700;">Sovereign App Forge</div>
+                        <div id="forgeTerminal" style="padding: 10px; font-family: monospace; font-size: 10px; height: calc(100% - 60px); overflow: hidden; white-space: pre-wrap;">
+                        </div>
+                        <div class="home-btn" onclick="goHome(this)"></div>
+                    </div>
+
+                    <!-- Martyr App -->
+                    <div class="layer app-layer" id="appMartyr" style="background: #1a0000;">
+                        <div class="app-header" style="background: #330000; color: #ff0000;">Martyr Protocol</div>
+                        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%;">
+                            <div id="martyrTimer" style="font-family: monospace; font-size: 4rem; color: #ff0000; text-shadow: 0 0 20px #ff0000;">00:00</div>
+                            <button id="martyrActivate" class="kill-btn" style="margin-top: 30px; font-size: 1rem; padding: 10px 20px;">INITIATE</button>
+                        </div>
+                        <div class="home-btn" onclick="goHome(this)"></div>
+                    </div>
+
+                    <!-- Radar App -->
+                    <div class="layer app-layer" id="appRadar" style="background: #000;">
+                        <div class="app-header" style="background: #001100; color: #00ff00;">Yggdrasil Mesh Radar</div>
+                        <div class="radar-container" style="position: relative; width: 100%; height: calc(100% - 50px); display: flex; align-items: center; justify-content: center; overflow: hidden;">
+                            <div class="radar-circle"></div>
+                            <div class="radar-sweep"></div>
+                            <div id="radarNodes"></div>
+                        </div>
+                        <div class="home-btn" onclick="goHome(this)"></div>
+                    </div>
+
+                    <!-- Signal App -->
+                    <div class="layer app-layer" id="appSignal">
+                        <div class="app-header">Secure Comms</div>
+                        <div class="chat-view">
+                            <div class="chat-bubble received">Transmission secured via Yggdrasil IPv6.</div>
+                            <div class="chat-bubble sent">Acknowledged. Key rotated.</div>
+                            <div class="chat-bubble received">Awaiting further instructions.</div>
+                        </div>
+                        <div class="home-btn" onclick="goHome(this)"></div>
+                    </div>
+
+                    <!-- Tor App -->
+                    <div class="layer app-layer" id="appTor">
+                        <div class="app-header">Onion Browser</div>
+                        <div class="tor-view">
+                            <div class="tor-status">
+                                <div class="tor-icon">🧅</div>
+                                <h3>Connected to Tor Network</h3>
+                                <p>Circuit established.</p>
+                            </div>
+                        </div>
+                        <div class="home-btn" onclick="goHome(this)"></div>
+                    </div>
+
+                    <!-- Codex App -->
+                    <div class="layer app-layer" id="appCodex">
+                        <div class="app-header">The Codex</div>
+                        <div class="codex-view">
+                            <div class="codex-content">
+                                <h3>The Ascendancy</h3>
+                                <div class="codex-log">
+                                    <p><span class="highlight">Phase 7:</span> Lazarus AI NPU Daemon active.</p>
+                                    <p><span class="highlight">Phase 8:</span> Sovereign App Forge connected.</p>
+                                    <p><span class="red-text">Phase 9:</span> Martyr Protocol armed.</p>
+                                    <p><span class="highlight">Phase 10:</span> Kyber routing engaged.</p>
+                                    <p><span class="highlight">Phase 11:</span> LEO Satellite uplink secured.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="home-btn" onclick="goHome(this)"></div>
+                    </div>
+
+                    <!-- Lazarus App -->
+                    <div class="layer app-layer" id="appLazarus">
+                        <div class="app-header">Lazarus AI</div>
+                        <div class="lazarus-view">
+                            <div class="lazarus-matrix">
+                                <p class="sys">[SYSTEM] SNAPDRAGON NPU MATRIX ACTIVE</p>
+                                <p class="ai">Lazarus: Neural-link established. Awaiting tactical input.</p>
+                                <div class="lazarus-input">
+                                    <span>></span>
+                                    <div class="pulse-cursor"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="home-btn" onclick="goHome(this)"></div>
+                    </div>
+
+                    <!-- Forge App -->
+                    <div class="layer app-layer" id="appForge">
+                        <div class="app-header">Sovereign Forge</div>
+                        <div class="forge-view">
+                            <div class="forge-header">IPFS PEER: 24,019</div>
+                            <div class="forge-list">
+                                <div class="forge-item">
+                                    <div class="fi-icon" style="background:#444"></div>
+                                    <div class="fi-details"><strong>Mesh Router</strong><span>Untraceable P2P</span></div>
+                                    <div class="fi-btn">GET</div>
+                                </div>
+                                <div class="forge-item">
+                                    <div class="fi-icon" style="background:#500"></div>
+                                    <div class="fi-details"><strong>Packet Sniffer</strong><span>Raw Hex Dump</span></div>
+                                    <div class="fi-btn">GET</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="home-btn" onclick="goHome(this)"></div>
+                    </div>
+
+                    <!-- Martyr App -->
+                    <div class="layer app-layer" id="appMartyr">
+                        <div class="app-header red">MARTYR PROTOCOL</div>
+                        <div class="martyr-view">
+                            <div class="warning-sign">☣️</div>
+                            <h3>CRYPTOGRAPHIC WIPE</h3>
+                            <p>WARNING: Sliding this switch will permanently erase all decryption keys. Device will be bricked.</p>
+                            <div class="kill-switch-container">
+                                <div class="kill-slider">SLIDE TO ARM</div>
+                            </div>
+                        </div>
+                        <div class="home-btn" onclick="goHome(this)"></div>
+                    </div>
+
+                    <!-- Radar App -->
+                    <div class="layer app-layer" id="appRadar">
+                        <div class="app-header">Mesh Radar</div>
+                        <div class="radar-view">
+                            <div class="radar-circle">
+                                <div class="radar-sweep"></div>
+                                <div class="radar-ping" style="top:20%; left:30%;"></div>
+                                <div class="radar-ping" style="top:60%; left:80%;"></div>
+                                <div class="radar-ping" style="top:75%; left:40%;"></div>
+                            </div>
+                            <p class="radar-status">Tracking Yggdrasil IPv6 Nodes...</p>
+                        </div>
+                        <div class="home-btn" onclick="goHome(this)"></div>
+                    </div>
+
+                    <!-- Dialer App -->
+                    <div class="layer app-layer" id="appDialer" style="background: #0a0a0a; color: #fff;">
+                        <div class="app-header" style="background: #111;">AOSP Dialer</div>
+                        <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%;">
+                            <h2 style="font-size:2rem; margin-bottom:20px; font-family:monospace; color:#2ecc71;">555-0199</h2>
+                            <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:15px; text-align:center; font-size:1.5rem;">
+                                <div>1</div><div>2</div><div>3</div>
+                                <div>4</div><div>5</div><div>6</div>
+                                <div>7</div><div>8</div><div>9</div>
+                                <div>*</div><div>0</div><div>#</div>
+                            </div>
+                            <div style="margin-top:20px; background:#2ecc71; padding:15px; border-radius:50%; width:60px; height:60px; display:flex; align-items:center; justify-content:center; font-size:1.5rem;">📞</div>
+                        </div>
+                        <div class="home-btn" onclick="goHome(this)"></div>
+                    </div>
+
+                    <!-- Browser App -->
+                    <div class="layer app-layer" id="appBrowser" style="background: #fff; color: #000;">
+                        <div class="app-header" style="background: #ddd; color: #333; padding: 1rem; border-bottom: 1px solid #ccc; font-size:0.8rem; display:flex; align-items:center;">
+                            <span style="flex:1; background:#eee; padding:5px 10px; border-radius:10px;">https://search.alfred.net</span>
+                        </div>
+                        <div style="padding:20px; text-align:center; margin-top:20px;">
+                            <h2 style="color:#3498db; margin-bottom:20px;">Alfred Search</h2>
+                            <input type="text" placeholder="Search the web..." style="width:80%; padding:10px; border:1px solid #ccc; border-radius:20px;">
+                        </div>
+                        <div class="home-btn" onclick="goHome(this)" style="border-color:#ccc;"></div>
+                    </div>
+
+                    <!-- Settings App -->
+                    <div class="layer app-layer" id="appSettings" style="background: #111; color: #eee;">
+                        <div class="app-header" style="background: #222;">Settings</div>
+                        <div style="padding:10px; font-family:sans-serif; overflow-y:auto; height:calc(100% - 60px);">
+                            <div style="padding:15px; border-bottom:1px solid #333;">📡 Network & Internet</div>
+                            <div style="padding:15px; border-bottom:1px solid #333;">📱 Connected Devices</div>
+                            <div style="padding:15px; border-bottom:1px solid #333;">🔋 Battery (100%)</div>
+                            <div style="padding:15px; border-bottom:1px solid #333;">🛡️ Archangel Daemon</div>
+                            <div style="padding:15px; border-bottom:1px solid #333;">🔒 Security & Privacy</div>
+                            <div style="padding:15px; border-bottom:1px solid #333;">⚙️ System</div>
+                        </div>
+                        <div class="home-btn" onclick="goHome(this)"></div>
+                    </div>
+
+                    <!-- Gallery App -->
+                    <!-- QGSM Post-Quantum Economy App -->
+                    <div class="layer app-layer" id="appQgsm" style="background: #050b14; color: #fff; font-family: 'Inter', sans-serif; overflow-y: auto; padding-bottom: 40px;">
+                        <div class="app-header" style="background: rgba(0, 242, 254, 0.1); border-bottom: 1px solid #00f2fe; color: #00f2fe; font-weight: 800; letter-spacing: 1px;">⚡ QGSM QUANTUM ECONOMY</div>
+                        <div style="padding: 12px; font-size: 0.8rem;">
+                            <div style="background: rgba(255,255,255,0.05); border: 1px solid rgba(0,242,254,0.3); border-radius: 8px; padding: 10px; margin-bottom: 12px; text-align: center; box-shadow: 0 0 15px rgba(0,242,254,0.15);">
+                                <div style="color: #888; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px;">Sovereign Mesh Balance</div>
+                                <div id="qgsmMobileBalance" style="font-size: 1.6rem; font-weight: 900; color: #ffd700; margin: 4px 0; text-shadow: 0 0 10px rgba(255,215,0,0.5);">1,337.42 QGSM</div>
+                                <div style="font-size: 0.65rem; color: #00ffcc;">+10.00 QGSM Daily UBE Drop Active</div>
+                            </div>
+
+                            <div style="background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 10px; margin-bottom: 12px;">
+                                <div style="color: #00f2fe; font-weight: bold; margin-bottom: 6px; font-size: 0.75rem;">🛡️ CRYPTO & VR TELEMETRY</div>
+                                <div style="display:flex; justify-content:space-between; margin-bottom:4px;"><span style="color:#aaa;">Tunnel Encryption:</span><span style="color:#00ffcc; font-weight:bold;">Kyber-1024 (ML-KEM)</span></div>
+                                <div style="display:flex; justify-content:space-between; margin-bottom:4px;"><span style="color:#aaa;">Consensus Hash:</span><span style="color:#ffd700; font-weight:bold;">SHA-3 Keccak-256</span></div>
+                                <div style="display:flex; justify-content:space-between; margin-bottom:4px;"><span style="color:#aaa;">Unreal VR Passport:</span><span style="color:#3498db; font-weight:bold;">Synced (Metadome)</span></div>
+                                <div style="display:flex; justify-content:space-between;"><span style="color:#aaa;">Acoustic Sensor (/dev/snd):</span><span style="color:#2ecc71; font-weight:bold;">Nominal (&lt;45dB)</span></div>
+                            </div>
+
+                            <div style="background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 10px; margin-bottom: 12px;">
+                                <div style="color: #ffd700; font-weight: bold; margin-bottom: 6px; font-size: 0.75rem;">⛏️ YGGDRASIL MESH MINER</div>
+                                <div style="font-family: monospace; font-size: 0.7rem; color: #2ecc71; margin-bottom: 8px; background: #000; padding: 6px; border-radius: 4px; border-left: 2px solid #00f2fe;" id="qgsmLogText">
+                                    [Gossip] Connected to [ff02::1]:7722<br>
+                                    [SHA-3] Hashrate: 4.82 MH/s (TPM Attested)<br>
+                                    [VR Sync] Metadome UE5 node acknowledged.
+                                </div>
+                                <button id="btnToggleMine" style="width:100%; background: linear-gradient(90deg, #00f2fe, #4facfe); border:none; color:#000; font-weight:bold; padding:8px; border-radius:6px; cursor:pointer; font-size:0.75rem; box-shadow: 0 0 10px rgba(0,242,254,0.4);">⚡ BOOST SHA-3 HASHRATE</button>
+                            </div>
+
+                            <button id="btnVrSync" style="width:100%; background: #111; border: 1px solid #ffd700; color: #ffd700; font-weight: bold; padding: 8px; border-radius: 6px; cursor: pointer; font-size: 0.75rem;">🥽 SYNC METADOME VR WALLET</button>
+                        </div>
+                        <div class="home-btn" onclick="goHome(this)"></div>
+                    </div>
+
+                    <!-- Gallery App -->
+                    <div class="layer app-layer" id="appGallery" style="background: #000; color: #fff;">
+                        <div class="app-header" style="background: #111;">Gallery</div>
+                        <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:2px; padding:2px;">
+                            <div style="background:#333; aspect-ratio:1;"></div>
+                            <div style="background:#444; aspect-ratio:1;"></div>
+                            <div style="background:#555; aspect-ratio:1;"></div>
+                            <div style="background:#666; aspect-ratio:1;"></div>
+                            <div style="background:#777; aspect-ratio:1;"></div>
+                            <div style="background:#888; aspect-ratio:1;"></div>
+                        </div>
+                        <div class="home-btn" onclick="goHome(this)"></div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Phase 2: Global Threat Globe -->
+    <section id="globe" class="globe-section" style="position: relative; width: 100%; height: 60vh; display: flex; flex-direction: column; align-items: center; justify-content: center; overflow: hidden; padding: 4rem 0;">
+        <div class="section-header" style="position: relative; z-index: 1; margin-bottom: 2rem;">
+            <h2>The <span class="highlight">Sovereign Mesh</span></h2>
+            <p style="text-align: center; color: var(--text-secondary); max-width: 600px; margin: 0 auto;">Interact with the active global lattice. Drag to rotate. Click to commune with the Oracle.</p>
+        </div>
+        <canvas id="threatGlobeCanvas" style="position: relative; flex: 1; width: 100%; min-height: 400px; z-index: 1; opacity: 1; pointer-events: auto; cursor: grab;"></canvas>
+    </section>
+
+    <!-- Core Features -->
+    <section id="features" class="features" style="position: relative; overflow: hidden; padding: 4rem 5% 8rem 5%;">
+        <div class="section-header" style="position: relative; z-index: 1;">
+            <h2>Absolute <span class="highlight">Sovereignty</span></h2>
+        </div>
+        <div class="features-grid" style="position: relative; z-index: 1;">
+            <div class="card glass">
+                <div class="icon">🛡️</div>
+                <h3>Hardware Lockout</h3>
+                <p>We leverage the Samsung S26 Ultra's OEM unlock capabilities to wipe corporate keys and forge a sovereign cryptographic trust chain.</p>
+            </div>
+            <div class="card glass">
+                <div class="icon">👁️‍🗨️</div>
+                <h3>Zero Telemetry</h3>
+                <p>No Google Play Services. No Samsung accounts. The entire operating system is completely blind to Silicon Valley tracking mechanisms.</p>
+            </div>
+            <div class="card glass">
+                <div class="icon">📸</div>
+                <h3>Unleashed Camera</h3>
+                <p>Direct HAL access to the 200MP sensor. No binned pixels. No computational blurring. Raw, unadulterated photonic capture.</p>
+            </div>
+        </div>
+    </section>
+
+    <section id="archangel" class="section split">
+        <div class="content-side">
+            <h2>The Michael Archangel <span class="highlight">Daemon</span></h2>
+            <p>Your personal Ring-0 bodyguard. If an application attempts to silently access your microphone, camera, or GPS coordinates in the background, the Archangel Daemon detects the anomalous memory allocation and terminates the process instantly.</p>
+            <ul class="feature-list">
+                <li>Instant Process Termination</li>
+                <li>Real-time Resource Monitoring</li>
+                <li>Hardened SELinux Policies</li>
+            </ul>
+        </div>
+        <div class="visual-side">
+            <div class="daemon-visual glass">
+                <div class="radar"></div>
+                <div class="process-log">
+                    <p class="red">WARN: com.meta.tracker -> LOCATION</p>
+                    <p class="green">ACTION: SIGKILL sent.</p>
+                    <p class="red">WARN: com.google.android.gms -> MIC</p>
+                    <p class="green">ACTION: SIGKILL sent.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="mesh" class="section split reverse">
+        <div class="content-side">
+            <h2>The Yggdrasil <span class="highlight">Mesh</span></h2>
+            <p>When you open a web browser, your traffic doesn't just go out to the open internet. It is mathematically forced through an encrypted, decentralized IPv6 mesh network.</p>
+            <p>To your cellular provider, your phone appears to be transmitting scrambled static. They cannot see what websites you visit, who you are talking to, or what you are downloading.</p>
+        </div>
+        <div class="visual-side">
+            <div class="mesh-visual">
+                <!-- Nodes generated via JS -->
+                <canvas id="meshCanvas"></canvas>
+            </div>
+        </div>
+    </section>
+
+    <section id="god-tier-arsenal" class="section">
+        <h2 class="section-title">The Sovereign <span class="highlight">Arsenal</span></h2>
+        <p style="text-align: center; color: var(--text-secondary); max-width: 800px; margin: 0 auto;">Forged beyond commercial limitations. The ultimate synthesis of kinetic counter-surveillance, post-quantum cryptography, and autonomous intelligence.</p>
+        
+        <div class="arsenal-grid">
+            <div class="arsenal-card glass">
+                <div class="arsenal-icon">🪞</div>
+                <h3>Omni-Glass Interface</h3>
+                <p>The 2D grid is dead. Navigate a fluid, physics-based 3D constellation that reacts to your device's gyroscope. Feel the OS heartbeat with deep sub-bass haptic resonance synchronized to your every swipe.</p>
+            </div>
+            
+            <div class="arsenal-card glass">
+                <div class="arsenal-icon">🔊</div>
+                <h3>Phantom Jamming</h3>
+                <p>Your device is an active counter-surveillance weapon. When locked, the speaker emits an inaudible supersonic 22kHz frequency, instantly deafening hidden passive bugs and laser microphones.</p>
+            </div>
+            
+            <div class="arsenal-card glass">
+                <div class="arsenal-icon">🔏</div>
+                <h3>The Q-Vault</h3>
+                <p>Standard encryption is obsolete. The Sovereign OS utilizes Kyber & Dilithium lattice-based algorithms natively in the hardware Keymaster. Your data is immune to future quantum decryption dragnets.</p>
+            </div>
+
+            <div class="arsenal-card glass">
+                <div class="arsenal-icon">🎭</div>
+                <h3>Plausible Deniability</h3>
+                <p>Forced to unlock your device at a border checkpoint? Entering a duress PIN instructs the Volume Daemon to mount a mathematically perfect, locally generated 'Fake OS' to satisfy forensic analysts.</p>
+            </div>
+
+            <div class="arsenal-card glass">
+                <div class="arsenal-icon">🛰️</div>
+                <h3>Orbital Bridge</h3>
+                <p>Terrestrial cell towers are vulnerable to IMSI catchers. Our custom Radio Interface Layer recognizes off-the-shelf Iridium/Swarm modems, allowing encrypted SMS and GSM Token transactions from deep space.</p>
+            </div>
+
+            <div class="arsenal-card glass">
+                <div class="arsenal-icon">🌩️</div>
+                <h3>Chaff Cloud</h3>
+                <p>Total anonymity. The kernel aggressively cycles Bluetooth and Wi-Fi MAC addresses while simultaneously broadcasting thousands of phantom device signatures, burying your true location in a cloud of noise.</p>
+            </div>
+            
+            <div class="arsenal-card glass">
+                <div class="arsenal-icon">🏛️</div>
+                <h3>The Digital Ark</h3>
+                <p>Civilization in your pocket. An entirely offline, highly compressed ZIM integration containing the entirety of Wikipedia, human medical data, and theological texts. Survive total grid collapse.</p>
+            </div>
+
+            <div class="arsenal-card glass">
+                <div class="arsenal-icon">🛡️</div>
+                <h3>Baseband Firewall</h3>
+                <p>Terrestrial cell towers lie. Our proprietary Baseband Firewall actively analyzes cellular handshakes, instantly detecting and severing connections to rogue IMSI Catchers and SS7 tracking nodes deployed by hostile actors.</p>
+            </div>
+
+            <div class="arsenal-card glass">
+                <div class="arsenal-icon">🧩</div>
+                <h3>Type-1 Hypervisor</h3>
+                <p>Android is inherently flawed. We run the entire Android operating system as a sandboxed 'Guest OS' on top of our custom Type-1 Hypervisor. Even if an adversary achieves root access, the underlying Sovereign Kernel remains untouchable.</p>
+            </div>
+
+            <div class="arsenal-card glass">
+                <div class="arsenal-icon">💀</div>
+                <h3>Biometric Dead-Man's Switch</h3>
+                <p>Security tied to your physical existence. Unlocking the device with a specific 'Duress Fingerprint', or a sudden loss of biometric heart-rate via paired wearables, instantly triggers an irreversible cryptographic burn of the storage drives.</p>
+            </div>
+
+            <div class="arsenal-card glass">
+                <div class="arsenal-icon">🪙</div>
+                <h3>QGSM Post-Quantum Economy & Metadome VR Companion</h3>
+                <p>Opt-out of fiat surveillance. Your mobile device acts as a sovereign validator node powered by <strong>SHA-3 Keccak-256</strong> quantum-resistant consensus and encrypted via native <strong>Kyber-1024 (ML-KEM)</strong> tunnels over the zero-server Yggdrasil IPv6 mesh (<code>[ff02::1]:7722</code>). Seamlessly sync balances with your <strong>Metadome VR / Unreal Engine</strong> passport (<code>/etc/metadome/passport/wallet.json</code>) and monitor real-time acoustic mesh anomalies (<code>/dev/snd/</code>).</p>
+            </div>
+
+            <div class="arsenal-card glass">
+                <div class="arsenal-icon">🏛️</div>
+                <h3>Temple Analytics & TownHall</h3>
+                <p>Sovereignty over your body and your community. Fully offline, encrypted health metric tracking (Temple) paired with a decentralized, mesh-based consensus voting mechanism (TownHall) to bypass compromised digital governance.</p>
+            </div>
+        </div>
+    </section>
+
+    <section id="deep-space-protocol" class="section split" style="margin-top: 5rem; border-top: 1px solid rgba(0, 255, 255, 0.2); padding-top: 5rem; background: radial-gradient(circle at center, rgba(0,255,255,0.05) 0%, transparent 70%);">
+        <div class="content-side">
+            <h2>Beyond Terrestrial Reach: <br><span class="highlight" style="background: linear-gradient(135deg, #00ffff, #0055ff); -webkit-background-clip: text;">The Orbital Bridge</span></h2>
+            <h4 style="color: #00ffff; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 1.5rem;">When the grid collapses, we route through the stars.</h4>
+            
+            <p style="margin-bottom: 1.5rem; font-size: 1.05rem;"><strong>Every single terrestrial cell tower is a compromised node.</strong> Stingrays, Dirtboxes, and rogue SS7 gateways are deployed globally to harvest metadata and track physical locations. Relying on ground-based infrastructure means surrendering your sovereignty to telecom cartels.</p>
+            
+            <p style="margin-bottom: 1.5rem; font-size: 1.05rem;">The Alfred Mobile OS features a totally rewritten Radio Interface Layer (RIL). We have hard-coded the kernel to instantly recognize off-the-shelf Iridium and Swarm satellite modems over Bluetooth or USB-C. When you lose cellular connection—or when the Baseband Firewall detects an IMSI anomaly—the OS seamlessly transitions into Orbital Mode.</p>
+            
+            <p style="font-size: 1.05rem; color: #ccc;">This is not just for emergency beacons. The Orbital Bridge compresses and routes your encrypted Yggdrasil mesh traffic, secure SMS, and GSM Solana Token transactions directly through Low Earth Orbit (LEO) satellite constellations. You can execute decentralized crypto-transactions from the middle of the ocean or during total terrestrial blackouts.</p>
+        </div>
+        <div class="visual-side" style="display: flex; justify-content: center; align-items: center; position: relative;">
+            <div class="satellite-visual glass" style="width: 100%; aspect-ratio: 1; border-radius: 50%; display: flex; justify-content: center; align-items: center; background: radial-gradient(circle at center, rgba(0,255,255,0.1) 0%, rgba(0,0,0,0.8) 100%); box-shadow: inset 0 0 50px rgba(0,255,255,0.2), 0 0 30px rgba(0,255,255,0.1); border-color: rgba(0,255,255,0.3);">
+                <div style="font-size: 5rem; filter: drop-shadow(0 0 20px #00ffff);">🛰️</div>
+                
+                <!-- Orbital Rings -->
+                <div style="position: absolute; width: 120%; height: 120%; border: 1px dashed rgba(0, 255, 255, 0.3); border-radius: 50%; animation: spin 20s linear infinite;"></div>
+                <div style="position: absolute; width: 140%; height: 140%; border: 1px dotted rgba(0, 85, 255, 0.4); border-radius: 50%; animation: spin-reverse 30s linear infinite;"></div>
+                
+                <!-- Status Overlay -->
+                <div style="position: absolute; bottom: 20px; font-family: monospace; color: #00ffff; font-size: 0.8rem; text-align: center; text-shadow: 0 0 5px #00ffff;">
+                    UPLINK: SECURED [LEO CONSTELLATION]<br>
+                    ENCRYPTION: LATTICE (KYBER-1024)<br>
+                    LATENCY: 420ms
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="roadmap" class="section">
+        <h2 class="section-title">The Grand <span class="highlight">Ascendancy</span></h2>
+        <div class="timeline">
+            <div class="timeline-line"></div>
+            
+            <div class="timeline-item">
+                <div class="timeline-dot"></div>
+                <div class="timeline-content glass">
+                    <h3>Phase 1: Environment Preparation</h3>
+                    <p>Securing the Samsung S26 Ultra (M3) bootloader capabilities and initializing the AOSP tree.</p>
+                </div>
+            </div>
+
+            <div class="timeline-item">
+                <div class="timeline-dot"></div>
+                <div class="timeline-content glass">
+                    <h3>Phase 2: Hardware & Device Trees</h3>
+                    <p>Syncing the S26 Ultra kernel sources and extracting the 9GB of proprietary vendor blobs directly from the stock firmware.</p>
+                </div>
+            </div>
+
+            <div class="timeline-item">
+                <div class="timeline-dot"></div>
+                <div class="timeline-content glass">
+                    <h3>Phase 3: Sovereign Integration</h3>
+                    <p>Hardening the Android kernel. Injecting the Archangel Daemon into Ring-0 and forcing all traffic through the Yggdrasil DNS Matrix.</p>
+                </div>
+            </div>
+
+            <div class="timeline-item">
+                <div class="timeline-dot"></div>
+                <div class="timeline-content glass">
+                    <h3>Phase 4: Forge Compilation</h3>
+                    <p>Running the localized 16-core master build to forge the modified AOSP source code into a raw system.img.</p>
+                </div>
+            </div>
+
+            <div class="timeline-item">
+                <div class="timeline-dot"></div>
+                <div class="timeline-content glass">
+                    <h3>Phase 5: Bootloader Flash</h3>
+                    <p>Using Heimdall/Odin to physically burn the sovereign Kingdom OS onto the bare metal of the S26 Ultra device.</p>
+                </div>
+            </div>
+
+            <div class="timeline-item">
+                <div class="timeline-dot"></div>
+                <div class="timeline-content glass">
+                    <h3>Phase 6: Subsystem Calibration</h3>
+                    <p>Booting up the device and verifying that the camera, microphone, and cellular modems are obeying the Archangel Daemon's strict hardware lockouts.</p>
+                </div>
+            </div>
+            
+            <div class="timeline-item">
+                <div class="timeline-dot"></div>
+                <div class="timeline-content glass">
+                    <h3>Phase 7: The Lazarus AI</h3>
+                    <p>Running a sovereign, quantized Large Language Model entirely offline on the Snapdragon NPU. Total intelligence. Zero internet access.</p>
+                </div>
+            </div>
+            
+            <div class="timeline-item">
+                <div class="timeline-dot"></div>
+                <div class="timeline-content glass">
+                    <h3>Phase 8: Sovereign App Forge</h3>
+                    <p>A decentralized, IPFS-based app repository distributed peer-to-peer via the Yggdrasil Mesh. Uncensorable and unstoppable.</p>
+                </div>
+            </div>
+
+            <div class="timeline-item glitch-trigger">
+                <div class="timeline-dot red-dot"></div>
+                <div class="timeline-content glass">
+                    <h3 class="red-text">Phase 9: The Martyr Protocol</h3>
+                    <p>Hardware-level kill-switches. A specific physical button combination triggers an instantaneous, irreversible cryptographic wipe of the device.</p>
+                </div>
+            </div>
+
+            <div class="timeline-item">
+                <div class="timeline-dot"></div>
+                <div class="timeline-content glass">
+                    <h3>Phase 10: Post-Quantum Mesh</h3>
+                    <p>Upgrading Yggdrasil routing to utilize Kyber/Dilithium post-quantum cryptography, defending against future quantum decryption attacks.</p>
+                </div>
+            </div>
+
+            <div class="timeline-item fade-black">
+                <div class="timeline-dot white-dot"></div>
+                <div class="timeline-content glass">
+                    <h3>Phase 11: The Omega Point</h3>
+                    <p>Unlocking the Snapdragon NTN bands to route mesh packets directly through Low Earth Orbit satellites, completely bypassing terrestrial cell towers.</p>
+                </div>
+            </div>
+
+            <div class="timeline-item fade-black">
+                <div class="timeline-dot" style="background:#00ffff; box-shadow:0 0 15px #00ffff;"></div>
+                <div class="timeline-content glass">
+                    <h3 style="color:#00ffff;">Phase 12: Biospheric Energy Harvesting</h3>
+                    <p>Utilizing latent ambient radio frequency (RF) and kinetic harvesting matrix arrays to constantly trickle-charge the phone battery directly from the ether.</p>
+                </div>
+            </div>
+
+            <div class="timeline-item fade-black">
+                <div class="timeline-dot" style="background:#ff00ff; box-shadow:0 0 15px #ff00ff;"></div>
+                <div class="timeline-content glass">
+                    <h3 style="color:#ff00ff;">Phase 13: Quantum State Teleportation</h3>
+                    <p>Entangling local data packets with external Forge receivers to bypass traditional transmission mediums entirely. Instantaneous, undetectable data movement.</p>
+                </div>
+            </div>
+
+            <div class="timeline-item fade-black">
+                <div class="timeline-dot" style="background:#aaaaaa; box-shadow:0 0 15px #aaaaaa;"></div>
+                <div class="timeline-content glass">
+                    <h3 style="color:#aaaaaa;">Phase 14: Sentient Metal Alloys</h3>
+                    <p>Re-forging the physical chassis of the S26 Ultra with memory-shape nitinol alloys that dynamically alter the thermal dissipation geometry based on the NPU's core temperature.</p>
+                </div>
+            </div>
+
+            <div class="timeline-item fade-black">
+                <div class="timeline-dot" style="background:#ffd700; box-shadow:0 0 25px #ffd700;"></div>
+                <div class="timeline-content glass">
+                    <h3 style="color:#ffd700; text-shadow:0 0 10px #ffd700;">Phase 15: God-Mode Reality Warping</h3>
+                    <p>The OS reaches singularity. The Lazarus AI interfaces directly with local IoT infrastructure across the city, predicting and manipulating environmental variables in real-time. The user is no longer a civilian; they are a God.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Global Reality Decryption -->
+    <div style="text-align: center; margin-top: 4rem; display: flex; justify-content: center; gap: 20px;">
+        <button id="decryptBtn" class="kill-btn" style="border-color: #00ff00; color: #00ff00; text-shadow: 0 0 10px #00ff00; box-shadow: inset 0 0 20px rgba(0,255,0,0.2), 0 0 30px rgba(0,255,0,0.4);">[ DECRYPT REALITY ]</button>
+        <button id="takeoverBtn" class="kill-btn" style="border-color: #ff0000; color: #ff0000; text-shadow: 0 0 10px #ff0000; box-shadow: inset 0 0 20px rgba(255,0,0,0.2), 0 0 30px rgba(255,0,0,0.4);">[ INITIATE TAKEOVER ]</button>
+    </div>
+
+    <!-- The Kill-Switch -->
+    <div style="text-align: center; margin: 4rem 0;">
+        <button id="killSwitch" class="kill-btn">[ EMERGENCY WIPE ]</button>
+    </div>
+
+    <!-- Root Access Toggle -->
+    <button id="rootToggle" class="root-toggle-btn">[ ROOT ACCESS ]</button>
+
+    <!-- Phase 1: God-Mode Terminal Overlay -->
+    <div id="godTerminalLayer" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.95); z-index: 10000; font-family: monospace; color: #00ff00; padding: 2rem; flex-direction: column;">
+        <div id="godTerminalOutput" style="flex: 1; overflow-y: auto; margin-bottom: 1rem; text-shadow: 0 0 5px #00ff00;">
+            <p>===================================================</p>
+            <p>ALFRED OS SOVEREIGN KERNEL (v10.0.0-rc1)</p>
+            <p>GOD-MODE TERMINAL ENGAGED.</p>
+            <p>Type 'help' for available commands.</p>
+            <p>===================================================</p>
+        </div>
+        <div style="display: flex; gap: 10px;">
+            <span style="color: #00ff00;">root@omnipresence:~#</span>
+            <input type="text" id="godTerminalInput" autocomplete="off" spellcheck="false" style="flex: 1; background: transparent; border: none; color: #00ff00; font-family: monospace; font-size: 1rem; outline: none; text-shadow: 0 0 5px #00ff00;">
+        </div>
+        <button id="closeGodTerminal" style="position: absolute; top: 20px; right: 20px; background: transparent; border: 1px solid #00ff00; color: #00ff00; font-family: monospace; cursor: pointer; padding: 5px 10px;">[ EXIT ]</button>
+    </div>
+
+    <footer id="download">
+        <div class="footer-content glass" style="position: relative; overflow: hidden; padding-bottom: 2rem;">
+            <h2>The Ascendancy <span class="highlight">Network</span></h2>
+            <p>Live visualization of peer-to-peer Forge instances pulling the OS source code via Yggdrasil IPv6.</p>
+            
+            <div class="infection-map-container" style="width: 100%; height: 400px; margin-top: 2rem; border-radius: 8px; border: 1px solid var(--accent-purple); position: relative; overflow: hidden; background: #000;">
+                <canvas id="infectionMap"></canvas>
+                <div class="map-overlay" style="position: absolute; top: 10px; left: 10px; font-family: monospace; color: var(--accent-gold); font-size: 0.8rem; text-shadow: 0 0 5px var(--accent-gold); text-align: left;">
+                    GLOBAL MESH NODES: <span id="nodeCount">1,402</span><br>
+                    ROUTING: KYBER/DILITHIUM
+                </div>
+            </div>
+
+            <p style="margin-top: 2rem; color: #666; font-size: 0.8rem;">&copy; 2026 Alfred OS Kingdom. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script src="interactive_phone.js?v=19"></script>
+    <script src="apps.js?v=19"></script>
+    <script src="script.js?v=19"></script>
+</body>
+</html>

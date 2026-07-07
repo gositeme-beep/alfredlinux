@@ -1,0 +1,180 @@
+# Alfred AI — Caddy Reverse Proxy Configuration
+# ─────────────────────────────────────────────────
+# Automatic HTTPS, HTTP/3, rate limiting, compression.
+# Caddy handles TLS certificates via Let's Encrypt automatically.
+
+{
+    email support@gositeme.com
+    
+    servers {
+        protocols h1 h2 h3
+    }
+}
+
+# ── Main Site ────────────────────────────────────────────────────
+gositeme.com {
+    # Compression
+    encode gzip zstd
+    
+    # Security headers
+    header {
+        Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+        X-Content-Type-Options "nosniff"
+        X-Frame-Options "SAMEORIGIN"
+        Referrer-Policy "strict-origin-when-cross-origin"
+        Permissions-Policy "camera=(), microphone=(self), geolocation=()"
+        -Server
+    }
+
+    # Rate limiting for API endpoints
+    @api path /api/*
+    rate_limit @api {
+        zone api_zone {
+            key {remote_host}
+            events 60
+            window 60s
+        }
+    }
+
+    # Stricter rate limit for auth endpoints
+    @auth_endpoints {
+        path /api/auth.php /api/login.php /api/register.php /api/alfred-command.php
+    }
+    rate_limit @auth_endpoints {
+        zone auth_zone {
+            key {remote_host}
+            events 10
+            window 60s
+        }
+    }
+
+    # WebSocket proxy
+    @websocket {
+        path /ws/*
+        header Connection *Upgrade*
+        header Upgrade websocket
+    }
+    reverse_proxy @websocket localhost:3010
+
+    # MCP Client proxy
+    @mcp path /mcp/*
+    reverse_proxy @mcp localhost:3005 {
+        header_up X-Forwarded-Proto {scheme}
+    }
+
+    # GoCodeMe Middleware proxy (IDE + Agent + API)
+    handle_path /middleware/* {
+        reverse_proxy localhost:3001 {
+            header_up X-Forwarded-Proto {scheme}
+            header_up X-Forwarded-Host {host}
+        }
+    }
+
+    # Job Queue health (internal only)
+    @jobhealth {
+        path /jobs/health
+        remote_ip 127.0.0.1 10.0.0.0/8 172.16.0.0/12 192.168.0.0/16
+    }
+    reverse_proxy @jobhealth localhost:3011
+
+    # PHP-FPM for API and pages
+    @php {
+        path *.php
+        path /api/*
+    }
+    php_fastcgi @php localhost:9000 {
+        root /srv/www
+    }
+
+    # Static files
+    root * /srv/www
+    file_server {
+        hide .git .env .htaccess *.log *.sql
+    }
+
+    # Cache static assets
+    @static path *.css *.js *.png *.jpg *.jpeg *.webp *.svg *.woff2 *.ico
+    header @static Cache-Control "public, max-age=31536000, immutable"
+
+    # Block sensitive files
+    @blocked {
+        path *.env *.sql *.log *.bak *.backup *.orig *.old .htaccess
+        path /config/* /logs/* /cache/* /.git/*
+    }
+    respond @blocked 404
+
+    # Logging
+    log {
+        output file /var/log/caddy/access.log {
+            roll_size 50mb
+            roll_keep 5
+        }
+    }
+}
+
+# ── WWW redirect ─────────────────────────────────────────────────
+www.gositeme.com {
+    redir https://gositeme.com{uri} permanent
+}
+
+# ── MetaDome domain ───────────────────────────────────────────────
+meta-dome.com {
+    encode gzip zstd
+
+    header {
+        Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+        X-Content-Type-Options "nosniff"
+        X-Frame-Options "SAMEORIGIN"
+        Referrer-Policy "strict-origin-when-cross-origin"
+        -Server
+    }
+
+    # Serve MetaDome landing page
+    @php path *.php
+    php_fastcgi @php localhost:9000 {
+        root /srv/www
+        env SCRIPT_FILENAME /srv/www/metadome-landing.php
+    }
+
+    # All non-static requests → landing page
+    @notStatic {
+        not path *.css *.js *.png *.jpg *.jpeg *.webp *.svg *.woff2 *.ico
+        not path /brand/* /assets/*
+    }
+    rewrite @notStatic /metadome-landing.php
+
+    root * /srv/www
+    file_server {
+        hide .git .env .htaccess *.log *.sql
+    }
+
+    @static path *.css *.js *.png *.jpg *.jpeg *.webp *.svg *.woff2 *.ico
+    header @static Cache-Control "public, max-age=31536000, immutable"
+
+    log {
+        output file /var/log/caddy/metadome-access.log {
+            roll_size 50mb
+            roll_keep 3
+        }
+    }
+}
+
+www.meta-dome.com {
+    redir https://meta-dome.com{uri} permanent
+}
+
+# ── API subdomain (optional) ─────────────────────────────────────
+api.gositeme.com {
+    encode gzip
+
+    header {
+        Access-Control-Allow-Origin "https://gositeme.com"
+        Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
+        Access-Control-Allow-Headers "Content-Type, Authorization"
+        -Server
+    }
+
+    reverse_proxy localhost:9000 {
+        header_up X-Forwarded-Proto {scheme}
+    }
+}

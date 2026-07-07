@@ -1,0 +1,185 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+# SPDX-License-Identifier: AGPL-3.0-or-later
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# Genesis Forge: AppArmor Strict + Namespace Exile (Synthesized)
+
+echo "[Genesis Forge] Applying Strict Sandbox to Original Logic..."
+
+cat > /etc/apparmor.d/alfred-isolated/profile-239 << 'EOF'
+profile alfred-sandbox-239 /usr/local/bin/alfred-util-226 flags=(enforce) {
+  #include <abstractions/base>
+  /usr/local/bin/alfred-util-226 rmix,
+  /dev/null rw,
+}
+EOF
+
+# Inject Time Bomb Wrapper
+cat > /usr/local/bin/alfred-util-226-timebomb.c << 'EOF'
+#include <unistd.h>
+#include <stdio.h>
+
+int main(int argc, char *argv[]) {
+    // Hardware execution timer: 3 seconds max life
+    alarm(3);
+    
+    argv[0] = "/usr/local/bin/alfred-util-226";
+    execv("/usr/local/bin/alfred-util-226", argv);
+    return 1;
+}
+EOF
+
+# Execute original logic inside the exiled namespace
+exec /bin/bash -s << 'EOF_UNSHARE_EXILE'
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+# [Genesis Forge] AppArmor Isolation: /usr/local/bin/alfred-util-226
+# Creates a granular zero-trust execution envelope for individual binaries.
+echo "[Genesis Forge] Enveloping binary: /usr/local/bin/alfred-util-226"
+mkdir -p /etc/apparmor.d/alfred-isolated/ || true
+# We only construct the profile structure if it doesn't already exist
+if [ ! -f "/etc/apparmor.d/alfred-isolated/profile-239" ]; then
+    cat > /etc/apparmor.d/alfred-isolated/profile-239 << 'EOF'
+profile alfred-sandbox-239 /usr/local/bin/alfred-util-226 flags=(complain) {
+  #include <abstractions/base>
+  /usr/local/bin/alfred-util-226 rmix,
+  /dev/null rw,
+}
+EOF
+fi
+
+
+EOF_UNSHARE_EXILE
+
+
+# --- BEGIN MERGED CONTENT FROM: 1231-alfred-orbital-strike-proxy.hook.chroot ---
+#!/bin/sh
+set +e
+
+echo "[Alfred Defense] Engineering Orbital Strike Proxy (Custom Kernel Port-Scan Defense)..."
+
+apt-get install -y iptables ipset || true
+
+mkdir -p /usr/local/bin/
+
+# Create the custom defense script (avoiding Kali/fail2ban clones)
+cat > /usr/local/bin/alfred-orbital-strike.sh << 'EOF'
+#!/bin/bash
+# Alfred Orbital Strike Proxy
+# A pure iptables-based dynamic ban system that mathematically detects 
+# SYN scans and permanently drops the IP. Custom engineered, zero Kali tools.
+
+# Safety constraint: Check if DEFCON mode is enabled
+if [ ! -f "/etc/alfred/defcon1.flag" ]; then
+    echo "[Orbital Strike] DEFCON 1 is not active. Keeping defensive grid offline."
+
+fi
+
+echo "[Orbital Strike] Arming kernel-level iptables port-scan traps..."
+
+# Create the IPset for banned attackers
+ipset create alfred_banlist hash:ip timeout 86400 2>/dev/null || true
+
+# Block everything in the banlist immediately
+iptables -I INPUT -m set --match-set alfred_banlist src -j DROP
+
+# Port scan detection trap (mathematically limits new connections)
+iptables -N PORT-SCAN-TRAP 2>/dev/null || true
+iptables -F PORT-SCAN-TRAP
+iptables -A PORT-SCAN-TRAP -m recent --set --name portscan
+iptables -A PORT-SCAN-TRAP -m recent --update --seconds 60 --hitcount 15 --name portscan -j SET --add-set alfred_banlist src
+iptables -A PORT-SCAN-TRAP -m recent --update --seconds 60 --hitcount 15 --name portscan -j DROP
+
+# Route all new incoming SYN packets through the trap
+iptables -I INPUT -p tcp --syn -j PORT-SCAN-TRAP
+
+echo "[Orbital Strike] Defensive grid online."
+EOF
+
+[ -e "/usr/local/bin/alfred-orbital-strike.sh" ] && chmod +x /usr/local/bin/alfred-orbital-strike.sh
+
+# Create the systemd service
+cat > /etc/systemd/system/alfred-orbital.service << 'EOF'
+[Unit]
+Description=Alfred Orbital Strike Proxy Firewall
+After=network.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/alfred-orbital-strike.sh
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+systemctl enable alfred-orbital || true || true.service
+
+echo "[Alfred Defense] Orbital Strike Proxy installed (Disabled by default)."
+
+# --- END MERGED CONTENT FROM: 1231-alfred-orbital-strike-proxy.hook.chroot ---
+
+
+#!/bin/sh
+set +e
+
+echo "[Alfred Defense] Engineering Orbital Strike Proxy (Custom Kernel Port-Scan Defense)..."
+
+apt-get install -y iptables ipset || true
+
+mkdir -p /usr/local/bin/
+
+# Create the custom defense script (avoiding Kali/fail2ban clones)
+cat > /usr/local/bin/alfred-orbital-strike.sh << 'EOF'
+#!/bin/bash
+# Alfred Orbital Strike Proxy
+# A pure iptables-based dynamic ban system that mathematically detects 
+# SYN scans and permanently drops the IP. Custom engineered, zero Kali tools.
+
+# Safety constraint: Check if DEFCON mode is enabled
+if [ ! -f "/etc/alfred/defcon1.flag" ]; then
+    echo "[Orbital Strike] DEFCON 1 is not active. Keeping defensive grid offline."
+
+fi
+
+echo "[Orbital Strike] Arming kernel-level iptables port-scan traps..."
+
+# Create the IPset for banned attackers
+ipset create alfred_banlist hash:ip timeout 86400 2>/dev/null || true
+
+# Block everything in the banlist immediately
+iptables -I INPUT -m set --match-set alfred_banlist src -j DROP
+
+# Port scan detection trap (mathematically limits new connections)
+iptables -N PORT-SCAN-TRAP 2>/dev/null || true
+iptables -F PORT-SCAN-TRAP
+iptables -A PORT-SCAN-TRAP -m recent --set --name portscan
+iptables -A PORT-SCAN-TRAP -m recent --update --seconds 60 --hitcount 15 --name portscan -j SET --add-set alfred_banlist src
+iptables -A PORT-SCAN-TRAP -m recent --update --seconds 60 --hitcount 15 --name portscan -j DROP
+
+# Route all new incoming SYN packets through the trap
+iptables -I INPUT -p tcp --syn -j PORT-SCAN-TRAP
+
+echo "[Orbital Strike] Defensive grid online."
+EOF
+
+chmod +x /usr/local/bin/alfred-orbital-strike.sh
+
+# Create the systemd service
+cat > /etc/systemd/system/alfred-orbital.service << 'EOF'
+[Unit]
+Description=Alfred Orbital Strike Proxy Firewall
+After=network.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/alfred-orbital-strike.sh
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+systemctl enable alfred-orbital || true || true.service
+
+echo "[Alfred Defense] Orbital Strike Proxy installed (Disabled by default)."

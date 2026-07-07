@@ -1,0 +1,70 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# 0804-alfred-store-gui.hook.chroot
+# Installs a graphical wrapper for the Alfred Store
+
+set +e
+
+echo "[0804] Installing Kingdom App Store GUI..."
+DEBIAN_FRONTEND=noninteractive apt-get install -y --fix-broken -y --no-install-recommends python3-tk || true
+
+mkdir -p /usr/local/bin || true
+cat << 'EOF' > /usr/local/bin/alfred-store-gui
+#!/usr/bin/env python3
+import tkinter as tk
+from tkinter import ttk, messagebox
+import subprocess
+
+def install_app(app_id):
+    try:
+        subprocess.Popen(['konsole', '-e', f'alfred-store install {app_id}'])
+    except Exception as e:
+        messagebox.showerror("Error", str(e))
+
+root = tk.Tk()
+root.title("Kingdom App Store")
+root.geometry("600x400")
+root.configure(bg="#1a1a2e")
+
+style = ttk.Style()
+style.theme_use('clam')
+style.configure("TLabel", background="#1a1a2e", foreground="gold", font=("Helvetica", 14))
+style.configure("TButton", background="gold", foreground="black", font=("Helvetica", 12, "bold"))
+
+ttk.Label(root, text="God's Kingdom - Approved Software", font=("Helvetica", 18, "bold")).pack(pady=20)
+
+apps = [
+    ("Holy Bible (KJV)", "bible"),
+    ("Watchman AI", "watchman"),
+    ("Devotional Guide", "devotion"),
+    ("Digital Ark", "ark")
+]
+
+frame = tk.Frame(root, bg="#1a1a2e")
+frame.pack(fill=tk.BOTH, expand=True, padx=20)
+
+for name, cmd in apps:
+    row = tk.Frame(frame, bg="#1a1a2e")
+    row.pack(fill=tk.X, pady=5)
+    ttk.Label(row, text=name).pack(side=tk.LEFT)
+    ttk.Button(row, text="Install", command=lambda c=cmd: install_app(c)).pack(side=tk.RIGHT)
+
+root.mainloop()
+EOF
+[ -e /usr/local/bin/alfred-store-gui ] && chmod +x /usr/local/bin/alfred-store-gui || true
+
+mkdir -p /usr/share/applications || true
+cat << 'EOF' > /usr/share/applications/alfred-store-gui.desktop
+[Desktop Entry]
+Name=Kingdom App Store
+Exec=/usr/local/bin/alfred-store-gui
+Icon=system-software-install
+Type=Application
+Categories=System;
+EOF
+
+echo "[0804] Kingdom App Store GUI configured."
+
+exit 0

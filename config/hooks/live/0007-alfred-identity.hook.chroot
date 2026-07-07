@@ -1,0 +1,184 @@
+#!/bin/bash
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+# 0050-alfred-identity.hook.chroot
+# Sets the canonical Alfred Linux identity:
+#   - user "alfred" / password "alfred"
+#   - hostname "alfred"
+#   - alfred has NOPASSWD sudo (so `sudo` and `sudo su` need no password)
+#   - root account locked (no direct root login)
+#   - MOTD prints credentials so users always know
+#   - autologin to alfred on live session (lightdm + getty fallback)
+#   - calamares preset (alfred/alfred/host=alfred, autologin ON) for installs
+set +e
+echo "==[0050 alfred-identity] START $(date -u)=="
+
+# ---------- 1. user alfred / pass alfred ----------
+if ! id alfred >/dev/null 2>&1; then
+  useradd -m -s /bin/bash -c "Alfred" \
+    -G sudo,audio,video,plugdev,netdev,cdrom,dialout,users \
+    alfred
+fi
+HASH=$(perl -le 'print crypt("alfred", "\$6\$alfred\$")')
+usermod -p "$HASH" alfred || echo "alfred:alfred" | chpasswd
+# Password expiry is not forced here to avoid autologin/PAM lockouts in live sessions.
+# First-boot wizard below handles secure password change flow.
+# Lock root account (no direct password login). sudo still works.
+passwd -l root || true
+
+# ---------- 2. hostname ----------
+echo alfred > /etc/hostname || true
+if ! grep -q "127.0.1.1[[:space:]]*alfred" /etc/hosts; then
+  sed -i '/^127\.0\.1\.1/d' /etc/hosts || true
+  echo -e "127.0.1.1\talfred" >> /etc/hosts || true
+fi
+
+# ---------- 3. NOPASSWD sudo for alfred ----------
+mkdir -p /etc/sudoers.d || true
+cat > /etc/sudoers.d/010-alfred <<'EOF'
+# Alfred Linux — alfred user has full passwordless sudo.
+# This is the canonical Alfred identity.
+alfred ALL=(ALL:ALL) NOPASSWD: ALL
+EOF
+chmod 0440 /etc/sudoers.d/010-alfred || true
+visudo -cf /etc/sudoers.d/010-alfred 2>/dev/null || echo "[0050] visudo not available yet — sudoers syntax will be validated after sudo is installed"
+
+# ---------- 4. discoverable MOTD / issue ----------
+cat > /etc/motd <<'EOF'
+
+  ╔══════════════════════════════════════════════════════════════╗
+  ║                    ALFRED LINUX 7.77                         ║
+  ║              Kingdom of God Edition                          ║
+  ╠══════════════════════════════════════════════════════════════╣
+  ║   Login:     alfred                                          ║
+  ║   Password:  alfred   (permanent auto-login)     ║
+  ║                        first login — or pick "keep")         ║
+  ║   sudo:      no password required (just type: sudo <cmd>)    ║
+  ║   root:      locked — use `sudo su` for a root shell         ║
+  ║   Hostname:  alfred                                          ║
+  ╚══════════════════════════════════════════════════════════════╝
+
+EOF
+# /etc/issue (shown at TTY login prompt before login)
+cat > /etc/issue <<'EOF'
+Alfred Linux 7.77 \n \l
+
+  Login: alfred   Password: alfred   (sudo needs no password)
+
+EOF
+cp /etc/issue /etc/issue.net || true
+
+# ---------- 5. live-session autologin ----------
+# (a) lightdm autologin if installed
+if [ -d /etc/lightdm ]; then
+  mkdir -p /etc/lightdm/lightdm.conf.d || true
+  cat > /etc/lightdm/lightdm.conf.d/50-alfred-autologin.conf <<'EOF'
+[Seat:*]
+autologin-user=alfred
+autologin-user-timeout=0
+autologin-session=
+EOF
+fi
+# (b) gdm3 autologin if installed
+if [ -d /etc/gdm3 ]; then
+  mkdir -p /etc/gdm3 || true
+  if [ -f /etc/gdm3/daemon.conf ]; then
+    sed -i '/^\[daemon\]/,/^\[/{/AutomaticLoginEnable/d;/AutomaticLogin/d}' /etc/gdm3/daemon.conf || true
+    sed -i '/^\[daemon\]/a AutomaticLoginEnable=true\nAutomaticLogin=alfred' /etc/gdm3/daemon.conf || true
+  else
+    cat > /etc/gdm3/daemon.conf <<'EOF'
+[daemon]
+AutomaticLoginEnable=true
+AutomaticLogin=alfred
+EOF
+  fi
+fi
+# (c) sddm autologin if installed
+if [ -d /etc/sddm.conf.d ] || [ -f /etc/sddm.conf ]; then
+  mkdir -p /etc/sddm.conf.d || true
+  cat > /etc/sddm.conf.d/autologin.conf <<'EOF'
+[Autologin]
+User=alfred
+Session=plasmax11
+EOF
+  cat > /etc/sddm.conf.d/theme.conf <<'EOF'
+[Theme]
+Current=breeze
+EOF
+  mkdir -p /usr/share/sddm/themes/breeze || true
+  cat > /usr/share/sddm/themes/breeze/theme.conf.user <<'EOF'
+[General]
+background=/usr/share/wallpapers/Kingdom/9.png
+EOF
+  mkdir -p /var/lib/AccountsService/users /var/lib/AccountsService/icons || true
+  # In case the file isn't there during early hook, we'll link it (or just rely on the path)
+  cat > /var/lib/AccountsService/users/alfred <<'EOF'
+[User]
+Icon=/usr/share/icons/alfred-avatar.png
+EOF
+fi
+# (d) getty TTY1 autologin (fallback for console-only mode)
+mkdir -p /etc/systemd/system/getty@tty1.service.d || true
+cat > /etc/systemd/system/getty@tty1.service.d/autologin.conf <<'EOF'
+[Service]
+ExecStart=
+ExecStart=-/sbin/agetty --autologin alfred --noclear %I $TERM
+EOF
+
+# ---------- 6. calamares preset (so installer pre-fills alfred) ----------
+if [ -d /etc/calamares ]; then
+  mkdir -p /etc/calamares/modules || true
+  cat > /etc/calamares/modules/users.conf <<'EOF'
+# Alfred Linux installer defaults
+defaultGroups:
+    - users
+    - audio
+    - video
+    - plugdev
+    - netdev
+    - cdrom
+    - dialout
+    - sudo
+autologinGroup:  autologin
+sudoersGroup:    sudo
+setRootPassword: false
+doReusePassword: false
+passwordRequirements:
+    minLength: -1
+    maxLength: -1
+presets:
+    fullName:
+        value: "Alfred"
+        editable: true
+    loginName:
+        value: "alfred"
+        editable: true
+    hostName:
+        value: "alfred"
+        editable: true
+    autoLogin:
+        value: false
+        editable: true
+EOF
+fi
+
+# ---------- 7. shell greeting (bash login banner backup) ----------
+cat > /etc/profile.d/00-alfred-welcome.sh <<'EOF'
+# Alfred Linux first-shell hint — only on interactive non-root shells
+if [ -n "$PS1" ] && [ "$(id -u)" -ne 0 ] && [ -z "$ALFRED_GREETED" ]; then
+  export ALFRED_GREETED=1
+  echo
+  echo "  Welcome, alfred. (password: alfred — sudo needs no password)"
+  echo "  Type 'alfred-help' for the tour, 'sudo su' for root shell."
+  echo
+fi
+EOF
+chmod 0644 /etc/profile.d/00-alfred-welcome.sh || true
+
+echo "==[0050 alfred-identity] DONE $(date -u)=="
+
+# Tell live-config to use alfred instead of user
+mkdir -p /etc/live/config.conf.d || true
+echo "LIVE_USERNAME=alfred" > /etc/live/config.conf.d/alfred.conf || true
+
+exit 0

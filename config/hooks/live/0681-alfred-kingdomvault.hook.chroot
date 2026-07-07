@@ -1,0 +1,44 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+echo "[0804] Baking Kingdom Vault (GoSiteMe Cloud Storage) Integration..."
+
+# We install davfs2 to allow mounting WebDAV natively in the filesystem
+apt_nonfatal davfs2
+
+# Configure davfs2 to not require root for mounting
+if [ -f /etc/davfs2/davfs2.conf ]; then
+    sed -i 's/# use_locks       1/use_locks       0/' /etc/davfs2/davfs2.conf || true
+fi
+
+# Create the KingdomVault mount script
+cat > /usr/local/bin/alfred-mount-vault << 'SCRIPT'
+#!/bin/bash
+MOUNT_POINT="$HOME/KingdomVault"
+mkdir -p "$MOUNT_POINT" || true
+
+# In a real environment, this would securely read from the user's keychain.
+# For the prototype, we just launch the Dolphin file manager pointing to the remote WebDAV URL.
+xdg-open "webdavs://gositeme.com/kingdom-vault/remote.php/webdav/"
+SCRIPT
+[ -e /usr/local/bin/alfred-mount-vault ] && chmod +x /usr/local/bin/alfred-mount-vault || true
+
+# Create a Desktop Shortcut for the Vault
+mkdir -p /usr/share/applications/ || true
+cat > /usr/share/applications/kingdom-vault.desktop << 'DESKTOP'
+[Desktop Entry]
+Version=1.0
+Name=Kingdom Vault (Cloud Storage)
+Comment=Access your GoSiteMe Sovereign Storage
+Exec=/usr/local/bin/alfred-mount-vault
+Icon=folder-network
+Terminal=false
+Type=Application
+Categories=Network;FileTransfer;
+DESKTOP
+
+echo "[0804] Kingdom Vault integration complete."
+
+exit 0

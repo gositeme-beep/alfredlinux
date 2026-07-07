@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Alfred Weather — sample</title>
+  <style>
+    :root {
+      --bg: #0a0e1a;
+      --card: rgba(20, 28, 48, 0.85);
+      --gold: #e2b340;
+      --cyan: #22d3ee;
+      --text: #e8edf7;
+      --muted: #8b9bb4;
+      --radius: 18px;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Segoe UI", system-ui, sans-serif;
+      background: radial-gradient(1200px 800px at 20% 0%, #1a2040 0%, transparent 55%),
+        radial-gradient(900px 600px at 90% 20%, #0d3d4a 0%, transparent 50%),
+        var(--bg);
+      color: var(--text);
+      padding: 32px 20px 48px;
+    }
+    .wrap { max-width: 520px; margin: 0 auto; }
+    header { text-align: center; margin-bottom: 28px; }
+    h1 {
+      font-size: 1.5rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      margin: 0 0 8px;
+      background: linear-gradient(135deg, var(--gold), var(--cyan));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .sub { color: var(--muted); font-size: 0.85rem; line-height: 1.5; }
+    .card {
+      background: var(--card);
+      border: 1px solid rgba(226, 179, 64, 0.2);
+      border-radius: var(--radius);
+      padding: 24px 22px;
+      backdrop-filter: blur(12px);
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.45);
+    }
+    .loc { font-size: 1.1rem; font-weight: 700; margin-bottom: 4px; }
+    .cond { color: var(--muted); font-size: 0.9rem; margin-bottom: 20px; }
+    .temp-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+    .temp { font-size: 3.2rem; font-weight: 800; line-height: 1; letter-spacing: -0.04em; }
+    .unit { font-size: 1.4rem; font-weight: 600; opacity: 0.7; vertical-align: super; }
+    .hi-lo { font-size: 0.9rem; color: var(--muted); text-align: right; }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-top: 22px;
+      padding-top: 18px;
+      border-top: 1px solid rgba(255, 255, 255, 0.06);
+    }
+    .pill {
+      background: rgba(0, 0, 0, 0.25);
+      border-radius: 12px;
+      padding: 10px 8px;
+      text-align: center;
+      font-size: 0.78rem;
+    }
+    .pill b { display: block; color: var(--cyan); font-size: 0.95rem; margin-top: 4px; }
+    footer {
+      margin-top: 22px;
+      text-align: center;
+      font-size: 0.75rem;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+    footer a { color: var(--gold); text-decoration: none; }
+    footer a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1>Alfred Weather</h1>
+      <p class="sub">Static demo page — swap in a real API (Open-Meteo, OpenWeather) from Alfred IDE when you’re ready.</p>
+    </header>
+    <div class="card" id="card">
+      <div class="loc" id="loc">Montréal, QC</div>
+      <div class="cond" id="cond">Partly cloudy · sample data</div>
+      <div class="temp-row">
+        <div>
+          <span class="temp" id="temp">-3</span><span class="unit">°C</span>
+        </div>
+        <div class="hi-lo">
+          H <strong id="hi">1°</strong><br />
+          L <strong id="lo">-8°</strong>
+        </div>
+      </div>
+      <div class="grid">
+        <div class="pill">Humidity<b id="hum">72%</b></div>
+        <div class="pill">Wind<b id="wind">18 km/h NW</b></div>
+        <div class="pill">UV<b id="uv">Low</b></div>
+      </div>
+    </div>
+    <footer>
+      Built as a <strong>sample</strong> for <code>/alfred-ide/</code> chat tests.<br />
+      Path: <code>/demo/alfred-weather/</code> ·
+      <a href="/">← GoSiteMe</a>
+    </footer>
+  </div>
+  <script>
+    // Optional: replace with fetch() to Open-Meteo (no key) when deployed.
+    document.getElementById("card").addEventListener("dblclick", function () {
+      var t = document.getElementById("temp");
+      var n = parseInt(t.textContent, 10) || 0;
+      t.textContent = String(n + (Math.random() > 0.5 ? 1 : -1));
+    });
+  </script>
+</body>
+</html>

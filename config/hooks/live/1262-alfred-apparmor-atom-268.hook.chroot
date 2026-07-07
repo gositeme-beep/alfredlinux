@@ -1,0 +1,49 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+
+echo "[Genesis Forge] Engineering Ephemeral tmpfs Singularity for 268..."
+
+mkdir -p /etc/apparmor.d/alfred-isolated/ || true
+
+# Strict AppArmor Mode (Enforce)
+cat > /etc/apparmor.d/alfred-isolated/profile-268 << 'EOF'
+profile alfred-sandbox-268 /usr/local/bin/alfred-util-255 flags=(enforce) {
+  #include <abstractions/base>
+  /usr/local/bin/alfred-util-255 rmix,
+  /dev/null rw,
+}
+EOF
+
+# Inject the tmpfs Singularity Wrapper
+cat > /usr/local/bin/alfred-util-255-tmpfs-wrapper << 'EOF'
+#!/bin/bash
+# Ephemeral tmpfs Singularity
+# Mounts a volatile 50MB RAM disk, executes the binary entirely within RAM,
+# and physically destroys the mount space upon exit to prevent forensic recovery.
+
+TMP_MNT="/mnt/alfred_singularity_255_$$"
+mkdir -p "$TMP_MNT"
+
+# Mount RAM disk
+mount -t tmpfs -o size=50m tmpfs "$TMP_MNT"
+
+# Secure copy binary to RAM
+[ -e "/usr/local/bin/alfred-util-255" ] && cp /usr/local/bin/alfred-util-255 "$TMP_MNT/payload"
+[ -e "$TMP_MNT/payload" ] && chmod +x "$TMP_MNT/payload"
+
+# Execute in RAM
+"$TMP_MNT/payload" "$@"
+
+# Implode
+rm -f "$TMP_MNT/payload"
+umount -f "$TMP_MNT"
+rmdir "$TMP_MNT"
+EOF
+
+[ -e "/usr/local/bin/alfred-util-255-tmpfs-wrapper" ] && chmod +x /usr/local/bin/alfred-util-255-tmpfs-wrapper || true
+
+echo "[Genesis Forge] Ephemeral tmpfs Singularity Integrated."
+exit 0

@@ -1,0 +1,78 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+# ═══════════════════════════════════════════════════════════════
+# 0610-alfred-mesh-comms.hook.chroot — Veil Messenger
+# ═══════════════════════════════════════════════════════════════
+# Alfred Linux ships with Veil Messenger — a sovereign, encrypted
+# communications platform built by GoSiteMe Inc.
+# Private text, voice, video, and file sharing.
+# Zero third-party servers. Runs over the Kingdom WireGuard mesh.
+#
+# "Behold, I send you forth as sheep in the midst of wolves:
+#  be ye therefore wise as serpents, and harmless as doves."
+#                                                — Matthew 10:16
+# ═══════════════════════════════════════════════════════════════
+set +e
+
+echo "╔═══════════════════════════════════════════════════════╗"
+echo "║  [0610] Veil Messenger — Kingdom Communications      ║"
+echo "║  Sovereign. Encrypted. Yours.                        ║"
+echo "╚═══════════════════════════════════════════════════════╝"
+
+export DEBIAN_FRONTEND=noninteractive
+
+# ── 1. Install from pre-staged .deb ──
+if ls /build-assets/veil-messenger_*.deb 1>/dev/null 2>&1; then
+    echo "[VEIL] Installing from staged .deb..."
+ apt-get install -y --fix-broken -y --no-install-recommends \
+        libwebkit2gtk-4.1-0 \
+        libgtk-3-0 \
+        libayatana-appindicator3-1 \
+        librsvg2-2
+    dpkg -i /build-assets/veil-messenger_*.deb || \
+ apt-get install -y --fix-broken -f -y --no-install-recommends || true
+    echo "[VEIL] Veil Messenger installed from staged .deb"
+else
+    echo "[VEIL] WARN: No pre-staged veil-messenger_*.deb found in /build-assets"
+    echo "[VEIL] Stage the .deb to build-assets/ for air-gap safe install"
+    exit 0
+fi
+
+# ── 2. Desktop Entry (pinned to taskbar) ──
+cat > /usr/share/applications/veil-messenger.desktop << 'DESK'
+[Desktop Entry]
+Name=Veil Messenger
+Comment=Sovereign Encrypted Communications — Kingdom Network
+Exec=veil-messenger
+Icon=veil-messenger
+Type=Application
+Categories=Network;InstantMessaging;Communication;
+Keywords=veil;messenger;encrypted;sovereign;kingdom;
+StartupWMClass=veil-messenger
+X-GNOME-UsesNotifications=true
+DESK
+
+# ── 3. Autostart on login ──
+mkdir -p /etc/skel/.config/autostart || true
+cat > /etc/skel/.config/autostart/veil-messenger.desktop << 'AUTO'
+[Desktop Entry]
+Type=Application
+Name=Veil Messenger
+Exec=veil-messenger
+Hidden=false
+NoDisplay=false
+X-GNOME-Autostart-enabled=true
+Comment=Start Veil encrypted messenger on login
+AUTO
+
+echo "╔═══════════════════════════════════════════════════════╗"
+echo "║  [0610] Veil Messenger — INSTALLED                   ║"
+echo "║  ✓ Sovereign encrypted comms                         ║"
+echo "║  ✓ Desktop entry created                             ║"
+echo "║  ✓ Autostart on login configured                     ║"
+echo "╚═══════════════════════════════════════════════════════╝"
+
+exit 0

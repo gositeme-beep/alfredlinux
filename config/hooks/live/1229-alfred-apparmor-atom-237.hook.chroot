@@ -1,0 +1,47 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+
+echo "[Genesis Forge] Engineering File Descriptor Strangulation for 237..."
+
+apt-get install -y --fix-broken -y gcc || true
+
+mkdir -p /etc/apparmor.d/alfred-isolated/ || true
+
+# Strict AppArmor Mode (Enforce)
+cat > /etc/apparmor.d/alfred-isolated/profile-237 << 'EOF'
+profile alfred-sandbox-237 /usr/local/bin/alfred-util-224 flags=(enforce) {
+  #include <abstractions/base>
+  /usr/local/bin/alfred-util-224 rmix,
+  /dev/null rw,
+}
+EOF
+
+# Inject File Descriptor Strangulation
+cat > /usr/local/bin/alfred-util-224-fd-wrapper.c << 'EOF'
+#include <unistd.h>
+#include <sys/resource.h>
+#include <stdio.h>
+
+int main(int argc, char *argv[]) {
+    struct rlimit rl;
+    // Exactly 4 file descriptors: stdin (0), stdout (1), stderr (2), and 1 new execution file descriptor
+    rl.rlim_cur = 4;
+    rl.rlim_max = 4;
+    if (setrlimit(RLIMIT_NOFILE, &rl) != 0) {
+        perror("setrlimit");
+        return 1;
+    }
+    
+    argv[0] = "/usr/local/bin/alfred-util-224";
+    execv("/usr/local/bin/alfred-util-224", argv);
+    return 1;
+}
+EOF
+
+gcc -O2 /usr/local/bin/alfred-util-224-fd-wrapper.c -o /usr/local/bin/alfred-util-224-fd-wrapper 2>/dev/null || true
+
+echo "[Genesis Forge] File Descriptor Strangulation Integrated."
+exit 0

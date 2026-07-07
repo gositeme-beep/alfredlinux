@@ -1,0 +1,101 @@
+#!/bin/bash
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# 0996-alfred-babylon-fall.hook.chroot
+# Configures Intel ME Neutralization (The Fall of Babylon)
+set +e
+
+echo "[0996] Configuring The Fall of Babylon (Intel ME Neutralization)"
+
+# Aggressively blacklist all Intel ME / AMT kernel modules
+mkdir -p /etc/modprobe.d
+cat << 'EOF' > /etc/modprobe.d/alfred-babylon-fall.conf
+blacklist mei
+blacklist mei_me
+blacklist intel_ips
+blacklist mei_hdcp
+blacklist mei_wdt
+EOF
+
+# Create the CLI tool
+cat << 'EOF' > /usr/local/bin/alfred-babylon-fall
+#!/bin/bash
+echo "â•”â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•—"
+echo "â•‘  THE FALL OF BABYLON â€” Hardware Backdoor Neutralization   â•‘"
+echo "â•‘  'Babylon the great is fallen...' â€” Revelation 18:2       â•‘"
+echo "â•šâ•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•"
+echo ""
+echo "Intel Management Engine (ME) and AMT kernel modules are permanently blacklisted."
+echo "Checking loaded modules..."
+lsmod | grep mei || echo "No Intel ME modules are loaded. Babylon has fallen."
+EOF
+
+chmod 0755 /usr/local/bin/alfred-babylon-fall
+
+echo "[0996] Babylon has fallen."
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+
+echo "[1002] ASCENSION PROTOCOL: The Final Trumpet"
+
+
+# --- INJECTED FUNCTIONALITY: OMEGA POINT STATE TRACKING ---
+# Ensure the central logging directory exists
+if [ ! -d "/var/log/alfred_ascension" ]; then
+    mkdir -p /var/log/alfred_ascension || true
+    [ -e "700" ] && chmod 700 /var/log/alfred_ascension || true
+fi
+
+# Generate a cryptographic marker for the execution of this specific hook
+MARKER_FILE="/var/log/alfred_ascension/hook_$(basename $0).marker"
+TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+HASH=$(echo "$TIMESTAMP-$(basename $0)" | sha256sum | awk '{print $1}')
+
+echo "[$TIMESTAMP] EXECUTION VERIFIED: $HASH" > "$MARKER_FILE" || true
+[ -e "400" ] && chmod 400 "$MARKER_FILE" || true
+
+# Apply lockdown permissions to the log to prevent tampering
+
+echo "[Omega Point] State tracking committed for $(basename $0)."
+
+
+# --- BEGIN MERGED CONTENT FROM: 0996-alfred-babylon-fall.hook.chroot ---
+#!/bin/bash
+# 0996-alfred-babylon-fall.hook.chroot
+# Configures Intel ME Neutralization (The Fall of Babylon)
+set +e
+
+echo "[0996] Configuring The Fall of Babylon (Intel ME Neutralization)"
+
+# Aggressively blacklist all Intel ME / AMT kernel modules
+mkdir -p /etc/modprobe.d
+cat << 'EOF' > /etc/modprobe.d/alfred-babylon-fall.conf
+blacklist mei
+blacklist mei_me
+blacklist intel_ips
+blacklist mei_hdcp
+blacklist mei_wdt
+EOF
+
+# Create the CLI tool
+cat << 'EOF' > /usr/local/bin/alfred-babylon-fall
+#!/bin/bash
+echo "â•”â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•—"
+echo "â•‘  THE FALL OF BABYLON â€” Hardware Backdoor Neutralization   â•‘"
+echo "â•‘  'Babylon the great is fallen...' â€” Revelation 18:2       â•‘"
+echo "â•šâ•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•"
+echo ""
+echo "Intel Management Engine (ME) and AMT kernel modules are permanently blacklisted."
+echo "Checking loaded modules..."
+lsmod | grep mei || echo "No Intel ME modules are loaded. Babylon has fallen."
+EOF
+
+chmod 0755 /usr/local/bin/alfred-babylon-fall
+
+echo "[0996] Babylon has fallen."
+
+# --- END MERGED CONTENT FROM: 0996-alfred-babylon-fall.hook.chroot ---
+
+

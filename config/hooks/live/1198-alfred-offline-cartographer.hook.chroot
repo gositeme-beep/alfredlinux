@@ -1,0 +1,74 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+
+echo "[Genesis Forge] Engineering Global Vector Map Server (Offline Cartographer)..."
+
+# Install map server dependencies
+apt-get install -y --fix-broken -y python3 python3-pip curl || true
+pip3 install --break-system-packages mbtileserver 2>/dev/null || true
+
+mkdir -p /var/log/alfred_ascension || true
+[ -e "700" ] && chmod 700 /var/log/alfred_ascension || true
+
+mkdir -p /opt/alfred-maps/mbtiles || true
+
+# Inject Map Server Daemon Script
+cat > /opt/alfred-maps/map_daemon.sh << 'EOF'
+#!/bin/bash
+# The Offline Cartographer
+# Serves global vector and topographical tiles to the tactical mesh network.
+
+LOG_FILE="/var/log/alfred_ascension/offline_cartographer.log"
+
+echo "[$(date -u +"%Y-%m-%dT%H:%M:%SZ")] Activating Offline Map Server..." >> "$LOG_FILE"
+
+# Start a lightweight Python HTTP server specifically tailored for MBTiles 
+# or a generic HTTP directory listing if the mbtileserver isn't installed.
+if command -v mbtileserver &> /dev/null; then
+    mbtileserver -d /opt/alfred-maps/mbtiles -p 8081 >> "$LOG_FILE" 2>&1 &
+    MAP_PID=$!
+    echo "[Cartographer] MBTile Server Active. PID: $MAP_PID" >> "$LOG_FILE"
+    wait $MAP_PID
+else
+    # Fallback: Serve the raw tile files statically
+    cd /opt/alfred-maps/mbtiles
+    python3 -m http.server 8081 >> "$LOG_FILE" 2>&1 &
+    MAP_PID=$!
+    echo "[Cartographer] Static HTTP Tile Server Active. PID: $MAP_PID" >> "$LOG_FILE"
+    wait $MAP_PID
+fi
+EOF
+
+[ -e "+x" ] && chmod +x /opt/alfred-maps/map_daemon.sh || true
+
+# Create systemd service for the daemon
+cat > /etc/systemd/system/alfred-offline-cartographer.service << 'EOF'
+[Unit]
+Description=Alfred Offline Cartographer Vector Map Server
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/opt/alfred-maps/map_daemon.sh
+Restart=always
+RestartSec=15
+User=root
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+systemctl enable alfred-offline-cartographer || true || true.service || true
+
+# Original marker functionality
+MARKER_FILE="/var/log/alfred_ascension/hook_1198-alfred-offline-cartographer.hook.chroot.marker"
+TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+HASH=$(echo "$TIMESTAMP-1198-alfred-offline-cartographer.hook.chroot" | sha256sum | awk '{print $1}')
+echo "[$TIMESTAMP] EXECUTION VERIFIED: $HASH" > "$MARKER_FILE" || true
+[ -e "400" ] && chmod 400 "$MARKER_FILE" || true
+
+echo "[Genesis Forge] Global Vector Map Server Integrated."
+exit 0

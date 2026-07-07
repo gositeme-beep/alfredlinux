@@ -1,0 +1,58 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# 0778-alfred-watchman.hook.chroot
+# Configures the "Watchmen on the Wall" Intrusion Detection System
+set +e
+
+echo "[0778] Configuring Watchmen on the Wall (fail2ban/auditd)"
+
+# Configure fail2ban to be highly aggressive
+cat << 'EOF' > /etc/fail2ban/jail.d/alfred-watchman.local
+[DEFAULT]
+bantime  = 86400
+findtime  = 600
+maxretry = 3
+banaction = ufw
+
+[sshd]
+enabled = true
+port    = ssh
+filter  = sshd
+logpath = /var/log/auth.log
+maxretry = 3
+EOF
+
+# Create the alfred-watchman CLI
+cat << 'EOF' > /usr/local/bin/alfred-watchman
+#!/bin/bash
+# alfred-watchman - View the ledger of banned IPs
+echo "╔═══════════════════════════════════════════════════════════╗"
+echo "║  WATCHMEN ON THE WALL                                     ║"
+echo "║  'I have set watchmen upon thy walls' — Isaiah 62:6       ║"
+echo "╚═══════════════════════════════════════════════════════════╝"
+echo ""
+
+if command -v fail2ban-client &>/dev/null; then
+    fail2ban-client status sshd
+else
+    echo "Watchman daemon (fail2ban) is not running."
+fi
+EOF
+
+chmod 0755 /usr/local/bin/alfred-watchman || true
+
+# Enable auditd for tracking execve and unauthorized accesses
+cat << 'EOF' > /etc/audit/rules.d/alfred-watchman.rules
+-w /etc/shadow -p wa -k shadow_access
+-w /etc/passwd -p wa -k passwd_access
+-w /var/log/auth.log -p wa -k auth_log_tamper
+EOF
+
+systemctl enable fail2ban || true || true || true
+systemctl enable auditd || true || true || true
+
+echo "[0778] Watchmen stationed on the walls."
+
+exit 0

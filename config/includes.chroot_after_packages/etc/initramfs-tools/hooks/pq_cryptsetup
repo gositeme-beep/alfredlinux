@@ -1,0 +1,102 @@
+#!/bin/sh
+
+PREREQ="cryptroot"
+prereqs()
+{
+	echo "$PREREQ"
+}
+
+case $1 in
+prereqs)
+	prereqs
+	exit 0
+	;;
+esac
+
+. /usr/share/initramfs-tools/hook-functions
+
+if [ -f /usr/lib/liboqs.so.0 ]; then
+    copy_exec /usr/lib/liboqs.so.0 /usr/lib/
+fi
+
+if [ -f /usr/lib/x86_64-linux-gnu/cryptsetup/libcryptsetup-token-pq.so ]; then
+    mkdir -p ${DESTDIR}/usr/lib/x86_64-linux-gnu/cryptsetup
+    copy_exec /usr/lib/x86_64-linux-gnu/cryptsetup/libcryptsetup-token-pq.so /usr/lib/x86_64-linux-gnu/cryptsetup/
+fi
+
+for bin in tpm2_unseal openssl ssss-combine curl zbarcam iwlist ifconfig; do
+    if [ -x /usr/bin/$bin ]; then copy_exec /usr/bin/$bin /usr/bin/; fi
+    if [ -x /sbin/$bin ]; then copy_exec /sbin/$bin /sbin/; fi
+done
+
+cat << 'EOF' > ${DESTDIR}/scripts/local-top/mount_pq_usb
+#!/bin/sh
+PREREQ="udev"
+prereqs()
+{
+    echo "$PREREQ"
+}
+case $1 in
+prereqs)
+    prereqs
+    exit 0
+    ;;
+esac
+
+# Proof of Space and Time (Nomadic Vault)
+echo "VERIFYING GEOGRAPHIC COORDINATES..."
+ifconfig wlan0 up 2>/dev/null || true
+sleep 2
+SCAN_RES=$(iwlist wlan0 scan 2>/dev/null | grep "Address:" || true)
+ALLOWED_BSSID="00:11:22:33:44:55"
+if ! echo "$SCAN_RES" | grep -q "$ALLOWED_BSSID"; then
+    echo "GEOGRAPHIC BOUNDARY VIOLATION. BOOT ABORTED."
+    sleep 99999
+fi
+
+echo "WARNING: USB BOOT DISABLED. AWAITING OPTICAL TRANSMISSION."
+echo "0" > /sys/bus/usb/devices/usb1/authorized || true
+echo "0" > /sys/bus/usb/devices/usb2/authorized || true
+
+echo "Please present your Smartphone QR Stream to the Webcam..."
+/usr/bin/zbarcam --raw --nodisplay /dev/video0 > /tmp/shard1.txt
+killall zbarcam
+
+echo "1" > /sys/bus/usb/devices/usb1/authorized || true
+echo "1" > /sys/bus/usb/devices/usb2/authorized || true
+
+# Network Shamir Consensus
+if [ -f /tmp/shard1.txt ]; then
+    echo "Fetching Kingdom Shards from Network..."
+    curl -s --connect-timeout 5 https://kingdom1.alfredlinux.com/shard2 -o /tmp/shard2.txt || true
+    curl -s --connect-timeout 5 https://kingdom2.alfredlinux.com/shard3 -o /tmp/shard3.txt || true
+    
+    if [ -f /tmp/shard2.txt ] && [ -f /tmp/shard3.txt ]; then
+        cat /tmp/shard1.txt /tmp/shard2.txt /tmp/shard3.txt > /tmp/all_shards.txt
+        ssss-combine -t 2 < /tmp/all_shards.txt > /tmp/pq_key.enc 2>/dev/null
+    fi
+fi
+
+# Archangel TPM + Genesis Duress Password unlock
+if [ -f /tmp/pq_key.enc ]; then
+    tpm2_unseal -c 0x81000000 -p pcr:7,11 -o /tmp/tpm_sym.key 2>/dev/null || true
+    /lib/cryptsetup/askpass "Enter Genesis Passphrase: " > /tmp/user_pass.txt
+    
+    FEAR_PIN="helpme123"
+    USER_PIN=$(cat /tmp/user_pass.txt)
+    
+    if [ "$USER_PIN" = "$FEAR_PIN" ]; then
+        echo "DURESS DETECTED: WARPING QUANTUM SEED..." > /dev/kmsg
+        echo "DECOY_SEED_ACTIVE" > /tmp/tpm_sym.key
+    fi
+    
+    if [ -f /tmp/tpm_sym.key ] && [ -f /tmp/user_pass.txt ]; then
+        openssl enc -d -aes-256-cbc -in /tmp/pq_key.enc -out /tmp/pq_key.bin -pass file:/tmp/user_pass.txt -kfile /tmp/tpm_sym.key 2>/dev/null
+    fi
+    
+    dd if=/dev/zero of=/tmp/user_pass.txt bs=1 count=100 2>/dev/null
+    dd if=/dev/zero of=/tmp/tpm_sym.key bs=1 count=100 2>/dev/null
+    rm -f /tmp/user_pass.txt /tmp/tpm_sym.key /tmp/all_shards.txt /tmp/shard2.txt /tmp/shard3.txt /tmp/pq_key.enc
+fi
+EOF
+chmod +x ${DESTDIR}/scripts/local-top/mount_pq_usb

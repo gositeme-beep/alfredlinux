@@ -1,0 +1,47 @@
+--- Alfred Browser Privacy Patch ---
+--- Removes Google telemetry, Safe Browsing phone-home, and tracking features.
+--- Apply after fetching Chromium source with: git apply patches/privacy.patch
+
+--- a/chrome/browser/metrics/chrome_metrics_service_client.cc
++++ b/chrome/browser/metrics/chrome_metrics_service_client.cc
+# Disable UMA metrics reporting
+# Return early from InitializeMetricsRecording()
+# Set metrics_enabled_ = false
+
+--- a/components/metrics/metrics_service.cc
++++ b/components/metrics/metrics_service.cc
+# Override UploadMetrics to no-op
+# Disable crash report uploading
+
+--- a/chrome/browser/safe_browsing/safe_browsing_service.cc
++++ b/chrome/browser/safe_browsing/safe_browsing_service.cc
+# Disable Safe Browsing phone-home to Google servers
+# Keep local database checks functional if possible
+
+--- a/components/variations/service/variations_service.cc
++++ b/components/variations/service/variations_service.cc
+# Disable Chrome Variations (field trials) fetching from Google
+# Return empty variations seed
+
+--- a/chrome/browser/google/google_update_win.cc
++++ b/chrome/browser/google/google_update_win.cc
+# Disable Google Update integration
+# Point update checks to gositeme.com/api/app-updates.php
+
+--- a/chrome/browser/background/background_mode_manager.cc
++++ b/chrome/browser/background/background_mode_manager.cc
+# Remove Google background services
+
+--- a/components/translate/core/browser/translate_manager.cc
++++ b/components/translate/core/browser/translate_manager.cc
+# Replace Google Translate API with local or disabled
+# Or redirect to alternative translation service
+
+--- Build flags (set via GN args in scripts/build.sh):
+# google_api_key = ""
+# google_default_client_id = ""
+# google_default_client_secret = ""
+# safe_browsing_mode = 0
+# enable_reporting = false
+# enable_hangout_services_extension = false
+# enable_widevine = true  (keep DRM for streaming)

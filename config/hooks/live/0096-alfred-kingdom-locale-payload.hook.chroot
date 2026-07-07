@@ -1,0 +1,183 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/sh
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+# 0297 — Supporting squashfs payload toward ~7.77 GiB (binary), Omahon / real install only.
+# PRIMARY gap-close is Kingdom video + 4K/8K via build-assets + 0285 §7 — this hook adds
+# Noto typography + LibreOffice help/l10n + ffmpeg + headers (tongues on screen + docs).
+# See docs/ISO-777-GiB-PLAN.txt — after GA rebuild, run check-iso-777gib.sh (alfred-linux-v2: scripts/;
+#   alfredlinux.com law/site mirror: build/scripts/).
+
+export DEBIAN_FRONTEND=noninteractive
+
+# ── apt_nonfatal helpers (injected: apt-swallow observability) ──
+apt_update_nonfatal() {
+    local tag="$1"
+    mkdir -p /var/lib/alfred/build-flags || true
+    if ! DEBIAN_FRONTEND=noninteractive apt-get update -qq 2>/dev/null || true; then
+        echo "[WARN] apt-get update || true (${tag}) failed (nonfatal)" >&2 || true
+        echo "${tag}_update_failed=$(date -Is)" >> /var/lib/alfred/build-flags/${tag}-apt-failed || true
+    fi
+}
+apt_nonfatal() {
+    local tag="$1"; shift
+    mkdir -p /var/lib/alfred/build-flags || true
+    if ! DEBIAN_FRONTEND=noninteractive apt-get install -y --fix-broken -y --no-install-recommends "$@" 2>/dev/null; then
+        echo "[WARN] ${tag} install failed (nonfatal)" >&2 || true
+        echo "${tag}_install_failed=$(date -Is)" >> /var/lib/alfred/build-flags/${tag}-apt-failed || true
+    fi
+}
+
+echo "╔════════════════════════════════════════════════════════════════╗"
+echo "║ 0297: Kingdom locale + typography payload (7.77 GiB target)     ║"
+echo "╚════════════════════════════════════════════════════════════════╝"
+
+apt_update_nonfatal locale
+
+filter_pkgs() {
+    local p
+    for p in "$@"; do
+        if apt-cache show "$p" >/dev/null 2>&1; then
+            printf '%s\n' "$p"
+        else
+            echo "[0297] (skip — not in archive) $p" >&2 || true
+        fi
+    done
+}
+
+PKG_TMP=/tmp/0297-pkgs.list
+rm -f $PKG_TMP || true
+filter_pkgs \
+    fonts-noto-cjk \
+    fonts-noto-cjk-extra \
+    fonts-noto-extra \
+    poppler-data \
+    ffmpeg \
+    libreoffice-help-en-us \
+    libreoffice-help-en-gb \
+    libreoffice-help-fr \
+    libreoffice-help-es \
+    libreoffice-help-de \
+    libreoffice-help-it \
+    libreoffice-help-pt-br \
+    libreoffice-help-ru \
+    libreoffice-help-zh-cn \
+    libreoffice-help-ja \
+    libreoffice-help-ko \
+    libreoffice-help-he \
+    libreoffice-help-ar \
+    libreoffice-help-pl \
+    libreoffice-help-tr \
+    libreoffice-help-vi \
+    libreoffice-help-el \
+    libreoffice-help-hi \
+    libreoffice-help-fa \
+    libreoffice-help-uk \
+    libreoffice-l10n-fr \
+    libreoffice-l10n-es \
+    libreoffice-l10n-de \
+    libreoffice-l10n-it \
+    libreoffice-l10n-pt-br \
+    libreoffice-l10n-ru \
+    libreoffice-l10n-zh-cn \
+    libreoffice-l10n-ja \
+    libreoffice-l10n-ko \
+    libreoffice-l10n-he \
+    libreoffice-l10n-ar \
+    libreoffice-l10n-pl \
+    libreoffice-l10n-tr \
+    libreoffice-l10n-vi \
+    libreoffice-l10n-el \
+    libreoffice-l10n-hi \
+    libreoffice-l10n-fa \
+    libreoffice-l10n-uk \
+    libreoffice-l10n-nl \
+    libreoffice-l10n-sv \
+    libreoffice-l10n-da \
+    libreoffice-l10n-fi \
+    libreoffice-l10n-cs \
+    libreoffice-l10n-ro \
+    libreoffice-l10n-hu \
+    libreoffice-l10n-sk \
+    libreoffice-l10n-sl \
+    libreoffice-l10n-bg \
+    libreoffice-l10n-sr \
+    libreoffice-l10n-hr \
+    libreoffice-l10n-lt \
+    libreoffice-l10n-lv \
+    libreoffice-l10n-et \
+    libreoffice-l10n-gl \
+    libreoffice-l10n-ca \
+    libreoffice-l10n-eu \
+    libreoffice-l10n-af \
+    libreoffice-l10n-id \
+    libreoffice-l10n-th \
+    libreoffice-l10n-bn \
+    libreoffice-l10n-ta \
+    libreoffice-l10n-te \
+    libreoffice-l10n-ml \
+    libreoffice-l10n-gu \
+    libreoffice-l10n-kn \
+    libreoffice-l10n-am \
+    libreoffice-l10n-om \
+    libreoffice-l10n-sw \
+    libreoffice-l10n-zu \
+> $PKG_TMP
+
+PKGS=$(cat $PKG_TMP)
+rm -f $PKG_TMP || true
+
+if [ -z "$PKGS" ]; then
+    echo "[0297] WARNING: no packages resolved — check apt sources in chroot."
+    exit 0
+fi
+
+echo "[0297] Installing packages (this grows the squashfs)..."
+if ! apt-get install -y --fix-broken -y --no-install-recommends $PKGS; then
+    echo "[0297] Bulk install had errors — retrying per-package (non-fatal)..."
+    for p in $PKGS; do
+        apt-get install -y --fix-broken -y --no-install-recommends "$p" >/dev/null 2>&1 || echo "[0297] FAILED (non-fatal): $p" || true
+    done
+fi
+
+mkdir -p /usr/share/doc/alfred-linux || true
+cat > /usr/share/doc/alfred-linux/KINGDOM-LOCALE-PAYLOAD.txt << 'DOC'
+0297-alfred-kingdom-locale-payload — supporting ISO growth (Omahon)
+
+Primary path to the ~7.77 GiB gate is Kingdom video + 4K/8K via build-assets and
+0285-alfred-eternal-storage §7 (see ISO-777-GiB-PLAN.txt). This hook adds:
+
+This install adds:
+  • Noto CJK + extra + extended font coverage (typography for many scripts)
+  • poppler-data (better CJK/Middle-Indic PDF rendering)
+  • ffmpeg (CLI + libs for Kingdom media / offline transcoding)
+  • LibreOffice extended help + l10n for many languages
+
+Rebuild GA, then verify size band (same script as site build/scripts/):
+  bash scripts/check-iso-777gib.sh iso-output/alfred-linux-7.77-ga-intel-amd64-YYYYMMDD.iso
+
+Only when that exits 0 should /download claim ~7.77 GiB binary as shipped truth.
+DOC
+
+echo "[0297] Kingdom locale + typography payload — DONE"
+
+# Kernel-7-only enforcement merged from former 0990 overflow hook.
+echo "[0297] Enforcing Alfred kernel 7 only..."
+# [NEUTRALIZED by forensic audit 2026-06-23] Kernel purge disabled to protect custom 7.0.12 ZFS kernel
+# apt-get purge -y linux-image-amd64 linux-headers-amd64 linux-image-rt-amd64 linux-headers-rt-amd64 2>/dev/null || true
+# apt-mark manual linux-image-7* linux-headers-7* 2>/dev/null || true; apt-get autoremove -y 2>/dev/null || true
+kimg="$(ls -1 /boot/vmlinuz-7* 2>/dev/null | sort -V | tail -1 || true)"
+if [ -n "$kimg" ]; then
+  kver="${kimg##*/vmlinuz-}"
+  update-initramfs -c -k "$kver" 2>/dev/null || update-initramfs -u -k "$kver" || true
+  rm -f /boot/vmlinuz-6* /boot/initrd.img-6* || true
+  ln -sf "vmlinuz-$kver" /boot/vmlinuz
+  ln -sf "initrd.img-$kver" /boot/initrd.img
+  if command -v lsinitramfs >/dev/null 2>&1; then
+    lsinitramfs "/boot/initrd.img-$kver" | grep -Eq 'overlay\.ko(\.xz)?$' || echo "[0297] WARN: overlay module not found in initrd for $kver"
+  fi
+  echo "[0297] Kernel 7 only enforced: $kver"
+else
+  echo "[0297] WARN: no /boot/vmlinuz-7* found; skipping kernel-7 enforce"
+fi
+
+exit 0

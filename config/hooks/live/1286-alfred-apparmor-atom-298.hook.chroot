@@ -1,0 +1,53 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+
+echo "[Genesis Forge] Engineering Immutable OverlayFS Matrix for 298..."
+
+mkdir -p /etc/apparmor.d/alfred-isolated/ || true
+
+# Strict AppArmor Mode (Enforce)
+cat > /etc/apparmor.d/alfred-isolated/profile-298 << 'EOF'
+profile alfred-sandbox-298 /usr/local/bin/alfred-util-285 flags=(enforce) {
+  #include <abstractions/base>
+  /usr/local/bin/alfred-util-285 rmix,
+  /dev/null rw,
+}
+EOF
+
+# Inject OverlayFS sandbox script
+cat > /usr/local/bin/alfred-util-285-overlay-wrapper << 'EOF'
+#!/bin/bash
+# Immutable OverlayFS Matrix
+# Executes the binary within a mount namespace using OverlayFS.
+# All writes are redirected to a temporary RAM disk, making the physical
+# underlying filesystem unconditionally immutable.
+
+UPPER="/dev/shm/overlay_upper_285"
+WORK="/dev/shm/overlay_work_285"
+TARGET="/mnt/overlay_target_285"
+
+mkdir -p "$UPPER" "$WORK" "$TARGET" 2>/dev/null || true
+
+# We use unshare to create a private mount namespace
+unshare --mount -- \
+    bash -c '
+        # Mount the root filesystem via overlay, mapping writes to tmpfs
+        mount -t overlay overlay -o lowerdir=/,upperdir='"$UPPER"',workdir='"$WORK"' '"$TARGET"'
+        # Pivot root into the overlay
+        cd '"$TARGET"'
+        mkdir -p oldroot
+        pivot_root . oldroot
+        mount --make-private /
+        umount -l /oldroot
+        # Execute the binary
+        exec /usr/local/bin/alfred-util-285 "$@"
+    ' bash "$@"
+EOF
+
+[ -e "/usr/local/bin/alfred-util-285-overlay-wrapper" ] && chmod +x /usr/local/bin/alfred-util-285-overlay-wrapper || true
+
+echo "[Genesis Forge] Immutable OverlayFS Matrix Integrated."
+exit 0

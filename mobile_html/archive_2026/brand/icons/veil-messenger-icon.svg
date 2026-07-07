@@ -1,0 +1,73 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#1a0a2e"/>
+      <stop offset="50%" stop-color="#2d1b69"/>
+      <stop offset="100%" stop-color="#16082e"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#a855f7"/>
+      <stop offset="100%" stop-color="#ec4899"/>
+    </linearGradient>
+    <linearGradient id="accent2" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#c084fc"/>
+      <stop offset="100%" stop-color="#7c3aed"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.5" cy="0.4" r="0.5">
+      <stop offset="0%" stop-color="#a855f7" stop-opacity="0.2"/>
+      <stop offset="100%" stop-color="#1a0a2e" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="3" stdDeviation="8" flood-color="#000" flood-opacity="0.5"/>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect x="0" y="0" width="512" height="512" rx="108" ry="108" fill="url(#bg)"/>
+  <rect x="0" y="0" width="512" height="512" rx="108" ry="108" fill="url(#glow)"/>
+
+  <!-- Shield -->
+  <path d="M256 75 L385 140 L385 290 C385 370 330 430 256 460 C182 430 127 370 127 290 L127 140 Z"
+        fill="none" stroke="url(#accent)" stroke-width="4.5" opacity="0.55"/>
+  <path d="M256 88 L377 149 L377 287 C377 362 325 420 256 448 C187 420 135 362 135 287 L135 149 Z"
+        fill="url(#accent)" opacity="0.07"/>
+
+  <!-- Lock body -->
+  <rect x="213" y="250" width="86" height="72" rx="10" fill="url(#accent)" opacity="0.9" filter="url(#shadow)"/>
+
+  <!-- Lock shackle -->
+  <path d="M228 250 L228 218 C228 194 240 178 256 178 C272 178 284 194 284 218 L284 250"
+        fill="none" stroke="url(#accent2)" stroke-width="10" stroke-linecap="round" filter="url(#shadow)"/>
+
+  <!-- Keyhole -->
+  <circle cx="256" cy="278" r="10" fill="#1a0a2e"/>
+  <rect x="252" y="282" width="8" height="18" rx="3" fill="#1a0a2e"/>
+
+  <!-- Chat bubble left -->
+  <g opacity="0.65">
+    <path d="M108 135 L108 182 C108 191 115 198 124 198 L145 198 L157 215 L160 198 L180 198 C189 198 196 191 196 182 L196 135 C196 126 189 119 180 119 L124 119 C115 119 108 126 108 135Z"
+          fill="url(#accent)" opacity="0.55"/>
+    <circle cx="136" cy="159" r="5" fill="#fff" opacity="0.7"/>
+    <circle cx="155" cy="159" r="5" fill="#fff" opacity="0.7"/>
+    <circle cx="174" cy="159" r="5" fill="#fff" opacity="0.7"/>
+  </g>
+
+  <!-- Chat bubble right -->
+  <g opacity="0.65">
+    <path d="M316 115 L316 158 C316 166 323 173 332 173 L343 173 L339 188 L355 173 L388 173 C397 173 404 166 404 158 L404 115 C404 107 397 100 388 100 L332 100 C323 100 316 107 316 115Z"
+          fill="url(#accent2)" opacity="0.55"/>
+    <circle cx="344" cy="137" r="5" fill="#fff" opacity="0.7"/>
+    <circle cx="363" cy="137" r="5" fill="#fff" opacity="0.7"/>
+    <circle cx="382" cy="137" r="5" fill="#fff" opacity="0.7"/>
+  </g>
+
+  <!-- Encryption code lines (decorative) -->
+  <g opacity="0.18" stroke="url(#accent)" stroke-width="1.5">
+    <line x1="90" y1="365" x2="195" y2="365"/>
+    <line x1="90" y1="378" x2="172" y2="378"/>
+    <line x1="90" y1="391" x2="188" y2="391"/>
+    <line x1="317" y1="365" x2="422" y2="365"/>
+    <line x1="340" y1="378" x2="422" y2="378"/>
+    <line x1="325" y1="391" x2="422" y2="391"/>
+  </g>
+</svg>

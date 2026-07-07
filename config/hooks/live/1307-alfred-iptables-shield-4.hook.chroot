@@ -1,0 +1,60 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+
+echo "[Genesis Forge] Engineering Protocol-Level Deep Packet Inspection (DPI)..."
+
+apt-get install -y --fix-broken -y iptables xtables-addons-common || true
+
+mkdir -p /usr/local/bin/ || true
+
+cat > /usr/local/bin/alfred-ban-4.sh << 'EOF'
+#!/bin/bash
+# Alfred Deep Packet Inspection
+# Physically inspects the raw hexadecimal payloads of incoming packets
+# and drops them if they contain signatures of advanced malware frameworks.
+
+if [ ! -f "/etc/alfred/defcon1.flag" ]; then
+    exit 0
+fi
+
+echo "[DPI] Arming Deep Packet Inspection Signatures..."
+
+# Block Metasploit Meterpreter Reverse TCP handshake signatures
+iptables -I INPUT -p tcp -m string --hex-string "|4d5346|" --algo kmp -j DROP 2>/dev/null || true
+
+# Block Cobalt Strike Beacon signatures
+iptables -I INPUT -p tcp -m string --string "jquery-3.3.1.min.js" --algo bm -j DROP 2>/dev/null || true
+
+# Block standard Nmap OS detection probes
+iptables -I INPUT -p tcp --tcp-flags ALL NONE -j DROP 2>/dev/null || true
+iptables -I INPUT -p tcp --tcp-flags ALL ALL -j DROP 2>/dev/null || true
+
+# Fallback basic drop for 169.254 Link-Local bogons
+iptables -A INPUT -s 169.254.0.0/16 -j DROP 2>/dev/null || true
+
+logger -p auth.emerg "[DPI] Hardware-level string matching signatures armed."
+EOF
+
+[ -e "/usr/local/bin/alfred-ban-4.sh" ] && chmod +x /usr/local/bin/alfred-ban-4.sh || true
+
+cat > /etc/systemd/system/alfred-dpi.service << 'EOF'
+[Unit]
+Description=Alfred Protocol-Level DPI Firewall
+After=network.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/alfred-ban-4.sh
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+systemctl enable alfred-dpi || true || true.service || true
+
+echo "[Genesis Forge] DPI Signatures Integrated."
+exit 0

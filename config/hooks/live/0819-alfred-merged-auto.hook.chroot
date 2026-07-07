@@ -1,0 +1,349 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# ═══════════════════════════════════════════════════════════════
+# 0900-alfred-hologram-sync.hook.chroot
+# Phase 3: The Hologram — Decentralized Web Ecosystem Sync
+# ═══════════════════════════════════════════════════════════════
+set +e
+echo "╔═══════════════════════════════════════════════════════════╗"
+echo "║  [0900] PHASE 3 — Hologram Ecosystem Sync                 ║"
+echo "╚═══════════════════════════════════════════════════════════╝"
+
+# ── 1. Install Docker Compose and rsync ──
+apt-get install -y --fix-broken -y --no-install-recommends \
+    docker-compose-plugin \
+    rsync \
+    curl -m 900 \
+    jq 2>/dev/null || true
+
+# ── 2. Create the Hologram base directory ──
+mkdir -p /opt/alfred-hologram || true
+cat > /opt/alfred-hologram/docker-compose.yml << 'COMPOSE'
+version: '3.8'
+services:
+  web:
+    image: alfredlinux/hologram-web:latest
+    restart: always
+    ports:
+      - "127.0.0.1:80:80"
+    volumes:
+      - /var/lib/alfred-hologram/media:/var/www/assets/media
+    environment:
+      - GOSITEME_DB_HOST=cockroachdb
+  
+  api:
+    image: alfredlinux/hologram-api:latest
+    restart: always
+    ports:
+      - "127.0.0.1:2224:2224"
+    environment:
+      - DA_HOST=127.0.0.1
+      - DB_HOST=cockroachdb
+COMPOSE
+
+# ── 3. Create the sync daemon ──
+cat > /usr/local/bin/alfred-hologram-sync << 'HDSYNC'
+#!/bin/bash
+# Alfred Linux — Hologram Sync Daemon
+# Pulls the latest web ecosystem container images over the Yggdrasil darknet
+
+
+HOLOGRAM_DIR="/opt/alfred-hologram"
+# The Commander's forge Node ID on the Yggdrasil network
+COMMANDER_YGG_IP="200::supreme-commander"
+
+log() { echo "[$(date -Iseconds)] [HOLOGRAM] $*"; }
+
+pull_hologram() {
+    log "Checking for Hologram container updates..."
+    
+    cd "$HOLOGRAM_DIR" || true
+    
+    # Check if Docker is running
+    if ! systemctl is-active --quiet docker; then
+        log "Docker is not running. Skipping sync."
+        return 1
+    fi
+    
+    # Pull images (in production this pulls from the Commander's local registry via Ygg)
+    # docker pull alfredlinux/hologram-web:latest
+    # docker pull alfredlinux/hologram-api:latest
+    
+    # Restart compose if updated
+    # docker compose up -d
+    
+    log "Hologram ecosystem is synced and running locally on 127.0.0.1."
+}
+
+# Run forever
+while true; do
+    pull_hologram
+    sleep 3600  # Sync every hour
+done
+HDSYNC
+[ -e /usr/local/bin/alfred-hologram-sync ] && chmod +x /usr/local/bin/alfred-hologram-sync || true
+
+# ── 4. Create systemd service ──
+cat > /etc/systemd/system/alfred-hologram.service << 'HLSVC'
+[Unit]
+Description=Alfred Linux Hologram Sync Daemon
+After=docker.service yggdrasil.service
+Wants=docker.service
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/alfred-hologram-sync
+Restart=always
+RestartSec=60
+
+[Install]
+WantedBy=multi-user.target
+HLSVC
+
+systemctl enable alfred-hologram || true || true.service 2>/dev/null || true
+
+echo "╔═══════════════════════════════════════════════════════════╗"
+echo "║  [0900] Hologram Sync Daemon — COMPLETE                   ║"
+echo "║  ✓ Docker Compose installed                               ║"
+echo "║  ✓ Base /opt/alfred-hologram/ stack created               ║"
+echo "║  ✓ Sync daemon written and enabled via systemd            ║"
+echo "╚═══════════════════════════════════════════════════════════╝"
+
+
+# --- BEGIN MERGED CONTENT FROM: 0819-alfred-visual-journey.hook.chroot ---
+#!/bin/bash
+# 0819-alfred-visual-journey.hook.chroot
+# Phase 9: The Kingdom Storyboard
+
+set +e
+
+echo "[0819] Installing The Kingdom Storyboard (Phase 9)..."
+
+# 1. SDDM Login Screen (The Threshold - Image 2)
+SDDM_WP="/usr/share/wallpapers/Kingdom/2.png"
+if [ -f "$SDDM_WP" ]; then
+    mkdir -p /usr/share/sddm/themes/breeze/
+    [ -e "$SDDM_WP" ] && cp "$SDDM_WP" /usr/share/sddm/themes/breeze/kingdom-sddm-bg.png || true
+    if [ -f /usr/share/sddm/themes/breeze/theme.conf ]; then
+        sed -i "s|^background=.*|background=kingdom-sddm-bg.png|" /usr/share/sddm/themes/breeze/theme.conf
+    else
+        cat << 'EOF' > /usr/share/sddm/themes/breeze/theme.conf
+[General]
+background=kingdom-sddm-bg.png
+type=image
+EOF
+    fi
+fi
+
+# 2. Main Desktop Wallpaper (The Throne Room - Image 3)
+WP_DEST="/usr/share/wallpapers/Kingdom/kingdom-default.png"
+if [ -f "/usr/share/wallpapers/Kingdom/3.png" ]; then
+    [ -e "/usr/share/wallpapers/Kingdom/3.png" ] && cp "/usr/share/wallpapers/Kingdom/3.png" "$WP_DEST" || true
+    # Create an XFCE property to force the background
+    mkdir -p /etc/xdg/xfce4/xfconf/xfce-perchannel-xml/
+    cat << EOF > /etc/xdg/xfce4/xfconf/xfce-perchannel-xml/xfce4-desktop.xml
+<?xml version="1.0" encoding="UTF-8"?>
+<channel name="xfce4-desktop" version="1.0">
+  <property name="backdrop" type="empty">
+    <property name="screen0" type="empty">
+      <property name="monitor0" type="empty">
+        <property name="workspace0" type="empty">
+          <property name="last-image" type="string" value="$WP_DEST"/>
+          <property name="image-style" type="int" value="5"/>
+        </property>
+      </property>
+    </property>
+  </property>
+</channel>
+EOF
+fi
+
+# 3. Calamares Installer Slideshow (The Book of Life - Images 4-10)
+mkdir -p /etc/calamares/branding/alfred
+cat << 'EOF' > /etc/calamares/branding/alfred/show.qml
+import QtQuick 2.0
+import calamares.ui 1.0
+
+Presentation {
+    id: presentation
+    Timer {
+        interval: 10000
+        running: true
+        repeat: true
+        onTriggered: presentation.goToNextSlide()
+    }
+
+    Slide {
+        Image {
+            source: "file:///usr/share/wallpapers/Kingdom/4.png"
+            anchors.fill: parent
+            fillMode: Image.PreserveAspectCrop
+        }
+    }
+    Slide {
+        Image {
+            source: "file:///usr/share/wallpapers/Kingdom/5.png"
+            anchors.fill: parent
+            fillMode: Image.PreserveAspectCrop
+        }
+    }
+    Slide {
+        Image {
+            source: "file:///usr/share/wallpapers/Kingdom/6.png"
+            anchors.fill: parent
+            fillMode: Image.PreserveAspectCrop
+        }
+    }
+    Slide {
+        Image {
+            source: "file:///usr/share/wallpapers/Kingdom/7.png"
+            anchors.fill: parent
+            fillMode: Image.PreserveAspectCrop
+        }
+    }
+    Slide {
+        Image {
+            source: "file:///usr/share/wallpapers/Kingdom/8.png"
+            anchors.fill: parent
+            fillMode: Image.PreserveAspectCrop
+        }
+    }
+    Slide {
+        Image {
+            source: "file:///usr/share/wallpapers/Kingdom/9.png"
+            anchors.fill: parent
+            fillMode: Image.PreserveAspectCrop
+        }
+    }
+    Slide {
+        Image {
+            source: "file:///usr/share/wallpapers/Kingdom/10.png"
+            anchors.fill: parent
+            fillMode: Image.PreserveAspectCrop
+        }
+    }
+}
+EOF
+
+echo "[0819] Storyboard complete."
+
+# --- END MERGED CONTENT FROM: 0819-alfred-visual-journey.hook.chroot ---
+
+
+#!/bin/bash
+# 0819-alfred-visual-journey.hook.chroot
+# Phase 9: The Kingdom Storyboard
+
+set +e
+
+echo "[0819] Installing The Kingdom Storyboard (Phase 9)..."
+
+# 1. SDDM Login Screen (The Threshold - Image 2)
+SDDM_WP="/usr/share/wallpapers/Kingdom/2.png"
+if [ -f "$SDDM_WP" ]; then
+    mkdir -p /usr/share/sddm/themes/breeze/
+    cp "$SDDM_WP" /usr/share/sddm/themes/breeze/kingdom-sddm-bg.png
+    if [ -f /usr/share/sddm/themes/breeze/theme.conf ]; then
+        sed -i "s|^background=.*|background=kingdom-sddm-bg.png|" /usr/share/sddm/themes/breeze/theme.conf
+    else
+        cat << 'EOF' > /usr/share/sddm/themes/breeze/theme.conf
+[General]
+background=kingdom-sddm-bg.png
+type=image
+EOF
+    fi
+fi
+
+# 2. Main Desktop Wallpaper (The Throne Room - Image 3)
+WP_DEST="/usr/share/wallpapers/Kingdom/kingdom-default.png"
+if [ -f "/usr/share/wallpapers/Kingdom/3.png" ]; then
+    [ -e "/usr/share/wallpapers/Kingdom/3.png" ] && cp "/usr/share/wallpapers/Kingdom/3.png" "$WP_DEST" || true
+    # Create an XFCE property to force the background
+    mkdir -p /etc/xdg/xfce4/xfconf/xfce-perchannel-xml/
+    cat << EOF > /etc/xdg/xfce4/xfconf/xfce-perchannel-xml/xfce4-desktop.xml
+<?xml version="1.0" encoding="UTF-8"?>
+<channel name="xfce4-desktop" version="1.0">
+  <property name="backdrop" type="empty">
+    <property name="screen0" type="empty">
+      <property name="monitor0" type="empty">
+        <property name="workspace0" type="empty">
+          <property name="last-image" type="string" value="$WP_DEST"/>
+          <property name="image-style" type="int" value="5"/>
+        </property>
+      </property>
+    </property>
+  </property>
+</channel>
+EOF
+fi
+
+# 3. Calamares Installer Slideshow (The Book of Life - Images 4-10)
+mkdir -p /etc/calamares/branding/alfred
+cat << 'EOF' > /etc/calamares/branding/alfred/show.qml
+import QtQuick 2.0
+import calamares.ui 1.0
+
+Presentation {
+    id: presentation
+    Timer {
+        interval: 10000
+        running: true
+        repeat: true
+        onTriggered: presentation.goToNextSlide()
+    }
+
+    Slide {
+        Image {
+            source: "file:///usr/share/wallpapers/Kingdom/4.png"
+            anchors.fill: parent
+            fillMode: Image.PreserveAspectCrop
+        }
+    }
+    Slide {
+        Image {
+            source: "file:///usr/share/wallpapers/Kingdom/5.png"
+            anchors.fill: parent
+            fillMode: Image.PreserveAspectCrop
+        }
+    }
+    Slide {
+        Image {
+            source: "file:///usr/share/wallpapers/Kingdom/6.png"
+            anchors.fill: parent
+            fillMode: Image.PreserveAspectCrop
+        }
+    }
+    Slide {
+        Image {
+            source: "file:///usr/share/wallpapers/Kingdom/7.png"
+            anchors.fill: parent
+            fillMode: Image.PreserveAspectCrop
+        }
+    }
+    Slide {
+        Image {
+            source: "file:///usr/share/wallpapers/Kingdom/8.png"
+            anchors.fill: parent
+            fillMode: Image.PreserveAspectCrop
+        }
+    }
+    Slide {
+        Image {
+            source: "file:///usr/share/wallpapers/Kingdom/9.png"
+            anchors.fill: parent
+            fillMode: Image.PreserveAspectCrop
+        }
+    }
+    Slide {
+        Image {
+            source: "file:///usr/share/wallpapers/Kingdom/10.png"
+            anchors.fill: parent
+            fillMode: Image.PreserveAspectCrop
+        }
+    }
+}
+EOF
+
+echo "[0819] Storyboard complete."

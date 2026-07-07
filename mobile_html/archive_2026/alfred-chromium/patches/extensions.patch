@@ -1,0 +1,49 @@
+--- Alfred Browser Built-in Extensions Patch ---
+--- Installs 5 GoSiteMe extensions as built-in (non-removable) browser extensions.
+--- Apply after fetching Chromium source with: git apply patches/extensions.patch
+
+--- a/chrome/browser/extensions/component_loader.cc
++++ b/chrome/browser/extensions/component_loader.cc
+# Register Alfred extensions as component extensions:
+#
+# void ComponentLoader::AddAlfredExtensions() {
+#   Add(IDR_ALFRED_MINER, base::FilePath("alfred_extensions/alfred-miner"));
+#   Add(IDR_ALFRED_NEWTAB, base::FilePath("alfred_extensions/alfred-newtab"));
+#   Add(IDR_ALFRED_WALLET, base::FilePath("alfred_extensions/alfred-wallet"));
+#   Add(IDR_ALFRED_VEIL, base::FilePath("alfred_extensions/alfred-veil"));
+#   Add(IDR_ALFRED_PULSE, base::FilePath("alfred_extensions/alfred-pulse"));
+# }
+#
+# Call AddAlfredExtensions() in AddDefaultComponentExtensions()
+# Extensions are installed to chrome/browser/resources/alfred_extensions/
+
+--- a/chrome/browser/resources/BUILD.gn
++++ b/chrome/browser/resources/BUILD.gn
+# Add alfred_extensions directory to the GN build
+# Include all extension files as browser resources
+
+--- a/chrome/browser/extensions/extension_management.cc
++++ b/chrome/browser/extensions/extension_management.cc
+# Mark Alfred extensions as force-installed (cannot be uninstalled)
+# Allow user to disable them but not remove
+# Extension IDs will be generated from their public keys
+
+--- a/chrome/browser/ui/toolbar/toolbar_actions_model.cc
++++ b/chrome/browser/ui/toolbar/toolbar_actions_model.cc
+# Pin Alfred extensions to the toolbar by default:
+# - Miner (pickaxe icon)
+# - Wallet (wallet icon)
+# - Veil (shield icon)
+# - Pulse (heart icon)
+# New Tab extension has no toolbar icon (it overrides chrome://newtab)
+
+--- Notes:
+# The extensions are copied from alfred-chromium/extensions/ to
+# chromium/src/chrome/browser/resources/alfred_extensions/ by
+# the apply-patches.sh script. This patch just registers them
+# with the Chromium extension system.
+#
+# Each extension is Manifest V3 compliant and uses:
+# - Service workers (not background pages)
+# - chrome.offscreen API where Web Workers are needed (miner)
+# - Proper permissions with minimal scope

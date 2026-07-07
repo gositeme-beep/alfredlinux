@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Genesis Sequence — Alfred Linux</title>
+    <style>
+        :root {
+            --bg: #030308; --surface: rgba(13,13,26,0.7); --border: rgba(34,211,238,0.2);
+            --cyan: #22d3ee; --gold: #f5c542; --text: #e2e8f0; --dim: #64748b;
+        }
+        body {
+            margin: 0; padding: 0; background: var(--bg); color: var(--text);
+            font-family: 'Inter', system-ui, sans-serif;
+            height: 100vh; display: flex; flex-direction: column;
+            justify-content: center; align-items: center; overflow: hidden;
+            background-image: radial-gradient(circle at center, #0a0a1a 0%, #030308 100%);
+        }
+        .container {
+            width: 800px; max-width: 90%; background: var(--surface);
+            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--border); border-radius: 24px;
+            padding: 50px; text-align: center;
+            box-shadow: 0 0 50px rgba(34,211,238,0.05);
+            position: relative;
+        }
+        h1 { font-size: 2.5rem; margin: 0 0 10px; color: var(--cyan); text-transform: uppercase; letter-spacing: 2px; }
+        p { font-size: 1.1rem; color: var(--dim); margin-bottom: 40px; }
+        
+        .steps { display: flex; flex-direction: column; gap: 20px; text-align: left; margin-bottom: 40px; }
+        .step { 
+            display: flex; align-items: center; gap: 15px; padding: 15px 20px;
+            background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 12px; transition: all 0.3s ease;
+        }
+        .step.active { border-color: var(--cyan); box-shadow: 0 0 20px rgba(34,211,238,0.1); }
+        .step.done { border-color: #34d399; color: #34d399; }
+        .step-icon { font-size: 1.5rem; width: 30px; text-align: center; }
+        .step-text { flex: 1; font-weight: 500; }
+        
+        .btn {
+            background: linear-gradient(135deg, #0ea5e9, var(--cyan));
+            color: #000; font-weight: 700; font-size: 1.2rem;
+            padding: 16px 40px; border: none; border-radius: 40px;
+            cursor: pointer; text-transform: uppercase; letter-spacing: 1px;
+            transition: all 0.3s ease; box-shadow: 0 0 30px rgba(34,211,238,0.3);
+        }
+        .btn:hover { transform: scale(1.05); box-shadow: 0 0 50px rgba(34,211,238,0.5); }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+        
+        .spinner {
+            display: inline-block; width: 20px; height: 20px;
+            border: 3px solid rgba(255,255,255,0.3); border-radius: 50%;
+            border-top-color: #fff; animation: spin 1s ease-in-out infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+
+<div class="container" id="box">
+    <h1>The Kingdom Awaits</h1>
+    <p>Welcome to Alfred Linux. Initializing your sovereign node.</p>
+    
+    <div class="steps">
+        <div class="step" id="step1">
+            <div class="step-icon" id="icon1">⏳</div>
+            <div class="step-text">Connecting to Yggdrasil Darknet Mesh</div>
+        </div>
+        <div class="step" id="step2">
+            <div class="step-icon" id="icon2">⏳</div>
+            <div class="step-text">Binding Hardware to TPM 2.0 Security Module</div>
+        </div>
+        <div class="step" id="step3">
+            <div class="step-icon" id="icon3">⏳</div>
+            <div class="step-text">Generating Solana Custodial Wallet</div>
+        </div>
+        <div class="step" id="step4">
+            <div class="step-icon" id="icon4">⏳</div>
+            <div class="step-text">Engaging Goliath GPU Swarm</div>
+        </div>
+    </div>
+    
+    <button class="btn" id="startBtn" onclick="startGenesis()">Commence Genesis</button>
+</div>
+
+<script>
+async function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+async function processStep(id, text, time) {
+    const el = document.getElementById('step' + id);
+    const icon = document.getElementById('icon' + id);
+    el.classList.add('active');
+    icon.innerHTML = '<div class="spinner"></div>';
+    
+    await sleep(time);
+    
+    el.classList.remove('active');
+    el.classList.add('done');
+    icon.innerHTML = '✓';
+}
+
+async function startGenesis() {
+    document.getElementById('startBtn').disabled = true;
+    document.getElementById('startBtn').innerText = 'Initializing...';
+    
+    await processStep(1, 'Mesh', 2500);
+    await processStep(2, 'TPM', 3000);
+    await processStep(3, 'Solana', 2000);
+    await processStep(4, 'Goliath', 3500);
+    
+    document.getElementById('box').innerHTML = `
+        <h1 style="color: #34d399">Node Activated</h1>
+        <p style="color: var(--text); font-size: 1.2rem; margin-top: 30px;">
+            Your hardware is now an immutable pillar of the Kingdom.<br><br>
+            Welcome, Sovereign.
+        </p>
+        <button class="btn" style="margin-top:40px; background: #34d399;" onclick="finish()">Enter Desktop</button>
+    `;
+}
+
+function finish() {
+    // Ping local python server to self-destruct the autostart and close chromium
+    fetch('http://127.0.0.1:44044/finish', {mode: 'no-cors'}).catch(()=>{}).finally(()=>{
+        window.close();
+    });
+}
+</script>
+
+</body>
+</html>

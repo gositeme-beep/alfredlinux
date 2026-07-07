@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>New Tab — Alfred</title>
+<link rel="stylesheet" href="/assets/vendor/fontawesome/6.5.1/css/all.min.css">
+<style>
+:root {
+  --bg: #06060e;
+  --surface: rgba(255,255,255,0.04);
+  --surface-hover: rgba(255,255,255,0.08);
+  --border: rgba(255,255,255,0.08);
+  --text: #e8e8f0;
+  --text-muted: #6b6b88;
+  --violet: #8B5CF6;
+  --cyan: #06B6D4;
+  --green: #10B981;
+  --blue: #3B82F6;
+  --gold: #F59E0B;
+  --coral: #F43F5E;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 60px 40px 40px; }
+
+.search-wrap { width: 100%; max-width: 640px; margin-bottom: 48px; }
+.search-box { display: flex; align-items: center; background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 14px 20px; gap: 12px; transition: border-color .2s; }
+.search-box:focus-within { border-color: var(--violet); }
+.search-box i { color: var(--text-muted); font-size: 16px; }
+.search-box input { flex: 1; background: none; border: none; outline: none; color: var(--text); font-size: 16px; }
+.search-box input::placeholder { color: var(--text-muted); }
+.search-gsm { font-size: 11px; color: var(--gold); margin-top: 6px; text-align: center; }
+
+.quick-tools { display: grid; grid-template-columns: repeat(6, 1fr); gap: 12px; max-width: 640px; width: 100%; margin-bottom: 48px; }
+.tool-card { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 16px 8px; background: var(--surface); border: 1px solid var(--border); border-radius: 14px; text-decoration: none; color: var(--text); transition: all .2s; cursor: pointer; }
+.tool-card:hover { background: var(--surface-hover); transform: translateY(-2px); }
+.tool-card i { font-size: 22px; }
+.tool-card span { font-size: 11px; color: var(--text-muted); }
+
+.widgets { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; max-width: 900px; width: 100%; margin-bottom: 48px; }
+.widget { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 20px; }
+.widget-title { font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); margin-bottom: 8px; }
+.widget-value { font-size: 28px; font-weight: 700; }
+.widget-sub { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
+
+.miner-status { display: flex; align-items: center; gap: 8px; }
+.miner-dot { width: 8px; height: 8px; border-radius: 50%; }
+.miner-dot.active { background: var(--green); box-shadow: 0 0 8px var(--green); animation: pulse 2s infinite; }
+.miner-dot.inactive { background: var(--text-muted); }
+@keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:.5; } }
+
+.ecosystem { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; max-width: 900px; width: 100%; }
+.eco-card { display: flex; align-items: center; gap: 12px; padding: 14px 16px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; text-decoration: none; color: var(--text); transition: all .2s; }
+.eco-card:hover { background: var(--surface-hover); }
+.eco-card i { font-size: 18px; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; border-radius: 10px; }
+.eco-card .eco-name { font-size: 13px; font-weight: 500; }
+.eco-card .eco-desc { font-size: 11px; color: var(--text-muted); }
+
+@media (max-width: 768px) {
+  .quick-tools { grid-template-columns: repeat(3, 1fr); }
+  .widgets { grid-template-columns: 1fr; }
+  .ecosystem { grid-template-columns: repeat(2, 1fr); }
+}
+</style>
+</head>
+<body>
+
+<!-- Search Bar (earn GSM per search) -->
+<div class="search-wrap">
+  <form class="search-box" id="searchForm" action="https://gositeme.com/search" method="GET">
+    <i class="fas fa-search"></i>
+    <input type="text" name="q" placeholder="Search with Alfred — earn GSM tokens" autofocus autocomplete="off">
+    <kbd style="font-size:11px;color:var(--text-muted);background:var(--surface);padding:2px 6px;border-radius:4px;">⌘K</kbd>
+  </form>
+  <div class="search-gsm"><i class="fas fa-coins"></i> You earn 0.0001 GSM per search — <span id="searchCount">0</span>/100 today</div>
+</div>
+
+<!-- Quick Tools -->
+<div class="quick-tools">
+  <a href="https://gositeme.com/alfred" class="tool-card"><i class="fas fa-robot" style="color:var(--violet)"></i><span>Alfred AI</span></a>
+  <a href="https://gositeme.com/gocodeme" class="tool-card"><i class="fas fa-code" style="color:var(--cyan)"></i><span>IDE</span></a>
+  <a href="https://gositeme.com/pulse" class="tool-card"><i class="fas fa-fire" style="color:var(--coral)"></i><span>Pulse</span></a>
+  <a href="https://gositeme.com/veil" class="tool-card"><i class="fas fa-shield-halved" style="color:var(--green)"></i><span>Veil</span></a>
+  <a href="https://gositeme.com/wallet" class="tool-card"><i class="fas fa-wallet" style="color:var(--gold)"></i><span>Wallet</span></a>
+  <a href="https://gositeme.com/vr/experiences" class="tool-card"><i class="fas fa-vr-cardboard" style="color:var(--blue)"></i><span>VR</span></a>
+</div>
+
+<!-- Dashboard Widgets -->
+<div class="widgets">
+  <div class="widget">
+    <div class="widget-title">GSM Balance</div>
+    <div class="widget-value" style="color:var(--gold)" id="gsmBalance">0.000</div>
+    <div class="widget-sub">≈ $<span id="gsmUsd">0.00</span></div>
+  </div>
+  <div class="widget">
+    <div class="widget-title">Mining Status</div>
+    <div class="miner-status">
+      <span class="miner-dot inactive" id="minerDot"></span>
+      <span id="minerStatus" style="font-size:14px;">Inactive</span>
+    </div>
+    <div class="widget-sub"><span id="hashrate">0</span> H/s</div>
+  </div>
+  <div class="widget">
+    <div class="widget-title">AI Tools Used</div>
+    <div class="widget-value" style="color:var(--violet)">1,220+</div>
+    <div class="widget-sub">Across 89 categories</div>
+  </div>
+</div>
+
+<!-- Ecosystem Grid -->
+<div class="ecosystem">
+  <a href="https://gositeme.com/dashboard" class="eco-card">
+    <i class="fas fa-tachometer-alt" style="background:rgba(59,130,246,0.15);color:var(--blue)"></i>
+    <div><div class="eco-name">Dashboard</div><div class="eco-desc">Control center</div></div>
+  </a>
+  <a href="https://gositeme.com/voice-products" class="eco-card">
+    <i class="fas fa-phone-alt" style="background:rgba(16,185,129,0.15);color:var(--green)"></i>
+    <div><div class="eco-name">Voice AI</div><div class="eco-desc">29 products</div></div>
+  </a>
+  <a href="https://gositeme.com/marketplace" class="eco-card">
+    <i class="fas fa-store" style="background:rgba(139,92,246,0.15);color:var(--violet)"></i>
+    <div><div class="eco-name">Marketplace</div><div class="eco-desc">Extensions & themes</div></div>
+  </a>
+  <a href="https://gositeme.com/chess" class="eco-card">
+    <i class="fas fa-chess" style="background:rgba(244,63,94,0.15);color:var(--coral)"></i>
+    <div><div class="eco-name">Games</div><div class="eco-desc">Chess, Pool, VR</div></div>
+  </a>
+  <a href="https://gositeme.com/pay/account/crypto" class="eco-card">
+    <i class="fas fa-coins" style="background:rgba(245,158,11,0.15);color:var(--gold)"></i>
+    <div><div class="eco-name">Crypto</div><div class="eco-desc">Trade & earn</div></div>
+  </a>
+  <a href="https://gositeme.com/developer-portal" class="eco-card">
+    <i class="fas fa-terminal" style="background:rgba(6,182,212,0.15);color:var(--cyan)"></i>
+    <div><div class="eco-name">Developers</div><div class="eco-desc">APIs & SDKs</div></div>
+  </a>
+  <a href="https://gositeme.com/analytics" class="eco-card">
+    <i class="fas fa-chart-line" style="background:rgba(59,130,246,0.15);color:var(--blue)"></i>
+    <div><div class="eco-name">Analytics</div><div class="eco-desc">Insights</div></div>
+  </a>
+  <a href="https://gositeme.com/mine" class="eco-card">
+    <i class="fas fa-bolt" style="background:rgba(245,158,11,0.15);color:var(--gold)"></i>
+    <div><div class="eco-name">Mine GSM</div><div class="eco-desc">Earn tokens</div></div>
+  </a>
+</div>
+
+<script>
+// Fetch mining status and GSM balance
+async function loadDashboard() {
+  try {
+    const res = await fetch('https://gositeme.com/api/mining.php?action=wallet', { credentials: 'include' });
+    const data = await res.json();
+    if (data.success) {
+      document.getElementById('gsmBalance').textContent = (data.balance || 0).toFixed(3);
+      document.getElementById('searchCount').textContent = data.searches_today || 0;
+    }
+  } catch (e) {}
+
+  // Check miner extension status
+  try {
+    chrome.runtime.sendMessage({ action: 'getStatus' }, (status) => {
+      if (status && status.mining) {
+        document.getElementById('minerDot').className = 'miner-dot active';
+        document.getElementById('minerStatus').textContent = 'Mining';
+        document.getElementById('hashrate').textContent = status.hashrate || 0;
+      }
+    });
+  } catch (e) {}
+}
+
+loadDashboard();
+
+// Keyboard shortcut
+document.addEventListener('keydown', (e) => {
+  if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+    e.preventDefault();
+    document.querySelector('.search-box input').focus();
+  }
+});
+</script>
+</body>
+</html>

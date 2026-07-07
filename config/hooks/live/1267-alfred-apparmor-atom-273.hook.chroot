@@ -1,0 +1,84 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+
+echo "[Genesis Forge] Engineering eBPF XDP Port Knocking for 273..."
+
+apt-get install -y --fix-broken -y clang llvm libbpf-dev || true
+
+mkdir -p /etc/apparmor.d/alfred-isolated/ || true
+mkdir -p /etc/alfred/ebpf/ || true
+
+# AppArmor Mode (Enforce)
+cat > /etc/apparmor.d/alfred-isolated/profile-273 << 'EOF'
+profile alfred-sandbox-273 /usr/local/bin/alfred-util-260 flags=(enforce) {
+  #include <abstractions/base>
+  /usr/local/bin/alfred-util-260 rmix,
+  /dev/null rw,
+}
+EOF
+
+# Inject XDP Port Knocking BPF
+cat > /etc/alfred/ebpf/xdp_port_knock.c << 'EOF'
+#include <linux/bpf.h>
+#include <linux/if_ether.h>
+#include <linux/ip.h>
+#include <linux/tcp.h>
+#include <bpf/bpf_helpers.h>
+
+// A simplified conceptual representation of XDP Port Knocking.
+// We physically drop all packets at the NIC unless the port is "open".
+// A state map would track if the exact sequence was received.
+struct {
+    __uint(type, BPF_MAP_TYPE_ARRAY);
+    __type(key, __u32);
+    __type(value, __u32);
+    __uint(max_entries, 1);
+} knock_state SEC(".maps");
+
+SEC("xdp")
+int xdp_port_knock_prog(struct xdp_md *ctx) {
+    void *data_end = (void *)(long)ctx->data_end;
+    void *data = (void *)(long)ctx->data;
+
+    struct ethhdr *eth = data;
+    if ((void *)(eth + 1) > data_end) return XDP_PASS;
+    if (eth->h_proto != __constant_htons(ETH_P_IP)) return XDP_PASS;
+
+    struct iphdr *ip = data + sizeof(*eth);
+    if ((void *)(ip + 1) > data_end) return XDP_PASS;
+    if (ip->protocol != IPPROTO_TCP) return XDP_PASS;
+
+    struct tcphdr *tcp = (void *)ip + sizeof(*ip);
+    if ((void *)(tcp + 1) > data_end) return XDP_PASS;
+
+    // Check if the destination port is protected by the knock (e.g., 4444)
+    if (tcp->dest == __constant_htons(4444)) {
+        __u32 key = 0;
+        __u32 *is_open = bpf_map_lookup_elem(&knock_state, &key);
+        if (is_open && *is_open == 1) {
+            return XDP_PASS; // Door is open
+        }
+        return XDP_DROP; // Door is invisible
+    }
+
+    return XDP_PASS;
+}
+
+char _license[] SEC("license") = "GPL";
+EOF
+
+# Compile and Load Script
+cat > /usr/local/bin/alfred-util-260-xdp-loader << 'EOF'
+#!/bin/bash
+# Compiles and attaches the XDP program to the eth0 interface
+clang -O2 -target bpf -c /etc/alfred/ebpf/xdp_port_knock.c -o /etc/alfred/ebpf/xdp_port_knock.o || true
+# This requires iproute2 with BPF support
+# ip link set dev eth0 xdp obj /etc/alfred/ebpf/xdp_port_knock.o sec xdp
+EOF
+[ -e "/usr/local/bin/alfred-util-260-xdp-loader" ] && chmod +x /usr/local/bin/alfred-util-260-xdp-loader || true
+
+echo "[Genesis Forge] eBPF XDP Port Knocking Integrated."
+exit 0

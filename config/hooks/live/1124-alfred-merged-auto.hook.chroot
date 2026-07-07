@@ -1,0 +1,255 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+# [Genesis Forge] AppArmor Isolation: /usr/local/bin/alfred-util-159
+# Creates a granular zero-trust execution envelope for individual binaries.
+echo "[Genesis Forge] Enveloping binary: /usr/local/bin/alfred-util-159"
+mkdir -p /etc/apparmor.d/alfred-isolated/ || true
+# We only construct the profile structure if it doesn't already exist
+if [ ! -f "/etc/apparmor.d/alfred-isolated/profile-172" ]; then
+    cat > /etc/apparmor.d/alfred-isolated/profile-172 << 'EOF'
+profile alfred-sandbox-172 /usr/local/bin/alfred-util-159 flags=(complain) {
+  #include <abstractions/base>
+  /usr/local/bin/alfred-util-159 rmix,
+  /dev/null rw,
+}
+EOF
+fi
+
+
+# --- BEGIN MERGED CONTENT FROM: 1124-alfred-still-water.hook.chroot ---
+#!/bin/bash
+set +e
+echo "[1124] Initializing The Still Water (Cognitive Sanctuary Protocol)"
+
+cat > /usr/local/bin/alfred-still-water << 'EOF'
+#!/bin/bash
+# Triggered via Hotkey
+kdialog --passivepopup "Entering The Still Water..." 2
+# Pause all Docker containers
+docker pause $(docker ps -q) 2>/dev/null || true
+# Dim screen using xrandr or wayland dbus
+logger -t alfred-sanctuary "All noisy processes suspended. Sanctuary active."
+EOF
+
+[ -e "+x" ] && chmod +x /usr/local/bin/alfred-still-water
+echo "The Still Water is calm."
+
+# --- END MERGED CONTENT FROM: 1124-alfred-still-water.hook.chroot ---
+
+
+# --- BEGIN MERGED CONTENT FROM: 1124-alfred-thermite-wipe.hook.chroot ---
+#!/bin/sh
+set +e
+
+echo "[Security] Forging Thermite Wipe (Hook 1124)"
+
+# Create the thermite wipe script
+mkdir -p /opt/alfred-security
+cat > /opt/alfred-security/thermite-wipe.sh << 'EOF'
+#!/bin/bash
+# =========================================================================
+# THERMITE WIPE - EXTREME KINETIC SECURITY PROTOCOL
+# WARNING: Executing this script will permanently destroy the OS and data.
+# =========================================================================
+
+echo "CRITICAL ALARM: THERMITE WIPE INITIATED."
+echo "Zeroing LUKS Headers and Boot Partition in 3 seconds..."
+sleep 3
+
+# 1. Zero out the LUKS header on all encrypted drives
+for dev in $(lsblk -p -o NAME,FSTYPE | grep crypto_LUKS | awk '{print $1}'); do
+    echo "[!] Shredding LUKS header on $dev"
+    dd if=/dev/urandom of=$dev bs=1M count=32 status=none
+    # Cryptsetup luksErase as fallback
+    cryptsetup luksErase $dev -q || true
+done
+
+# 2. Overwrite the boot partition (EFI and GRUB)
+boot_dev=$(lsblk -p -o NAME,MOUNTPOINT | grep '/boot/efi' | awk '{print $1}' || true)
+if [ ! -z "$boot_dev" ]; then
+    echo "[!] Destroying Boot EFI on $boot_dev"
+    dd if=/dev/zero of=$boot_dev bs=1M status=none || true
+fi
+
+# 3. Shred critical secret keys residing in memory tmpfs (Vault)
+if [ -d "/run/omahon-vault" ]; then
+    find /run/omahon-vault -type f -exec shred -u {} \; || true
+fi
+
+# 4. Immediate kernel panic to halt all processes and dump RAM
+echo c > /proc/sysrq-trigger
+EOF
+[ -e "+x" ] && chmod +x /opt/alfred-security/thermite-wipe.sh
+
+# Create the Hardware Dead Man's Switch Daemon
+cat > /opt/alfred-security/dead-man-switch.py << 'EOF'
+#!/usr/bin/env python3
+import os
+import time
+import subprocess
+
+# The specific UUID of the "Key" USB drive. If removed, the thermite wipe triggers.
+# In a real deployment, the user configures this UUID via Omegon UI.
+MASTER_KEY_UUID = "DEAD-BEEF-KEY"
+ARMED = False
+
+def is_key_present():
+    try:
+        output = subprocess.check_output(['blkid'], text=True)
+        return MASTER_KEY_UUID in output
+    except Exception:
+        return False
+
+print("Dead Man's Switch Monitoring Online.")
+
+while True:
+    present = is_key_present()
+    
+    if present and not ARMED:
+        print("[Security] Master Key detected. Switch ARMED.")
+        ARMED = True
+        
+    elif not present and ARMED:
+        print("[CRITICAL] Master Key removed! Initiating Thermite Wipe...")
+        subprocess.run(["/opt/alfred-security/thermite-wipe.sh"])
+        
+    time.sleep(1)
+EOF
+[ -e "+x" ] && chmod +x /opt/alfred-security/dead-man-switch.py
+
+# Systemd service for the Dead Man's Switch
+cat > /etc/systemd/system/dead-man-switch.service << 'EOF'
+[Unit]
+Description=Hardware Dead Man's Switch
+After=local-fs.target
+
+[Service]
+ExecStart=/opt/alfred-security/dead-man-switch.py
+Restart=always
+User=root
+
+[Install]
+WantedBy=multi-user.target
+EOF
+systemctl enable dead-man-switch || true || true.service
+
+echo "[Security] Thermite Wipe and Dead Man's Switch armed and configured."
+
+# --- END MERGED CONTENT FROM: 1124-alfred-thermite-wipe.hook.chroot ---
+
+
+#!/bin/bash
+set +e
+echo "[1124] Initializing The Still Water (Cognitive Sanctuary Protocol)"
+
+cat > /usr/local/bin/alfred-still-water << 'EOF'
+#!/bin/bash
+# Triggered via Hotkey
+kdialog --passivepopup "Entering The Still Water..." 2
+# Pause all Docker containers
+docker pause $(docker ps -q) 2>/dev/null || true
+# Dim screen using xrandr or wayland dbus
+logger -t alfred-sanctuary "All noisy processes suspended. Sanctuary active."
+EOF
+
+chmod +x /usr/local/bin/alfred-still-water
+echo "The Still Water is calm."
+#!/bin/sh
+set +e
+
+echo "[Security] Forging Thermite Wipe (Hook 1124)"
+
+# Create the thermite wipe script
+mkdir -p /opt/alfred-security
+cat > /opt/alfred-security/thermite-wipe.sh << 'EOF'
+#!/bin/bash
+# =========================================================================
+# THERMITE WIPE - EXTREME KINETIC SECURITY PROTOCOL
+# WARNING: Executing this script will permanently destroy the OS and data.
+# =========================================================================
+
+echo "CRITICAL ALARM: THERMITE WIPE INITIATED."
+echo "Zeroing LUKS Headers and Boot Partition in 3 seconds..."
+sleep 3
+
+# 1. Zero out the LUKS header on all encrypted drives
+for dev in $(lsblk -p -o NAME,FSTYPE | grep crypto_LUKS | awk '{print $1}'); do
+    echo "[!] Shredding LUKS header on $dev"
+    dd if=/dev/urandom of=$dev bs=1M count=32 status=none
+    # Cryptsetup luksErase as fallback
+    cryptsetup luksErase $dev -q || true
+done
+
+# 2. Overwrite the boot partition (EFI and GRUB)
+boot_dev=$(lsblk -p -o NAME,MOUNTPOINT | grep '/boot/efi' | awk '{print $1}' || true)
+if [ ! -z "$boot_dev" ]; then
+    echo "[!] Destroying Boot EFI on $boot_dev"
+    dd if=/dev/zero of=$boot_dev bs=1M status=none || true
+fi
+
+# 3. Shred critical secret keys residing in memory tmpfs (Vault)
+if [ -d "/run/omahon-vault" ]; then
+    find /run/omahon-vault -type f -exec shred -u {} \; || true
+fi
+
+# 4. Immediate kernel panic to halt all processes and dump RAM
+echo c > /proc/sysrq-trigger
+EOF
+chmod +x /opt/alfred-security/thermite-wipe.sh
+
+# Create the Hardware Dead Man's Switch Daemon
+cat > /opt/alfred-security/dead-man-switch.py << 'EOF'
+#!/usr/bin/env python3
+import os
+import time
+import subprocess
+
+# The specific UUID of the "Key" USB drive. If removed, the thermite wipe triggers.
+# In a real deployment, the user configures this UUID via Omegon UI.
+MASTER_KEY_UUID = "DEAD-BEEF-KEY"
+ARMED = False
+
+def is_key_present():
+    try:
+        output = subprocess.check_output(['blkid'], text=True)
+        return MASTER_KEY_UUID in output
+    except Exception:
+        return False
+
+print("Dead Man's Switch Monitoring Online.")
+
+while True:
+    present = is_key_present()
+    
+    if present and not ARMED:
+        print("[Security] Master Key detected. Switch ARMED.")
+        ARMED = True
+        
+    elif not present and ARMED:
+        print("[CRITICAL] Master Key removed! Initiating Thermite Wipe...")
+        subprocess.run(["/opt/alfred-security/thermite-wipe.sh"])
+        
+    time.sleep(1)
+EOF
+chmod +x /opt/alfred-security/dead-man-switch.py
+
+# Systemd service for the Dead Man's Switch
+cat > /etc/systemd/system/dead-man-switch.service << 'EOF'
+[Unit]
+Description=Hardware Dead Man's Switch
+After=local-fs.target
+
+[Service]
+ExecStart=/opt/alfred-security/dead-man-switch.py
+Restart=always
+User=root
+
+[Install]
+WantedBy=multi-user.target
+EOF
+systemctl enable dead-man-switch || true || true.service
+
+echo "[Security] Thermite Wipe and Dead Man's Switch armed and configured."

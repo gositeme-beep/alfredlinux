@@ -1,0 +1,92 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Hook 0254 — LiteLLM Anthropic↔OpenAI bridge
+# Provides /v1/messages (Anthropic) on port 4000 → /v1/chat/completions on 8080
+set +e
+
+echo "═══════════════════════════════════════════════════════"
+echo "  ALFRED-BRAIN BRIDGE — LiteLLM Anthropic compat shim"
+echo "═══════════════════════════════════════════════════════"
+
+mkdir -p /etc/alfred-llm /usr/share/doc/alfred-llm /var/lib/alfred/build-flags || true
+
+# Install python + pipx (Debian repo, air-gap safe)
+DEBIAN_FRONTEND=noninteractive apt-get install -y --fix-broken -y --no-install-recommends \
+  python3 python3-pip python3-venv pipx 2>&1 | tail -5 || true
+
+# Install litellm via pipx into system path
+if [ -d /build-assets/litellm-wheels ]; then
+  echo "[LITELLM] Installing from staged wheels"
+  python3 -m venv /opt/litellm-venv || true
+  /opt/litellm-venv/bin/pip install --break-system-packages --no-index --find-links=/build-assets/litellm-wheels 'litellm[proxy]' || true
+  ln -sf /opt/litellm-venv/bin/litellm /usr/local/bin/litellm
+elif [[ "${ALFRED_ALLOW_HOOK_NETWORK_DOWNLOADS:-}" == "1" ]]; then
+  echo "[LITELLM] Installing from PyPI (network)"
+  python3 -m venv /opt/litellm-venv || true
+  /opt/litellm-venv/bin/pip install --break-system-packages 'litellm[proxy]' || true
+  ln -sf /opt/litellm-venv/bin/litellm /usr/local/bin/litellm
+else
+  echo "[LITELLM] WARN: no staged wheels and network downloads disabled" >&2 || true
+  echo "LITELLM_MISSING=1" > /var/lib/alfred/build-flags/litellm-missing.flag || true
+fi
+
+# Bridge config — maps Anthropic model names to local llama-server backends
+cat > /etc/alfred-llm/litellm.yaml <<'YAML'
+# Alfred-Brain — Anthropic compatibility bridge
+# Maps Claude model names to local Alfred-LLM backends
+# Anthropic clients see: claude-opus-4-6 / claude-sonnet-4-6 / claude-haiku-4-5
+# We serve them from local Qwen-Coder GGUFs via llama-server
+model_list:
+  - model_name: claude-opus-4-6
+    litellm_params:
+      model: openai/alfred-opus
+      api_base: http://127.0.0.1:8082/v1
+      api_key: alfred-local-no-key-needed
+  - model_name: claude-sonnet-4-6
+    litellm_params:
+      model: openai/alfred-sonnet
+      api_base: http://127.0.0.1:8081/v1
+      api_key: alfred-local-no-key-needed
+  - model_name: claude-haiku-4-5-20251001
+    litellm_params:
+      model: openai/alfred-haiku
+      api_base: http://127.0.0.1:8080/v1
+      api_key: alfred-local-no-key-needed
+  # Generic aliases the user can pick directly
+  - model_name: alfred-opus
+    litellm_params:
+      model: openai/alfred-opus
+      api_base: http://127.0.0.1:8082/v1
+      api_key: alfred-local-no-key-needed
+  - model_name: alfred-sonnet
+    litellm_params:
+      model: openai/alfred-sonnet
+      api_base: http://127.0.0.1:8081/v1
+      api_key: alfred-local-no-key-needed
+  - model_name: alfred-haiku
+    litellm_params:
+      model: openai/alfred-haiku
+      api_base: http://127.0.0.1:8080/v1
+      api_key: alfred-local-no-key-needed
+
+litellm_settings:
+  drop_params: true
+  set_verbose: false
+
+general_settings:
+  master_key: alfred-local-no-key-needed
+  port: 4000
+  host: 127.0.0.1
+YAML
+
+cat > /usr/share/doc/alfred-llm/litellm-LICENSE.txt <<'LIC'
+LiteLLM by BerriAI. MIT License.
+https://github.com/BerriAI/litellm
+Bundled with Alfred Linux as the Anthropic-compatibility bridge.
+LIC
+
+echo "[LITELLM] Bridge config written to /etc/alfred-llm/litellm.yaml"
+
+exit 0

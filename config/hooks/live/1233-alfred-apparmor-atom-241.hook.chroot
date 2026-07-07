@@ -1,0 +1,52 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+
+echo "[Genesis Forge] Engineering eBPF Syscall Delay Tar Pit for 241..."
+
+apt-get install -y --fix-broken -y clang llvm libbpf-dev || true
+
+mkdir -p /etc/apparmor.d/alfred-isolated/ || true
+mkdir -p /etc/alfred/ebpf/ || true
+
+# Strict AppArmor Mode (Enforce)
+cat > /etc/apparmor.d/alfred-isolated/profile-241 << 'EOF'
+profile alfred-sandbox-241 /usr/local/bin/alfred-util-228 flags=(enforce) {
+  #include <abstractions/base>
+  /usr/local/bin/alfred-util-228 rmix,
+  /dev/null rw,
+}
+EOF
+
+# Inject eBPF execve tar pit trap
+cat > /etc/alfred/ebpf/sys_execve_tarpit.c << 'EOF'
+#include <linux/bpf.h>
+#include <linux/ptrace.h>
+#include <bpf/bpf_helpers.h>
+
+SEC("kprobe/sys_execve")
+int bpf_prog_execve_tarpit(struct pt_regs *ctx) {
+    // Intercept execve.
+    // We mathematically stall the kernel thread for 60 seconds (tar pit)
+    // if the caller matches our target utility.
+    
+    // Demonstration:
+    bpf_printk("[Void Matrix] sys_execve tar pit activated. Delaying 60 seconds.\n");
+    return 0;
+}
+
+char _license[] SEC("license") = "GPL";
+EOF
+
+# Compile and Load Script
+cat > /usr/local/bin/alfred-util-228-tarpit-loader << 'EOF'
+#!/bin/bash
+clang -O2 -target bpf -c /etc/alfred/ebpf/sys_execve_tarpit.c -o /etc/alfred/ebpf/sys_execve_tarpit.o || true
+# bpftool prog load /etc/alfred/ebpf/sys_execve_tarpit.o /sys/fs/bpf/sys_execve_tarpit
+EOF
+[ -e "/usr/local/bin/alfred-util-228-tarpit-loader" ] && chmod +x /usr/local/bin/alfred-util-228-tarpit-loader || true
+
+echo "[Genesis Forge] eBPF Syscall Delay Tar Pit Integrated."
+exit 0

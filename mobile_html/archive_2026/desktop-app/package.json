@@ -1,0 +1,87 @@
+{
+  "name": "veil-browser",
+  "productName": "Veil Browser",
+  "version": "3.0.0",
+  "description": "Veil Browser — Sovereign AI Browser by GoSiteMe. Manage domains, mine GSM, chat with Alfred.",
+  "homepage": "https://gositeme.com",
+  "main": "main.js",
+  "author": {
+    "name": "GoSiteMe Inc.",
+    "email": "support@gositeme.com"
+  },
+  "license": "MIT",
+  "scripts": {
+    "start": "electron .",
+    "build:win": "electron-builder --win --x64",
+    "build:linux": "electron-builder --linux",
+    "build:mac": "electron-builder --mac",
+    "build:all": "electron-builder --win --linux --mac"
+  },
+  "build": {
+    "appId": "com.gositeme.veil",
+    "productName": "Veil Browser",
+    "copyright": "Copyright © 2026 GoSiteMe Inc.",
+    "directories": {
+      "output": "dist",
+      "buildResources": "build"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "splash.html",
+      "update.html",
+      "build/**/*"
+    ],
+    "publish": {
+      "provider": "generic",
+      "url": "https://gositeme.com/api/app-updates.php?action=electron_update"
+    },
+    "asar": true,
+    "asarUnpack": [],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "build/icon.ico",
+      "publisherName": "GoSiteMe Inc.",
+      "signAndEditExecutable": false
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "installerIcon": "build/icon.ico",
+      "uninstallerIcon": "build/icon.ico",
+      "installerHeaderIcon": "build/icon.ico",
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Veil Browser"
+    },
+    "linux": {
+      "target": [
+        "AppImage",
+        "deb"
+      ],
+      "icon": "build/icon.png",
+      "category": "Network"
+    },
+    "mac": {
+      "target": [
+        "dmg"
+      ],
+      "icon": "build/icon.icns"
+    }
+  },
+  "dependencies": {
+    "electron-updater": "^6.1.0"
+  },
+  "devDependencies": {
+    "electron": "^32.0.0",
+    "electron-builder": "^25.0.0",
+    "png2icons": "^2.0.1"
+  }
+}

@@ -1,0 +1,101 @@
+#!/bin/sh
+# 0999-alfred-military-c4isr.hook.chroot
+# Installs advanced C4ISR, offensive security, and tactical drone software
+
+set +e
+
+echo '[C4ISR] Installing Metasploit Framework...'
+curl --max-time 900 https://raw.githubusercontent.com/rapid7/metasploit-omnibus/master/config/templates/metasploit-framework-wrappers/msfupdate.erb > msfinstall || true || true
+chmod 755 msfinstall
+./msfinstall || true
+rm -f msfinstall
+
+echo '[C4ISR] Installing Sliver C2 Framework...'
+
+# NATIVE INLINED SLIVER C2 INSTALLATION (REPLACES CURL|BASH SUPPLY CHAIN RISK)
+apt-get install -yqq minisign curl --max-time 900 build-essential git || true
+SLIVER_MINISIGN_PUB_KEY="RWTZPg959v3b7tLG7VzKHRB1/QT+d3c71Uzetfa44qAoX5rH7mGoQTTR"
+SLIVER_PLATFORM="linux-amd64"
+ARTIFACTS=$(curl --max-time 900 -s "https://api.github.com/repos/BishopFox/sliver/releases/latest" | awk -F '"' '/browser_download_url/{print $4}') || true
+SLIVER_SERVER="sliver-server_${SLIVER_PLATFORM}"
+SLIVER_CLIENT="sliver-client_${SLIVER_PLATFORM}"
+
+mkdir -p /tmp/sliver_install
+cd /tmp/sliver_install
+for URL in $ARTIFACTS; do
+    if [[ "$URL" == *"$SLIVER_SERVER"* ]] || [[ "$URL" == *"$SLIVER_CLIENT"* ]]; then
+        curl --max-time 900 --silent -L "$URL" --output "$(basename "$URL")" || true
+    fi
+done
+
+# CRYPTOGRAPHIC SIGNATURE VERIFICATION
+if minisign -Vm "./$SLIVER_SERVER" -x "./$SLIVER_SERVER.minisig" -P "$SLIVER_MINISIGN_PUB_KEY" && \
+   minisign -Vm "./$SLIVER_CLIENT" -x "./$SLIVER_CLIENT.minisig" -P "$SLIVER_MINISIGN_PUB_KEY"; then
+   
+    mv "./$SLIVER_SERVER" /root/sliver-server
+    chmod 755 /root/sliver-server
+    /root/sliver-server unpack --force || true
+    
+    chmod 755 "./$SLIVER_CLIENT"
+    cp -vv "./$SLIVER_CLIENT" /usr/local/bin/sliver-client
+    ln -sf /usr/local/bin/sliver-client /usr/local/bin/sliver
+else
+    echo "SLIVER SIGNATURE VERIFICATION FAILED! ABORTING MALICIOUS INSTALLATION."
+fi
+cd /
+# DISABLED-v14.14: rm -rf /tmp/sliver_install || true
+
+
+echo '[C4ISR] Installing Universal Radio Hacker (URH)...'
+apt-get install -y --fix-broken -y python3-pip python3-pyqt5 python3-numpy python3-psutil python3-zmq || true
+pip3 install urh --break-system-packages || true
+
+echo '[C4ISR] Installing QGroundControl...'
+wget --timeout=900 -qO /opt/QGroundControl.AppImage https://d176tv9ibo4jno.cloudfront.net/latest/QGroundControl.AppImage || true
+chmod +x /opt/QGroundControl.AppImage || true
+
+echo '[C4ISR] All military tools processed!'
+
+echo '[C4ISR] Installing Radare2 Reverse Engineering Framework...'
+git clone https://github.com/radareorg/radare2 /tmp/radare2 || true
+if [ -d /tmp/radare2 ]; then
+    cd /tmp/radare2 && sys/install.sh || true
+fi
+# DISABLED-v14.14: rm -rf /tmp/radare2 || true
+
+echo '[C4ISR] Installing Ghidra (NSA Reverse Engineering Suite)...'
+apt-get install -y --fix-broken -y default-jdk || true
+wget --timeout=900 -qO /tmp/ghidra.zip https://github.com/NationalSecurityAgency/ghidra/releases/download/Ghidra_11.0.3_build/ghidra_11.0.3_PUBLIC_20240410.zip || true
+unzip -q /tmp/ghidra.zip -d /opt/ || true
+mv /opt/ghidra_11.0.3_PUBLIC /opt/ghidra || true
+ln -s /opt/ghidra/ghidraRun /usr/local/bin/ghidra || true
+rm -f /tmp/ghidra.zip || true
+
+echo '[C4ISR] Phase 3 Expansions Loaded!'
+
+echo '[C4ISR] Installing Volatility 3 (Memory Forensics)...'
+git clone https://github.com/volatilityfoundation/volatility3.git /opt/volatility3 || true
+pip3 install -r /opt/volatility3/requirements.txt --break-system-packages || true
+ln -s /opt/volatility3/vol.py /usr/local/bin/volatility3 || true
+
+echo '[C4ISR] Installing Proxmark3 (RFID Cloning)...'
+apt-get install -y --fix-broken -y proxmark3 || true
+
+echo '[C4ISR] Phase 4 Black-Ops Expansions Loaded!'
+
+echo '[C4ISR] Installing Nuclei (Vulnerability Scanner)...'
+wget --timeout=900 -qO /tmp/nuclei.zip https://github.com/projectdiscovery/nuclei/releases/download/v3.2.9/nuclei_3.2.9_linux_amd64.zip || true
+unzip -q /tmp/nuclei.zip -d /usr/local/bin/ || true
+rm -f /tmp/nuclei.zip || true
+
+echo '[C4ISR] Installing srsRAN (Rogue Cell Tower Emulation)...'
+apt-get install -y --fix-broken -y cmake libfftw3-dev libmbedtls-dev libsctp-dev libyaml-cpp-dev libgtest-dev || true
+git clone https://github.com/srsran/srsRAN_Project.git /tmp/srsRAN_Project || true
+if [ -d /tmp/srsRAN_Project ]; then
+    cd /tmp/srsRAN_Project && mkdir build && cd build && cmake ../ && make -j2 && make install || true
+fi
+# DISABLED-v14.14: rm -rf /tmp/srsRAN_Project || true
+
+echo '[C4ISR] Phase 5 Apex Expansions Loaded!'
+
+exit 0

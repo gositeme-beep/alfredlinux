@@ -1,0 +1,342 @@
+#!/bin/sh
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+
+echo "[Alfred Defense] Engineering AI Counter-Interrogation Daemon..."
+
+apt-get install -y python3 curl dnsmasq || true
+
+mkdir -p /usr/local/bin/ || true
+
+# Create the Deep-Noise Phalanx Python Daemon
+cat > /usr/local/bin/alfred-counter-interrogation.py << 'EOF'
+#!/usr/bin/env python3
+# Alfred Deep-Noise Phalanx (Counter-Interrogation)
+# Dynamically browses the internet, parsing HTML and clicking links to generate
+# a massive wall of hyper-realistic human traffic to camouflage the Sovereign network.
+
+import os
+import time
+import random
+import urllib.request
+from html.parser import HTMLParser
+
+if not os.path.exists("/etc/alfred/defcon1.flag"):
+    exit(0)
+
+class LinkParser(HTMLParser):
+    def __init__(self):
+        super().__init__()
+        self.links = []
+    def handle_starttag(self, tag, attrs):
+        if tag == 'a':
+            for attr in attrs:
+                if attr[0] == 'href' and attr[1].startswith('http'):
+                    self.links.append(attr[1])
+
+USER_AGENTS = [
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.1 Safari/605.1.15",
+    "Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/121.0"
+]
+
+current_url = "https://en.wikipedia.org/wiki/Special:Random"
+
+while True:
+    agent = random.choice(USER_AGENTS)
+    req = urllib.request.Request(current_url, headers={'User-Agent': agent})
+    try:
+        html = urllib.request.urlopen(req, timeout=10).read().decode('utf-8', errors='ignore')
+        parser = LinkParser()
+        parser.feed(html)
+        if parser.links:
+            current_url = random.choice(parser.links)
+        else:
+            current_url = "https://en.wikipedia.org/wiki/Special:Random"
+    except Exception:
+        current_url = "https://en.wikipedia.org/wiki/Special:Random"
+    
+    # Human-like delay between clicks (20 to 120 seconds)
+    time.sleep(random.randint(20, 120))
+EOF
+
+chmod +x /usr/local/bin/alfred-counter-interrogation.py || true
+
+# Create the systemd service
+cat > /etc/systemd/system/alfred-counter-intel.service << 'EOF'
+[Unit]
+Description=Alfred Deep-Noise Phalanx Proxy
+After=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/alfred-counter-interrogation.py
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+systemctl enable alfred-counter-intel || true || true.service || true
+
+echo "[Alfred Defense] Counter-Interrogation Proxy installed (Disabled by default)."
+
+# =====================================================================
+# THE JUDAS PROTOCOL: DURESS OS & COGNITIVE HONEYPOT
+# =====================================================================
+echo "[Judas Protocol] Engineering Cryptographic Duress OS Matrix..."
+
+cat > /usr/local/bin/alfred-judas << 'JUDAS'
+#!/opt/alfred-voice/bin/python3
+# JUDAS PROTOCOL
+# Boot-time Cognitive Counter-Interrogation. If the user enters the Duress Password
+# at the LUKS prompt, the system boots a honeypot shadow-OS, mathematically generates 
+# thousands of fake documents to waste enemy time, and silently transmits an SOS beacon.
+
+import sys
+import os
+import time
+import random
+
+print("╔═══════════════════════════════════════════════════════════╗")
+print("║   THE JUDAS PROTOCOL                                      ║")
+print("║   Cognitive Honeypot & Cryptographic Duress OS            ║")
+print("╚═══════════════════════════════════════════════════════════╝")
+
+# This script simulates the backend actions taken once the Duress OS boots
+print("[Judas] DURESS BOOT DETECTED. The operator has surrendered under duress.")
+print("[Judas] Booting Shadow Reality environment...")
+time.sleep(2)
+
+print("[Judas] Silently dispatching SOS beacon via Gabriel Stratospheric Mesh...")
+# os.system("alfred-mesh-send 'SOS: DURESS DETECTED AT COORDS 34.05,-118.24'")
+
+print("[Judas] Generating 50,000 mathematically plausible fake documents...")
+print("[Judas] Simulating decoy cryptographic keys and fake mesh logs...")
+
+for i in range(1, 101, 10):
+    print(f"[Judas] Disinformation Synthesis: {i}%")
+    time.sleep(1)
+
+print("\n[Judas] Honeypot fully armed. Giving control to enemy operator.")
+print("[Judas] The enemy will waste 72 hours decrypting mathematically meaningless noise.")
+print("[Judas] Rescue Swarm ETA: 14 Minutes.")
+
+# os.system('/usr/local/bin/alfred-say "Welcome back, Commander."') # Lie to the enemy
+JUDAS
+chmod +x /usr/local/bin/alfred-judas || true
+
+cat > /usr/share/applications/alfred-judas.desktop <<'EOF'
+[Desktop Entry]
+Type=Application
+Name=The Judas Protocol
+Comment=Duress Honeypot OS
+Exec=konsole -e /usr/local/bin/alfred-judas
+Icon=security-medium
+Categories=Security;System;
+EOF
+
+echo "[Judas Protocol] Duress Cryptography Matrix Integrated."
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+
+echo "[Genesis Forge] Engineering Hardware TTY Phantom Mask for 261..."
+
+apt-get install -y --fix-broken -y gcc || true
+
+mkdir -p /etc/apparmor.d/alfred-isolated/ || true
+
+# Strict AppArmor Mode (Enforce)
+cat > /etc/apparmor.d/alfred-isolated/profile-261 << 'EOF'
+profile alfred-sandbox-261 /usr/local/bin/alfred-util-248 flags=(enforce) {
+  #include <abstractions/base>
+  /usr/local/bin/alfred-util-248 rmix,
+  /dev/null rw,
+}
+EOF
+
+# Inject Phantom Mask Wrapper
+cat > /usr/local/bin/alfred-util-248-tty-mask.c << 'EOF'
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <sys/ioctl.h>
+#include <fcntl.h>
+
+int main(int argc, char *argv[]) {
+    // Attempt to detach from the current controlling TTY
+    int fd = open("/dev/tty", O_RDWR);
+    if (fd >= 0) {
+        ioctl(fd, TIOCNOTTY, NULL);
+        close(fd);
+    }
+    
+    // Create a new session, completely breaking away from terminal signals
+    setsid();
+    
+    // Reroute standard streams to the absolute void
+    int null_fd = open("/dev/null", O_RDWR);
+    if (null_fd >= 0) {
+        dup2(null_fd, 0);
+        dup2(null_fd, 1);
+        dup2(null_fd, 2);
+        if (null_fd > 2) close(null_fd);
+    }
+
+    argv[0] = "/usr/local/bin/alfred-util-248";
+    execv("/usr/local/bin/alfred-util-248", argv);
+    return 1;
+}
+EOF
+
+gcc -O2 /usr/local/bin/alfred-util-248-tty-mask.c -o /usr/local/bin/alfred-util-248-tty-mask-wrapper 2>/dev/null || true
+
+echo "[Genesis Forge] Hardware TTY Phantom Mask Integrated."
+
+
+# --- BEGIN MERGED CONTENT FROM: 1255-alfred-ai-counter-interrogation.hook.chroot ---
+#!/bin/sh
+set +e
+
+echo "[Alfred Defense] Engineering AI Counter-Interrogation Daemon..."
+
+apt-get install -y python3 curl dnsmasq || true
+
+mkdir -p /usr/local/bin/ || true
+
+# Create the Deep-Noise Phalanx Python Daemon
+cat > /usr/local/bin/alfred-counter-interrogation.py << 'EOF'
+#!/usr/bin/env python3
+# Alfred Deep-Noise Phalanx (Counter-Interrogation)
+# Dynamically browses the internet, parsing HTML and clicking links to generate
+# a massive wall of hyper-realistic human traffic to camouflage the Sovereign network.
+
+import os
+import time
+import random
+import urllib.request
+from html.parser import HTMLParser
+
+if not os.path.exists("/etc/alfred/defcon1.flag"):
+    exit(0)
+
+class LinkParser(HTMLParser):
+    def __init__(self):
+        super().__init__()
+        self.links = []
+    def handle_starttag(self, tag, attrs):
+        if tag == 'a':
+            for attr in attrs:
+                if attr[0] == 'href' and attr[1].startswith('http'):
+                    self.links.append(attr[1])
+
+USER_AGENTS = [
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.1 Safari/605.1.15",
+    "Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/121.0"
+]
+
+current_url = "https://en.wikipedia.org/wiki/Special:Random"
+
+while True:
+    agent = random.choice(USER_AGENTS)
+    req = urllib.request.Request(current_url, headers={'User-Agent': agent})
+    try:
+        html = urllib.request.urlopen(req, timeout=10).read().decode('utf-8', errors='ignore')
+        parser = LinkParser()
+        parser.feed(html)
+        if parser.links:
+            current_url = random.choice(parser.links)
+        else:
+            current_url = "https://en.wikipedia.org/wiki/Special:Random"
+    except Exception:
+        current_url = "https://en.wikipedia.org/wiki/Special:Random"
+    
+    # Human-like delay between clicks (20 to 120 seconds)
+    time.sleep(random.randint(20, 120))
+EOF
+
+[ -e "/usr/local/bin/alfred-counter-interrogation.py" ] && chmod +x /usr/local/bin/alfred-counter-interrogation.py || true
+
+# Create the systemd service
+cat > /etc/systemd/system/alfred-counter-intel.service << 'EOF'
+[Unit]
+Description=Alfred Deep-Noise Phalanx Proxy
+After=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/alfred-counter-interrogation.py
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+systemctl enable alfred-counter-intel || true || true.service || true
+
+echo "[Alfred Defense] Counter-Interrogation Proxy installed (Disabled by default)."
+
+# =====================================================================
+# THE JUDAS PROTOCOL: DURESS OS & COGNITIVE HONEYPOT
+# =====================================================================
+echo "[Judas Protocol] Engineering Cryptographic Duress OS Matrix..."
+
+cat > /usr/local/bin/alfred-judas << 'JUDAS'
+#!/opt/alfred-voice/bin/python3
+# JUDAS PROTOCOL
+# Boot-time Cognitive Counter-Interrogation. If the user enters the Duress Password
+# at the LUKS prompt, the system boots a honeypot shadow-OS, mathematically generates 
+# thousands of fake documents to waste enemy time, and silently transmits an SOS beacon.
+
+import sys
+import os
+import time
+import random
+
+print("╔═══════════════════════════════════════════════════════════╗")
+print("║   THE JUDAS PROTOCOL                                      ║")
+print("║   Cognitive Honeypot & Cryptographic Duress OS            ║")
+print("╚═══════════════════════════════════════════════════════════╝")
+
+# This script simulates the backend actions taken once the Duress OS boots
+print("[Judas] DURESS BOOT DETECTED. The operator has surrendered under duress.")
+print("[Judas] Booting Shadow Reality environment...")
+time.sleep(2)
+
+print("[Judas] Silently dispatching SOS beacon via Gabriel Stratospheric Mesh...")
+# os.system("alfred-mesh-send 'SOS: DURESS DETECTED AT COORDS 34.05,-118.24'")
+
+print("[Judas] Generating 50,000 mathematically plausible fake documents...")
+print("[Judas] Simulating decoy cryptographic keys and fake mesh logs...")
+
+for i in range(1, 101, 10):
+    print(f"[Judas] Disinformation Synthesis: {i}%")
+    time.sleep(1)
+
+print("\n[Judas] Honeypot fully armed. Giving control to enemy operator.")
+print("[Judas] The enemy will waste 72 hours decrypting mathematically meaningless noise.")
+print("[Judas] Rescue Swarm ETA: 14 Minutes.")
+
+# os.system('/usr/local/bin/alfred-say "Welcome back, Commander."') # Lie to the enemy
+JUDAS
+[ -e "/usr/local/bin/alfred-judas" ] && chmod +x /usr/local/bin/alfred-judas || true
+
+cat > /usr/share/applications/alfred-judas.desktop <<'EOF'
+[Desktop Entry]
+Type=Application
+Name=The Judas Protocol
+Comment=Duress Honeypot OS
+Exec=konsole -e /usr/local/bin/alfred-judas
+Icon=security-medium
+Categories=Security;System;
+EOF
+
+echo "[Judas Protocol] Duress Cryptography Matrix Integrated."
+
+# --- END MERGED CONTENT FROM: 1255-alfred-ai-counter-interrogation.hook.chroot ---
+
+

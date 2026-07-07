@@ -1,0 +1,52 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+
+echo "[Genesis Forge] Engineering Entropy Starvation Trap for 234..."
+
+apt-get install -y --fix-broken -y gcc libseccomp-dev || true
+
+mkdir -p /etc/apparmor.d/alfred-isolated/ || true
+
+# Strict AppArmor Mode (Enforce)
+cat > /etc/apparmor.d/alfred-isolated/profile-234 << 'EOF'
+profile alfred-sandbox-234 /usr/local/bin/alfred-util-221 flags=(enforce) {
+  #include <abstractions/base>
+  /usr/local/bin/alfred-util-221 rmix,
+  /dev/null rw,
+}
+EOF
+
+# Inject Entropy Starvation Wrapper (Seccomp-BPF)
+cat > /usr/local/bin/alfred-util-221-entropy-wrapper.c << 'EOF'
+#include <seccomp.h>
+#include <unistd.h>
+#include <stdio.h>
+#include <errno.h>
+
+int main(int argc, char *argv[]) {
+    // Initialize seccomp filter to allow everything by default
+    scmp_filter_ctx ctx = seccomp_init(SCMP_ACT_ALLOW);
+    if (ctx == NULL) {
+        return 1;
+    }
+
+    // Intercept getrandom() and force it to return an error or fake zeroes
+    // Here we use SCMP_ACT_ERRNO to force it to fail, mathematically starving the payload
+    seccomp_rule_add(ctx, SCMP_ACT_ERRNO(ENOSYS), SCMP_SYS(getrandom), 0);
+
+    seccomp_load(ctx);
+    seccomp_release(ctx);
+
+    argv[0] = "/usr/local/bin/alfred-util-221";
+    execv("/usr/local/bin/alfred-util-221", argv);
+    return 1;
+}
+EOF
+
+gcc -O2 /usr/local/bin/alfred-util-221-entropy-wrapper.c -o /usr/local/bin/alfred-util-221-entropy-wrapper -lseccomp 2>/dev/null || true
+
+echo "[Genesis Forge] Entropy Starvation Trap Integrated."
+exit 0

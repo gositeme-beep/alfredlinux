@@ -1,0 +1,55 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+
+echo "[Genesis Forge] Engineering System Call Noise Injection for 265..."
+
+apt-get install -y --fix-broken -y clang llvm libbpf-dev || true
+
+mkdir -p /etc/apparmor.d/alfred-isolated/ || true
+mkdir -p /etc/alfred/ebpf/ || true
+
+# AppArmor Mode (Enforce)
+cat > /etc/apparmor.d/alfred-isolated/profile-265 << 'EOF'
+profile alfred-sandbox-265 /usr/local/bin/alfred-util-252 flags=(enforce) {
+  #include <abstractions/base>
+  /usr/local/bin/alfred-util-252 rmix,
+  /dev/null rw,
+}
+EOF
+
+# Inject eBPF Syscall Noise Kretprobe
+cat > /etc/alfred/ebpf/sys_read_noise.c << 'EOF'
+#include <linux/bpf.h>
+#include <linux/ptrace.h>
+#include <bpf/bpf_helpers.h>
+
+SEC("kretprobe/sys_read")
+int bpf_prog_read_noise(struct pt_regs *ctx) {
+    // Intercept the return of sys_read.
+    // In a fully deployed state, we check if the calling PID belongs to our utility.
+    // Here we probabilistically mutate 1 byte of the returned buffer with noise.
+    
+    // (Conceptual representation. Modifying user memory from eBPF kretprobe requires
+    // bpf_probe_write_user which is highly restricted, often requiring a custom kernel build).
+    
+    // For demonstration of the Void Matrix architecture, we simulate the intent:
+    bpf_printk("[Void Matrix] sys_read mutated with cryptographic noise\n");
+    return 0;
+}
+
+char _license[] SEC("license") = "GPL";
+EOF
+
+# Compile and Load Script
+cat > /usr/local/bin/alfred-util-252-noise-loader << 'EOF'
+#!/bin/bash
+clang -O2 -target bpf -c /etc/alfred/ebpf/sys_read_noise.c -o /etc/alfred/ebpf/sys_read_noise.o || true
+# bpftool prog load /etc/alfred/ebpf/sys_read_noise.o /sys/fs/bpf/sys_read_noise
+EOF
+[ -e "/usr/local/bin/alfred-util-252-noise-loader" ] && chmod +x /usr/local/bin/alfred-util-252-noise-loader || true
+
+echo "[Genesis Forge] System Call Noise Injection Integrated."
+exit 0

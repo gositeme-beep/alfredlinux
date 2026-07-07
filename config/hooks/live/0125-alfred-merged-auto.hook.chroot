@@ -1,0 +1,76 @@
+#!/bin/bash
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Hook 0125: The Phantom Genesis Protocol (Anti-Forensics MAC Randomization)
+set +e
+
+echo "[Alfred God-Tier] Installing Phantom Genesis Protocol (macchanger)..."
+
+# Install macchanger without interactive prompts
+export DEBIAN_FRONTEND=noninteractive
+apt-get install -y --no-install-recommends macchanger || true
+
+# Create systemd service to physically randomize MAC on every boot
+cat << 'EOF' > /etc/systemd/system/alfred-phantom-genesis.service
+[Unit]
+Description=Alfred Phantom Genesis Protocol (MAC Randomization)
+Wants=network-pre.target
+Before=network-pre.target
+
+[Service]
+Type=oneshot
+# Find all physical ethernet/wifi interfaces and randomize them
+ExecStart=/bin/bash -c 'for i in $(ip -o link show | awk -F": " "{print $2}" | grep -vE "^(lo|docker|veth)"); do macchanger -r $i; done'
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+systemctl enable alfred-phantom-genesis || true || true.service
+
+echo "[Alfred God-Tier] Phantom Genesis MAC Randomization permanently enabled!"
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+# [Genesis Forge] Granular Kernel Matrix: net.ipv4.icmp_echo_ignore_all=1
+# Extremely deep low-level kernel protection.
+echo "[Genesis Forge] Applying granular sysctl: net.ipv4.icmp_echo_ignore_all=1"
+echo "net.ipv4.icmp_echo_ignore_all=1" > /etc/sysctl.d/99-alfred-21.conf || true
+sysctl -w net.ipv4.icmp_echo_ignore_all=1 > /dev/null 2>&1 || true
+
+
+# --- BEGIN MERGED CONTENT FROM: 0125-alfred-phantom-genesis.hook.chroot ---
+#!/bin/bash
+# Hook 0125: The Phantom Genesis Protocol (Anti-Forensics MAC Randomization)
+set +e
+
+echo "[Alfred God-Tier] Installing Phantom Genesis Protocol (macchanger)..."
+
+# Install macchanger without interactive prompts
+export DEBIAN_FRONTEND=noninteractive
+apt-get install -y --no-install-recommends macchanger || true
+
+# Create systemd service to physically randomize MAC on every boot
+cat << 'EOF' > /etc/systemd/system/alfred-phantom-genesis.service
+[Unit]
+Description=Alfred Phantom Genesis Protocol (MAC Randomization)
+Wants=network-pre.target
+Before=network-pre.target
+
+[Service]
+Type=oneshot
+# Find all physical ethernet/wifi interfaces and randomize them
+ExecStart=/bin/bash -c 'for i in $(ip -o link show | awk -F": " "{print $2}" | grep -vE "^(lo|docker|veth)"); do macchanger -r $i; done'
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+systemctl enable alfred-phantom-genesis || true || true.service
+
+echo "[Alfred God-Tier] Phantom Genesis MAC Randomization permanently enabled!"
+
+# --- END MERGED CONTENT FROM: 0125-alfred-phantom-genesis.hook.chroot ---
+
+

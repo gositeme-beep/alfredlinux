@@ -1,0 +1,48 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# 0105-alfred-wine-subsystem.hook.chroot
+# Enables i386 multiarch and installs Wine to run Windows .exe applications
+
+set +e
+
+echo "[0105] Enabling Wine Windows Subsystem..."
+
+# Add 32-bit architecture for legacy Windows apps
+dpkg --add-architecture i386
+
+# Update package lists
+apt-get update || true || true
+
+# Install Wine components
+# Note: we use DEBIAN_FRONTEND=noninteractive to avoid any prompts
+DEBIAN_FRONTEND=noninteractive apt-get install -y --fix-broken -y --no-install-recommends wine wine64 wine32 winetricks || true
+
+# --- [AUTO-HEAL FIX FOR DEBIAN WINE COLLISION] ---
+echo "[Auto-Heal] Forcing DPKG overwrite for broken libwine dependencies..."
+DEBIAN_FRONTEND=noninteractive apt-get --fix-broken install -y -o Dpkg::Options::="--force-overwrite" || true
+
+# Create a showcase Windows app (PuTTY) on the default desktop
+mkdir -p "/etc/skel/Desktop/Windows Apps" || true
+cd "/etc/skel/Desktop/Windows Apps" || true
+# Download a lightweight, standalone Windows executable (PuTTY)
+curl -m 900 -sL https://the.earth.li/~sgtatham/putty/latest/w64/putty.exe -o putty.exe || true
+[ -e putty.exe ] && chmod +x putty.exe || true
+
+# Configure Wine to automatically open .exe files via desktop MIME
+mkdir -p /usr/share/applications || true
+cat << 'EOF' > /usr/share/applications/wine.desktop
+[Desktop Entry]
+Name=Wine Windows Program Loader
+Exec=wine start /unix %f
+MimeType=application/x-ms-dos-executable;application/x-msi;application/x-ms-shortcut;
+Icon=wine
+NoDisplay=true
+Type=Application
+Categories=X-Wine;
+EOF
+
+echo "[0105] Wine Windows Subsystem configured."
+
+exit 0

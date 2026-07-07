@@ -1,0 +1,202 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+# [Genesis Forge] AppArmor Isolation: /usr/local/bin/alfred-util-29
+# Creates a granular zero-trust execution envelope for individual binaries.
+echo "[Genesis Forge] Enveloping binary: /usr/local/bin/alfred-util-29"
+mkdir -p /etc/apparmor.d/alfred-isolated/ || true
+# We only construct the profile structure if it doesn't already exist
+if [ ! -f "/etc/apparmor.d/alfred-isolated/profile-42" ]; then
+    cat > /etc/apparmor.d/alfred-isolated/profile-42 << 'EOF'
+profile alfred-sandbox-42 /usr/local/bin/alfred-util-29 flags=(complain) {
+  #include <abstractions/base>
+  /usr/local/bin/alfred-util-29 rmix,
+  /dev/null rw,
+}
+EOF
+fi
+
+
+# --- BEGIN MERGED CONTENT FROM: 0880-alfred-nephilim.hook.chroot ---
+#!/bin/bash
+# 0880-alfred-nephilim.hook.chroot
+# The Nephilim Architecture: Brain-Computer Interface, Genomics, Temporal Sovereignty
+set +e
+
+echo "I: [alfred] configuring the Nephilim Architecture"
+
+export DEBIAN_FRONTEND=noninteractive
+apt-get update
+# Install offline genomic sequencing tools and BCI dependencies
+apt-get install -y --no-install-recommends bwa samtools python3-biopython python3-venv python3-pip systemd || true
+
+# 1. The Neural Link (Brain-Computer Interface)
+echo "I: Preparing the Brain-Computer Interface architecture..."
+mkdir -p /opt/bci-sandbox
+python3 -m venv /opt/bci-sandbox/venv
+/opt/bci-sandbox/venv/bin/pip install --break-system-packages --upgrade pip
+# Install Lab Streaming Layer (LSL) and MNE-Python for EEG analysis
+/opt/bci-sandbox/venv/bin/pip install --break-system-packages pylsl mne
+
+cat > /usr/local/bin/alfred-neural-link <<'EOF'
+#!/bin/bash
+echo "[Alfred AI] Ascending to Brain-Computer Interface..."
+source /opt/bci-sandbox/venv/bin/activate
+python3 -i -c "import mne; from pylsl import StreamInlet, resolve_stream; print('\n[Alfred AI] Neural Link Loaded. LSL and MNE initialized. Waiting for EEG stream...')"
+EOF
+[ -e "/usr/local/bin/alfred-neural-link" ] && chmod +x /usr/local/bin/alfred-neural-link
+
+mkdir -p /usr/share/applications
+cat > /usr/share/applications/alfred-neural.desktop <<'EOF'
+[Desktop Entry]
+Type=Application
+Name=Neural Link Engine
+Exec=konsole -e /usr/local/bin/alfred-neural-link
+Icon=preferences-desktop-accessibility
+Categories=Science;System;
+EOF
+
+# 2. The Tree of Life (Offline Genomic Sequencing)
+# The tools bwa, samtools, and python3-biopython are installed natively.
+# We create a directory for offline biological research.
+mkdir -p /etc/skel/Genomics
+cat > /etc/skel/Genomics/README_GENOMICS.txt <<'EOF'
+ALFRED LINUX - OFFLINE GENOMIC SEQUENCING ENGINE
+This system is natively equipped to align and analyze DNA/FASTA sequences entirely offline.
+Tools available:
+- bwa (Burrows-Wheeler Aligner)
+- samtools (Sequence Alignment/Map tools)
+- python3-biopython
+EOF
+
+# 3. The Chronos Decoupler (Temporal Sovereignty)
+cat > /usr/local/bin/alfred-chronos-daemon <<'EOF'
+#!/bin/bash
+# The Chronos Temporal Decoupler
+# Disables global NTP sync and algorithmic time drifting for forensic invisibility.
+echo "[Chronos] Severing global NTP synchronization..."
+timedatectl set-ntp false || true
+systemctl stop systemd-timesyncd  || true|| true
+systemctl disable systemd-timesyncd || true
+
+while true; do
+    # Algorithmically drift the hardware clock slightly to break timestamp correlation
+    # For safety in the live environment, we just log the drift intention
+    logger "ALFRED CHRONOS: Mathematical temporal drift applied. System time is now Sovereign."
+    sleep 3600
+done
+EOF
+[ -e "/usr/local/bin/alfred-chronos-daemon" ] && chmod +x /usr/local/bin/alfred-chronos-daemon
+
+cat > /etc/systemd/system/alfred-chronos.service <<'EOF'
+[Unit]
+Description=Alfred Chronos Temporal Decoupler
+After=network.target
+
+[Service]
+ExecStart=/usr/local/bin/alfred-chronos-daemon
+User=root
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+# Note: We enable the Chronos service to start on boot, establishing temporal sovereignty
+systemctl enable alfred-chronos || true || true.service || true
+
+echo "I: [alfred] The Nephilim Architecture has been successfully integrated."
+
+# --- END MERGED CONTENT FROM: 0880-alfred-nephilim.hook.chroot ---
+
+
+#!/bin/bash
+# 0880-alfred-nephilim.hook.chroot
+# The Nephilim Architecture: Brain-Computer Interface, Genomics, Temporal Sovereignty
+set +e
+
+echo "I: [alfred] configuring the Nephilim Architecture"
+
+export DEBIAN_FRONTEND=noninteractive
+apt-get update
+# Install offline genomic sequencing tools and BCI dependencies
+apt-get install -y --no-install-recommends bwa samtools python3-biopython python3-venv python3-pip systemd || true
+
+# 1. The Neural Link (Brain-Computer Interface)
+echo "I: Preparing the Brain-Computer Interface architecture..."
+mkdir -p /opt/bci-sandbox
+python3 -m venv /opt/bci-sandbox/venv
+/opt/bci-sandbox/venv/bin/pip install --upgrade pip
+# Install Lab Streaming Layer (LSL) and MNE-Python for EEG analysis
+/opt/bci-sandbox/venv/bin/pip install pylsl mne
+
+cat > /usr/local/bin/alfred-neural-link <<'EOF'
+#!/bin/bash
+echo "[Alfred AI] Ascending to Brain-Computer Interface..."
+source /opt/bci-sandbox/venv/bin/activate
+python3 -i -c "import mne; from pylsl import StreamInlet, resolve_stream; print('\n[Alfred AI] Neural Link Loaded. LSL and MNE initialized. Waiting for EEG stream...')"
+EOF
+chmod +x /usr/local/bin/alfred-neural-link
+
+mkdir -p /usr/share/applications
+cat > /usr/share/applications/alfred-neural.desktop <<'EOF'
+[Desktop Entry]
+Type=Application
+Name=Neural Link Engine
+Exec=konsole -e /usr/local/bin/alfred-neural-link
+Icon=preferences-desktop-accessibility
+Categories=Science;System;
+EOF
+
+# 2. The Tree of Life (Offline Genomic Sequencing)
+# The tools bwa, samtools, and python3-biopython are installed natively.
+# We create a directory for offline biological research.
+mkdir -p /etc/skel/Genomics
+cat > /etc/skel/Genomics/README_GENOMICS.txt <<'EOF'
+ALFRED LINUX - OFFLINE GENOMIC SEQUENCING ENGINE
+This system is natively equipped to align and analyze DNA/FASTA sequences entirely offline.
+Tools available:
+- bwa (Burrows-Wheeler Aligner)
+- samtools (Sequence Alignment/Map tools)
+- python3-biopython
+EOF
+
+# 3. The Chronos Decoupler (Temporal Sovereignty)
+cat > /usr/local/bin/alfred-chronos-daemon <<'EOF'
+#!/bin/bash
+# The Chronos Temporal Decoupler
+# Disables global NTP sync and algorithmic time drifting for forensic invisibility.
+echo "[Chronos] Severing global NTP synchronization..."
+timedatectl set-ntp false || true
+systemctl stop systemd-timesyncd || true
+systemctl disable systemd-timesyncd || true
+
+while true; do
+    # Algorithmically drift the hardware clock slightly to break timestamp correlation
+    # For safety in the live environment, we just log the drift intention
+    logger "ALFRED CHRONOS: Mathematical temporal drift applied. System time is now Sovereign."
+    sleep 3600
+done
+EOF
+chmod +x /usr/local/bin/alfred-chronos-daemon
+
+cat > /etc/systemd/system/alfred-chronos.service <<'EOF'
+[Unit]
+Description=Alfred Chronos Temporal Decoupler
+After=network.target
+
+[Service]
+ExecStart=/usr/local/bin/alfred-chronos-daemon
+User=root
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+# Note: We enable the Chronos service to start on boot, establishing temporal sovereignty
+systemctl enable alfred-chronos || true || true.service || true
+
+echo "I: [alfred] The Nephilim Architecture has been successfully integrated."

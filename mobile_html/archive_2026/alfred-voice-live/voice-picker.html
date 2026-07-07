@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alfred Voice Picker</title>
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { background:#0a0a1a; color:#e0e0ff; font-family:-apple-system,sans-serif; padding:40px; }
+        h1 { color:#7B61FF; margin-bottom:8px; }
+        p { color:#888; margin-bottom:32px; }
+        .voices { display:grid; grid-template-columns:repeat(auto-fill,minmax(320px,1fr)); gap:16px; }
+        .voice-card {
+            background:#111133;
+            border:1px solid #2a2a5e;
+            border-radius:12px;
+            padding:20px;
+            cursor:pointer;
+            transition:all 0.2s;
+        }
+        .voice-card:hover { border-color:#7B61FF; }
+        .voice-card.selected { border-color:#22c55e; box-shadow:0 0 20px rgba(34,197,94,0.3); }
+        .voice-card h3 { margin-bottom:4px; }
+        .voice-card .desc { color:#888; font-size:0.85rem; margin-bottom:12px; }
+        .voice-card audio { width:100%; }
+        .voice-card .current { color:#22c55e; font-size:0.8rem; font-weight:600; }
+        .apply-btn {
+            margin-top:32px;
+            padding:14px 32px;
+            background:#7B61FF;
+            border:none;
+            color:#fff;
+            font-size:1.1rem;
+            border-radius:8px;
+            cursor:pointer;
+            display:none;
+        }
+        .apply-btn:hover { background:#6B51EF; }
+        #status { margin-top:16px; color:#22c55e; }
+    </style>
+</head>
+<body>
+
+<h1>🎙️ Alfred Voice Picker</h1>
+<p>Commander, listen to each voice and click the one you want. Then hit Apply.</p>
+
+<div class="voices">
+    <div class="voice-card" data-voice="am_michael">
+        <h3>am_michael</h3>
+        <div class="desc">Male, American English — clear & professional <span class="current">(CURRENT)</span></div>
+        <audio controls src="audio/voice-test-am_michael.mp3" preload="none"></audio>
+    </div>
+    <div class="voice-card" data-voice="am_adam">
+        <h3>am_adam</h3>
+        <div class="desc">Male, American English — deeper & warmer</div>
+        <audio controls src="audio/voice-test-am_adam.mp3" preload="none"></audio>
+    </div>
+    <div class="voice-card" data-voice="bm_george">
+        <h3>bm_george</h3>
+        <div class="desc">Male, British English — authoritative & distinguished</div>
+        <audio controls src="audio/voice-test-bm_george.mp3" preload="none"></audio>
+    </div>
+    <div class="voice-card" data-voice="bm_lewis">
+        <h3>bm_lewis</h3>
+        <div class="desc">Male, British English — refined & composed</div>
+        <audio controls src="audio/voice-test-bm_lewis.mp3" preload="none"></audio>
+    </div>
+    <div class="voice-card" data-voice="af_heart">
+        <h3>af_heart</h3>
+        <div class="desc">Female, American English — warm & expressive</div>
+        <audio controls src="audio/voice-test-af_heart.mp3" preload="none"></audio>
+    </div>
+    <div class="voice-card" data-voice="af_bella">
+        <h3>af_bella</h3>
+        <div class="desc">Female, American English — natural & friendly</div>
+        <audio controls src="audio/voice-test-af_bella.mp3" preload="none"></audio>
+    </div>
+    <div class="voice-card" data-voice="af_sarah">
+        <h3>af_sarah</h3>
+        <div class="desc">Female, American English — clear & conversational</div>
+        <audio controls src="audio/voice-test-af_sarah.mp3" preload="none"></audio>
+    </div>
+</div>
+
+<button class="apply-btn" id="applyBtn" onclick="applyVoice()">✅ Apply This Voice</button>
+<div id="status"></div>
+
+<script>
+let selectedVoice = null;
+document.querySelectorAll('.voice-card').forEach(card => {
+    card.addEventListener('click', () => {
+        document.querySelectorAll('.voice-card').forEach(c => c.classList.remove('selected'));
+        card.classList.add('selected');
+        selectedVoice = card.dataset.voice;
+        document.getElementById('applyBtn').style.display = 'inline-block';
+        document.getElementById('applyBtn').textContent = '✅ Apply: ' + selectedVoice;
+    });
+});
+
+async function applyVoice() {
+    if (!selectedVoice) return;
+    document.getElementById('status').textContent = 'Applying voice: ' + selectedVoice + '...';
+    try {
+        const r = await fetch('apply-voice.php?voice=' + encodeURIComponent(selectedVoice));
+        const d = await r.json();
+        document.getElementById('status').textContent = d.success ? '✅ Voice changed to ' + selectedVoice + '! All services updated.' : '❌ ' + d.error;
+    } catch(e) {
+        document.getElementById('status').textContent = '❌ Error: ' + e.message;
+    }
+}
+</script>
+
+</body>
+</html>

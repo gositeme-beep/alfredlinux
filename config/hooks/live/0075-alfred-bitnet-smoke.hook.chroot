@@ -1,0 +1,77 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# 0252-alfred-bitnet-smoke.hook.chroot
+# Build-time smoke checks for BitNet.cpp and Alfred ask routing.
+
+set +e
+
+echo "[BITNET-SMOKE] Starting smoke checks..."
+mkdir -p /var/lib/alfred/build-flags || true
+
+REPORT="/var/lib/alfred/build-flags/bitnet-smoke.txt"
+PASS=0
+FAIL=0
+
+check_bin() {
+  local name="$1"
+  if command -v "$name" >/dev/null 2>&1; then
+    local path
+    path="$(command -v "$name")"
+    echo "PASS bin:$name path:$path" >> "$REPORT" || true
+    echo "[BITNET-SMOKE] PASS bin:$name ($path)"
+    PASS=$((PASS + 1))
+  else
+    echo "FAIL bin:$name missing" >> "$REPORT" || true
+    echo "[BITNET-SMOKE] FAIL bin:$name missing"
+    FAIL=$((FAIL + 1))
+  fi
+}
+
+check_file() {
+  local path="$1"
+  local label="$2"
+  if [ -f "$path" ]; then
+    echo "PASS file:$label path:$path" >> "$REPORT" || true
+    echo "[BITNET-SMOKE] PASS file:$label ($path)"
+    PASS=$((PASS + 1))
+  else
+    echo "FAIL file:$label missing path:$path" >> "$REPORT" || true
+    echo "[BITNET-SMOKE] FAIL file:$label missing ($path)"
+    FAIL=$((FAIL + 1))
+  fi
+}
+
+: > "$REPORT"
+check_bin bitnet.cpp
+check_bin alfred-ask
+check_bin alfred
+
+if [ -x /usr/local/bin/alfred ] && grep -q 'alfred-ask' /usr/local/bin/alfred; then
+  echo "PASS wiring:alfred->alfred-ask" >> "$REPORT" || true
+  echo "[BITNET-SMOKE] PASS wiring: alfred routes to alfred-ask"
+  PASS=$((PASS + 1))
+else
+  echo "FAIL wiring:alfred->alfred-ask" >> "$REPORT" || true
+  echo "[BITNET-SMOKE] FAIL wiring: alfred wrapper not linked to alfred-ask"
+  FAIL=$((FAIL + 1))
+fi
+
+check_file /usr/share/bitnet/models/default.gguf model-default-gguf
+check_file /usr/share/doc/alfred-ai/bitnet-model-policy.txt model-policy
+check_file /usr/share/doc/alfred-ai/bitnet-LICENSE bitnet-license
+check_file /usr/share/doc/alfred-ai/bitnet-model-LICENSE bitnet-model-license
+
+echo "SUMMARY pass:$PASS fail:$FAIL" >> "$REPORT" || true
+
+if [ "$FAIL" -eq 0 ]; then
+  echo "BITNET_SMOKE=PASS pass:$PASS fail:$FAIL" > /var/lib/alfred/build-flags/bitnet-smoke.ok || true
+  echo "[BITNET-SMOKE] RESULT: PASS ($PASS checks)"
+else
+  echo "BITNET_SMOKE=FAIL pass:$PASS fail:$FAIL" > /var/lib/alfred/build-flags/bitnet-smoke.fail || true
+  echo "[BITNET-SMOKE] RESULT: FAIL (pass:$PASS fail:$FAIL)"
+fi
+
+# Non-fatal by design: emit status and continue ISO build.
+exit 0

@@ -1,0 +1,104 @@
+Alfred Linux — security hardening waves (living checklist)
+===========================================================
+
+Wave 1 (landed)
+  • 0280 mesh SSH: StrictHostKeyChecking=accept-new; skynet uses bash -c (no eval).
+  • 0100 SSH: Kingdom-hardened defaults — Docker ISO passes ALFRED_ALLOW_SSH_PASSWORD_AUTH=0
+    (keys-only sshd); set =1 on the host before lb-docker-build only for bootstrap/recovery images.
+    sshd drop-in also disables KbdInteractive/GSSAPI/Kerberos and UseDNS where supported.
+  • 0270 alfred-security-audit: no eval; PASS if keys-only or /etc/alfred/ALLOW_SSH_PASSWORD_AUTH marker.
+  • 0167 Kingdom mesh POST: ALFRED_KINGDOM_MESH_REGISTER=1 opt-in; TLS + urlencode.
+  • 0176 Kingdom Covenant Shield: **Lavocat justice ministry** canonical domains
+    (**lavocat.ca** vs **lavocat.quebec** 301) installed to **/usr/share/alfred/legal/**
+    and viewable via **`alfred-license lavocat`**; full text also under **build-assets/kingdom-documents/**.
+  • scripts/security-audit.sh — static CI sweep (hooks + optional shellcheck).
+    Optional **ALFRED_SHELLCHECK_ALL=1** uses shellcheck **--severity=warning** on scripts/ops/shlib +
+    build-assets shells (style/info do not count as WARN; real warnings still do).
+  • Same CRITICAL/WARN patterns on scripts/*.sh, scripts/ops/*.sh, scripts/shlib/*.sh, and
+    build-assets/**/*.sh (excludes security-audit.sh itself to avoid self-match on audit strings).
+  • install-rust: two-step rustup (curl -o file → verify shebang → sh file).
+  • SECURITY-WAVES.txt + GoForge Actions (.gitea/ + generated .forgejo/).
+
+Wave 3 (prepare next — backlog)
+  • **Hook sweep (2026-04-30):** 42 `config/hooks/live/*.hook.chroot` — `security-audit.sh` clean (CRITICAL/WARN 0);
+    supplemental grep: no `eval` statements (0260 excluded by policy); no `curl|sh`; `http://` only
+    loopback / localhost / Debian mirror allowlist / Meilisearch health in 0500; **0100** `myip()` uses
+    third-party lookup only when **ALFRED_ALLOW_MYIP_LOOKUP=1** (else local IP message).
+  • SPDX: AGPL-3.0-or-later line after shebang on all `config/hooks/live/*.hook.chroot`
+    (landed); `scripts/ops/*.sh` + `scripts/shlib/bible_tongues_counts.sh` aligned; extend to any
+    remaining `scripts/*.sh` without SPDX + SBOM export still open.
+  • LICENSE vs LICENSING.md / KCL vs AGPL: README + LICENSING bridge added; full legal unify still optional.
+  • AppArmor: aa-genprof cycle for /usr/local/bin/alfred-mesh (WireGuard paths,
+    wg-quick, avahi, curl to fixed endpoints); start in complain, then enforce.
+  • SBOM: SPDX or CycloneDX export for ISO packages + hook-generated debs.
+  • curl|bash audit: **scripts/** + **build-assets/**/*.sh** in `security-audit.sh`; **law**
+    runtime copies: **`scripts/audit-law-wrappers.sh`** (top-level `*.sh`, control-plane, wallpapers,
+    `kernel-*-work/`, and law-side **`alfredlinux-com-source-live/`** `scripts/` + `scripts/ops/` +
+    `scripts/shlib/` + `build-assets/` shells — skips `security-audit.sh` in `scripts/`; default
+    `/home/gositeme/law`).
+    Deeper trees under law (kernel tarballs, etc.) are still out of scope.
+  • ~~README “8 hooks” vs six IDs~~ (fixed); ~~Elyon naming drift~~ (LICENSING note); ~~0160 .bak~~ (removed from tree).
+  • mesh-register: optional TLS public-key pinning — **`ALFRED_MESH_REGISTER_PINNEDPUBKEY`**
+    env or **`/etc/alfred/mesh-register.pinnedpubkey`** (single line for `curl --pinnedpubkey`, 0167 hook).
+    Example / derivation notes: **`contrib/examples/mesh-register.pinnedpubkey.example`**.
+  • alfred-skynet distribute: optional **`~/.config/alfred/skynet/distribute-allowlist`** (non-empty file
+    lists allowed `argv[0]` as full path or basename, one per line; 0280 hook).
+    Example: **`contrib/examples/skynet-distribute-allowlist.example`**.
+  • AppArmor: **`docs/APPARMOR-ALFRED-MESH.txt`** — aa-genprof cycle for `/usr/local/bin/alfred-mesh`;
+    complain stub: **`contrib/apparmor/usr.local.bin.alfred-mesh`** (`contrib/apparmor/README.txt`).
+  • SBOM: **`docs/SBOM-EXPORT.txt`** — Syft/Trivy/dpkg-query pointers (export still operator-run).
+
+How to run the audit locally
+  bash scripts/security-audit.sh
+  bash scripts/audit-law-wrappers.sh   # when /home/gositeme/law (or LAW_ROOT) exists
+  bash scripts/run-deep-security-checks.sh   # integrity + full shellcheck + law audit (slower)
+  ALFRED_REPO_HEALTH_JSON=1 bash scripts/alfred-repo-health.sh 2>/dev/null | jq .   # one-line JSON summary
+    (status **ok** or **error** with exit_code, phase, message; use **set -o pipefail** before piping if you need the
+    script’s exit code, not jq’s.)
+
+CI (GoForge — https://alfredlinux.com/forge/)
+  .gitea/workflows/security-audit.yml — canonical Actions workflow + act_runner
+    (release-integrity, security-audit.sh, audit-law-wrappers.sh; law scan skips if LAW_ROOT missing).
+    **workflow_dispatch** optional input **law_root** sets `LAW_ROOT` for the law audit step;
+    **shellcheck_all**=`1` sets `ALFRED_SHELLCHECK_ALL=1` on the security-audit step (same globs as
+    **`ALFRED_SHELLCHECK_ALL`** locally — see `scripts/README.txt`). Optional **repo_health_json**=`1`
+    runs **`alfred-repo-health.sh`** in JSON mode with **`set -o pipefail`** and a Python assert on **`status: ok`**
+    (re-runs the three gates — use for wrapper validation, not every push). On a dev host, one-shot
+    **integrity + full shellcheck + law**: **`bash scripts/run-deep-security-checks.sh`**.
+  .forgejo/workflows/security-audit.yml — generated (`bash scripts/sync-forgejo-actions-yaml.sh`).
+  .github/workflows/security-audit.yml — optional mirror only; keep aligned with .gitea if used.
+  Operator sizing + enablement: docs/GOFORGE-INFRASTRUCTURE-UPGRADE.txt
+  Ecosystem + supply-chain narrative: docs/MEGA-PLAN-L1-L9.txt, docs/MANIFEST-v1.txt, docs/UPSTREAM-SECURITY-SIGNALS.txt
+  GoSiteMe Veil commander/classified UIs: shared **includes/classified-page-headers.inc.php**
+    (no-store, **Vary: Cookie**, noindex, nosniff, **X-DNS-Prefetch-Control: off**, **X-Permitted-Cross-Domain-Policies: none**,
+    **Permissions-Policy** with camera/microphone/display-capture/encrypted-media/WebAuthn **(self)** only, X-Frame-Options DENY,
+    same-origin referrer) on all **client_id 33**-gated **veil/*.php** pages (Dell Watch/Mailer/Operations Hub, Memory Commander,
+    Nexus/Black Vault/Genesis, Pantheon, admins, call archive, integrity report, etc.); on **fleet-tracker**, **reports**,
+    **agenda**, **command-center** only when **$isOwner** (33). Dell Watch **?action=feed** JSON: **no-store** cache,
+    **Pragma/Expires**, **nosniff**, **X-Robots-Tag**, **Referrer-Policy: same-origin**.
+    After headers run, **GOSITEME_CLASSIFIED_HEADERS_APPLIED** is set; **includes/site-header.inc.php** skips its default
+    **Cache-Control / Pragma / X-Content-Type-Options / Referrer-Policy** block when that constant is defined (e.g. **reunion.php**)
+    so **same-origin** referrer and stricter cache lines are not overwritten.
+    **reunion.php**: **auth-gate** + client 33 check + classified headers **before** **site-header** (correct **$page_title** / meta).
+    **Auth debug trace** (optional): **GOSITEME_AUTH_DEBUG_TRACE=1** → minimal lines in
+    **/home/gositeme/law/var/auth-debug-trace.log** (never raw **$_SESSION**). Same **.prior.* / MAX / KEEP** rotation as
+    session backup, env **GOSITEME_AUTH_DEBUG_TRACE_MAX_BYTES** (default **10MiB**, cap **128MiB**),
+    **GOSITEME_AUTH_DEBUG_TRACE_KEEP** (default **8**, max **64**). Rotate+append runs under **{logpath}.lock** (**flock**).
+    **Session backup** (optional, operator): **GOSITEME_SESSION_BACKUP=1** appends legacy **gate-enter** lines with full
+    **sess=** JSON to **GOSITEME_SESSION_BACKUP_PATH** or default **/home/gositeme/oauth-trace.log**. Rotation when the active
+    file reaches **GOSITEME_SESSION_BACKUP_MAX_BYTES** (default **52428800**, max **512MiB**): rename to **{path}.prior.{UTC}**;
+    keep **GOSITEME_SESSION_BACKUP_KEEP** newest rotated files (default **8**, max **64**), delete older; **flock** on
+    **{path}.lock** around rotate+append. Off by default.
+    **api/auth.php**: explicit **Cache-Control/Pragma/Expires** no-store on JSON; **Access-Control-Allow-Headers** includes
+    **X-CSRF-Token**, **Authorization**, **X-Request-Id**, **X-Trace-Id** (aligns with **api-security** CORS). **includes/api-security.php**:
+    CSRF failure audit → **law/var/csrf-fail.log** (**LOCK_EX**, UTF-8-safe JSON); IP-watch → **law/var/rate-spam-watch.log**.
+    File rate-limit fallback → **/home/gositeme/law/var/api-rate-limits/** unless **GOSITEME_RATE_LIMIT_DATA_DIR** is set to an absolute path
+    that passes safety checks (no **..**, NUL, or **//** / **./** segments); dir **0700**, per-file **chmod 0600**. Redis keys use
+    **GOSITEME_REDIS_RL_PREFIX** (default **gositeme:rl:**, validated; trailing **:** added if missing).
+    **X-Request-Id** on responses; **429** / **403 CSRF** JSON and **csrf-fail.log** lines include **request_id**.
+    **api/auth.php** OAuth state dir **law/var/oauth-state** unless **GOSITEME_OAUTH_STATE_DIR** passes the same path checks; state files UTF-8-safe JSON;
+    filename hex capped **128**; **oauth_state_save** no-op if state too short.
+    **includes/api-response.inc.php**: **request_id** on **apiSuccess** / **apiError**; bounded JSON via **GOSITEME_API_MAX_JSON_BYTES** (default **2MiB**, max **16MiB**);
+    **api_read_raw_body_limited** for CSRF non-JSON path (**GOSITEME_API_MAX_NONJSON_BODY_BYTES**, default **64KiB**, max **1MiB**); **413** if exceeded.
+    **veil/dell-watch.php**: unknown **?action=** → **400** (only **feed** + default page).
+    **wallet**, **index**, **departments**, **pro-discussions** unchanged (not commander-only).

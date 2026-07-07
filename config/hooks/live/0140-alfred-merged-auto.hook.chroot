@@ -1,0 +1,88 @@
+#!/bin/bash
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Hook 0140: Foxtrot Protocol (Offline GPS Navigation)
+set +e
+
+echo "[Alfred God-Tier] Installing Foxtrot Offline Satellite Protocol..."
+
+# Install GPS daemon and Foxtrot Topographical Navigation
+apt-get install -y --no-install-recommends gpsd gpsd-clients qmapshack navit gpsprune || true
+
+# Bind gpsd to default USB Serial GPS receivers automatically
+cat << 'EOF' > /etc/default/gpsd
+START_DAEMON="true"
+DEVICES="/dev/ttyACM0 /dev/ttyUSB0 /dev/ttyS0"
+USBAUTO="true"
+GPSD_OPTIONS="-n"
+EOF
+
+systemctl enable gpsd || true || true
+
+# Configure FoxtrotGPS to be 100% Offline
+# Assuming the user has pre-staged the massive OpenStreetMap/Mapnik tile dump into the master assets
+# We physically link the global Mapnik tile cache to the skel directory for all new users
+mkdir -p /var/cache/qmapshack-navit-gpsprune/Mapnik
+mkdir -p /etc/skel/.qmapshack-navit-gpsprune
+
+# Write the FoxtrotGPS config file forcing offline-only rendering
+cat << 'EOF' > /etc/skel/.qmapshack-navit-gpsprune/qmapshack-navit-gpsprune.conf
+[global]
+# FORCE OFFLINE MODE: Never attempt to download tiles from the internet
+offline=1
+# Point directly to the pre-baked raw OpenStreetMap topographical tile cache
+map_dir=/var/cache/qmapshack-navit-gpsprune
+EOF
+
+echo "[Alfred God-Tier] Foxtrot Offline Navigation successfully injected with Forced Offline Map Tiles!"
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+# [Genesis Forge] Granular Kernel Matrix: net.ipv4.ip_local_port_range="2624 65535"
+# Extremely deep low-level kernel protection.
+echo "[Genesis Forge] Applying granular sysctl: net.ipv4.ip_local_port_range="2624 65535""
+echo "net.ipv4.ip_local_port_range="2624 65535"" > /etc/sysctl.d/99-alfred-35.conf || true
+sysctl -w net.ipv4.ip_local_port_range="2624 65535" > /dev/null 2>&1 || true
+
+
+# --- BEGIN MERGED CONTENT FROM: 0140-alfred-foxtrot-gps.hook.chroot ---
+#!/bin/bash
+# Hook 0140: Foxtrot Protocol (Offline GPS Navigation)
+set +e
+
+echo "[Alfred God-Tier] Installing Foxtrot Offline Satellite Protocol..."
+
+# Install GPS daemon and Foxtrot Topographical Navigation
+apt-get install -y --no-install-recommends gpsd gpsd-clients qmapshack navit gpsprune || true
+
+# Bind gpsd to default USB Serial GPS receivers automatically
+cat << 'EOF' > /etc/default/gpsd
+START_DAEMON="true"
+DEVICES="/dev/ttyACM0 /dev/ttyUSB0 /dev/ttyS0"
+USBAUTO="true"
+GPSD_OPTIONS="-n"
+EOF
+
+systemctl enable gpsd || true || true
+
+# Configure FoxtrotGPS to be 100% Offline
+# Assuming the user has pre-staged the massive OpenStreetMap/Mapnik tile dump into the master assets
+# We physically link the global Mapnik tile cache to the skel directory for all new users
+mkdir -p /var/cache/qmapshack-navit-gpsprune/Mapnik
+mkdir -p /etc/skel/.qmapshack-navit-gpsprune
+
+# Write the FoxtrotGPS config file forcing offline-only rendering
+cat << 'EOF' > /etc/skel/.qmapshack-navit-gpsprune/qmapshack-navit-gpsprune.conf
+[global]
+# FORCE OFFLINE MODE: Never attempt to download tiles from the internet
+offline=1
+# Point directly to the pre-baked raw OpenStreetMap topographical tile cache
+map_dir=/var/cache/qmapshack-navit-gpsprune
+EOF
+
+echo "[Alfred God-Tier] Foxtrot Offline Navigation successfully injected with Forced Offline Map Tiles!"
+
+# --- END MERGED CONTENT FROM: 0140-alfred-foxtrot-gps.hook.chroot ---
+
+

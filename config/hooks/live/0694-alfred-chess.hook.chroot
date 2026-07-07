@@ -1,0 +1,9 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+# HOOK 0810-chess: merged into 0800-alfred-store.hook.chroot.
+
+echo "[0810-chess] Content merged into 0800-alfred-store. Skipping."
+exit 0

@@ -1,0 +1,19 @@
+# Allow PHP execution in API directory
+<IfModule mod_php.c>
+    php_flag display_errors off
+    php_flag log_errors on
+</IfModule>
+
+# Enable rewrite
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    Options -Indexes
+    # Pass Authorization to PHP (often dropped under CGI/FPM — breaks IDE Bearer auth)
+    RewriteCond %{HTTP:Authorization} .
+    RewriteRule ^ - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+</IfModule>
+
+# Security - only allow PHP files
+<FilesMatch "\.php$">
+    Allow from all
+</FilesMatch>

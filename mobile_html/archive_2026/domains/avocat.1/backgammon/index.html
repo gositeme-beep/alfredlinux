@@ -1,0 +1,1660 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GoSiteMe Backgammon Arena — Play Against AI</title>
+<link rel="stylesheet" href="/assets/css/fonts.css">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: #0a0a14; color: #e0e0f0; font-family: 'Inter', sans-serif; min-height: 100vh; }
+a { color: #00A8FF; text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+.header { text-align: center; padding: 24px 16px 12px; }
+.header h1 { font-size: 1.8rem; font-weight: 700; color: #fff; }
+.header h1 .icon { display: inline-block; margin-right: 8px; }
+.header p { color: #8888aa; margin-top: 4px; font-size: 0.95rem; }
+.header .back-link { display: inline-block; margin-top: 8px; font-size: 0.85rem; color: #00A8FF; }
+
+.main { max-width: 1200px; margin: 0 auto; padding: 8px 16px 32px; display: flex; gap: 24px; align-items: flex-start; flex-wrap: wrap; justify-content: center; }
+
+.board-wrap { flex: 0 0 auto; width: 640px; max-width: 100%; border-radius: 6px; overflow: hidden; animation: pulseBorder 4s infinite; }
+#bgCanvas { width: 100%; display: block; cursor: pointer; border-radius: 6px; }
+
+.panel { flex: 1 1 320px; max-width: 420px; display: flex; flex-direction: column; gap: 14px; }
+.card { background: rgba(22,22,54,0.75); border: 1px solid rgba(125,0,255,0.18); border-radius: 14px; padding: 16px; }
+.card h3 { font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.06em; color: #7D00FF; margin-bottom: 10px; }
+
+.diff-btns { display: flex; gap: 6px; flex-wrap: wrap; }
+.diff-btns button { flex: 1; padding: 7px 4px; border: 1px solid rgba(0,168,255,0.25); border-radius: 8px; background: transparent; color: #aaa; font-family: inherit; font-size: 0.78rem; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+.diff-btns button.active, .diff-btns button:hover { background: #0074D9; color: #fff; border-color: #0074D9; }
+
+.btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
+.btn { padding: 9px 16px; border-radius: 10px; border: none; font-family: inherit; font-weight: 600; font-size: 0.82rem; cursor: pointer; transition: all 0.2s; }
+.btn-primary { background: linear-gradient(135deg, #0074D9, #00A8FF); color: #fff; }
+.btn-secondary { background: rgba(255,255,255,0.07); color: #ccc; border: 1px solid rgba(255,255,255,0.1); }
+.btn-danger { background: rgba(239,68,68,0.15); color: #ef4444; border: 1px solid rgba(239,68,68,0.3); }
+.btn-accent { background: linear-gradient(135deg, #7D00FF, #a855f7); color: #fff; }
+.btn:hover { filter: brightness(1.2); transform: translateY(-1px); }
+
+#status { font-size: 1rem; font-weight: 600; padding: 10px; text-align: center; border-radius: 10px; background: rgba(0,116,217,0.1); }
+
+.dice-display { display: flex; gap: 12px; align-items: center; justify-content: center; margin: 8px 0; }
+.die { width: 48px; height: 48px; background: linear-gradient(145deg, #1e1e4a, #2a2a6a); border: 2px solid rgba(125,0,255,0.35); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; font-weight: 800; color: #fff; transition: all 0.3s; position: relative; }
+.die.used { opacity: 0.3; border-color: rgba(255,255,255,0.1); }
+.die.doubles { border-color: #fbbf24; box-shadow: 0 0 12px rgba(251,191,36,0.3); }
+
+.pip-count { display: flex; justify-content: space-between; font-size: 0.85rem; }
+.pip-count .pip-item { display: flex; align-items: center; gap: 6px; }
+.pip-count .pip-dot { width: 12px; height: 12px; border-radius: 50%; }
+
+#moveLog { max-height: 180px; overflow-y: auto; font-size: 0.82rem; line-height: 1.7; color: #aab; padding-right: 4px; }
+#moveLog::-webkit-scrollbar { width: 5px; }
+#moveLog::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
+
+.cube-display { display: flex; align-items: center; justify-content: center; gap: 12px; }
+.cube { width: 40px; height: 40px; background: linear-gradient(145deg, #8b0000, #cc0000); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; font-weight: 800; color: #fff; border: 2px solid rgba(255,255,255,0.2); }
+.cube-owner { font-size: 0.8rem; color: #aab; }
+
+.score-row { display: flex; justify-content: space-around; text-align: center; }
+.score-item { }
+.score-item .label { font-size: 0.72rem; color: #666; text-transform: uppercase; }
+.score-item .value { font-size: 1.3rem; font-weight: 700; }
+
+.footer { text-align: center; padding: 24px 16px; color: #444; font-size: 0.78rem; }
+.footer span { color: #7D00FF; }
+
+@keyframes pulseBorder { 0%,100% { box-shadow: 0 0 0 0 rgba(0,116,217,0); } 50% { box-shadow: 0 0 18px 2px rgba(0,116,217,0.3); } }
+@keyframes diceRoll { 0% { transform: rotate(0deg) scale(1); } 25% { transform: rotate(90deg) scale(1.2); } 50% { transform: rotate(180deg) scale(1); } 75% { transform: rotate(270deg) scale(1.1); } 100% { transform: rotate(360deg) scale(1); } }
+.die.rolling { animation: diceRoll 0.4s ease-out; }
+
+@media (max-width: 960px) {
+  .main { flex-direction: column; align-items: center; }
+  .board-wrap { width: 100%; max-width: 560px; }
+  .panel { max-width: 560px; width: 100%; }
+}
+@media (max-width: 400px) {
+  .board-wrap { width: 100%; }
+  .header h1 { font-size: 1.3rem; }
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1><span class="icon">&#9866;</span>GoSiteMe Backgammon Arena</h1>
+  <p>Play against AI &mdash; Classic strategy with the doubling cube</p>
+  <a class="back-link" href="/games.php">&larr; Back to Games</a>
+</div>
+
+<div class="main">
+  <div class="board-wrap">
+    <canvas id="bgCanvas" width="960" height="640"></canvas>
+  </div>
+
+  <div class="panel">
+    <!-- Status -->
+    <div class="card">
+      <div id="status">Roll dice to start</div>
+    </div>
+
+    <!-- Dice -->
+    <div class="card">
+      <h3>Dice</h3>
+      <div class="dice-display">
+        <div class="die" id="die1">-</div>
+        <div class="die" id="die2">-</div>
+      </div>
+      <div style="text-align:center;margin-top:8px;">
+        <button class="btn btn-primary" id="btnRoll" onclick="BG.rollDice()">Roll Dice</button>
+        <button class="btn btn-secondary" id="btnConfirm" onclick="BG.confirmMove()" style="display:none;">Confirm</button>
+        <button class="btn btn-secondary" id="btnUndo" onclick="BG.undoMove()" style="display:none;">Undo</button>
+      </div>
+    </div>
+
+    <!-- Difficulty -->
+    <div class="card">
+      <h3>Difficulty</h3>
+      <div class="diff-btns">
+        <button data-level="easy" onclick="BG.setDifficulty('easy',this)">Easy</button>
+        <button data-level="medium" onclick="BG.setDifficulty('medium',this)" class="active">Medium</button>
+        <button data-level="hard" onclick="BG.setDifficulty('hard',this)">Hard</button>
+        <button data-level="expert" onclick="BG.setDifficulty('expert',this)">Expert</button>
+      </div>
+    </div>
+
+    <!-- Options -->
+    <div class="card">
+      <h3>Options</h3>
+      <div style="margin-bottom:10px">
+        <label style="font-size:.8rem;color:#888">SOL Wager (0-5)</label>
+        <input type="number" id="wagerInput" min="0" max="5" step="0.1" value="0"
+          style="width:100%;padding:6px 10px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:8px;color:#fff;font-size:.9rem">
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="BG.newGame()">New Game</button>
+        <button class="btn btn-accent" id="btnDouble" onclick="BG.offerDouble()" style="display:none;">Double</button>
+        <button class="btn btn-danger" onclick="BG.resign()">Resign</button>
+      </div>
+    </div>
+
+    <!-- Doubling Cube -->
+    <div class="card">
+      <h3>Doubling Cube</h3>
+      <div class="cube-display">
+        <div class="cube" id="cubeValue">1</div>
+        <span class="cube-owner" id="cubeOwner">Center</span>
+      </div>
+    </div>
+
+    <!-- Pip Count -->
+    <div class="card">
+      <h3>Pip Count</h3>
+      <div class="pip-count">
+        <div class="pip-item"><div class="pip-dot" style="background:#e8e8f0;"></div> You: <span id="pipWhite">167</span></div>
+        <div class="pip-item"><div class="pip-dot" style="background:#333;border:1px solid #666;"></div> AI: <span id="pipBlack">167</span></div>
+      </div>
+    </div>
+
+    <!-- Score -->
+    <div class="card">
+      <h3>Match Score</h3>
+      <div class="score-row">
+        <div class="score-item"><div class="label">You</div><div class="value" id="scoreWhite">0</div></div>
+        <div class="score-item"><div class="label">Games</div><div class="value" id="scoreGames">0</div></div>
+        <div class="score-item"><div class="label">AI</div><div class="value" id="scoreBlack">0</div></div>
+      </div>
+    </div>
+
+    <!-- Move Log -->
+    <div class="card">
+      <h3>Move Log</h3>
+      <div id="moveLog"></div>
+    </div>
+  </div>
+</div>
+
+<div class="footer">
+  Powered by <span>GoSiteMe AI</span> &middot; &copy; GoSiteMe
+</div>
+
+<script>
+var BG = (function() {
+  'use strict';
+
+  // ═══════════════════════════════════════════════════════
+  //  CONSTANTS
+  // ═══════════════════════════════════════════════════════
+  var WHITE = 1, BLACK = -1, EMPTY = 0;
+  var BAR_W = 25, BAR_B = 0; // bar indices
+  var NUM_POINTS = 24;
+  var CHECKERS_PER_PLAYER = 15;
+
+  // Colors
+  var C = {
+    boardBg:     '#1a1a2e',
+    boardBorder: '#2a2a5e',
+    pointDark:   '#2d1b69',
+    pointLight:  '#1b3a69',
+    barBg:       '#12121e',
+    white:       '#e8e8f0',
+    whiteBorder: '#aaaacc',
+    black:       '#2a2a3a',
+    blackBorder: '#555577',
+    highlight:   'rgba(0, 212, 255, 0.5)',
+    legalMove:   'rgba(34, 197, 94, 0.45)',
+    selected:    'rgba(125, 0, 255, 0.6)',
+    bearOff:     'rgba(251, 191, 36, 0.3)',
+    text:        '#8888aa',
+    pipText:     '#ccc'
+  };
+
+  // ═══════════════════════════════════════════════════════
+  //  STATE
+  // ═══════════════════════════════════════════════════════
+  var board = [];        // board[1..24], board[0] = black bar, board[25] = white bar
+  var borneOff = { w: 0, b: 0 };
+  var dice = [];
+  var movesLeft = [];
+  var currentTurn = WHITE;
+  var gameActive = false;
+  var difficulty = 'medium';
+  var selectedPoint = -1;
+  var pendingMoves = [];   // moves made this turn, for undo
+  var boardBeforeTurn = null;
+  var borneOffBeforeTurn = null;
+
+  // Doubling cube
+  var cubeValue = 1;
+  var cubeOwner = 0; // 0=center, WHITE, BLACK
+
+  // Match score
+  var scoreW = 0, scoreB = 0, gamesPlayed = 0;
+
+  // Canvas
+  var canvas, ctx;
+  var canvasW = 960, canvasH = 640;
+  var boardLeft = 30, boardTop = 30;
+  var boardW = 900, boardH = 580;
+  var pointW, barW = 50;
+  var halfW;
+
+  // Layout cache
+  var pointRegions = [];
+  var bearOffRegion = { x: 0, y: 0, w: 0, h: 0 };
+  var barRegion = { x: 0, y: 0, w: 0, h: 0 };
+
+  // Move log
+  var moveLogEntries = [];
+
+  // ═══════════════════════════════════════════════════════
+  //  INIT
+  // ═══════════════════════════════════════════════════════
+  function init() {
+    canvas = document.getElementById('bgCanvas');
+    ctx = canvas.getContext('2d');
+
+    canvas.addEventListener('click', onCanvasClick);
+    window.addEventListener('resize', handleResize);
+    handleResize();
+
+    resetBoard();
+    draw();
+  }
+
+  function handleResize() {
+    var wrap = canvas.parentElement;
+    var displayW = wrap.clientWidth;
+    var ratio = canvasH / canvasW;
+    canvas.style.width = displayW + 'px';
+    canvas.style.height = (displayW * ratio) + 'px';
+  }
+
+  function resetBoard() {
+    board = new Array(26).fill(0);
+    // Standard starting position
+    // White (positive) moves from 24 toward 1 (bearing off past 0)
+    // Black (negative) moves from 1 toward 24 (bearing off past 25)
+    board[1]  =  2;  // 2 white on point 1
+    board[6]  = -5;  // 5 black on point 6
+    board[8]  = -3;  // 3 black on point 8
+    board[12] =  5;  // 5 white on point 12
+    board[13] = -5;  // 5 black on point 13
+    board[17] =  3;  // 3 white on point 17
+    board[19] =  5;  // 5 white on point 19
+    board[24] = -2;  // 2 black on point 24
+
+    borneOff = { w: 0, b: 0 };
+    dice = [];
+    movesLeft = [];
+    selectedPoint = -1;
+    pendingMoves = [];
+    boardBeforeTurn = null;
+    borneOffBeforeTurn = null;
+    currentTurn = WHITE;
+    gameActive = true;
+
+    cubeValue = 1;
+    cubeOwner = 0;
+
+    moveLogEntries = [];
+    document.getElementById('moveLog').innerHTML = '';
+    updateUI();
+  }
+
+  // ═══════════════════════════════════════════════════════
+  //  BOARD GEOMETRY
+  // ═══════════════════════════════════════════════════════
+  function calcLayout() {
+    halfW = (boardW - barW) / 2;
+    pointW = halfW / 6;
+
+    pointRegions = [];
+    for (var i = 1; i <= 24; i++) {
+      var r = getPointRect(i);
+      pointRegions[i] = r;
+    }
+
+    // Bar region
+    barRegion = {
+      x: boardLeft + halfW,
+      y: boardTop,
+      w: barW,
+      h: boardH
+    };
+
+    // Bear off region (right side of board)
+    bearOffRegion = {
+      x: boardLeft + boardW + 8,
+      y: boardTop,
+      w: 40,
+      h: boardH
+    };
+  }
+
+  function getPointRect(point) {
+    // Points 13-24 are on top row (left to right: 13,14,...18 | bar | 19,20,...24)
+    // Points 12-1 are on bottom row (left to right: 12,11,...7 | bar | 6,5,...1)
+    var x, y, isTop;
+
+    if (point >= 13 && point <= 24) {
+      // Top row
+      isTop = true;
+      var idx = point - 13; // 0..11
+      if (idx < 6) {
+        x = boardLeft + idx * pointW;
+      } else {
+        x = boardLeft + halfW + barW + (idx - 6) * pointW;
+      }
+      y = boardTop;
+    } else {
+      // Bottom row (1-12)
+      isTop = false;
+      var idx = 12 - point; // point 12 -> idx 0, point 1 -> idx 11
+      if (idx < 6) {
+        x = boardLeft + idx * pointW;
+      } else {
+        x = boardLeft + halfW + barW + (idx - 6) * pointW;
+      }
+      y = boardTop + boardH / 2;
+    }
+
+    return {
+      x: x,
+      y: y,
+      w: pointW,
+      h: boardH / 2,
+      isTop: isTop,
+      point: point
+    };
+  }
+
+  // ═══════════════════════════════════════════════════════
+  //  DRAWING
+  // ═══════════════════════════════════════════════════════
+  function draw() {
+    calcLayout();
+    ctx.clearRect(0, 0, canvasW, canvasH);
+
+    drawBoard();
+    drawPoints();
+    drawCheckers();
+    drawBar();
+    drawBearOff();
+    drawDice();
+    drawHighlights();
+    drawPointNumbers();
+  }
+
+  function drawBoard() {
+    // Background
+    ctx.fillStyle = '#0a0a14';
+    ctx.fillRect(0, 0, canvasW, canvasH);
+
+    // Board
+    ctx.fillStyle = C.boardBg;
+    ctx.strokeStyle = C.boardBorder;
+    ctx.lineWidth = 2;
+    roundRect(ctx, boardLeft, boardTop, boardW, boardH, 8);
+    ctx.fill();
+    ctx.stroke();
+
+    // Bar
+    ctx.fillStyle = C.barBg;
+    ctx.fillRect(boardLeft + halfW, boardTop, barW, boardH);
+
+    // Center line
+    ctx.strokeStyle = 'rgba(125,0,255,0.15)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(boardLeft, boardTop + boardH / 2);
+    ctx.lineTo(boardLeft + boardW, boardTop + boardH / 2);
+    ctx.stroke();
+  }
+
+  function drawPoints() {
+    for (var i = 1; i <= 24; i++) {
+      var r = pointRegions[i];
+      var isEven = (i % 2 === 0);
+      ctx.fillStyle = isEven ? C.pointDark : C.pointLight;
+
+      ctx.beginPath();
+      if (r.isTop) {
+        // Triangle pointing down
+        ctx.moveTo(r.x + 2, r.y);
+        ctx.lineTo(r.x + r.w - 2, r.y);
+        ctx.lineTo(r.x + r.w / 2, r.y + r.h * 0.82);
+      } else {
+        // Triangle pointing up
+        ctx.moveTo(r.x + 2, r.y + r.h);
+        ctx.lineTo(r.x + r.w - 2, r.y + r.h);
+        ctx.lineTo(r.x + r.w / 2, r.y + r.h * 0.18);
+      }
+      ctx.closePath();
+      ctx.fill();
+    }
+  }
+
+  function drawCheckers() {
+    var checkerR = Math.min(pointW * 0.42, 22);
+
+    for (var i = 1; i <= 24; i++) {
+      var count = board[i];
+      if (count === 0) continue;
+
+      var color = count > 0 ? WHITE : BLACK;
+      var absCount = Math.abs(count);
+      var r = pointRegions[i];
+      var cx = r.x + r.w / 2;
+
+      var maxStack = 5;
+      var displayCount = Math.min(absCount, maxStack);
+      var spacing = checkerR * 2 + 2;
+
+      for (var j = 0; j < displayCount; j++) {
+        var cy;
+        if (r.isTop) {
+          cy = r.y + checkerR + 4 + j * spacing;
+        } else {
+          cy = r.y + r.h - checkerR - 4 - j * spacing;
+        }
+
+        drawChecker(cx, cy, checkerR, color, i === selectedPoint && j === displayCount - 1);
+      }
+
+      // Show count if stacked beyond 5
+      if (absCount > maxStack) {
+        var ty;
+        if (r.isTop) {
+          ty = r.y + checkerR + 4 + (maxStack - 1) * spacing;
+        } else {
+          ty = r.y + r.h - checkerR - 4 - (maxStack - 1) * spacing;
+        }
+        ctx.fillStyle = color === WHITE ? '#000' : '#fff';
+        ctx.font = 'bold 12px Inter';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(absCount, cx, ty);
+      }
+    }
+  }
+
+  function drawChecker(x, y, r, color, isSelected) {
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, Math.PI * 2);
+
+    if (color === WHITE) {
+      var grad = ctx.createRadialGradient(x - r * 0.3, y - r * 0.3, r * 0.1, x, y, r);
+      grad.addColorStop(0, '#ffffff');
+      grad.addColorStop(1, '#c8c8e0');
+      ctx.fillStyle = grad;
+      ctx.fill();
+      ctx.strokeStyle = isSelected ? '#7D00FF' : C.whiteBorder;
+      ctx.lineWidth = isSelected ? 3 : 1.5;
+      ctx.stroke();
+    } else {
+      var grad = ctx.createRadialGradient(x - r * 0.3, y - r * 0.3, r * 0.1, x, y, r);
+      grad.addColorStop(0, '#4a4a6a');
+      grad.addColorStop(1, '#1a1a2a');
+      ctx.fillStyle = grad;
+      ctx.fill();
+      ctx.strokeStyle = isSelected ? '#7D00FF' : C.blackBorder;
+      ctx.lineWidth = isSelected ? 3 : 1.5;
+      ctx.stroke();
+    }
+
+    if (isSelected) {
+      ctx.beginPath();
+      ctx.arc(x, y, r + 3, 0, Math.PI * 2);
+      ctx.strokeStyle = C.selected;
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    }
+  }
+
+  function drawBar() {
+    var checkerR = 18;
+    var bx = boardLeft + halfW + barW / 2;
+
+    // White on bar
+    var wBar = board[BAR_W];
+    for (var i = 0; i < Math.min(wBar, 5); i++) {
+      drawChecker(bx, boardTop + boardH - 40 - i * 40, checkerR, WHITE, selectedPoint === BAR_W && i === Math.min(wBar, 5) - 1);
+    }
+    if (wBar > 5) {
+      ctx.fillStyle = '#000';
+      ctx.font = 'bold 12px Inter';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(wBar, bx, boardTop + boardH - 40 - 4 * 40);
+    }
+
+    // Black on bar
+    var bBar = Math.abs(board[BAR_B]);
+    for (var i = 0; i < Math.min(bBar, 5); i++) {
+      drawChecker(bx, boardTop + 40 + i * 40, checkerR, BLACK, selectedPoint === BAR_B && i === Math.min(bBar, 5) - 1);
+    }
+    if (bBar > 5) {
+      ctx.fillStyle = '#fff';
+      ctx.font = 'bold 12px Inter';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(bBar, bx, boardTop + 40 + 4 * 40);
+    }
+
+    // Labels
+    ctx.fillStyle = C.text;
+    ctx.font = '10px Inter';
+    ctx.textAlign = 'center';
+    if (wBar > 0) ctx.fillText('BAR', bx, boardTop + boardH - 8);
+    if (bBar > 0) ctx.fillText('BAR', bx, boardTop + 16);
+  }
+
+  function drawBearOff() {
+    var bx = boardLeft + boardW + 28;
+    var checkerR = 12;
+
+    // White bear off (bottom)
+    ctx.fillStyle = C.bearOff;
+    roundRect(ctx, bx - 20, boardTop + boardH / 2 + 10, 40, boardH / 2 - 20, 6);
+    ctx.fill();
+
+    ctx.fillStyle = C.text;
+    ctx.font = '10px Inter';
+    ctx.textAlign = 'center';
+    ctx.fillText('OFF', bx, boardTop + boardH - 14);
+
+    var wOff = borneOff.w;
+    for (var i = 0; i < Math.min(wOff, 15); i++) {
+      var cy = boardTop + boardH - 30 - i * 16;
+      ctx.fillStyle = '#c8c8e0';
+      ctx.fillRect(bx - 14, cy - 6, 28, 12);
+      ctx.strokeStyle = C.whiteBorder;
+      ctx.lineWidth = 0.5;
+      ctx.strokeRect(bx - 14, cy - 6, 28, 12);
+    }
+
+    // Black bear off (top)
+    ctx.fillStyle = C.bearOff;
+    roundRect(ctx, bx - 20, boardTop + 10, 40, boardH / 2 - 20, 6);
+    ctx.fill();
+
+    ctx.fillStyle = C.text;
+    ctx.font = '10px Inter';
+    ctx.textAlign = 'center';
+    ctx.fillText('OFF', bx, boardTop + 22);
+
+    var bOff = borneOff.b;
+    for (var i = 0; i < Math.min(bOff, 15); i++) {
+      var cy = boardTop + 34 + i * 16;
+      ctx.fillStyle = '#2a2a3a';
+      ctx.fillRect(bx - 14, cy - 6, 28, 12);
+      ctx.strokeStyle = C.blackBorder;
+      ctx.lineWidth = 0.5;
+      ctx.strokeRect(bx - 14, cy - 6, 28, 12);
+    }
+  }
+
+  function drawDice() {
+    if (dice.length === 0) return;
+
+    var dx = boardLeft + halfW + barW / 2;
+    var dy = boardTop + boardH / 2;
+
+    // Draw small dice indicators on the bar
+    ctx.fillStyle = 'rgba(125,0,255,0.15)';
+    roundRect(ctx, dx - 28, dy - 22, 56, 44, 8);
+    ctx.fill();
+
+    for (var i = 0; i < Math.min(dice.length, 2); i++) {
+      var ddx = dx + (i === 0 ? -14 : 14);
+      var isUsed = i >= movesLeft.length || !movesLeft.includes(dice[i]);
+
+      ctx.fillStyle = isUsed ? 'rgba(255,255,255,0.05)' : 'rgba(125,0,255,0.4)';
+      roundRect(ctx, ddx - 11, dy - 11, 22, 22, 4);
+      ctx.fill();
+
+      ctx.fillStyle = isUsed ? '#444' : '#fff';
+      ctx.font = 'bold 13px Inter';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(dice[i], ddx, dy);
+    }
+  }
+
+  function drawHighlights() {
+    if (selectedPoint < 0 || movesLeft.length === 0) return;
+
+    var legalTargets = getLegalMovesFrom(selectedPoint);
+    for (var i = 0; i < legalTargets.length; i++) {
+      var target = legalTargets[i];
+      if (target === -1) {
+        // Bear off highlight
+        var bx = boardLeft + boardW + 28;
+        var by = currentTurn === WHITE ? boardTop + boardH / 2 + 10 : boardTop + 10;
+        ctx.fillStyle = C.legalMove;
+        roundRect(ctx, bx - 20, by, 40, 60, 6);
+        ctx.fill();
+      } else if (target >= 1 && target <= 24) {
+        var r = pointRegions[target];
+        ctx.fillStyle = C.legalMove;
+        ctx.beginPath();
+        ctx.arc(r.x + r.w / 2, r.isTop ? r.y + 20 : r.y + r.h - 20, 14, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+  }
+
+  function drawPointNumbers() {
+    ctx.fillStyle = C.text;
+    ctx.font = '10px Inter';
+    ctx.textAlign = 'center';
+
+    for (var i = 1; i <= 24; i++) {
+      var r = pointRegions[i];
+      var x = r.x + r.w / 2;
+      if (r.isTop) {
+        ctx.fillText(i, x, boardTop - 6);
+      } else {
+        ctx.fillText(i, x, boardTop + boardH + 16);
+      }
+    }
+  }
+
+  function roundRect(ctx, x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.lineTo(x + w - r, y);
+    ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+    ctx.lineTo(x + w, y + h - r);
+    ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+    ctx.lineTo(x + r, y + h);
+    ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+    ctx.lineTo(x, y + r);
+    ctx.quadraticCurveTo(x, y, x + r, y);
+    ctx.closePath();
+  }
+
+  // ═══════════════════════════════════════════════════════
+  //  GAME LOGIC
+  // ═══════════════════════════════════════════════════════
+  function rollDice() {
+    if (!gameActive) return;
+    if (movesLeft.length > 0) return; // Already have dice
+
+    var d1 = Math.floor(Math.random() * 6) + 1;
+    var d2 = Math.floor(Math.random() * 6) + 1;
+
+    dice = [d1, d2];
+
+    if (d1 === d2) {
+      movesLeft = [d1, d1, d1, d1]; // doubles = 4 moves
+    } else {
+      movesLeft = [d1, d2];
+    }
+
+    // Save state for undo
+    boardBeforeTurn = board.slice();
+    borneOffBeforeTurn = { w: borneOff.w, b: borneOff.b };
+    pendingMoves = [];
+
+    // Animate dice
+    var die1El = document.getElementById('die1');
+    var die2El = document.getElementById('die2');
+    die1El.classList.add('rolling');
+    die2El.classList.add('rolling');
+    die1El.textContent = d1;
+    die2El.textContent = d2;
+    die1El.classList.toggle('doubles', d1 === d2);
+    die2El.classList.toggle('doubles', d1 === d2);
+
+    setTimeout(function() {
+      die1El.classList.remove('rolling');
+      die2El.classList.remove('rolling');
+    }, 400);
+
+    // Check if any moves available
+    if (!hasAnyLegalMove()) {
+      setStatus('No legal moves — turn passes');
+      addMoveLog(currentTurn === WHITE ? 'You' : 'AI', 'No moves (' + d1 + ',' + d2 + ')');
+      setTimeout(function() {
+        endTurn();
+      }, 1200);
+      draw();
+      updateUI();
+      return;
+    }
+
+    if (currentTurn === WHITE) {
+      setStatus('Your turn — select a checker to move (' + d1 + ', ' + d2 + (d1 === d2 ? ' doubles!' : '') + ')');
+      document.getElementById('btnRoll').style.display = 'none';
+      document.getElementById('btnConfirm').style.display = '';
+      document.getElementById('btnUndo').style.display = '';
+    }
+
+    draw();
+    updateUI();
+
+    if (currentTurn === BLACK) {
+      setTimeout(function() { aiMove(); }, 600);
+    }
+  }
+
+  function isOnBar(player) {
+    if (player === WHITE) return board[BAR_W] > 0;
+    return board[BAR_B] < 0;
+  }
+
+  function canBearOff(player) {
+    if (player === WHITE) {
+      if (board[BAR_W] > 0) return false;
+      for (var i = 7; i <= 24; i++) {
+        if (board[i] > 0) return false;
+      }
+      return true;
+    } else {
+      if (board[BAR_B] < 0) return false;
+      for (var i = 1; i <= 18; i++) {
+        if (board[i] < 0) return false;
+      }
+      return true;
+    }
+  }
+
+  function getLegalMovesFrom(from) {
+    var targets = [];
+    if (currentTurn === WHITE) {
+      if (isOnBar(WHITE) && from !== BAR_W) return targets;
+      if (from === BAR_W) {
+        // Enter from bar
+        for (var i = 0; i < movesLeft.length; i++) {
+          var to = 25 - movesLeft[i]; // enter into opponent's home board
+          if (to >= 1 && to <= 24) {
+            if (board[to] >= -1) { // empty, own, or single opponent
+              if (targets.indexOf(to) === -1) targets.push(to);
+            }
+          }
+        }
+      } else if (from >= 1 && from <= 24 && board[from] > 0) {
+        for (var i = 0; i < movesLeft.length; i++) {
+          var to = from - movesLeft[i];
+          if (to >= 1) {
+            if (board[to] >= -1) {
+              if (targets.indexOf(to) === -1) targets.push(to);
+            }
+          } else if (to <= 0 && canBearOff(WHITE)) {
+            // Bear off
+            if (to === 0) {
+              if (targets.indexOf(-1) === -1) targets.push(-1);
+            } else {
+              // Can bear off with higher die if no checker on higher point
+              var hasHigher = false;
+              for (var p = from + 1; p <= 6; p++) {
+                if (board[p] > 0) { hasHigher = true; break; }
+              }
+              if (!hasHigher) {
+                if (targets.indexOf(-1) === -1) targets.push(-1);
+              }
+            }
+          }
+        }
+      }
+    } else {
+      // BLACK
+      if (isOnBar(BLACK) && from !== BAR_B) return targets;
+      if (from === BAR_B) {
+        for (var i = 0; i < movesLeft.length; i++) {
+          var to = movesLeft[i]; // enter into opponent's home board (1-6 for black entering)
+          if (to >= 1 && to <= 24) {
+            if (board[to] <= 1) {
+              if (targets.indexOf(to) === -1) targets.push(to);
+            }
+          }
+        }
+      } else if (from >= 1 && from <= 24 && board[from] < 0) {
+        for (var i = 0; i < movesLeft.length; i++) {
+          var to = from + movesLeft[i];
+          if (to <= 24) {
+            if (board[to] <= 1) {
+              if (targets.indexOf(to) === -1) targets.push(to);
+            }
+          } else if (to >= 25 && canBearOff(BLACK)) {
+            if (to === 25) {
+              if (targets.indexOf(-1) === -1) targets.push(-1);
+            } else {
+              var hasHigher = false;
+              for (var p = from - 1; p >= 19; p--) {
+                if (board[p] < 0) { hasHigher = true; break; }
+              }
+              if (!hasHigher) {
+                if (targets.indexOf(-1) === -1) targets.push(-1);
+              }
+            }
+          }
+        }
+      }
+    }
+    return targets;
+  }
+
+  function makeMove(from, to) {
+    var dieUsed = 0;
+
+    if (currentTurn === WHITE) {
+      if (from === BAR_W) {
+        dieUsed = 25 - to;
+        board[BAR_W]--;
+      } else {
+        board[from]--;
+      }
+
+      if (to === -1) {
+        // Bear off
+        if (from !== BAR_W) {
+          dieUsed = from; // exact die needed
+          // Find closest matching die
+          var found = false;
+          for (var i = 0; i < movesLeft.length; i++) {
+            if (movesLeft[i] === from) { dieUsed = from; found = true; break; }
+          }
+          if (!found) {
+            // Use higher die
+            for (var i = 0; i < movesLeft.length; i++) {
+              if (movesLeft[i] > from) { dieUsed = movesLeft[i]; break; }
+            }
+          }
+        }
+        borneOff.w++;
+      } else {
+        if (from !== BAR_W) dieUsed = from - to;
+        // Hit opponent?
+        if (board[to] === -1) {
+          board[to] = 0;
+          board[BAR_B]--;  // add to black's bar (negative)
+          pendingMoves.push({ from: from, to: to, hit: true });
+        } else {
+          pendingMoves.push({ from: from, to: to, hit: false });
+        }
+        board[to]++;
+      }
+    } else {
+      // BLACK
+      if (from === BAR_B) {
+        dieUsed = to;
+        board[BAR_B]++;
+      } else {
+        board[from]++;
+      }
+
+      if (to === -1) {
+        if (from !== BAR_B) {
+          dieUsed = 25 - from;
+          var found = false;
+          for (var i = 0; i < movesLeft.length; i++) {
+            if (movesLeft[i] === 25 - from) { dieUsed = 25 - from; found = true; break; }
+          }
+          if (!found) {
+            for (var i = 0; i < movesLeft.length; i++) {
+              if (movesLeft[i] > 25 - from) { dieUsed = movesLeft[i]; break; }
+            }
+          }
+        }
+        borneOff.b++;
+      } else {
+        if (from !== BAR_B) dieUsed = to - from;
+        if (board[to] === 1) {
+          board[to] = 0;
+          board[BAR_W]++;
+          pendingMoves.push({ from: from, to: to, hit: true });
+        } else {
+          pendingMoves.push({ from: from, to: to, hit: false });
+        }
+        board[to]--;
+      }
+    }
+
+    // Remove die
+    var idx = movesLeft.indexOf(dieUsed);
+    if (idx !== -1) {
+      movesLeft.splice(idx, 1);
+    }
+
+    // Update UI
+    updateDiceUI();
+
+    // Check win
+    if (borneOff.w >= CHECKERS_PER_PLAYER) {
+      gameWon(WHITE);
+    } else if (borneOff.b >= CHECKERS_PER_PLAYER) {
+      gameWon(BLACK);
+    }
+
+    // Auto-end turn if no moves left
+    if (movesLeft.length === 0 && gameActive) {
+      if (currentTurn === WHITE) {
+        addMoveLog('You', formatMoveLog(pendingMoves, dice));
+      }
+      setTimeout(function() { endTurn(); }, 300);
+    } else if (gameActive && !hasAnyLegalMove()) {
+      if (currentTurn === WHITE) {
+        addMoveLog('You', formatMoveLog(pendingMoves, dice) + ' (blocked)');
+      }
+      setTimeout(function() { endTurn(); }, 600);
+    }
+  }
+
+  function hasAnyLegalMove() {
+    if (movesLeft.length === 0) return false;
+
+    if (currentTurn === WHITE) {
+      if (isOnBar(WHITE)) {
+        return getLegalMovesFrom(BAR_W).length > 0;
+      }
+      for (var i = 1; i <= 24; i++) {
+        if (board[i] > 0 && getLegalMovesFrom(i).length > 0) return true;
+      }
+    } else {
+      if (isOnBar(BLACK)) {
+        return getLegalMovesFrom(BAR_B).length > 0;
+      }
+      for (var i = 1; i <= 24; i++) {
+        if (board[i] < 0 && getLegalMovesFrom(i).length > 0) return true;
+      }
+    }
+    return false;
+  }
+
+  function endTurn() {
+    selectedPoint = -1;
+    movesLeft = [];
+    dice = [];
+    pendingMoves = [];
+
+    currentTurn = currentTurn === WHITE ? BLACK : WHITE;
+
+    document.getElementById('die1').textContent = '-';
+    document.getElementById('die2').textContent = '-';
+    document.getElementById('die1').className = 'die';
+    document.getElementById('die2').className = 'die';
+
+    if (currentTurn === WHITE) {
+      setStatus('Your turn — roll the dice');
+      document.getElementById('btnRoll').style.display = '';
+      document.getElementById('btnConfirm').style.display = 'none';
+      document.getElementById('btnUndo').style.display = 'none';
+      document.getElementById('btnDouble').style.display = (cubeOwner === 0 || cubeOwner === WHITE) ? '' : 'none';
+    } else {
+      setStatus('AI is thinking...');
+      document.getElementById('btnRoll').style.display = 'none';
+      document.getElementById('btnConfirm').style.display = 'none';
+      document.getElementById('btnUndo').style.display = 'none';
+      document.getElementById('btnDouble').style.display = 'none';
+      setTimeout(function() { rollDice(); }, 800);
+    }
+
+    draw();
+    updateUI();
+  }
+
+  function gameWon(winner) {
+    gameActive = false;
+    var loserBorneOff = winner === WHITE ? borneOff.b : borneOff.w;
+    var multiplier = 1;
+
+    // Check for gammon/backgammon
+    if (loserBorneOff === 0) {
+      // Check for backgammon
+      var loserOnBar = winner === WHITE ? Math.abs(board[BAR_B]) : board[BAR_W];
+      var loserInWinnerHome = false;
+
+      if (winner === WHITE) {
+        for (var i = 1; i <= 6; i++) {
+          if (board[i] < 0) { loserInWinnerHome = true; break; }
+        }
+        loserInWinnerHome = loserInWinnerHome || loserOnBar > 0;
+      } else {
+        for (var i = 19; i <= 24; i++) {
+          if (board[i] > 0) { loserInWinnerHome = true; break; }
+        }
+        loserInWinnerHome = loserInWinnerHome || loserOnBar > 0;
+      }
+
+      if (loserInWinnerHome) {
+        multiplier = 3; // Backgammon!
+      } else {
+        multiplier = 2; // Gammon
+      }
+    }
+
+    var points = cubeValue * multiplier;
+    var resultText = multiplier === 3 ? 'BACKGAMMON! (3x)' : multiplier === 2 ? 'GAMMON! (2x)' : 'Win';
+
+    if (winner === WHITE) {
+      scoreW += points;
+      setStatus('You win! ' + resultText + ' — +' + points + ' points');
+    } else {
+      scoreB += points;
+      setStatus('AI wins! ' + resultText + ' — +' + points + ' points');
+    }
+
+    gamesPlayed++;
+    document.getElementById('btnRoll').style.display = 'none';
+    document.getElementById('btnConfirm').style.display = 'none';
+    document.getElementById('btnUndo').style.display = 'none';
+    document.getElementById('btnDouble').style.display = 'none';
+
+    addMoveLog('Game', (winner === WHITE ? 'You' : 'AI') + ' win — ' + resultText);
+    updateUI();
+    draw();
+  }
+
+  // ═══════════════════════════════════════════════════════
+  //  AI
+  // ═══════════════════════════════════════════════════════
+  function aiMove() {
+    if (!gameActive || currentTurn !== BLACK) return;
+
+    var allMoves = generateAllMoveSets(BLACK);
+
+    if (allMoves.length === 0) {
+      addMoveLog('AI', 'No moves (' + dice.join(',') + ')');
+      endTurn();
+      return;
+    }
+
+    var bestMoves = null;
+    var bestScore = -Infinity;
+
+    for (var i = 0; i < allMoves.length; i++) {
+      var score = evaluateMoveSet(allMoves[i], BLACK);
+      if (score > bestScore) {
+        bestScore = score;
+        bestMoves = allMoves[i];
+      }
+    }
+
+    // Execute best moves
+    if (bestMoves) {
+      var descriptions = [];
+      for (var i = 0; i < bestMoves.length; i++) {
+        var m = bestMoves[i];
+        makeMove(m.from, m.to);
+
+        var fromStr = m.from === BAR_B ? 'bar' : m.from;
+        var toStr = m.to === -1 ? 'off' : m.to;
+        descriptions.push(fromStr + '→' + toStr);
+      }
+      addMoveLog('AI', dice.join(',') + ': ' + descriptions.join(', '));
+    }
+
+    draw();
+  }
+
+  function generateAllMoveSets(player) {
+    var results = [];
+    var diceToUse = movesLeft.slice();
+
+    // Get unique permutations of dice
+    var perms = getUniquePermutations(diceToUse);
+
+    for (var p = 0; p < perms.length; p++) {
+      var perm = perms[p];
+      var savedBoard = board.slice();
+      var savedBorne = { w: borneOff.w, b: borneOff.b };
+      var savedMoves = movesLeft.slice();
+      var moveSequence = [];
+
+      movesLeft = perm.slice();
+
+      for (var d = 0; d < perm.length; d++) {
+        var die = perm[d];
+        var bestFrom = -1;
+        var bestTo = -1;
+
+        // Find all legal moves for this die
+        var legalSources = [];
+        if (player === BLACK) {
+          if (isOnBar(BLACK)) {
+            legalSources = [BAR_B];
+          } else {
+            for (var i = 1; i <= 24; i++) {
+              if (board[i] < 0) legalSources.push(i);
+            }
+          }
+        } else {
+          if (isOnBar(WHITE)) {
+            legalSources = [BAR_W];
+          } else {
+            for (var i = 1; i <= 24; i++) {
+              if (board[i] > 0) legalSources.push(i);
+            }
+          }
+        }
+
+        var possibleMoves = [];
+        for (var s = 0; s < legalSources.length; s++) {
+          var src = legalSources[s];
+          var targets = getLegalMovesFrom(src);
+          for (var t = 0; t < targets.length; t++) {
+            // Verify this target uses the current die
+            var dieNeeded;
+            if (player === BLACK) {
+              if (src === BAR_B) dieNeeded = targets[t];
+              else if (targets[t] === -1) dieNeeded = 25 - src;
+              else dieNeeded = targets[t] - src;
+            } else {
+              if (src === BAR_W) dieNeeded = 25 - targets[t];
+              else if (targets[t] === -1) dieNeeded = src;
+              else dieNeeded = src - targets[t];
+            }
+
+            if (dieNeeded === die || (targets[t] === -1 && dieNeeded <= die)) {
+              possibleMoves.push({ from: src, to: targets[t] });
+            }
+          }
+        }
+
+        if (possibleMoves.length > 0) {
+          // Choose the move (for enumeration, try each)
+          // For simplicity, pick best scoring one
+          var bestM = possibleMoves[0];
+          if (possibleMoves.length > 1) {
+            var bestSc = -Infinity;
+            for (var m = 0; m < possibleMoves.length; m++) {
+              var sc = evaluateSingleMove(possibleMoves[m], player);
+              if (sc > bestSc) { bestSc = sc; bestM = possibleMoves[m]; }
+            }
+          }
+          moveSequence.push(bestM);
+          // Apply move temporarily
+          applyMoveTemp(bestM.from, bestM.to, player);
+        }
+      }
+
+      // Restore state
+      board = savedBoard;
+      borneOff = savedBorne;
+      movesLeft = savedMoves;
+
+      if (moveSequence.length > 0) {
+        results.push(moveSequence);
+      }
+    }
+
+    // Deduplicate move sets
+    var unique = [];
+    var seen = {};
+    for (var i = 0; i < results.length; i++) {
+      var key = results[i].map(function(m) { return m.from + ':' + m.to; }).join('|');
+      if (!seen[key]) {
+        seen[key] = true;
+        unique.push(results[i]);
+      }
+    }
+
+    return unique;
+  }
+
+  function applyMoveTemp(from, to, player) {
+    if (player === WHITE) {
+      if (from === BAR_W) board[BAR_W]--;
+      else board[from]--;
+      if (to === -1) {
+        borneOff.w++;
+      } else {
+        if (board[to] === -1) { board[to] = 0; board[BAR_B]--; }
+        board[to]++;
+      }
+    } else {
+      if (from === BAR_B) board[BAR_B]++;
+      else board[from]++;
+      if (to === -1) {
+        borneOff.b++;
+      } else {
+        if (board[to] === 1) { board[to] = 0; board[BAR_W]++; }
+        board[to]--;
+      }
+    }
+    // Remove die used
+    var dieUsed;
+    if (player === BLACK) {
+      if (from === BAR_B) dieUsed = to;
+      else if (to === -1) dieUsed = 25 - from;
+      else dieUsed = to - from;
+    } else {
+      if (from === BAR_W) dieUsed = 25 - to;
+      else if (to === -1) dieUsed = from;
+      else dieUsed = from - to;
+    }
+    var idx = movesLeft.indexOf(dieUsed);
+    if (idx === -1) {
+      // Try higher die for bearing off
+      for (var i = 0; i < movesLeft.length; i++) {
+        if (movesLeft[i] >= dieUsed) { idx = i; break; }
+      }
+    }
+    if (idx !== -1) movesLeft.splice(idx, 1);
+  }
+
+  function getUniquePermutations(arr) {
+    if (arr.length <= 1) return [arr];
+    if (arr.length === 2) {
+      if (arr[0] === arr[1]) return [arr];
+      return [arr, [arr[1], arr[0]]];
+    }
+    // For doubles (4 of same), only one permutation
+    if (arr[0] === arr[arr.length - 1]) return [arr];
+    return [arr, arr.slice().reverse()];
+  }
+
+  function evaluateMoveSet(moves, player) {
+    // Save state
+    var saved = board.slice();
+    var savedBorne = { w: borneOff.w, b: borneOff.b };
+    var savedMoves = movesLeft.slice();
+
+    // Apply all moves
+    for (var i = 0; i < moves.length; i++) {
+      applyMoveTemp(moves[i].from, moves[i].to, player);
+    }
+
+    var score = evaluatePosition(player);
+
+    // Restore
+    board = saved;
+    borneOff = savedBorne;
+    movesLeft = savedMoves;
+
+    return score;
+  }
+
+  function evaluateSingleMove(move, player) {
+    var score = 0;
+
+    // Hitting is good
+    if (move.to !== -1) {
+      if (player === BLACK && board[move.to] === 1) score += 30;
+      if (player === WHITE && board[move.to] === -1) score += 30;
+    }
+
+    // Bearing off is great
+    if (move.to === -1) score += 50;
+
+    // Making a point (2+ checkers) is good
+    if (move.to !== -1) {
+      var existing = board[move.to];
+      if (player === BLACK && existing <= -1) score += 20; // making/extending point
+      if (player === WHITE && existing >= 1) score += 20;
+    }
+
+    // Leaving a blot is bad
+    if (move.from !== BAR_W && move.from !== BAR_B) {
+      var remaining = Math.abs(board[move.from]) - 1;
+      if (remaining === 1) score -= 15; // leaving a blot behind
+    }
+
+    return score;
+  }
+
+  function evaluatePosition(player) {
+    var score = 0;
+    var weights = getDifficultyWeights();
+
+    // Pip count advantage
+    var myPip = calcPipCount(player);
+    var oppPip = calcPipCount(player === WHITE ? BLACK : WHITE);
+    score += (oppPip - myPip) * weights.pip;
+
+    // Pieces borne off
+    var myOff = player === WHITE ? borneOff.w : borneOff.b;
+    score += myOff * weights.bearOff;
+
+    // Opponent on bar
+    var oppBar = player === WHITE ? Math.abs(board[BAR_B]) : board[BAR_W];
+    score += oppBar * weights.oppBar;
+
+    // My pieces on bar (bad)
+    var myBar = player === WHITE ? board[BAR_W] : Math.abs(board[BAR_B]);
+    score -= myBar * weights.myBar;
+
+    // Points held (2+ checkers)
+    for (var i = 1; i <= 24; i++) {
+      if (player === WHITE && board[i] >= 2) score += weights.point;
+      if (player === BLACK && board[i] <= -2) score += weights.point;
+    }
+
+    // Blots (single checker, exposed)
+    for (var i = 1; i <= 24; i++) {
+      if (player === WHITE && board[i] === 1) {
+        score -= weights.blot * blotDanger(i, WHITE);
+      }
+      if (player === BLACK && board[i] === -1) {
+        score -= weights.blot * blotDanger(i, BLACK);
+      }
+    }
+
+    // Prime detection (consecutive points held)
+    var consecutive = 0;
+    var maxPrime = 0;
+    for (var i = 1; i <= 24; i++) {
+      if ((player === WHITE && board[i] >= 2) || (player === BLACK && board[i] <= -2)) {
+        consecutive++;
+        if (consecutive > maxPrime) maxPrime = consecutive;
+      } else {
+        consecutive = 0;
+      }
+    }
+    score += maxPrime * maxPrime * weights.prime;
+
+    // Home board strength
+    var homePoints = 0;
+    if (player === WHITE) {
+      for (var i = 1; i <= 6; i++) {
+        if (board[i] >= 2) homePoints++;
+      }
+    } else {
+      for (var i = 19; i <= 24; i++) {
+        if (board[i] <= -2) homePoints++;
+      }
+    }
+    score += homePoints * weights.homeBoard;
+
+    // Randomization for easy difficulty
+    if (difficulty === 'easy') {
+      score += (Math.random() - 0.5) * 100;
+    }
+
+    return score;
+  }
+
+  function getDifficultyWeights() {
+    switch (difficulty) {
+      case 'easy':
+        return { pip: 0.3, bearOff: 15, oppBar: 8, myBar: 10, point: 3, blot: 3, prime: 2, homeBoard: 4 };
+      case 'medium':
+        return { pip: 0.8, bearOff: 25, oppBar: 18, myBar: 25, point: 8, blot: 6, prime: 8, homeBoard: 10 };
+      case 'hard':
+        return { pip: 1.2, bearOff: 35, oppBar: 25, myBar: 35, point: 12, blot: 10, prime: 15, homeBoard: 18 };
+      case 'expert':
+        return { pip: 1.5, bearOff: 45, oppBar: 35, myBar: 45, point: 15, blot: 14, prime: 22, homeBoard: 25 };
+      default:
+        return { pip: 0.8, bearOff: 25, oppBar: 18, myBar: 25, point: 8, blot: 6, prime: 8, homeBoard: 10 };
+    }
+  }
+
+  function blotDanger(point, player) {
+    // How many opponent rolls can hit this blot?
+    var danger = 0;
+    if (player === WHITE) {
+      for (var i = point + 1; i <= Math.min(point + 12, 24); i++) {
+        if (board[i] < 0) danger++;
+      }
+      if (board[BAR_B] < 0) danger += 2;
+    } else {
+      for (var i = point - 1; i >= Math.max(point - 12, 1); i--) {
+        if (board[i] > 0) danger++;
+      }
+      if (board[BAR_W] > 0) danger += 2;
+    }
+    return Math.min(danger, 5);
+  }
+
+  function calcPipCount(player) {
+    var count = 0;
+    if (player === WHITE) {
+      count += board[BAR_W] * 25;
+      for (var i = 1; i <= 24; i++) {
+        if (board[i] > 0) count += board[i] * i;
+      }
+    } else {
+      count += Math.abs(board[BAR_B]) * 25;
+      for (var i = 1; i <= 24; i++) {
+        if (board[i] < 0) count += Math.abs(board[i]) * (25 - i);
+      }
+    }
+    return count;
+  }
+
+  // ═══════════════════════════════════════════════════════
+  //  INPUT HANDLING
+  // ═══════════════════════════════════════════════════════
+  function onCanvasClick(e) {
+    if (!gameActive || currentTurn !== WHITE || movesLeft.length === 0) return;
+
+    var rect = canvas.getBoundingClientRect();
+    var scaleX = canvasW / rect.width;
+    var scaleY = canvasH / rect.height;
+    var mx = (e.clientX - rect.left) * scaleX;
+    var my = (e.clientY - rect.top) * scaleY;
+
+    // Check bar click (white is on bottom half of bar)
+    if (isOnBar(WHITE)) {
+      if (mx >= barRegion.x && mx <= barRegion.x + barRegion.w &&
+          my >= boardTop + boardH / 2 && my <= boardTop + boardH) {
+        if (selectedPoint === BAR_W) {
+          selectedPoint = -1;
+        } else {
+          selectedPoint = BAR_W;
+        }
+        draw();
+        return;
+      }
+    }
+
+    // If we have a selected point, check if clicking a legal target
+    if (selectedPoint >= 0) {
+      var targets = getLegalMovesFrom(selectedPoint);
+
+      // Check bear off click
+      if (targets.indexOf(-1) !== -1) {
+        var bx = boardLeft + boardW + 28;
+        if (mx >= bx - 20 && mx <= bx + 20 && my >= boardTop + boardH / 2) {
+          makeMove(selectedPoint, -1);
+          selectedPoint = -1;
+          draw();
+          return;
+        }
+      }
+
+      // Check point click
+      for (var i = 0; i < targets.length; i++) {
+        if (targets[i] >= 1 && targets[i] <= 24) {
+          var r = pointRegions[targets[i]];
+          if (mx >= r.x && mx <= r.x + r.w && my >= r.y && my <= r.y + r.h) {
+            makeMove(selectedPoint, targets[i]);
+            selectedPoint = -1;
+            draw();
+            return;
+          }
+        }
+      }
+    }
+
+    // Check if clicking own checker to select
+    for (var i = 1; i <= 24; i++) {
+      if (board[i] <= 0) continue; // skip non-white points
+      var r = pointRegions[i];
+      if (mx >= r.x && mx <= r.x + r.w && my >= r.y && my <= r.y + r.h) {
+        if (getLegalMovesFrom(i).length > 0) {
+          selectedPoint = (selectedPoint === i) ? -1 : i;
+          draw();
+          return;
+        }
+      }
+    }
+
+    // Deselect
+    selectedPoint = -1;
+    draw();
+  }
+
+  // ═══════════════════════════════════════════════════════
+  //  UI  HELPERS
+  // ═══════════════════════════════════════════════════════
+  function setStatus(text) {
+    document.getElementById('status').textContent = text;
+  }
+
+  function updateUI() {
+    document.getElementById('pipWhite').textContent = calcPipCount(WHITE);
+    document.getElementById('pipBlack').textContent = calcPipCount(BLACK);
+    document.getElementById('scoreWhite').textContent = scoreW;
+    document.getElementById('scoreBlack').textContent = scoreB;
+    document.getElementById('scoreGames').textContent = gamesPlayed;
+    document.getElementById('cubeValue').textContent = cubeValue;
+    document.getElementById('cubeOwner').textContent =
+      cubeOwner === 0 ? 'Center' : cubeOwner === WHITE ? 'You' : 'AI';
+  }
+
+  function updateDiceUI() {
+    var d1 = document.getElementById('die1');
+    var d2 = document.getElementById('die2');
+
+    if (dice.length >= 2) {
+      d1.classList.toggle('used', !movesLeft.includes(dice[0]) &&
+        movesLeft.filter(function(x) { return x === dice[0]; }).length <
+        dice.filter(function(x) { return x === dice[0]; }).length);
+      d2.classList.toggle('used', movesLeft.length === 0 || (dice[0] !== dice[1] && !movesLeft.includes(dice[1])));
+    }
+  }
+
+  function addMoveLog(who, text) {
+    moveLogEntries.push({ who: who, text: text });
+    var logEl = document.getElementById('moveLog');
+    var entry = document.createElement('div');
+    entry.innerHTML = '<span style="color:' + (who === 'You' ? '#00A8FF' : who === 'AI' ? '#ef4444' : '#7D00FF') +
+      ';font-weight:600;">' + who + ':</span> ' + text;
+    logEl.appendChild(entry);
+    logEl.scrollTop = logEl.scrollHeight;
+  }
+
+  function formatMoveLog(moves, diceRolled) {
+    if (moves.length === 0) return diceRolled.join(',');
+    var parts = moves.map(function(m) {
+      var fromStr = m.from === BAR_W ? 'bar' : m.from;
+      var toStr = m.to === -1 ? 'off' : m.to;
+      return fromStr + '→' + toStr + (m.hit ? '*' : '');
+    });
+    return diceRolled.join(',') + ': ' + parts.join(', ');
+  }
+
+  // ═══════════════════════════════════════════════════════
+  //  PUBLIC API
+  // ═══════════════════════════════════════════════════════
+  function pubRollDice() {
+    if (currentTurn !== WHITE) return;
+    rollDice();
+  }
+
+  function pubNewGame() {
+    resetBoard();
+    draw();
+    setStatus('New game — roll the dice to start');
+    document.getElementById('btnRoll').style.display = '';
+    document.getElementById('btnConfirm').style.display = 'none';
+    document.getElementById('btnUndo').style.display = 'none';
+    document.getElementById('btnDouble').style.display = '';
+  }
+
+  function pubSetDifficulty(level, btn) {
+    difficulty = level;
+    var btns = document.querySelectorAll('.diff-btns button');
+    btns.forEach(function(b) { b.classList.remove('active'); });
+    btn.classList.add('active');
+  }
+
+  function pubUndoMove() {
+    if (!boardBeforeTurn || currentTurn !== WHITE) return;
+    board = boardBeforeTurn.slice();
+    borneOff = { w: borneOffBeforeTurn.w, b: borneOffBeforeTurn.b };
+    pendingMoves = [];
+    selectedPoint = -1;
+
+    // Restore dice
+    if (dice[0] === dice[1]) {
+      movesLeft = [dice[0], dice[0], dice[0], dice[0]];
+    } else {
+      movesLeft = [dice[0], dice[1]];
+    }
+
+    setStatus('Moves undone — select a checker');
+    draw();
+    updateUI();
+    updateDiceUI();
+  }
+
+  function pubConfirmMove() {
+    if (currentTurn !== WHITE) return;
+    if (movesLeft.length > 0 && hasAnyLegalMove()) {
+      setStatus('You still have moves available!');
+      return;
+    }
+    addMoveLog('You', formatMoveLog(pendingMoves, dice));
+    endTurn();
+  }
+
+  function pubResign() {
+    if (!gameActive) return;
+    gameActive = false;
+    scoreB += cubeValue;
+    gamesPlayed++;
+    setStatus('You resigned — AI wins ' + cubeValue + ' point(s)');
+    addMoveLog('Game', 'You resigned');
+    document.getElementById('btnRoll').style.display = 'none';
+    document.getElementById('btnConfirm').style.display = 'none';
+    document.getElementById('btnUndo').style.display = 'none';
+    document.getElementById('btnDouble').style.display = 'none';
+    updateUI();
+  }
+
+  function pubOfferDouble() {
+    if (!gameActive || currentTurn !== WHITE) return;
+    if (movesLeft.length > 0) return; // Can only double before rolling
+
+    var newValue = cubeValue * 2;
+    // AI acceptance based on position evaluation
+    var myScore = evaluatePosition(WHITE);
+    var aiScore = evaluatePosition(BLACK);
+
+    // AI accepts if it's not too far behind
+    var acceptThreshold = difficulty === 'easy' ? 0.3 : difficulty === 'medium' ? 0.5 : difficulty === 'hard' ? 0.65 : 0.75;
+    var ratio = aiScore / (Math.abs(myScore) + Math.abs(aiScore) + 1);
+
+    if (ratio >= acceptThreshold) {
+      cubeValue = newValue;
+      cubeOwner = BLACK;
+      setStatus('AI accepts the double! Cube now at ' + cubeValue);
+      addMoveLog('Game', 'Double accepted — cube at ' + cubeValue);
+    } else {
+      // AI drops
+      gameActive = false;
+      scoreW += cubeValue;
+      gamesPlayed++;
+      setStatus('AI drops the double! You win ' + cubeValue + ' point(s)');
+      addMoveLog('Game', 'AI drops double — You win ' + cubeValue + ' pts');
+      document.getElementById('btnRoll').style.display = 'none';
+      document.getElementById('btnDouble').style.display = 'none';
+    }
+
+    updateUI();
+    draw();
+  }
+
+  // Init on load
+  window.addEventListener('DOMContentLoaded', init);
+
+  return {
+    rollDice: pubRollDice,
+    newGame: pubNewGame,
+    setDifficulty: pubSetDifficulty,
+    undoMove: pubUndoMove,
+    confirmMove: pubConfirmMove,
+    resign: pubResign,
+    offerDouble: pubOfferDouble
+  };
+})();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,51 @@
+#!/bin/sh
+# 0599-alfred-living-os-finalize.hook.chroot
+# Final pass: install wrappers, persona, systemd units, branding assets,
+# write the buried THIRD-PARTY-LICENSES.txt compliance file.
+set -e
+
+echo "I: [alfred] finalizing Alfred Living OS"
+
+# /usr/share/alfred — Alfred home for branding, persona, assets
+mkdir -p /usr/share/alfred/persona /usr/share/alfred/branding || true
+
+# All wrappers, persona, systemd units, branding mark are pre-staged
+# at /tmp/alfred-staging/ by includes.chroot/. Copy into final place.
+STAGE=/tmp/alfred-staging
+if [ -d "$STAGE" ]; then
+    install -m 0755 "$STAGE/bin/"alfred*       /usr/bin/
+    install -m 0644 "$STAGE/persona/alfred.md" /usr/share/alfred/persona/
+    install -m 0644 "$STAGE/branding/"*        /usr/share/alfred/branding/
+    install -m 0644 "$STAGE/systemd/"*.service /etc/systemd/system/
+fi
+
+# Enable services (will start on first boot)
+systemctl enable alfred-memory.service  2>/dev/null || true
+systemctl enable alfred-agent.service   2>/dev/null || true
+systemctl enable alfred-gateway.service 2>/dev/null || true
+
+# ── COMPLIANCE FILE (buried, plain text, satisfies MIT/Apache-2.0) ──
+mkdir -p /usr/share/doc/alfred || true
+{
+    echo "Alfred Linux — Third-Party Software Notices"
+    echo "==========================================="
+    echo ""
+    echo "Alfred Linux incorporates third-party software components."
+    echo "The original license texts are reproduced below as required by"
+    echo "their respective licenses."
+    echo ""
+    for L in /usr/share/doc/alfred/.licenses/*.LICENSE \
+             /usr/share/doc/alfred/.licenses/*.NOTICE; do
+        [ -f "$L" ] || continue
+        echo ""
+        echo "----- $(basename "$L") -----"
+        echo ""
+        cat "$L"
+        echo ""
+    done
+} > /usr/share/doc/alfred/THIRD-PARTY-LICENSES.txt
+
+# Cleanup staging
+# DISABLED-v14.14: rm -rf "$STAGE" 2>/dev/null || true
+
+echo "I: [alfred] Alfred Living OS finalized"

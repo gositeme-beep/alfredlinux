@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GoCodeMe.com - Claude Code Web IDE</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            background: #0d1117;
+            color: #c9d1d9;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .ide-container {
+            display: flex;
+            height: 100vh;
+        }
+
+        .sidebar {
+            width: 250px;
+            background: #161b22;
+            border-right: 1px solid #30363d;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar-header {
+            padding: 15px;
+            border-bottom: 1px solid #30363d;
+            background: #21262d;
+        }
+
+        .logo {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #58a6ff;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .user-info {
+            margin-top: 10px;
+            font-size: 0.8rem;
+            color: #8b949e;
+        }
+
+        .file-explorer {
+            flex: 1;
+            padding: 10px;
+            overflow-y: auto;
+        }
+
+        .file-item {
+            padding: 5px 10px;
+            cursor: pointer;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .file-item:hover {
+            background: #21262d;
+        }
+
+        .file-item.active {
+            background: #1f6feb;
+            color: white;
+        }
+
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .top-bar {
+            background: #161b22;
+            border-bottom: 1px solid #30363d;
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .terminal-tabs {
+            display: flex;
+            gap: 5px;
+        }
+
+        .tab {
+            padding: 8px 15px;
+            background: #21262d;
+            border: 1px solid #30363d;
+            border-radius: 4px 4px 0 0;
+            cursor: pointer;
+            font-size: 0.8rem;
+        }
+
+        .tab.active {
+            background: #0d1117;
+            border-bottom-color: #0d1117;
+        }
+
+        .claude-panel {
+            width: 400px;
+            background: #161b22;
+            border-left: 1px solid #30363d;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .claude-header {
+            background: #21262d;
+            padding: 15px;
+            border-bottom: 1px solid #30363d;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .claude-header h3 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #c9d1d9;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .claude-status {
+            font-size: 0.7rem;
+            color: #3fb950;
+            background: rgba(63, 185, 80, 0.1);
+            padding: 3px 8px;
+            border-radius: 12px;
+        }
+
+        .claude-chat {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 15px;
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            margin-bottom: 15px;
+        }
+
+        .message {
+            margin-bottom: 15px;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            line-height: 1.4;
+        }
+
+        .message.user {
+            background: #1f6feb;
+            color: white;
+            margin-left: 20px;
+        }
+
+        .message.claude {
+            background: #21262d;
+            color: #c9d1d9;
+            margin-right: 20px;
+            border: 1px solid #30363d;
+        }
+
+        .message.loading {
+            background: #21262d;
+            color: #8b949e;
+            font-style: italic;
+        }
+
+        .message.claude pre {
+            background: #0d1117;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+            margin: 10px 0;
+            border: 1px solid #30363d;
+        }
+
+        .message.claude code {
+            background: #0d1117;
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+        }
+
+        .chat-input {
+            display: flex;
+            gap: 10px;
+        }
+
+        .chat-input textarea {
+            flex: 1;
+            background: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            padding: 12px;
+            color: #c9d1d9;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 0.9rem;
+            resize: none;
+            height: 60px;
+        }
+
+        .chat-input textarea:focus {
+            outline: none;
+            border-color: #58a6ff;
+        }
+
+        .send-btn {
+            background: #238636;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background 0.3s;
+        }
+
+        .send-btn:hover {
+            background: #2ea043;
+        }
+
+        .send-btn:disabled {
+            background: #30363d;
+            cursor: not-allowed;
+        }
+
+        .claude-tools {
+            background: #21262d;
+            padding: 15px;
+            border-top: 1px solid #30363d;
+        }
+
+        .claude-tools h4 {
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #c9d1d9;
+        }
+
+        .tool-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+
+        .tool-btn {
+            background: #0d1117;
+            color: #c9d1d9;
+            border: 1px solid #30363d;
+            padding: 8px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: all 0.3s;
+        }
+
+        .tool-btn:hover {
+            background: #21262d;
+            border-color: #58a6ff;
+        }
+
+        .editor-area {
+            flex: 1;
+            display: flex;
+        }
+
+        .code-editor {
+            flex: 1;
+            background: #0d1117;
+        }
+
+        .vs-code-frame {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        .command-bar {
+            background: #161b22;
+            border-top: 1px solid #30363d;
+            padding: 10px 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .command-input {
+            flex: 1;
+            background: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 4px;
+            padding: 8px 12px;
+            color: #c9d1d9;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 0.9rem;
+        }
+
+        .command-input:focus {
+            outline: none;
+            border-color: #58a6ff;
+        }
+
+        .execute-btn {
+            background: #238636;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8rem;
+        }
+
+        .execute-btn:hover {
+            background: #2ea043;
+        }
+
+        .logout-btn {
+            background: #da3633;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: background 0.3s;
+        }
+
+        .logout-btn:hover {
+            background: #f85149;
+        }
+    </style>
+</head>
+<body>
+    <div class="ide-container">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <span>🤖</span>
+                    GoCodeMe.com
+                </div>
+                <div class="user-info" id="userInfo">
+                    Loading...
+                </div>
+            </div>
+            
+            <div class="file-explorer">
+                <div class="file-item active">
+                    <span>📁</span>
+                    Workspace
+                </div>
+                <div class="file-item">
+                    <span>📄</span>
+                    index.html
+                </div>
+                <div class="file-item">
+                    <span>📄</span>
+                    styles.css
+                </div>
+                <div class="file-item">
+                    <span>📄</span>
+                    app.js
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <div class="top-bar">
+                <div class="terminal-tabs">
+                    <div class="tab active">Editor</div>
+                    <div class="tab">Terminal</div>
+                    <div class="tab">Output</div>
+                </div>
+                <button class="logout-btn" onclick="logout()">Logout</button>
+            </div>
+
+            <div class="editor-area">
+                <!-- Code Editor -->
+                <div class="code-editor">
+                    <iframe 
+                        src="http://localhost:8080" 
+                        class="vs-code-frame"
+                        id="vscodeFrame">
+                    </iframe>
+                </div>
+
+                <!-- Claude AI Panel -->
+                <div class="claude-panel">
+                    <div class="claude-header">
+                        <h3>
+                            <span>🤖</span>
+                            Claude Code
+                        </h3>
+                        <span class="claude-status" id="claudeStatus">Ready</span>
+                    </div>
+
+                    <div class="claude-chat">
+                        <div class="chat-messages" id="chatMessages">
+                            <div class="message claude">
+                                <strong>Claude Code:</strong> Hello! I'm your AI coding assistant, inspired by <a href="https://docs.anthropic.com/en/docs/claude-code/overview" target="_blank" style="color: #58a6ff;">Claude Code</a>. I can help you:
+                                <br><br>
+                                • <strong>Build features from descriptions</strong> - Tell me what you want to build
+                                <br>
+                                • <strong>Debug and fix issues</strong> - Describe bugs or paste error messages
+                                <br>
+                                • <strong>Navigate codebases</strong> - Ask about your project structure
+                                <br>
+                                • <strong>Automate tasks</strong> - Fix lint issues, resolve conflicts
+                                <br><br>
+                                What would you like to work on today?
+                            </div>
+                        </div>
+
+                        <div class="chat-input">
+                            <textarea 
+                                id="chatInput" 
+                                placeholder="Describe what you want to build, debug, or automate..."
+                                onkeydown="handleKeyDown(event)">
+                            </textarea>
+                            <button class="send-btn" onclick="sendMessage()" id="sendBtn">Send</button>
+                        </div>
+                    </div>
+
+                    <div class="claude-tools">
+                        <h4>Quick Actions</h4>
+                        <div class="tool-buttons">
+                            <button class="tool-btn" onclick="buildFeature()">Build Feature</button>
+                            <button class="tool-btn" onclick="debugCode()">Debug Code</button>
+                            <button class="tool-btn" onclick="explainCode()">Explain Code</button>
+                            <button class="tool-btn" onclick="automateTask()">Automate</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Command Bar -->
+            <div class="command-bar">
+                <input 
+                    type="text" 
+                    class="command-input" 
+                    id="commandInput"
+                    placeholder="Enter a command or describe what you want to do..."
+                    onkeydown="handleCommandKeyDown(event)">
+                <button class="execute-btn" onclick="executeCommand()">Execute</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Check authentication
+        const token = localStorage.getItem('token');
+        const user = JSON.parse(localStorage.getItem('user') || '{}');
+
+        if (!token) {
+            window.location.href = '/';
+        }
+
+        // Display user info
+        document.getElementById('userInfo').textContent = user.email || 'Unknown User';
+
+        // Chat functionality
+        let isProcessing = false;
+
+        function handleKeyDown(event) {
+            if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault();
+                sendMessage();
+            }
+        }
+
+        function handleCommandKeyDown(event) {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                executeCommand();
+            }
+        }
+
+        async function sendMessage() {
+            const input = document.getElementById('chatInput');
+            const message = input.value.trim();
+            
+            if (!message || isProcessing) return;
+
+            // Add user message
+            addMessage('user', message);
+            input.value = '';
+
+            // Add loading message
+            const loadingId = addMessage('loading', 'Claude is thinking...');
+
+            isProcessing = true;
+            document.getElementById('sendBtn').disabled = true;
+            document.getElementById('claudeStatus').textContent = 'Processing...';
+
+            try {
+                const response = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        message: message,
+                        context: 'claude-code'
+                    })
+                });
+
+                const result = await response.json();
+
+                // Remove loading message
+                removeMessage(loadingId);
+
+                if (result.success) {
+                    addMessage('claude', result.response);
+                } else {
+                    addMessage('claude', `Error: ${result.error}`);
+                }
+            } catch (error) {
+                removeMessage(loadingId);
+                addMessage('claude', `Error: ${error.message}`);
+            } finally {
+                isProcessing = false;
+                document.getElementById('sendBtn').disabled = false;
+                document.getElementById('claudeStatus').textContent = 'Ready';
+            }
+        }
+
+        function addMessage(type, content) {
+            const messagesContainer = document.getElementById('chatMessages');
+            const messageDiv = document.createElement('div');
+            const messageId = Date.now();
+            messageDiv.id = `message-${messageId}`;
+            messageDiv.className = `message ${type}`;
+            
+            if (type === 'loading') {
+                messageDiv.innerHTML = `<strong>Claude Code:</strong> <span>Thinking...</span>`;
+            } else if (type === 'user') {
+                messageDiv.innerHTML = `<strong>You:</strong> ${content}`;
+            } else {
+                // Format code blocks in Claude responses
+                content = content.replace(/```(\w+)?\n([\s\S]*?)```/g, '<pre><code>$2</code></pre>');
+                content = content.replace(/`([^`]+)`/g, '<code>$1</code>');
+                messageDiv.innerHTML = `<strong>Claude Code:</strong> ${content}`;
+            }
+            
+            messagesContainer.appendChild(messageDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            
+            return messageId;
+        }
+
+        function removeMessage(messageId) {
+            const message = document.getElementById(`message-${messageId}`);
+            if (message) {
+                message.remove();
+            }
+        }
+
+        // Claude Code inspired functions
+        async function buildFeature() {
+            const message = "I want to build a new feature. Can you help me plan and implement it?";
+            document.getElementById('chatInput').value = message;
+            sendMessage();
+        }
+
+        async function debugCode() {
+            const message = "I have a bug or error in my code. Can you help me debug it?";
+            document.getElementById('chatInput').value = message;
+            sendMessage();
+        }
+
+        async function explainCode() {
+            const message = "Can you explain this codebase and help me understand how it works?";
+            document.getElementById('chatInput').value = message;
+            sendMessage();
+        }
+
+        async function automateTask() {
+            const message = "I want to automate a repetitive task. Can you help me create a script or workflow?";
+            document.getElementById('chatInput').value = message;
+            sendMessage();
+        }
+
+        async function executeCommand() {
+            const commandInput = document.getElementById('commandInput');
+            const command = commandInput.value.trim();
+            
+            if (!command) return;
+
+            // Add command to chat
+            addMessage('user', `Command: ${command}`);
+            commandInput.value = '';
+
+            // Simulate command execution
+            const loadingId = addMessage('loading', 'Executing command...');
+
+            try {
+                const response = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        message: `Execute this command and show me the results: ${command}`,
+                        context: 'command-execution'
+                    })
+                });
+
+                const result = await response.json();
+
+                removeMessage(loadingId);
+
+                if (result.success) {
+                    addMessage('claude', result.response);
+                } else {
+                    addMessage('claude', `Error: ${result.error}`);
+                }
+            } catch (error) {
+                removeMessage(loadingId);
+                addMessage('claude', `Error: ${error.message}`);
+            }
+        }
+
+        // Logout function
+        function logout() {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            window.location.href = '/';
+        }
+    </script>
+</body>
+</html> 

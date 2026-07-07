@@ -1,0 +1,204 @@
+#!/bin/bash
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# 0760-alfred-desktop-wizard.hook.chroot
+# First-Boot Kingdom Welcome Wizard for KDE Plasma
+set +e
+
+echo "I: [alfred] configuring first-boot layout wizard"
+
+mkdir -p /usr/local/bin
+cat > /usr/local/bin/alfred-desktop-wizard <<'EOF'
+#!/bin/bash
+
+# Ensure this only runs once per user profile
+if [ -f "$HOME/.config/alfred-wizard-done" ]; then
+
+fi
+
+# Wait for plasma shell to fully initialize
+sleep 8
+
+CHOICE=$(kdialog --title "Welcome to Alfred Linux 7.77" \
+                 --radiolist "How would you like to arrange your Kingdom?" \
+                 "modern" "The Modern Era (Centered, Windows 11 Style)" on \
+                 "classic" "The Classic Era (Left-Aligned, Windows 10 Style)" off \
+                 "zenith" "The Zenith (Mac Style, Top Panel)" off)
+
+if [ "$?" = 0 ]; then
+    case $CHOICE in
+        "modern")
+            # Center the panel alignment
+            qdbus org.kde.plasmashell /PlasmaShell org.kde.PlasmaShell.evaluateScript '
+                var allPanels = panels();
+                for (var i = 0; i < allPanels.length; i++) {
+                    allPanels[i].alignment = "center";
+                }
+            '
+            ;;
+        "classic")
+            # Left-align the panel
+            qdbus org.kde.plasmashell /PlasmaShell org.kde.PlasmaShell.evaluateScript '
+                var allPanels = panels();
+                for (var i = 0; i < allPanels.length; i++) {
+                    allPanels[i].alignment = "left";
+                }
+            '
+            ;;
+        "zenith")
+            # Move the panel to the top of the screen
+            qdbus org.kde.plasmashell /PlasmaShell org.kde.PlasmaShell.evaluateScript '
+                var allPanels = panels();
+                for (var i = 0; i < allPanels.length; i++) {
+                    allPanels[i].location = "top";
+                }
+            '
+            ;;
+    esac
+fi
+
+# Mark as completed so it never runs again
+mkdir -p "$HOME/.config"
+touch "$HOME/.config/alfred-wizard-done"
+EOF
+
+chmod +x /usr/local/bin/alfred-desktop-wizard
+
+# Register it globally as a KDE autostart application
+mkdir -p /etc/xdg/autostart
+cat > /etc/xdg/autostart/alfred-desktop-wizard.desktop <<'EOF'
+[Desktop Entry]
+Type=Application
+Name=Alfred Desktop Wizard
+Comment=Lets the user choose their desktop layout on first boot
+Exec=/usr/local/bin/alfred-desktop-wizard
+X-KDE-autostart-condition=ksmserver
+EOF
+
+echo "I: [alfred] Kingdom wizard hooked successfully."
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# 0855-alfred-tongues.hook.chroot
+# Configures The Tower of Babel Protocol (Offline AI Voice Translation)
+set +e
+
+echo "[0855] Configuring Tower of Babel Protocol (Offline Translation)"
+
+# Install whisper via pipx to avoid system package conflicts
+apt-get install -y --fix-broken -y pipx || true
+pipx install openai-whisper || true
+
+cat << 'EOF' > /usr/local/bin/alfred-tongues
+#!/bin/bash
+echo "╔═══════════════════════════════════════════════════════════╗"
+echo "║  THE TOWER OF BABEL PROTOCOL — Offline Translation        ║"
+echo "║  'Therefore is the name of it called Babel...'            ║"
+echo "╚═══════════════════════════════════════════════════════════╝"
+echo ""
+
+if [ -z "$1" ]; then
+    echo "Usage: alfred-tongues <audio-file.wav> [target-language]" || true
+
+fi
+
+AUDIO_FILE=$1
+LANG=${2:-en}
+
+if command -v whisper &>/dev/null; then
+    echo "Translating $AUDIO_FILE to $LANG entirely offline..."
+    # We use the local model cache in /opt/models/whisper
+    export WHISPER_CACHE_DIR=/opt/models/whisper
+    mkdir -p $WHISPER_CACHE_DIR || true
+    whisper "$AUDIO_FILE" --model small --language "$LANG" --task translate
+else
+    echo "Whisper AI engine not fully initialized."
+fi
+EOF
+
+chmod 0755 /usr/local/bin/alfred-tongues || true
+
+echo "[0855] Tower of Babel Protocol configured."
+
+
+# --- BEGIN MERGED CONTENT FROM: 0760-alfred-desktop-wizard.hook.chroot ---
+#!/bin/bash
+# 0760-alfred-desktop-wizard.hook.chroot
+# First-Boot Kingdom Welcome Wizard for KDE Plasma
+set +e
+
+echo "I: [alfred] configuring first-boot layout wizard"
+
+mkdir -p /usr/local/bin
+cat > /usr/local/bin/alfred-desktop-wizard <<'EOF'
+#!/bin/bash
+
+# Ensure this only runs once per user profile
+if [ -f "$HOME/.config/alfred-wizard-done" ]; then
+
+fi
+
+# Wait for plasma shell to fully initialize
+sleep 8
+
+CHOICE=$(kdialog --title "Welcome to Alfred Linux 7.77" \
+                 --radiolist "How would you like to arrange your Kingdom?" \
+                 "modern" "The Modern Era (Centered, Windows 11 Style)" on \
+                 "classic" "The Classic Era (Left-Aligned, Windows 10 Style)" off \
+                 "zenith" "The Zenith (Mac Style, Top Panel)" off)
+
+if [ "$?" = 0 ]; then
+    case $CHOICE in
+        "modern")
+            # Center the panel alignment
+            qdbus org.kde.plasmashell /PlasmaShell org.kde.PlasmaShell.evaluateScript '
+                var allPanels = panels();
+                for (var i = 0; i < allPanels.length; i++) {
+                    allPanels[i].alignment = "center";
+                }
+            '
+            ;;
+        "classic")
+            # Left-align the panel
+            qdbus org.kde.plasmashell /PlasmaShell org.kde.PlasmaShell.evaluateScript '
+                var allPanels = panels();
+                for (var i = 0; i < allPanels.length; i++) {
+                    allPanels[i].alignment = "left";
+                }
+            '
+            ;;
+        "zenith")
+            # Move the panel to the top of the screen
+            qdbus org.kde.plasmashell /PlasmaShell org.kde.PlasmaShell.evaluateScript '
+                var allPanels = panels();
+                for (var i = 0; i < allPanels.length; i++) {
+                    allPanels[i].location = "top";
+                }
+            '
+            ;;
+    esac
+fi
+
+# Mark as completed so it never runs again
+mkdir -p "$HOME/.config"
+touch "$HOME/.config/alfred-wizard-done"
+EOF
+
+[ -e "/usr/local/bin/alfred-desktop-wizard" ] && chmod +x /usr/local/bin/alfred-desktop-wizard
+
+# Register it globally as a KDE autostart application
+mkdir -p /etc/xdg/autostart
+cat > /etc/xdg/autostart/alfred-desktop-wizard.desktop <<'EOF'
+[Desktop Entry]
+Type=Application
+Name=Alfred Desktop Wizard
+Comment=Lets the user choose their desktop layout on first boot
+Exec=/usr/local/bin/alfred-desktop-wizard
+X-KDE-autostart-condition=ksmserver
+EOF
+
+echo "I: [alfred] Kingdom wizard hooked successfully."
+
+# --- END MERGED CONTENT FROM: 0760-alfred-desktop-wizard.hook.chroot ---
+
+

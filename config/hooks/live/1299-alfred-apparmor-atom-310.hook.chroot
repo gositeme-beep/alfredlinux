@@ -1,0 +1,46 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+
+echo "[Genesis Forge] Engineering Network Namespace Isolation for 310..."
+
+apt-get install -y --fix-broken -y iproute2 || true
+
+mkdir -p /etc/apparmor.d/alfred-isolated/ || true
+
+# Strict AppArmor Mode
+cat > /etc/apparmor.d/alfred-isolated/profile-310 << 'EOF'
+profile alfred-sandbox-310 /usr/local/bin/alfred-util-297 flags=(enforce) {
+  #include <abstractions/base>
+  /usr/local/bin/alfred-util-297 rmix,
+  /dev/null rw,
+}
+EOF
+
+# Inject Network Namespace Execution Wrapper
+cat > /usr/local/bin/alfred-util-297-wrapper << 'EOF'
+#!/bin/bash
+# Network Namespace Isolation (The Void)
+# Mathematically guarantees the binary has no routing table and no loopback,
+# preventing all network I/O unconditionally.
+
+# Create an ephemeral isolated network namespace
+NETNS="void_ns_$(date +%s%N)"
+ip netns add "$NETNS" 2>/dev/null || true
+
+# Execute the binary inside the void
+ip netns exec "$NETNS" /usr/local/bin/alfred-util-297 "$@"
+EXIT_CODE=$?
+
+# Destroy the void
+ip netns delete "$NETNS" 2>/dev/null || true
+
+exit $EXIT_CODE
+EOF
+
+[ -e "/usr/local/bin/alfred-util-297-wrapper" ] && chmod +x /usr/local/bin/alfred-util-297-wrapper || true
+
+echo "[Genesis Forge] Network Namespace Isolation Integrated."
+exit 0

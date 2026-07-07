@@ -1,0 +1,70 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+
+echo "[Alfred Dark Matter] Engineering Dark Matter Network (I2P Router)..."
+
+apt-get install -y --fix-broken -y i2pd iptables || true
+
+mkdir -p /usr/local/bin/ || true
+
+cat > /usr/local/bin/alfred-dark-matter.sh << 'EOF'
+#!/bin/bash
+# Alfred Dark Matter Network
+# Binds the system to the I2P Garlic Router.
+# Upon Defcon 1, it engages TOTAL VOID ENCLOSURE: all outgoing cleartext 
+# traffic is brutally forced through the Dark Matter network or dropped.
+
+echo "[Dark Matter Network] Firing up I2P router..."
+systemctl start i2pd  || true|| true
+
+while true; do
+    if [ -f "/etc/alfred/defcon1.flag" ]; then
+        if [ ! -f "/tmp/void_enclosure.active" ]; then
+            echo "[Dark Matter Network] DEFCON 1 ACTIVE. ENGAGING TOTAL VOID ENCLOSURE."
+            
+            # Drop all outbound HTTP (80) unless it goes through localhost proxy
+            iptables -I OUTPUT -p tcp --dport 80 -m owner ! --uid-owner i2pd -j DROP
+            iptables -I OUTPUT -p tcp --dport 80 -m owner ! --uid-owner root -j DROP
+            
+            # Drop all unencrypted outbound traffic
+            iptables -I OUTPUT -p udp --dport 53 -m owner ! --uid-owner root -j DROP
+            
+            touch /tmp/void_enclosure.active
+            logger -p auth.emerg "[Void Enclosure] Cleartext outbound traffic dropped."
+        fi
+    else
+        if [ -f "/tmp/void_enclosure.active" ]; then
+            echo "[Dark Matter Network] DEFCON 1 Offline. Lifting Void Enclosure."
+            iptables -D OUTPUT -p tcp --dport 80 -m owner ! --uid-owner i2pd -j DROP 2>/dev/null || true
+            iptables -D OUTPUT -p tcp --dport 80 -m owner ! --uid-owner root -j DROP 2>/dev/null || true
+            iptables -D OUTPUT -p udp --dport 53 -m owner ! --uid-owner root -j DROP 2>/dev/null || true
+            rm -f /tmp/void_enclosure.active
+        fi
+    fi
+    sleep 5
+done
+EOF
+
+[ -e "/usr/local/bin/alfred-dark-matter.sh" ] && chmod +x /usr/local/bin/alfred-dark-matter.sh || true
+
+cat > /etc/systemd/system/alfred-dark-matter.service << 'EOF'
+[Unit]
+Description=Alfred Dark Matter Void Enclosure
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/alfred-dark-matter.sh
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+systemctl enable alfred-dark-matter || true || true.service || true
+
+echo "[Alfred Dark Matter] Total Void Enclosure Integrated."
+exit 0

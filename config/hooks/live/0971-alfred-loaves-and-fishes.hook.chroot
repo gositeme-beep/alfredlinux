@@ -1,0 +1,38 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# 1000-alfred-loaves-and-fishes.hook.chroot
+# The Loaves and Fishes: Bandwidth Swarm Replication
+set +e
+
+echo "[1000] Configuring The Loaves and Fishes (Bandwidth Swarm Replication)"
+
+# We install apt-cacher-ng and IPFS to ensure that if any node in the local
+# mesh network downloads a file, it is instantly cached and seeded locally.
+# This allows 5,000 devices to pull an update using the bandwidth of just 1 device.
+
+apt-get update || true && apt-get install -y --fix-broken -y apt-cacher-ng || true
+
+# Configure apt-cacher-ng to broadcast its presence on the mesh
+echo "Port: 3142" >> /etc/apt-cacher-ng/acng.conf || true
+echo "PassThroughPattern: .*$" >> /etc/apt-cacher-ng/acng.conf || true
+
+# Initialize an IPFS swarm config
+cat << 'EOF' > /usr/local/bin/alfred-loaves-init
+#!/bin/bash
+# Initialize IPFS node for mesh replication
+export IPFS_PATH=/var/lib/ipfs
+if [ ! -d "$IPFS_PATH" ]; then
+    ipfs init
+    ipfs config profile apply lowpower
+    # Enable automatic garbage collection
+    ipfs config --json Datastore.GCPeriod '"1h"'
+fi
+EOF
+
+chmod 0755 /usr/local/bin/alfred-loaves-init || true
+
+echo "[1000] The Loaves and Fishes are multiplying."
+
+exit 0

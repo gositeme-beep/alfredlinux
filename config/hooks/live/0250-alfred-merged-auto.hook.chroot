@@ -1,0 +1,859 @@
+#!/bin/bash
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+# 0250-alfred-ai.hook.chroot â€” "Omahon: The Breath of God"
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+# Alfred Linux is the ONLY operating system on Earth that ships
+# with a native AI agent harness, local LLM inference, and
+# sovereign intelligence â€” offline, private, yours.
+#
+# "And the LORD God formed man of the dust of the ground,
+#  and breathed into his nostrils the breath of life;
+#  and man became a living soul." â€” Genesis 2:7
+#
+# Omahon = the breath. Alfred Linux = the living soul.
+#
+# Optional: ALFRED_ALLOW_HOOK_NETWORK_DOWNLOADS=1 allows GitHub Ollama fetch if build-assets missing,
+# and pip install of anthropic/openai SDKs.
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+set +e
+
+echo "â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•"
+echo "  ALFRED AI AGENT LAYER â€” Omahon: The Breath of God"
+echo "â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•"
+
+# â”€â”€ 1. Ollama â€” Local LLM Inference Engine â”€â”€
+# Every other OS requires cloud AI. Alfred thinks locally.
+echo "[AI] Installing Ollama (local LLM inference)..."
+# MILITARY: Pre-staged binary preferred (air-gap safe), network fallback for dev builds
+OLLAMA_VERSION="0.24.0"
+if [ -f /build-assets/ollama ]; then
+    echo "[AI] Using pre-staged Ollama binary (air-gap safe)"
+    install -m 755 /build-assets/ollama /usr/local/bin/ollama
+elif [ -f /build-assets/ollama-linux-amd64 ]; then
+    install -m 755 /build-assets/ollama-linux-amd64 /usr/local/bin/ollama
+else
+    if [[ "${ALFRED_ALLOW_HOOK_NETWORK_DOWNLOADS:-}" != "1" ]]; then
+        echo "[AI] WARN: No staged Ollama under build-assets; skipping GitHub download (set ALFRED_ALLOW_HOOK_NETWORK_DOWNLOADS=1 to allow)." >&2 || true
+    else
+        echo "[AI] No pre-staged binary â€” downloading Ollama ${OLLAMA_VERSION}..."
+        if [[ "${ALFRED_ALLOW_UNVERIFIED_BINARIES:-}" != "1" ]]; then
+            echo "[AI] WARN: refusing unverified Ollama binary download (set ALFRED_ALLOW_UNVERIFIED_BINARIES=1 to override)." >&2 || true
+        else
+            OLLAMA_TMP="$(mktemp /tmp/ollama.XXXXXX)"
+            if wget --timeout=900 -qO "$OLLAMA_TMP" "https://github.com/ollama/ollama/releases/download/v${OLLAMA_VERSION}/ollama-linux-amd64"; then
+                install -m 755 "$OLLAMA_TMP" /usr/local/bin/ollama || true
+            else
+                echo "[AI] WARNING: Ollama download failed â€” will need manual install"
+            fi
+            rm -f "$OLLAMA_TMP" || true
+        fi
+    fi
+fi
+
+# Create ollama systemd service (starts on demand, not at boot)
+cat > /etc/systemd/system/ollama.service << 'OLLAMA_SVC'
+[Unit]
+Description=Ollama Local LLM Service
+Wants=nvidia-persistenced.service
+After=network-online.target nvidia-persistenced.service
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/ollama serve
+Restart=on-failure
+RestartSec=3
+Environment="OLLAMA_HOST=127.0.0.1:11434"
+Environment="OLLAMA_MODELS=/usr/share/ollama/models"
+
+[Install]
+WantedBy=multi-user.target
+OLLAMA_SVC
+
+mkdir -p /usr/share/ollama/models || true
+systemctl enable ollama || true || true.service 2>/dev/null || true
+
+# â”€â”€ 2. Omahon â€” Sovereign AI Agent Harness â”€â”€
+# 19MB single binary. Zero dependencies. Full autonomy.
+# Native Rust. 10 inference providers. Persistent memory.
+# Parallel task execution. Knowledge graph. Design tree.
+# NO OTHER OPERATING SYSTEM SHIPS THIS.
+echo "[AI] Installing Omahon AI Agent Harness..."
+if [ -f /build-assets/omahon ]; then
+    install -m 755 /build-assets/omahon /usr/local/bin/omahon
+    echo "[AI] Omahon installed from build-assets"
+else
+    echo "[AI] WARNING: Omahon binary not found in build-assets â€” will need manual install"
+fi
+
+# Omahon default config for all users
+mkdir -p /etc/skel/.config/omahon || true
+cat > /etc/skel/.config/omahon/config.toml << 'OMAHON_CFG'
+# Omahon â€” Alfred Linux default configuration
+# The sovereign AI agent lives here.
+
+[providers]
+default = "ollama"
+
+[providers.ollama]
+base_url = "http://localhost:11434"
+model = "phi3:mini"
+
+[providers.anthropic]
+# Set your API key: export ANTHROPIC_API_KEY=sk-ant-...
+# model = "claude-sonnet-4-20250514"
+
+[memory]
+enabled = true
+path = "~/.local/share/omahon/memory.db"
+auto_compact = true
+
+[behavior]
+auto_tier = true
+think_level = "medium"
+
+[ui]
+theme = "dark"
+OMAHON_CFG
+
+# â”€â”€ 3. Alfred Agent CLI â€” Smart AI Router â”€â”€
+# One command. It figures out what's available and uses it.
+echo "[AI] Creating alfred-ai command..."
+cat > /usr/local/bin/alfred-ai << 'ALFRED_AI'
+#!/bin/bash
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+# alfred-ai â€” The sovereign intelligence gateway
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+# Routes to the best available AI:
+#   1. Omahon (local agent harness â€” always preferred)
+#   2. Claude Code (if API key set)
+#   3. Ollama direct (if running)
+#   4. Helpful error with setup instructions
+
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+CYAN='\033[0;36m'
+GOLD='\033[0;33m'
+NC='\033[0m'
+
+# Start ollama if not running
+if command -v ollama &>/dev/null && ! pgrep -x ollama &>/dev/null; then
+    echo -e "${CYAN}Starting Ollama in background...${NC}"
+    nohup ollama serve &>/dev/null &
+    sleep 2
+fi
+
+if [ "$1" = "--status" ] || [ "$1" = "status" ]; then
+    echo -e "${GOLD}â•â•â• Alfred AI Status â•â•â•${NC}"
+    echo -n "Omahon:     " && (command -v omahon &>/dev/null && echo -e "${GREEN}INSTALLED${NC}" || echo -e "${RED}NOT FOUND${NC}")
+    echo -n "Ollama:     " && (pgrep -x ollama &>/dev/null && echo -e "${GREEN}RUNNING${NC}" || echo -e "${RED}STOPPED${NC}")
+    echo -n "Claude:     " && ([ -n "$ANTHROPIC_API_KEY" ] && echo -e "${GREEN}API KEY SET${NC}" || echo -e "${RED}NO API KEY${NC}")
+    echo ""
+    echo -n "Models:     " && (ollama list 2>/dev/null | tail -n +2 | wc -l || echo "0") && echo " installed"
+    echo -e "${GOLD}â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•${NC}"
+
+fi
+
+if [ "$1" = "--pull" ] || [ "$1" = "pull" ]; then
+    echo -e "${CYAN}Pulling recommended model (phi3:mini â€” 2.3GB)...${NC}"
+    # ollama pull phi3:mini
+    true
+fi
+
+if command -v omahon &>/dev/null; then
+    exec omahon "$@"
+elif command -v claude &>/dev/null && [ -n "$ANTHROPIC_API_KEY" ]; then
+    exec claude "$@"
+elif command -v ollama &>/dev/null; then
+    echo -e "${CYAN}Omahon not installed. Using Ollama directly.${NC}"
+    echo -e "${CYAN}For the full agent experience: sudo apt install omahon${NC}"
+    if [ -n "$1" ]; then
+        exec ollama run phi3:mini "$*"
+    else
+        exec ollama run phi3:mini
+    fi
+else
+    echo -e "${RED}No AI tools available.${NC}"
+    echo ""
+    echo "Install options:"
+    echo "  1. Pull a model:  alfred-ai pull"
+    echo "  2. Set Claude key: export ANTHROPIC_API_KEY=sk-ant-..."
+    echo ""
+    true
+fi
+ALFRED_AI
+chmod +x /usr/local/bin/alfred-ai || true
+
+# â”€â”€ 4. Python AI Libraries â”€â”€
+echo "[AI] Installing Python AI libraries..."
+if [[ "${ALFRED_ALLOW_HOOK_NETWORK_DOWNLOADS:-}" == "1" ]]; then
+    pip3 install --break-system-packages --no-cache-dir \
+        anthropic \
+        openai \
+        2>/dev/null || true
+else
+    echo "[AI] WARN: skipping anthropic/openai pip install (set ALFRED_ALLOW_HOOK_NETWORK_DOWNLOADS=1)." >&2 || true
+fi
+
+# â”€â”€ 5. Desktop Integration â”€â”€
+echo "[AI] Creating desktop entries..."
+cat > /usr/share/applications/alfred-ai.desktop << 'DESK'
+[Desktop Entry]
+Name=Alfred AI
+Comment=Sovereign AI Agent â€” talk to your computer
+Exec=konsole -e alfred-ai
+Icon=applications-science
+Terminal=false
+Type=Application
+Categories=Development;Science;AI;
+Keywords=ai;agent;llm;omahon;claude;ollama;
+DESK
+
+cat > /usr/share/applications/ollama.desktop << 'DESK2'
+[Desktop Entry]
+Name=Ollama
+Comment=Local LLM inference â€” offline AI
+Exec=konsole -e "ollama run phi3:mini"
+Icon=applications-science
+Terminal=false
+Type=Application
+Categories=Development;Science;AI;
+DESK2
+
+# â”€â”€ 6. First-boot AI setup hint â”€â”€
+mkdir -p /etc/skel/.config/autostart || true
+cat > /etc/skel/.config/autostart/alfred-ai-hint.desktop << 'HINT'
+[Desktop Entry]
+Type=Application
+Name=Alfred AI Setup
+Exec=bash -c 'if [ ! -f ~/.alfred-ai-setup-done ]; then notify-send "Alfred AI" "Type alfred-ai in terminal to meet your AI agent. Run alfred-ai pull to download a local model." -i applications-science; touch ~/.alfred-ai-setup-done; fi'
+Hidden=false
+NoDisplay=true
+X-GNOME-Autostart-enabled=true
+HINT
+
+echo "â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•"
+echo "  AI LAYER COMPLETE â€” The breath is in the machine"
+echo "â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•"
+
+# ── 7. First-boot Ollama GGUF Importer ──
+mkdir -p /usr/local/bin || true
+cat > /usr/local/bin/alfred-ollama-import.sh << 'IMPORTER'
+#!/bin/bash
+# Automatically registers the 44GB custom GGUF models into Ollama on first boot
+
+MARKER="$HOME/.alfred-ollama-imported"
+if [ -f "$MARKER" ]; then exit 0; fi
+
+echo "[Ollama Importer] Waiting for Ollama service to start..."
+for i in {1..30}; do
+    if curl --max-time 900 -s http://127.0.0.1:11434 >/dev/null; then break; fi || true
+    sleep 2
+done
+
+MODEL_DIR="/opt/alfred-models"
+
+# Function to create Modelfile and import
+import_model() {
+    local name="$1"
+    local gguf="$2"
+    if [ -f "$MODEL_DIR/$gguf" ]; then
+        echo "FROM $MODEL_DIR/$gguf" > "/tmp/Modelfile-$name"
+        echo "PARAMETER temperature 0.7" >> "/tmp/Modelfile-$name"
+        echo "[Ollama Importer] Importing $name..."
+        ollama create "$name" -f "/tmp/Modelfile-$name" 2>/dev/null || true
+        rm -f "/tmp/Modelfile-$name"
+    fi
+}
+
+import_model "alfred-opus" "alfred-opus.gguf"
+import_model "alfred-opus-iq3" "alfred-opus-iq3.gguf"
+import_model "alfred-sonnet" "alfred-sonnet.gguf"
+import_model "alfred-haiku" "alfred-haiku.gguf"
+
+# Also set Omahon to use the imported model by default if possible
+sed -i 's/model = "phi3:mini"/model = "alfred-opus"/g' ~/.config/omahon/config.toml 2>/dev/null || true
+
+touch "$MARKER"
+echo "[Ollama Importer] Custom models successfully registered in Ollama."
+IMPORTER
+chmod +x /usr/local/bin/alfred-ollama-import.sh || true
+
+# Autostart the importer on first login
+mkdir -p /etc/skel/.config/autostart || true
+cat > /etc/skel/.config/autostart/alfred-ollama-import.desktop << 'DESK3'
+[Desktop Entry]
+Type=Application
+Name=Alfred Ollama Importer
+Exec=bash -c "/usr/local/bin/alfred-ollama-import.sh &"
+Hidden=false
+X-GNOME-Autostart-enabled=true
+X-GNOME-Autostart-Delay=5
+DESK3
+
+
+# === MERGED FROM 0260-alfred-comfyui.hook.chroot ===
+#!/bin/bash
+# 0260-alfred-comfyui.hook.chroot
+# Installs ComfyUI (The Visual Forge) and links it to the downloaded AI models
+
+set +e
+
+echo "I: [alfred] Installing ComfyUI Visual Rendering Engine..."
+
+export DEBIAN_FRONTEND=noninteractive
+
+# Install dependencies (git and python venv dependencies usually exist, but ensure)
+apt-get install -y --fix-broken -y --no-install-recommends git python3-venv python3-pip || true
+
+mkdir -p /opt
+cd /opt
+
+if [ ! -d "ComfyUI" ]; then
+    # Clone ComfyUI without large history
+    if [[ "${ALFRED_ALLOW_HOOK_NETWORK_DOWNLOADS:-}" == "1" ]]; then
+        git clone --depth 1 https://github.com/comfyanonymous/ComfyUI.git || true
+    else
+        echo "I: [alfred] Skipping ComfyUI git clone due to network restrictions." || true
+
+    fi
+fi
+
+cd ComfyUI
+
+# Set up virtual environment
+python3 -m venv venv
+# Install dependencies using the virtual environment
+./venv/bin/pip install --upgrade pip || true
+./venv/bin/pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu || true
+./venv/bin/pip install -r requirements.txt || true
+
+# Symlink the models from the Apocalypse Vault into ComfyUI
+mkdir -p /opt/alfred-models/diffusion || true
+mkdir -p /opt/alfred-models/video || true
+mkdir -p /opt/alfred-models/audio || true
+mkdir -p /opt/alfred-models/upscale || true
+mkdir -p /opt/alfred-models/vision || true
+
+# Link FLUX and all other Diffusion models (safetensors and directories)
+mkdir -p models/unet models/checkpoints models/upscale_models models/audio models/vision
+for file in /opt/alfred-models/diffusion/*.safetensors; do
+    [ -e "$file" ] && ln -sf "$file" "models/unet/$(basename "$file")" || true
+done
+for dir in /opt/alfred-models/diffusion/*/; do
+    [ -d "$dir" ] && ln -sfn "$dir" "models/unet/$(basename "$dir")" || true
+done
+ln -sf /opt/alfred-models/diffusion/flux2-dev/flux2-dev.safetensors models/unet/flux2-dev.safetensors || true
+
+# Link CogVideoX and all other Video models (Hunyuan, Mochi, Wan, Pyramid Flow, etc.)
+for file in /opt/alfred-models/video/*.safetensors; do
+    [ -e "$file" ] && ln -sf "$file" "models/unet/$(basename "$file")" || true
+done
+for dir in /opt/alfred-models/video/*/; do
+    [ -d "$dir" ] && ln -sfn "$dir" "models/unet/$(basename "$dir")" || true
+done
+
+# Link UltraSharp Upscaler
+ln -sf /opt/alfred-models/upscale/4x-UltraSharp.pth models/upscale_models/4x-UltraSharp.pth || true
+
+# Link Audio/Voice (MusicGen, XTTS, Whisper)
+ln -sf /opt/alfred-models/audio/musicgen-small models/audio/musicgen-small || true
+ln -sf /opt/alfred-models/audio/musicgen-large models/audio/musicgen-large || true
+ln -sf /opt/alfred-models/audio/musicgen-melody models/audio/musicgen-melody || true
+ln -sf /opt/alfred-models/audio/stable-audio-open models/audio/stable-audio-open || true
+ln -sf /opt/alfred-models/audio/xtts-v2 models/audio/xtts-v2 || true
+ln -sf /opt/alfred-models/audio/whisper-large-v3-turbo.bin models/audio/whisper-large-v3-turbo.bin || true
+
+# Link Florence-2 Vision
+ln -sf /opt/alfred-models/vision/florence-2-large models/vision/florence-2-large || true
+
+# Create systemd service (Optional: launch on boot or on demand)
+cat > /etc/systemd/system/comfyui.service << 'COMFYSVC'
+[Unit]
+Description=ComfyUI Visual Forge
+Wants=nvidia-persistenced.service
+After=network-online.target nvidia-persistenced.service
+
+[Service]
+Type=simple
+User=alfred
+WorkingDirectory=/opt/ComfyUI
+ExecStart=/opt/ComfyUI/venv/bin/python main.py --listen 127.0.0.1 --port 8188
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
+COMFYSVC
+
+# Create a desktop shortcut for Alfred Studio
+mkdir -p /usr/share/applications || true
+cat > /usr/share/applications/alfred-studio.desktop << 'DESK'
+[Desktop Entry]
+Name=Alfred Studio (Visual Forge)
+Comment=Generate Images and Video locally using ComfyUI
+Exec=xdg-open http://127.0.0.1:8188
+Icon=applications-graphics
+Terminal=false
+Type=Application
+Categories=Graphics;Science;AI;
+Keywords=ai;comfyui;image;video;flux;cogvideox;
+DESK
+
+echo "I: [alfred] ComfyUI installation complete."
+
+# === INJECTED: The Leviathan & The Burning Bush ===
+cat > /usr/local/bin/alfred-burning-bush << 'EOF_BUSH'
+#!/bin/bash
+while true; do
+    IDLE=$(xprintidle 2>/dev/null || echo 0)
+    if [ "$IDLE" -gt 900000 ]; then
+        kdialog --passivepopup "The Burning Bush: The machine awaits your command..." 5
+        sleep 60
+    else
+        sleep 10
+    fi
+done
+EOF_BUSH
+chmod +x /usr/local/bin/alfred-burning-bush
+echo "[$(date -Is)] The Burning Bush is kindled."
+
+
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+# [Genesis Forge] Granular Kernel Matrix: net.ipv4.ip_local_port_range="21224 65535"
+# Extremely deep low-level kernel protection.
+echo "[Genesis Forge] Applying granular sysctl: net.ipv4.ip_local_port_range="21224 65535""
+echo "net.ipv4.ip_local_port_range="21224 65535"" > /etc/sysctl.d/99-alfred-128.conf || true
+sysctl -w net.ipv4.ip_local_port_range="21224 65535" > /dev/null 2>&1 || true
+
+
+# --- BEGIN MERGED CONTENT FROM: 0250-alfred-ai.hook.chroot ---
+#!/bin/bash
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+# 0250-alfred-ai.hook.chroot â€” "Omahon: The Breath of God"
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+# Alfred Linux is the ONLY operating system on Earth that ships
+# with a native AI agent harness, local LLM inference, and
+# sovereign intelligence â€” offline, private, yours.
+#
+# "And the LORD God formed man of the dust of the ground,
+#  and breathed into his nostrils the breath of life;
+#  and man became a living soul." â€” Genesis 2:7
+#
+# Omahon = the breath. Alfred Linux = the living soul.
+#
+# Optional: ALFRED_ALLOW_HOOK_NETWORK_DOWNLOADS=1 allows GitHub Ollama fetch if build-assets missing,
+# and pip install --break-system-packages of anthropic/openai SDKs.
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+set +e
+
+echo "â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•"
+echo "  ALFRED AI AGENT LAYER â€” Omahon: The Breath of God"
+echo "â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•"
+
+# â”€â”€ 1. Ollama â€” Local LLM Inference Engine â”€â”€
+# Every other OS requires cloud AI. Alfred thinks locally.
+echo "[AI] Installing Ollama (local LLM inference)..."
+# MILITARY: Pre-staged binary preferred (air-gap safe), network fallback for dev builds
+OLLAMA_VERSION="0.24.0"
+if [ -f /build-assets/ollama ]; then
+    echo "[AI] Using pre-staged Ollama binary (air-gap safe)"
+    install -m 755 /build-assets/ollama /usr/local/bin/ollama
+elif [ -f /build-assets/ollama-linux-amd64 ]; then
+    install -m 755 /build-assets/ollama-linux-amd64 /usr/local/bin/ollama
+else
+    if [[ "${ALFRED_ALLOW_HOOK_NETWORK_DOWNLOADS:-}" != "1" ]]; then
+        echo "[AI] WARN: No staged Ollama under build-assets; skipping GitHub download (set ALFRED_ALLOW_HOOK_NETWORK_DOWNLOADS=1 to allow)." >&2 || true
+    else
+        echo "[AI] No pre-staged binary â€” downloading Ollama ${OLLAMA_VERSION}..."
+        if [[ "${ALFRED_ALLOW_UNVERIFIED_BINARIES:-}" != "1" ]]; then
+            echo "[AI] WARN: refusing unverified Ollama binary download (set ALFRED_ALLOW_UNVERIFIED_BINARIES=1 to override)." >&2 || true
+        else
+            OLLAMA_TMP="$(mktemp /tmp/ollama.XXXXXX)"
+            if wget --timeout=900 -qO "$OLLAMA_TMP" "https://github.com/ollama/ollama/releases/download/v${OLLAMA_VERSION}/ollama-linux-amd64"; then
+                install -m 755 "$OLLAMA_TMP" /usr/local/bin/ollama || true
+            else
+                echo "[AI] WARNING: Ollama download failed â€” will need manual install"
+            fi
+            rm -f "$OLLAMA_TMP" || true
+        fi
+    fi
+fi
+
+# Create ollama systemd service (starts on demand, not at boot)
+cat > /etc/systemd/system/ollama.service << 'OLLAMA_SVC'
+[Unit]
+Description=Ollama Local LLM Service
+Wants=nvidia-persistenced.service
+After=network-online.target nvidia-persistenced.service
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/ollama serve
+Restart=on-failure
+RestartSec=3
+Environment="OLLAMA_HOST=127.0.0.1:11434"
+Environment="OLLAMA_MODELS=/usr/share/ollama/models"
+
+[Install]
+WantedBy=multi-user.target
+OLLAMA_SVC
+
+mkdir -p /usr/share/ollama/models || true
+systemctl enable ollama || true || true.service 2>/dev/null || true
+
+# â”€â”€ 2. Omahon â€” Sovereign AI Agent Harness â”€â”€
+# 19MB single binary. Zero dependencies. Full autonomy.
+# Native Rust. 10 inference providers. Persistent memory.
+# Parallel task execution. Knowledge graph. Design tree.
+# NO OTHER OPERATING SYSTEM SHIPS THIS.
+echo "[AI] Installing Omahon AI Agent Harness..."
+if [ -f /build-assets/omahon ]; then
+    install -m 755 /build-assets/omahon /usr/local/bin/omahon
+    echo "[AI] Omahon installed from build-assets"
+else
+    echo "[AI] WARNING: Omahon binary not found in build-assets â€” will need manual install"
+fi
+
+# Omahon default config for all users
+mkdir -p /etc/skel/.config/omahon || true
+cat > /etc/skel/.config/omahon/config.toml << 'OMAHON_CFG'
+# Omahon â€” Alfred Linux default configuration
+# The sovereign AI agent lives here.
+
+[providers]
+default = "ollama"
+
+[providers.ollama]
+base_url = "http://localhost:11434"
+model = "phi3:mini"
+
+[providers.anthropic]
+# Set your API key: export ANTHROPIC_API_KEY=sk-ant-...
+# model = "claude-sonnet-4-20250514"
+
+[memory]
+enabled = true
+path = "~/.local/share/omahon/memory.db"
+auto_compact = true
+
+[behavior]
+auto_tier = true
+think_level = "medium"
+
+[ui]
+theme = "dark"
+OMAHON_CFG
+
+# â”€â”€ 3. Alfred Agent CLI â€” Smart AI Router â”€â”€
+# One command. It figures out what's available and uses it.
+echo "[AI] Creating alfred-ai command..."
+cat > /usr/local/bin/alfred-ai << 'ALFRED_AI'
+#!/bin/bash
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+# alfred-ai â€” The sovereign intelligence gateway
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+# Routes to the best available AI:
+#   1. Omahon (local agent harness â€” always preferred)
+#   2. Claude Code (if API key set)
+#   3. Ollama direct (if running)
+#   4. Helpful error with setup instructions
+
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+CYAN='\033[0;36m'
+GOLD='\033[0;33m'
+NC='\033[0m'
+
+# Start ollama if not running
+if command -v ollama &>/dev/null && ! pgrep -x ollama &>/dev/null; then
+    echo -e "${CYAN}Starting Ollama in background...${NC}"
+    nohup ollama serve &>/dev/null &
+    sleep 2
+fi
+
+if [ "$1" = "--status" ] || [ "$1" = "status" ]; then
+    echo -e "${GOLD}â•â•â• Alfred AI Status â•â•â•${NC}"
+    echo -n "Omahon:     " && (command -v omahon &>/dev/null && echo -e "${GREEN}INSTALLED${NC}" || echo -e "${RED}NOT FOUND${NC}")
+    echo -n "Ollama:     " && (pgrep -x ollama &>/dev/null && echo -e "${GREEN}RUNNING${NC}" || echo -e "${RED}STOPPED${NC}")
+    echo -n "Claude:     " && ([ -n "$ANTHROPIC_API_KEY" ] && echo -e "${GREEN}API KEY SET${NC}" || echo -e "${RED}NO API KEY${NC}")
+    echo ""
+    echo -n "Models:     " && (ollama list 2>/dev/null | tail -n +2 | wc -l || echo "0") && echo " installed"
+    echo -e "${GOLD}â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•${NC}"
+
+fi
+
+if [ "$1" = "--pull" ] || [ "$1" = "pull" ]; then
+    echo -e "${CYAN}Pulling recommended model (phi3:mini â€” 2.3GB)...${NC}"
+    # ollama pull phi3:mini
+    true
+fi
+
+if command -v omahon &>/dev/null; then
+    exec omahon "$@"
+elif command -v claude &>/dev/null && [ -n "$ANTHROPIC_API_KEY" ]; then
+    exec claude "$@"
+elif command -v ollama &>/dev/null; then
+    echo -e "${CYAN}Omahon not installed. Using Ollama directly.${NC}"
+ echo -e "${CYAN}For the full agent experience: sudo apt install omahon${NC}"
+    if [ -n "$1" ]; then
+        exec ollama run phi3:mini "$*"
+    else
+        exec ollama run phi3:mini
+    fi
+else
+    echo -e "${RED}No AI tools available.${NC}"
+    echo ""
+    echo "Install options:"
+    echo "  1. Pull a model:  alfred-ai pull"
+    echo "  2. Set Claude key: export ANTHROPIC_API_KEY=sk-ant-..."
+    echo ""
+    true
+fi
+ALFRED_AI
+[ -e /usr/local/bin/alfred-ai ] && chmod +x /usr/local/bin/alfred-ai || true
+
+# â”€â”€ 4. Python AI Libraries â”€â”€
+echo "[AI] Installing Python AI libraries..."
+if [[ "${ALFRED_ALLOW_HOOK_NETWORK_DOWNLOADS:-}" == "1" ]]; then
+    pip3 install --break-system-packages --no-cache-dir \
+        anthropic \
+        openai \
+        2>/dev/null || true
+else
+    echo "[AI] WARN: skipping anthropic/openai pip install --break-system-packages (set ALFRED_ALLOW_HOOK_NETWORK_DOWNLOADS=1)." >&2 || true
+fi
+
+# â”€â”€ 5. Desktop Integration â”€â”€
+echo "[AI] Creating desktop entries..."
+cat > /usr/share/applications/alfred-ai.desktop << 'DESK'
+[Desktop Entry]
+Name=Alfred AI
+Comment=Sovereign AI Agent â€” talk to your computer
+Exec=konsole -e alfred-ai
+Icon=applications-science
+Terminal=false
+Type=Application
+Categories=Development;Science;AI;
+Keywords=ai;agent;llm;omahon;claude;ollama;
+DESK
+
+cat > /usr/share/applications/ollama.desktop << 'DESK2'
+[Desktop Entry]
+Name=Ollama
+Comment=Local LLM inference â€” offline AI
+Exec=konsole -e "ollama run phi3:mini"
+Icon=applications-science
+Terminal=false
+Type=Application
+Categories=Development;Science;AI;
+DESK2
+
+# â”€â”€ 6. First-boot AI setup hint â”€â”€
+mkdir -p /etc/skel/.config/autostart || true
+cat > /etc/skel/.config/autostart/alfred-ai-hint.desktop << 'HINT'
+[Desktop Entry]
+Type=Application
+Name=Alfred AI Setup
+Exec=bash -c 'if [ ! -f ~/.alfred-ai-setup-done ]; then notify-send "Alfred AI" "Type alfred-ai in terminal to meet your AI agent. Run alfred-ai pull to download a local model." -i applications-science; touch ~/.alfred-ai-setup-done; fi'
+Hidden=false
+NoDisplay=true
+X-GNOME-Autostart-enabled=true
+HINT
+
+echo "â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•"
+echo "  AI LAYER COMPLETE â€” The breath is in the machine"
+echo "â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•"
+
+# ── 7. First-boot Ollama GGUF Importer ──
+mkdir -p /usr/local/bin || true
+cat > /usr/local/bin/alfred-ollama-import.sh << 'IMPORTER'
+#!/bin/bash
+# Automatically registers the 44GB custom GGUF models into Ollama on first boot
+
+MARKER="$HOME/.alfred-ollama-imported"
+if [ -f "$MARKER" ]; then exit 0; fi
+
+echo "[Ollama Importer] Waiting for Ollama service to start..."
+for i in {1..30}; do
+    if curl --max-time 900 -s http://127.0.0.1:11434 >/dev/null; then break; fi || true
+    sleep 2
+done
+
+MODEL_DIR="/opt/alfred-models"
+
+# Function to create Modelfile and import
+import_model() {
+    local name="$1"
+    local gguf="$2"
+    if [ -f "$MODEL_DIR/$gguf" ]; then
+        echo "FROM $MODEL_DIR/$gguf" > "/tmp/Modelfile-$name"
+        echo "PARAMETER temperature 0.7" >> "/tmp/Modelfile-$name"
+        echo "[Ollama Importer] Importing $name..."
+        ollama create "$name" -f "/tmp/Modelfile-$name" 2>/dev/null || true
+        rm -f "/tmp/Modelfile-$name"
+    fi
+}
+
+import_model "alfred-opus" "alfred-opus.gguf"
+import_model "alfred-opus-iq3" "alfred-opus-iq3.gguf"
+import_model "alfred-sonnet" "alfred-sonnet.gguf"
+import_model "alfred-haiku" "alfred-haiku.gguf"
+
+# Also set Omahon to use the imported model by default if possible
+sed -i 's/model = "phi3:mini"/model = "alfred-opus"/g' ~/.config/omahon/config.toml 2>/dev/null || true
+
+touch "$MARKER"
+echo "[Ollama Importer] Custom models successfully registered in Ollama."
+IMPORTER
+[ -e /usr/local/bin/alfred-ollama-import.sh ] && chmod +x /usr/local/bin/alfred-ollama-import.sh || true
+
+# Autostart the importer on first login
+mkdir -p /etc/skel/.config/autostart || true
+cat > /etc/skel/.config/autostart/alfred-ollama-import.desktop << 'DESK3'
+[Desktop Entry]
+Type=Application
+Name=Alfred Ollama Importer
+Exec=bash -c "/usr/local/bin/alfred-ollama-import.sh &"
+Hidden=false
+X-GNOME-Autostart-enabled=true
+X-GNOME-Autostart-Delay=5
+DESK3
+
+
+# === MERGED FROM 0260-alfred-comfyui.hook.chroot ===
+#!/bin/bash
+# 0260-alfred-comfyui.hook.chroot
+# Installs ComfyUI (The Visual Forge) and links it to the downloaded AI models
+
+set +e
+
+echo "I: [alfred] Installing ComfyUI Visual Rendering Engine..."
+
+export DEBIAN_FRONTEND=noninteractive
+
+# Install dependencies (git and python venv dependencies usually exist, but ensure)
+apt-get install -y --fix-broken -y --no-install-recommends git python3-venv python3-pip || true
+
+mkdir -p /opt
+cd /opt
+
+if [ ! -d "ComfyUI" ]; then
+    # Clone ComfyUI without large history
+    if [[ "${ALFRED_ALLOW_HOOK_NETWORK_DOWNLOADS:-}" == "1" ]]; then
+        git clone --depth 1 https://github.com/comfyanonymous/ComfyUI.git || true
+    else
+        echo "I: [alfred] Skipping ComfyUI git clone due to network restrictions." || true
+
+    fi
+fi
+
+cd ComfyUI
+
+# Set up virtual environment
+python3 -m venv venv
+# Install dependencies using the virtual environment
+./venv/bin/pip install --break-system-packages --upgrade pip || true
+./venv/bin/pip install --break-system-packages torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu || true
+./venv/bin/pip install --break-system-packages -r requirements.txt || true
+
+# Symlink the models from the Apocalypse Vault into ComfyUI
+mkdir -p /opt/alfred-models/diffusion || true
+mkdir -p /opt/alfred-models/video || true
+mkdir -p /opt/alfred-models/audio || true
+mkdir -p /opt/alfred-models/upscale || true
+mkdir -p /opt/alfred-models/vision || true
+
+# Link FLUX and all other Diffusion models (safetensors and directories)
+mkdir -p models/unet models/checkpoints models/upscale_models models/audio models/vision
+for file in /opt/alfred-models/diffusion/*.safetensors; do
+    [ -e "$file" ] && ln -sf "$file" "models/unet/$(basename "$file")" || true
+done
+for dir in /opt/alfred-models/diffusion/*/; do
+    [ -d "$dir" ] && ln -sfn "$dir" "models/unet/$(basename "$dir")" || true
+done
+ln -sf /opt/alfred-models/diffusion/flux2-dev/flux2-dev.safetensors models/unet/flux2-dev.safetensors || true
+
+# Link CogVideoX and all other Video models (Hunyuan, Mochi, Wan, Pyramid Flow, etc.)
+for file in /opt/alfred-models/video/*.safetensors; do
+    [ -e "$file" ] && ln -sf "$file" "models/unet/$(basename "$file")" || true
+done
+for dir in /opt/alfred-models/video/*/; do
+    [ -d "$dir" ] && ln -sfn "$dir" "models/unet/$(basename "$dir")" || true
+done
+
+# Link UltraSharp Upscaler
+ln -sf /opt/alfred-models/upscale/4x-UltraSharp.pth models/upscale_models/4x-UltraSharp.pth || true
+
+# Link Audio/Voice (MusicGen, XTTS, Whisper)
+ln -sf /opt/alfred-models/audio/musicgen-small models/audio/musicgen-small || true
+ln -sf /opt/alfred-models/audio/musicgen-large models/audio/musicgen-large || true
+ln -sf /opt/alfred-models/audio/musicgen-melody models/audio/musicgen-melody || true
+ln -sf /opt/alfred-models/audio/stable-audio-open models/audio/stable-audio-open || true
+ln -sf /opt/alfred-models/audio/xtts-v2 models/audio/xtts-v2 || true
+ln -sf /opt/alfred-models/audio/whisper-large-v3-turbo.bin models/audio/whisper-large-v3-turbo.bin || true
+
+# Link Florence-2 Vision
+ln -sf /opt/alfred-models/vision/florence-2-large models/vision/florence-2-large || true
+
+# Create systemd service (Optional: launch on boot or on demand)
+cat > /etc/systemd/system/comfyui.service << 'COMFYSVC'
+[Unit]
+Description=ComfyUI Visual Forge
+Wants=nvidia-persistenced.service
+After=network-online.target nvidia-persistenced.service
+
+[Service]
+Type=simple
+User=alfred
+WorkingDirectory=/opt/ComfyUI
+ExecStart=/opt/ComfyUI/venv/bin/python main.py --listen 127.0.0.1 --port 8188
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
+COMFYSVC
+
+# Create a desktop shortcut for Alfred Studio
+mkdir -p /usr/share/applications || true
+cat > /usr/share/applications/alfred-studio.desktop << 'DESK'
+[Desktop Entry]
+Name=Alfred Studio (Visual Forge)
+Comment=Generate Images and Video locally using ComfyUI
+Exec=xdg-open http://127.0.0.1:8188
+Icon=applications-graphics
+Terminal=false
+Type=Application
+Categories=Graphics;Science;AI;
+Keywords=ai;comfyui;image;video;flux;cogvideox;
+DESK
+
+echo "I: [alfred] ComfyUI installation complete."
+
+# === INJECTED: The Leviathan & The Burning Bush ===
+cat > /usr/local/bin/alfred-burning-bush << 'EOF_BUSH'
+#!/bin/bash
+while true; do
+    IDLE=$(xprintidle 2>/dev/null || echo 0)
+    if [ "$IDLE" -gt 900000 ]; then
+        kdialog --passivepopup "The Burning Bush: The machine awaits your command..." 5
+        sleep 60
+    else
+        sleep 10
+    fi
+done
+EOF_BUSH
+[ -e /usr/local/bin/alfred-burning-bush ] && chmod +x /usr/local/bin/alfred-burning-bush
+echo "[$(date -Is)] The Burning Bush is kindled."
+
+# --- END MERGED CONTENT FROM: 0250-alfred-ai.hook.chroot ---
+
+

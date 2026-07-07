@@ -1,0 +1,80 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+# [Genesis Forge] Systemd Hardening: alfred-daemon-279.service
+# Enforces deep PrivateTmp, ProtectSystem, and ProtectHome on native daemons.
+echo "[Genesis Forge] Hardening systemd service: alfred-daemon-279.service"
+mkdir -p /etc/systemd/system/alfred-daemon-279.service.d/ || true
+cat > /etc/systemd/system/alfred-daemon-279.service.d/override.conf << 'EOF'
+[Service]
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=read-only
+NoNewPrivileges=yes
+RestrictRealtime=yes
+EOF
+
+
+# --- BEGIN MERGED CONTENT FROM: 0813-alfred-upper-room.hook.chroot ---
+#!/bin/bash
+# 0813-alfred-upper-room.hook.chroot
+# Installs qTox for decentralized encrypted chat
+
+set +e
+
+echo "[0813] Installing The Upper Room (qTox)..."
+
+# qtox is in the Debian repositories
+DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends qtox || true
+
+mkdir -p /usr/share/applications
+cat << 'EOF' > /usr/share/applications/alfred-upper-room.desktop
+[Desktop Entry]
+Name=The Upper Room
+Comment=Decentralized Encrypted P2P Chat
+Exec=qtox
+Icon=qtox
+Type=Application
+Categories=Network;Chat;
+EOF
+
+# Put it on the desktop
+mkdir -p /etc/skel/Desktop
+[ -e "/usr/share/applications/alfred-upper-room.desktop" ] && cp /usr/share/applications/alfred-upper-room.desktop /etc/skel/Desktop/
+[ -e "/etc/skel/Desktop/alfred-upper-room.desktop" ] && chmod +x /etc/skel/Desktop/alfred-upper-room.desktop
+
+echo "[0813] Upper Room installed."
+
+# --- END MERGED CONTENT FROM: 0813-alfred-upper-room.hook.chroot ---
+
+
+#!/bin/bash
+# 0813-alfred-upper-room.hook.chroot
+# Installs qTox for decentralized encrypted chat
+
+set +e
+
+echo "[0813] Installing The Upper Room (qTox)..."
+
+# qtox is in the Debian repositories
+DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends qtox || true
+
+mkdir -p /usr/share/applications
+cat << 'EOF' > /usr/share/applications/alfred-upper-room.desktop
+[Desktop Entry]
+Name=The Upper Room
+Comment=Decentralized Encrypted P2P Chat
+Exec=qtox
+Icon=qtox
+Type=Application
+Categories=Network;Chat;
+EOF
+
+# Put it on the desktop
+mkdir -p /etc/skel/Desktop
+cp /usr/share/applications/alfred-upper-room.desktop /etc/skel/Desktop/
+chmod +x /etc/skel/Desktop/alfred-upper-room.desktop
+
+echo "[0813] Upper Room installed."

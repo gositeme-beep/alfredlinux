@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1a0820"/>
+      <stop offset="100%" style="stop-color:#0d0515"/>
+    </linearGradient>
+    <linearGradient id="vr" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#8b5cf6"/>
+      <stop offset="50%" style="stop-color:#a78bfa"/>
+      <stop offset="100%" style="stop-color:#c4b5fd"/>
+    </linearGradient>
+    <linearGradient id="ring" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#7c3aed"/>
+      <stop offset="100%" style="stop-color:#a78bfa"/>
+    </linearGradient>
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="5" result="blur"/>
+      <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="512" height="512" rx="110" fill="url(#bg)"/>
+  <rect x="4" y="4" width="504" height="504" rx="106" fill="none" stroke="url(#ring)" stroke-width="5" opacity="0.7"/>
+
+  <!-- VR headset body -->
+  <rect x="110" y="195" width="292" height="140" rx="35" fill="none" stroke="url(#vr)" stroke-width="10" filter="url(#glow)"/>
+
+  <!-- Left lens -->
+  <circle cx="200" cy="265" r="38" fill="none" stroke="url(#vr)" stroke-width="6" opacity="0.7"/>
+  <circle cx="200" cy="265" r="18" fill="url(#vr)" opacity="0.3"/>
+
+  <!-- Right lens -->
+  <circle cx="312" cy="265" r="38" fill="none" stroke="url(#vr)" stroke-width="6" opacity="0.7"/>
+  <circle cx="312" cy="265" r="18" fill="url(#vr)" opacity="0.3"/>
+
+  <!-- Nose bridge -->
+  <path d="M238 285 C248 300 264 300 274 285" fill="none" stroke="url(#vr)" stroke-width="4" opacity="0.5"/>
+
+  <!-- Head strap -->
+  <path d="M110 250 C80 240 70 200 80 170 C90 140 120 130 140 145"
+    fill="none" stroke="url(#vr)" stroke-width="5" opacity="0.35"/>
+  <path d="M402 250 C432 240 442 200 432 170 C422 140 392 130 372 145"
+    fill="none" stroke="url(#vr)" stroke-width="5" opacity="0.35"/>
+
+  <!-- Digital particles / virtual world hints -->
+  <circle cx="200" cy="130" r="4" fill="#a78bfa" opacity="0.4"/>
+  <circle cx="312" cy="130" r="4" fill="#a78bfa" opacity="0.4"/>
+  <circle cx="256" cy="110" r="3" fill="#c4b5fd" opacity="0.3"/>
+  <circle cx="180" cy="400" r="3" fill="#8b5cf6" opacity="0.3"/>
+  <circle cx="332" cy="400" r="3" fill="#8b5cf6" opacity="0.3"/>
+</svg>

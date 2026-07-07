@@ -1,0 +1,56 @@
+Alfred Linux — ISO staging: what ships, what can still be missing (audit)
+===========================================================================
+Last deep pass: 2026-04-26. Pair with `docs/ISO-BUILD-RISK-REGISTER.txt` and
+`scripts/sync-canonical-to-build.sh`.
+
+A) What `sync-canonical-to-build.sh` now merges (before `lb config`)
+----------------------------------------------------------------------
+  • `config/hooks/live/*.hook.chroot`           → `build/config/hooks/`
+  • `config/package-lists/*.list.chroot`      → `build/config/package-lists/`
+  • `config/packages.chroot/*` (files)        → `build/config/packages.chroot/`
+  • `build-assets/`                           → `build/config/includes.chroot/build-assets/`
+      – Docker (`lb-docker-inner-build.sh`): `ALFRED_FULL_BUILD_ASSETS=1` → full tree rsync.
+      – Fast (default): subtrees `bible/`, `kingdom-documents/`, `videos/`, `wallpapers/`,
+        `music/`, `nodejs-20-debs/` when present **plus every depth-1 file** under
+        `build-assets/` (binaries like `omahon`, `helm`, `rustup-init`, keys, staged `.deb`).
+  • `local/` (if non-empty at repo root)       → `build/local/` (live-build local hooks)
+
+B) Repo `config/` vs `build/config/` (non-hook paths)
+------------------------------------------------------
+  • `package-lists`, `packages.chroot`, `preseed`, `templates`, `includes*`, `packages`,
+    `archives`, `bootstrap` under **repo** `config/` were compared to the same subtrees
+    under **build/config/**: no extra tracked files lived only in repo **except** what
+    sync now copies (hooks live in `config/hooks/live/` but land in `build/config/hooks/`
+    flat — handled by the hook sync, not path-identical diff).
+
+C) Still NOT automatic — maintainer / builder must supply
+----------------------------------------------------------
+  1) **Kernel 7.0.4 `.deb` set** — listed in `.gitignore`; fresh git clones have no
+     `linux-image-7.0.4*.deb` until you copy bindeb-pkg outputs into `config/packages.chroot/`
+     (`scripts/iso-preflight.sh`, `README-KERNEL7.txt`).
+  2) **Optional binaries never committed** — hooks look for `/build-assets/meilisearch`,
+     `/build-assets/code-server_*_amd64.deb`, real **ollama** (non-zero) if you replace the
+     placeholder, `helm`, `zoxide`, `starship`, `goforge-cli`, `nodesource-repo-gpg.key`, etc.
+     If absent, hooks fall back to apt/wget or skip (see each hook).
+  3) **Large gitignored media** — `.gitignore` drops `build-assets/videos/`, `music/`,
+     `wallpapers/` from forge clones; **full** ISO needs them on the builder disk before
+     Docker (or ship via release artifact + `ALFRED_FULL_BUILD_ASSETS=1` rsync from a tree
+     that actually contains those dirs).
+  4) **`build/config/includes.chroot/tmp/`** — e.g. `alfred-commander-*.tar.gz` may be
+     build-host staging only (not in this git tree). Sync does not invent these.
+  5) **`build/auto/`** — empty is normal; if you add a custom `auto/config`, it lives under
+     `build/` (gitignored) and is not copied from repo root `config/` (there is no parallel
+     `config/auto/` in-tree).
+  6) **Network-first hooks** — some paths `wget`/`curl` upstream when a staged file is
+     missing (e.g. code-server); ISO “completeness” then depends on mirror availability, not
+     only git.
+
+D) Quick “did we forget X?” checklist before burning GA
+---------------------------------------------------------
+  [ ] `bash scripts/iso-preflight.sh`
+  [ ] `ALFRED_FULL_BUILD_ASSETS=1 bash scripts/sync-canonical-to-build.sh` (host) **or**
+      rely on Docker inner (sets full assets flag).
+  [ ] `bash scripts/release-integrity.sh check-repo` && `bash scripts/security-audit.sh`
+  [ ] Spot-check `build/config/includes.chroot/build-assets/` for omahon, bible TSVs,
+      videos/wallpapers if this GA promises them.
+  [ ] `lb build` → boot smoke + one hook-unique path (e.g. `/usr/share/alfred/bible/`).

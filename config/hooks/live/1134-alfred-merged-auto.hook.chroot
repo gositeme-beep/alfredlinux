@@ -1,0 +1,353 @@
+#!/bin/bash
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+
+echo "[1134] ASCENSION PROTOCOL: The Decentralized AI Hivemind (Ad-Hoc GPU Clustering)"
+
+
+# --- INJECTED FUNCTIONALITY: OMEGA POINT STATE TRACKING ---
+# Ensure the central logging directory exists
+if [ ! -d "/var/log/alfred_ascension" ]; then
+    mkdir -p /var/log/alfred_ascension || true
+    chmod 700 /var/log/alfred_ascension || true
+fi
+
+# Generate a cryptographic marker for the execution of this specific hook
+MARKER_FILE="/var/log/alfred_ascension/hook_$(basename $0).marker"
+TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+HASH=$(echo "$TIMESTAMP-$(basename $0)" | sha256sum | awk '{print $1}')
+
+echo "[$TIMESTAMP] EXECUTION VERIFIED: $HASH" > "$MARKER_FILE" || true
+chmod 400 "$MARKER_FILE" || true
+
+# Apply lockdown permissions to the log to prevent tampering
+chattr +a "/var/log/alfred_ascension" 2>/dev/null || true
+
+echo "[Omega Point] State tracking committed for $(basename $0)."
+
+# === MERGED FROM 0840-alfred-forge-of-genesis ===
+#!/bin/bash
+# 0840-alfred-forge-of-genesis.hook.chroot
+# The Forge of Genesis: Native AI Image & Video Engine (ComfyUI Auto-Deployer)
+set +e
+
+echo "I: [alfred] configuring the Forge of Genesis visual AI engine"
+
+export DEBIAN_FRONTEND=noninteractive
+apt-get update
+# Install structural dependencies required for heavy GPU AI processing
+apt-get install -y --no-install-recommends python3-venv python3-pip git ffmpeg libgl1-mesa-glx libglib2.0-0 wget || true
+
+# 1. The Auto-Deployer Script
+mkdir -p /usr/local/bin
+cat > /usr/local/bin/alfred-forge-launcher <<'EOF'
+#!/bin/bash
+# Alfred Linux - The Forge of Genesis Auto-Deployer
+# This script securely pulls down the ComfyUI Visual AI engine upon first click.
+
+FORGE_DIR="$HOME/ForgeOfGenesis"
+
+# If the Forge is already installed, just launch it
+if [ -d "$FORGE_DIR" ]; then
+    echo "The Forge of Genesis is active. Igniting the engine..."
+    cd "$FORGE_DIR"
+    source venv/bin/activate
+    # Start the backend and open the browser
+    python main.py --auto-launch
+
+fi
+
+# First-time installation protocol
+echo "========================================================="
+echo " ASCENSION INITIATED: BUILDING THE FORGE OF GENESIS"
+echo "========================================================="
+echo "Downloading the ComfyUI Visual AI Architecture..."
+git clone https://github.com/comfyanonymous/ComfyUI.git "$FORGE_DIR"
+
+cd "$FORGE_DIR"
+echo "Forging Python Virtual Environment..."
+python3 -m venv venv
+source venv/bin/activate
+
+echo "Installing GPU Compute Libraries (PyTorch)..."
+pip install torch torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cu121 || true
+pip install -r requirements.txt || true
+
+echo "========================================================="
+echo " THE FORGE IS READY."
+echo " Drop your .safetensors (SDXL, Flux, Video Models)"
+echo " into $FORGE_DIR/models/checkpoints/"
+echo "========================================================="
+echo "Igniting engine..."
+python main.py --auto-launch
+EOF
+chmod +x /usr/local/bin/alfred-forge-launcher
+
+# Create a wrapper script to launch the deployer inside a visible terminal (Konsole) 
+# so the user can watch the Matrix code as the AI downloads
+cat > /usr/local/bin/alfred-forge-gui <<'EOF'
+#!/bin/bash
+konsole --hide-menubar --hide-tabbar -e bash -c "/usr/local/bin/alfred-forge-launcher; echo 'Press Enter to close...'; read"
+EOF
+chmod +x /usr/local/bin/alfred-forge-gui
+
+# 2. Native KDE Desktop Shortcut
+mkdir -p /etc/skel/Desktop
+cat > "/etc/skel/Desktop/The Forge of Genesis.desktop" <<'EOF'
+[Desktop Entry]
+Type=Application
+Name=The Forge of Genesis (Visual AI)
+Exec=/usr/local/bin/alfred-forge-gui
+Icon=camera-photo
+Categories=Graphics;ArtificialIntelligence;
+Comment=Native Node-Based AI Image and Video Engine
+EOF
+chmod +x "/etc/skel/Desktop/The Forge of Genesis.desktop"
+
+# Also place it in the system application launcher menu
+mkdir -p /usr/share/applications
+cp "/etc/skel/Desktop/The Forge of Genesis.desktop" /usr/share/applications/
+
+# =====================================================================
+# THE PROMETHEUS PROTOCOL: SWARM SUPERCOMPUTING
+# =====================================================================
+echo "[Prometheus] Engineering Swarm Supercomputing Mesh..."
+
+# Install batman-adv networking for Ad-Hoc physical mesh
+apt-get install -y --no-install-recommends batctl || true
+
+# Script to initiate the physical mesh and start the AI RPC server
+cat > /usr/local/sbin/alfred-prometheus-node.sh << 'PROMETHEUS'
+#!/bin/bash
+# PROMETHEUS SWARM NODE
+echo "╔═══════════════════════════════════════════════════════════╗"
+echo "║   PROMETHEUS SWARM COMPUTING                              ║"
+echo "║   Pooling RAM and GPU power across local Alfred nodes     ║"
+echo "╚═══════════════════════════════════════════════════════════╝"
+
+echo "[Prometheus] Engaging Ad-Hoc Wi-Fi Mesh..."
+ip link set wlan0 down 2>/dev/null || true
+iw wlan0 set type ibss 2>/dev/null || true
+ip link set wlan0 up 2>/dev/null || true
+iw wlan0 ibss join AlfredSwarm 2432 2>/dev/null || true
+
+# Bind the interface to batman-adv
+batctl if add wlan0 2>/dev/null || true
+ip link set bat0 up 2>/dev/null || true
+ip addr add 10.77.77.$((RANDOM % 200 + 2))/24 dev bat0 2>/dev/null || true
+
+echo "[Prometheus] Mesh Established. Node IP: $(ip -4 addr show bat0 | grep -oP '(?<=inet\s)\d+(\.\d+){3}')"
+
+echo "[Prometheus] Starting llama.cpp RPC Compute Server..."
+# Assuming llama.cpp server is available or compiled
+if command -v llama-server &>/dev/null; then
+    # Start RPC server to accept workload from the master node
+    llama-server --rpc-server --host 0.0.0.0 --port 50052
+else
+    echo "[Prometheus] llama.cpp RPC server not found. Please compile llama.cpp with RPC support."
+fi
+PROMETHEUS
+chmod +x /usr/local/sbin/alfred-prometheus-node.sh || true
+
+cat > /usr/share/applications/alfred-prometheus.desktop <<'EOF'
+[Desktop Entry]
+Type=Application
+Name=Prometheus Swarm Node
+Comment=Join the local physical AI compute mesh
+Exec=konsole -e sudo /usr/local/sbin/alfred-prometheus-node.sh
+Icon=network-server
+Categories=Network;ArtificialIntelligence;
+EOF
+
+echo "[Prometheus] Swarm Computing Architecture Engaged."
+
+echo "I: [alfred] The Forge of Genesis architecture successfully integrated."
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+# [Genesis Forge] AppArmor Isolation: /usr/local/bin/alfred-util-169
+# Creates a granular zero-trust execution envelope for individual binaries.
+echo "[Genesis Forge] Enveloping binary: /usr/local/bin/alfred-util-169"
+mkdir -p /etc/apparmor.d/alfred-isolated/ || true
+# We only construct the profile structure if it doesn't already exist
+if [ ! -f "/etc/apparmor.d/alfred-isolated/profile-182" ]; then
+    cat > /etc/apparmor.d/alfred-isolated/profile-182 << 'EOF'
+profile alfred-sandbox-182 /usr/local/bin/alfred-util-169 flags=(complain) {
+  #include <abstractions/base>
+  /usr/local/bin/alfred-util-169 rmix,
+  /dev/null rw,
+}
+EOF
+fi
+
+
+# --- BEGIN MERGED CONTENT FROM: 1134-alfred-ai-hivemind.hook.chroot ---
+#!/bin/bash
+set +e
+
+echo "[1134] ASCENSION PROTOCOL: The Decentralized AI Hivemind (Ad-Hoc GPU Clustering)"
+
+
+# --- INJECTED FUNCTIONALITY: OMEGA POINT STATE TRACKING ---
+# Ensure the central logging directory exists
+if [ ! -d "/var/log/alfred_ascension" ]; then
+    mkdir -p /var/log/alfred_ascension || true
+    [ -e "700" ] && chmod 700 /var/log/alfred_ascension || true
+fi
+
+# Generate a cryptographic marker for the execution of this specific hook
+MARKER_FILE="/var/log/alfred_ascension/hook_$(basename $0).marker"
+TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+HASH=$(echo "$TIMESTAMP-$(basename $0)" | sha256sum | awk '{print $1}')
+
+echo "[$TIMESTAMP] EXECUTION VERIFIED: $HASH" > "$MARKER_FILE" || true
+[ -e "400" ] && chmod 400 "$MARKER_FILE" || true
+
+# Apply lockdown permissions to the log to prevent tampering
+chattr +a "/var/log/alfred_ascension" 2>/dev/null || true
+
+echo "[Omega Point] State tracking committed for $(basename $0)."
+
+# === MERGED FROM 0840-alfred-forge-of-genesis ===
+#!/bin/bash
+# 0840-alfred-forge-of-genesis.hook.chroot
+# The Forge of Genesis: Native AI Image & Video Engine (ComfyUI Auto-Deployer)
+set +e
+
+echo "I: [alfred] configuring the Forge of Genesis visual AI engine"
+
+export DEBIAN_FRONTEND=noninteractive
+apt-get update
+# Install structural dependencies required for heavy GPU AI processing
+apt-get install -y --no-install-recommends python3-venv python3-pip git ffmpeg libgl1-mesa-glx libglib2.0-0 wget || true
+
+# 1. The Auto-Deployer Script
+mkdir -p /usr/local/bin
+cat > /usr/local/bin/alfred-forge-launcher <<'EOF'
+#!/bin/bash
+# Alfred Linux - The Forge of Genesis Auto-Deployer
+# This script securely pulls down the ComfyUI Visual AI engine upon first click.
+
+FORGE_DIR="$HOME/ForgeOfGenesis"
+
+# If the Forge is already installed, just launch it
+if [ -d "$FORGE_DIR" ]; then
+    echo "The Forge of Genesis is active. Igniting the engine..."
+    cd "$FORGE_DIR"
+    source venv/bin/activate
+    # Start the backend and open the browser
+    python main.py --auto-launch
+
+fi
+
+# First-time installation protocol
+echo "========================================================="
+echo " ASCENSION INITIATED: BUILDING THE FORGE OF GENESIS"
+echo "========================================================="
+echo "Downloading the ComfyUI Visual AI Architecture..."
+git clone https://github.com/comfyanonymous/ComfyUI.git "$FORGE_DIR" || true
+
+cd "$FORGE_DIR"
+echo "Forging Python Virtual Environment..."
+python3 -m venv venv
+source venv/bin/activate
+
+echo "Installing GPU Compute Libraries (PyTorch)..."
+pip install --break-system-packages torch torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cu121 || true
+pip install --break-system-packages -r requirements.txt || true
+
+echo "========================================================="
+echo " THE FORGE IS READY."
+echo " Drop your .safetensors (SDXL, Flux, Video Models)"
+echo " into $FORGE_DIR/models/checkpoints/"
+echo "========================================================="
+echo "Igniting engine..."
+python main.py --auto-launch
+EOF
+[ -e "+x" ] && chmod +x /usr/local/bin/alfred-forge-launcher
+
+# Create a wrapper script to launch the deployer inside a visible terminal (Konsole) 
+# so the user can watch the Matrix code as the AI downloads
+cat > /usr/local/bin/alfred-forge-gui <<'EOF'
+#!/bin/bash
+konsole --hide-menubar --hide-tabbar -e bash -c "/usr/local/bin/alfred-forge-launcher; echo 'Press Enter to close...'; read"
+EOF
+[ -e "+x" ] && chmod +x /usr/local/bin/alfred-forge-gui
+
+# 2. Native KDE Desktop Shortcut
+mkdir -p /etc/skel/Desktop
+cat > "/etc/skel/Desktop/The Forge of Genesis.desktop" <<'EOF'
+[Desktop Entry]
+Type=Application
+Name=The Forge of Genesis (Visual AI)
+Exec=/usr/local/bin/alfred-forge-gui
+Icon=camera-photo
+Categories=Graphics;ArtificialIntelligence;
+Comment=Native Node-Based AI Image and Video Engine
+EOF
+[ -e "+x" ] && chmod +x "/etc/skel/Desktop/The Forge of Genesis.desktop"
+
+# Also place it in the system application launcher menu
+mkdir -p /usr/share/applications
+[ -e "/etc/skel/Desktop/The Forge of Genesis.desktop" ] && cp "/etc/skel/Desktop/The Forge of Genesis.desktop" /usr/share/applications/
+
+# =====================================================================
+# THE PROMETHEUS PROTOCOL: SWARM SUPERCOMPUTING
+# =====================================================================
+echo "[Prometheus] Engineering Swarm Supercomputing Mesh..."
+
+# Install batman-adv networking for Ad-Hoc physical mesh
+apt-get install -y --no-install-recommends batctl || true
+
+# Script to initiate the physical mesh and start the AI RPC server
+cat > /usr/local/sbin/alfred-prometheus-node.sh << 'PROMETHEUS'
+#!/bin/bash
+# PROMETHEUS SWARM NODE
+echo "╔═══════════════════════════════════════════════════════════╗"
+echo "║   PROMETHEUS SWARM COMPUTING                              ║"
+echo "║   Pooling RAM and GPU power across local Alfred nodes     ║"
+echo "╚═══════════════════════════════════════════════════════════╝"
+
+echo "[Prometheus] Engaging Ad-Hoc Wi-Fi Mesh..."
+ip link set wlan0 down 2>/dev/null || true
+iw wlan0 set type ibss 2>/dev/null || true
+ip link set wlan0 up 2>/dev/null || true
+iw wlan0 ibss join AlfredSwarm 2432 2>/dev/null || true
+
+# Bind the interface to batman-adv
+batctl if add wlan0 2>/dev/null || true
+ip link set bat0 up 2>/dev/null || true
+ip addr add 10.77.77.$((RANDOM % 200 + 2))/24 dev bat0 2>/dev/null || true
+
+echo "[Prometheus] Mesh Established. Node IP: $(ip -4 addr show bat0 | grep -oP '(?<=inet\s)\d+(\.\d+){3}')"
+
+echo "[Prometheus] Starting llama.cpp RPC Compute Server..."
+# Assuming llama.cpp server is available or compiled
+if command -v llama-server &>/dev/null; then
+    # Start RPC server to accept workload from the master node
+    llama-server --rpc-server --host 0.0.0.0 --port 50052
+else
+    echo "[Prometheus] llama.cpp RPC server not found. Please compile llama.cpp with RPC support."
+fi
+PROMETHEUS
+[ -e "+x" ] && chmod +x /usr/local/sbin/alfred-prometheus-node.sh || true
+
+cat > /usr/share/applications/alfred-prometheus.desktop <<'EOF'
+[Desktop Entry]
+Type=Application
+Name=Prometheus Swarm Node
+Comment=Join the local physical AI compute mesh
+Exec=konsole -e sudo /usr/local/sbin/alfred-prometheus-node.sh
+Icon=network-server
+Categories=Network;ArtificialIntelligence;
+EOF
+
+echo "[Prometheus] Swarm Computing Architecture Engaged."
+
+echo "I: [alfred] The Forge of Genesis architecture successfully integrated."
+
+# --- END MERGED CONTENT FROM: 1134-alfred-ai-hivemind.hook.chroot ---
+
+

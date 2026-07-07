@@ -1,0 +1,1228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GoSiteMe 3D Poker — Texas Hold'em</title>
+<meta name="description" content="Play Texas Hold'em Poker in stunning 3D. AI opponents with unique personalities, realistic chip physics, and immersive casino atmosphere — no downloads required.">
+<link rel="icon" href="/favicon.png">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0a0a14;color:#fff;font-family:'Inter','Segoe UI',system-ui,sans-serif;overflow:hidden;-webkit-font-smoothing:antialiased}
+#loading{position:fixed;inset:0;background:#0a0a14;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;transition:opacity .6s}
+#loading.hidden{opacity:0;pointer-events:none}
+#loading h1{font-size:2rem;margin-bottom:.5rem;background:linear-gradient(135deg,#22c55e,#10b981);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+#loading p{color:rgba(255,255,255,.5);font-size:.9rem;margin-bottom:1.5rem}
+.load-bar{width:200px;height:4px;background:rgba(255,255,255,.1);border-radius:2px;overflow:hidden}
+.load-bar-fill{height:100%;background:linear-gradient(90deg,#22c55e,#10b981);border-radius:2px;animation:loadPulse 1.5s ease-in-out infinite;width:60%}
+@keyframes loadPulse{0%,100%{transform:translateX(-100%)}50%{transform:translateX(100%)}}
+canvas#gameCanvas{display:block;width:100vw;height:100vh}
+
+/* HUD */
+#hud{position:fixed;top:0;left:0;right:0;padding:1rem 1.5rem;display:flex;align-items:center;justify-content:space-between;z-index:100;background:linear-gradient(180deg,rgba(10,10,20,.9),transparent);pointer-events:none}
+#hud>*{pointer-events:auto}
+.hud-left,.hud-right{display:flex;align-items:center;gap:.75rem}
+.hud-title{font-size:1.1rem;font-weight:700;background:linear-gradient(135deg,#22c55e,#10b981);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.hud-subtitle{font-size:.7rem;color:rgba(255,255,255,.4);margin-left:.5rem}
+.hud-btn{padding:.4rem .8rem;border-radius:8px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.06);color:rgba(255,255,255,.7);cursor:pointer;font-size:.75rem;font-weight:600;transition:.2s;backdrop-filter:blur(8px)}
+.hud-btn:hover{background:rgba(34,197,94,.15);color:#22c55e;border-color:rgba(34,197,94,.3)}
+
+/* Player Seats */
+.seat{position:fixed;z-index:100;pointer-events:none}
+.seat-inner{background:rgba(22,22,54,.85);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:.6rem .8rem;backdrop-filter:blur(12px);min-width:130px;text-align:center}
+.seat-inner.active{border-color:rgba(34,197,94,.5);box-shadow:0 0 16px rgba(34,197,94,.15)}
+.seat-inner.folded{opacity:.4}
+.seat-inner.dealer::after{content:'D';position:absolute;top:-.5rem;right:-.5rem;background:#f59e0b;color:#000;width:20px;height:20px;border-radius:50%;font-size:.65rem;font-weight:800;display:flex;align-items:center;justify-content:center}
+.seat-name{font-size:.78rem;font-weight:700;margin-bottom:.15rem;white-space:nowrap}
+.seat-chips{font-size:.65rem;color:rgba(255,255,255,.5)}
+.seat-bet{font-size:.6rem;color:#22c55e;margin-top:.15rem;font-weight:600}
+.seat-cards{display:flex;gap:3px;justify-content:center;margin-top:.3rem}
+.seat-card{width:26px;height:36px;border-radius:3px;font-size:.6rem;display:flex;align-items:center;justify-content:center;font-weight:700;line-height:1}
+.seat-card.facedown{background:linear-gradient(135deg,#1e3a5f,#0d1b2e);border:1px solid rgba(255,255,255,.15)}
+.seat-card.faceup{background:#fff;color:#000;border:1px solid rgba(0,0,0,.15)}
+.seat-card.red{color:#dc2626}
+
+/* Community Cards */
+#communityCards{position:fixed;left:50%;top:38%;transform:translate(-50%,-50%);z-index:100;display:flex;gap:6px;pointer-events:none}
+.comm-card{width:44px;height:62px;border-radius:5px;font-size:.8rem;display:flex;align-items:center;justify-content:center;font-weight:700;background:rgba(22,22,54,.6);border:1px solid rgba(255,255,255,.08);backdrop-filter:blur(4px);transition:all .4s}
+.comm-card.dealt{background:#fff;color:#000;border:1px solid rgba(0,0,0,.15);transform:scale(1.05)}
+.comm-card.red{color:#dc2626}
+
+/* Pot Display */
+#potDisplay{position:fixed;left:50%;top:27%;transform:translateX(-50%);z-index:100;text-align:center;pointer-events:none}
+#potDisplay .pot-label{font-size:.6rem;text-transform:uppercase;letter-spacing:1px;color:rgba(255,255,255,.4)}
+#potDisplay .pot-amount{font-size:1.3rem;font-weight:800;color:#f59e0b}
+
+/* Action Bar */
+#actionBar{position:fixed;bottom:1.5rem;left:50%;transform:translateX(-50%);z-index:200;display:flex;gap:.5rem;background:rgba(22,22,54,.92);border:1px solid rgba(255,255,255,.1);border-radius:14px;padding:.6rem;backdrop-filter:blur(16px)}
+#actionBar.hidden{display:none}
+.action-btn{padding:.6rem 1.2rem;border-radius:10px;border:none;cursor:pointer;font-size:.8rem;font-weight:700;transition:.2s;white-space:nowrap}
+.action-btn.fold{background:rgba(239,68,68,.15);color:#ef4444;border:1px solid rgba(239,68,68,.3)}
+.action-btn.fold:hover{background:rgba(239,68,68,.25)}
+.action-btn.check{background:rgba(59,130,246,.15);color:#3b82f6;border:1px solid rgba(59,130,246,.3)}
+.action-btn.check:hover{background:rgba(59,130,246,.25)}
+.action-btn.call{background:rgba(34,197,94,.15);color:#22c55e;border:1px solid rgba(34,197,94,.3)}
+.action-btn.call:hover{background:rgba(34,197,94,.25)}
+.action-btn.raise{background:rgba(245,158,11,.15);color:#f59e0b;border:1px solid rgba(245,158,11,.3)}
+.action-btn.raise:hover{background:rgba(245,158,11,.25)}
+.action-btn.allin{background:linear-gradient(135deg,#ef4444,#f59e0b);color:#000;border:none;font-weight:800}
+.action-btn.allin:hover{transform:scale(1.05)}
+
+/* Raise Slider */
+#raiseControls{display:none;align-items:center;gap:.5rem}
+#raiseControls.visible{display:flex}
+#raiseSlider{width:120px;accent-color:#f59e0b;cursor:pointer}
+#raiseAmount{font-size:.8rem;font-weight:700;color:#f59e0b;min-width:50px;text-align:center}
+
+/* Status Toast */
+#statusToast{position:fixed;bottom:6rem;left:50%;transform:translateX(-50%);z-index:300;padding:.6rem 1.2rem;border-radius:10px;background:rgba(22,22,54,.95);border:1px solid rgba(34,197,94,.3);color:#22c55e;font-size:.82rem;font-weight:600;backdrop-filter:blur(12px);opacity:0;transition:opacity .3s;pointer-events:none}
+#statusToast.visible{opacity:1}
+
+/* Hand Rank Display */
+#handRank{position:fixed;bottom:5.5rem;left:50%;transform:translateX(-50%);z-index:100;font-size:.75rem;font-weight:700;color:#f59e0b;opacity:0;transition:opacity .3s;pointer-events:none}
+#handRank.visible{opacity:1}
+
+/* Player Cards (Your Hand) */
+#yourCards{position:fixed;bottom:8rem;left:50%;transform:translateX(-50%);z-index:150;display:flex;gap:8px;pointer-events:none}
+.your-card{width:56px;height:80px;border-radius:6px;background:#fff;color:#000;border:2px solid rgba(34,197,94,.4);font-size:1.1rem;display:flex;align-items:center;justify-content:center;font-weight:800;box-shadow:0 4px 20px rgba(0,0,0,.5);transition:transform .3s}
+.your-card.red{color:#dc2626}
+
+/* Mode Modal */
+#modeModal{position:fixed;inset:0;background:rgba(10,10,20,.92);z-index:500;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(8px)}
+#modeModal.hidden{display:none}
+.mode-panel{background:rgba(22,22,54,.95);border:1px solid rgba(255,255,255,.1);border-radius:20px;padding:2.5rem;max-width:560px;width:90%;text-align:center}
+.mode-panel h2{font-size:1.5rem;margin-bottom:.3rem;background:linear-gradient(135deg,#22c55e,#10b981);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.mode-panel>p{color:rgba(255,255,255,.5);font-size:.85rem;margin-bottom:2rem}
+.mode-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+.mode-card{padding:1.5rem 1rem;border-radius:14px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.03);cursor:pointer;transition:.2s;text-decoration:none;color:#fff}
+.mode-card:hover{border-color:rgba(34,197,94,.3);background:rgba(34,197,94,.06);transform:translateY(-2px)}
+.mode-card .icon{font-size:2rem;margin-bottom:.5rem}
+.mode-card h3{font-size:.95rem;margin-bottom:.3rem}
+.mode-card p{font-size:.72rem;color:rgba(255,255,255,.4);margin:0}
+
+/* Log Panel */
+#logPanel{position:fixed;right:1.5rem;top:50%;transform:translateY(-50%);z-index:100;width:200px;max-height:50vh}
+.log-card{background:rgba(22,22,54,.85);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:.8rem;backdrop-filter:blur(12px)}
+.log-card h4{font-size:.6rem;text-transform:uppercase;letter-spacing:1px;color:rgba(255,255,255,.3);margin-bottom:.5rem}
+#logList{max-height:40vh;overflow-y:auto;font-size:.72rem;line-height:1.8;color:rgba(255,255,255,.5)}
+#logList::-webkit-scrollbar{width:3px}
+#logList::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:2px}
+.log-entry{padding:2px 4px;border-radius:3px}
+.log-highlight{color:#22c55e}
+.log-warning{color:#f59e0b}
+.log-fold{color:#ef4444}
+
+/* Win Overlay */
+#winOverlay{position:fixed;inset:0;background:rgba(10,10,20,.85);z-index:400;display:flex;flex-direction:column;align-items:center;justify-content:center;backdrop-filter:blur(6px)}
+#winOverlay.hidden{display:none}
+#winOverlay h2{font-size:1.8rem;margin-bottom:.5rem;background:linear-gradient(135deg,#f59e0b,#22c55e);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+#winOverlay .win-detail{color:rgba(255,255,255,.6);font-size:.95rem;margin-bottom:.3rem}
+#winOverlay .win-pot{color:#f59e0b;font-size:1.4rem;font-weight:800;margin-bottom:1.5rem}
+.win-actions{display:flex;gap:.75rem}
+
+/* Responsive */
+@media(max-width:768px){
+  .seat-inner{min-width:90px;padding:.4rem .5rem}
+  .seat-name{font-size:.68rem}
+  .your-card{width:44px;height:62px;font-size:.9rem}
+  .comm-card{width:36px;height:50px;font-size:.7rem}
+  #logPanel{display:none}
+  .mode-grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<!-- Loading -->
+<div id="loading">
+    <h1>♠ GoSiteMe Poker</h1>
+    <p>Shuffling the deck...</p>
+    <div class="load-bar"><div class="load-bar-fill"></div></div>
+</div>
+
+<!-- 3D Canvas -->
+<canvas id="gameCanvas"></canvas>
+
+<!-- HUD -->
+<div id="hud">
+    <div class="hud-left">
+        <span class="hud-title">♠ GoSiteMe Poker</span>
+        <span class="hud-subtitle">Texas Hold'em</span>
+    </div>
+    <div class="hud-right">
+        <a href="/vr/experiences/" class="hud-btn">← Worlds</a>
+        <a href="/games.php" class="hud-btn">Games</a>
+        <button class="hud-btn" onclick="toggleSound()">🔊</button>
+    </div>
+</div>
+
+<!-- Pot -->
+<div id="potDisplay">
+    <div class="pot-label">Pot</div>
+    <div class="pot-amount" id="potAmount">0</div>
+</div>
+
+<!-- Community Cards -->
+<div id="communityCards">
+    <div class="comm-card" id="cc0"></div>
+    <div class="comm-card" id="cc1"></div>
+    <div class="comm-card" id="cc2"></div>
+    <div class="comm-card" id="cc3"></div>
+    <div class="comm-card" id="cc4"></div>
+</div>
+
+<!-- Player Seat Overlays (positioned via JS) -->
+<div class="seat" id="seat0" style="bottom:1rem;left:50%;transform:translateX(-50%)"></div>
+<div class="seat" id="seat1" style="bottom:15%;left:8%"></div>
+<div class="seat" id="seat2" style="top:35%;left:3%"></div>
+<div class="seat" id="seat3" style="top:10%;left:20%"></div>
+<div class="seat" id="seat4" style="top:10%;right:20%"></div>
+<div class="seat" id="seat5" style="top:35%;right:3%"></div>
+<div class="seat" id="seat6" style="bottom:15%;right:8%"></div>
+
+<!-- Your Cards -->
+<div id="yourCards"></div>
+
+<!-- Hand Rank -->
+<div id="handRank"></div>
+
+<!-- Action Bar -->
+<div id="actionBar" class="hidden">
+    <button class="action-btn fold" onclick="playerAction('fold')">Fold</button>
+    <button class="action-btn check" id="btnCheck" onclick="playerAction('check')">Check</button>
+    <button class="action-btn call" id="btnCall" onclick="playerAction('call')" style="display:none">Call <span id="callAmount"></span></button>
+    <div id="raiseControls">
+        <input type="range" id="raiseSlider" min="0" max="1000" value="100">
+        <span id="raiseAmount">100</span>
+    </div>
+    <button class="action-btn raise" id="btnRaise" onclick="playerAction('raise')">Raise</button>
+    <button class="action-btn allin" onclick="playerAction('allin')">All In</button>
+</div>
+
+<!-- Status Toast -->
+<div id="statusToast"></div>
+
+<!-- Log Panel -->
+<div id="logPanel">
+    <div class="log-card">
+        <h4>♠ Game Log</h4>
+        <div id="logList"></div>
+    </div>
+</div>
+
+<!-- Win Overlay -->
+<div id="winOverlay" class="hidden">
+    <h2 id="winTitle">Winner!</h2>
+    <div class="win-detail" id="winHand"></div>
+    <div class="win-pot" id="winPot"></div>
+    <div class="win-actions">
+        <button class="action-btn call" onclick="startNewHand()">Deal Again</button>
+        <button class="action-btn fold" onclick="backToMenu()">Leave Table</button>
+    </div>
+</div>
+
+<!-- Mode Select -->
+<div id="modeModal">
+    <div class="mode-panel">
+        <h2>♠ Texas Hold'em Poker</h2>
+        <p>Choose your table — 3D rendered, AI opponents, real strategy.</p>
+        <div style="text-align:center;margin-bottom:.8rem">
+            <button onclick="GameBetting.openWager()" style="padding:.5rem 1.2rem;border:1px solid rgba(251,146,60,.4);border-radius:10px;background:linear-gradient(135deg,rgba(251,146,60,.2),rgba(239,68,68,.2));color:#fb923c;font-size:.9rem;font-weight:700;cursor:pointer">&#x1F3B0; Place Real Wager</button>
+        </div>
+        <div class="mode-grid">
+            <div class="mode-card" onclick="startGame('casual')">
+                <div class="icon">🎰</div>
+                <h3>Casual Table</h3>
+                <p>$100 buy-in · Relaxed AI · Learn the game</p>
+            </div>
+            <div class="mode-card" onclick="startGame('tournament')">
+                <div class="icon">🏆</div>
+                <h3>Tournament</h3>
+                <p>$1,000 buy-in · 6 players · Aggressive AI</p>
+            </div>
+            <div class="mode-card" onclick="startGame('highroller')">
+                <div class="icon">💎</div>
+                <h3>High Roller</h3>
+                <p>$10,000 buy-in · Expert AI · No mercy</p>
+            </div>
+            <div class="mode-card" onclick="startGame('heads')">
+                <div class="icon">⚔️</div>
+                <h3>Heads Up</h3>
+                <p>1v1 showdown · All-in or nothing</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="/assets/js/vendor/three.r128.min.js"></script>
+<script src="/vr/shared/gositeme-quality.js"></script>
+<script>
+(function(){
+'use strict';
+
+// ═══════════════════════════════════════
+// CARD SYSTEM
+// ═══════════════════════════════════════
+var SUITS = ['♠','♥','♦','♣'];
+var SUIT_COLORS = {'♠':'black','♥':'red','♦':'red','♣':'black'};
+var RANKS = ['2','3','4','5','6','7','8','9','10','J','Q','K','A'];
+var RANK_VALUES = {'2':2,'3':3,'4':4,'5':5,'6':6,'7':7,'8':8,'9':9,'10':10,'J':11,'Q':12,'K':13,'A':14};
+
+function createDeck() {
+    var d = [];
+    for (var s = 0; s < SUITS.length; s++)
+        for (var r = 0; r < RANKS.length; r++)
+            d.push({ rank: RANKS[r], suit: SUITS[s], value: RANK_VALUES[RANKS[r]] });
+    return d;
+}
+
+function shuffleDeck(deck) {
+    for (var i = deck.length - 1; i > 0; i--) {
+        var j = Math.floor(Math.random() * (i + 1));
+        var t = deck[i]; deck[i] = deck[j]; deck[j] = t;
+    }
+    return deck;
+}
+
+function cardStr(c) { return c.rank + c.suit; }
+function cardColor(c) { return SUIT_COLORS[c.suit]; }
+
+// ═══════════════════════════════════════
+// HAND EVALUATION
+// ═══════════════════════════════════════
+var HAND_RANKS = {
+    'Royal Flush':9,'Straight Flush':8,'Four of a Kind':7,'Full House':6,
+    'Flush':5,'Straight':4,'Three of a Kind':3,'Two Pair':2,'One Pair':1,'High Card':0
+};
+
+function evaluateHand(cards) {
+    if (cards.length < 5) return { name: 'High Card', rank: 0, kickers: [] };
+    var best = null;
+    var combos = getCombinations(cards, 5);
+    for (var i = 0; i < combos.length; i++) {
+        var h = evalFive(combos[i]);
+        if (!best || compareHands(h, best) > 0) best = h;
+    }
+    return best;
+}
+
+function getCombinations(arr, k) {
+    var result = [];
+    function combo(start, chosen) {
+        if (chosen.length === k) { result.push(chosen.slice()); return; }
+        for (var i = start; i < arr.length; i++) {
+            chosen.push(arr[i]);
+            combo(i + 1, chosen);
+            chosen.pop();
+        }
+    }
+    combo(0, []);
+    return result;
+}
+
+function evalFive(cards) {
+    var vals = cards.map(function(c){ return c.value; }).sort(function(a,b){ return b - a; });
+    var suits = cards.map(function(c){ return c.suit; });
+    var isFlush = suits.every(function(s){ return s === suits[0]; });
+    var isStraight = false;
+    var straightHigh = vals[0];
+
+    // Check standard straight
+    if (vals[0]-vals[1]===1 && vals[1]-vals[2]===1 && vals[2]-vals[3]===1 && vals[3]-vals[4]===1) {
+        isStraight = true;
+    }
+    // Ace-low straight (A-2-3-4-5)
+    if (vals[0]===14 && vals[1]===5 && vals[2]===4 && vals[3]===3 && vals[4]===2) {
+        isStraight = true;
+        straightHigh = 5;
+    }
+
+    // Count ranks
+    var counts = {};
+    for (var i = 0; i < vals.length; i++) counts[vals[i]] = (counts[vals[i]]||0) + 1;
+    var groups = [];
+    for (var v in counts) groups.push({ val: parseInt(v), count: counts[v] });
+    groups.sort(function(a,b){ return b.count - a.count || b.val - a.val; });
+
+    if (isFlush && isStraight && straightHigh === 14) return { name:'Royal Flush', rank:9, high:14, kickers:[] };
+    if (isFlush && isStraight) return { name:'Straight Flush', rank:8, high:straightHigh, kickers:[] };
+    if (groups[0].count===4) return { name:'Four of a Kind', rank:7, high:groups[0].val, kickers:[groups[1].val] };
+    if (groups[0].count===3 && groups[1].count===2) return { name:'Full House', rank:6, high:groups[0].val, kickers:[groups[1].val] };
+    if (isFlush) return { name:'Flush', rank:5, high:vals[0], kickers:vals.slice(1) };
+    if (isStraight) return { name:'Straight', rank:4, high:straightHigh, kickers:[] };
+    if (groups[0].count===3) return { name:'Three of a Kind', rank:3, high:groups[0].val, kickers:groups.slice(1).map(function(g){return g.val;}) };
+    if (groups[0].count===2 && groups[1].count===2) return { name:'Two Pair', rank:2, high:Math.max(groups[0].val,groups[1].val), kickers:[Math.min(groups[0].val,groups[1].val),groups[2].val] };
+    if (groups[0].count===2) return { name:'One Pair', rank:1, high:groups[0].val, kickers:groups.slice(1).map(function(g){return g.val;}) };
+    return { name:'High Card', rank:0, high:vals[0], kickers:vals.slice(1) };
+}
+
+function compareHands(a, b) {
+    if (a.rank !== b.rank) return a.rank - b.rank;
+    if (a.high !== b.high) return a.high - b.high;
+    for (var i = 0; i < Math.min(a.kickers.length, b.kickers.length); i++) {
+        if (a.kickers[i] !== b.kickers[i]) return a.kickers[i] - b.kickers[i];
+    }
+    return 0;
+}
+
+// ═══════════════════════════════════════
+// AI OPPONENTS
+// ═══════════════════════════════════════
+var AI_PLAYERS = [
+    { name:'Maverick', style:'aggressive', bluff:0.3, avatar:'😎' },
+    { name:'Luna', style:'tight', bluff:0.1, avatar:'🌙' },
+    { name:'Rex', style:'loose', bluff:0.25, avatar:'🦖' },
+    { name:'Ivy', style:'calculated', bluff:0.15, avatar:'🌿' },
+    { name:'Blaze', style:'maniac', bluff:0.4, avatar:'🔥' },
+    { name:'Sage', style:'balanced', bluff:0.2, avatar:'🧠' },
+];
+
+// ═══════════════════════════════════════
+// GAME STATE
+// ═══════════════════════════════════════
+var game = {
+    players: [],
+    deck: [],
+    community: [],
+    pot: 0,
+    sidePots: [],
+    currentBet: 0,
+    minRaise: 0,
+    smallBlind: 0,
+    bigBlind: 0,
+    dealerIdx: 0,
+    activeIdx: -1,
+    phase: 'idle', // idle, preflop, flop, turn, river, showdown
+    mode: null,
+    handNum: 0,
+    soundOn: true
+};
+
+// ═══════════════════════════════════════
+// THREE.JS SCENE
+// ═══════════════════════════════════════
+var scene, camera, renderer, clock;
+var tableMesh, chipMeshes = [], cardMeshes3D = [];
+
+function initThree() {
+    clock = new THREE.Clock();
+    scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x0a0a14);
+    scene.fog = new THREE.FogExp2(0x0a0a14, 0.025);
+
+    camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 100);
+    camera.position.set(0, 8, 7);
+    camera.lookAt(0, 0, 0);
+
+    renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('gameCanvas'), antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.2;
+
+    // Lights
+    var ambient = new THREE.AmbientLight(0x404060, 0.6);
+    scene.add(ambient);
+
+    var spot = new THREE.SpotLight(0xffeedd, 1.5, 30, Math.PI/4, 0.5, 1);
+    spot.position.set(0, 12, 0);
+    spot.castShadow = true;
+    spot.shadow.mapSize.set(1024, 1024);
+    scene.add(spot);
+    scene.add(spot.target);
+
+    var rim1 = new THREE.PointLight(0x22c55e, 0.4, 20);
+    rim1.position.set(-6, 3, -4);
+    scene.add(rim1);
+
+    var rim2 = new THREE.PointLight(0x3b82f6, 0.3, 20);
+    rim2.position.set(6, 3, 4);
+    scene.add(rim2);
+
+    // Table
+    buildTable();
+
+    // Floor
+    var floorGeo = new THREE.PlaneGeometry(60, 60);
+    var floorMat = new THREE.MeshStandardMaterial({ color: 0x080812, roughness: 0.9 });
+    var floor = new THREE.Mesh(floorGeo, floorMat);
+    floor.rotation.x = -Math.PI / 2;
+    floor.position.y = -0.5;
+    floor.receiveShadow = true;
+    scene.add(floor);
+
+    // Starfield
+    var starGeo = new THREE.BufferGeometry();
+    var starPositions = [];
+    for (var i = 0; i < 1000; i++) {
+        starPositions.push((Math.random()-0.5)*80, Math.random()*30+5, (Math.random()-0.5)*80);
+    }
+    starGeo.setAttribute('position', new THREE.Float32BufferAttribute(starPositions, 3));
+    var starMat = new THREE.PointsMaterial({ color: 0x555577, size: 0.06, transparent: true, opacity: 0.6 });
+    scene.add(new THREE.Points(starGeo, starMat));
+
+    window.addEventListener('resize', onResize);
+    animate();
+}
+
+function buildTable() {
+    // Oval table top
+    var tableShape = new THREE.Shape();
+    var rx = 4.5, ry = 3;
+    for (var a = 0; a <= Math.PI*2; a += 0.05) {
+        var x = rx * Math.cos(a), z = ry * Math.sin(a);
+        if (a === 0) tableShape.moveTo(x, z);
+        else tableShape.lineTo(x, z);
+    }
+
+    var extrudeSettings = { depth: 0.3, bevelEnabled: true, bevelThickness: 0.05, bevelSize: 0.05, bevelSegments: 3 };
+    var tableGeo = new THREE.ExtrudeGeometry(tableShape, extrudeSettings);
+    var tableMat = new THREE.MeshStandardMaterial({ color: 0x0f5132, roughness: 0.8, metalness: 0.1 });
+    tableMesh = new THREE.Mesh(tableGeo, tableMat);
+    tableMesh.rotation.x = -Math.PI / 2;
+    tableMesh.position.y = 0;
+    tableMesh.castShadow = true;
+    tableMesh.receiveShadow = true;
+    scene.add(tableMesh);
+
+    // Table rim
+    var rimGeo = new THREE.TorusGeometry(3.75, 0.18, 8, 64);
+    var rimMat = new THREE.MeshStandardMaterial({ color: 0x3a1f0a, roughness: 0.5, metalness: 0.3 });
+    var rim = new THREE.Mesh(rimGeo, rimMat);
+    rim.scale.set(1.2, 1, 0.8);
+    rim.rotation.x = -Math.PI / 2;
+    rim.position.y = 0.15;
+    rim.castShadow = true;
+    scene.add(rim);
+
+    // Table legs
+    var legGeo = new THREE.CylinderGeometry(0.08, 0.12, 0.5, 8);
+    var legMat = new THREE.MeshStandardMaterial({ color: 0x2a1505, roughness: 0.6 });
+    var legPositions = [[-3,0,-2],[3,0,-2],[-3,0,2],[3,0,2]];
+    for (var i = 0; i < legPositions.length; i++) {
+        var leg = new THREE.Mesh(legGeo, legMat);
+        leg.position.set(legPositions[i][0], -0.25, legPositions[i][2]);
+        leg.castShadow = true;
+        scene.add(leg);
+    }
+}
+
+function add3DChip(x, z, color) {
+    var chipGeo = new THREE.CylinderGeometry(0.12, 0.12, 0.04, 16);
+    var chipMat = new THREE.MeshStandardMaterial({ color: color, roughness: 0.4, metalness: 0.6 });
+    var chip = new THREE.Mesh(chipGeo, chipMat);
+    chip.position.set(x, 0.35 + chipMeshes.length * 0.04, z);
+    chip.castShadow = true;
+    scene.add(chip);
+    chipMeshes.push(chip);
+    return chip;
+}
+
+function clear3DChips() {
+    for (var i = 0; i < chipMeshes.length; i++) scene.remove(chipMeshes[i]);
+    chipMeshes = [];
+}
+
+function clear3DCards() {
+    for (var i = 0; i < cardMeshes3D.length; i++) scene.remove(cardMeshes3D[i]);
+    cardMeshes3D = [];
+}
+
+function add3DCard(x, z, faceUp) {
+    var cardGeo = new THREE.BoxGeometry(0.35, 0.005, 0.5);
+    var color = faceUp ? 0xffffff : 0x1e3a5f;
+    var cardMat = new THREE.MeshStandardMaterial({ color: color, roughness: 0.3 });
+    var card = new THREE.Mesh(cardGeo, cardMat);
+    card.position.set(x, 0.33, z);
+    card.castShadow = true;
+    scene.add(card);
+    cardMeshes3D.push(card);
+    return card;
+}
+
+function onResize() {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+}
+
+var cameraAngle = 0;
+function animate() {
+    requestAnimationFrame(animate);
+    var dt = clock.getDelta();
+
+    // Gentle camera sway
+    cameraAngle += dt * 0.08;
+    camera.position.x = Math.sin(cameraAngle) * 0.3;
+    camera.lookAt(0, 0, 0);
+
+    renderer.render(scene, camera);
+}
+
+// ═══════════════════════════════════════
+// GAME LOGIC
+// ═══════════════════════════════════════
+function startGame(mode) {
+    game.mode = mode;
+    document.getElementById('modeModal').classList.add('hidden');
+
+    var numPlayers, buyIn;
+    if (mode === 'casual') { numPlayers = 4; buyIn = 100; game.smallBlind = 1; game.bigBlind = 2; }
+    else if (mode === 'tournament') { numPlayers = 6; buyIn = 1000; game.smallBlind = 5; game.bigBlind = 10; }
+    else if (mode === 'highroller') { numPlayers = 6; buyIn = 10000; game.smallBlind = 50; game.bigBlind = 100; }
+    else { numPlayers = 2; buyIn = 500; game.smallBlind = 5; game.bigBlind = 10; } // heads up
+
+    // Create player list: human at seat 0
+    game.players = [{ name: 'You', chips: buyIn, hand: [], bet: 0, folded: false, allIn: false, isHuman: true, avatar: '🎮', style: 'human' }];
+    var aiPool = AI_PLAYERS.slice();
+    for (var i = 1; i < numPlayers; i++) {
+        var ai = aiPool.splice(Math.floor(Math.random()*aiPool.length), 1)[0];
+        game.players.push({ name: ai.name, chips: buyIn, hand: [], bet: 0, folded: false, allIn: false, isHuman: false, avatar: ai.avatar, style: ai.style, bluff: ai.bluff });
+    }
+
+    game.dealerIdx = Math.floor(Math.random() * game.players.length);
+    game.handNum = 0;
+
+    addLog('Table opened — ' + mode.charAt(0).toUpperCase()+mode.slice(1));
+    addLog(game.players.length + ' players · $' + buyIn + ' buy-in');
+    addLog('Blinds: $' + game.smallBlind + '/$' + game.bigBlind);
+
+    // Hide loading, start
+    document.getElementById('loading').classList.add('hidden');
+    startNewHand();
+}
+
+function startNewHand() {
+    document.getElementById('winOverlay').classList.add('hidden');
+    game.handNum++;
+    game.pot = 0;
+    game.community = [];
+    game.currentBet = 0;
+    game.sidePots = [];
+    game.phase = 'preflop';
+
+    clear3DChips();
+    clear3DCards();
+
+    // Remove eliminated players
+    game.players = game.players.filter(function(p){ return p.chips > 0; });
+    if (game.players.length < 2) {
+        showToast(game.players[0].name + ' wins the tournament!');
+        return;
+    }
+
+    // Reset player state
+    for (var i = 0; i < game.players.length; i++) {
+        game.players[i].hand = [];
+        game.players[i].bet = 0;
+        game.players[i].folded = false;
+        game.players[i].allIn = false;
+    }
+
+    // Advance dealer
+    game.dealerIdx = (game.dealerIdx + 1) % game.players.length;
+
+    // Shuffle & deal
+    game.deck = shuffleDeck(createDeck());
+    for (var round = 0; round < 2; round++) {
+        for (var j = 0; j < game.players.length; j++) {
+            game.players[j].hand.push(game.deck.pop());
+        }
+    }
+
+    // Post blinds
+    var sbIdx = (game.dealerIdx + 1) % game.players.length;
+    var bbIdx = (game.dealerIdx + 2) % game.players.length;
+    postBlind(sbIdx, game.smallBlind);
+    postBlind(bbIdx, game.bigBlind);
+    game.currentBet = game.bigBlind;
+    game.minRaise = game.bigBlind;
+
+    addLog('— Hand #' + game.handNum + ' —');
+    addLog(game.players[game.dealerIdx].name + ' is dealer');
+
+    // Add 3D community card placeholders
+    for (var c = 0; c < 5; c++) {
+        add3DCard(-1 + c * 0.5, 0, false);
+    }
+
+    // Start preflop action
+    game.activeIdx = (bbIdx + 1) % game.players.length;
+    updateUI();
+    nextAction();
+}
+
+function postBlind(idx, amount) {
+    var p = game.players[idx];
+    var actual = Math.min(amount, p.chips);
+    p.chips -= actual;
+    p.bet = actual;
+    game.pot += actual;
+    if (p.chips === 0) p.allIn = true;
+    addLog(p.name + ' posts $' + actual + ' blind');
+}
+
+// ═══════════════════════════════════════
+// ACTION FLOW
+// ═══════════════════════════════════════
+function nextAction() {
+    // Skip folded/all-in
+    var attempts = 0;
+    while (attempts < game.players.length) {
+        var p = game.players[game.activeIdx];
+        if (!p.folded && !p.allIn) break;
+        game.activeIdx = (game.activeIdx + 1) % game.players.length;
+        attempts++;
+    }
+
+    // Check if round is over
+    if (isRoundOver()) {
+        advancePhase();
+        return;
+    }
+
+    var p = game.players[game.activeIdx];
+    updateUI();
+
+    if (p.isHuman) {
+        showActionBar();
+    } else {
+        document.getElementById('actionBar').classList.add('hidden');
+        setTimeout(function(){ aiDecide(game.activeIdx); }, 600 + Math.random() * 800);
+    }
+}
+
+function isRoundOver() {
+    var activePlayers = game.players.filter(function(p){ return !p.folded && !p.allIn; });
+    if (activePlayers.length <= 1) {
+        // Check if only one non-folded player
+        var nonFolded = game.players.filter(function(p){ return !p.folded; });
+        if (nonFolded.length <= 1) return true;
+        if (activePlayers.length === 0) return true;
+    }
+    // All active players have matched current bet
+    var allMatched = activePlayers.every(function(p){ return p.bet === game.currentBet; });
+    // Make sure everyone has had a chance to act
+    if (allMatched && game.phase === 'preflop') {
+        // BB gets option to raise
+        var bbIdx = (game.dealerIdx + 2) % game.players.length;
+        if (game.activeIdx === bbIdx && game.currentBet === game.bigBlind && !game.players[bbIdx]._bbActed) {
+            return false;
+        }
+    }
+    return allMatched;
+}
+
+function advancePhase() {
+    document.getElementById('actionBar').classList.add('hidden');
+
+    // Only one player left? They win.
+    var nonFolded = game.players.filter(function(p){ return !p.folded; });
+    if (nonFolded.length === 1) {
+        resolveWinner();
+        return;
+    }
+
+    // Reset bets for new round
+    for (var i = 0; i < game.players.length; i++) {
+        game.players[i].bet = 0;
+        game.players[i]._bbActed = false;
+    }
+    game.currentBet = 0;
+    game.minRaise = game.bigBlind;
+
+    if (game.phase === 'preflop') {
+        game.phase = 'flop';
+        game.deck.pop(); // Burn
+        game.community.push(game.deck.pop(), game.deck.pop(), game.deck.pop());
+        addLog('--- Flop: ' + game.community.map(cardStr).join(' ') + ' ---');
+    } else if (game.phase === 'flop') {
+        game.phase = 'turn';
+        game.deck.pop(); // Burn
+        game.community.push(game.deck.pop());
+        addLog('--- Turn: ' + cardStr(game.community[3]) + ' ---');
+    } else if (game.phase === 'turn') {
+        game.phase = 'river';
+        game.deck.pop(); // Burn
+        game.community.push(game.deck.pop());
+        addLog('--- River: ' + cardStr(game.community[4]) + ' ---');
+    } else if (game.phase === 'river') {
+        game.phase = 'showdown';
+        resolveWinner();
+        return;
+    }
+
+    // Update 3D cards
+    clear3DCards();
+    for (var c = 0; c < 5; c++) {
+        add3DCard(-1 + c * 0.5, 0, c < game.community.length);
+    }
+
+    // Stack some chips in center
+    var chipColors = [0xef4444, 0x3b82f6, 0x22c55e, 0xf59e0b, 0x8b5cf6];
+    var numChipStacks = Math.min(Math.floor(game.pot / (game.bigBlind * 2)) + 1, 8);
+    clear3DChips();
+    for (var ci = 0; ci < numChipStacks; ci++) {
+        add3DChip((Math.random()-0.5)*0.8, (Math.random()-0.5)*0.6, chipColors[ci % chipColors.length]);
+    }
+
+    updateUI();
+
+    // Start new betting round from left of dealer
+    game.activeIdx = (game.dealerIdx + 1) % game.players.length;
+    setTimeout(function(){ nextAction(); }, 500);
+}
+
+function resolveWinner() {
+    game.phase = 'showdown';
+    var nonFolded = game.players.filter(function(p){ return !p.folded; });
+
+    if (nonFolded.length === 1) {
+        var winner = nonFolded[0];
+        winner.chips += game.pot;
+        addLog(winner.name + ' wins $' + game.pot + ' (others folded)','highlight');
+        showWin(winner.name, 'Everyone folded', game.pot);
+        return;
+    }
+
+    // Evaluate hands
+    var results = nonFolded.map(function(p) {
+        var allCards = p.hand.concat(game.community);
+        var hand = evaluateHand(allCards);
+        return { player: p, hand: hand };
+    });
+
+    results.sort(function(a, b) { return compareHands(b.hand, a.hand); });
+    var winner = results[0];
+    winner.player.chips += game.pot;
+
+    addLog(winner.player.name + ' wins $' + game.pot + ' with ' + winner.hand.name, 'highlight');
+    for (var i = 0; i < results.length; i++) {
+        addLog(results[i].player.name + ': ' + results[i].player.hand.map(cardStr).join(' ') + ' — ' + results[i].hand.name);
+    }
+
+    showWin(winner.player.name, winner.hand.name + ' — ' + winner.player.hand.map(cardStr).join(' '), game.pot);
+}
+
+function showWin(name, detail, pot) {
+    document.getElementById('winTitle').textContent = name + ' Wins!';
+    document.getElementById('winHand').textContent = detail;
+    document.getElementById('winPot').textContent = '$' + pot;
+    document.getElementById('winOverlay').classList.remove('hidden');
+    document.getElementById('actionBar').classList.add('hidden');
+    updateUI();
+}
+
+// ═══════════════════════════════════════
+// PLAYER ACTIONS
+// ═══════════════════════════════════════
+function playerAction(action) {
+    var p = game.players[game.activeIdx];
+    if (!p.isHuman) return;
+
+    if (action === 'fold') {
+        p.folded = true;
+        addLog('You fold', 'fold');
+    } else if (action === 'check') {
+        if (game.currentBet > p.bet) return; // Can't check
+        addLog('You check');
+        p._bbActed = true;
+    } else if (action === 'call') {
+        var callAmt = Math.min(game.currentBet - p.bet, p.chips);
+        p.chips -= callAmt;
+        p.bet += callAmt;
+        game.pot += callAmt;
+        if (p.chips === 0) p.allIn = true;
+        addLog('You call $' + callAmt);
+    } else if (action === 'raise') {
+        var raiseTotal = parseInt(document.getElementById('raiseSlider').value);
+        var raiseAmt = raiseTotal - p.bet;
+        if (raiseAmt > p.chips) raiseAmt = p.chips;
+        p.chips -= raiseAmt;
+        p.bet += raiseAmt;
+        game.pot += raiseAmt;
+        game.currentBet = p.bet;
+        game.minRaise = raiseTotal - game.currentBet + game.bigBlind;
+        if (p.chips === 0) p.allIn = true;
+        addLog('You raise to $' + p.bet, 'highlight');
+    } else if (action === 'allin') {
+        var allInAmt = p.chips;
+        game.pot += allInAmt;
+        p.bet += allInAmt;
+        p.chips = 0;
+        p.allIn = true;
+        if (p.bet > game.currentBet) game.currentBet = p.bet;
+        addLog('You go ALL IN — $' + p.bet, 'warning');
+    }
+
+    document.getElementById('actionBar').classList.add('hidden');
+    game.activeIdx = (game.activeIdx + 1) % game.players.length;
+    updateUI();
+    setTimeout(function(){ nextAction(); }, 300);
+}
+
+function showActionBar() {
+    var p = game.players[game.activeIdx];
+    var bar = document.getElementById('actionBar');
+    bar.classList.remove('hidden');
+
+    var toCall = game.currentBet - p.bet;
+    var btnCheck = document.getElementById('btnCheck');
+    var btnCall = document.getElementById('btnCall');
+
+    if (toCall > 0) {
+        btnCheck.style.display = 'none';
+        btnCall.style.display = '';
+        document.getElementById('callAmount').textContent = '$' + Math.min(toCall, p.chips);
+    } else {
+        btnCheck.style.display = '';
+        btnCall.style.display = 'none';
+    }
+
+    // Raise slider
+    var slider = document.getElementById('raiseSlider');
+    var minRaise = game.currentBet + game.minRaise;
+    slider.min = minRaise;
+    slider.max = p.chips + p.bet;
+    slider.value = Math.min(minRaise, p.chips + p.bet);
+    document.getElementById('raiseAmount').textContent = '$' + slider.value;
+    document.getElementById('raiseControls').classList.add('visible');
+
+    slider.oninput = function() {
+        document.getElementById('raiseAmount').textContent = '$' + this.value;
+    };
+}
+
+// ═══════════════════════════════════════
+// AI LOGIC
+// ═══════════════════════════════════════
+function aiDecide(idx) {
+    var p = game.players[idx];
+    var toCall = game.currentBet - p.bet;
+    var handStrength = getAIHandStrength(p);
+    var r = Math.random();
+
+    // Decision based on style + hand strength
+    var action, amount = 0;
+
+    if (p.style === 'aggressive' || p.style === 'maniac') {
+        if (handStrength > 0.6 || (r < p.bluff)) {
+            if (r < 0.3 && handStrength > 0.7) {
+                action = 'allin';
+            } else {
+                action = 'raise';
+                amount = game.currentBet + game.bigBlind * (2 + Math.floor(Math.random() * 4));
+            }
+        } else if (toCall === 0 || (toCall <= game.bigBlind * 2 && handStrength > 0.3)) {
+            action = toCall > 0 ? 'call' : 'check';
+        } else {
+            action = 'fold';
+        }
+    } else if (p.style === 'tight') {
+        if (handStrength > 0.7) {
+            action = 'raise';
+            amount = game.currentBet + game.bigBlind * 3;
+        } else if (handStrength > 0.45 && toCall <= game.bigBlind * 3) {
+            action = toCall > 0 ? 'call' : 'check';
+        } else if (toCall === 0) {
+            action = 'check';
+        } else {
+            action = 'fold';
+        }
+    } else if (p.style === 'loose') {
+        if (handStrength > 0.5 || r < 0.15) {
+            action = 'raise';
+            amount = game.currentBet + game.bigBlind * (1 + Math.floor(Math.random() * 3));
+        } else if (toCall <= game.bigBlind * 4 || r < 0.4) {
+            action = toCall > 0 ? 'call' : 'check';
+        } else {
+            action = 'fold';
+        }
+    } else { // calculated, balanced
+        if (handStrength > 0.75) {
+            if (r < 0.4) {
+                action = 'raise';
+                amount = game.currentBet + game.bigBlind * Math.ceil(handStrength * 5);
+            } else {
+                action = toCall > 0 ? 'call' : 'check';
+            }
+        } else if (handStrength > 0.4 && toCall <= game.bigBlind * 3) {
+            action = toCall > 0 ? 'call' : 'check';
+        } else if (toCall === 0) {
+            action = r < p.bluff ? 'raise' : 'check';
+            if (action === 'raise') amount = game.currentBet + game.bigBlind * 2;
+        } else {
+            action = 'fold';
+        }
+    }
+
+    // Execute AI action
+    if (action === 'fold') {
+        p.folded = true;
+        addLog(p.avatar + ' ' + p.name + ' folds', 'fold');
+    } else if (action === 'check') {
+        addLog(p.avatar + ' ' + p.name + ' checks');
+        p._bbActed = true;
+    } else if (action === 'call') {
+        var callAmt = Math.min(toCall, p.chips);
+        p.chips -= callAmt;
+        p.bet += callAmt;
+        game.pot += callAmt;
+        if (p.chips === 0) p.allIn = true;
+        addLog(p.avatar + ' ' + p.name + ' calls $' + callAmt);
+    } else if (action === 'raise') {
+        var raiseAmt = Math.min(amount, p.chips + p.bet) - p.bet;
+        if (raiseAmt <= 0) raiseAmt = Math.min(game.bigBlind, p.chips);
+        p.chips -= raiseAmt;
+        p.bet += raiseAmt;
+        game.pot += raiseAmt;
+        if (p.bet > game.currentBet) game.currentBet = p.bet;
+        if (p.chips === 0) p.allIn = true;
+        addLog(p.avatar + ' ' + p.name + ' raises to $' + p.bet, 'highlight');
+    } else if (action === 'allin') {
+        var allAmt = p.chips;
+        game.pot += allAmt;
+        p.bet += allAmt;
+        p.chips = 0;
+        p.allIn = true;
+        if (p.bet > game.currentBet) game.currentBet = p.bet;
+        addLog(p.avatar + ' ' + p.name + ' ALL IN $' + p.bet, 'warning');
+    }
+
+    game.activeIdx = (game.activeIdx + 1) % game.players.length;
+    updateUI();
+    setTimeout(function(){ nextAction(); }, 200);
+}
+
+function getAIHandStrength(p) {
+    var score = 0;
+    var h = p.hand;
+    if (h.length < 2) return 0.3;
+
+    // Preflop evaluation
+    var v1 = h[0].value, v2 = h[1].value;
+    var paired = v1 === v2;
+    var suited = h[0].suit === h[1].suit;
+    var gap = Math.abs(v1 - v2);
+    var highCard = Math.max(v1, v2);
+
+    if (paired) {
+        score = 0.5 + (v1 / 14) * 0.4; // Pocket pair
+    } else {
+        score = (highCard / 14) * 0.35;
+        if (suited) score += 0.08;
+        if (gap <= 2) score += 0.06;
+        if (gap <= 1) score += 0.04;
+        // Premium hands
+        if (highCard === 14 && Math.min(v1,v2) >= 10) score += 0.15;
+    }
+
+    // Postflop — evaluate with community
+    if (game.community.length >= 3) {
+        var allCards = p.hand.concat(game.community);
+        var handResult = evaluateHand(allCards);
+        score = 0.3 + (handResult.rank / 9) * 0.7;
+    }
+
+    return Math.min(score, 1);
+}
+
+// ═══════════════════════════════════════
+// UI RENDERING
+// ═══════════════════════════════════════
+function updateUI() {
+    // Pot
+    document.getElementById('potAmount').textContent = '$' + game.pot;
+
+    // Community cards
+    for (var c = 0; c < 5; c++) {
+        var el = document.getElementById('cc' + c);
+        if (c < game.community.length) {
+            var card = game.community[c];
+            el.textContent = cardStr(card);
+            el.className = 'comm-card dealt' + (cardColor(card) === 'red' ? ' red' : '');
+        } else {
+            el.textContent = '';
+            el.className = 'comm-card';
+        }
+    }
+
+    // Seats
+    for (var i = 0; i < 7; i++) {
+        var seatEl = document.getElementById('seat' + i);
+        if (i >= game.players.length) {
+            seatEl.innerHTML = '';
+            continue;
+        }
+        var p = game.players[i];
+        var isActive = (i === game.activeIdx && game.phase !== 'showdown' && game.phase !== 'idle');
+        var isDealer = (i === game.dealerIdx);
+
+        var classes = 'seat-inner';
+        if (isActive) classes += ' active';
+        if (p.folded) classes += ' folded';
+        if (isDealer) classes += ' dealer';
+
+        var cardsHTML = '';
+        if (p.isHuman || game.phase === 'showdown') {
+            if (p.hand.length > 0 && !p.folded) {
+                for (var ci = 0; ci < p.hand.length; ci++) {
+                    var ch = p.hand[ci];
+                    cardsHTML += '<div class="seat-card faceup' + (cardColor(ch)==='red'?' red':'') + '">' + cardStr(ch) + '</div>';
+                }
+            }
+        } else if (!p.folded) {
+            cardsHTML = '<div class="seat-card facedown"></div><div class="seat-card facedown"></div>';
+        }
+
+        seatEl.innerHTML = '<div class="' + classes + '" style="position:relative">' +
+            '<div class="seat-name">' + p.avatar + ' ' + p.name + (isActive?'<span class="player-thinking"></span>':'') + '</div>' +
+            '<div class="seat-chips">$' + p.chips + (p.allIn ? ' (All-In)' : '') + '</div>' +
+            (p.bet > 0 ? '<div class="seat-bet">Bet: $' + p.bet + '</div>' : '') +
+            (cardsHTML ? '<div class="seat-cards">' + cardsHTML + '</div>' : '') +
+        '</div>';
+    }
+
+    // Your cards (larger display)
+    var yourCards = document.getElementById('yourCards');
+    var human = game.players[0];
+    if (human && human.hand.length > 0 && !human.folded) {
+        yourCards.innerHTML = human.hand.map(function(c) {
+            return '<div class="your-card' + (cardColor(c)==='red'?' red':'') + '">' + cardStr(c) + '</div>';
+        }).join('');
+    } else {
+        yourCards.innerHTML = '';
+    }
+
+    // Hand rank
+    var rankEl = document.getElementById('handRank');
+    if (human && human.hand.length === 2 && game.community.length >= 3 && !human.folded) {
+        var allCards = human.hand.concat(game.community);
+        var result = evaluateHand(allCards);
+        rankEl.textContent = result.name;
+        rankEl.classList.add('visible');
+    } else {
+        rankEl.classList.remove('visible');
+    }
+}
+
+// ═══════════════════════════════════════
+// LOG & TOAST
+// ═══════════════════════════════════════
+function addLog(msg, type) {
+    var list = document.getElementById('logList');
+    var cls = 'log-entry';
+    if (type === 'highlight') cls += ' log-highlight';
+    else if (type === 'warning') cls += ' log-warning';
+    else if (type === 'fold') cls += ' log-fold';
+    list.innerHTML = '<div class="' + cls + '">' + msg + '</div>' + list.innerHTML;
+    // Keep last 50 entries
+    while (list.children.length > 50) list.removeChild(list.lastChild);
+}
+
+function showToast(msg) {
+    var t = document.getElementById('statusToast');
+    t.textContent = msg;
+    t.classList.add('visible');
+    setTimeout(function(){ t.classList.remove('visible'); }, 3000);
+}
+
+function toggleSound() {
+    game.soundOn = !game.soundOn;
+    showToast('Sound ' + (game.soundOn ? 'On' : 'Off'));
+}
+
+function backToMenu() {
+    document.getElementById('winOverlay').classList.add('hidden');
+    document.getElementById('modeModal').classList.remove('hidden');
+    document.getElementById('actionBar').classList.add('hidden');
+    clear3DChips();
+    clear3DCards();
+    game.phase = 'idle';
+    document.getElementById('logList').innerHTML = '';
+    document.getElementById('yourCards').innerHTML = '';
+    document.getElementById('handRank').classList.remove('visible');
+    for (var c = 0; c < 5; c++) {
+        var el = document.getElementById('cc' + c);
+        el.textContent = '';
+        el.className = 'comm-card';
+    }
+    document.getElementById('potAmount').textContent = '0';
+    for (var s = 0; s < 7; s++) document.getElementById('seat' + s).innerHTML = '';
+}
+
+// ═══════════════════════════════════════
+// EXPOSE TO GLOBAL SCOPE (for onclick handlers)
+// ═══════════════════════════════════════
+window.startGame = startGame;
+window.startNewHand = startNewHand;
+window.playerAction = playerAction;
+window.backToMenu = backToMenu;
+window.toggleSound = toggleSound;
+
+// ═══════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════
+initThree();
+document.getElementById('loading').classList.add('hidden');
+
+})();
+</script>
+<script src="/assets/js/game-betting-sdk.js"></script>
+<script>
+(function() {
+    var pokerStartChips = 0;
+    var pokerHandsPlayed = 0;
+
+    // Hook startGame to track initial chips
+    var origStartGame = window.startGame;
+    window.startGame = function(mode) {
+        origStartGame(mode);
+        // game.players[0] is always the human
+        if (typeof game !== 'undefined' && game.players && game.players[0]) {
+            pokerStartChips = game.players[0].chips;
+            pokerHandsPlayed = 0;
+        }
+    };
+
+    // Hook showWin to track hands and settle if player is eliminated or leaves
+    var origShowWin = window.showWin || function(){};
+    window.showWin = function(name, detail, pot) {
+        origShowWin(name, detail, pot);
+        pokerHandsPlayed++;
+
+        // Check if human player is eliminated (0 chips)
+        if (typeof game !== 'undefined' && game.players && game.players[0]) {
+            var human = game.players[0];
+            if (human.chips <= 0 && GameBetting.hasActiveWager()) {
+                GameBetting.settle('lost', pokerHandsPlayed, { hand_rank: detail, final_chips: 0, start_chips: pokerStartChips });
+            }
+        }
+    };
+
+    // Hook backToMenu to settle on voluntary exit
+    var origBackToMenu = window.backToMenu;
+    window.backToMenu = function() {
+        if (typeof game !== 'undefined' && game.players && game.players[0] && GameBetting.hasActiveWager()) {
+            var human = game.players[0];
+            var result = human.chips > pokerStartChips ? 'won' : (human.chips < pokerStartChips ? 'lost' : 'draw');
+            GameBetting.settle(result, pokerHandsPlayed, { hand_rank: 'session_end', final_chips: human.chips, start_chips: pokerStartChips });
+        }
+        origBackToMenu();
+    };
+
+    GameBetting.init({
+        game: 'poker',
+        getResult: function() { return 'lost'; },
+        getMoves: function() { return pokerHandsPlayed; },
+        getEvidence: function() { return { start_chips: pokerStartChips }; },
+    });
+})();
+</script>
+<script src="/assets/js/alfred-widget.min.js" defer></script>
+<script src="/assets/js/agent-presence.js" data-game="poker" defer></script>
+<script src="/vr/shared/heartbeat.js"></script>
+</body>
+</html>

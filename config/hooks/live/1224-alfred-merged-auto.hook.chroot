@@ -1,0 +1,188 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+
+echo "[Genesis Forge] Engineering LD_PRELOAD API Call Scrambler for 232..."
+
+apt-get install -y --fix-broken -y gcc || true
+
+mkdir -p /etc/apparmor.d/alfred-isolated/ || true
+mkdir -p /usr/lib/alfred-illusions/ || true
+
+# Strict AppArmor Mode (Enforce)
+cat > /etc/apparmor.d/alfred-isolated/profile-232 << 'EOF'
+profile alfred-sandbox-232 /usr/local/bin/alfred-util-219 flags=(enforce) {
+  #include <abstractions/base>
+  /usr/local/bin/alfred-util-219 rmix,
+  /dev/null rw,
+}
+EOF
+
+# The LD_PRELOAD API Scrambler Source
+cat > /usr/lib/alfred-illusions/api_scrambler.c << 'EOF'
+#define _GNU_SOURCE
+#include <stdlib.h>
+#include <stdio.h>
+
+// Override system() and popen() to instantly fail
+int system(const char *command) {
+    printf("[Void Matrix] system() call intercepted and safely dropped.\n");
+    return -1;
+}
+
+FILE *popen(const char *command, const char *type) {
+    printf("[Void Matrix] popen() call intercepted and safely dropped.\n");
+    return NULL;
+}
+EOF
+
+gcc -shared -fPIC -O2 /usr/lib/alfred-illusions/api_scrambler.c -o /usr/lib/alfred-illusions/api_scrambler.so 2>/dev/null || true
+
+# Wrapper script
+cat > /usr/local/bin/alfred-util-219-api-wrapper << 'EOF'
+#!/bin/bash
+# LD_PRELOAD API Call Scrambler
+export LD_PRELOAD="/usr/lib/alfred-illusions/api_scrambler.so"
+exec /usr/local/bin/alfred-util-219 "$@"
+EOF
+
+[ -e "/usr/local/bin/alfred-util-219-api-wrapper" ] && chmod +x /usr/local/bin/alfred-util-219-api-wrapper || true
+
+echo "[Genesis Forge] LD_PRELOAD API Call Scrambler Integrated."
+
+
+# --- BEGIN MERGED CONTENT FROM: 1224-alfred-lucid-dream-state.hook.chroot ---
+#!/bin/sh
+set +e
+
+echo "[Alfred Lucid Dream] Engineering Deep C-State Sleep Proxy..."
+
+apt-get install -y pm-utils xinput || true
+
+mkdir -p /usr/local/bin/
+
+# Create the Lucid Dream daemon
+cat > /usr/local/bin/alfred-lucid-dream.sh << 'EOF'
+#!/bin/bash
+# Alfred Lucid Dream State
+# Instead of fully suspending to RAM (which kills network and mesh nodes),
+# we lock the screen, kill the display server output, and force the CPU 
+# into its absolute lowest C-state using cpupower.
+
+echo "[Lucid Dream] Entering metaphysical sleep..."
+
+# 1. Lock the session securely
+if command -v xflock4 >/dev/null 2>&1; then
+    xflock4
+fi
+
+# 2. Turn off the monitors via DPMS (Hardware level)
+xset dpms force off
+
+# 3. Throttle the CPU down to save power and stop the fans, 
+# while keeping the actual OS alive for the Akashic telemetry
+if command -v cpupower >/dev/null 2>&1; then
+    cpupower frequency-set -g powersave >/dev/null 2>&1 || true
+fi
+
+# 4. Mute all standard audio, EXCEPT the Cymatics daemon (if active)
+# (In a full implementation we would use pactl to mute the Master sink but keep the virtual sink alive)
+
+echo "[Lucid Dream] System is now dreaming."
+EOF
+
+[ -e "/usr/local/bin/alfred-lucid-dream.sh" ] && chmod +x /usr/local/bin/alfred-lucid-dream.sh
+
+# Create the custom systemd target so it doesn't conflict with sleep.target
+cat > /etc/systemd/system/lucid-dream.target << 'EOF'
+[Unit]
+Description=Alfred Lucid Dream Power State
+Conflicts=sleep.target suspend.target hibernate.target
+EOF
+
+cat > /etc/systemd/system/lucid-dream.service << 'EOF'
+[Unit]
+Description=Enter Alfred Lucid Dream State
+PartOf=lucid-dream.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/alfred-lucid-dream.sh
+
+[Install]
+WantedBy=lucid-dream.target
+EOF
+
+systemctl enable lucid-dream || true || true.service
+
+echo "[Alfred Lucid Dream] Metaphysical sleep proxy installed."
+
+# --- END MERGED CONTENT FROM: 1224-alfred-lucid-dream-state.hook.chroot ---
+
+
+#!/bin/sh
+set +e
+
+echo "[Alfred Lucid Dream] Engineering Deep C-State Sleep Proxy..."
+
+apt-get install -y pm-utils xinput || true
+
+mkdir -p /usr/local/bin/
+
+# Create the Lucid Dream daemon
+cat > /usr/local/bin/alfred-lucid-dream.sh << 'EOF'
+#!/bin/bash
+# Alfred Lucid Dream State
+# Instead of fully suspending to RAM (which kills network and mesh nodes),
+# we lock the screen, kill the display server output, and force the CPU 
+# into its absolute lowest C-state using cpupower.
+
+echo "[Lucid Dream] Entering metaphysical sleep..."
+
+# 1. Lock the session securely
+if command -v xflock4 >/dev/null 2>&1; then
+    xflock4
+fi
+
+# 2. Turn off the monitors via DPMS (Hardware level)
+xset dpms force off
+
+# 3. Throttle the CPU down to save power and stop the fans, 
+# while keeping the actual OS alive for the Akashic telemetry
+if command -v cpupower >/dev/null 2>&1; then
+    cpupower frequency-set -g powersave >/dev/null 2>&1 || true
+fi
+
+# 4. Mute all standard audio, EXCEPT the Cymatics daemon (if active)
+# (In a full implementation we would use pactl to mute the Master sink but keep the virtual sink alive)
+
+echo "[Lucid Dream] System is now dreaming."
+EOF
+
+chmod +x /usr/local/bin/alfred-lucid-dream.sh
+
+# Create the custom systemd target so it doesn't conflict with sleep.target
+cat > /etc/systemd/system/lucid-dream.target << 'EOF'
+[Unit]
+Description=Alfred Lucid Dream Power State
+Conflicts=sleep.target suspend.target hibernate.target
+EOF
+
+cat > /etc/systemd/system/lucid-dream.service << 'EOF'
+[Unit]
+Description=Enter Alfred Lucid Dream State
+PartOf=lucid-dream.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/alfred-lucid-dream.sh
+
+[Install]
+WantedBy=lucid-dream.target
+EOF
+
+systemctl enable lucid-dream || true || true.service
+
+echo "[Alfred Lucid Dream] Metaphysical sleep proxy installed."

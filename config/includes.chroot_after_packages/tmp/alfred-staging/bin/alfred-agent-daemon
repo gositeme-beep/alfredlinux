@@ -1,0 +1,6 @@
+#!/bin/sh
+# /usr/bin/alfred-agent-daemon — service entrypoint for alfred-agent.service
+export HERMES_HOME="${HERMES_HOME:-/var/lib/alfred/agent}"
+export HERMES_PERSONA_FILE=/usr/share/alfred/persona/alfred.md
+export ALFRED_BRAND="Alfred"
+exec /opt/alfred-agent/.venv/bin/hermes gateway start --no-tui

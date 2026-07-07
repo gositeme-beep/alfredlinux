@@ -1,0 +1,1189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GoCodeMe — 13,000+ AI Tools | Voice AI | E-Commerce | From $0/mo</title>
+    <meta name="description" content="The #1 AI hosting platform. 13,000+ tools, 17 AI engines, voice commands, e-commerce, SEO, DevOps, accessibility. Managed by Alfred AI. Start free.">
+    <meta name="keywords" content="AI hosting platform, AI website builder, Alfred AI, voice AI hosting, AI e-commerce, GoCodeMe, AI IDE, 13,000+ tools">
+    <link rel="canonical" href="https://gocodeme.com/">
+
+    <!-- Open Graph -->
+    <meta property="og:title" content="GoCodeMe — 13,000+ AI Tools | The #1 AI Hosting Platform">
+    <meta property="og:description" content="13,000+ AI tools. 17 engines. Voice commands. E-commerce, SEO, DevOps, design, accessibility. Alfred AI manages everything. Start free.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://gocodeme.com/">
+    <meta property="og:site_name" content="GoCodeMe">
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="GoCodeMe — 13,000+ AI Tools | AI Hosting Platform">
+    <meta name="twitter:description" content="13,000+ AI tools. Voice commands. E-commerce to DevOps. Start free.">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+    /* ═══════════════════════════════════════════════
+       RESET + BASE
+    ═══════════════════════════════════════════════ */
+    *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+    :root {
+        --bg0: #080817;
+        --bg1: #0f0f23;
+        --bg2: #131328;
+        --bg3: #1a1a38;
+        --indigo: #4f46e5;
+        --cyan:   #06b6d4;
+        --violet: #7c3aed;
+        --green:  #10b981;
+        --red:    #ef4444;
+        --white:  #ffffff;
+        --text1:  #f1f5f9;
+        --text2:  #94a3b8;
+        --text3:  #64748b;
+        --border: rgba(255,255,255,0.08);
+        --radius: 16px;
+        --grad: linear-gradient(135deg, var(--indigo), var(--cyan));
+    }
+    html { scroll-behavior: smooth; }
+    body {
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        background: var(--bg0);
+        color: var(--text1);
+        overflow-x: hidden;
+        -webkit-font-smoothing: antialiased;
+    }
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: var(--bg1); }
+    ::-webkit-scrollbar-thumb { background: var(--indigo); border-radius: 3px; }
+
+    /* ═══════════════════════════════════════════════
+       ANIMATIONS
+    ═══════════════════════════════════════════════ */
+    @keyframes fadeUp   { from { opacity:0; transform:translateY(28px); } to { opacity:1; transform:translateY(0); } }
+    @keyframes fadeIn   { from { opacity:0; } to { opacity:1; } }
+    @keyframes pulse    { 0%,100%{opacity:1} 50%{opacity:.55} }
+    @keyframes spin     { to { transform: rotate(360deg); } }
+    @keyframes orbFloat { 0%,100%{transform:translate(-50%,-50%) scale(1)} 50%{transform:translate(-50%,-52%) scale(1.04)} }
+    @keyframes gradShift{ 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
+    @keyframes ticker   { 0%{transform:translateX(0)} 100%{transform:translateX(-50%)} }
+    @keyframes glow     { 0%,100%{box-shadow:0 0 20px rgba(79,70,229,.3)} 50%{box-shadow:0 0 50px rgba(79,70,229,.6),0 0 80px rgba(6,182,212,.3)} }
+
+    .anim-up  { animation: fadeUp  .7s ease both; }
+    .anim-up-1{ animation: fadeUp  .7s ease .1s both; }
+    .anim-up-2{ animation: fadeUp  .7s ease .2s both; }
+    .anim-up-3{ animation: fadeUp  .7s ease .3s both; }
+    .anim-up-4{ animation: fadeUp  .7s ease .45s both; }
+    .anim-up-5{ animation: fadeUp  .7s ease .6s both; }
+
+    /* ═══════════════════════════════════════════════
+       LAYOUT UTILS
+    ═══════════════════════════════════════════════ */
+    .wrap  { max-width: 1200px; margin: 0 auto; padding: 0 1.5rem; }
+    .wrap-sm { max-width: 780px;  margin: 0 auto; padding: 0 1.5rem; }
+    .section { padding: 7rem 1.5rem; }
+    .section-alt { background: var(--bg2); }
+
+    .sec-label {
+        display: inline-flex; align-items: center; gap: .5rem;
+        background: rgba(79,70,229,.12); border: 1px solid rgba(79,70,229,.3);
+        color: var(--cyan); font-size: .78rem; font-weight: 700;
+        padding: .35rem 1rem; border-radius: 50px; text-transform: uppercase;
+        letter-spacing: .8px; margin-bottom: 1.2rem;
+    }
+    .sec-title {
+        font-size: clamp(2rem,5vw,3rem); font-weight: 900; line-height: 1.15;
+        margin-bottom: 1rem;
+        background: linear-gradient(135deg,#fff 40%,#94a3b8);
+        -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+    .sec-title span {
+        background: var(--grad); background-size:200%;
+        animation: gradShift 4s ease infinite;
+        -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+    .sec-sub {
+        font-size: 1.1rem; color: var(--text2); line-height: 1.75;
+        max-width: 600px;
+    }
+    .sec-sub.centered { margin: 0 auto 3.5rem; text-align: center; }
+    .sec-header { text-align: center; margin-bottom: 3.5rem; }
+
+    /* ═══════════════════════════════════════════════
+       NAVIGATION
+    ═══════════════════════════════════════════════ */
+    .nav-wrap {
+        position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+        background: rgba(8,8,23,.85); backdrop-filter: blur(24px) saturate(180%);
+        border-bottom: 1px solid var(--border);
+        transition: background .3s;
+    }
+    .nav {
+        max-width: 1200px; margin: 0 auto;
+        display: flex; justify-content: space-between; align-items: center;
+        padding: .9rem 1.5rem;
+    }
+    .nav-logo {
+        font-size: 1.3rem; font-weight: 900; text-decoration: none;
+        background: var(--grad); background-size: 200%; animation: gradShift 4s ease infinite;
+        -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+        display: flex; align-items: center; gap: .5rem;
+    }
+    .nav-links {
+        display: flex; align-items: center; gap: 1.8rem; list-style: none;
+    }
+    .nav-links a {
+        color: var(--text2); text-decoration: none; font-size: .9rem; font-weight: 500;
+        transition: color .25s; position: relative;
+    }
+    .nav-links a:hover { color: var(--white); }
+    .nav-links a.special { color: var(--cyan); }
+    .nav-ctas { display: flex; gap: .75rem; align-items: center; }
+
+    .btn {
+        display: inline-flex; align-items: center; justify-content: center;
+        padding: .65rem 1.4rem; border-radius: 10px; font-weight: 700; font-size: .88rem;
+        text-decoration: none; transition: all .25s; border: none; cursor: pointer;
+        gap: .4rem; white-space: nowrap;
+    }
+    .btn-ghost {
+        background: transparent; color: var(--text1);
+        border: 1.5px solid rgba(255,255,255,.18);
+    }
+    .btn-ghost:hover { border-color: var(--indigo); color: var(--white); background: rgba(79,70,229,.1); }
+    .btn-solid {
+        background: var(--grad); background-size:200%; animation: gradShift 4s ease infinite;
+        color: #fff; box-shadow: 0 4px 18px rgba(79,70,229,.35);
+    }
+    .btn-solid:hover { box-shadow: 0 8px 30px rgba(79,70,229,.55); transform: translateY(-1px); }
+    .btn-lg { padding: .9rem 2rem; font-size: 1rem; border-radius: 12px; }
+    .btn-xl { padding: 1.1rem 2.4rem; font-size: 1.05rem; border-radius: 14px; }
+    .btn-outline-white {
+        background: transparent; color: var(--text1);
+        border: 1.5px solid rgba(255,255,255,.25);
+    }
+    .btn-outline-white:hover { background: rgba(255,255,255,.07); border-color: rgba(255,255,255,.5); }
+
+    /* ═══════════════════════════════════════════════
+       HERO
+    ═══════════════════════════════════════════════ */
+    .hero {
+        min-height: 100vh;
+        display: flex; align-items: center; justify-content: center;
+        position: relative; overflow: hidden;
+        padding: 8rem 1.5rem 4rem;
+    }
+
+    /* background orb */
+    .hero-orb {
+        position: absolute; top: 45%; left: 50%;
+        width: 900px; height: 900px;
+        border-radius: 50%;
+        background: radial-gradient(ellipse at center, rgba(79,70,229,.22) 0%, rgba(6,182,212,.08) 50%, transparent 70%);
+        transform: translate(-50%,-50%);
+        animation: orbFloat 6s ease-in-out infinite;
+        pointer-events: none;
+    }
+    .hero-grid {
+        position: absolute; inset: 0;
+        background-image:
+            linear-gradient(rgba(79,70,229,.06) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(79,70,229,.06) 1px, transparent 1px);
+        background-size: 60px 60px;
+        mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black 40%, transparent 100%);
+    }
+
+    .hero-inner {
+        position: relative; z-index: 2;
+        max-width: 900px; margin: 0 auto; text-align: center;
+    }
+    .hero-badge {
+        display: inline-flex; align-items: center; gap: .5rem;
+        background: rgba(79,70,229,.1); border: 1px solid rgba(79,70,229,.35);
+        color: var(--cyan); font-size: .82rem; font-weight: 700;
+        padding: .45rem 1.1rem; border-radius: 50px;
+        margin-bottom: 2rem; animation: pulse 3s ease infinite;
+    }
+    .hero-badge .dot {
+        width: 6px; height: 6px; border-radius: 50%;
+        background: var(--green); animation: pulse .9s ease infinite;
+    }
+    .hero-h1 {
+        font-size: clamp(3.2rem,9vw,6rem); font-weight: 900; line-height: 1.05;
+        letter-spacing: -.02em; margin-bottom: 1.5rem;
+    }
+    .hero-h1 .line1 {
+        display: block; color: var(--white);
+    }
+    .hero-h1 .line2 {
+        display: block;
+        background: var(--grad); background-size: 200%;
+        animation: gradShift 4s ease infinite;
+        -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+    .hero-sub {
+        font-size: clamp(1.05rem,2.5vw,1.3rem); color: var(--text2);
+        line-height: 1.75; max-width: 640px; margin: 0 auto 2.5rem;
+    }
+    .hero-ctas {
+        display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;
+        margin-bottom: 3rem;
+    }
+    .hero-promo {
+        font-size: .82rem; color: var(--text3);
+        margin-bottom: 3.5rem;
+    }
+    .hero-promo strong { color: var(--white); }
+
+    /* hero stat bar */
+    .hero-stats {
+        display: flex; justify-content: center; gap: 0; flex-wrap: wrap;
+        background: rgba(255,255,255,.03); border: 1px solid var(--border);
+        border-radius: 18px; overflow: hidden; max-width: 700px; margin: 0 auto;
+    }
+    .hstat {
+        flex: 1; min-width: 120px; padding: 1.2rem 1rem; text-align: center;
+        border-right: 1px solid var(--border);
+    }
+    .hstat:last-child { border-right: none; }
+    .hstat-num {
+        font-size: 1.9rem; font-weight: 900; line-height: 1;
+        background: var(--grad); -webkit-background-clip:text;
+        -webkit-text-fill-color:transparent; background-clip:text;
+        margin-bottom: .25rem;
+    }
+    .hstat-lbl { font-size: .72rem; color: var(--text3); text-transform: uppercase; letter-spacing: .8px; }
+
+    /* ═══════════════════════════════════════════════
+       TICKER / SOCIAL PROOF
+    ═══════════════════════════════════════════════ */
+    .ticker-wrap {
+        background: var(--bg2); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);
+        padding: .85rem 0; overflow: hidden;
+    }
+    .ticker-track {
+        display: flex; gap: 0; white-space: nowrap;
+        animation: ticker 28s linear infinite;
+    }
+    .ticker-item {
+        display: inline-flex; align-items: center; gap: .6rem;
+        padding: 0 2.5rem; font-size: .82rem; font-weight: 600; color: var(--text3);
+        flex-shrink: 0;
+    }
+    .ticker-item .ti-dot {
+        width: 5px; height: 5px; border-radius: 50%;
+        background: var(--indigo); flex-shrink:0;
+    }
+    .ticker-item span { color: var(--text2); }
+
+    /* ═══════════════════════════════════════════════
+       DEMO / WHAT ALFRED DOES
+    ═══════════════════════════════════════════════ */
+    .demo-grid {
+        display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem;
+        margin-top: 1rem;
+    }
+    .demo-card {
+        background: rgba(255,255,255,.03); border: 1px solid var(--border);
+        border-radius: var(--radius); padding: 1.4rem 1.5rem;
+        display: flex; gap: 1rem; align-items: flex-start;
+        transition: border-color .3s, background .3s;
+        cursor: default;
+    }
+    .demo-card:hover {
+        border-color: rgba(79,70,229,.35);
+        background: rgba(79,70,229,.05);
+    }
+    .demo-card .dc-icon { font-size: 1.5rem; flex-shrink:0; margin-top:.1rem; }
+    .demo-card .dc-cmd {
+        font-size: .82rem; color: #a78bfa; font-family: 'Courier New', monospace;
+        margin-bottom: .35rem; line-height: 1.4;
+    }
+    .demo-card .dc-res { font-size: .82rem; color: var(--text2); line-height: 1.5; }
+    .demo-card .dc-res strong { color: var(--green); }
+    .demo-foot {
+        text-align: center; margin-top: 2.5rem;
+        font-size: .95rem; color: var(--text3);
+    }
+    .demo-foot strong { color: var(--white); }
+
+    /* ═══════════════════════════════════════════════
+       FEATURES
+    ═══════════════════════════════════════════════ */
+    .feat-grid {
+        display: grid; grid-template-columns: repeat(3,1fr); gap: 1.2rem;
+    }
+    .feat-card {
+        background: rgba(255,255,255,.03); border: 1px solid var(--border);
+        border-radius: var(--radius); padding: 1.8rem;
+        transition: all .3s; position: relative; overflow: hidden;
+    }
+    .feat-card::after {
+        content:''; position:absolute; inset:0; opacity:0; transition: opacity .3s;
+        background: radial-gradient(circle at 30% 30%, rgba(79,70,229,.08), transparent 70%);
+    }
+    .feat-card:hover { border-color: rgba(79,70,229,.3); transform: translateY(-5px); }
+    .feat-card:hover::after { opacity: 1; }
+    .feat-icon {
+        width: 48px; height: 48px;
+        background: linear-gradient(135deg,rgba(79,70,229,.2),rgba(6,182,212,.15));
+        border: 1px solid rgba(79,70,229,.25); border-radius: 12px;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1.3rem; margin-bottom: 1.1rem;
+    }
+    .feat-title { font-size: 1rem; font-weight: 700; color: var(--white); margin-bottom: .5rem; }
+    .feat-desc { font-size: .85rem; color: var(--text2); line-height: 1.65; }
+    .feat-new {
+        display: inline-block; background: rgba(16,185,129,.15); color: var(--green);
+        font-size: .6rem; font-weight: 800; padding: 2px 7px; border-radius: 4px;
+        text-transform: uppercase; letter-spacing: .5px; margin-left: 7px; vertical-align: middle;
+    }
+
+    /* ═══════════════════════════════════════════════
+       COMPARISON
+    ═══════════════════════════════════════════════ */
+    .cmp-table {
+        width: 100%; border-collapse: separate; border-spacing: 0;
+        border-radius: var(--radius); overflow: hidden;
+        border: 1px solid var(--border);
+    }
+    .cmp-table th {
+        padding: 1rem; background: var(--bg3); font-size: .8rem; font-weight: 700;
+        text-align: center; color: var(--text3); border-bottom: 1px solid var(--border);
+    }
+    .cmp-table th:first-child { text-align: left; }
+    .cmp-table th.hl { color: var(--indigo); font-size: .85rem; }
+    .cmp-table td {
+        padding: .8rem 1rem; font-size: .85rem; color: var(--text2);
+        text-align: center; border-bottom: 1px solid rgba(255,255,255,.04);
+    }
+    .cmp-table td:first-child { text-align: left; font-weight: 500; color: var(--text1); }
+    .cmp-table td.hl { color: var(--white); font-weight: 600; }
+    .cmp-table .y { color: var(--green); font-weight: 700; }
+    .cmp-table .n { color: var(--red); }
+    .cmp-table tr:last-child td { border-bottom: none; }
+    .cmp-table tr:hover td { background: rgba(255,255,255,.015); }
+    .cmp-table col.hl-col { background: rgba(79,70,229,.04); }
+
+    /* ═══════════════════════════════════════════════
+       PRICING
+    ═══════════════════════════════════════════════ */
+    .pricing-toggle {
+        display: flex; align-items: center; justify-content: center; gap: 1rem;
+        margin-bottom: 3rem;
+    }
+    .tog-label { font-size: .9rem; font-weight: 600; color: var(--text2); }
+    .tog-label.active { color: var(--white); }
+    .toggle-switch {
+        width: 52px; height: 28px; background: rgba(79,70,229,.3); border-radius: 50px;
+        position: relative; cursor: pointer; border: 1px solid rgba(79,70,229,.5);
+        transition: background .3s;
+    }
+    .toggle-switch.on { background: var(--indigo); }
+    .toggle-switch .knob {
+        position: absolute; top: 3px; left: 3px; width: 20px; height: 20px;
+        border-radius: 50%; background: #fff; transition: transform .3s;
+    }
+    .toggle-switch.on .knob { transform: translateX(24px); }
+    .save-badge {
+        background: rgba(16,185,129,.15); color: var(--green);
+        font-size: .72rem; font-weight: 800; padding: 3px 8px; border-radius: 4px;
+        text-transform: uppercase; letter-spacing: .5px;
+    }
+
+    .pricing-cards {
+        display: grid; grid-template-columns: repeat(3,1fr);
+        max-width: 980px; margin: 0 auto;
+        border-radius: 20px; overflow: visible;
+        gap: 0;
+    }
+    .pc {
+        background: var(--bg2); border: 1px solid rgba(79,70,229,.22);
+        padding: 2.2rem 1.8rem 2rem;
+        position: relative; display: flex; flex-direction: column;
+        transition: border-color .3s;
+    }
+    .pc:first-child { border-radius: 20px 0 0 20px; }
+    .pc:last-child  { border-radius: 0 20px 20px 0; }
+    .pc::before {
+        content:''; position:absolute; top:0; left:0; right:0; height:3px;
+        background: var(--grad); border-radius:inherit;
+    }
+    .pc.featured {
+        background: linear-gradient(170deg,#1c1c42 0%,#13133a 100%);
+        border: 1px solid rgba(79,70,229,.6);
+        border-radius: 20px !important;
+        z-index: 2; margin: -1px;
+        box-shadow: 0 0 0 1px rgba(79,70,229,.4), 0 24px 70px rgba(79,70,229,.28);
+        animation: glow 4s ease-in-out infinite;
+    }
+    .pc.featured::before { background: linear-gradient(90deg,var(--indigo),var(--cyan),var(--indigo)); }
+
+    .pc-badge {
+        position:absolute; top:-15px; left:50%; transform:translateX(-50%);
+        background: var(--grad); color:#fff;
+        font-size:.68rem; font-weight:800; padding:4px 16px; border-radius:20px;
+        letter-spacing:1px; text-transform:uppercase; white-space:nowrap;
+    }
+    .pc-name   { font-size:1.2rem; font-weight:800; color:var(--white); text-align:center; margin-bottom:.2rem; }
+    .pc-tagline{ font-size:.75rem; color:var(--text3); text-align:center; margin-bottom:1.3rem; }
+    .pc-price  { display:flex; align-items:flex-start; justify-content:center; gap:1px; margin-bottom:.2rem; }
+    .pc-price .cur { font-size:1.3rem; font-weight:700; color:var(--indigo); margin-top:.4rem; }
+    .pc-price .amt { font-size:3rem; font-weight:900; color:var(--indigo); line-height:1; }
+    .pc-period { font-size:.75rem; color:var(--text3); text-align:center; margin-bottom:1.6rem; }
+    .pc-save   { font-size:.72rem; color:var(--green); text-align:center; margin-bottom:1.2rem; margin-top:-.9rem; font-weight:600; display:none; }
+    .pc-save.show { display:block; }
+
+    .pc-list   { list-style:none; flex:1; margin-bottom:1.6rem; }
+    .pc-list li{
+        display:flex; align-items:flex-start; gap:.6rem;
+        padding:.42rem 0; font-size:.85rem; color:var(--text2);
+        border-bottom:1px solid rgba(255,255,255,.04);
+    }
+    .pc-list li:last-child { border-bottom:none; }
+    .pc-list .ck { color:var(--indigo); font-weight:700; font-size:.95rem; flex-shrink:0; margin-top:.05rem; }
+    .pc-list strong { color:var(--text1); }
+
+    .pc-btn {
+        display:block; width:100%; padding:.9rem; border-radius:10px;
+        font-weight:700; font-size:.9rem; text-align:center; text-decoration:none;
+        transition:all .25s; cursor:pointer;
+        border:1.5px solid var(--indigo); color:var(--indigo); background:transparent;
+    }
+    .pc-btn:hover { background:var(--indigo); color:#fff; transform:translateY(-2px); }
+    .pc-btn.featured-btn {
+        background:var(--grad); color:#fff; border:none;
+        box-shadow:0 4px 20px rgba(79,70,229,.45);
+    }
+    .pc-btn.featured-btn:hover { box-shadow:0 8px 32px rgba(79,70,229,.65); transform:translateY(-2px); }
+
+    .pricing-foot {
+        text-align:center; margin-top:2rem; font-size:.85rem; color:var(--text3);
+    }
+    .pricing-foot strong { color:var(--white); }
+    .pricing-foot a { color:var(--cyan); text-decoration:none; font-weight:600; }
+    .pricing-foot a:hover { text-decoration:underline; }
+
+    /* ═══════════════════════════════════════════════
+       FOOTER
+    ═══════════════════════════════════════════════ */
+    .footer {
+        background: var(--bg0); padding: 5rem 1.5rem 2rem;
+        border-top: 1px solid var(--border);
+    }
+    .footer-grid {
+        max-width: 1200px; margin: 0 auto;
+        display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 3rem;
+        margin-bottom: 4rem;
+    }
+    .footer-brand .fb-logo {
+        font-size: 1.2rem; font-weight: 900;
+        background: var(--grad); -webkit-background-clip:text;
+        -webkit-text-fill-color:transparent; background-clip:text;
+        margin-bottom: .75rem; display:block;
+    }
+    .footer-brand p { font-size:.88rem; color:var(--text3); line-height:1.75; max-width:260px; }
+    .footer-brand .fb-sub { margin-top:.75rem; font-size:.82rem; color:var(--text3); }
+    .footer-brand .fb-sub a { color:var(--cyan); text-decoration:none; }
+    .footer-col h4 { font-size:.85rem; font-weight:700; color:var(--text1); margin-bottom:1rem; }
+    .footer-col a {
+        display:block; color:var(--text3); text-decoration:none;
+        font-size:.85rem; line-height:2.1; transition:color .25s;
+    }
+    .footer-col a:hover { color:var(--text1); }
+    .footer-col a.special { color:var(--cyan); }
+    .footer-bottom {
+        max-width:1200px; margin:0 auto;
+        display:flex; justify-content:space-between; align-items:center;
+        padding-top:2rem; border-top:1px solid var(--border);
+        font-size:.8rem; color:var(--text3); flex-wrap:wrap; gap:.75rem;
+    }
+    .footer-bottom a { color:var(--text3); text-decoration:none; transition:color .25s; }
+    .footer-bottom a:hover { color:var(--text1); }
+
+    /* ═══════════════════════════════════════════════
+       MODALS
+    ═══════════════════════════════════════════════ */
+    .modal {
+        display:none; position:fixed; inset:0;
+        background:rgba(0,0,0,.75); backdrop-filter:blur(12px); z-index:2000;
+    }
+    .modal-box {
+        position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
+        background:var(--bg3); border:1px solid rgba(79,70,229,.3);
+        border-radius:20px; padding:2.2rem; width:90%; max-width:400px;
+        animation: fadeUp .3s ease;
+    }
+    .modal-head { display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem; }
+    .modal-head h3 { font-size:1.3rem; font-weight:800; color:var(--white); }
+    .modal-close { background:none; border:none; color:var(--text3); font-size:1.4rem; cursor:pointer; transition:color .25s; }
+    .modal-close:hover { color:var(--white); }
+    .modal-btns { display:flex; flex-direction:column; gap:.75rem; margin-top:1rem; }
+    .modal-note { text-align:center; margin-top:1.1rem; font-size:.85rem; color:var(--text3); }
+    .modal-note a { color:var(--indigo); text-decoration:none; font-weight:600; }
+
+    /* ═══════════════════════════════════════════════
+       RESPONSIVE
+    ═══════════════════════════════════════════════ */
+    @media (max-width:1024px) {
+        .feat-grid { grid-template-columns: repeat(2,1fr); }
+        .footer-grid { grid-template-columns: 1fr 1fr; }
+    }
+    @media (max-width:860px) {
+        .pricing-cards { grid-template-columns:1fr; max-width:420px; }
+        .pc:first-child { border-radius:20px 20px 0 0; }
+        .pc:last-child  { border-radius:0 0 20px 20px; }
+        .pc.featured { margin:0; border-radius:0 !important; animation:none; }
+        .demo-grid { grid-template-columns:1fr; }
+        nav .nav-links { display:none; }
+    }
+    @media (max-width:640px) {
+        .feat-grid { grid-template-columns:1fr; }
+        .hero-stats .hstat { min-width:45%; }
+        .footer-grid { grid-template-columns:1fr; gap:2rem; }
+        .footer-bottom { flex-direction:column; text-align:center; }
+        div.overflow { overflow-x:auto; }
+    }
+    </style>
+</head>
+<body>
+
+<!-- ══════════════════ NAV ══════════════════ -->
+<header class="nav-wrap">
+    <nav class="nav">
+        <a href="/" class="nav-logo">🤖 GoCodeMe</a>
+        <ul class="nav-links">
+            <li><a href="#demo">What It Does</a></li>
+            <li><a href="#features">Features</a></li>
+            <li><a href="/alfred.html" class="special">Alfred AI</a></li>
+            <li><a href="#pricing">Pricing</a></li>
+            <li><a href="https://gositeme.com">GoSiteMe</a></li>
+        </ul>
+        <div class="nav-ctas">
+            <button class="btn btn-ghost" onclick="openModal('login')">Login</button>
+            <a href="https://gositeme.com/cart?a=add&pid=18" class="btn btn-solid">Get Started</a>
+        </div>
+    </nav>
+</header>
+
+<!-- ══════════════════ HERO ══════════════════ -->
+<section class="hero">
+    <div class="hero-orb"></div>
+    <div class="hero-grid"></div>
+
+    <div class="hero-inner">
+        <div class="hero-badge anim-up">
+            <div class="dot"></div>
+            World's First AI Hosting Platform
+        </div>
+
+        <h1 class="hero-h1">
+            <span class="line1 anim-up-1">Your Website.</span>
+            <span class="line2 anim-up-2">Managed by Alfred AI.</span>
+        </h1>
+
+        <p class="hero-sub anim-up-3">
+            13,000+ AI tools. Voice commands. WhatsApp &amp; Discord. WordPress, e-commerce, SEO, DevOps, accessibility, domains, SSL, email, security, backups, image generation — all through plain English. No code. No agency.
+        </p>
+
+        <div class="hero-ctas anim-up-4">
+            <a href="https://gositeme.com/cart?a=add&pid=18" class="btn btn-solid btn-xl">
+                Start AI Hosting — $15/mo
+            </a>
+            <a href="/alfred.html" class="btn btn-outline-white btn-xl">
+                See All 13,000+ Tools →
+            </a>
+        </div>
+
+        <p class="hero-promo anim-up-4">
+            Use code <strong>LAUNCH50</strong> for 50% off your first year &nbsp;·&nbsp; No contracts &nbsp;·&nbsp; Cancel anytime
+        </p>
+
+        <div class="hero-stats anim-up-5">
+            <div class="hstat">
+                <div class="hstat-num">13,000+</div>
+                <div class="hstat-lbl">AI Tools</div>
+            </div>
+            <div class="hstat">
+                <div class="hstat-num">6+</div>
+                <div class="hstat-lbl">Messaging Apps</div>
+            </div>
+            <div class="hstat">
+                <div class="hstat-num">$15</div>
+                <div class="hstat-lbl">Per Month</div>
+            </div>
+            <div class="hstat">
+                <div class="hstat-num">0</div>
+                <div class="hstat-lbl">Commands to Learn</div>
+            </div>
+            <div class="hstat">
+                <div class="hstat-num">99.9%</div>
+                <div class="hstat-lbl">Uptime SLA</div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ══════════════════ TICKER ══════════════════ -->
+<div class="ticker-wrap">
+    <div class="ticker-track">
+        <!-- duplicated for seamless loop -->
+        <span class="ticker-item"><span class="ti-dot"></span><span>WordPress Management</span></span>
+        <span class="ticker-item"><span class="ti-dot"></span><span>AI Image Generation</span></span>
+        <span class="ticker-item"><span class="ti-dot"></span><span>Voice Commands</span></span>
+        <span class="ticker-item"><span class="ti-dot"></span><span>WhatsApp Control</span></span>
+        <span class="ticker-item"><span class="ti-dot"></span><span>DNS &amp; Domains</span></span>
+        <span class="ticker-item"><span class="ti-dot"></span><span>SSL Certificates</span></span>
+        <span class="ticker-item"><span class="ti-dot"></span><span>AI Video Generation</span></span>
+        <span class="ticker-item"><span class="ti-dot"></span><span>Malware Scanning</span></span>
+        <span class="ticker-item"><span class="ti-dot"></span><span>Git + Backups</span></span>
+        <span class="ticker-item"><span class="ti-dot"></span><span>Email Management</span></span>
+        <span class="ticker-item"><span class="ti-dot"></span><span>Billing — 14 Tools</span></span>
+        <span class="ticker-item"><span class="ti-dot"></span><span>Canadian Servers</span></span>
+        <!-- duplicate -->
+        <span class="ticker-item"><span class="ti-dot"></span><span>WordPress Management</span></span>
+        <span class="ticker-item"><span class="ti-dot"></span><span>AI Image Generation</span></span>
+        <span class="ticker-item"><span class="ti-dot"></span><span>Voice Commands</span></span>
+        <span class="ticker-item"><span class="ti-dot"></span><span>WhatsApp Control</span></span>
+        <span class="ticker-item"><span class="ti-dot"></span><span>DNS &amp; Domains</span></span>
+        <span class="ticker-item"><span class="ti-dot"></span><span>SSL Certificates</span></span>
+        <span class="ticker-item"><span class="ti-dot"></span><span>AI Video Generation</span></span>
+        <span class="ticker-item"><span class="ti-dot"></span><span>Malware Scanning</span></span>
+        <span class="ticker-item"><span class="ti-dot"></span><span>Git + Backups</span></span>
+        <span class="ticker-item"><span class="ti-dot"></span><span>Email Management</span></span>
+        <span class="ticker-item"><span class="ti-dot"></span><span>Billing — 14 Tools</span></span>
+        <span class="ticker-item"><span class="ti-dot"></span><span>Canadian Servers</span></span>
+    </div>
+</div>
+
+<!-- ══════════════════ DEMO ══════════════════ -->
+<section class="section" id="demo">
+    <div class="wrap">
+        <div class="sec-header">
+            <div class="sec-label">⚡ Live Demo</div>
+            <h2 class="sec-title">It's 9 PM. You Just Had an Idea.</h2>
+            <p class="sec-sub centered">No developer. No agency. No $5,000 invoice. Here's what Alfred does in 12 minutes — all from a conversation.</p>
+        </div>
+        <div class="demo-grid">
+            <div class="demo-card">
+                <div class="dc-icon">🌐</div>
+                <div>
+                    <div class="dc-cmd">"Set up a WordPress site on mybakery.com"</div>
+                    <div class="dc-res"><strong>✓ Done in 8s.</strong> WordPress installed, SSL provisioned, DNS configured. Site is live.</div>
+                </div>
+            </div>
+            <div class="demo-card">
+                <div class="dc-icon">🛒</div>
+                <div>
+                    <div class="dc-cmd">"Install WooCommerce and create 3 products"</div>
+                    <div class="dc-res"><strong>✓ Done.</strong> WooCommerce activated. 3 products with descriptions, images, and pricing.</div>
+                </div>
+            </div>
+            <div class="demo-card">
+                <div class="dc-icon">🎨</div>
+                <div>
+                    <div class="dc-cmd">"Generate a hero image — rustic bakery, warm light"</div>
+                    <div class="dc-res"><strong>✓ Generated in 4.2s.</strong> Saved to /ai-images/ with a public URL, ready to embed.</div>
+                </div>
+            </div>
+            <div class="demo-card">
+                <div class="dc-icon">📧</div>
+                <div>
+                    <div class="dc-cmd">"Create me@mybakery.com and forward to Gmail"</div>
+                    <div class="dc-res"><strong>✓ Done.</strong> Email created. Forwarding enabled. SPF, DKIM, DMARC configured automatically.</div>
+                </div>
+            </div>
+            <div class="demo-card">
+                <div class="dc-icon">🔒</div>
+                <div>
+                    <div class="dc-cmd">"Check if my site is fast and secure"</div>
+                    <div class="dc-res"><strong>✓ Grade: A+</strong> SSL valid, 0.28s response, no malware, permissions clean, DNS healthy.</div>
+                </div>
+            </div>
+            <div class="demo-card">
+                <div class="dc-icon">💾</div>
+                <div>
+                    <div class="dc-cmd">"Back everything up and commit to Git"</div>
+                    <div class="dc-res"><strong>✓ Done.</strong> Full backup created. Git initialized and committed. Restore anytime in 1 click.</div>
+                </div>
+            </div>
+            <div class="demo-card">
+                <div class="dc-icon">🛒</div>
+                <div>
+                    <div class="dc-cmd">"Set up an online store selling organic coffee"</div>
+                    <div class="dc-res"><strong>✓ Done.</strong> WooCommerce installed, 3 starter products, Stripe checkout enabled. Store is live.</div>
+                </div>
+            </div>
+            <div class="demo-card">
+                <div class="dc-icon">📊</div>
+                <div>
+                    <div class="dc-cmd">"Run an SEO audit and fix everything"</div>
+                    <div class="dc-res"><strong>✓ SEO score: 42→91.</strong> Fixed meta tags, added sitemap, optimized images, improved headings.</div>
+                </div>
+            </div>
+        </div>
+        <p class="demo-foot">
+            Total time: <strong>~12 minutes</strong> &nbsp;·&nbsp;
+            Commands typed: <strong>zero</strong> &nbsp;·&nbsp;
+            Agency cost saved: <strong>$2,000–$10,000</strong>
+        </p>
+    </div>
+</section>
+
+<!-- ══════════════════ FEATURES ══════════════════ -->
+<section class="section section-alt" id="features">
+    <div class="wrap">
+        <div class="sec-header">
+            <div class="sec-label">🤖 13,000+ Tools</div>
+            <h2 class="sec-title">Everything. <span>One Conversation.</span></h2>
+            <p class="sec-sub centered">GoCodeMe isn't just an editor — it's your entire web presence managed by Alfred AI through natural language.</p>
+        </div>
+        <div class="feat-grid">
+            <div class="feat-card">
+                <div class="feat-icon">🎙️</div>
+                <h3 class="feat-title">Voice Commands</h3>
+                <p class="feat-desc">Click the mic and speak naturally. "Set up SSL on mysite.com" and Alfred executes it. Native browser — no extensions, no plugins.</p>
+            </div>
+            <div class="feat-card">
+                <div class="feat-icon">💬</div>
+                <h3 class="feat-title">Messaging Integration <span class="feat-new">New</span></h3>
+                <p class="feat-desc">Manage your site from WhatsApp, Signal, Discord, Telegram, or SMS. Send a command from your phone — Alfred responds in seconds.</p>
+            </div>
+            <div class="feat-card">
+                <div class="feat-icon">🖼️</div>
+                <h3 class="feat-title">AI Image Generation <span class="feat-new">New</span></h3>
+                <p class="feat-desc">Generate photos, logos, hero images, and product shots from text. 7 style presets. Saved directly to your /ai-images/ folder with a live URL.</p>
+            </div>
+            <div class="feat-card">
+                <div class="feat-icon">🎬</div>
+                <h3 class="feat-title">AI Video &amp; Audio <span class="feat-new">New</span></h3>
+                <p class="feat-desc">Generate product demo videos and professional voiceovers from text. Perfect for social media, landing pages, and ads — all without leaving Alfred.</p>
+            </div>
+            <div class="feat-card">
+                <div class="feat-icon">🛡️</div>
+                <h3 class="feat-title">Security &amp; Monitoring</h3>
+                <p class="feat-desc">Malware scanning, permission audits, SSL management, error log analysis. Alfred monitors proactively and can auto-fix common issues.</p>
+            </div>
+            <div class="feat-card">
+                <div class="feat-icon">📝</div>
+                <h3 class="feat-title">Full Code Editor</h3>
+                <p class="feat-desc">Browser-based IDE powered by Claude AI. Write, debug, and deploy on phone, iPad, or laptop. Intelligent suggestions, real-time diagnostics.</p>
+            </div>
+            <div class="feat-card">
+                <div class="feat-icon">🔄</div>
+                <h3 class="feat-title">Git + Backups</h3>
+                <p class="feat-desc">Every change committable. Checkpoints created before major changes. Full account backups on demand. Roll back anything in one click.</p>
+            </div>
+            <div class="feat-card">
+                <div class="feat-icon">🌐</div>
+                <h3 class="feat-title">WordPress — 11 Tools</h3>
+                <p class="feat-desc">Install, manage, update, secure, and optimise WordPress through conversation. Plugins, themes, DB optimize, migration — all automated.</p>
+            </div>
+            <div class="feat-card">
+                <div class="feat-icon">🇨🇦</div>
+                <h3 class="feat-title">Canadian Infrastructure</h3>
+                <p class="feat-desc">Hardened Canadian servers. Sandboxed access — Alfred touches only your files, never another customer's. 24/7 support at 1-833-GOSITEME.</p>
+            </div>
+            <div class="feat-card">
+                <div class="feat-icon">🛒</div>
+                <h3 class="feat-title">E-Commerce &amp; Payments <span class="feat-new">New</span></h3>
+                <p class="feat-desc">Online stores, payment gateways, invoices, subscriptions, shipping — set up a complete e-commerce business with one conversation. Stripe, PayPal, WooCommerce.</p>
+            </div>
+            <div class="feat-card">
+                <div class="feat-icon">🔍</div>
+                <h3 class="feat-title">SEO, DevOps &amp; CI/CD <span class="feat-new">New</span></h3>
+                <p class="feat-desc">SEO audits, sitemaps, keyword research. Staging sites, auto-deploy, Docker, test suites. Your entire development workflow managed by AI.</p>
+            </div>
+            <div class="feat-card">
+                <div class="feat-icon">♿</div>
+                <h3 class="feat-title">Accessibility &amp; Compliance <span class="feat-new">New</span></h3>
+                <p class="feat-desc">WCAG audits, GDPR compliance, ADA fixes, cookie consent, privacy policies. Make your site accessible and legally compliant automatically.</p>
+            </div>
+        </div>
+        <div style="text-align:center;margin-top:2.5rem;">
+            <a href="/alfred.html" class="btn btn-solid btn-lg">View All 13,000+ Tools →</a>
+        </div>
+    </div>
+</section>
+
+<!-- ══════════════════ ENTERPRISE SHOWCASE ══════════════════ -->
+<section class="section" id="enterprise">
+    <div class="wrap">
+        <div class="sec-header">
+            <div class="sec-label">🏢 Fortune 500 Capable</div>
+            <h2 class="sec-title">What Fortune 500 Companies Pay <span>Millions</span> For</h2>
+            <p class="sec-sub centered">GoCodeMe doesn't just build blogs. It builds Fortune 500-quality websites. The same AI that powers your hosting can architect enterprise-grade dashboards, e-commerce platforms, SaaS applications, and multi-language marketing sites.<br><strong style="color:var(--cyan);">You don't need a team of 50 developers anymore — Alfred IS the team.</strong></p>
+        </div>
+
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1.5rem;margin-top:2.5rem;">
+            <!-- SaaS Dashboard -->
+            <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:2rem;transition:transform .3s,box-shadow .3s;" onmouseover="this.style.transform='translateY(-6px)';this.style.boxShadow='0 12px 40px rgba(79,70,229,.2)';" onmouseout="this.style.transform='';this.style.boxShadow='';">
+                <div style="font-size:2.2rem;margin-bottom:.8rem;">📊</div>
+                <h3 style="font-size:1.15rem;font-weight:800;margin-bottom:.5rem;color:var(--white);">SaaS Dashboards</h3>
+                <p style="font-size:.88rem;color:var(--text2);line-height:1.6;">Real-time analytics, user management, subscription billing, role-based access. Full-stack SaaS — one conversation.</p>
+                <div style="margin-top:.8rem;display:flex;flex-wrap:wrap;gap:.4rem;"><span style="background:rgba(79,70,229,.12);color:var(--cyan);padding:3px 10px;border-radius:6px;font-size:.72rem;font-weight:600;">React</span><span style="background:rgba(79,70,229,.12);color:var(--cyan);padding:3px 10px;border-radius:6px;font-size:.72rem;font-weight:600;">Charts</span><span style="background:rgba(79,70,229,.12);color:var(--cyan);padding:3px 10px;border-radius:6px;font-size:.72rem;font-weight:600;">Auth</span></div>
+            </div>
+            <!-- E-Commerce -->
+            <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:2rem;transition:transform .3s,box-shadow .3s;" onmouseover="this.style.transform='translateY(-6px)';this.style.boxShadow='0 12px 40px rgba(79,70,229,.2)';" onmouseout="this.style.transform='';this.style.boxShadow='';">
+                <div style="font-size:2.2rem;margin-bottom:.8rem;">🛒</div>
+                <h3 style="font-size:1.15rem;font-weight:800;margin-bottom:.5rem;color:var(--white);">E-Commerce Platforms</h3>
+                <p style="font-size:.88rem;color:var(--text2);line-height:1.6;">Product catalogs, payment gateways, inventory management, abandoned cart recovery. Shopify-level stores — no Shopify tax.</p>
+                <div style="margin-top:.8rem;display:flex;flex-wrap:wrap;gap:.4rem;"><span style="background:rgba(79,70,229,.12);color:var(--cyan);padding:3px 10px;border-radius:6px;font-size:.72rem;font-weight:600;">WooCommerce</span><span style="background:rgba(79,70,229,.12);color:var(--cyan);padding:3px 10px;border-radius:6px;font-size:.72rem;font-weight:600;">Stripe</span><span style="background:rgba(79,70,229,.12);color:var(--cyan);padding:3px 10px;border-radius:6px;font-size:.72rem;font-weight:600;">Inventory</span></div>
+            </div>
+            <!-- Healthcare -->
+            <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:2rem;transition:transform .3s,box-shadow .3s;" onmouseover="this.style.transform='translateY(-6px)';this.style.boxShadow='0 12px 40px rgba(79,70,229,.2)';" onmouseout="this.style.transform='';this.style.boxShadow='';">
+                <div style="font-size:2.2rem;margin-bottom:.8rem;">🏥</div>
+                <h3 style="font-size:1.15rem;font-weight:800;margin-bottom:.5rem;color:var(--white);">Healthcare Portals</h3>
+                <p style="font-size:.88rem;color:var(--text2);line-height:1.6;">Patient scheduling, secure forms, HIPAA-conscious design, appointment booking, telehealth integration. Medical-grade UX.</p>
+                <div style="margin-top:.8rem;display:flex;flex-wrap:wrap;gap:.4rem;"><span style="background:rgba(79,70,229,.12);color:var(--cyan);padding:3px 10px;border-radius:6px;font-size:.72rem;font-weight:600;">HIPAA</span><span style="background:rgba(79,70,229,.12);color:var(--cyan);padding:3px 10px;border-radius:6px;font-size:.72rem;font-weight:600;">Booking</span><span style="background:rgba(79,70,229,.12);color:var(--cyan);padding:3px 10px;border-radius:6px;font-size:.72rem;font-weight:600;">Forms</span></div>
+            </div>
+            <!-- Fintech -->
+            <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:2rem;transition:transform .3s,box-shadow .3s;" onmouseover="this.style.transform='translateY(-6px)';this.style.boxShadow='0 12px 40px rgba(79,70,229,.2)';" onmouseout="this.style.transform='';this.style.boxShadow='';">
+                <div style="font-size:2.2rem;margin-bottom:.8rem;">💰</div>
+                <h3 style="font-size:1.15rem;font-weight:800;margin-bottom:.5rem;color:var(--white);">Fintech Dashboards</h3>
+                <p style="font-size:.88rem;color:var(--text2);line-height:1.6;">Financial data visualization, portfolio trackers, payment processing, compliance dashboards. Wall Street polish, startup speed.</p>
+                <div style="margin-top:.8rem;display:flex;flex-wrap:wrap;gap:.4rem;"><span style="background:rgba(79,70,229,.12);color:var(--cyan);padding:3px 10px;border-radius:6px;font-size:.72rem;font-weight:600;">Charts</span><span style="background:rgba(79,70,229,.12);color:var(--cyan);padding:3px 10px;border-radius:6px;font-size:.72rem;font-weight:600;">API</span><span style="background:rgba(79,70,229,.12);color:var(--cyan);padding:3px 10px;border-radius:6px;font-size:.72rem;font-weight:600;">Security</span></div>
+            </div>
+            <!-- Real Estate -->
+            <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:2rem;transition:transform .3s,box-shadow .3s;" onmouseover="this.style.transform='translateY(-6px)';this.style.boxShadow='0 12px 40px rgba(79,70,229,.2)';" onmouseout="this.style.transform='';this.style.boxShadow='';">
+                <div style="font-size:2.2rem;margin-bottom:.8rem;">🏠</div>
+                <h3 style="font-size:1.15rem;font-weight:800;margin-bottom:.5rem;color:var(--white);">Real Estate Portals</h3>
+                <p style="font-size:.88rem;color:var(--text2);line-height:1.6;">MLS-style property listings, interactive maps, virtual tours, mortgage calculators, agent dashboards. Zillow-level power.</p>
+                <div style="margin-top:.8rem;display:flex;flex-wrap:wrap;gap:.4rem;"><span style="background:rgba(79,70,229,.12);color:var(--cyan);padding:3px 10px;border-radius:6px;font-size:.72rem;font-weight:600;">Maps</span><span style="background:rgba(79,70,229,.12);color:var(--cyan);padding:3px 10px;border-radius:6px;font-size:.72rem;font-weight:600;">Search</span><span style="background:rgba(79,70,229,.12);color:var(--cyan);padding:3px 10px;border-radius:6px;font-size:.72rem;font-weight:600;">CRM</span></div>
+            </div>
+            <!-- Restaurant Chain -->
+            <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:2rem;transition:transform .3s,box-shadow .3s;" onmouseover="this.style.transform='translateY(-6px)';this.style.boxShadow='0 12px 40px rgba(79,70,229,.2)';" onmouseout="this.style.transform='';this.style.boxShadow='';">
+                <div style="font-size:2.2rem;margin-bottom:.8rem;">🍽️</div>
+                <h3 style="font-size:1.15rem;font-weight:800;margin-bottom:.5rem;color:var(--white);">Restaurant Chains</h3>
+                <p style="font-size:.88rem;color:var(--text2);line-height:1.6;">Online ordering, multi-location menus, reservation systems, delivery integration, loyalty programs. Enterprise food service — done.</p>
+                <div style="margin-top:.8rem;display:flex;flex-wrap:wrap;gap:.4rem;"><span style="background:rgba(79,70,229,.12);color:var(--cyan);padding:3px 10px;border-radius:6px;font-size:.72rem;font-weight:600;">Orders</span><span style="background:rgba(79,70,229,.12);color:var(--cyan);padding:3px 10px;border-radius:6px;font-size:.72rem;font-weight:600;">Menu</span><span style="background:rgba(79,70,229,.12);color:var(--cyan);padding:3px 10px;border-radius:6px;font-size:.72rem;font-weight:600;">Reservations</span></div>
+            </div>
+            <!-- Law Firm -->
+            <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:2rem;transition:transform .3s,box-shadow .3s;" onmouseover="this.style.transform='translateY(-6px)';this.style.boxShadow='0 12px 40px rgba(79,70,229,.2)';" onmouseout="this.style.transform='';this.style.boxShadow='';">
+                <div style="font-size:2.2rem;margin-bottom:.8rem;">⚖️</div>
+                <h3 style="font-size:1.15rem;font-weight:800;margin-bottom:.5rem;color:var(--white);">Law Firm Sites</h3>
+                <p style="font-size:.88rem;color:var(--text2);line-height:1.6;">Practice area pages, attorney profiles, case intake forms, client portals, document management. White-shoe firm credibility.</p>
+                <div style="margin-top:.8rem;display:flex;flex-wrap:wrap;gap:.4rem;"><span style="background:rgba(79,70,229,.12);color:var(--cyan);padding:3px 10px;border-radius:6px;font-size:.72rem;font-weight:600;">Intake</span><span style="background:rgba(79,70,229,.12);color:var(--cyan);padding:3px 10px;border-radius:6px;font-size:.72rem;font-weight:600;">Portal</span><span style="background:rgba(79,70,229,.12);color:var(--cyan);padding:3px 10px;border-radius:6px;font-size:.72rem;font-weight:600;">WCAG</span></div>
+            </div>
+            <!-- Booking Platform -->
+            <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:2rem;transition:transform .3s,box-shadow .3s;" onmouseover="this.style.transform='translateY(-6px)';this.style.boxShadow='0 12px 40px rgba(79,70,229,.2)';" onmouseout="this.style.transform='';this.style.boxShadow='';">
+                <div style="font-size:2.2rem;margin-bottom:.8rem;">📅</div>
+                <h3 style="font-size:1.15rem;font-weight:800;margin-bottom:.5rem;color:var(--white);">Booking Platforms</h3>
+                <p style="font-size:.88rem;color:var(--text2);line-height:1.6;">Calendar scheduling, payment processing, automated reminders, multi-timezone support, staff management. Your own Calendly — owned by you.</p>
+                <div style="margin-top:.8rem;display:flex;flex-wrap:wrap;gap:.4rem;"><span style="background:rgba(79,70,229,.12);color:var(--cyan);padding:3px 10px;border-radius:6px;font-size:.72rem;font-weight:600;">Calendar</span><span style="background:rgba(79,70,229,.12);color:var(--cyan);padding:3px 10px;border-radius:6px;font-size:.72rem;font-weight:600;">Payments</span><span style="background:rgba(79,70,229,.12);color:var(--cyan);padding:3px 10px;border-radius:6px;font-size:.72rem;font-weight:600;">Reminders</span></div>
+            </div>
+        </div>
+
+        <div style="text-align:center;margin-top:3rem;padding:2rem;background:linear-gradient(135deg,rgba(79,70,229,.08),rgba(6,182,212,.08));border:1px solid rgba(79,70,229,.2);border-radius:var(--radius);">
+            <p style="font-size:1.2rem;font-weight:700;color:var(--white);margin-bottom:.5rem;">What Fortune 500 companies pay millions for, you build in hours.</p>
+            <p style="font-size:.95rem;color:var(--text2);">Tell Alfred what you need. Watch it architect, design, code, and deploy — while you grab coffee.</p>
+            <a href="#pricing" class="btn btn-solid btn-lg" style="margin-top:1.2rem;">Start Building Enterprise-Grade →</a>
+        </div>
+    </div>
+</section>
+
+<!-- ══════════════════ COMPARISON ══════════════════ -->
+<section class="section" id="compare">
+    <div class="wrap">
+        <div class="sec-header">
+            <div class="sec-label">🏆 Head to Head</div>
+            <h2 class="sec-title">Alfred vs. <span>Everything Else</span></h2>
+            <p class="sec-sub centered">We built what the industry said was impossible. Here's the proof.</p>
+        </div>
+        <div style="overflow-x:auto;">
+        <table class="cmp-table">
+            <colgroup>
+                <col><col class="hl-col"><col><col><col>
+            </colgroup>
+            <thead>
+                <tr>
+                    <th>Feature</th>
+                    <th class="hl">Alfred AI · $15/mo</th>
+                    <th>Cursor · $20/mo</th>
+                    <th>Lovable · $20/mo</th>
+                    <th>cPanel · $15+</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr><td>AI Code Editor</td><td class="hl y">✓ Full IDE</td><td class="y">✓</td><td>Limited</td><td class="n">✗</td></tr>
+                <tr><td>AI Image Generation</td><td class="hl y">✓ Built-in</td><td class="n">✗</td><td class="n">✗</td><td class="n">✗</td></tr>
+                <tr><td>AI Video &amp; Audio</td><td class="hl y">✓ Built-in</td><td class="n">✗</td><td class="n">✗</td><td class="n">✗</td></tr>
+                <tr><td>WordPress Management</td><td class="hl y">✓ 11 tools</td><td class="n">✗</td><td class="n">✗</td><td>Basic</td></tr>
+                <tr><td>Domain &amp; DNS</td><td class="hl y">✓ Full</td><td class="n">✗</td><td class="n">✗</td><td class="y">✓</td></tr>
+                <tr><td>Email Management</td><td class="hl y">✓ With AI</td><td class="n">✗</td><td class="n">✗</td><td class="y">✓</td></tr>
+                <tr><td>SSL &amp; Security</td><td class="hl y">✓ Automated</td><td class="n">✗</td><td class="n">✗</td><td>Manual</td></tr>
+                <tr><td>Backups &amp; Git</td><td class="hl y">✓ Both</td><td>Git only</td><td class="n">✗</td><td>Backups</td></tr>
+                <tr><td>Voice Commands</td><td class="hl y">✓ Browser native</td><td class="n">✗</td><td class="n">✗</td><td class="n">✗</td></tr>
+                <tr><td>WhatsApp / Messaging</td><td class="hl y">✓ 6+ platforms</td><td class="n">✗</td><td class="n">✗</td><td class="n">✗</td></tr>
+                <tr><td>Hosting Included</td><td class="hl y">✓ Full</td><td class="n">✗ BYOH</td><td>Limited</td><td class="y">✓</td></tr>
+                <tr><td>Total AI Tools</td><td class="hl" style="font-weight:900;color:var(--indigo)">13,000+</td><td>~15</td><td>~8</td><td>0</td></tr>
+            </tbody>
+        </table>
+        </div>
+        <p style="text-align:center;margin-top:1.5rem;font-size:.88rem;color:var(--text3);">
+            Not just an editor. Not just hosting. <strong style="color:var(--white);">The entire stack — one place, less money.</strong>
+        </p>
+    </div>
+</section>
+
+<!-- ══════════════════ PRICING ══════════════════ -->
+<section class="section section-alt" id="pricing">
+    <div class="wrap">
+        <div class="sec-header">
+            <div class="sec-label">💳 Pricing</div>
+            <h2 class="sec-title">Simple, <span>Honest Pricing</span></h2>
+            <p class="sec-sub centered">Start with AI hosting and scale as you grow. No hidden fees, no surprises.</p>
+        </div>
+
+        <!-- Toggle -->
+        <div class="pricing-toggle">
+            <span class="tog-label active" id="tog-monthly">Monthly</span>
+            <div class="toggle-switch" id="billing-toggle" onclick="toggleBilling()">
+                <div class="knob"></div>
+            </div>
+            <span class="tog-label" id="tog-annual">Annual</span>
+            <span class="save-badge">Save ~20%</span>
+        </div>
+
+        <div class="pricing-cards">
+
+            <!-- WordPress 1 — pid=2 -->
+            <div class="pc">
+                <div class="pc-name">WordPress 1</div>
+                <div class="pc-tagline">Websites without AI assistant</div>
+                <div class="pc-price">
+                    <span class="cur">$</span>
+                    <span class="amt" data-m="3.95" data-a="3.95">3.95</span>
+                </div>
+                <div class="pc-period">/month <span class="pc-period-note"></span></div>
+                <div class="pc-save" id="save-wp1"></div>
+                <ul class="pc-list">
+                    <li><span class="ck">✓</span> 1 Website</li>
+                    <li><span class="ck">✓</span> 10 GB SSD Storage</li>
+                    <li><span class="ck">✓</span> 25,000 Monthly Visits</li>
+                    <li><span class="ck">✓</span> Free SSL &amp; Email</li>
+                    <li><span class="ck">✓</span> Free Site Migration</li>
+                    <li><span class="ck">✓</span> Code Editor Access</li>
+                </ul>
+                <a href="https://gositeme.com/cart?a=add&pid=2" class="pc-btn">Get Started</a>
+            </div>
+
+            <!-- Builder — pid=18 — FEATURED -->
+            <div class="pc featured">
+                <div class="pc-badge">Most Popular</div>
+                <div class="pc-name">Builder</div>
+                <div class="pc-tagline">Full Alfred AI + hosting</div>
+                <div class="pc-price">
+                    <span class="cur">$</span>
+                    <span class="amt" data-m="15" data-a="12">15</span>
+                </div>
+                <div class="pc-period">/month <span class="pc-period-note"></span></div>
+                <div class="pc-save" id="save-builder"></div>
+                <ul class="pc-list">
+                    <li><span class="ck">✓</span> 1 Website</li>
+                    <li><span class="ck">✓</span> <strong>Alfred AI — 13,000+ Tools</strong></li>
+                    <li><span class="ck">✓</span> Voice + Messaging Control</li>
+                    <li><span class="ck">✓</span> AI Image, Video &amp; Audio</li>
+                    <li><span class="ck">✓</span> GoCodeMe Web IDE</li>
+                    <li><span class="ck">✓</span> Domain mgmt + Free SSL</li>
+                    <li><span class="ck">✓</span> One-click deployment</li>
+                    <li><span class="ck">✓</span> 300,000 AI Tokens/month</li>
+                </ul>
+                <a href="https://gositeme.com/cart?a=add&pid=18" class="pc-btn featured-btn">Start AI Hosting</a>
+            </div>
+
+            <!-- Professional — pid=19 -->
+            <div class="pc">
+                <div class="pc-name">Professional</div>
+                <div class="pc-tagline">Freelancers &amp; pro developers</div>
+                <div class="pc-price">
+                    <span class="cur">$</span>
+                    <span class="amt" data-m="29" data-a="24">29</span>
+                </div>
+                <div class="pc-period">/month <span class="pc-period-note"></span></div>
+                <div class="pc-save" id="save-pro"></div>
+                <ul class="pc-list">
+                    <li><span class="ck">✓</span> Everything in Builder</li>
+                    <li><span class="ck">✓</span> <strong>Alfred AI — 13,000+ Tools</strong></li>
+                    <li><span class="ck">✓</span> 600,000 AI Tokens/month</li>
+                    <li><span class="ck">✓</span> Priority AI processing</li>
+                    <li><span class="ck">✓</span> Full Git workflow + PRs</li>
+                    <li><span class="ck">✓</span> Database management</li>
+                    <li><span class="ck">✓</span> SSH/SFTP access</li>
+                </ul>
+                <a href="https://gositeme.com/cart?a=add&pid=19" class="pc-btn">Get Professional</a>
+            </div>
+
+        </div>
+
+        <p class="pricing-foot">
+            Use code <strong>LAUNCH50</strong> for 50% off your first year &nbsp;·&nbsp;
+            <a href="https://gositeme.com/#pricing">View all plans →</a>
+            &nbsp;·&nbsp; Creator $22 &nbsp;·&nbsp; Studio $59 &nbsp;·&nbsp; Business $99 &nbsp;·&nbsp; Enterprise $199
+        </p>
+    </div>
+</section>
+
+<!-- ══════════════════ FOOTER ══════════════════ -->
+<footer class="footer">
+    <div class="footer-grid">
+        <div class="footer-brand">
+            <span class="fb-logo">🤖 GoCodeMe.com</span>
+            <p>The world's first AI hosting platform. Alfred manages your entire web presence through plain English conversation — voice, messaging, or browser.</p>
+            <p class="fb-sub">A <a href="https://gositeme.com">GoSiteMe.com</a> product. Canadian infrastructure.</p>
+        </div>
+        <div class="footer-col">
+            <h4>Product</h4>
+            <a href="#demo">What Alfred Does</a>
+            <a href="#features">Features</a>
+            <a href="/alfred.html" class="special">Alfred AI — 13,000+ Tools</a>
+            <a href="#pricing">Pricing</a>
+            <a href="https://gositeme.com/middleware/dashboard">Open Editor</a>
+        </div>
+        <div class="footer-col">
+            <h4>Hosting</h4>
+            <a href="https://gositeme.com/store/wordpress">WordPress Hosting</a>
+            <a href="https://gositeme.com/store/hosting">AI Hosting</a>
+            <a href="https://gositeme.com/cart?a=add&domain=register">Register a Domain</a>
+            <a href="https://gositeme.com/ai-servers/">AI Servers</a>
+            <a href="https://gositeme.com/alfred-voice-live/">Alfred Voice</a>
+        </div>
+        <div class="footer-col">
+            <h4>Support</h4>
+            <a href="https://gositeme.com/contact">Contact Us</a>
+            <a href="https://gositeme.com/knowledgebase">Help Center</a>
+            <a href="https://gositeme.com/privacy-policy/">Privacy Policy</a>
+            <a href="https://gositeme.com/announcements">News &amp; Updates</a>
+            <a href="tel:18338674836" class="special">1-833-GOSITEME</a>
+        </div>
+    </div>
+    <div class="footer-bottom">
+        <span>&copy; 2026 GoCodeMe.com — A <a href="https://gositeme.com">GoSiteMe.com</a> product. All rights reserved.</span>
+        <span>
+            <a href="https://gositeme.com/privacy-policy/">Privacy</a> &nbsp;·&nbsp;
+            <a href="https://gositeme.com/contact">Contact</a> &nbsp;·&nbsp;
+            <a href="tel:18338674836">1-833-GOSITEME</a>
+        </span>
+    </div>
+</footer>
+
+<!-- ══════════════════ MODALS ══════════════════ -->
+<div id="loginModal" class="modal" onclick="if(event.target===this)closeModal('login')">
+    <div class="modal-box">
+        <div class="modal-head">
+            <h3>Welcome Back</h3>
+            <button class="modal-close" onclick="closeModal('login')">&times;</button>
+        </div>
+        <p style="color:var(--text2);font-size:.9rem;margin-bottom:.5rem;">Access your GoCodeMe editor and Alfred AI through GoSiteMe.</p>
+        <div class="modal-btns">
+            <a href="https://gositeme.com/account" class="btn btn-solid btn-lg" style="width:100%;">Login on GoSiteMe</a>
+            <a href="https://gositeme.com/middleware/dashboard" class="btn btn-ghost btn-lg" style="width:100%;">Open Editor Directly</a>
+        </div>
+        <p class="modal-note">No account? <a href="#" onclick="switchModal('login','signup')">Sign up free →</a></p>
+    </div>
+</div>
+
+<div id="signupModal" class="modal" onclick="if(event.target===this)closeModal('signup')">
+    <div class="modal-box">
+        <div class="modal-head">
+            <h3>Join GoCodeMe</h3>
+            <button class="modal-close" onclick="closeModal('signup')">&times;</button>
+        </div>
+        <p style="color:var(--text2);font-size:.9rem;margin-bottom:.5rem;">Create your account on GoSiteMe.com to get started with Alfred AI.</p>
+        <div class="modal-btns">
+            <a href="https://gositeme.com/register" class="btn btn-solid btn-lg" style="width:100%;">Create Account on GoSiteMe</a>
+            <a href="https://gositeme.com/cart?a=add&pid=18" class="btn btn-ghost btn-lg" style="width:100%;">Start AI Hosting — $15/mo</a>
+        </div>
+        <p class="modal-note">Already have an account? <a href="#" onclick="switchModal('signup','login')">Login →</a></p>
+    </div>
+</div>
+
+<script>
+/* ── Modals ── */
+function openModal(t){document.getElementById(t+'Modal').style.display='block';document.body.style.overflow='hidden';}
+function closeModal(t){document.getElementById(t+'Modal').style.display='none';document.body.style.overflow='';}
+function switchModal(f,t){closeModal(f);openModal(t);}
+
+/* ── Billing toggle ── */
+let annual = false;
+function toggleBilling(){
+    annual = !annual;
+    const tog = document.getElementById('billing-toggle');
+    tog.classList.toggle('on', annual);
+    document.getElementById('tog-monthly').classList.toggle('active',!annual);
+    document.getElementById('tog-annual').classList.toggle('active',annual);
+
+    document.querySelectorAll('.pc-price .amt').forEach(el=>{
+        const m = parseFloat(el.dataset.m);
+        const a = parseFloat(el.dataset.a);
+        el.textContent = annual ? a : m;
+    });
+
+    /* show/hide save notes */
+    const saves = [
+        {id:'save-builder', m:15, a:12},
+        {id:'save-pro',     m:29, a:24},
+    ];
+    saves.forEach(s=>{
+        const el = document.getElementById(s.id);
+        if(annual){
+            const saving = ((s.m - s.a)*12).toFixed(0);
+            el.textContent = `Save $${saving}/year vs monthly`;
+            el.classList.add('show');
+        } else {
+            el.classList.remove('show');
+        }
+    });
+}
+</script>
+
+<!-- Alfred Voice Floating Widget -->
+<style>
+.alfred-widget{position:fixed;bottom:24px;right:24px;z-index:999;display:flex;flex-direction:column;align-items:flex-end;gap:12px}
+.alfred-orb{width:64px;height:64px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 35% 35%,rgba(192,132,252,.95),rgba(125,0,255,.7) 50%,rgba(0,212,255,.35));box-shadow:0 8px 36px rgba(125,0,255,.45),0 0 60px rgba(125,0,255,.15),inset 0 0 20px rgba(0,212,255,.1);cursor:pointer;text-decoration:none;position:relative;transition:all .3s;animation:aoIdle 3s ease-in-out infinite}
+.alfred-orb:hover{transform:scale(1.12);box-shadow:0 12px 48px rgba(125,0,255,.6),0 0 80px rgba(0,212,255,.2);text-decoration:none}
+.alfred-orb::before{content:'';position:absolute;top:12%;left:18%;width:30%;height:25%;background:rgba(255,255,255,.18);border-radius:50%;filter:blur(6px);transform:rotate(-30deg);pointer-events:none}
+.alfred-icon{font-size:1.6rem;filter:drop-shadow(0 2px 6px rgba(0,0,0,.4));position:relative;z-index:1;line-height:1}
+.alfred-pulse{position:absolute;width:100%;height:100%;border-radius:50%;background:radial-gradient(circle,rgba(125,0,255,.3),transparent 70%);animation:aoPulse 2.5s ease-out infinite;z-index:-1;pointer-events:none}
+.alfred-ring{position:absolute;width:100%;height:100%;border-radius:50%;border:2px solid rgba(0,212,255,.3);animation:aoRing 3s ease-out infinite;z-index:-1;pointer-events:none}
+.alfred-badge{position:absolute;top:-4px;right:-4px;background:linear-gradient(135deg,#10b981,#06b6d4);color:#fff;font-size:.55rem;font-weight:900;padding:2px 5px;border-radius:6px;letter-spacing:.5px;border:2px solid #0a0a1a;z-index:2}
+@keyframes aoIdle{0%,100%{box-shadow:0 8px 36px rgba(125,0,255,.45),0 0 60px rgba(125,0,255,.15)}50%{box-shadow:0 12px 48px rgba(125,0,255,.6),0 0 80px rgba(125,0,255,.25)}}
+@keyframes aoPulse{0%{transform:scale(1);opacity:.5}100%{transform:scale(1.8);opacity:0}}
+@keyframes aoRing{0%{transform:scale(1);opacity:.6}100%{transform:scale(2);opacity:0}}
+.alfred-tooltip{background:rgba(15,15,28,.97);backdrop-filter:blur(20px);border:1px solid rgba(125,0,255,.3);border-radius:16px;padding:18px 20px;width:260px;box-shadow:0 16px 48px rgba(0,0,0,.5),0 0 24px rgba(125,0,255,.1);animation:atIn .4s ease;position:relative}
+@keyframes atIn{from{opacity:0;transform:translateY(10px) scale(.95)}to{opacity:1;transform:translateY(0) scale(1)}}
+.at-close{position:absolute;top:8px;right:10px;color:rgba(255,255,255,.3);cursor:pointer;font-size:1.1rem;line-height:1;transition:color .2s;background:none;border:none}
+.at-close:hover{color:#fff}
+.at-head{font-size:1rem;font-weight:800;color:#fff;margin-bottom:6px}
+.at-body{font-size:.82rem;color:rgba(255,255,255,.5);line-height:1.5;margin-bottom:12px}
+.at-cta{display:block;text-align:center;padding:10px 0;background:linear-gradient(135deg,#7D00FF,#00D4FF);border-radius:10px;color:#fff;font-size:.85rem;font-weight:700;text-decoration:none;transition:all .2s}
+.at-cta:hover{transform:translateY(-1px);box-shadow:0 4px 16px rgba(125,0,255,.4);text-decoration:none;color:#fff}
+@media(max-width:480px){.alfred-widget{bottom:16px;right:16px}.alfred-orb{width:56px;height:56px}.alfred-icon{font-size:1.3rem}.alfred-tooltip{width:240px}}
+</style>
+
+<div class="alfred-widget" id="alfredWidget">
+    <a href="https://gositeme.com/alfred-voice-live/" class="alfred-orb" title="Talk to Alfred — AI Voice Assistant">
+        <span class="alfred-pulse"></span>
+        <span class="alfred-ring"></span>
+        <span class="alfred-icon">🎩</span>
+        <span class="alfred-badge">AI</span>
+    </a>
+    <div class="alfred-tooltip" id="alfredTooltip" style="display:none">
+        <button class="at-close" onclick="document.getElementById('alfredTooltip').style.display='none';localStorage.setItem('alfred_tip_closed','1')">&times;</button>
+        <div class="at-head">✨ Meet Alfred</div>
+        <div class="at-body">13,000+ AI tools, voice steering, e-commerce, SEO, DevOps — talk to your hosting!</div>
+        <a href="https://gositeme.com/alfred-voice-live/" class="at-cta">🎙️ Talk to Alfred</a>
+    </div>
+</div>
+<script>
+(function(){
+    var t=document.getElementById('alfredTooltip');
+    if(!t||localStorage.getItem('alfred_tip_closed')==='1')return;
+    setTimeout(function(){t.style.display='block'},3000);
+    setTimeout(function(){if(t.style.display!=='none')t.style.display='none'},11000);
+})();
+</script>
+
+</body>
+</html>

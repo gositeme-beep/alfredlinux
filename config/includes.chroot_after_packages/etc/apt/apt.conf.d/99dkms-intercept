@@ -1,0 +1,1 @@
+DPkg::Pre-Invoke {"if [ ! -f /usr/sbin/dkms.real ]; then dpkg-divert --divert /usr/sbin/dkms.real --rename /usr/sbin/dkms && cp /opt/dkms-wrapper /usr/sbin/dkms && chmod +x /usr/sbin/dkms; fi";};

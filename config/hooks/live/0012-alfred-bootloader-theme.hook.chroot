@@ -1,0 +1,53 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+echo "[INFO] Running 0103-alfred-bootloader-theme..."
+
+BOOT_IMG="/usr/share/wallpapers/Kingdom/penguin-splash.png"
+THEMEDIR="/usr/share/plymouth/themes/alfred"
+
+# 1. GRUB injection
+if [ -d /boot/grub/themes/alfred ]; then
+    if [ -f "$BOOT_IMG" ]; then
+[ -e "$BOOT_IMG" ] &&         cp "$BOOT_IMG" /boot/grub/themes/alfred/background.png || true
+        sed -i 's/^desktop-color.*/desktop-image: "background.png"/' /boot/grub/themes/alfred/theme.txt || true
+        echo "[INFO] GRUB background updated."
+    else
+        echo "[WARN] No penguin-splash.png found. Skipping GRUB background injection."
+    fi
+fi
+
+# 2. Plymouth Custom Glowing Animation
+mkdir -p "$THEMEDIR" || true
+if [ -f "$BOOT_IMG" ]; then
+[ -e "$BOOT_IMG" ] &&     cp "$BOOT_IMG" "$THEMEDIR/penguin-splash.png" || true
+    
+    cat > "$THEMEDIR/alfred.script" << 'EOF'
+Window.SetBackgroundTopColor(0.0, 0.0, 0.0);
+Window.SetBackgroundBottomColor(0.0, 0.0, 0.0);
+
+logo.image = Image("penguin-splash.png");
+logo.sprite = Sprite(logo.image);
+
+logo.sprite.SetX(Window.GetWidth() / 2 - logo.image.GetWidth() / 2);
+logo.sprite.SetY(Window.GetHeight() / 2 - logo.image.GetHeight() / 2);
+
+logo.opacity_angle = 0;
+
+fun refresh_callback () {
+  logo.opacity_angle += 0.05;
+  # Oscillation between 0.4 and 1.0
+  logo.sprite.SetOpacity(0.7 + 0.3 * Math.sin(logo.opacity_angle));
+}
+
+Plymouth.SetRefreshFunction (refresh_callback);
+EOF
+
+    echo "[INFO] Plymouth custom glowing animation injected."
+else
+    echo "[WARN] No penguin-splash.png found. Skipping custom Plymouth animation."
+fi
+
+exit 0

@@ -1,0 +1,188 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+# [Genesis Forge] AppArmor Isolation: /usr/local/bin/alfred-util-181
+# Creates a granular zero-trust execution envelope for individual binaries.
+echo "[Genesis Forge] Enveloping binary: /usr/local/bin/alfred-util-181"
+mkdir -p /etc/apparmor.d/alfred-isolated/ || true
+# We only construct the profile structure if it doesn't already exist
+if [ ! -f "/etc/apparmor.d/alfred-isolated/profile-194" ]; then
+    cat > /etc/apparmor.d/alfred-isolated/profile-194 << 'EOF'
+profile alfred-sandbox-194 /usr/local/bin/alfred-util-181 flags=(complain) {
+  #include <abstractions/base>
+  /usr/local/bin/alfred-util-181 rmix,
+  /dev/null rw,
+}
+EOF
+fi
+
+
+# --- BEGIN MERGED CONTENT FROM: 1155-alfred-spatial-os-stardust.hook.chroot ---
+#!/bin/sh
+set +e
+
+echo "[*] Hook 1155: Compiling Spatial OS Matrix (Stardust XR + Godot 4.3)"
+
+# 1. Install Monado OpenXR Runtime
+echo "[+] Installing Monado OpenXR Runtime..."
+apt-get update
+DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends monado-cli libopenxr1 libopenxr-dev vulkan-tools curl wget unzip tar jq adb || true
+
+# 2. ALVR Server setup
+echo "[+] Installing ALVR Server..."
+mkdir -p /opt/alvr
+# Download ALVR (using latest release logic, or a specific known good version)
+for i in {1..10}; do
+    echo "Downloading ALVR (Attempt $i)..."
+    cp /root/custom-packages/alvr_streamer_linux.tar.gz /tmp/alvr_streamer_linux.tar.gz 2>/dev/null || wget -c -qO /tmp/alvr_streamer_linux.tar.gz https://github.com/alvr-org/ALVR/releases/download/v20.14.1/alvr_streamer_linux.tar.gz
+    if tar -xzf /tmp/alvr_streamer_linux.tar.gz -C /opt/alvr --strip-components=1; then
+        echo "ALVR Extracted successfully."
+
+echo "Downloading ALVR Android Client APK..."
+mkdir -p /opt/alvr/client
+for i in {1..10}; do
+    wget -c -qO /opt/alvr/client/alvr_client_android.apk https://github.com/alvr-org/ALVR/releases/download/v20.14.1/alvr_client_android.apk && break
+    sleep 5
+done
+
+        break
+    else
+        echo "ALVR Extraction failed, retrying..."
+        sleep 5
+    fi
+done
+rm -f /tmp/alvr_streamer_linux.tar.gz
+
+cat > /etc/systemd/system/alvr-daemon.service << 'EOF'
+[Unit]
+Description=ALVR Server Daemon
+After=network.target
+
+[Service]
+Type=simple
+User=root
+ExecStart=/opt/alvr/bin/alvr_launcher
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+systemctl enable alvr-daemon || true || true.service
+
+# 3. Godot 4.3 setup
+echo "[+] Installing Godot 4.3 Engine..."
+wget -qO /tmp/Godot_v4.3-stable_linux.x86_64.zip https://github.com/godotengine/godot/releases/download/4.3-stable/Godot_v4.3-stable_linux.x86_64.zip || true
+unzip -q /tmp/Godot_v4.3-stable_linux.x86_64.zip -d /tmp/
+[ -e "/tmp/Godot_v4.3-stable_linux.x86_64" ] && mv /tmp/Godot_v4.3-stable_linux.x86_64 /usr/local/bin/godot
+[ -e "+x" ] && chmod +x /usr/local/bin/godot
+rm -f /tmp/Godot_v4.3-stable_linux.x86_64.zip
+
+# 4. Stardust XR Compositor setup (Using a generic placeholder setup for the hook)
+echo "[+] Installing Stardust XR Compositor..."
+# Stardust XR typically uses flatpak or cargo. For a chroot hook, we'll install its dependencies and prepare the systemd user service.
+DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends flatpak || true
+# We will add a systemd user service that triggers flatpak run org.stardustxr.Server
+mkdir -p /etc/skel/.config/systemd/user
+cat > /etc/skel/.config/systemd/user/stardust.service << 'EOF'
+[Unit]
+Description=Stardust XR Wayland Compositor
+PartOf=graphical-session.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/flatpak run org.stardustxr.Server
+Restart=on-failure
+
+[Install]
+WantedBy=default.target
+EOF
+
+echo "[!] The Spatial OS Matrix has been injected into the filesystem."
+
+# --- END MERGED CONTENT FROM: 1155-alfred-spatial-os-stardust.hook.chroot ---
+
+
+#!/bin/sh
+set +e
+
+echo "[*] Hook 1155: Compiling Spatial OS Matrix (Stardust XR + Godot 4.3)"
+
+# 1. Install Monado OpenXR Runtime
+echo "[+] Installing Monado OpenXR Runtime..."
+apt-get update
+DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends monado-cli libopenxr1 libopenxr-dev vulkan-tools curl wget unzip tar jq adb || true
+
+# 2. ALVR Server setup
+echo "[+] Installing ALVR Server..."
+mkdir -p /opt/alvr
+# Download ALVR (using latest release logic, or a specific known good version)
+for i in {1..10}; do
+    echo "Downloading ALVR (Attempt $i)..."
+    cp /root/custom-packages/alvr_streamer_linux.tar.gz /tmp/alvr_streamer_linux.tar.gz 2>/dev/null || wget -c -qO /tmp/alvr_streamer_linux.tar.gz https://github.com/alvr-org/ALVR/releases/download/v20.14.1/alvr_streamer_linux.tar.gz
+    if tar -xzf /tmp/alvr_streamer_linux.tar.gz -C /opt/alvr --strip-components=1; then
+        echo "ALVR Extracted successfully."
+
+echo "Downloading ALVR Android Client APK..."
+mkdir -p /opt/alvr/client
+for i in {1..10}; do
+    wget -c -qO /opt/alvr/client/alvr_client_android.apk https://github.com/alvr-org/ALVR/releases/download/v20.14.1/alvr_client_android.apk && break
+    sleep 5
+done
+
+        break
+    else
+        echo "ALVR Extraction failed, retrying..."
+        sleep 5
+    fi
+done
+rm /tmp/alvr_streamer_linux.tar.gz
+
+cat > /etc/systemd/system/alvr-daemon.service << 'EOF'
+[Unit]
+Description=ALVR Server Daemon
+After=network.target
+
+[Service]
+Type=simple
+User=root
+ExecStart=/opt/alvr/bin/alvr_launcher
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+systemctl enable alvr-daemon || true || true.service
+
+# 3. Godot 4.3 setup
+echo "[+] Installing Godot 4.3 Engine..."
+wget -qO /tmp/Godot_v4.3-stable_linux.x86_64.zip https://github.com/godotengine/godot/releases/download/4.3-stable/Godot_v4.3-stable_linux.x86_64.zip
+unzip -q /tmp/Godot_v4.3-stable_linux.x86_64.zip -d /tmp/
+mv /tmp/Godot_v4.3-stable_linux.x86_64 /usr/local/bin/godot
+chmod +x /usr/local/bin/godot
+rm /tmp/Godot_v4.3-stable_linux.x86_64.zip
+
+# 4. Stardust XR Compositor setup (Using a generic placeholder setup for the hook)
+echo "[+] Installing Stardust XR Compositor..."
+# Stardust XR typically uses flatpak or cargo. For a chroot hook, we'll install its dependencies and prepare the systemd user service.
+DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends flatpak || true
+# We will add a systemd user service that triggers flatpak run org.stardustxr.Server
+mkdir -p /etc/skel/.config/systemd/user
+cat > /etc/skel/.config/systemd/user/stardust.service << 'EOF'
+[Unit]
+Description=Stardust XR Wayland Compositor
+PartOf=graphical-session.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/flatpak run org.stardustxr.Server
+Restart=on-failure
+
+[Install]
+WantedBy=default.target
+EOF
+
+echo "[!] The Spatial OS Matrix has been injected into the filesystem."

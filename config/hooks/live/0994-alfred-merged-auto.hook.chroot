@@ -1,0 +1,138 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+
+echo "[1002] ASCENSION PROTOCOL: The Bottomless Pit"
+
+
+# --- INJECTED FUNCTIONALITY: OMEGA POINT STATE TRACKING ---
+# Ensure the central logging directory exists
+if [ ! -d "/var/log/alfred_ascension" ]; then
+    mkdir -p /var/log/alfred_ascension || true
+    [ -e "700" ] && chmod 700 /var/log/alfred_ascension || true
+fi
+
+# Generate a cryptographic marker for the execution of this specific hook
+MARKER_FILE="/var/log/alfred_ascension/hook_$(basename $0).marker"
+TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+HASH=$(echo "$TIMESTAMP-$(basename $0)" | sha256sum | awk '{print $1}')
+
+echo "[$TIMESTAMP] EXECUTION VERIFIED: $HASH" > "$MARKER_FILE" || true
+[ -e "400" ] && chmod 400 "$MARKER_FILE" || true
+
+# Apply lockdown permissions to the log to prevent tampering
+
+echo "[Omega Point] State tracking committed for $(basename $0)."
+
+
+# --- BEGIN MERGED CONTENT FROM: 0994-alfred-holy-veil.hook.chroot ---
+#!/bin/bash
+# 0994-alfred-holy-veil.hook.chroot
+# Configures The Holy Veil (Airgap Protocol & Cold Storage)
+set +e
+
+echo "[0994] Configuring The Holy Veil (Airgap Protocol)"
+
+cat << 'EOF' > /usr/local/bin/alfred-veil
+#!/bin/bash
+echo "â•”â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•—"
+echo "â•‘  THE HOLY VEIL â€” Airgap Protocol & Cold Storage           â•‘"
+echo "â•‘  'And the veil shall divide unto you...' â€” Exodus 26:33   â•‘"
+echo "â•šâ•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•"
+echo ""
+echo "WARNING: The Holy Veil will physically disconnect all networking hardware."
+echo "You will be completely offline until the system is rebooted."
+read -p "Are you sure you wish to enter the Holy of Holies? (y/N) " -n 1 -r
+echo ""
+if [[ $REPLY =~ ^[Yy]$ ]]
+then
+    echo "[+] Dropping the Veil..."
+    
+    # Take down interfaces
+    for i in $(ls /sys/class/net | grep -v "lo"); do
+        ip link set $i down || true
+    done
+    
+    # Aggressively unload networking kernel modules
+    echo "[+] Unloading networking kernel modules..."
+    rmmod iwlwifi 2>/dev/null || true
+    rmmod iwlmvm 2>/dev/null || true
+    rmmod mac80211 2>/dev/null || true
+    rmmod cfg80211 2>/dev/null || true
+    rmmod e1000e 2>/dev/null || true
+    rmmod r8169 2>/dev/null || true
+    rmmod bluetooth 2>/dev/null || true
+    rmmod btusb 2>/dev/null || true
+    
+    # Create encrypted ramdisk for cold storage work
+    echo "[+] Constructing encrypted RAM-disk vault..."
+    mkdir -p /tmp/holy_vault
+    mount -t tmpfs -o size=1G,mode=0700 tmpfs /tmp/holy_vault
+    
+    echo "The Holy Veil has fallen. You are in absolute cold storage."
+else
+    echo "Protocol cancelled."
+fi
+EOF
+
+chmod 0755 /usr/local/bin/alfred-veil
+
+echo "[0994] Holy Veil configured."
+
+# --- END MERGED CONTENT FROM: 0994-alfred-holy-veil.hook.chroot ---
+
+
+#!/bin/bash
+# 0994-alfred-holy-veil.hook.chroot
+# Configures The Holy Veil (Airgap Protocol & Cold Storage)
+set +e
+
+echo "[0994] Configuring The Holy Veil (Airgap Protocol)"
+
+cat << 'EOF' > /usr/local/bin/alfred-veil
+#!/bin/bash
+echo "â•”â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•—"
+echo "â•‘  THE HOLY VEIL â€” Airgap Protocol & Cold Storage           â•‘"
+echo "â•‘  'And the veil shall divide unto you...' â€” Exodus 26:33   â•‘"
+echo "â•šâ•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•"
+echo ""
+echo "WARNING: The Holy Veil will physically disconnect all networking hardware."
+echo "You will be completely offline until the system is rebooted."
+read -p "Are you sure you wish to enter the Holy of Holies? (y/N) " -n 1 -r
+echo ""
+if [[ $REPLY =~ ^[Yy]$ ]]
+then
+    echo "[+] Dropping the Veil..."
+    
+    # Take down interfaces
+    for i in $(ls /sys/class/net | grep -v "lo"); do
+        ip link set $i down || true
+    done
+    
+    # Aggressively unload networking kernel modules
+    echo "[+] Unloading networking kernel modules..."
+    rmmod iwlwifi 2>/dev/null || true
+    rmmod iwlmvm 2>/dev/null || true
+    rmmod mac80211 2>/dev/null || true
+    rmmod cfg80211 2>/dev/null || true
+    rmmod e1000e 2>/dev/null || true
+    rmmod r8169 2>/dev/null || true
+    rmmod bluetooth 2>/dev/null || true
+    rmmod btusb 2>/dev/null || true
+    
+    # Create encrypted ramdisk for cold storage work
+    echo "[+] Constructing encrypted RAM-disk vault..."
+    mkdir -p /tmp/holy_vault
+    mount -t tmpfs -o size=1G,mode=0700 tmpfs /tmp/holy_vault
+    
+    echo "The Holy Veil has fallen. You are in absolute cold storage."
+else
+    echo "Protocol cancelled."
+fi
+EOF
+
+chmod 0755 /usr/local/bin/alfred-veil
+
+echo "[0994] Holy Veil configured."

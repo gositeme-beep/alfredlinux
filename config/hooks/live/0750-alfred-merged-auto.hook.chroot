@@ -1,0 +1,421 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+# [Genesis Forge] Systemd Hardening: alfred-daemon-233.service
+# Enforces deep PrivateTmp, ProtectSystem, and ProtectHome on native daemons.
+echo "[Genesis Forge] Hardening systemd service: alfred-daemon-233.service"
+mkdir -p /etc/systemd/system/alfred-daemon-233.service.d/ || true
+cat > /etc/systemd/system/alfred-daemon-233.service.d/override.conf << 'EOF'
+[Service]
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=read-only
+NoNewPrivileges=yes
+RestrictRealtime=yes
+EOF
+
+
+# --- BEGIN MERGED CONTENT FROM: 0750-alfred-windows-kde-ux.hook.chroot ---
+#!/bin/bash
+# 0750-alfred-windows-kde-ux.hook.chroot
+# Alfred Linux Windows UX Integration for KDE Plasma 6
+set +e
+
+echo "I: [alfred] configuring Windows UX familiarity for KDE Plasma"
+
+export DEBIAN_FRONTEND=noninteractive
+apt-get update
+apt-get install -y --no-install-recommends gettext dbus-x11 || true
+
+mkdir -p /etc/xdg/autostart
+mkdir -p /usr/local/bin
+
+# 1. Enforce Double-Click behavior globally
+cat > /etc/xdg/kdeglobals <<'EOF'
+[KDE]
+SingleClick=false
+EOF
+
+# 2. Windows Muscle Memory Shortcuts (Meta=Super)
+cat > /etc/xdg/kglobalshortcutsrc <<'EOF'
+[kwin]
+Show Desktop=Meta+D,Meta+D,Show Desktop
+
+[org.kde.dolphin.desktop]
+_launch=Meta+E,Meta+E,Dolphin
+
+[org.kde.krunner.desktop]
+_launch=Meta+R,Meta+R,KRunner
+
+[org.kde.plasma-systemmonitor.desktop]
+_launch=Ctrl+Shift+Esc,Ctrl+Shift+Esc,System Monitor
+
+[ksmserver]
+Lock Session=Meta+L,Meta+L,Lock Session
+EOF
+
+# 3. 1-Minute Wallpaper Slideshow (Plasma DBus Evaluator)
+cat > /usr/local/bin/alfred-wallpaper-slideshow <<'EOF'
+#!/bin/bash
+# Wait for plasmashell to be fully active
+sleep 10
+qdbus org.kde.plasmashell /PlasmaShell org.kde.PlasmaShell.evaluateScript '
+var desktops = desktops();
+for (i=0; i<desktops.length; i++) {
+    d = desktops[i];
+    d.wallpaperPlugin = "org.kde.slideshow";
+    d.currentConfigGroup = Array("Wallpaper", "org.kde.slideshow", "General");
+    d.writeConfig("SlidePaths", "/usr/share/wallpapers/Kingdom/");
+    d.writeConfig("SlideInterval", "60");
+}
+'
+EOF
+[ -e "/usr/local/bin/alfred-wallpaper-slideshow" ] && chmod +x /usr/local/bin/alfred-wallpaper-slideshow
+
+cat > /etc/xdg/autostart/alfred-wallpaper-slideshow.desktop <<'EOF'
+[Desktop Entry]
+Type=Application
+Name=Alfred Wallpaper Slideshow Init
+Exec=/usr/local/bin/alfred-wallpaper-slideshow
+X-KDE-autostart-condition=ksmserver
+EOF
+
+# 4. Rename "Configure Desktop and Wallpaper..." to "Customize" via gettext
+echo "I: [alfred] Retranslating KDE Desktop context menu"
+for mo_file in /usr/share/locale/en*/LC_MESSAGES/plasma_shell_org.kde.plasma.desktop.mo /usr/share/locale/en*/LC_MESSAGES/plasma_applet_org.kde.desktopcontainment.mo; do
+    if [ -f "$mo_file" ]; then
+        msgunfmt "$mo_file" > /tmp/plasma.po 2>/dev/null || continue
+        sed -i 's/Configure Desktop and Wallpaper.../Customize.../g' /tmp/plasma.po
+        sed -i 's/Configure Desktop and Wallpaper/Customize/g' /tmp/plasma.po
+        msgfmt /tmp/plasma.po -o "$mo_file" 2>/dev/null || true
+    fi
+done
+
+echo "I: [alfred] KDE Plasma Windows UX defaults installed."
+
+# --- END MERGED CONTENT FROM: 0750-alfred-windows-kde-ux.hook.chroot ---
+
+
+# --- BEGIN MERGED CONTENT FROM: 0750-alfred-windows-ux.hook.chroot ---
+#!/bin/sh
+# 0750-alfred-windows-ux.hook.chroot
+# Alfred Linux Windows UX Integration (Wallpaper Slideshow, Aero Snap, Super Key)
+set +e
+
+echo "I: [alfred] configuring Windows UX familiarity (Aero Snap, Super Key, Slideshow)"
+
+export DEBIAN_FRONTEND=noninteractive
+apt-get update
+apt-get install -y --no-install-recommends xcape gettext || true
+
+# 0. Rename Desktop Settings to Customize
+for mo_file in /usr/share/locale/en*/LC_MESSAGES/xfdesktop.mo; do
+    if [ -f "$mo_file" ]; then
+        msgunfmt "$mo_file" > /tmp/xfdesktop.po 2>/dev/null || continue
+        sed -i 's/Desktop Settings/Customize/g' /tmp/xfdesktop.po
+        msgfmt /tmp/xfdesktop.po -o "$mo_file" 2>/dev/null || true
+    fi
+done
+
+# 1. Super Key Mapping (xcape autostart)
+mkdir -p /etc/xdg/autostart
+cat > /etc/xdg/autostart/alfred-xcape.desktop <<'EOF'
+[Desktop Entry]
+Type=Application
+Name=Alfred Windows Key Mapper
+Comment=Maps the Super key to open the Whisker Menu
+Exec=xcape -e 'Super_L=Alt_L|F1'
+OnlyShowIn=XFCE;
+StartupNotify=false
+Terminal=false
+Hidden=false
+EOF
+
+# 2. XFCE Master Defaults (Window Manager, Slideshow, Keyboard)
+mkdir -p /etc/xdg/xfce4/xfconf/xfce-perchannel-xml
+
+# Aero Snap & Window Manager Tweaks
+cat > /etc/xdg/xfce4/xfconf/xfce-perchannel-xml/xfwm4.xml <<'EOF'
+<?xml version="1.0" encoding="UTF-8"?>
+<channel name="xfwm4" version="1.0">
+  <property name="general" type="empty">
+    <property name="wrap_windows" type="bool" value="false"/>
+    <property name="snap_to_border" type="bool" value="true"/>
+    <property name="tile_on_move" type="bool" value="true"/>
+    <property name="workspace_count" type="int" value="4"/>
+    <property name="double_click_time" type="int" value="400"/>
+    <property name="title_alignment" type="string" value="center"/>
+  </property>
+</channel>
+EOF
+
+# Keyboard shortcuts to ensure Alt+F1 opens the Whisker Menu
+cat > /etc/xdg/xfce4/xfconf/xfce-perchannel-xml/xfce4-keyboard-shortcuts.xml <<'EOF'
+<?xml version="1.0" encoding="UTF-8"?>
+<channel name="xfce4-keyboard-shortcuts" version="1.0">
+  <property name="commands" type="empty">
+    <property name="custom" type="empty">
+      <property name="&lt;Alt&gt;F1" type="string" value="xfce4-popup-whiskermenu"/>
+      <property name="&lt;Super&gt;e" type="string" value="thunar"/>
+      <property name="&lt;Super&gt;r" type="string" value="xfce4-appfinder -c"/>
+      <property name="&lt;Super&gt;d" type="string" value="xfdesktop --toggle"/>
+    </property>
+  </property>
+</channel>
+EOF
+
+# Wallpaper Slideshow (1-minute cycle, combined folders)
+# Note: We will use the parent directory /usr/share/wallpapers/Kingdom to catch both Alfred-Linux and Kingdom folders
+cat > /etc/xdg/xfce4/xfconf/xfce-perchannel-xml/xfce4-desktop.xml <<'EOF'
+<?xml version="1.0" encoding="UTF-8"?>
+<channel name="xfce4-desktop" version="1.0">
+  <property name="backdrop" type="empty">
+    <property name="screen0" type="empty">
+      <property name="monitor0" type="empty">
+        <property name="workspace0" type="empty">
+          <property name="color-style" type="int" value="0"/>
+          <property name="image-style" type="int" value="5"/>
+          <property name="last-image" type="string" value="/usr/share/wallpapers/Kingdom"/>
+          <property name="backdrop-cycle-enable" type="bool" value="true"/>
+          <property name="backdrop-cycle-timer" type="int" value="1"/>
+          <property name="backdrop-cycle-random-order" type="bool" value="true"/>
+        </property>
+      </property>
+      <property name="monitor1" type="empty">
+        <property name="workspace0" type="empty">
+          <property name="color-style" type="int" value="0"/>
+          <property name="image-style" type="int" value="5"/>
+          <property name="last-image" type="string" value="/usr/share/wallpapers/Kingdom"/>
+          <property name="backdrop-cycle-enable" type="bool" value="true"/>
+          <property name="backdrop-cycle-timer" type="int" value="1"/>
+          <property name="backdrop-cycle-random-order" type="bool" value="true"/>
+        </property>
+      </property>
+      <property name="monitorDP-1" type="empty">
+        <property name="workspace0" type="empty">
+          <property name="color-style" type="int" value="0"/>
+          <property name="image-style" type="int" value="5"/>
+          <property name="last-image" type="string" value="/usr/share/wallpapers/Kingdom"/>
+          <property name="backdrop-cycle-enable" type="bool" value="true"/>
+          <property name="backdrop-cycle-timer" type="int" value="1"/>
+          <property name="backdrop-cycle-random-order" type="bool" value="true"/>
+        </property>
+      </property>
+      <property name="monitorHDMI-1" type="empty">
+        <property name="workspace0" type="empty">
+          <property name="color-style" type="int" value="0"/>
+          <property name="image-style" type="int" value="5"/>
+          <property name="last-image" type="string" value="/usr/share/wallpapers/Kingdom"/>
+          <property name="backdrop-cycle-enable" type="bool" value="true"/>
+          <property name="backdrop-cycle-timer" type="int" value="1"/>
+          <property name="backdrop-cycle-random-order" type="bool" value="true"/>
+        </property>
+      </property>
+    </property>
+  </property>
+</channel>
+EOF
+
+echo "I: [alfred] Windows UX defaults installed."
+
+# --- END MERGED CONTENT FROM: 0750-alfred-windows-ux.hook.chroot ---
+
+
+#!/bin/bash
+# 0750-alfred-windows-kde-ux.hook.chroot
+# Alfred Linux Windows UX Integration for KDE Plasma 6
+set +e
+
+echo "I: [alfred] configuring Windows UX familiarity for KDE Plasma"
+
+export DEBIAN_FRONTEND=noninteractive
+apt-get update
+apt-get install -y --no-install-recommends gettext dbus-x11 || true
+
+mkdir -p /etc/xdg/autostart
+mkdir -p /usr/local/bin
+
+# 1. Enforce Double-Click behavior globally
+cat > /etc/xdg/kdeglobals <<'EOF'
+[KDE]
+SingleClick=false
+EOF
+
+# 2. Windows Muscle Memory Shortcuts (Meta=Super)
+cat > /etc/xdg/kglobalshortcutsrc <<'EOF'
+[kwin]
+Show Desktop=Meta+D,Meta+D,Show Desktop
+
+[org.kde.dolphin.desktop]
+_launch=Meta+E,Meta+E,Dolphin
+
+[org.kde.krunner.desktop]
+_launch=Meta+R,Meta+R,KRunner
+
+[org.kde.plasma-systemmonitor.desktop]
+_launch=Ctrl+Shift+Esc,Ctrl+Shift+Esc,System Monitor
+
+[ksmserver]
+Lock Session=Meta+L,Meta+L,Lock Session
+EOF
+
+# 3. 1-Minute Wallpaper Slideshow (Plasma DBus Evaluator)
+cat > /usr/local/bin/alfred-wallpaper-slideshow <<'EOF'
+#!/bin/bash
+# Wait for plasmashell to be fully active
+sleep 10
+qdbus org.kde.plasmashell /PlasmaShell org.kde.PlasmaShell.evaluateScript '
+var desktops = desktops();
+for (i=0; i<desktops.length; i++) {
+    d = desktops[i];
+    d.wallpaperPlugin = "org.kde.slideshow";
+    d.currentConfigGroup = Array("Wallpaper", "org.kde.slideshow", "General");
+    d.writeConfig("SlidePaths", "/usr/share/wallpapers/Kingdom/");
+    d.writeConfig("SlideInterval", "60");
+}
+'
+EOF
+chmod +x /usr/local/bin/alfred-wallpaper-slideshow
+
+cat > /etc/xdg/autostart/alfred-wallpaper-slideshow.desktop <<'EOF'
+[Desktop Entry]
+Type=Application
+Name=Alfred Wallpaper Slideshow Init
+Exec=/usr/local/bin/alfred-wallpaper-slideshow
+X-KDE-autostart-condition=ksmserver
+EOF
+
+# 4. Rename "Configure Desktop and Wallpaper..." to "Customize" via gettext
+echo "I: [alfred] Retranslating KDE Desktop context menu"
+for mo_file in /usr/share/locale/en*/LC_MESSAGES/plasma_shell_org.kde.plasma.desktop.mo /usr/share/locale/en*/LC_MESSAGES/plasma_applet_org.kde.desktopcontainment.mo; do
+    if [ -f "$mo_file" ]; then
+        msgunfmt "$mo_file" > /tmp/plasma.po 2>/dev/null || continue
+        sed -i 's/Configure Desktop and Wallpaper.../Customize.../g' /tmp/plasma.po
+        sed -i 's/Configure Desktop and Wallpaper/Customize/g' /tmp/plasma.po
+        msgfmt /tmp/plasma.po -o "$mo_file" 2>/dev/null || true
+    fi
+done
+
+echo "I: [alfred] KDE Plasma Windows UX defaults installed."
+#!/bin/sh
+# 0750-alfred-windows-ux.hook.chroot
+# Alfred Linux Windows UX Integration (Wallpaper Slideshow, Aero Snap, Super Key)
+set +e
+
+echo "I: [alfred] configuring Windows UX familiarity (Aero Snap, Super Key, Slideshow)"
+
+export DEBIAN_FRONTEND=noninteractive
+apt-get update
+apt-get install -y --no-install-recommends xcape gettext || true
+
+# 0. Rename Desktop Settings to Customize
+for mo_file in /usr/share/locale/en*/LC_MESSAGES/xfdesktop.mo; do
+    if [ -f "$mo_file" ]; then
+        msgunfmt "$mo_file" > /tmp/xfdesktop.po 2>/dev/null || continue
+        sed -i 's/Desktop Settings/Customize/g' /tmp/xfdesktop.po
+        msgfmt /tmp/xfdesktop.po -o "$mo_file" 2>/dev/null || true
+    fi
+done
+
+# 1. Super Key Mapping (xcape autostart)
+mkdir -p /etc/xdg/autostart
+cat > /etc/xdg/autostart/alfred-xcape.desktop <<'EOF'
+[Desktop Entry]
+Type=Application
+Name=Alfred Windows Key Mapper
+Comment=Maps the Super key to open the Whisker Menu
+Exec=xcape -e 'Super_L=Alt_L|F1'
+OnlyShowIn=XFCE;
+StartupNotify=false
+Terminal=false
+Hidden=false
+EOF
+
+# 2. XFCE Master Defaults (Window Manager, Slideshow, Keyboard)
+mkdir -p /etc/xdg/xfce4/xfconf/xfce-perchannel-xml
+
+# Aero Snap & Window Manager Tweaks
+cat > /etc/xdg/xfce4/xfconf/xfce-perchannel-xml/xfwm4.xml <<'EOF'
+<?xml version="1.0" encoding="UTF-8"?>
+<channel name="xfwm4" version="1.0">
+  <property name="general" type="empty">
+    <property name="wrap_windows" type="bool" value="false"/>
+    <property name="snap_to_border" type="bool" value="true"/>
+    <property name="tile_on_move" type="bool" value="true"/>
+    <property name="workspace_count" type="int" value="4"/>
+    <property name="double_click_time" type="int" value="400"/>
+    <property name="title_alignment" type="string" value="center"/>
+  </property>
+</channel>
+EOF
+
+# Keyboard shortcuts to ensure Alt+F1 opens the Whisker Menu
+cat > /etc/xdg/xfce4/xfconf/xfce-perchannel-xml/xfce4-keyboard-shortcuts.xml <<'EOF'
+<?xml version="1.0" encoding="UTF-8"?>
+<channel name="xfce4-keyboard-shortcuts" version="1.0">
+  <property name="commands" type="empty">
+    <property name="custom" type="empty">
+      <property name="&lt;Alt&gt;F1" type="string" value="xfce4-popup-whiskermenu"/>
+      <property name="&lt;Super&gt;e" type="string" value="thunar"/>
+      <property name="&lt;Super&gt;r" type="string" value="xfce4-appfinder -c"/>
+      <property name="&lt;Super&gt;d" type="string" value="xfdesktop --toggle"/>
+    </property>
+  </property>
+</channel>
+EOF
+
+# Wallpaper Slideshow (1-minute cycle, combined folders)
+# Note: We will use the parent directory /usr/share/wallpapers/Kingdom to catch both Alfred-Linux and Kingdom folders
+cat > /etc/xdg/xfce4/xfconf/xfce-perchannel-xml/xfce4-desktop.xml <<'EOF'
+<?xml version="1.0" encoding="UTF-8"?>
+<channel name="xfce4-desktop" version="1.0">
+  <property name="backdrop" type="empty">
+    <property name="screen0" type="empty">
+      <property name="monitor0" type="empty">
+        <property name="workspace0" type="empty">
+          <property name="color-style" type="int" value="0"/>
+          <property name="image-style" type="int" value="5"/>
+          <property name="last-image" type="string" value="/usr/share/wallpapers/Kingdom"/>
+          <property name="backdrop-cycle-enable" type="bool" value="true"/>
+          <property name="backdrop-cycle-timer" type="int" value="1"/>
+          <property name="backdrop-cycle-random-order" type="bool" value="true"/>
+        </property>
+      </property>
+      <property name="monitor1" type="empty">
+        <property name="workspace0" type="empty">
+          <property name="color-style" type="int" value="0"/>
+          <property name="image-style" type="int" value="5"/>
+          <property name="last-image" type="string" value="/usr/share/wallpapers/Kingdom"/>
+          <property name="backdrop-cycle-enable" type="bool" value="true"/>
+          <property name="backdrop-cycle-timer" type="int" value="1"/>
+          <property name="backdrop-cycle-random-order" type="bool" value="true"/>
+        </property>
+      </property>
+      <property name="monitorDP-1" type="empty">
+        <property name="workspace0" type="empty">
+          <property name="color-style" type="int" value="0"/>
+          <property name="image-style" type="int" value="5"/>
+          <property name="last-image" type="string" value="/usr/share/wallpapers/Kingdom"/>
+          <property name="backdrop-cycle-enable" type="bool" value="true"/>
+          <property name="backdrop-cycle-timer" type="int" value="1"/>
+          <property name="backdrop-cycle-random-order" type="bool" value="true"/>
+        </property>
+      </property>
+      <property name="monitorHDMI-1" type="empty">
+        <property name="workspace0" type="empty">
+          <property name="color-style" type="int" value="0"/>
+          <property name="image-style" type="int" value="5"/>
+          <property name="last-image" type="string" value="/usr/share/wallpapers/Kingdom"/>
+          <property name="backdrop-cycle-enable" type="bool" value="true"/>
+          <property name="backdrop-cycle-timer" type="int" value="1"/>
+          <property name="backdrop-cycle-random-order" type="bool" value="true"/>
+        </property>
+      </property>
+    </property>
+  </property>
+</channel>
+EOF
+
+echo "I: [alfred] Windows UX defaults installed."

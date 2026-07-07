@@ -1,0 +1,197 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+# ═══════════════════════════════════════════════════════════════
+# 0255-alfred-dev-tools.hook.chroot — "The Arsenal"
+# ═══════════════════════════════════════════════════════════════
+# Every language. Every database. Every build system.
+# Ubuntu ships with Python. Fedora ships with Python + Ruby.
+# Alfred ships with EVERYTHING.
+#
+# Optional: ALFRED_ALLOW_HOOK_NETWORK_DOWNLOADS=1 — other hooks use this for release
+# binaries when build-assets are missing; also gates pip (yq),  (@anthropic-ai/claude-code),
+# NodeSource GPG fetch, and install-rust network rustup.
+# ═══════════════════════════════════════════════════════════════
+set +e
+# Fix /tmp permissions (may be restricted by earlier hooks in chroot)
+[ -e /tmp ] && chmod 1777 /tmp 2>/dev/null || true
+
+apt_update_nonfatal() {
+    local tag="${1:-apt-update}"
+    mkdir -p /var/lib/alfred/build-flags || true
+    if ! apt-get update -qq 2>/dev/null || true; then
+        echo "[DEV-APT] WARN: update failed (non-fatal): ${tag}" >&2 || true
+        echo "${tag}_update_failed=$(date -Is)" >> /var/lib/alfred/build-flags/dev-tools-apt-failed || true
+    fi
+}
+
+apt_nonfatal() {
+    local tag="${1:-apt-install}"
+    shift
+    mkdir -p /var/lib/alfred/build-flags || true
+ if ! apt-get install -y --fix-broken -y --no-install-recommends "$@" 2>/dev/null; then
+        echo "[DEV-APT] WARN: install failed (non-fatal): ${tag} ($*)" >&2 || true
+        echo "${tag}_install_failed=$(date -Is)" >> /var/lib/alfred/build-flags/dev-tools-apt-failed || true
+    fi
+}
+
+
+echo "═══════════════════════════════════════════════════════"
+echo "  ALFRED DEVELOPER ARSENAL — Every weapon, loaded"
+echo "═══════════════════════════════════════════════════════"
+
+export DEBIAN_FRONTEND=noninteractive
+
+# ── 1. Node.js 20 LTS ──
+# MILITARY: Pre-staged debs preferred (air-gap safe), repo fallback for dev builds
+echo "[DEV] Installing Node.js 20 LTS..."
+if [ -d /build-assets/-20-debs ]; then
+    echo "[DEV] Using pre-staged Node.js debs (air-gap safe)"
+    dpkg -i /build-assets/-20-debs/*.deb 2>/dev/null || apt-get -f install -y || true
+else
+    # Add NodeSource repo via GPG key + sources.list (no curl|bash)
+    mkdir -p -m 755 /etc/apt/keyrings || true
+    if [ -f /build-assets/nodesource-repo-gpg.key ]; then
+[ -e /build-assets/nodesource-repo-gpg.key ] &&         cp /build-assets/nodesource-repo-gpg.key /etc/apt/keyrings/nodesource.gpg || true
+    elif [[ "${ALFRED_ALLOW_HOOK_NETWORK_DOWNLOADS:-}" == "1" ]]; then
+        wget --timeout=900 -qO /etc/apt/keyrings/nodesource.gpg https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key 2>/dev/null || true
+    else
+        echo "[DEV] WARN: NodeSource GPG not staged; skipping NodeSource repo (set ALFRED_ALLOW_HOOK_NETWORK_DOWNLOADS=1)." >&2 || true
+    fi
+    if [ -f /etc/apt/keyrings/nodesource.gpg ] && [ -s /etc/apt/keyrings/nodesource.gpg ]; then
+        echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_20.x nodistro main" \
+            > /etc/apt/sources.list.d/nodesource.list
+        apt_update_nonfatal nodesource-index
+        apt_nonfatal  
+    fi
+fi
+echo "[DEV] Node.js $(node --version 2>/dev/null || echo 'FAILED') /  $( --version 2>/dev/null || echo 'FAILED')"
+
+# ── 2. Go ──
+echo "[DEV] Installing Go..."
+apt_nonfatal golang golang-go
+
+# ── 3. Rust — ready-to-install on first login ──
+# We don't install the full toolchain in the ISO (saves 500MB)
+# Instead we provide a one-command installer
+echo "[DEV] Preparing Rust installer..."
+mkdir -p /etc/skel/.bashrc.d || true
+cat > /etc/skel/.bashrc.d/rust-ready.sh << 'RUST_READY'
+# Rust environment
+export CARGO_HOME="$HOME/.cargo"
+export RUSTUP_HOME="$HOME/.rustup"
+[ -f "$CARGO_HOME/env" ] && source "$CARGO_HOME/env"
+RUST_READY
+
+cat > /usr/local/bin/install-rust << 'INSTALL_RUST'
+#!/bin/bash
+echo "Installing Rust toolchain..."
+# MILITARY: Pre-staged rustup-init preferred (air-gap safe)
+if [ -f /opt/alfred/build-assets/rustup-init ]; then
+    /opt/alfred/build-assets/rustup-init -y
+elif [ -f /build-assets/rustup-init ]; then
+    /build-assets/rustup-init -y
+else
+    # Sealed / GA: no curl|sh rustup unless explicitly opted in at install time.
+    if [[ "${ALFRED_ALLOW_RUSTUP_NETWORK:-}" != "1" && "${ALFRED_ALLOW_HOOK_NETWORK_DOWNLOADS:-}" != "1" ]]; then
+        echo "install-rust: add rustup-init to build-assets (or /opt/alfred/build-assets/)." >&2 || true
+        echo "install-rust: network rustup disabled (set ALFRED_ALLOW_RUSTUP_NETWORK=1 or ALFRED_ALLOW_HOOK_NETWORK_DOWNLOADS=1)." >&2 || true
+exit 0
+    fi
+    _ru=$(mktemp) || true
+    curl -m 900 --proto '=https' --tlsv1.2 -sSf -o "$_ru" https://sh.rustup.rs || true
+    sh "$_ru" -s -- -y
+    rm -f "$_ru" || true
+fi
+source "$HOME/.cargo/env"
+echo "Rust $(rustc --version) installed!"
+INSTALL_RUST
+[ -e /usr/local/bin/install-rust ] && chmod +x /usr/local/bin/install-rust || true
+
+# ── 4. Database Clients ──
+# Every database client. Zero servers (keep it light).
+echo "[DEV] Installing database clients..."
+apt_nonfatal db-clients \
+    mariadb-client \
+    redis-tools \
+    sqlite3 \
+    || true
+
+# ── 5. Build Tools ──
+echo "[DEV] Installing build tools..."
+apt_nonfatal db-clients \
+    cmake \
+    meson \
+    ninja-build \
+    pkg-config \
+    libssl-dev \
+    || true
+
+# ── 6. Git Extensions ──
+echo "[DEV] Installing git extensions..."
+apt_nonfatal git-lfs git-lfs
+git lfs install --system 2>/dev/null || true
+
+# ── 7. GoForge CLI (Sovereign Git - replaces GitHub CLI) ──
+# Alfred Linux uses GoForge, not GitHub. Sovereignty first.
+echo "[DEV] Configuring GoForge CLI support..."
+if [ -f /build-assets/goforge-cli ]; then
+    install -m 755 /build-assets/goforge-cli /usr/local/bin/goforge
+    echo "[DEV] GoForge CLI installed from build-assets"
+else
+    # Create a GoForge config hint for first-run
+    cat > /usr/local/bin/goforge << 'GOFORGE_CLI'
+#!/bin/bash
+echo "GoForge — Sovereign Git Forge"
+echo ""
+echo "GoForge is Alfred Linux's sovereign code forge."
+echo "Configure: git remote add origin https://your-forge-url/user/repo.git"
+echo ""
+echo "For full GoForge CLI, visit: https://alfredlinux.com/forge/"
+GOFORGE_CLI
+[ -e /usr/local/bin/goforge ] && chmod +x /usr/local/bin/goforge || true
+fi
+
+# ── 8. Debug & Profiling Tools ──
+echo "[DEV] Installing debug tools..."
+apt_nonfatal db-clients \
+    strace \
+    ltrace \
+    gdb \
+    || true
+
+# ── 9. JSON/YAML tools ──
+echo "[DEV] Installing data tools..."
+apt_nonfatal db-clients \
+    jq \
+    || true
+# yq via pip (more reliable than snap)
+if [[ "${ALFRED_ALLOW_HOOK_NETWORK_DOWNLOADS:-}" == "1" ]]; then
+    pip3 install --break-system-packages --no-cache-dir yq 2>/dev/null || true
+else
+    echo "[DEV] WARN: skipping yq pip install --break-system-packages (set ALFRED_ALLOW_HOOK_NETWORK_DOWNLOADS=1 or use apt jq-only)." >&2 || true
+fi
+
+# ── 10. Claude Code CLI ──
+# Official Anthropic coding agent. Needs API key to function.
+echo "[DEV] Installing Claude Code CLI..."
+if [ -f /build-assets/claude-code.tar.gz ]; then
+    echo "[DEV] Using pre-staged Claude Code (air-gap safe)"
+     install -g /build-assets/claude-code.tar.gz 2>/dev/null || true
+elif [[ "${ALFRED_ALLOW_HOOK_NETWORK_DOWNLOADS:-}" == "1" ]]; then
+     install -g @anthropic-ai/claude-code 2>/dev/null || {
+        echo "[DEV] Claude Code not available — install later with:  install -g @anthropic-ai/claude-code"
+    }
+else
+    echo "[DEV] WARN: skipping Claude Code  install (stage claude-code.tar.gz or set ALFRED_ALLOW_HOOK_NETWORK_DOWNLOADS=1)." >&2 || true
+fi
+
+echo "═══════════════════════════════════════════════════════"
+echo "  DEVELOPER ARSENAL COMPLETE"
+echo "  Node.js + Go + Rust-ready + DB clients + Git LFS"
+echo "  + GoForge CLI + Debug tools + jq + Claude Code"
+echo "═══════════════════════════════════════════════════════"
+
+exit 0

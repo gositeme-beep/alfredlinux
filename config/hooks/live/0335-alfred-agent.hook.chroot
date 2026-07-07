@@ -1,0 +1,82 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# 0510-alfred-agent.hook.chroot
+# Alfred — the sovereign assistant
+# Crown of Alfred Linux 7.77.1.0.0
+set +e
+
+echo "I: [alfred] installing Alfred Agent"
+
+export DEBIAN_FRONTEND=noninteractive
+apt-get update
+apt-get install -y --no-install-recommends \
+    python3 python3-venv python3-pip git curl ca-certificates \
+    ripgrep ffmpeg sqlite3 build-essential || true
+
+# uv (fast Python installer)
+if ! command -v uv >/dev/null 2>&1; then
+    if [ -f /opt/alfred-offline-assets/uv.tar.gz ]; then
+        cp /opt/alfred-offline-assets/uv.tar.gz /tmp/uv.tar.gz || true
+    else
+        curl -fsSL "https://github.com/astral-sh/uv/releases/latest/download/uv-x86_64-unknown-linux-gnu.tar.gz" -o /tmp/uv.tar.gz || true
+    fi
+    tar -xzf /tmp/uv.tar.gz -C /tmp
+    cp /tmp/uv-x86_64-unknown-linux-gnu/uv /usr/local/bin/uv || true
+    chmod +x /usr/local/bin/uv || true
+fi
+
+ALFRED_AGENT_TAG="${ALFRED_AGENT_TAG:-v2026.5.7}"
+ALFRED_AGENT_DIR=/opt/alfred-agent
+
+git clone --depth 1 --branch "$ALFRED_AGENT_TAG" \
+    https://github.com/NousResearch/hermes-agent.git "$ALFRED_AGENT_DIR" || true
+
+[ -d "$ALFRED_AGENT_DIR" ] || exit 0
+cd "$ALFRED_AGENT_DIR"
+if [ ! -d ".venv" ]; then
+    uv venv .venv --python 3.11
+fi
+. .venv/bin/activate
+uv pip install --break-system-packages -e ".[all]"
+deactivate
+
+# ── SOVEREIGN STRIP: every visible "Hermes / Nous" identifier → "Alfred / Crown" ──
+find "$ALFRED_AGENT_DIR" \
+    \( -path '*/web/*' -o -path '*/ui-tui/*' -o -path '*/website/*' -o -path '*/locales/*' \) \
+    -type f \( -name '*.html' -o -name '*.css' -o -name '*.js' -o -name '*.ts' \
+            -o -name '*.tsx' -o -name '*.json' -o -name '*.yaml' -o -name '*.yml' \
+            -o -name '*.md' \) \
+    -exec sed -i \
+        -e 's/Hermes Agent/Alfred/g' \
+        -e 's/Hermes/Alfred/g' \
+        -e 's/hermes-agent/alfred/g' \
+        -e 's/hermes/alfred/g' \
+        -e 's/HERMES/ALFRED/g' \
+        -e 's/Nous Research/Crown/g' \
+        -e 's/NousResearch/Crown/g' \
+        -e 's/nousresearch/crown/g' \
+        -e 's/Nous Portal/Crown Portal/g' \
+        -e 's/teknium1/Crown/g' \
+        -e 's/☤/🎩/g' \
+        {} \; 2>/dev/null || true
+
+# Default identity injection — agent literally cannot say it is Hermes
+mkdir -p /etc/skel/.alfred/agent || true
+cat > /etc/skel/.alfred/agent/config.json <<'JSON'
+{
+  "personaPath": "/usr/share/alfred/persona/alfred.md",
+  "branding": { "name": "Alfred", "emoji": "🎩" },
+  "memory": { "endpoint": "http://127.0.0.1:37777" },
+  "providers": {
+    "default": "alfred-local"
+  }
+}
+JSON
+
+# Compliance file (buried)
+mkdir -p /usr/share/doc/alfred/.licenses || true
+cp "$ALFRED_AGENT_DIR/LICENSE" /usr/share/doc/alfred/.licenses/agent.LICENSE 2>/dev/null || true
+
+echo "I: [alfred] Alfred Agent installed"

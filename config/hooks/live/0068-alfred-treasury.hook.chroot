@@ -1,0 +1,74 @@
+#!/bin/bash
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+echo "================================================="
+echo "==== ALFRED TREASURY (Air-Gapped Crypto) ========"
+echo "================================================="
+
+export DEBIAN_FRONTEND=noninteractive
+
+if ls /build-assets/treasury/* 1>/dev/null 2>&1; then
+    echo "Installing custom Kingdom Treasury binaries..."
+    cp -r /build-assets/treasury/* /usr/local/bin/ || true
+    chmod +x /usr/local/bin/* || true
+else
+    echo "No custom treasury binaries found in /build-assets. Installing fallbacks."
+    apt-get install -y --fix-broken -y --no-install-recommends electrum || true
+fi
+
+cat > /usr/local/sbin/alfred-treasury << 'EOF'
+#!/bin/bash
+echo "Engaging Treasury Cold Storage Protocol..."
+if command -v alfred-faraday-on >/dev/null; then
+    alfred-faraday-on
+else
+    rfkill block all
+fi
+echo "Network severed. You are in an air-gapped state."
+echo "Treasury operations are mathematically safe from exfiltration."
+# Users can launch their specific wallets here
+EOF
+chmod +x /usr/local/sbin/alfred-treasury || true
+
+echo "================================================="
+echo "==== THE SEVEN-SABBATH PATH: NATIVE HARDWARE ===="
+echo "================================================="
+
+# 1. Install prerequisites
+apt-get install -y curl pcscd libusb-1.0-0-dev libudev-dev jq || true
+
+# 2. Add Ledger udev rules for Hardware Wallet support
+echo "[+] Adding Ledger udev rules..."
+cat << 'UDEV_EOF' > /etc/udev/rules.d/20-hw1.rules
+# HW.1 / Nano
+SUBSYSTEMS=="usb", ATTRS{idVendor}=="2c97", ATTRS{idProduct}=="0000|0001|0004", TAG+="uaccess", TAG+="udev-acl"
+# Blue
+SUBSYSTEMS=="usb", ATTRS{idVendor}=="2c97", ATTRS{idProduct}=="0015", TAG+="uaccess", TAG+="udev-acl"
+# Nano S
+SUBSYSTEMS=="usb", ATTRS{idVendor}=="2c97", ATTRS{idProduct}=="0001|1000|1001|1002|1003|1004|1005|1006|1007|1008|1009|100a|100b|100c|100d|100e|100f|1010|1011|1012|1013|1014|1015|1016|1017|1018|1019|101a|101b|101c|101d|101e|101f", TAG+="uaccess", TAG+="udev-acl"
+# Nano X
+SUBSYSTEMS=="usb", ATTRS{idVendor}=="2c97", ATTRS{idProduct}=="0004|4000|4001|4002|4003|4004|4005|4006|4007|4008|4009|400a|400b|400c|400d|400e|400f|4010|4011|4012|4013|4014|4015|4016|4017|4018|4019|401a|401b|401c|401d|401e|401f", TAG+="uaccess", TAG+="udev-acl"
+UDEV_EOF
+
+# 3. Download and install Solana CLI locally for offline signing capability
+echo "[+] Installing Solana CLI core utilities..."
+mkdir -p /opt/solana
+SOLANA_VERSION="v1.17.20"
+SOLANA_RELEASE="solana-release-x86_64-unknown-linux-gnu.tar.bz2"
+curl -sSfL "https://github.com/solana-labs/solana/releases/download/${SOLANA_VERSION}/${SOLANA_RELEASE}" -o /tmp/${SOLANA_RELEASE} || true
+if [ -f /tmp/${SOLANA_RELEASE} ]; then
+    tar jxf /tmp/${SOLANA_RELEASE} -C /opt/ || true
+    mv /opt/solana-release /opt/solana/current || true
+    rm /tmp/${SOLANA_RELEASE} || true
+    
+    # Link binaries
+    ln -sf /opt/solana/current/bin/solana /usr/local/bin/solana || true
+    ln -sf /opt/solana/current/bin/solana-keygen /usr/local/bin/solana-keygen || true
+    ln -sf /opt/solana/current/bin/spl-token /usr/local/bin/spl-token || true
+else
+    echo "[-] Failed to download Solana CLI. Air-gap nodes will rely on /build-assets."
+fi
+
+echo "Treasury installed."
+
+exit 0

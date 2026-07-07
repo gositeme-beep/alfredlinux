@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Alfred AI</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      width: 380px; min-height: 480px; max-height: 600px;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: #0a0a14; color: #e2e8f0; overflow-y: auto;
+    }
+    .header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 16px 18px; border-bottom: 1px solid rgba(255,255,255,.06);
+      background: #12121e;
+    }
+    .header-left { display: flex; align-items: center; gap: 10px; }
+    .header-left img { width: 28px; height: 28px; border-radius: 8px; }
+    .header-left h1 { font-size: 1rem; font-weight: 700; background: linear-gradient(135deg,#6c5ce7,#0984e3); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .settings-btn { background: none; border: none; color: #94a3b8; cursor: pointer; font-size: 1.1rem; padding: 4px; }
+    .settings-btn:hover { color: #e2e8f0; }
+
+    /* Setup Screen */
+    .setup { padding: 32px 18px; text-align: center; }
+    .setup h2 { font-size: 1.1rem; margin-bottom: 8px; }
+    .setup p { font-size: .85rem; color: #94a3b8; margin-bottom: 20px; }
+    .setup input {
+      width: 100%; padding: 12px 14px; background: #1a1a2e; border: 1px solid rgba(255,255,255,.1);
+      border-radius: 10px; color: #e2e8f0; font-size: .9rem; margin-bottom: 12px; outline: none;
+    }
+    .setup input:focus { border-color: #6c5ce7; }
+    .btn-primary {
+      width: 100%; padding: 12px; border: none; border-radius: 10px; cursor: pointer;
+      font-weight: 700; font-size: .95rem; color: #fff;
+      background: linear-gradient(135deg,#6c5ce7,#0984e3);
+      transition: transform .2s, box-shadow .2s;
+    }
+    .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 20px rgba(108,92,231,.4); }
+
+    /* Quick Actions */
+    .actions { padding: 18px; }
+    .actions-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 18px; }
+    .action-btn {
+      display: flex; flex-direction: column; align-items: center; gap: 8px;
+      padding: 16px 10px; background: #12121e; border: 1px solid rgba(255,255,255,.06);
+      border-radius: 12px; cursor: pointer; color: #e2e8f0; font-size: .82rem; font-weight: 600;
+      transition: border-color .2s, background .2s;
+    }
+    .action-btn:hover { border-color: #6c5ce7; background: rgba(108,92,231,.08); }
+    .action-btn .icon { font-size: 1.4rem; }
+
+    /* Chat */
+    .chat-area { padding: 0 18px 14px; }
+    .chat-label { font-size: .78rem; color: #94a3b8; margin-bottom: 8px; text-transform: uppercase; letter-spacing: .5px; font-weight: 600; }
+    .chat-input-wrap {
+      display: flex; gap: 8px; align-items: center;
+      background: #12121e; border: 1px solid rgba(255,255,255,.08);
+      border-radius: 12px; padding: 6px 8px 6px 14px;
+    }
+    .chat-input-wrap:focus-within { border-color: #6c5ce7; }
+    .chat-input {
+      flex: 1; background: none; border: none; color: #e2e8f0;
+      font-size: .9rem; outline: none; font-family: inherit;
+    }
+    .chat-input::placeholder { color: #64748b; }
+    .send-btn {
+      width: 34px; height: 34px; border-radius: 8px; border: none;
+      background: linear-gradient(135deg,#6c5ce7,#0984e3); color: #fff;
+      cursor: pointer; font-size: .9rem; display: flex; align-items: center; justify-content: center;
+      transition: transform .15s;
+    }
+    .send-btn:hover { transform: scale(1.05); }
+
+    /* Response */
+    .response-area {
+      margin: 14px 18px; padding: 14px; background: #12121e;
+      border-radius: 12px; border: 1px solid rgba(255,255,255,.06);
+      font-size: .88rem; line-height: 1.6; max-height: 180px; overflow-y: auto;
+      display: none;
+    }
+    .response-area.active { display: block; }
+    .response-area .loading { color: #6c5ce7; }
+
+    /* Footer */
+    .popup-footer {
+      padding: 12px 18px; border-top: 1px solid rgba(255,255,255,.06);
+      text-align: center;
+    }
+    .open-panel-btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 8px 18px; background: rgba(108,92,231,.1); border: 1px solid rgba(108,92,231,.2);
+      border-radius: 8px; color: #a29bfe; font-size: .82rem; font-weight: 600;
+      cursor: pointer; text-decoration: none; transition: background .2s;
+    }
+    .open-panel-btn:hover { background: rgba(108,92,231,.18); }
+
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="header-left">
+      <div style="width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,#6c5ce7,#0984e3);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.85rem;color:#fff;">A</div>
+      <h1>Alfred AI</h1>
+    </div>
+    <button class="settings-btn" id="settingsBtn" title="Settings">⚙</button>
+  </div>
+
+  <!-- Setup Screen (shown when no API key) -->
+  <div class="setup" id="setupScreen">
+    <h2>Connect to Alfred</h2>
+    <p>Enter your API key to get started. You can find it in your <a href="https://gositeme.com/developer-portal.php" target="_blank" style="color:#a29bfe;">Developer Portal</a>.</p>
+    <input type="password" id="apiKeyInput" placeholder="Enter your API key…" autocomplete="off">
+    <button class="btn-primary" id="saveKeyBtn">Save & Connect</button>
+  </div>
+
+  <!-- Main Screen -->
+  <div id="mainScreen" class="hidden">
+    <div class="actions">
+      <div class="actions-grid">
+        <button class="action-btn" data-action="chat"><span class="icon">💬</span>Chat</button>
+        <button class="action-btn" data-action="analyze"><span class="icon">🔍</span>Analyze Page</button>
+        <button class="action-btn" data-action="seo"><span class="icon">📊</span>SEO Check</button>
+        <button class="action-btn" data-action="summarize"><span class="icon">📝</span>Summarize</button>
+      </div>
+    </div>
+
+    <div class="chat-area">
+      <div class="chat-label">Ask Alfred</div>
+      <div class="chat-input-wrap">
+        <input type="text" class="chat-input" id="chatInput" placeholder="Ask anything…">
+        <button class="send-btn" id="sendBtn">➤</button>
+      </div>
+    </div>
+
+    <div class="response-area" id="responseArea"></div>
+
+    <div class="popup-footer">
+      <a href="#" class="open-panel-btn" id="openPanelBtn">◧ Open Full Panel</a>
+    </div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

@@ -1,0 +1,255 @@
+
+RewriteRule ^kernel-7012/?$ /kernel-7012.php [L]
+RewriteRule ^forge/kernel/kernel-hardened-704/?$ /kernel-7012 [R=302,L]
+RewriteEngine On
+
+# == BEGIN forge-substitute ==
+# Rewrite third-party upstream docs hostnames (legacy docs.gitea.com in HTML) to Alfred the Forge docs.
+# .htaccess context only allows global filter; forge backend sends gzip so we must inflate first.
+<IfModule mod_substitute.c>
+    AddOutputFilterByType INFLATE;SUBSTITUTE;DEFLATE text/html
+    Substitute "s|https://docs\.gitea\.com/[^\"' <>]*|/forge/docs/|in"
+    Substitute "s|https://docs\.gitea\.com|/forge/docs/|in"
+    Substitute "s|docs\.gitea\.com|alfredlinux.com/forge/docs|in"
+</IfModule>
+# == END forge-substitute ==
+
+
+# Custom 404 error page
+ErrorDocument 404 /404.php
+
+# ── Security Headers ──────────────────────────────────────────
+<IfModule mod_headers.c>
+  Header always set X-Content-Type-Options "nosniff"
+  Header always set X-Frame-Options "SAMEORIGIN"
+  Header always set Referrer-Policy "strict-origin-when-cross-origin"
+  Header always set Permissions-Policy "camera=(), microphone=(), geolocation=()"
+  Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains" env=HTTPS
+</IfModule>
+
+# CORS for .torrent files (in-browser / cross-origin fetch). Plain /downloads/*.iso is denied (covenant + bandwidth); see downloads/.htaccess.
+<IfModule mod_headers.c>
+  <FilesMatch "\.torrent$">
+    Header set Access-Control-Allow-Origin "*"
+    Header set Access-Control-Allow-Methods "GET, HEAD, OPTIONS"
+  </FilesMatch>
+</IfModule>
+
+# Clean URL: /docs → docs.php
+RewriteRule ^docs/?$ /docs.php [L]
+
+# Clean URL: /developers → developers.php
+RewriteRule ^developers/?$ /developers.php [L]
+
+# Clean URL: /download → download.php
+RewriteRule ^download/?$ /download.php [L]
+RewriteRule ^reseal/?$ /reseal.php [L]
+
+# Clean URL: /releases → releases.php
+# Clean URL: /saint-jean-baptiste ??? saint-jean-baptiste.php
+RewriteRule ^saint-jean-baptiste/?$ /saint-jean-baptiste.php [L]
+
+RewriteRule ^releases/?$ /releases.php [L]
+
+# Clean URL: /security → security.php
+RewriteRule ^security/?$ /security.php [L]
+
+# Clean URL: /apps → apps.php
+RewriteRule ^apps/?$ /apps.php [L]
+
+# Clean URL: /security-kernel → security-kernel.php (kernel 7.0.6 supply-chain transparency)
+RewriteRule ^security-kernel/?$ /security-kernel.php [L]
+
+# Clean URL: /privacy → privacy.php
+RewriteRule ^privacy/?$ /privacy.php [L]
+
+# Clean URL: /compare → compare.php
+RewriteRule ^compare/?$ /compare.php [L]
+
+# Clean URL: /about → about.php
+RewriteRule ^about/?$ /about.php [L]
+
+# Clean URL: /features → features.php
+RewriteRule ^features/?$ /features.php [L]
+
+# Clean URL: /24-systems → 24-systems.php
+RewriteRule ^24-systems/?$ /24-systems.php [L]
+RewriteRule ^world-firsts/?$ /world-firsts.php [L]
+RewriteRule ^scenarios/?$ /scenarios.php [L]
+
+# Clean URL: /ai-stack → ai-stack.php
+RewriteRule ^ai-stack/?$ /ai-stack.php [L]
+
+# Clean URL: /community → community.php
+RewriteRule ^community/?$ /community.php [L]
+
+# Clean URL: /hardware → hardware.php
+RewriteRule ^hardware/?$ /hardware.php [L]
+
+# Clean URL: /roadmap → roadmap.php
+RewriteRule ^roadmap/?$ /roadmap.php [L]
+
+# Clean URL: /manifesto → manifesto.php
+RewriteRule ^manifesto/?$ /manifesto.php [L]
+
+# Clean URL: /why-alfred-linux → why-alfred-linux.php
+RewriteRule ^why-alfred-linux/?$ /why-alfred-linux.php [L]
+
+# Clean URL: /listen → listen.php
+RewriteRule ^listen/?$ /listen.php [L]
+
+# Clean URL: /license → license.php
+RewriteRule ^license/?$ /license.php [L]
+
+# Clean URL: /verify → verify.php
+RewriteRule ^verify/?$ /verify.php [L]
+
+# Clean URL: /write-usb → write-usb.php
+RewriteRule ^write-usb/?$ /write-usb.php [L]
+
+# Clean URL: /member-lounge → member-lounge.php
+RewriteRule ^member-lounge/?$ /member-lounge.php [L]
+
+# Clean URL: /world-peace → world-peace.php
+RewriteRule ^world-peace/?$ /world-peace.php [L]
+
+# Clean URL: /kingdom-report → kingdom-report.php
+RewriteRule ^kingdom-report/?$ /kingdom-report.php [L]
+
+# Clean URL: /packages → packages.php
+RewriteRule ^packages/?$ /packages.php [L]
+
+# Clean URL: /downloads → downloads.php
+RewriteRule ^downloads/?$ /downloads.php [L]
+RewriteRule ^downloads_iso/?$ /downloads_iso.php [L]
+
+# Clean URL: /release → release.php
+RewriteRule ^release/?$ /release.php [L]
+
+# AKJV Bible — reader (shared with gositeme.com)
+RewriteRule ^bible/?$ /bible.php [QSA,L]
+RewriteRule ^bible/read/?$ /bible-read.php [QSA,L]
+RewriteRule ^bible/read/(.+)$ /bible-read.php [QSA,L]
+
+# Bible Editions — redirect to gositeme.com canonical
+RewriteRule ^bible/editions/?$ https://gositeme.com/bible/editions [R=301,L]
+RewriteRule ^bible/heirloom(.*)$ https://gositeme.com/bible/heirloom$1 [R=301,L]
+RewriteRule ^bible/children(.*)$ https://gositeme.com/bible/children$1 [R=301,L]
+RewriteRule ^bible/chabad(.*)$ https://gositeme.com/bible/chabad$1 [R=301,L]
+RewriteRule ^bible/church(.*)$ https://gositeme.com/bible/church$1 [R=301,L]
+RewriteRule ^bible/pdf/(.+)$ https://gositeme.com/bible/pdf/$1 [R=301,L]
+
+# Torrent API proxy (unified seeder on port 3202)
+RewriteCond %{REQUEST_URI} ^/torrent-api/
+RewriteRule ^torrent-api/(.*)$ http://127.0.0.1:3202/$1 [P,L]
+
+# == BEGIN forge-auth-clear ==
+# Force PIN re-prompt on every sign-in: delete forge_pin_ok cookie whenever
+# user touches /forge/user/login, /forge/user/oauth2/.../callback, or /forge/user/logout.
+# This makes the next /forge/ access fail the gate cookie check and bounce
+# back to gositeme.com/forge-pin-gate.php for PIN entry.
+<If "%{REQUEST_URI} =~ m#^/forge/user/(login|logout|oauth2/[^/]+/callback)#">
+    Header always add Set-Cookie "forge_pin_ok=deleted; Path=/; Domain=.alfredlinux.com; Max-Age=0; Expires=Thu, 01 Jan 1970 00:00:00 GMT; Secure; HttpOnly; SameSite=Lax"
+</If>
+# == END forge-auth-clear ==
+
+
+
+#PUBLIC# # == BEGIN forge-pin-gate ==
+#PUBLIC# # Cross-domain PIN gate. If user has no forge_pin_ok cookie, bounce to gositeme.com
+#PUBLIC# # which forces login + PIN, then HMAC-redirects to forge-pin-set.php which sets the cookie.
+#PUBLIC# # Bypass: forge OAuth callbacks (so login can complete), static assets, the gate-set itself.
+#PUBLIC# RewriteCond %{REQUEST_URI} ^/forge(/|$)
+#PUBLIC# RewriteCond %{REQUEST_URI} !^/forge/user/oauth2/
+#PUBLIC# RewriteCond %{REQUEST_URI} !^/forge/-/
+#PUBLIC# RewriteCond %{REQUEST_URI} !^/forge/assets/
+#PUBLIC# RewriteCond %{REQUEST_URI} !^/forge/avatars/
+#PUBLIC# RewriteCond %{REQUEST_URI} !^/forge/api/healthz
+#PUBLIC# RewriteCond %{REQUEST_URI} !^/forge/docs
+#PUBLIC# RewriteCond %{HTTP_COOKIE} !(^|;\ *)forge_pin_ok=1
+#PUBLIC# RewriteRule ^forge(/.*)?$ https://gositeme.com/forge-pin-gate.php?to=https://alfredlinux.com%{REQUEST_URI} [R=302,L,QSA]
+#PUBLIC# # == END forge-pin-gate ==
+# GoForge — Alfred Linux sovereign forge (app on port 3300)
+RewriteCond %{REQUEST_URI} ^/forge(/|$)
+# == BEGIN forge-docs-local ==
+# Skip reverse-proxy for /forge/docs/* so Apache serves local GoForge docs.
+RewriteCond %{REQUEST_FILENAME} -f [OR]
+RewriteCond %{REQUEST_FILENAME} -d
+RewriteRule ^forge/docs/ - [END]
+RewriteRule ^forge/docs/?$ /forge/docs/index.html [END]
+# == END forge-docs-local ==
+# GoForge: mod_dir can rewrite /forge/ → /forge/index.html before proxy, so Gitea sees /index.html and
+# sets redirect_to=/forge/index.html; after OAuth that path has no route → 404. Treat as forge root.
+RewriteRule ^forge/index\.html$ http://127.0.0.1:3300/ [P,L]
+
+RewriteRule ^forge(/.*)?$ http://127.0.0.1:3300$1 [P,L]
+
+# WebSocket tracker proxy (tracker on port 3201)
+# Browsers connect to wss://alfredlinux.com/announce
+RewriteCond %{HTTP:Upgrade} websocket [NC]
+RewriteCond %{REQUEST_URI} ^/announce
+RewriteRule ^announce(.*)$ ws://127.0.0.1:3201/$1 [P,L]
+
+# HTTP tracker announce (for non-WebSocket clients)
+RewriteCond %{REQUEST_URI} ^/announce
+RewriteRule ^announce(.*)$ http://127.0.0.1:3201/announce$1 [P,L]
+
+# == BEGIN teaching-pages (clean URLs for biblical pages) ==
+RewriteRule ^akjesusbible/?$  /akjesusbible.php  [L]
+RewriteRule ^welcome/?$       /welcome.php       [L]
+RewriteRule ^scriptures/?$    /scriptures.php    [L]
+RewriteRule ^numbers/?$       /numbers.php       [L]
+RewriteRule ^thirty-three/?$  /thirty-three.php  [L]
+RewriteRule ^names/?$         /names.php         [L]
+RewriteRule ^shema/?$         /shema.php         [L]
+RewriteRule ^sevens/?$        /sevens.php        [L]
+RewriteRule ^forty-two/?$     /forty-two.php     [L]
+RewriteRule ^i-am/?$          /i-am.php          [L]
+RewriteRule ^armor/?$         /armor.php         [L]
+# == END teaching-pages ==
+
+# == BEGIN teaching-pages-2 (additional clean URLs) ==
+RewriteRule ^pillars/?$        /pillars.php        [L]
+RewriteRule ^sabbath/?$        /sabbath.php        [L]
+RewriteRule ^daily-bread/?$    /daily-bread.php    [L]
+RewriteRule ^kingdom-status/?$ /kingdom-status.php [L]
+RewriteRule ^sovereign/?$      /sovereign.php      [L]
+RewriteRule ^sovereignty/?$    /sovereignty.php    [L]
+RewriteRule ^covenant/?$       /covenant.php       [L]
+RewriteRule ^verify/?$         /verify.php         [L]
+# == END teaching-pages-2 ==
+
+# == BEGIN teaching-pages-3 == 2026-04-23
+RewriteRule ^witness/?$           /witness.php           [L]
+RewriteRule ^ten-commandments/?$  /ten-commandments.php  [L]
+RewriteRule ^beatitudes/?$        /beatitudes.php        [L]
+RewriteRule ^lords-prayer/?$      /lords-prayer.php      [L]
+# == END teaching-pages-3 ==
+
+# == BEGIN teaching-pages-4 == 2026-04-23
+RewriteRule ^share/?$ /share.php [QSA,L]
+# == END teaching-pages-4 ==
+
+# == BEGIN global-private-deny == (p16 2026-05-04)
+# Belt-and-suspenders: deny dotfiles, env, logs, backups, swap files
+# anywhere under DocumentRoot. PHP scripts that need these read them via
+# absolute paths outside DocumentRoot.
+<FilesMatch "^\.(env|git|svn|hg|DS_Store|htpasswd)">
+    Require all denied
+</FilesMatch>
+<FilesMatch "\.(env|log|bak|save|swp|orig|sql|sqlite|sqlite3|key|pem|p12|pfx)(\..+)?$">
+    Require all denied
+</FilesMatch>
+<FilesMatch "(^|/)(node_modules|vendor|tests?|spec)/">
+    Require all denied
+</FilesMatch>
+# == END global-private-deny ==
+
+
+RewriteRule ^gold-master/?$ /gold-master-2026.php [L]
+
+
+RewriteEngine On
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteRule ^([^\.]+)$ \.php [NC,L]

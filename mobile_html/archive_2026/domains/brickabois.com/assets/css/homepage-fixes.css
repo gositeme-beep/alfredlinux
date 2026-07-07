@@ -1,0 +1,95 @@
+/**
+ * Homepage Layout Fixes
+ * Ensure all sections are visible
+ */
+
+/* Ensure all sections are visible */
+section {
+    position: relative !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    z-index: 1 !important;
+    overflow: visible !important;
+}
+
+/* Fix hero section not covering content */
+.hero-section-advanced {
+    z-index: 1 !important;
+}
+
+.hero-content-advanced {
+    position: relative !important;
+    z-index: 10 !important;
+}
+
+/* Ensure all reveal elements are visible */
+.reveal-on-scroll {
+    opacity: 1 !important;
+    transform: translateY(0) !important;
+    visibility: visible !important;
+}
+
+/* Ensure stats section is visible */
+.stats-section-advanced {
+    position: relative !important;
+    z-index: 2 !important;
+    overflow: visible !important;
+}
+
+/* Ensure dimensions section is visible and scrollable */
+.dimensions-section-advanced {
+    position: relative !important;
+    z-index: 2 !important;
+    overflow: visible !important;
+    transform: none !important; /* Prevent parallax from breaking scrolling */
+    will-change: auto !important; /* Remove will-change that might cause issues */
+}
+
+/* Ensure manifesto section is visible */
+.manifesto-section {
+    position: relative !important;
+    z-index: 2 !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+}
+
+/* Ensure all other sections are visible */
+.how-it-works-section,
+.vision-section,
+.values-section,
+.activity-section,
+.testimonials-section,
+.ready-section {
+    position: relative !important;
+    z-index: 2 !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    overflow: visible !important;
+}
+
+/* Ensure containers don't hide content */
+.container {
+    position: relative !important;
+    z-index: 1 !important;
+}
+
+/* Fix parallax layers not hiding content */
+.parallax-layer {
+    position: relative !important;
+    z-index: 2 !important;
+}
+
+/* Prevent dimensions section from being affected by parallax */
+.dimensions-section-advanced.parallax-layer {
+    transform: none !important;
+}
+
+/* Ensure cards are visible */
+.stat-card-advanced,
+.dimension-card-advanced,
+.interactive-card-3d {
+    opacity: 1 !important;
+    visibility: visible !important;
+    position: relative !important;
+}
+

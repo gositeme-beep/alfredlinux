@@ -1,0 +1,1575 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GoCodeMe — Dashboard</title>
+  <link rel="stylesheet" href="/assets/css/fonts.css">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --brand:       #0ea5e9;
+      --brand-dark:  #0284c7;
+      --brand-glow:  rgba(14,165,233,.18);
+      --accent:      #8b5cf6;
+      --accent-glow: rgba(139,92,246,.15);
+      --bg:          #0b1120;
+      --bg2:         #111827;
+      --surface:     rgba(30,41,59,.55);
+      --surface-solid: #1e293b;
+      --surface2:    #283548;
+      --border:      rgba(51,65,85,.6);
+      --border-light:rgba(71,85,105,.4);
+      --fg:          #f1f5f9;
+      --text:        #f1f5f9;
+      --muted:       #94a3b8;
+      --green:       #22c55e;
+      --yellow:      #eab308;
+      --red:         #ef4444;
+      --radius:      14px;
+      --radius-sm:   8px;
+    }
+
+    body {
+      font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+    }
+
+    /* subtle mesh bg */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      background:
+        radial-gradient(ellipse 80% 50% at 20% 20%, rgba(14,165,233,.08), transparent),
+        radial-gradient(ellipse 60% 60% at 80% 60%, rgba(139,92,246,.06), transparent),
+        radial-gradient(ellipse 50% 40% at 50% 90%, rgba(14,165,233,.04), transparent);
+    }
+
+    /* ── Scrollbar ── */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 99px; }
+
+    /* ── Header ── */
+    header {
+      background: rgba(17,24,39,.75);
+      backdrop-filter: blur(16px) saturate(1.5);
+      -webkit-backdrop-filter: blur(16px) saturate(1.5);
+      border-bottom: 1px solid var(--border);
+      padding: 0 2rem;
+      height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+    .logo {
+      font-size: 1.4rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, var(--brand), var(--accent));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      letter-spacing: -0.5px;
+    }
+    .logo span {
+      -webkit-text-fill-color: var(--fg);
+    }
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      font-size: 0.875rem;
+      color: var(--muted);
+    }
+    .badge {
+      background: linear-gradient(135deg, var(--brand), var(--accent));
+      color: #fff;
+      font-size: 0.68rem;
+      font-weight: 700;
+      padding: 3px 10px;
+      border-radius: 999px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    /* ── Main layout ── */
+    main {
+      flex: 1;
+      max-width: 1100px;
+      width: 100%;
+      margin: 2rem auto;
+      padding: 0 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+
+    h1 { font-size: 1.8rem; font-weight: 800; letter-spacing: -0.5px; }
+    h1 span {
+      background: linear-gradient(135deg, var(--brand), var(--accent));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    /* ── Cards ── */
+    .card {
+      background: var(--surface);
+      backdrop-filter: blur(20px) saturate(1.3);
+      -webkit-backdrop-filter: blur(20px) saturate(1.3);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      transition: border-color .25s, box-shadow .25s;
+    }
+    .card:hover {
+      border-color: var(--border-light);
+      box-shadow: 0 4px 24px rgba(0,0,0,.15);
+    }
+    .card-title {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--muted);
+      margin-bottom: 1.25rem;
+    }
+    .card-title .card-icon {
+      width: 28px; height: 28px;
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.9rem;
+      flex-shrink: 0;
+    }
+
+    /* ── Grid row (2 col on wide) ── */
+    .card-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.25rem;
+    }
+    @media (max-width: 760px) {
+      .card-grid { grid-template-columns: 1fr; }
+    }
+
+    /* ── Token Gauge ── */
+    .token-hero {
+      display: flex;
+      align-items: center;
+      gap: 2rem;
+      margin-bottom: 1rem;
+    }
+    @media (max-width: 600px) {
+      .token-hero { flex-direction: column; text-align: center; }
+    }
+
+    .gauge-wrap {
+      position: relative;
+      width: 140px;
+      height: 140px;
+      flex-shrink: 0;
+    }
+    .gauge-svg {
+      width: 140px; height: 140px;
+      transform: rotate(-90deg);
+    }
+    .gauge-track {
+      fill: none;
+      stroke: var(--border);
+      stroke-width: 10;
+    }
+    .gauge-fill {
+      fill: none;
+      stroke: url(#gauge-gradient);
+      stroke-width: 10;
+      stroke-linecap: round;
+      stroke-dasharray: 377;            /* 2π × 60 */
+      stroke-dashoffset: 377;
+      transition: stroke-dashoffset 1s cubic-bezier(.4,0,.2,1);
+    }
+    .gauge-center {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    .gauge-pct {
+      font-size: 2rem;
+      font-weight: 800;
+      font-variant-numeric: tabular-nums;
+      line-height: 1;
+    }
+    .gauge-label {
+      font-size: 0.68rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-top: 2px;
+    }
+
+    .token-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 1rem;
+      flex: 1;
+    }
+    @media (max-width: 600px) { .token-grid { grid-template-columns: 1fr 1fr 1fr; gap: 0.5rem; } }
+
+    .stat-box {
+      background: rgba(15,23,42,.45);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 0.75rem 1rem;
+    }
+    .stat-label { font-size: 0.72rem; color: var(--muted); margin-bottom: 0.25rem; text-transform: uppercase; letter-spacing: 0.04em; font-weight: 600; }
+    .stat-value { font-size: 1.35rem; font-weight: 800; font-variant-numeric: tabular-nums; }
+    .stat-value.green  { color: var(--green); }
+    .stat-value.yellow { color: var(--yellow); }
+    .stat-value.red    { color: var(--red); }
+
+    /* Keep progress bar (hidden on main card, visible in billing) */
+    .progress-wrap { margin-top: 0.75rem; display: none; }
+    .progress-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.75rem;
+      color: var(--muted);
+      margin-bottom: 0.35rem;
+    }
+    .progress-bar {
+      height: 6px;
+      background: var(--border);
+      border-radius: 999px;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      border-radius: 999px;
+      background: var(--brand);
+      transition: width .6s cubic-bezier(.4,0,.2,1), background .4s;
+    }
+    .progress-fill.warning { background: var(--yellow); }
+    .progress-fill.danger  { background: var(--red); }
+
+    /* ── Launch area ── */
+    .launch-section {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .workspace-row {
+      display: flex;
+      gap: 0.75rem;
+      align-items: center;
+    }
+    .workspace-row label { font-size: 0.82rem; color: var(--muted); white-space: nowrap; font-weight: 500; }
+    .workspace-row input {
+      flex: 1;
+      background: rgba(15,23,42,.6);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 0.55rem 0.85rem;
+      color: var(--text);
+      font-family: 'Inter', system-ui, sans-serif;
+      font-size: 0.875rem;
+      outline: none;
+      transition: border-color .2s, box-shadow .2s;
+    }
+    .workspace-row input:focus {
+      border-color: var(--brand);
+      box-shadow: 0 0 0 3px var(--brand-glow);
+    }
+
+    .btn-row { display: flex; gap: 0.75rem; flex-wrap: wrap; align-items: center; }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.6rem 1.3rem;
+      border-radius: var(--radius-sm);
+      border: none;
+      font-family: inherit;
+      font-size: 0.875rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all .2s;
+      text-decoration: none;
+    }
+    .btn:active { transform: scale(0.97); }
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+    .btn-primary {
+      background: linear-gradient(135deg, var(--brand), #3b82f6);
+      color: #fff;
+      box-shadow: 0 2px 8px rgba(14,165,233,.25);
+    }
+    .btn-primary:hover:not(:disabled) {
+      box-shadow: 0 4px 16px rgba(14,165,233,.35);
+      transform: translateY(-1px);
+    }
+    .btn-ghost {
+      background: transparent;
+      color: var(--muted);
+      border: 1px solid var(--border);
+    }
+    .btn-ghost:hover:not(:disabled) {
+      border-color: var(--brand);
+      color: var(--brand);
+      background: var(--brand-glow);
+    }
+
+    /* ── Status pill ── */
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 0.78rem;
+      padding: 4px 12px;
+      border-radius: 999px;
+      font-weight: 600;
+    }
+    .status-pill::before {
+      content: '';
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+    .pill-idle    { background: rgba(148,163,184,.1); color: var(--muted); }
+    .pill-running { background: rgba(34,197,94,.1);   color: var(--green); }
+    .pill-running::before { animation: pulse-dot 1.5s ease-in-out infinite; }
+    .pill-loading { background: rgba(14,165,233,.1);  color: var(--brand); }
+    .pill-loading::before { animation: pulse-dot 1s ease-in-out infinite; }
+    .pill-error   { background: rgba(239,68,68,.1);   color: var(--red); }
+
+    @keyframes pulse-dot {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: .5; transform: scale(1.3); }
+    }
+
+    /* ── Session table ── */
+    .sessions-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+    th {
+      text-align: left;
+      font-size: 0.68rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--muted);
+      padding: 0.5rem 0.75rem;
+      border-bottom: 1px solid var(--border);
+    }
+    td { padding: 0.65rem 0.75rem; border-bottom: 1px solid rgba(51,65,85,.35); }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: rgba(14,165,233,.03); }
+    td a {
+      color: var(--brand);
+      text-decoration: none;
+      font-weight: 500;
+    }
+    td a:hover { text-decoration: underline; }
+    .no-sessions { text-align: center; padding: 2rem; color: var(--muted); font-size: 0.82rem; }
+
+    /* ── Toast ── */
+    #toast {
+      position: fixed;
+      bottom: 1.5rem;
+      right: 1.5rem;
+      background: rgba(30,41,59,.9);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 0.8rem 1.3rem;
+      font-size: 0.85rem;
+      max-width: 380px;
+      opacity: 0;
+      transform: translateY(12px);
+      transition: opacity .3s, transform .3s;
+      pointer-events: none;
+      z-index: 999;
+      box-shadow: 0 8px 32px rgba(0,0,0,.3);
+    }
+    #toast.show { opacity: 1; transform: none; pointer-events: auto; }
+    #toast.toast-error { border-color: var(--red); color: var(--red); }
+    #toast.toast-ok    { border-color: var(--green); color: var(--green); }
+
+    /* ── Footer ── */
+    footer {
+      text-align: center;
+      padding: 1.75rem;
+      color: var(--muted);
+      font-size: 0.75rem;
+      border-top: 1px solid var(--border);
+    }
+    footer a { color: var(--brand); text-decoration: none; }
+    footer a:hover { text-decoration: underline; }
+
+    /* ── Onboarding Wizard Overlay ── */
+    #onboarding-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(11,17,32,.88);
+      backdrop-filter: blur(8px);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+    }
+    #onboarding-overlay.visible { display: flex; }
+
+    .wizard-box {
+      background: var(--surface-solid);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 2.5rem 2rem;
+      max-width: 480px;
+      width: calc(100% - 2rem);
+      position: relative;
+      box-shadow: 0 24px 64px rgba(0,0,0,.4);
+    }
+
+    .wizard-step-label {
+      font-size: 0.68rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--brand);
+      margin-bottom: 0.4rem;
+    }
+    .wizard-title {
+      font-size: 1.4rem;
+      font-weight: 800;
+      margin-bottom: 0.75rem;
+    }
+    .wizard-desc {
+      color: var(--muted);
+      font-size: 0.9rem;
+      line-height: 1.65;
+      margin-bottom: 1.75rem;
+    }
+
+    .wizard-progress {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 1.75rem;
+    }
+    .wizard-dot {
+      flex: 1;
+      height: 4px;
+      border-radius: 999px;
+      background: var(--border);
+      transition: background 0.3s;
+    }
+    .wizard-dot.active {
+      background: linear-gradient(135deg, var(--brand), var(--accent));
+    }
+
+    .wizard-actions { display: flex; gap: 0.75rem; justify-content: flex-end; flex-wrap: wrap; }
+
+    .wizard-skip {
+      font-size: 0.78rem;
+      color: var(--muted);
+      background: none;
+      border: none;
+      cursor: pointer;
+      margin-top: 1rem;
+      display: block;
+      text-align: center;
+      width: 100%;
+      font-family: inherit;
+    }
+    .wizard-skip:hover { color: var(--text); }
+
+    /* ── Landing page (unauthenticated) ── */
+    #landing {
+      display: none;
+      flex: 1;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 3rem 1.5rem;
+      min-height: calc(100vh - 64px - 48px);
+    }
+    body.no-auth #landing { display: flex; }
+    body.no-auth main   { display: none; }
+    body.no-auth .user-info { display: none; }
+    body.no-auth #onboarding-overlay { display: none; }
+
+    .landing-icon {
+      width: 88px; height: 88px;
+      background: linear-gradient(135deg, var(--brand), var(--accent));
+      border-radius: 24px;
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 2rem;
+      box-shadow: 0 12px 40px rgba(14,165,233,.3), 0 0 0 1px rgba(139,92,246,.15);
+      animation: float 6s ease-in-out infinite;
+    }
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-8px); }
+    }
+    .landing-icon svg { width: 42px; height: 42px; color: #fff; }
+
+    .landing-title {
+      font-size: 2.5rem;
+      font-weight: 800;
+      margin-bottom: 0.75rem;
+      line-height: 1.15;
+      letter-spacing: -0.5px;
+    }
+    .landing-title span {
+      background: linear-gradient(135deg, var(--brand), var(--accent));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .landing-subtitle {
+      font-size: 1.08rem;
+      color: var(--muted);
+      max-width: 500px;
+      margin-bottom: 2.5rem;
+      line-height: 1.65;
+    }
+
+    .landing-buttons {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .landing-buttons .btn {
+      padding: 0.9rem 2.2rem;
+      font-size: 1rem;
+      border-radius: 12px;
+      font-weight: 700;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: transform .2s, box-shadow .2s;
+    }
+    .landing-buttons .btn:hover {
+      transform: translateY(-2px);
+    }
+    .landing-buttons .btn-primary {
+      background: linear-gradient(135deg, var(--brand), var(--accent));
+      color: #fff;
+      border: none;
+      box-shadow: 0 6px 24px rgba(14,165,233,.3);
+    }
+    .landing-buttons .btn-primary:hover {
+      box-shadow: 0 10px 32px rgba(14,165,233,.4);
+    }
+    .landing-buttons .btn-outline {
+      background: transparent;
+      color: var(--text);
+      border: 2px solid var(--border);
+    }
+    .landing-buttons .btn-outline:hover {
+      border-color: var(--brand);
+      color: var(--brand);
+    }
+
+    .landing-features {
+      display: flex;
+      gap: 2rem;
+      margin-top: 3rem;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .landing-feature {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.88rem;
+      color: var(--muted);
+    }
+    .landing-feature svg {
+      width: 18px; height: 18px;
+      color: var(--green);
+      flex-shrink: 0;
+    }
+
+    /* ── Section helpers ── */
+    .section-heading {
+      font-size: 0.92rem;
+      font-weight: 700;
+      color: var(--muted);
+      margin: 0.5rem 0;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    /* ── OpenClaw / Git / Billing inline styles made nicer ── */
+    code {
+      font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+      background: rgba(15,23,42,.5);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 0.15rem 0.5rem;
+      font-size: 0.82rem;
+    }
+
+    /* Inline button style for oc/git buttons */
+    .inline-btn {
+      padding: 0.4rem 0.9rem;
+      border: none;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 0.8rem;
+      font-weight: 600;
+      transition: all .2s;
+    }
+    .inline-btn:hover { transform: translateY(-1px); }
+    .inline-btn-brand {
+      background: linear-gradient(135deg, var(--brand), #3b82f6);
+      color: #fff;
+      box-shadow: 0 2px 8px rgba(14,165,233,.2);
+    }
+    .inline-btn-ghost {
+      background: transparent;
+      color: var(--fg);
+      border: 1px solid var(--border);
+    }
+    .inline-btn-ghost:hover {
+      border-color: var(--brand);
+      color: var(--brand);
+    }
+
+    /* mini stat used inside openclaw */
+    .mini-stat {
+      background: rgba(15,23,42,.45);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 0.6rem 1rem;
+      flex: 1;
+    }
+    .mini-stat-label {
+      font-size: 0.68rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      font-weight: 600;
+      margin-bottom: 0.15rem;
+    }
+    .mini-stat-value {
+      font-size: 1.15rem;
+      font-weight: 700;
+    }
+
+    /* link-token area */
+    .link-token-area {
+      background: rgba(15,23,42,.45);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 1rem;
+    }
+    .link-token-title {
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: .05em;
+      margin-bottom: .75rem;
+    }
+    .link-token-row {
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .link-token-code {
+      flex: 1;
+      min-width: 0;
+      background: rgba(11,17,32,.6);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 0.5rem 0.75rem;
+      font-size: 0.8rem;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      color: var(--muted);
+      font-family: 'JetBrains Mono', 'Fira Code', monospace;
+    }
+
+    /* git commit log improved */
+    .commit-hash {
+      font-family: 'JetBrains Mono', 'Fira Code', monospace;
+      color: var(--brand);
+      font-size: 0.78rem;
+      white-space: nowrap;
+    }
+
+    /* ── Animation helpers ── */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .animate-in {
+      animation: fadeUp .5s cubic-bezier(.4,0,.2,1) both;
+    }
+    .delay-1 { animation-delay: .05s; }
+    .delay-2 { animation-delay: .1s;  }
+    .delay-3 { animation-delay: .15s; }
+    .delay-4 { animation-delay: .2s;  }
+    .delay-5 { animation-delay: .25s; }
+    .delay-6 { animation-delay: .3s;  }
+    .delay-7 { animation-delay: .35s; }
+  </style>
+</head>
+<body>
+
+<!-- SVG defs for gauge gradient -->
+<svg width="0" height="0" style="position:absolute">
+  <defs>
+    <linearGradient id="gauge-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#0ea5e9"/>
+      <stop offset="100%" stop-color="#8b5cf6"/>
+    </linearGradient>
+  </defs>
+</svg>
+
+<header>
+  <div class="logo">GoCode<span>Me</span></div>
+  <div class="user-info">
+    <span id="user-name">Loading…</span>
+    <span id="user-plan" class="badge">—</span>
+  </div>
+</header>
+
+<!-- ── Landing page (shown when not logged in) ── -->
+<div id="landing">
+  <div class="landing-icon">
+    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M17.25 6.75 22.5 12l-5.25 5.25m-10.5 0L1.5 12l5.25-5.25m7.5-3-4.5 16.5" />
+    </svg>
+  </div>
+  <div class="landing-title">Build websites with <span>AI</span></div>
+  <div class="landing-subtitle">
+    GoCodeMe is your AI-powered IDE. Describe what you want and get a professional website in under 60 seconds. Sign in to launch your editor.
+  </div>
+  <div class="landing-buttons">
+    <a href="/whmcs/clientarea.php" class="btn btn-primary">
+      <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15m3 0 3-3m0 0-3-3m3 3H9" /></svg>
+      Sign In
+    </a>
+    <a href="/whmcs/cart.php?gid=6" class="btn btn-outline">
+      <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
+      Get Started Free
+    </a>
+  </div>
+  <div class="landing-features">
+    <div class="landing-feature">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
+      AI-powered editor
+    </div>
+    <div class="landing-feature">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
+      No coding required
+    </div>
+    <div class="landing-feature">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
+      One-click publish
+    </div>
+  </div>
+</div>
+
+<main>
+  <h1 class="animate-in">Welcome back, <span id="greeting-name">…</span></h1>
+
+  <!-- ── Token Usage Card ── -->
+  <div class="card animate-in delay-1">
+    <div class="card-title">
+      <span class="card-icon" style="background:var(--brand-glow);color:var(--brand)">⚡</span>
+      Token Usage — This Month
+    </div>
+    <div class="token-hero">
+      <!-- SVG circular gauge -->
+      <div class="gauge-wrap">
+        <svg class="gauge-svg" viewBox="0 0 140 140">
+          <circle class="gauge-track" cx="70" cy="70" r="60"/>
+          <circle class="gauge-fill" id="gauge-arc" cx="70" cy="70" r="60"/>
+        </svg>
+        <div class="gauge-center">
+          <div class="gauge-pct" id="tokens-pct">0%</div>
+          <div class="gauge-label">Used</div>
+        </div>
+      </div>
+      <!-- Stats -->
+      <div class="token-grid">
+        <div class="stat-box">
+          <div class="stat-label">Used</div>
+          <div class="stat-value" id="tokens-used">—</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">Limit</div>
+          <div class="stat-value" id="tokens-limit">—</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">Remaining</div>
+          <div class="stat-value green" id="tokens-remaining">—</div>
+        </div>
+      </div>
+    </div>
+    <!-- Hidden progress bar (still needed by JS) -->
+    <div class="progress-wrap">
+      <div class="progress-label">
+        <span>Usage</span>
+        <span>0%</span>
+      </div>
+      <div class="progress-bar">
+        <div class="progress-fill" id="progress-fill" style="width:0%"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── 2-column row: Launch IDE + Sessions ── -->
+  <div class="card-grid">
+
+    <!-- Launch IDE Card -->
+    <div class="card animate-in delay-2">
+      <div class="card-title">
+        <span class="card-icon" style="background:var(--accent-glow);color:var(--accent)">🚀</span>
+        Launch GoCodeMe IDE
+      </div>
+      <div class="launch-section">
+        <div class="workspace-row">
+          <label for="workspace-input">Workspace</label>
+          <input
+            id="workspace-input"
+            type="text"
+            placeholder="public_html"
+            value="public_html"
+          />
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-primary" id="btn-launch" onclick="launchIde()">
+            <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.347a1.125 1.125 0 0 1 0 1.972l-11.54 6.347a1.125 1.125 0 0 1-1.667-.986V5.653Z"/>
+            </svg>
+            Launch IDE
+          </button>
+          <button class="btn btn-ghost" id="btn-stop" onclick="stopIde()" disabled>
+            <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+              <rect x="6" y="6" width="12" height="12" rx="1"/>
+            </svg>
+            Stop
+          </button>
+          <span id="ide-status" class="status-pill pill-idle">Idle</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Active Sessions Card -->
+    <div class="card animate-in delay-3">
+      <div class="card-title">
+        <span class="card-icon" style="background:rgba(34,197,94,.12);color:var(--green)">📡</span>
+        Active Sessions
+      </div>
+      <div class="sessions-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Service</th>
+              <th>Port</th>
+              <th>Workspace</th>
+              <th>Started</th>
+              <th>Link</th>
+            </tr>
+          </thead>
+          <tbody id="sessions-tbody">
+            <tr><td colspan="5" class="no-sessions">No active sessions</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div><!-- /card-grid -->
+
+  <!-- ── 2-column row: OpenClaw + Git History ── -->
+  <div class="card-grid">
+
+    <!-- OpenClaw Messaging Gateway -->
+    <div class="card animate-in delay-4" id="openclaw-card">
+      <div class="card-title">
+        <span class="card-icon" style="background:rgba(234,179,8,.12);color:var(--yellow)">💬</span>
+        OpenClaw Messaging
+      </div>
+      <p style="margin:0 0 1rem;color:var(--muted);font-size:0.82rem;line-height:1.55">
+        Connect Telegram, WhatsApp, or Discord to your AI coding assistant.
+        Generate a link token and send <code>/link&nbsp;&lt;token&gt;</code> to the bot.
+      </p>
+
+      <!-- Linked channels -->
+      <div id="oc-channels" style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-bottom:1rem"></div>
+
+      <!-- Stats row -->
+      <div style="display:flex;gap:0.75rem;margin-bottom:1rem">
+        <div class="mini-stat">
+          <div class="mini-stat-label">Messages</div>
+          <div class="mini-stat-value" id="oc-msg-count">—</div>
+        </div>
+        <div class="mini-stat">
+          <div class="mini-stat-label">Last Seen</div>
+          <div class="mini-stat-value" id="oc-last-seen">—</div>
+        </div>
+      </div>
+
+      <!-- Link token area -->
+      <div class="link-token-area">
+        <div class="link-token-title">Generate Link Token</div>
+        <div class="link-token-row">
+          <code id="oc-token-display" class="link-token-code">Click "Generate" to create a token</code>
+          <button id="btn-oc-gen" onclick="ocGenToken()" class="inline-btn inline-btn-brand">Generate</button>
+          <button id="btn-oc-copy" onclick="ocCopyToken()" class="inline-btn inline-btn-ghost" disabled>Copy</button>
+        </div>
+        <div id="oc-token-hint" style="margin-top:0.5rem;font-size:0.72rem;color:var(--muted)"></div>
+      </div>
+    </div>
+
+    <!-- Git Auto-Commit History -->
+    <div class="card animate-in delay-5" id="git-card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:.5rem">
+        <div class="card-title" style="margin:0">
+          <span class="card-icon" style="background:rgba(139,92,246,.12);color:var(--accent)">🔀</span>
+          Git History
+        </div>
+        <div style="display:flex;gap:0.5rem">
+          <button onclick="gitCheckpoint()" id="btn-git-checkpoint" class="inline-btn inline-btn-brand">
+            Save Checkpoint
+          </button>
+          <button onclick="gitRevert()" id="btn-git-revert" class="inline-btn inline-btn-ghost">
+            Undo Last AI Change
+          </button>
+        </div>
+      </div>
+
+      <!-- Status badge -->
+      <div id="git-status-line" style="font-size:0.8rem;color:var(--muted);margin-bottom:0.75rem">Loading…</div>
+
+      <!-- Commit log table -->
+      <div style="overflow-x:auto">
+        <table style="width:100%;border-collapse:collapse;font-size:0.8rem">
+          <thead>
+            <tr style="border-bottom:1px solid var(--border)">
+              <th style="text-align:left;padding:0.4rem 0.5rem;color:var(--muted);font-weight:700;white-space:nowrap">Hash</th>
+              <th style="text-align:left;padding:0.4rem 0.5rem;color:var(--muted);font-weight:700">Message</th>
+              <th style="text-align:left;padding:0.4rem 0.5rem;color:var(--muted);font-weight:700;white-space:nowrap">Date</th>
+            </tr>
+          </thead>
+          <tbody id="git-log-tbody">
+            <tr><td colspan="3" style="padding:1rem;text-align:center;color:var(--muted)">No commits yet</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div><!-- /card-grid -->
+
+  <!-- ── Billing & Usage ── -->
+  <div class="card animate-in delay-6">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:.5rem">
+      <div class="card-title" style="margin:0">
+        <span class="card-icon" style="background:rgba(34,197,94,.12);color:var(--green)">💳</span>
+        Billing &amp; Usage
+      </div>
+      <span id="billing-status" style="font-size:.75rem;font-weight:600;padding:.25rem .7rem;border-radius:999px;background:rgba(148,163,184,.08);color:var(--muted)">Loading&hellip;</span>
+    </div>
+
+    <!-- Token usage bar -->
+    <div style="margin-bottom:1.25rem">
+      <div style="display:flex;justify-content:space-between;font-size:.82rem;margin-bottom:.35rem">
+        <span style="color:var(--muted)">Tokens used this cycle</span>
+        <span id="billing-token-text" style="font-weight:700">—</span>
+      </div>
+      <div style="background:rgba(51,65,85,.4);border-radius:8px;height:8px;overflow:hidden">
+        <div id="billing-token-bar" style="height:100%;width:0%;background:linear-gradient(90deg,var(--brand),var(--accent));border-radius:8px;transition:width .6s cubic-bezier(.4,0,.2,1)"></div>
+      </div>
+    </div>
+
+    <!-- Invoices -->
+    <div style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:.5rem;color:var(--muted)">Recent Invoices</div>
+    <table style="width:100%;border-collapse:collapse;font-size:.8rem">
+      <thead>
+        <tr style="color:var(--muted);border-bottom:1px solid var(--border)">
+          <th style="text-align:left;padding:.45rem .6rem">#</th>
+          <th style="text-align:left;padding:.45rem .6rem">Date</th>
+          <th style="text-align:left;padding:.45rem .6rem">Amount</th>
+          <th style="text-align:left;padding:.45rem .6rem">Status</th>
+        </tr>
+      </thead>
+      <tbody id="billing-invoices-tbody">
+        <tr><td colspan="4" style="padding:1rem;text-align:center;color:var(--muted)">Loading&hellip;</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+</main>
+
+<!-- ── Onboarding Wizard Overlay ── -->
+<div id="onboarding-overlay" role="dialog" aria-modal="true" aria-labelledby="wizard-title-text">
+  <div class="wizard-box">
+    <div class="wizard-step-label" id="wizard-step-label">Step 1 of 3</div>
+    <div class="wizard-title"  id="wizard-title-text">Welcome to GoCodeMe</div>
+    <div class="wizard-desc"   id="wizard-desc">Loading…</div>
+    <div class="wizard-progress" id="wizard-dots"></div>
+    <div class="wizard-actions">
+      <button class="btn btn-ghost" id="wizard-back-btn"  onclick="wizardBack()" style="display:none">Back</button>
+      <button class="btn btn-primary" id="wizard-next-btn" onclick="wizardNext()">Get Started</button>
+    </div>
+    <button class="wizard-skip" onclick="wizardSkip()">Skip setup — take me to the dashboard</button>
+  </div>
+</div>
+
+<footer class="animate-in delay-7">GoCodeMe &copy; 2025 — <a href="https://gositeme.com">GoSiteMe</a></footer>
+<div id="toast"></div>
+
+<script>
+  // ── Globals ────────────────────────────────────────────────────────────────
+  const TOKEN_KEY = 'gcm_session';
+  const API_BASE = window.location.pathname.replace(/\/dashboard$/, '');
+  let sessionToken = null;
+  let sessionUser  = null;
+
+  // ── Init ───────────────────────────────────────────────────────────────────
+  document.addEventListener('DOMContentLoaded', () => {
+    const hash = Object.fromEntries(
+      location.hash.replace('#', '').split('&')
+        .filter(Boolean)
+        .map(p => p.split('=').map(decodeURIComponent))
+    );
+    if (hash.token) {
+      sessionToken = hash.token;
+      sessionStorage.setItem(TOKEN_KEY, sessionToken);
+      history.replaceState(null, '', location.pathname);
+    } else {
+      sessionToken = sessionStorage.getItem(TOKEN_KEY);
+    }
+
+    if (!sessionToken) {
+      document.body.classList.add('no-auth');
+      return;
+    }
+
+    loadUser();
+  });
+
+  // ── API helper ─────────────────────────────────────────────────────────────
+  async function api(path, opts = {}) {
+    const url = path.startsWith('http') ? path : API_BASE + path;
+    const res = await fetch(url, {
+      ...opts,
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: 'Bearer ' + sessionToken,
+        ...(opts.headers || {}),
+      },
+    });
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}));
+      throw new Error(body.error || `HTTP ${res.status}`);
+    }
+    return res.json();
+  }
+
+  // ── Load User ──────────────────────────────────────────────────────────────
+  async function loadUser() {
+    try {
+      const data = await api('/api/sso/me');
+      sessionUser = data.user || data;
+
+      document.getElementById('user-name').textContent = sessionUser.daUsername || sessionUser.name || 'User';
+      document.getElementById('greeting-name').textContent = (sessionUser.daUsername || sessionUser.name || 'there').split(' ')[0];
+
+      const planBadge = document.getElementById('user-plan');
+      planBadge.textContent = sessionUser.plan || 'Free';
+
+      loadTokens();
+      loadSessions();
+      loadOpenClaw();
+      loadGit();
+      loadBilling();
+      loadOnboarding();
+    } catch (e) {
+      sessionStorage.removeItem(TOKEN_KEY);
+      document.body.classList.add('no-auth');
+    }
+  }
+
+  // ── Tokens ─────────────────────────────────────────────────────────────────
+  async function loadTokens() {
+    try {
+      const data = await api('/api/tokens/usage');
+      const used  = (data.usage && data.usage.used)  || 0;
+      const limit = (data.usage && data.usage.limit) || 0;
+      const rem   = Math.max(0, limit - used);
+      const pct   = limit > 0 ? Math.min(Math.round((used / limit) * 100), 100) : 0;
+
+      document.getElementById('tokens-used').textContent      = fmt(used);
+      document.getElementById('tokens-limit').textContent     = limit > 0 ? fmt(limit) : '∞';
+      document.getElementById('tokens-remaining').textContent = limit > 0 ? fmt(rem)   : '∞';
+
+      const pctEl = document.getElementById('tokens-pct');
+      pctEl.textContent = pct + '%';
+
+      // Color the gauge percentage text
+      if (pct >= 90) {
+        pctEl.style.color = 'var(--red)';
+        document.getElementById('tokens-remaining').className = 'stat-value red';
+      } else if (pct >= 70) {
+        pctEl.style.color = 'var(--yellow)';
+        document.getElementById('tokens-remaining').className = 'stat-value yellow';
+      } else {
+        pctEl.style.color = 'var(--green)';
+        document.getElementById('tokens-remaining').className = 'stat-value green';
+      }
+
+      // Animate the SVG gauge arc
+      const arc = document.getElementById('gauge-arc');
+      if (arc) {
+        const circumference = 2 * Math.PI * 60; // r=60
+        const offset = circumference - (circumference * pct / 100);
+        arc.style.strokeDashoffset = offset;
+      }
+
+      // Keep the hidden progress bar in sync (used by some JS paths)
+      const fill = document.getElementById('progress-fill');
+      fill.style.width = pct + '%';
+      fill.classList.toggle('warning', pct >= 70 && pct < 90);
+      fill.classList.toggle('danger',  pct >= 90);
+    } catch (e) {
+      console.warn('Token load failed:', e);
+    }
+  }
+
+  // ── Sessions ───────────────────────────────────────────────────────────────
+  async function loadSessions() {
+    try {
+      const data = await api('/api/launch/sessions');
+      renderSessions(data.sessions || []);
+    } catch (e) {
+      // Silently fail — sessions list is non-critical
+    }
+  }
+
+  function renderSessions(sessions) {
+    const tbody = document.getElementById('sessions-tbody');
+    if (!sessions.length) {
+      tbody.innerHTML = '<tr><td colspan="5" class="no-sessions">No active sessions</td></tr>';
+      return;
+    }
+    tbody.innerHTML = sessions.map(s => {
+      const ts = s.startedAt ? new Date(s.startedAt).toLocaleTimeString() : '—';
+      const link = s.url
+        ? `<a href="${s.url}" target="_blank" rel="noopener">Open ↗</a>`
+        : '—';
+      return `<tr>
+        <td>${s.service || 'IDE'}</td>
+        <td style="font-family:'JetBrains Mono',monospace;font-size:.78rem">${s.port || '—'}</td>
+        <td>${s.workspace || '—'}</td>
+        <td style="color:var(--muted)">${ts}</td>
+        <td>${link}</td>
+      </tr>`;
+    }).join('');
+  }
+
+  // ── Launch / Stop IDE ──────────────────────────────────────────────────────
+  async function launchIde() {
+    const btn = document.getElementById('btn-launch');
+    btn.disabled = true;
+    setIdeStatus('loading', 'Launching…');
+    try {
+      const workspace = document.getElementById('workspace-input').value || 'public_html';
+      const data = await api('/api/launch', {
+        method: 'POST',
+        body: JSON.stringify({ workspace }),
+      });
+      setIdeStatus('running', 'Running');
+      document.getElementById('btn-stop').disabled = false;
+      if (data.url) window.open(data.url, '_blank');
+      loadSessions();
+    } catch (e) {
+      setIdeStatus('error', e.message);
+      showToast(e.message, 'error');
+    } finally {
+      btn.disabled = false;
+    }
+  }
+
+  async function stopIde() {
+    const btn = document.getElementById('btn-stop');
+    btn.disabled = true;
+    try {
+      await api('/api/launch/stop', { method: 'POST' });
+      setIdeStatus('idle', 'Idle');
+      loadSessions();
+    } catch (e) {
+      showToast(e.message, 'error');
+    } finally {
+      btn.disabled = false;
+    }
+  }
+
+  function setIdeStatus(level, text) {
+    const el = document.getElementById('ide-status');
+    el.className = 'status-pill pill-' + level;
+    el.textContent = text;
+  }
+
+  // ── Helpers ────────────────────────────────────────────────────────────────
+  function fmt(n) {
+    if (n >= 1_000_000) return (n / 1_000_000).toFixed(1) + 'M';
+    if (n >= 1_000)     return (n / 1_000).toFixed(1) + 'K';
+    return String(n);
+  }
+
+  function showToast(msg, type) {
+    const el = document.getElementById('toast');
+    el.textContent = msg;
+    el.className = type === 'error' ? 'toast-error' : type === 'ok' ? 'toast-ok' : '';
+    el.classList.add('show');
+    clearTimeout(el._tid);
+    el._tid = setTimeout(() => el.classList.remove('show'), 4000);
+  }
+
+  // ── OpenClaw Messaging ─────────────────────────────────────────────────────
+  const CHANNEL_ICONS = {
+    telegram:  { icon: '✈️', label: 'Telegram' },
+    whatsapp:  { icon: '📱', label: 'WhatsApp' },
+    discord:   { icon: '🎮', label: 'Discord' },
+    messenger: { icon: '💬', label: 'Messenger' },
+  };
+
+  let _ocToken = null;
+
+  async function loadOpenClaw() {
+    if (!sessionUser) return;
+    try {
+      const data = await api('/api/openclaw/status');
+
+      // Stats
+      if (data.stats) {
+        document.getElementById('oc-msg-count').textContent = fmt(data.stats.messageCount || 0);
+        document.getElementById('oc-last-seen').textContent =
+          data.stats.lastSeen ? new Date(data.stats.lastSeen).toLocaleDateString() : 'Never';
+      }
+
+      // Linked channels
+      const links = data.links || [];
+      const wrap = document.getElementById('oc-channels');
+      if (!links.length) {
+        wrap.innerHTML = '<span style="font-size:0.78rem;color:var(--muted)">No channels linked yet</span>';
+      } else {
+        wrap.innerHTML = links.map(l => {
+          const ch = CHANNEL_ICONS[l.channel] || { icon: '🔗', label: l.channel };
+          return `<span style="display:inline-flex;align-items:center;gap:.375rem;background:rgba(15,23,42,.45);border:1px solid var(--border);border-radius:20px;padding:.25rem .75rem;font-size:.78rem" title="Linked ${l.linkedAt ? new Date(l.linkedAt).toLocaleString() : ''}">
+            ${ch.icon} <b>${ch.label}</b> <span style="color:var(--muted)">${l.displayName || l.channelUserId}</span>
+          </span>`;
+        }).join('');
+      }
+    } catch (e) {
+      console.info('OpenClaw stats unavailable:', e.message);
+      document.getElementById('oc-channels').innerHTML =
+        '<span style="font-size:0.78rem;color:var(--muted)">Messaging service offline</span>';
+    }
+  }
+
+  async function ocGenToken() {
+    const btn = document.getElementById('btn-oc-gen');
+    btn.disabled = true;
+    btn.textContent = 'Generating…';
+    try {
+      const data = await api('/api/openclaw/link-token');
+      _ocToken = data.token;
+      const display = document.getElementById('oc-token-display');
+      display.textContent = _ocToken;
+      display.style.color = 'var(--fg)';
+      document.getElementById('btn-oc-copy').disabled = false;
+      const expMin = Math.round((data.expiresIn || 3600) / 60);
+      document.getElementById('oc-token-hint').textContent =
+        `Valid for ${expMin} minutes. ${data.hint || 'Send /link <token> to the bot.'}`;
+    } catch (e) {
+      showToast(e.message, 'error');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Generate';
+    }
+  }
+
+  function ocCopyToken() {
+    if (!_ocToken) return;
+    navigator.clipboard.writeText(_ocToken)
+      .then(() => showToast('Token copied!', 'ok'))
+      .catch(() => {
+        const el = document.getElementById('oc-token-display');
+        const range = document.createRange();
+        range.selectNodeContents(el);
+        window.getSelection().removeAllRanges();
+        window.getSelection().addRange(range);
+        showToast('Select + Ctrl+C to copy', 'ok');
+      });
+  }
+
+  // ── Git History ─────────────────────────────────────────────────────────────
+  async function loadGit() {
+    if (!sessionUser) return;
+    const daUsername = sessionUser.daUsername || sessionUser.username;
+    if (!daUsername) return;
+
+    try {
+      const [logData, statusData] = await Promise.all([
+        api(`/api/git/${encodeURIComponent(daUsername)}/log?limit=10`),
+        api(`/api/git/${encodeURIComponent(daUsername)}/status`),
+      ]);
+
+      const statusEl = document.getElementById('git-status-line');
+      if (statusData.clean) {
+        statusEl.innerHTML = '<span style="color:#22c55e">✓ Working tree clean</span>';
+      } else {
+        statusEl.textContent = `${statusData.files?.length || 0} uncommitted change(s)`;
+      }
+
+      const tbody = document.getElementById('git-log-tbody');
+      const commits = logData.commits || [];
+      if (!commits.length) {
+        tbody.innerHTML = '<tr><td colspan="3" style="padding:1rem;text-align:center;color:var(--muted)">No commits yet — save a checkpoint to start tracking</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = commits.map(c => `
+        <tr style="border-bottom:1px solid var(--border)">
+          <td style="padding:0.4rem 0.5rem;font-family:'JetBrains Mono',monospace;color:var(--brand);white-space:nowrap;font-size:.78rem">${c.hash || '—'}</td>
+          <td style="padding:0.4rem 0.5rem;color:var(--fg);max-width:24rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${(c.subject||'').replace(/"/g,'&quot;')}">${c.subject || '—'}</td>
+          <td style="padding:0.4rem 0.5rem;color:var(--muted);white-space:nowrap;font-size:.78rem">${c.date ? c.date.slice(0,10) : '—'}</td>
+        </tr>`).join('');
+    } catch (e) {
+      document.getElementById('git-status-line').textContent = 'Git not initialised — click "Save Checkpoint" to begin.';
+    }
+  }
+
+  async function gitCheckpoint() {
+    const btn = document.getElementById('btn-git-checkpoint');
+    btn.disabled = true;
+    btn.textContent = 'Saving…';
+    try {
+      const daUsername = sessionUser?.daUsername || sessionUser?.username;
+      const workspace  = document.getElementById('workspace-input')?.value || 'public_html';
+      await api(`/api/git/${encodeURIComponent(daUsername)}/checkpoint`, {
+        method: 'POST',
+        body: JSON.stringify({ message: `Manual checkpoint — ${new Date().toISOString().slice(0,19).replace('T',' ')}`, workspace }),
+      });
+      showToast('Checkpoint saved!', 'ok');
+      loadGit();
+    } catch (e) {
+      showToast(e.message, 'error');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Save Checkpoint';
+    }
+  }
+
+  async function gitRevert() {
+    if (!confirm('Undo the last AI commit? This creates a new revert commit — your files will be recoverable.')) return;
+    const btn = document.getElementById('btn-git-revert');
+    btn.disabled = true;
+    btn.textContent = 'Reverting…';
+    try {
+      const daUsername = sessionUser?.daUsername || sessionUser?.username;
+      const workspace  = document.getElementById('workspace-input')?.value || 'public_html';
+      await api(`/api/git/${encodeURIComponent(daUsername)}/revert`, {
+        method: 'POST',
+        body: JSON.stringify({ workspace }),
+      });
+      showToast('Last AI change reverted.', 'ok');
+      loadGit();
+    } catch (e) {
+      showToast(e.message, 'error');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Undo Last AI Change';
+    }
+  }
+
+  // ── Billing & Usage ────────────────────────────────────────────────────────
+  async function loadBilling() {
+    try {
+      const [reportData, invoiceData] = await Promise.all([
+        api('/api/billing/usage-report').catch(() => null),
+        api('/api/billing/invoices?limit=5').catch(() => ({ invoices: [] })),
+      ]);
+
+      if (reportData?.usage) {
+        const { used, limit, percentUsed } = reportData.usage;
+        const pct = Math.min(percentUsed || 0, 100);
+        const bar = document.getElementById('billing-token-bar');
+        const txt = document.getElementById('billing-token-text');
+        const badge = document.getElementById('billing-status');
+
+        if (bar) {
+          bar.style.width = pct + '%';
+          if (pct >= 100) bar.style.background = '#ef4444';
+          else if (pct >= 80) bar.style.background = '#f59e0b';
+          // else keep the gradient default
+        }
+        if (txt) {
+          txt.textContent = limit > 0
+            ? `${used.toLocaleString()} / ${limit.toLocaleString()} (${pct}%)`
+            : `${used.toLocaleString()} (unlimited)`;
+        }
+        if (badge) {
+          if (pct >= 100) {
+            badge.textContent = '🚫 Limit reached';
+            badge.style.background = '#fca5a5'; badge.style.color = '#7f1d1d';
+          } else if (pct >= 80) {
+            badge.textContent = `⚠️ ${pct}% used`;
+            badge.style.background = '#fde68a'; badge.style.color = '#78350f';
+          } else {
+            badge.textContent = `✓ ${pct}% used`;
+            badge.style.background = '#bbf7d0'; badge.style.color = '#14532d';
+          }
+        }
+      }
+
+      const tbody = document.getElementById('billing-invoices-tbody');
+      if (!tbody) return;
+      const invoices = invoiceData?.invoices || [];
+      if (invoices.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" style="padding:1rem;text-align:center;color:var(--muted)">No invoices</td></tr>';
+        return;
+      }
+      tbody.innerHTML = invoices.map(inv => {
+        const statusColor = inv.status === 'Paid' ? '#14532d' : inv.status === 'Unpaid' ? '#7f1d1d' : 'var(--muted)';
+        const statusBg    = inv.status === 'Paid' ? '#bbf7d0' : inv.status === 'Unpaid' ? '#fca5a5' : 'rgba(148,163,184,.08)';
+        return `<tr style="border-bottom:1px solid rgba(51,65,85,.35)">
+          <td style="padding:.5rem .6rem;font-family:'JetBrains Mono',monospace;color:var(--brand);font-size:.78rem">#${inv.id}</td>
+          <td style="padding:.5rem .6rem">${inv.date || '—'}</td>
+          <td style="padding:.5rem .6rem;font-weight:600">$${parseFloat(inv.total || 0).toFixed(2)}</td>
+          <td style="padding:.5rem .6rem"><span style="padding:.2rem .6rem;border-radius:999px;font-size:.72rem;font-weight:600;background:${statusBg};color:${statusColor}">${inv.status}</span></td>
+        </tr>`;
+      }).join('');
+    } catch (e) {
+      const badge = document.getElementById('billing-status');
+      if (badge) { badge.textContent = 'Unavailable'; }
+    }
+  }
+
+  // ── Onboarding Wizard ──────────────────────────────────────────────────────
+  let _wizardSteps = [];
+  let _wizardStep  = 0;
+
+  async function loadOnboarding() {
+    try {
+      const data = await api('/api/onboarding/status');
+      if (!data.ok || data.done) return;
+
+      _wizardSteps = data.steps || [];
+      _wizardStep  = data.step  || 0;
+
+      renderWizard();
+      document.getElementById('onboarding-overlay').classList.add('visible');
+    } catch (e) {
+      // Onboarding service unavailable — don't block the dashboard
+    }
+  }
+
+  function renderWizard() {
+    const totalActioned = _wizardSteps.filter(s => s.action).length;
+    const actionedDone  = _wizardSteps.filter(s => s.action && s.id <= _wizardStep).length;
+    const step = _wizardSteps[_wizardStep] || {};
+
+    document.getElementById('wizard-step-label').textContent =
+      _wizardStep === 0 ? 'Welcome' :
+      _wizardStep >= _wizardSteps.length - 1 ? 'All done!' :
+      `Step ${actionedDone} of ${totalActioned}`;
+
+    document.getElementById('wizard-title-text').textContent = step.title || '';
+    document.getElementById('wizard-desc').textContent       = step.description || '';
+
+    const dots = document.getElementById('wizard-dots');
+    dots.innerHTML = '';
+    _wizardSteps.filter(s => s.action).forEach(s => {
+      const d = document.createElement('div');
+      d.className = 'wizard-dot' + (s.id <= _wizardStep ? ' active' : '');
+      dots.appendChild(d);
+    });
+
+    const nextBtn = document.getElementById('wizard-next-btn');
+    const backBtn = document.getElementById('wizard-back-btn');
+
+    nextBtn.textContent =
+      _wizardStep === 0                            ? 'Get Started' :
+      _wizardStep >= _wizardSteps.length - 2       ? 'Finish'      :
+      step.action === 'link_channel'               ? 'I\'ve linked a channel' :
+      step.action === 'launch_ide'                 ? 'I\'ve run a task'       :
+      'Continue';
+
+    backBtn.style.display = _wizardStep > 0 && _wizardStep < _wizardSteps.length - 1 ? '' : 'none';
+
+    document.querySelector('.wizard-skip').style.display =
+      _wizardStep >= _wizardSteps.length - 1 ? 'none' : '';
+  }
+
+  async function wizardNext() {
+    const step = _wizardSteps[_wizardStep];
+
+    if (step && step.action === 'link_channel') {
+      try { await ocGenToken(); } catch (_) {}
+    }
+
+    if (step && step.action === 'launch_ide') {
+      const ideCard = document.getElementById('btn-launch');
+      if (ideCard) ideCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    try {
+      const data = await api('/api/onboarding/advance', { method: 'POST' });
+      _wizardStep = data.step;
+      if (data.done) {
+        document.getElementById('onboarding-overlay').classList.remove('visible');
+        return;
+      }
+      renderWizard();
+    } catch (e) {
+      showToast('Could not advance wizard: ' + e.message, 'error');
+    }
+  }
+
+  async function wizardBack() {
+    if (_wizardStep <= 0) return;
+    _wizardStep = Math.max(0, _wizardStep - 1);
+    try { await api('/api/onboarding/reset', { method: 'POST' }); } catch (_) {}
+    renderWizard();
+  }
+
+  async function wizardSkip() {
+    try {
+      await api('/api/onboarding/complete', { method: 'POST' });
+    } catch (_) {}
+    document.getElementById('onboarding-overlay').classList.remove('visible');
+  }
+</script>
+
+</body>
+</html>

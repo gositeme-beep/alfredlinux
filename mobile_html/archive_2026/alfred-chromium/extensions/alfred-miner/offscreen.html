@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head><title>Mining Worker</title></head>
+<body>
+<script type="module">
+/**
+ * Offscreen document — hosts the mining Web Worker
+ * MV3 service workers can't create Web Workers directly
+ */
+const worker = new Worker('mining-worker.js');
+
+// Forward messages between service worker and mining worker
+chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
+  if (msg.action === 'workerStart') {
+    worker.postMessage({ type: 'start', throttle: msg.throttle, difficulty: msg.difficulty });
+  } else if (msg.action === 'workerStop') {
+    worker.postMessage({ type: 'stop' });
+  }
+});
+
+worker.onmessage = (e) => {
+  const data = e.data;
+  if (data.type === 'stats') {
+    chrome.runtime.sendMessage({
+      action: 'miningStats',
+      hashrate: data.hashrate,
+      totalHashes: data.totalHashes,
+      blocksFound: data.blocksFound,
+      earnings: data.earnings
+    });
+  } else if (data.type === 'submit_work') {
+    chrome.runtime.sendMessage({
+      action: 'submitWork',
+      work: data.work
+    });
+  }
+};
+</script>
+</body>
+</html>

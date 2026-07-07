@@ -1,0 +1,5 @@
+# Redirect all traffic to gositeme.com — this domain is not actively maintained
+# and was serving stale duplicate content. Added 2026-04-07.
+RewriteEngine On
+RewriteCond %{HTTP_HOST} ^(www\.)?alfred-mobile\.com$ [NC]
+RewriteRule ^(.*)$ https://gositeme.com/$1 [R=301,L]

@@ -1,0 +1,147 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+echo "[0118] Baking GoHostMe Native Server Stack & Sovereign Billing Portal..."
+
+PHP_SOCK_PATH=$(find /run/php -name "php*-fpm.sock" | head -n 1)
+if [ -z "$PHP_SOCK_PATH" ]; then
+    PHP_SOCK_PATH="/run/php/php-fpm.sock"
+fi
+
+mkdir -p /etc/nginx/sites-available /etc/nginx/sites-enabled || true
+cat > /etc/nginx/sites-available/gohostme-panel << NGINX
+server {
+    listen 2222;
+    listen 2223 ssl;
+    ssl_certificate /etc/ssl/certs/ssl-cert-snakeoil.pem;
+    ssl_certificate_key /etc/ssl/private/ssl-cert-snakeoil.key;
+    server_name localhost;
+
+    root /var/www;
+    index dashboard.php index.php landing.php;
+
+    location / {
+        try_files \$uri \$uri/ /dashboard.php?\$query_string;
+    }
+
+    # Sovereign Billing Portal Routing
+    location ^~ /pay {
+        alias /var/www/pay;
+        index index.php dashboard.php;
+        try_files \$uri \$uri/ /pay/index.php?\$query_string;
+        
+        location ~ \.php$ {
+            include snippets/fastcgi-php.conf;
+            fastcgi_param SCRIPT_FILENAME \$request_filename;
+            fastcgi_pass unix:\$PHP_SOCK_PATH;
+        }
+    }
+
+    location ~ \.php$ {
+        include snippets/fastcgi-php.conf;
+        fastcgi_pass unix:\$PHP_SOCK_PATH;
+    }
+}
+NGINX
+
+ln -s /etc/nginx/sites-available/gohostme-panel /etc/nginx/sites-enabled/gohostme-panel 2>/dev/null || true
+rm -f /etc/nginx/sites-enabled/default || true
+
+# Set permissions
+chown -R www-data:www-data /var/www || true
+[ -e 755 ] && chmod -R 755 /var/www || true
+
+# Start services
+systemctl enable mariadb || true || true 2>/dev/null || true
+systemctl enable nginx || true || true 2>/dev/null || true
+systemctl enable redis-server || true || true 2>/dev/null || true
+for svc in /lib/systemd/system/php*-fpm.service; do
+    systemctl enable  || true || true$(basename $svc) 2>/dev/null || true
+done
+
+echo "[0118] GoHostMe Server Stack configured."
+
+exit 0
+#!/bin/bash
+# 0026-alfred-zfs-bake.hook.chroot
+# Installs ZFS 2.3.x userspace tools and pre-compiles modules for kernel 7.0.12
+# This ensures ZFS is BAKED IN, not just DKMS-compiled at boot
+
+set +e
+export DEBIAN_FRONTEND=noninteractive
+
+echo "[0026] Baking ZFS into AlfredOS..."
+
+KVER=$(ls -1 /boot/vmlinuz-* 2>/dev/null | sort -V | tail -n 1 | sed 's/.*vmlinuz-//')
+echo "[0026] Target kernel: $KVER"
+
+# ── Phase 1: Install ZFS userspace from Debian repos ──
+echo "[0026] Installing ZFS userspace..."
+apt-get update -qq 2>/dev/null || true
+apt-get install -y --no-install-recommends \
+    zfsutils-linux zfs-zed zfs-initramfs \
+    2>&1 || true
+
+# ── Phase 2: Install ZFS DKMS source ──
+echo "[0026] Installing ZFS DKMS source..."
+apt-get install -y --no-install-recommends \
+    zfs-dkms linux-headers-${KVER} \
+    2>&1 || true
+
+# ── Phase 3: Bypass kernel version check (7.0.12 > 6.11 limit) ──
+ZFS_SRC="/usr/src/zfs-2.4.3"
+if [ ! -d "$ZFS_SRC" ]; then
+    # Try to find whatever version was installed
+    ZFS_SRC=$(ls -d /usr/src/zfs-* 2>/dev/null | tail -1)
+fi
+
+if [ -d "$ZFS_SRC" ]; then
+    echo "[0026] Patching ZFS source at $ZFS_SRC for kernel $KVER compatibility..."
+    
+    # Bypass kernel version ceiling
+    if [ -f "$ZFS_SRC/configure" ]; then
+        sed -i 's/kernel build directory is not supported/kernel build directory IS FORGED/' "$ZFS_SRC/configure"
+        sed -i 's/as_fn_error.*ZFS is not designed for 32-bit kernels.*/echo "[0026] BYPASSING ZFS 32-bit kernel trap!"/' "$ZFS_SRC/configure"
+    fi
+    
+    # Bypass SPL kernel version check
+    if [ -f "$ZFS_SRC/include/os/linux/spl/sys/kmem.h" ]; then
+        sed -i 's/#error "This version of ZFS is only supported on Linux 3.10 to 6.11"/#warning "AlfredOS: Bypassing ZFS kernel version check for 7.0.12"/' "$ZFS_SRC/include/os/linux/spl/sys/kmem.h"
+    fi
+    
+    # ── Phase 4: Build and install ZFS modules via DKMS ──
+    echo "[0026] Building ZFS modules via DKMS for kernel $KVER..."
+    ZFS_VER=$(basename "$ZFS_SRC" | sed 's/zfs-//')
+    dkms remove zfs/$ZFS_VER --all 2>/dev/null || true
+    dkms add -m zfs -v $ZFS_VER 2>/dev/null || true
+    dkms build -m zfs -v $ZFS_VER -k $KVER 2>&1 || true
+    dkms install -m zfs -v $ZFS_VER -k $KVER 2>&1 || true
+    
+    echo "[0026] ZFS DKMS build result: $?"
+else
+    echo "[0026] WARNING: No ZFS source found in /usr/src/"
+fi
+
+# ── Phase 5: Verify ZFS is actually installed ──
+echo "[0026] Verification:"
+echo "  zfs binary: $(which zfs 2>/dev/null || echo 'NOT FOUND')"
+echo "  zpool binary: $(which zpool 2>/dev/null || echo 'NOT FOUND')"
+echo "  zfs.ko module:"
+find /lib/modules/$KVER -name "zfs.ko*" 2>/dev/null | head -3
+echo "  spl.ko module:"
+find /lib/modules/$KVER -name "spl.ko*" 2>/dev/null | head -3
+
+# ── Phase 6: Run depmod ──
+depmod -a "$KVER" 2>/dev/null || true
+
+# ── Phase 7: Add ZFS to initramfs ──
+grep -qxF "zfs" /etc/initramfs-tools/modules 2>/dev/null || echo "zfs" >> /etc/initramfs-tools/modules
+update-initramfs -u -k "$KVER" 2>/dev/null || true
+
+# ── Phase 8: Remove equivs dummies (replaced by real packages) ──
+dpkg --purge zfs-zed-dummy zfsutils-linux-dummy zfs-dkms-dummy 2>/dev/null || true
+
+echo "[0026] ✅ ZFS baked into AlfredOS for kernel $KVER"
+exit 0

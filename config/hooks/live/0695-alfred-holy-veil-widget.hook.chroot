@@ -1,0 +1,44 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# 0810-alfred-holy-veil-widget.hook.chroot
+# Creates a desktop toggle for the strict firewall
+
+set +e
+
+echo "[0810] Installing Holy Veil Toggle..."
+DEBIAN_FRONTEND=noninteractive apt-get install -y --fix-broken -y --no-install-recommends kdialog ufw || true
+
+mkdir -p /usr/local/bin || true
+cat << 'EOF' > /usr/local/bin/alfred-veil-toggle
+#!/bin/bash
+STATUS=$(ufw status | grep -i active)
+if [ -z "$STATUS" ]; then
+    pkexec ufw enable
+    kdialog --title "The Holy Veil" --passivepopup "Holy Veil (Strict Lockdown Mode) is now ACTIVE." 5
+else
+    pkexec ufw disable
+    kdialog --title "The Holy Veil" --passivepopup "Holy Veil is now DEACTIVATED (Standard Mode)." 5
+fi
+EOF
+[ -e /usr/local/bin/alfred-veil-toggle ] && chmod +x /usr/local/bin/alfred-veil-toggle || true
+
+mkdir -p /usr/share/applications || true
+cat << 'EOF' > /usr/share/applications/alfred-holy-veil.desktop
+[Desktop Entry]
+Name=Toggle Holy Veil
+Exec=/usr/local/bin/alfred-veil-toggle
+Icon=security-high
+Type=Application
+Categories=System;Security;
+EOF
+
+# Put it on the user's desktop for quick access
+mkdir -p /etc/skel/Desktop || true
+[ -e "/usr/share/applications/alfred-holy-veil.desktop" ] && cp /usr/share/applications/alfred-holy-veil.desktop /etc/skel/Desktop/ || true
+[ -e /etc/skel/Desktop/alfred-holy-veil.desktop ] && chmod +x /etc/skel/Desktop/alfred-holy-veil.desktop || true
+
+echo "[0810] Holy Veil configured."
+
+exit 0

@@ -1,0 +1,65 @@
+#!/bin/bash
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+echo "=> Baking NVIDIA Proprietary Drivers directly into the OS ISO..." || true
+export DEBIAN_FRONTEND=noninteractive
+
+echo [Sentinel Auto-Heal] Cleaning up open-source Nouveau drivers...
+
+echo [Nvidia Bake] Installing base DKMS framework first...
+apt-get update || true
+
+# Dynamically determine the kernel version installed in the chroot
+KVER=$(ls -1 /boot/vmlinuz-* | sort -V | tail -n 1 | sed 's/.*vmlinuz-//')
+echo "[Nvidia Bake] Detected target kernel version: ${KVER}"
+
+apt-get install -y linux-headers-${KVER} dkms || true
+
+echo [Nvidia Bake] Installing Proprietary NVIDIA Drivers for CUDA / Spatial OS...
+# DISABLED BY ANTIGRAVITY: 550 overwrites 610 modules
+# apt-get install -y --fix-broken nvidia-driver nvidia-kernel-dummy nvidia-settings || true
+
+echo [Nvidia Bake] NVIDIA Drivers Locked In.
+apt-mark manual nvidia-driver nvidia-kernel-dummy nvidia-settings || true
+
+
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+# [Genesis Forge] Granular Kernel Matrix: net.ipv4.ip_local_port_range="26424 65535"
+# Extremely deep low-level kernel protection.
+echo "[Genesis Forge] Applying granular sysctl: net.ipv4.ip_local_port_range="26424 65535""
+echo "net.ipv4.ip_local_port_range="26424 65535"" > /etc/sysctl.d/99-alfred-154.conf || true
+sysctl -w net.ipv4.ip_local_port_range="26424 65535" > /dev/null 2>&1 || true
+
+
+# --- BEGIN MERGED CONTENT FROM: 0276-alfred-nvidia-bake.hook.chroot ---
+#!/bin/bash
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+echo "=> Baking NVIDIA Proprietary Drivers directly into the OS ISO..." || true
+export DEBIAN_FRONTEND=noninteractive
+
+echo [Sentinel Auto-Heal] Cleaning up open-source Nouveau drivers...
+
+echo [Nvidia Bake] Installing base DKMS framework first...
+apt-get update || true
+
+# Dynamically determine the kernel version installed in the chroot
+KVER=$(ls -1 /boot/vmlinuz-* | sort -V | tail -n 1 | sed 's/.*vmlinuz-//')
+echo "[Nvidia Bake] Detected target kernel version: ${KVER}"
+
+apt-get install -y linux-headers-${KVER} dkms || true
+
+echo [Nvidia Bake] Installing Proprietary NVIDIA Drivers for CUDA / Spatial OS...
+# [ALFRED SURGICAL PATCH] Neutralized rogue legacy NVIDIA driver
+# apt-get install -y --fix-broken nvidia-driver nvidia-kernel-dummy nvidia-settings || true
+
+echo [Nvidia Bake] NVIDIA Drivers Locked In.
+# apt-mark manual nvidia-driver nvidia-kernel-dummy nvidia-settings || true
+
+# --- END MERGED CONTENT FROM: 0276-alfred-nvidia-bake.hook.chroot ---
+
+

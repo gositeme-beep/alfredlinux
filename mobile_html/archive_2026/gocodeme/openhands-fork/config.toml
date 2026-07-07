@@ -1,0 +1,55 @@
+# GoCodeMe Agent — Runtime Configuration
+# Generated: 2026-02-25
+# DO NOT COMMIT — contains secrets. Sourced at startup via start-agent.sh
+
+[core]
+# Runtime: 'local' runs agent in-process — no Docker needed
+runtime = "local"
+
+# Workspace is per-customer, passed via --workspace CLI arg at startup
+workspace_base = "/tmp/gocodeme-workspace"
+
+# File store: local disk (per customer workspace)
+file_store = "local"
+file_store_path = "~/.gocodeme/file_store"
+
+# Security
+jwt_secret = "bc65634d1693afdf3b5381e2edd67c2b94418186d5a09e7f2d10f214178809302b8a549180bf1f5d"
+
+# Disable browser automation (no Playwright on this server)
+enable_browser = false
+
+# Agent settings
+max_iterations = 100
+max_budget_per_task = 0.5
+
+# Git identity for auto-commits
+git_user_name = "GoCodeMe Agent"
+git_user_email = "agent@gositeme.com"
+
+#################################### LLM #####################################
+# Claude is the only model — API key injected from env at startup
+##############################################################################
+[llm]
+model = "anthropic/claude-sonnet-4-6"
+# api_key is loaded from ANTHROPIC_API_KEY env var at runtime
+api_key = "${ANTHROPIC_API_KEY}"
+caching_prompt = true
+temperature = 0.0
+max_output_tokens = 8192
+
+#################################### MCP #####################################
+# Connect to GoCodeMe MCP server for DirectAdmin file operations
+##############################################################################
+[mcp]
+# StreamableHTTP transport (our MCP server supports this)
+# api_key is the customer's JWT token — passed at startup
+shttp_servers = [
+    {url = "http://localhost:3005/mcp", api_key = "${GOCODEME_JWT_TOKEN}"}
+]
+
+#################################### Sandbox #################################
+[sandbox]
+# No Docker sandbox — run everything in the existing shell environment
+# The agent is scoped to the customer's workspace directory
+

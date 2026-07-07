@@ -1,0 +1,71 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# 0807-alfred-hologram.hook.chroot
+# Installs Conky for transparent desktop scriptures
+
+set +e
+
+echo "[0807] Installing Holographic Scriptures..."
+DEBIAN_FRONTEND=noninteractive apt-get install -y --fix-broken -y --no-install-recommends conky-all || true
+
+mkdir -p /etc/skel/.config/conky || true
+cat << 'EOF' > /etc/skel/.config/conky/conky.conf
+conky.config = {
+    alignment = 'top_right',
+    background = true,
+    border_width = 0,
+    cpu_avg_samples = 2,
+    default_color = 'gold',
+    default_outline_color = 'black',
+    default_shade_color = 'black',
+    draw_borders = false,
+    draw_graph_borders = false,
+    draw_outline = true,
+    draw_shades = true,
+    use_xft = true,
+    font = 'Sans:size=18',
+    gap_x = 40,
+    gap_y = 60,
+    net_avg_samples = 2,
+    no_buffers = true,
+    out_to_console = false,
+    out_to_ncurses = false,
+    out_to_stderr = false,
+    out_to_x = true,
+    extra_newline = false,
+    own_window = true,
+    own_window_class = 'Conky',
+    own_window_type = 'desktop',
+    own_window_transparent = true,
+    own_window_argb_visual = true,
+    stippled_borders = 0,
+    update_interval = 3600,
+    uppercase = false,
+    use_spacer = 'none',
+    show_graph_scale = false,
+    show_graph_range = false
+}
+
+conky.text = [[
+${alignr}${font Sans:bold:size=28}God's Kingdom${font}
+${voffset 10}${alignr}${font Sans:italic:size=16}"Let your light so shine before men..."${font}
+]]
+EOF
+
+# Ensure conky autostarts
+mkdir -p /etc/skel/.config/autostart || true
+cat << 'EOF' > /etc/skel/.config/autostart/conky.desktop
+[Desktop Entry]
+Type=Application
+Exec=conky -d -p 5
+Hidden=false
+NoDisplay=false
+X-GNOME-Autostart-enabled=true
+Name=Holographic Scriptures
+EOF
+
+echo "[0807] Holographic Scriptures configured."
+
+exit 0

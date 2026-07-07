@@ -1,0 +1,105 @@
+#!/bin/sh
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+
+echo "[Metadome] Forging ALVR Daemon (Hook 1102)"
+
+# Add ALVR repository and install ALVR
+apt-get update
+# Note: In a real environment, we would add the PPA or download the AppImage/deb directly.
+# For this script, we download the official tarball to /opt/ALVR
+mkdir -p /opt/ALVR
+cd /opt/ALVR
+wget -qO alvr.tar.gz https://github.com/alvr-org/ALVR/releases/latest/download/alvr_streamer_linux.tar.gz || true
+if [ -f alvr.tar.gz ]; then
+    tar -xf alvr.tar.gz
+    rm alvr.tar.gz
+fi
+
+# Create desktop entry for the ALVR Launcher
+cat > /usr/share/applications/alvr.desktop << 'EOF'
+[Desktop Entry]
+Name=ALVR Dashboard
+Comment=Stream VR to Meta Quest
+Exec=/opt/ALVR/bin/alvr_dashboard
+Icon=video-display
+Terminal=false
+Type=Application
+Categories=Network;AudioVideo;VR;
+EOF
+
+# Ensure firewall allows ALVR connections (ports 9943/9944)
+# UFW rules will be applied at runtime, but we script the intent here.
+mkdir -p /etc/alfred/firewall.d
+cat > /etc/alfred/firewall.d/alvr.rules << 'EOF'
+ufw allow 9943/tcp
+ufw allow 9944/tcp
+ufw allow 9944/udp
+EOF
+
+echo "[Metadome] ALVR Daemon configured and ready for Quest 3 connection."
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+# [Genesis Forge] AppArmor Isolation: /usr/local/bin/alfred-util-137
+# Creates a granular zero-trust execution envelope for individual binaries.
+echo "[Genesis Forge] Enveloping binary: /usr/local/bin/alfred-util-137"
+mkdir -p /etc/apparmor.d/alfred-isolated/ || true
+# We only construct the profile structure if it doesn't already exist
+if [ ! -f "/etc/apparmor.d/alfred-isolated/profile-150" ]; then
+    cat > /etc/apparmor.d/alfred-isolated/profile-150 << 'EOF'
+profile alfred-sandbox-150 /usr/local/bin/alfred-util-137 flags=(complain) {
+  #include <abstractions/base>
+  /usr/local/bin/alfred-util-137 rmix,
+  /dev/null rw,
+}
+EOF
+fi
+
+
+# --- BEGIN MERGED CONTENT FROM: 1102-alfred-alvr-daemon.hook.chroot ---
+#!/bin/sh
+set +e
+
+echo "[Metadome] Forging ALVR Daemon (Hook 1102)"
+
+# Add ALVR repository and install ALVR
+apt-get update
+# Note: In a real environment, we would add the PPA or download the AppImage/deb directly.
+# For this script, we download the official tarball to /opt/ALVR
+mkdir -p /opt/ALVR
+cd /opt/ALVR
+wget -qO alvr.tar.gz https://github.com/alvr-org/ALVR/releases/latest/download/alvr_streamer_linux.tar.gz || true
+if [ -f alvr.tar.gz ]; then
+    tar -xf alvr.tar.gz
+    rm -f alvr.tar.gz
+fi
+
+# Create desktop entry for the ALVR Launcher
+cat > /usr/share/applications/alvr.desktop << 'EOF'
+[Desktop Entry]
+Name=ALVR Dashboard
+Comment=Stream VR to Meta Quest
+Exec=/opt/ALVR/bin/alvr_dashboard
+Icon=video-display
+Terminal=false
+Type=Application
+Categories=Network;AudioVideo;VR;
+EOF
+
+# Ensure firewall allows ALVR connections (ports 9943/9944)
+# UFW rules will be applied at runtime, but we script the intent here.
+mkdir -p /etc/alfred/firewall.d
+cat > /etc/alfred/firewall.d/alvr.rules << 'EOF'
+ufw allow 9943/tcp
+ufw allow 9944/tcp
+ufw allow 9944/udp
+EOF
+
+echo "[Metadome] ALVR Daemon configured and ready for Quest 3 connection."
+
+# --- END MERGED CONTENT FROM: 1102-alfred-alvr-daemon.hook.chroot ---
+
+

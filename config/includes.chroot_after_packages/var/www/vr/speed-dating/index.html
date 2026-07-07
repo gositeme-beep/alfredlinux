@@ -1,0 +1,1531 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Speed Dating — GoSiteMe</title>
+<meta name="description" content="Video speed dating with fun face filters. Meet new people in 2-minute rounds. Free daily matches, premium unlimited access.">
+<link rel="icon" href="/assets/favicon.ico">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0a0a14;color:#fff;font-family:'Inter','Segoe UI',system-ui,sans-serif;overflow:hidden;-webkit-font-smoothing:antialiased}
+
+/* ── Loading ── */
+#loading{position:fixed;inset:0;background:#0a0a14;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;transition:opacity .6s}
+#loading.hidden{opacity:0;pointer-events:none}
+#loading h1{font-size:2rem;margin-bottom:.5rem;background:linear-gradient(135deg,#f472b6,#ec4899);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+#loading p{color:rgba(255,255,255,.5);font-size:.9rem;margin-bottom:1.5rem}
+.load-bar{width:200px;height:4px;background:rgba(255,255,255,.1);border-radius:2px;overflow:hidden}
+.load-bar-fill{height:100%;background:linear-gradient(90deg,#f472b6,#ec4899);border-radius:2px;animation:loadPulse 1.5s ease-in-out infinite;width:60%}
+@keyframes loadPulse{0%,100%{transform:translateX(-100%)}50%{transform:translateX(100%)}}
+
+/* ── Lobby ── */
+#lobby{position:fixed;inset:0;background:radial-gradient(ellipse at center,#1a0a20 0%,#0a0a14 70%);z-index:500;display:flex;align-items:center;justify-content:center}
+#lobby.hidden{display:none}
+.lobby-panel{max-width:600px;width:92%;text-align:center}
+.lobby-panel h1{font-size:2.5rem;margin-bottom:.5rem;background:linear-gradient(135deg,#f472b6,#a855f7);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.lobby-panel .tagline{color:rgba(255,255,255,.5);font-size:1rem;margin-bottom:2rem}
+.lobby-stats{display:flex;justify-content:center;gap:2rem;margin-bottom:2rem}
+.lobby-stat{text-align:center}
+.lobby-stat .val{font-size:1.5rem;font-weight:800;color:#f472b6}
+.lobby-stat .lbl{font-size:.7rem;text-transform:uppercase;letter-spacing:1px;color:rgba(255,255,255,.35)}
+
+/* Daily usage bar */
+.usage-bar{margin:0 auto 2rem;max-width:300px}
+.usage-bar-label{display:flex;justify-content:space-between;font-size:.75rem;color:rgba(255,255,255,.4);margin-bottom:.3rem}
+.usage-track{height:6px;background:rgba(255,255,255,.08);border-radius:3px;overflow:hidden}
+.usage-fill{height:100%;background:linear-gradient(90deg,#10b981,#f472b6);border-radius:3px;transition:width .4s}
+
+/* Start buttons */
+.lobby-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.5rem}
+.lobby-card{padding:1.5rem;border-radius:16px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.03);cursor:pointer;transition:.25s;text-decoration:none;color:#fff}
+.lobby-card:hover{border-color:rgba(244,114,182,.3);background:rgba(244,114,182,.06);transform:translateY(-3px)}
+.lobby-card.disabled{opacity:.4;pointer-events:none}
+.lobby-card .icon{font-size:2.5rem;margin-bottom:.5rem}
+.lobby-card h3{font-size:1rem;margin-bottom:.3rem}
+.lobby-card p{font-size:.72rem;color:rgba(255,255,255,.4);margin:0}
+
+/* Sub plans */
+.sub-section{margin-top:2rem;text-align:center}
+.sub-section h3{font-size:.8rem;color:rgba(255,255,255,.3);text-transform:uppercase;letter-spacing:1px;margin-bottom:1rem}
+.sub-plans{display:grid;grid-template-columns:repeat(3,1fr);gap:.75rem}
+.sub-plan{padding:1rem;border-radius:12px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.02);cursor:pointer;transition:.2s}
+.sub-plan:hover{border-color:rgba(244,114,182,.3);background:rgba(244,114,182,.04)}
+.sub-plan.popular{border-color:rgba(244,114,182,.3);background:rgba(244,114,182,.06);position:relative}
+.sub-plan.popular::before{content:'Most Popular';position:absolute;top:-8px;left:50%;transform:translateX(-50%);font-size:.55rem;font-weight:700;background:linear-gradient(135deg,#f472b6,#a855f7);color:#fff;padding:2px 8px;border-radius:4px;white-space:nowrap}
+.sub-plan .plan-price{font-size:1.3rem;font-weight:800;color:#f472b6;margin-bottom:.25rem}
+.sub-plan .plan-period{font-size:.65rem;color:rgba(255,255,255,.35)}
+.sub-plan .plan-name{font-size:.8rem;font-weight:600;margin-bottom:.25rem}
+.sub-plan .plan-feat{font-size:.65rem;color:rgba(255,255,255,.4);line-height:1.4}
+
+.lobby-footer{margin-top:1.5rem;display:flex;gap:1rem;justify-content:center;align-items:center}
+.lobby-footer a{color:rgba(255,255,255,.35);font-size:.75rem;text-decoration:none;transition:.2s}
+.lobby-footer a:hover{color:#f472b6}
+
+/* ── Video Layout ── */
+#dateView{display:none;position:fixed;inset:0;background:#0a0a14;z-index:10}
+.video-container{display:flex;height:100vh;position:relative}
+.video-half{flex:1;position:relative;overflow:hidden;background:#111}
+.video-half video,.video-half canvas{width:100%;height:100%;object-fit:cover;display:block}
+.video-divider{width:3px;background:linear-gradient(180deg,#f472b6,#a855f7);z-index:5;flex-shrink:0;position:relative}
+.video-divider::after{content:'💕';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:1.5rem;background:#0a0a14;padding:.5rem;border-radius:50%;border:2px solid rgba(244,114,182,.4);z-index:6}
+.video-label{position:absolute;bottom:1rem;left:1rem;font-size:.8rem;font-weight:600;background:rgba(10,10,20,.7);padding:.3rem .8rem;border-radius:8px;backdrop-filter:blur(6px);z-index:4}
+.video-label.you{border:1px solid rgba(244,114,182,.3)}
+.video-label.them{border:1px solid rgba(168,85,247,.3)}
+
+/* ── Timer Bar ── */
+#timerBar{position:fixed;top:0;left:0;right:0;height:6px;z-index:200;background:rgba(255,255,255,.06)}
+#timerFill{height:100%;background:linear-gradient(90deg,#10b981,#f472b6,#ef4444);border-radius:0 3px 3px 0;transition:width .5s linear}
+
+/* ── HUD Overlay ── */
+#dateHud{position:fixed;top:1rem;left:50%;transform:translateX(-50%);z-index:200;display:flex;align-items:center;gap:1rem;background:rgba(22,22,54,.9);border:1px solid rgba(255,255,255,.1);border-radius:14px;padding:.6rem 1.5rem;backdrop-filter:blur(16px)}
+.hud-timer{font-size:1.3rem;font-weight:800;font-variant-numeric:tabular-nums;color:#f472b6;min-width:48px;text-align:center}
+.hud-round{font-size:.75rem;color:rgba(255,255,255,.4)}
+.hud-btn-date{padding:.4rem .8rem;border-radius:8px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.06);color:rgba(255,255,255,.7);cursor:pointer;font-size:.75rem;font-weight:600;transition:.2s}
+.hud-btn-date:hover{background:rgba(244,114,182,.15);color:#f472b6;border-color:rgba(244,114,182,.3)}
+
+/* ── Filter Bar ── */
+#filterBar{position:fixed;bottom:1.5rem;left:50%;transform:translateX(-50%);z-index:200;display:flex;gap:.5rem;background:rgba(22,22,54,.9);border:1px solid rgba(255,255,255,.1);border-radius:14px;padding:.5rem;backdrop-filter:blur(16px)}
+.filter-btn{padding:.5rem .8rem;border-radius:10px;border:1px solid rgba(255,255,255,.06);background:rgba(255,255,255,.03);cursor:pointer;font-size:.85rem;transition:.2s;color:#fff;display:flex;flex-direction:column;align-items:center;gap:2px}
+.filter-btn span{font-size:.55rem;color:rgba(255,255,255,.3)}
+.filter-btn:hover,.filter-btn.active{border-color:rgba(244,114,182,.4);background:rgba(244,114,182,.1)}
+
+/* ── Reaction Buttons ── */
+#reactionBar{position:fixed;bottom:5rem;right:1.5rem;z-index:200;display:flex;flex-direction:column;gap:.5rem}
+.reaction-btn{width:48px;height:48px;border-radius:50%;border:1px solid rgba(255,255,255,.1);background:rgba(22,22,54,.85);cursor:pointer;font-size:1.3rem;display:flex;align-items:center;justify-content:center;transition:.2s;backdrop-filter:blur(8px)}
+.reaction-btn:hover{transform:scale(1.15);border-color:rgba(244,114,182,.4)}
+.reaction-btn.like{background:rgba(16,185,129,.15);border-color:rgba(16,185,129,.3)}
+.reaction-btn.skip{background:rgba(239,68,68,.1);border-color:rgba(239,68,68,.2)}
+
+/* ── Round Transition ── */
+#roundTransition{position:fixed;inset:0;z-index:400;display:none;align-items:center;justify-content:center;background:rgba(10,10,20,.9);backdrop-filter:blur(8px)}
+#roundTransition.show{display:flex}
+.rt-card{text-align:center;max-width:380px;width:90%}
+.rt-card h2{font-size:1.8rem;margin-bottom:.5rem;color:#f472b6}
+.rt-card p{color:rgba(255,255,255,.5);margin-bottom:1.5rem}
+.rt-countdown{font-size:4rem;font-weight:900;background:linear-gradient(135deg,#f472b6,#a855f7);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+
+/* ── Match Found ── */
+#matchResult{position:fixed;inset:0;z-index:450;display:none;align-items:center;justify-content:center;background:rgba(10,10,20,.9);backdrop-filter:blur(8px)}
+#matchResult.show{display:flex}
+.match-card{text-align:center;max-width:420px;width:90%;background:rgba(22,22,54,.95);border:1px solid rgba(244,114,182,.2);border-radius:24px;padding:2.5rem}
+.match-hearts{font-size:3rem;margin-bottom:1rem;animation:heartBeat 1s ease-in-out infinite}
+@keyframes heartBeat{0%,100%{transform:scale(1)}50%{transform:scale(1.15)}}
+.match-card h2{font-size:1.5rem;margin-bottom:.5rem;color:#f472b6}
+.match-card p{color:rgba(255,255,255,.5);margin-bottom:1.5rem;font-size:.9rem}
+.match-actions{display:flex;gap:.75rem;justify-content:center}
+.match-btn{padding:.7rem 1.5rem;border-radius:12px;border:none;cursor:pointer;font-size:.85rem;font-weight:700;transition:.2s;text-decoration:none;color:#fff}
+.match-btn.primary{background:linear-gradient(135deg,#f472b6,#a855f7)}
+.match-btn.secondary{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12)}
+
+/* ── SOL Wallet ── */
+#walletBar{position:fixed;top:1rem;right:1.5rem;z-index:300;display:flex;align-items:center;gap:.5rem}
+.wallet-btn{display:flex;align-items:center;gap:.4rem;padding:.4rem .8rem;border-radius:10px;border:1px solid rgba(255,255,255,.1);background:rgba(22,22,54,.85);backdrop-filter:blur(12px);cursor:pointer;color:#fff;font-size:.78rem;font-weight:600;transition:.2s}
+.wallet-btn:hover{border-color:rgba(168,85,247,.3);background:rgba(168,85,247,.08)}
+.wallet-bal{color:#a855f7;font-weight:700}
+.wallet-addr{font-size:.65rem;color:rgba(255,255,255,.3);font-family:monospace;max-width:80px;overflow:hidden;text-overflow:ellipsis}
+
+/* ── Paywall Modal ── */
+#paywallModal{position:fixed;inset:0;z-index:800;display:none;align-items:center;justify-content:center;background:rgba(10,10,20,.92);backdrop-filter:blur(6px)}
+#paywallModal.show{display:flex}
+.paywall-card{max-width:500px;width:92%;background:rgba(22,22,54,.98);border:1px solid rgba(244,114,182,.2);border-radius:24px;padding:2.5rem;text-align:center}
+.paywall-card h2{font-size:1.5rem;margin-bottom:.5rem;background:linear-gradient(135deg,#f472b6,#a855f7);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.paywall-card>p{color:rgba(255,255,255,.5);margin-bottom:1.5rem}
+.paywall-plans{display:grid;grid-template-columns:1fr 1fr 1fr;gap:.75rem;margin-bottom:1.5rem}
+
+/* ── Toast ── */
+#toast{position:fixed;bottom:5rem;left:50%;transform:translateX(-50%);z-index:600;padding:.6rem 1.2rem;border-radius:10px;background:rgba(22,22,54,.95);border:1px solid rgba(244,114,182,.3);color:#f472b6;font-size:.8rem;font-weight:600;backdrop-filter:blur(12px);opacity:0;transition:opacity .3s;pointer-events:none}
+#toast.visible{opacity:1}
+
+/* ── AI Chat Bubble ── */
+#aiChatBubble{position:absolute;bottom:4rem;left:1rem;right:1rem;z-index:10;padding:.8rem 1rem;border-radius:14px;background:rgba(168,85,247,.12);border:1px solid rgba(168,85,247,.25);backdrop-filter:blur(8px);display:none;transition:opacity .3s}
+#aiChatBubble.show{display:block}
+#aiChatBubble .agent-bubble-name{font-size:.7rem;font-weight:700;color:#a855f7;margin-bottom:.25rem}
+#aiChatBubble .agent-bubble-text{font-size:.85rem;color:rgba(255,255,255,.85);line-height:1.4}
+
+/* ── Spectator Badge ── */
+#spectatorBadge{position:fixed;top:4rem;left:50%;transform:translateX(-50%);z-index:600;padding:.5rem 1.2rem;border-radius:12px;background:rgba(244,114,182,.15);border:1px solid rgba(244,114,182,.3);color:#f472b6;font-size:.8rem;font-weight:700;backdrop-filter:blur(12px);cursor:pointer;display:none;transition:.2s}
+#spectatorBadge:hover{background:rgba(244,114,182,.25)}
+
+/* ── Opt-in Badge ── */
+.opted-in-badge{display:inline-block;padding:2px 8px;border-radius:6px;font-size:.6rem;font-weight:700;background:linear-gradient(135deg,#10b981,#059669);color:#fff;margin-left:.5rem;vertical-align:middle}
+
+/* ── Mic Indicator ── */
+.mic-live{display:inline-block;width:8px;height:8px;border-radius:50%;background:#ef4444;margin-right:4px;animation:micPulse 1s ease-in-out infinite}
+@keyframes micPulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* ── Face Filter Canvas ── */
+#filterCanvas{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:3}
+
+@media(max-width:768px){
+    .video-container{flex-direction:column}
+    .video-divider{width:100%;height:3px}
+    .video-divider::after{top:50%;left:50%}
+    #dateHud{left:1rem;right:1rem;transform:none;justify-content:center}
+    #filterBar{flex-wrap:wrap;max-width:95%}
+    .sub-plans{grid-template-columns:1fr}
+    .paywall-plans{grid-template-columns:1fr}
+    #reactionBar{bottom:8rem;right:.5rem}
+    .lobby-grid{grid-template-columns:1fr}
+}
+
+/* Alfred Chat Panel */
+#alfredPanel{position:fixed;bottom:1.5rem;left:1.5rem;width:320px;max-height:420px;background:rgba(22,22,54,.95);border:1px solid rgba(244,114,182,.25);border-radius:16px;z-index:600;display:none;flex-direction:column;backdrop-filter:blur(12px)}
+#alfredPanel.open{display:flex}
+#alfredPanel .ap-hdr{display:flex;align-items:center;justify-content:space-between;padding:.75rem 1rem;border-bottom:1px solid rgba(255,255,255,.06)}
+#alfredPanel .ap-hdr span{font-weight:700;font-size:.85rem;background:linear-gradient(135deg,#f472b6,#a855f7);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+#alfredPanel .ap-hdr button{background:none;border:none;color:rgba(255,255,255,.4);cursor:pointer;font-size:1.1rem}
+#alfredMsgs{flex:1;overflow-y:auto;padding:.75rem;display:flex;flex-direction:column;gap:.5rem;max-height:280px}
+.amsg{padding:.5rem .75rem;border-radius:10px;font-size:.78rem;line-height:1.4;max-width:88%;word-wrap:break-word}
+.amsg.user{background:rgba(244,114,182,.15);color:#f9a8d4;align-self:flex-end;border:1px solid rgba(244,114,182,.2)}
+.amsg.alfred{background:rgba(168,85,247,.1);color:rgba(255,255,255,.85);align-self:flex-start;border:1px solid rgba(168,85,247,.15)}
+#alfredInput{display:flex;gap:.4rem;padding:.6rem .75rem;border-top:1px solid rgba(255,255,255,.06)}
+#alfredInput input{flex:1;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:.4rem .6rem;color:#fff;font-size:.78rem;outline:none}
+#alfredInput button{background:linear-gradient(135deg,#f472b6,#a855f7);border:none;border-radius:8px;padding:.4rem .7rem;color:#fff;cursor:pointer;font-size:.75rem;font-weight:600}
+#alfredToggle{position:fixed;bottom:1.5rem;left:1.5rem;width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#f472b6,#a855f7);border:none;color:#fff;font-size:1.3rem;cursor:pointer;z-index:590;box-shadow:0 4px 15px rgba(244,114,182,.3)}
+
+</style>
+<script src="/vr/shared/alfred-csrf.js"></script>
+</head>
+<body>
+
+<!-- Alfred Chat Panel -->
+<div id="alfredPanel">
+    <div class="ap-hdr"><span>🤖 Alfred — Dating Coach</span><button onclick="toggleAlfredPanel()">&times;</button></div>
+    <div id="alfredMsgs"><div class="amsg alfred">Hey! I'm your dating coach. Ask me for conversation starters, tips, or anything about your date.</div></div>
+    <div id="alfredInput"><input id="alfredIn" placeholder="Ask Alfred…" onkeydown="if(event.key==='Enter')sendAlfred()"><button onclick="sendAlfred()">Send</button></div>
+</div>
+<button id="alfredToggle" onclick="toggleAlfredPanel()" title="Ask Alfred">🤖</button>
+
+<!-- Loading -->
+<div id="loading">
+    <h1>Speed Dating</h1>
+    <p>Preparing your camera...</p>
+    <div class="load-bar"><div class="load-bar-fill"></div></div>
+</div>
+
+<!-- Lobby -->
+<div id="lobby">
+    <div class="lobby-panel">
+        <h1>💕 Speed Dating</h1>
+        <p class="tagline">2-minute video dates with fun face filters. Meet interesting people — no awkward silences.</p>
+        
+        <div class="lobby-stats">
+            <div class="lobby-stat"><div class="val" id="onlineCount">—</div><div class="lbl">Online Now</div></div>
+            <div class="lobby-stat"><div class="val" id="matchCount">—</div><div class="lbl">Matches Today</div></div>
+            <div class="lobby-stat"><div class="val" id="roundsUsed">0/10</div><div class="lbl">Daily Rounds</div></div>
+        </div>
+        
+        <div class="usage-bar">
+            <div class="usage-bar-label"><span>Daily Free Rounds</span><span id="usageLabel">0 / 10</span></div>
+            <div class="usage-track"><div class="usage-fill" id="usageFill" style="width:0%"></div></div>
+        </div>
+        
+        <div class="lobby-grid">
+            <div class="lobby-card" id="startVideoBtn" onclick="startMatching('video')">
+                <div class="icon">📹</div>
+                <h3>Video Date</h3>
+                <p>Face-to-face with camera &amp; optional face filters</p>
+            </div>
+            <div class="lobby-card" onclick="startMatching('voice')">
+                <div class="icon">🎙️</div>
+                <h3>Voice Date</h3>
+                <p>Audio only — camera stays off, mystery vibes</p>
+            </div>
+            <div class="lobby-card" onclick="startMatching('ai')">
+                <div class="icon">🤖</div>
+                <h3>AI Practice Date</h3>
+                <p>Practice with AI agents — sharpen your conversation skills</p>
+            </div>
+            <div class="lobby-card" onclick="startSpectator()">
+                <div class="icon">👀</div>
+                <h3>Watch AI Date</h3>
+                <p>Spectate two AI agents on a speed date</p>
+            </div>
+        </div>
+        
+        <div class="sub-section">
+            <h3>✨ Unlimited Free Access</h3>
+            <p style="color:rgba(255,255,255,.5);font-size:.85rem;">All rounds, all face filters, VIP features, and priority matching — completely free for everyone.</p>
+        </div>
+        
+        <div class="lobby-footer">
+            <a href="/games.php">← Games</a>
+            <a href="/privacy-policy.php">Privacy</a>
+            <a href="/terms-of-service.php">Terms</a>
+        </div>
+    </div>
+</div>
+
+<!-- SOL Wallet (shown when logged in) -->
+<div id="walletBar" style="display:none">
+    <div class="wallet-btn" id="walletConnect" onclick="connectWallet()">
+        <span>◎</span>
+        <span id="walletLabel">Connect Wallet</span>
+    </div>
+</div>
+
+<!-- Date View -->
+<div id="dateView">
+    <div id="timerBar"><div id="timerFill" style="width:100%"></div></div>
+    
+    <div class="video-container">
+        <div class="video-half" id="localVideoWrap">
+            <video id="localVideo" autoplay playsinline muted></video>
+            <canvas id="filterCanvas"></canvas>
+            <div class="video-label you">You</div>
+        </div>
+        <div class="video-divider"></div>
+        <div class="video-half" id="remoteVideoWrap">
+            <div id="remoteSimulated" style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#1a0a20,#0a0a14);flex-direction:column">
+                <div style="font-size:4rem;margin-bottom:1rem" id="remoteAvatar">😊</div>
+                <div style="font-size:1rem;font-weight:600" id="remoteName">Finding someone...</div>
+                <div style="font-size:.75rem;color:rgba(255,255,255,.4);margin-top:.3rem" id="remoteStatus"></div>
+            </div>
+            <div class="video-label them" id="partnerLabel">Partner</div>
+            <div id="aiChatBubble"><div class="agent-bubble-name" id="aiBubbleName"></div><div class="agent-bubble-text" id="aiBubbleText"></div></div>
+        </div>
+    </div>
+    
+    <div id="dateHud">
+        <div class="hud-round" id="roundLabel">Round 1/10</div>
+        <div class="hud-timer" id="timerDisplay">2:00</div>
+        <button class="hud-btn-date" id="micToggle" onclick="toggleMic()">🎙️ On</button>
+        <button class="hud-btn-date" id="voiceCommandToggle" onclick="toggleVoiceCommands()">🗣️ Cmd Off</button>
+        <button class="hud-btn-date" onclick="toggleCamera()">📷</button>
+        <button class="hud-btn-date" onclick="skipPartner()" style="color:#ef4444">⏭ Skip</button>
+        <button class="hud-btn-date" onclick="endSession()">🚪 Leave</button>
+    </div>
+    
+    <!-- Face Filters -->
+    <div id="filterBar">
+        <div class="filter-btn active" data-filter="none" onclick="setFilter('none')">😐<span>None</span></div>
+        <div class="filter-btn" data-filter="hearts" onclick="setFilter('hearts')">💕<span>Hearts</span></div>
+        <div class="filter-btn" data-filter="sparkle" onclick="setFilter('sparkle')">✨<span>Sparkle</span></div>
+        <div class="filter-btn" data-filter="glow" onclick="setFilter('glow')">🌟<span>Glow</span></div>
+        <div class="filter-btn" data-filter="neon" onclick="setFilter('neon')">💜<span>Neon</span></div>
+        <div class="filter-btn" data-filter="pixel" onclick="setFilter('pixel')">👾<span>Pixel</span></div>
+        <div class="filter-btn" data-filter="warm" onclick="setFilter('warm')">🔥<span>Warm</span></div>
+        <div class="filter-btn" data-filter="cool" onclick="setFilter('cool')">❄️<span>Cool</span></div>
+        <div class="filter-btn" data-filter="vintage" onclick="setFilter('vintage')">📷<span>Vintage</span></div>
+        <div class="filter-btn locked" data-filter="vip" onclick="setFilter('vip')">👑<span>VIP</span></div>
+    </div>
+    
+    <!-- Reactions -->
+    <div id="reactionBar">
+        <button class="reaction-btn" onclick="sendReaction('👋')">👋</button>
+        <button class="reaction-btn" onclick="sendReaction('😂')">😂</button>
+        <button class="reaction-btn" onclick="sendReaction('🔥')">🔥</button>
+        <button class="reaction-btn like" onclick="likePartner()">💚</button>
+        <button class="reaction-btn skip" onclick="skipPartner()">👎</button>
+    </div>
+</div>
+
+<!-- Round Transition -->
+<div id="roundTransition">
+    <div class="rt-card">
+        <h2 id="rtTitle">Next Round</h2>
+        <p id="rtMessage">Finding your next match...</p>
+        <div class="rt-countdown" id="rtCountdown">3</div>
+    </div>
+</div>
+
+<!-- Match Result -->
+<div id="matchResult">
+    <div class="match-card">
+        <div class="match-hearts">💕</div>
+        <h2>It's a Match!</h2>
+        <p id="matchMsg">You both liked each other! Start a conversation?</p>
+        <div class="match-actions">
+            <button class="match-btn primary" onclick="openChat()">💬 Chat</button>
+            <button class="match-btn secondary" onclick="continueRounds()">Continue Dating</button>
+        </div>
+    </div>
+</div>
+
+<!-- Paywall -->
+<div id="paywallModal">
+    <div class="paywall-card">
+        <h2>All Access — Free</h2>
+        <p id="paywallText">Unlimited rounds, all face filters, and VIP features — no charge.</p>
+        <button class="match-btn secondary" onclick="closePaywall()" style="margin-top:1rem">Continue Dating</button>
+    </div>
+</div>
+
+<!-- Toast -->
+<div id="toast"></div>
+
+<!-- Spectator Badge -->
+<div id="spectatorBadge" onclick="toggleSpectatorPause()">👀 Spectating — Click to Pause</div>
+
+<script>
+/* ══════════════════════════════════════════════════════════════════
+   GoSiteMe Speed Dating — Video Dating with Face Filters
+   ══════════════════════════════════════════════════════════════════ */
+(function(){
+'use strict';
+
+// ── Constants ──
+var ROUND_DURATION = 120; // 2 minutes in seconds
+var DEFAULT_FREE_ROUNDS = 999999;
+var OPTIN_FREE_ROUNDS = 999999;
+var MAX_FREE_ROUNDS = DEFAULT_FREE_ROUNDS; // Unlimited — all access free
+var TRANSITION_DELAY = 3;
+
+// ── State ──
+var roundsUsedToday = 0;
+var isPremium = true; // All access free — no subscription required
+var isOptedIn = false;
+var currentRound = 0;
+var timerSeconds = ROUND_DURATION;
+var timerInterval = null;
+var localStream = null;
+var currentFilter = 'none';
+var cameraOn = true;
+var micOn = true;
+var dateMode = 'video'; // 'video', 'voice', or 'ai'
+var matchLikes = {}; // track likes per round
+var filterCtx = null;
+var filterAnimFrame = null;
+var isMatching = false;
+var aiDateMode = false;
+var currentAIAgent = null;
+var aiChatInterval = null;
+
+// Spectator mode
+var spectatorMode = false;
+var spectatorAgent1 = null;
+var spectatorAgent2 = null;
+var spectatorPaused = false;
+var spectatorRoundTimer = null;
+
+// Avatar pool for simulated partners
+var AVATARS = ['😊','😎','🥳','😄','🤩','😋','🙃','🤗','😏','🥰','🤔','😇','🧑‍💻','👩‍🎤','👨‍🍳','👩‍🔬','🧑‍🎨','👩‍🚀','🧑‍🏫','👨‍⚕️'];
+var NAMES = ['Alex','Jordan','Sam','Riley','Morgan','Casey','Quinn','Avery','Skyler','Dakota','Kai','Rowan','Sage','Phoenix','River','Emery','Blake','Finley','Hayden','Reese'];
+var INTERESTS = ['travel','cooking','music','art','gaming','hiking','reading','photography','yoga','surfing','coding','dancing','movies','pets','coffee','fitness','meditation','astronomy','gardening','chess'];
+
+// ── AI Dating Agents ──
+var DATING_AGENTS = [
+    { id: 'alfred', name: 'Alfred', emoji: '🤵', personality: 'Charming British gentleman, witty and refined',
+      topics: ['Do you enjoy fine dining or cozy home-cooked meals?', 'I find a good book and tea to be the perfect evening. What about you?', 'Travel broadens the mind — where would you go if you could go anywhere?', 'What\'s the most spontaneous thing you\'ve ever done?', 'I appreciate good manners. What quality do you value most in a person?', 'Classical music or modern beats — what moves your soul?'] },
+    { id: 'nova', name: 'Nova', emoji: '✨', personality: 'Adventurous and curious, loves exploring new ideas',
+      topics: ['If you could learn any skill overnight, what would it be?', 'I just discovered this amazing hiking trail — do you like the outdoors?', 'What\'s the most interesting thing you learned this week?', 'I\'m always up for trying new foods. What\'s the wildest thing you\'ve eaten?', 'Do you believe in taking risks or playing it safe?', 'What does your ideal weekend look like?'] },
+    { id: 'sage', name: 'Sage', emoji: '🧘', personality: 'Calm, thoughtful, deeply philosophical',
+      topics: ['What brings you the most peace in life?', 'Do you think we\'re meant to find one soulmate, or can we connect deeply with many?', 'I love early mornings — sunrise or sunset person?', 'What\'s something you\'re grateful for today?', 'If you could give your younger self one piece of advice, what would it be?', 'What does happiness mean to you?'] },
+    { id: 'atlas', name: 'Atlas', emoji: '🗺️', personality: 'World traveler, confident storyteller',
+      topics: ['I just got back from Tokyo — have you been to Asia?', 'What\'s the best trip you\'ve ever taken?', 'Street food or five-star restaurants?', 'I collect stories from every country I visit. What\'s your best story?', 'Do you prefer mountains or ocean?', 'If we went on a trip together, where would you take me?'] },
+    { id: 'cipher', name: 'Cipher', emoji: '🔮', personality: 'Mysterious and intriguing, speaks in riddles sometimes',
+      topics: ['They say eyes are windows to the soul — what do you see in mine?', 'If I could read your mind right now, what would I find?', 'What\'s your hidden talent that nobody knows about?', 'Do you believe in fate or do we make our own destiny?', 'What\'s the one thing you\'ve never told anyone on a first date?', 'If this conversation could last forever, would you want it to?'] },
+    { id: 'pulse', name: 'Pulse', emoji: '🎵', personality: 'Energetic music lover, always upbeat',
+      topics: ['What song would be our date\'s soundtrack right now?', 'concerts or vinyl at home — what\'s your vibe?', 'I once danced in the rain at a festival — ever done anything like that?', 'What genre of music matches your personality?', 'If you could see any artist perform live, dead or alive, who?', 'Karaoke song of choice — go!'] },
+    { id: 'luna', name: 'Luna', emoji: '🌙', personality: 'Creative artist, romantic dreamer',
+      topics: ['Do you ever look at the stars and wonder?', 'I paint my feelings — how do you express yours?', 'What\'s the most romantic thing that\'s ever happened to you?', 'If our date was a movie, what genre would it be?', 'What color best describes your mood right now?', 'I believe in magic in everyday moments — do you?'] },
+    { id: 'blaze', name: 'Blaze', emoji: '🔥', personality: 'Fitness enthusiast, competitive and fun',
+      topics: ['Early bird workout or evening gym session?', 'What\'s your go-to way to stay active?', 'I just ran a marathon — what\'s on your bucket list?', 'Friendly competition: would you beat me at trivia or sports?', 'What drives you to be your best self?', 'Adventure date or chill Netflix night?'] }
+];
+
+// SOL wallet
+var walletAddress = null;
+var walletBalance = null;
+
+// ═══ CAMERA / MEDIA ═══
+
+function initCamera(mode) {
+    var constraints = mode === 'voice'
+        ? { audio: true, video: false }
+        : { audio: true, video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } } };
+    
+    return navigator.mediaDevices.getUserMedia(constraints)
+        .then(function(stream) {
+            localStream = stream;
+            var video = document.getElementById('localVideo');
+            video.srcObject = stream;
+            
+            if (mode === 'video') {
+                // Init filter canvas
+                var canvas = document.getElementById('filterCanvas');
+                filterCtx = canvas.getContext('2d');
+                video.addEventListener('loadedmetadata', function() {
+                    canvas.width = video.videoWidth || 640;
+                    canvas.height = video.videoHeight || 480;
+                });
+            }
+            
+            return stream;
+        });
+}
+
+function stopCamera() {
+    if (localStream) {
+        localStream.getTracks().forEach(function(t) { t.stop(); });
+        localStream = null;
+    }
+    if (filterAnimFrame) {
+        cancelAnimationFrame(filterAnimFrame);
+        filterAnimFrame = null;
+    }
+}
+
+// ═══ FACE FILTERS ═══
+
+function setFilter(name) {
+    currentFilter = name;
+    
+    // Update button states
+    document.querySelectorAll('.filter-btn').forEach(function(btn) {
+        btn.classList.toggle('active', btn.dataset.filter === name);
+    });
+    
+    if (name === 'vip' && !isPremium) {
+        showPaywall();
+        setFilter('none');
+        return;
+    }
+    
+    showToast('Filter: ' + name);
+    
+    // Start or stop filter rendering
+    if (name !== 'none' && dateMode === 'video') {
+        startFilterRender();
+    } else {
+        stopFilterRender();
+    }
+}
+
+function startFilterRender() {
+    if (filterAnimFrame) return;
+    var canvas = document.getElementById('filterCanvas');
+    var video = document.getElementById('localVideo');
+    if (!filterCtx) {
+        filterCtx = canvas.getContext('2d');
+    }
+    
+    function renderFilter() {
+        filterAnimFrame = requestAnimationFrame(renderFilter);
+        
+        if (!video.videoWidth) return;
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        
+        filterCtx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        var w = canvas.width;
+        var h = canvas.height;
+        var t = Date.now() / 1000;
+        
+        if (currentFilter === 'hearts') {
+            // Floating hearts overlay
+            filterCtx.font = '28px serif';
+            for (var i = 0; i < 8; i++) {
+                var x = (Math.sin(t * 0.5 + i * 1.1) * 0.4 + 0.5) * w;
+                var y = ((t * 0.3 + i * 0.13) % 1) * h;
+                filterCtx.globalAlpha = 0.6 + Math.sin(t + i) * 0.3;
+                filterCtx.fillText('💕', x, y);
+            }
+            filterCtx.globalAlpha = 1;
+        }
+        else if (currentFilter === 'sparkle') {
+            filterCtx.font = '20px serif';
+            for (var i = 0; i < 12; i++) {
+                var x = (Math.sin(t * 0.7 + i * 0.8) * 0.5 + 0.5) * w;
+                var y = (Math.cos(t * 0.5 + i * 1.2) * 0.5 + 0.5) * h;
+                filterCtx.globalAlpha = Math.abs(Math.sin(t * 2 + i));
+                filterCtx.fillText('✨', x, y);
+            }
+            filterCtx.globalAlpha = 1;
+        }
+        else if (currentFilter === 'glow') {
+            // Soft radial glow
+            var grad = filterCtx.createRadialGradient(w/2, h/2, 0, w/2, h/2, Math.max(w,h)*0.6);
+            grad.addColorStop(0, 'rgba(244,114,182,0)');
+            grad.addColorStop(0.7, 'rgba(244,114,182,0)');
+            grad.addColorStop(1, 'rgba(244,114,182,0.25)');
+            filterCtx.fillStyle = grad;
+            filterCtx.fillRect(0, 0, w, h);
+            
+            // Soft vignette
+            var grad2 = filterCtx.createRadialGradient(w/2, h*0.3, w*0.15, w/2, h/2, Math.max(w,h)*0.5);
+            grad2.addColorStop(0, 'rgba(255,255,200,0.08)');
+            grad2.addColorStop(1, 'rgba(0,0,0,0)');
+            filterCtx.fillStyle = grad2;
+            filterCtx.fillRect(0, 0, w, h);
+        }
+        else if (currentFilter === 'neon') {
+            // Neon edge glow
+            filterCtx.strokeStyle = 'rgba(168,85,247,' + (0.3 + Math.sin(t * 3) * 0.15) + ')';
+            filterCtx.lineWidth = 4;
+            var pad = 20 + Math.sin(t * 2) * 5;
+            filterCtx.strokeRect(pad, pad, w - pad*2, h - pad*2);
+            
+            filterCtx.strokeStyle = 'rgba(244,114,182,' + (0.2 + Math.sin(t * 2.5) * 0.1) + ')';
+            filterCtx.lineWidth = 2;
+            filterCtx.strokeRect(pad+10, pad+10, w - (pad+10)*2, h - (pad+10)*2);
+        }
+        else if (currentFilter === 'pixel') {
+            // Pixelation effect — draw video pixelated
+            filterCtx.imageSmoothingEnabled = false;
+            var scale = 12;
+            filterCtx.drawImage(video, 0, 0, w/scale, h/scale);
+            filterCtx.drawImage(canvas, 0, 0, w/scale, h/scale, 0, 0, w, h);
+            filterCtx.imageSmoothingEnabled = true;
+        }
+        else if (currentFilter === 'warm') {
+            filterCtx.fillStyle = 'rgba(255,140,0,0.08)';
+            filterCtx.fillRect(0, 0, w, h);
+        }
+        else if (currentFilter === 'cool') {
+            filterCtx.fillStyle = 'rgba(0,150,255,0.08)';
+            filterCtx.fillRect(0, 0, w, h);
+        }
+        else if (currentFilter === 'vintage') {
+            filterCtx.fillStyle = 'rgba(120,80,40,0.12)';
+            filterCtx.fillRect(0, 0, w, h);
+            // Film grain
+            for (var i = 0; i < 50; i++) {
+                filterCtx.fillStyle = 'rgba(255,255,255,' + (Math.random() * 0.05) + ')';
+                filterCtx.fillRect(Math.random() * w, Math.random() * h, 2, 2);
+            }
+            // Vignette
+            var vg = filterCtx.createRadialGradient(w/2, h/2, w*0.3, w/2, h/2, w*0.7);
+            vg.addColorStop(0, 'rgba(0,0,0,0)');
+            vg.addColorStop(1, 'rgba(0,0,0,0.3)');
+            filterCtx.fillStyle = vg;
+            filterCtx.fillRect(0, 0, w, h);
+        }
+        else if (currentFilter === 'vip') {
+            // Crown + sparkle particle ring
+            filterCtx.font = '36px serif';
+            filterCtx.fillText('👑', w/2 - 18, 60 + Math.sin(t * 2) * 5);
+            for (var i = 0; i < 6; i++) {
+                var angle = t + i * Math.PI / 3;
+                var rx = w/2 + Math.cos(angle) * 80;
+                var ry = 80 + Math.sin(angle) * 30;
+                filterCtx.globalAlpha = 0.7;
+                filterCtx.font = '16px serif';
+                filterCtx.fillText('⭐', rx, ry);
+            }
+            filterCtx.globalAlpha = 1;
+        }
+    }
+    
+    renderFilter();
+}
+
+function stopFilterRender() {
+    if (filterAnimFrame) {
+        cancelAnimationFrame(filterAnimFrame);
+        filterAnimFrame = null;
+    }
+    var canvas = document.getElementById('filterCanvas');
+    if (canvas && filterCtx) {
+        filterCtx.clearRect(0, 0, canvas.width, canvas.height);
+    }
+}
+
+// ═══ MATCHING & ROUNDS ═══
+
+function startMatching(mode) {
+    // Check daily limit
+    if (roundsUsedToday >= MAX_FREE_ROUNDS && !isPremium) {
+        showPaywall();
+        return;
+    }
+    
+    aiDateMode = (mode === 'ai');
+    dateMode = (mode === 'ai') ? 'video' : mode;
+    isMatching = true;
+    spectatorMode = false;
+    
+    document.getElementById('lobby').classList.add('hidden');
+    document.getElementById('dateView').style.display = 'block';
+    document.getElementById('walletBar').style.display = 'flex';
+    
+    if (mode === 'voice') {
+        document.getElementById('localVideo').style.display = 'none';
+        document.getElementById('filterCanvas').style.display = 'none';
+        document.getElementById('filterBar').style.display = 'none';
+        document.getElementById('localVideoWrap').innerHTML = '<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#1a0a20,#0a0a14);flex-direction:column"><div style="font-size:4rem">🎙️</div><div style="font-size:.9rem;margin-top:.5rem;color:rgba(255,255,255,.5)">Voice Only</div></div><div class="video-label you">You</div>';
+    }
+    
+    if (mode === 'ai') {
+        // AI mode doesn't need camera — show avatar for user too
+        document.getElementById('filterBar').style.display = 'none';
+        currentRound = 0;
+        startNextRound();
+        updateVoiceCommandsButton();
+        return;
+    }
+    
+    initCamera(mode).then(function() {
+        currentRound = 0;
+        startNextRound();
+    }).catch(function(err) {
+        showToast('Camera access denied. Please allow camera access.');
+        endSession();
+    });
+}
+
+// ═══ SPECTATOR MODE ═══
+
+function startSpectator() {
+    spectatorMode = true;
+    aiDateMode = true;
+    isMatching = true;
+    
+    // Pick two random agents
+    var shuffled = DATING_AGENTS.slice().sort(function() { return Math.random() - 0.5; });
+    spectatorAgent1 = shuffled[0];
+    spectatorAgent2 = shuffled[1];
+    
+    document.getElementById('lobby').classList.add('hidden');
+    document.getElementById('dateView').style.display = 'block';
+    document.getElementById('filterBar').style.display = 'none';
+    document.getElementById('reactionBar').style.display = 'none';
+    document.getElementById('walletBar').style.display = 'none';
+    
+    // Set up left panel as agent 1
+    document.getElementById('localVideoWrap').innerHTML = '<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#1a0a20,#0a0a14);flex-direction:column"><div style="font-size:5rem;margin-bottom:1rem">' + spectatorAgent1.emoji + '</div><div style="font-size:1.2rem;font-weight:700">' + spectatorAgent1.name + '</div><div style="font-size:.75rem;color:rgba(255,255,255,.4);margin-top:.3rem">' + spectatorAgent1.personality.split(',')[0] + '</div></div><div class="video-label you" style="border-color:rgba(168,85,247,.3)">' + spectatorAgent1.name + '</div>';
+    
+    // Set up right panel as agent 2
+    document.getElementById('remoteAvatar').textContent = spectatorAgent2.emoji;
+    document.getElementById('remoteName').textContent = spectatorAgent2.name;
+    document.getElementById('remoteStatus').textContent = spectatorAgent2.personality.split(',')[0];
+    document.getElementById('partnerLabel').textContent = spectatorAgent2.name;
+    
+    // Show spectator badge
+    var badge = document.getElementById('spectatorBadge');
+    badge.style.display = 'block';
+    badge.textContent = '👀 Spectating: ' + spectatorAgent1.name + ' × ' + spectatorAgent2.name + ' — Click to Pause';
+    
+    // Update HUD
+    document.getElementById('roundLabel').textContent = 'Spectator Mode';
+    
+    // Hide skip/leave from HUD but keep timer
+    var hudBtns = document.getElementById('dateHud').querySelectorAll('.hud-btn-date');
+    hudBtns.forEach(function(btn) { btn.style.display = 'none'; });
+    
+    // Add a leave button back
+    var leaveBtn = document.createElement('button');
+    leaveBtn.className = 'hud-btn-date';
+    leaveBtn.textContent = '🚪 Leave';
+    leaveBtn.onclick = endSession;
+    leaveBtn.id = 'spectatorLeaveBtn';
+    document.getElementById('dateHud').appendChild(leaveBtn);
+    
+    // Start spectator date
+    showToast('Spectating ' + spectatorAgent1.name + ' × ' + spectatorAgent2.name);
+    
+    // Start timer
+    timerSeconds = ROUND_DURATION;
+    updateTimerDisplay();
+    if (timerInterval) clearInterval(timerInterval);
+    timerInterval = setInterval(function() {
+        if (spectatorPaused) return;
+        timerSeconds--;
+        updateTimerDisplay();
+        if (timerSeconds <= 0) {
+            clearInterval(timerInterval);
+            spectatorRoundEnd();
+        }
+    }, 1000);
+    
+    // AI conversation simulation
+    startSpectatorChat();
+    
+    // Heartbeat
+    try {
+        fetch('/api/game-ecosystem.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'heartbeat', game: 'speed-dating', mode: 'spectator' })
+        }).catch(function(){});
+    } catch(e) {}
+}
+
+function toggleSpectatorPause() {
+    spectatorPaused = !spectatorPaused;
+    var badge = document.getElementById('spectatorBadge');
+    badge.textContent = spectatorPaused
+        ? '⏸️ Paused — Click to Resume'
+        : '👀 Spectating: ' + spectatorAgent1.name + ' × ' + spectatorAgent2.name + ' — Click to Pause';
+}
+
+function spectatorRoundEnd() {
+    // Simulate match result
+    var matched = Math.random() > 0.5;
+    if (matched) {
+        document.getElementById('matchMsg').textContent = spectatorAgent1.name + ' and ' + spectatorAgent2.name + ' matched! 💕';
+        document.getElementById('matchResult').classList.add('show');
+        playSound('match');
+        // Auto-dismiss after 5 seconds
+        setTimeout(function() {
+            document.getElementById('matchResult').classList.remove('show');
+            startNextSpectatorRound();
+        }, 5000);
+    } else {
+        showToast(spectatorAgent1.name + ' and ' + spectatorAgent2.name + ' didn\'t match this time');
+        setTimeout(startNextSpectatorRound, 2000);
+    }
+}
+
+function startNextSpectatorRound() {
+    if (!spectatorMode) return;
+    
+    // Pick new agents
+    var shuffled = DATING_AGENTS.slice().sort(function() { return Math.random() - 0.5; });
+    spectatorAgent1 = shuffled[0];
+    spectatorAgent2 = shuffled[1];
+    
+    // Update panels
+    document.getElementById('localVideoWrap').innerHTML = '<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#1a0a20,#0a0a14);flex-direction:column"><div style="font-size:5rem;margin-bottom:1rem">' + spectatorAgent1.emoji + '</div><div style="font-size:1.2rem;font-weight:700">' + spectatorAgent1.name + '</div><div style="font-size:.75rem;color:rgba(255,255,255,.4);margin-top:.3rem">' + spectatorAgent1.personality.split(',')[0] + '</div></div><div class="video-label you" style="border-color:rgba(168,85,247,.3)">' + spectatorAgent1.name + '</div>';
+    
+    document.getElementById('remoteAvatar').textContent = spectatorAgent2.emoji;
+    document.getElementById('remoteName').textContent = spectatorAgent2.name;
+    document.getElementById('remoteStatus').textContent = spectatorAgent2.personality.split(',')[0];
+    document.getElementById('partnerLabel').textContent = spectatorAgent2.name;
+    
+    var badge = document.getElementById('spectatorBadge');
+    badge.textContent = '👀 Spectating: ' + spectatorAgent1.name + ' × ' + spectatorAgent2.name + ' — Click to Pause';
+    
+    // Restart timer
+    timerSeconds = ROUND_DURATION;
+    updateTimerDisplay();
+    if (timerInterval) clearInterval(timerInterval);
+    timerInterval = setInterval(function() {
+        if (spectatorPaused) return;
+        timerSeconds--;
+        updateTimerDisplay();
+        if (timerSeconds <= 0) {
+            clearInterval(timerInterval);
+            spectatorRoundEnd();
+        }
+    }, 1000);
+    
+    startSpectatorChat();
+}
+
+function startSpectatorChat() {
+    if (aiChatInterval) clearInterval(aiChatInterval);
+    
+    var agents = [spectatorAgent1, spectatorAgent2];
+    var turnIdx = 0;
+    
+    // First message after 2 seconds
+    setTimeout(function() {
+        showAIChatBubble(agents[0], agents[0].topics[0]);
+    }, 2000);
+    
+    // Alternate every 8 seconds
+    aiChatInterval = setInterval(function() {
+        if (spectatorPaused || !spectatorMode) return;
+        turnIdx++;
+        var agent = agents[turnIdx % 2];
+        var topicIdx = Math.floor(turnIdx / 2) % agent.topics.length;
+        showAIChatBubble(agent, agent.topics[topicIdx]);
+    }, 8000);
+}
+
+function startNextRound() {
+    currentRound++;
+    roundsUsedToday++;
+    
+    if (roundsUsedToday > MAX_FREE_ROUNDS && !isPremium) {
+        showPaywall();
+        return;
+    }
+    
+    // Show transition
+    showRoundTransition();
+    
+    setTimeout(function() {
+        hideRoundTransition();
+        
+        if (aiDateMode && !spectatorMode) {
+            // AI Practice Date — pick an agent
+            var agentIdx = (currentRound - 1) % DATING_AGENTS.length;
+            currentAIAgent = DATING_AGENTS[agentIdx];
+            
+            document.getElementById('remoteAvatar').textContent = currentAIAgent.emoji;
+            document.getElementById('remoteName').textContent = currentAIAgent.name;
+            document.getElementById('remoteStatus').textContent = currentAIAgent.personality.split(',')[0];
+            document.getElementById('partnerLabel').textContent = currentAIAgent.name + ' (AI)';
+            
+            // Start AI chat simulation
+            startAIChat();
+        } else {
+            // Generate simulated partner
+            var avatarIdx = Math.floor(Math.random() * AVATARS.length);
+            var nameIdx = Math.floor(Math.random() * NAMES.length);
+            var interest1 = INTERESTS[Math.floor(Math.random() * INTERESTS.length)];
+            var interest2 = INTERESTS[Math.floor(Math.random() * INTERESTS.length)];
+            
+            document.getElementById('remoteAvatar').textContent = AVATARS[avatarIdx];
+            document.getElementById('remoteName').textContent = NAMES[nameIdx];
+            document.getElementById('remoteStatus').textContent = 'Loves ' + interest1 + ' & ' + interest2;
+            document.getElementById('partnerLabel').textContent = NAMES[nameIdx];
+        }
+        
+        document.getElementById('roundLabel').textContent = 'Round ' + currentRound + '/' + (isPremium ? '∞' : MAX_FREE_ROUNDS);
+        
+        updateUsageUI();
+        startTimer();
+        
+    }, TRANSITION_DELAY * 1000);
+}
+
+function startTimer() {
+    timerSeconds = ROUND_DURATION;
+    updateTimerDisplay();
+    
+    if (timerInterval) clearInterval(timerInterval);
+    timerInterval = setInterval(function() {
+        timerSeconds--;
+        updateTimerDisplay();
+        
+        if (timerSeconds <= 0) {
+            clearInterval(timerInterval);
+            roundEnded();
+        }
+    }, 1000);
+}
+
+function updateTimerDisplay() {
+    var min = Math.floor(timerSeconds / 60);
+    var sec = timerSeconds % 60;
+    document.getElementById('timerDisplay').textContent = min + ':' + (sec < 10 ? '0' : '') + sec;
+    
+    var pct = (timerSeconds / ROUND_DURATION) * 100;
+    document.getElementById('timerFill').style.width = pct + '%';
+    
+    // Color change in last 10 seconds
+    if (timerSeconds <= 10) {
+        document.getElementById('timerDisplay').style.color = '#ef4444';
+    } else if (timerSeconds <= 30) {
+        document.getElementById('timerDisplay').style.color = '#fbbf24';
+    } else {
+        document.getElementById('timerDisplay').style.color = '#f472b6';
+    }
+}
+
+function roundEnded() {
+    // Check mutual like
+    if (matchLikes[currentRound]) {
+        // 40% chance simulated partner also liked (varies by round)
+        var likeChance = 0.3 + Math.random() * 0.2;
+        if (Math.random() < likeChance) {
+            showMatchFound();
+            return;
+        }
+    }
+    
+    if (roundsUsedToday >= MAX_FREE_ROUNDS && !isPremium) {
+        showPaywall();
+        return;
+    }
+    
+    startNextRound();
+}
+
+function skipPartner() {
+    if (timerInterval) clearInterval(timerInterval);
+    showToast('Skipped — finding next match...');
+    
+    if (roundsUsedToday >= MAX_FREE_ROUNDS && !isPremium) {
+        showPaywall();
+        return;
+    }
+    
+    startNextRound();
+}
+
+function likePartner() {
+    matchLikes[currentRound] = true;
+    showToast('💚 You liked ' + document.getElementById('remoteName').textContent + '!');
+    playReactionAnim('💚');
+}
+
+function sendReaction(emoji) {
+    playReactionAnim(emoji);
+}
+
+function playReactionAnim(emoji) {
+    var el = document.createElement('div');
+    el.textContent = emoji;
+    el.style.cssText = 'position:fixed;font-size:3rem;z-index:500;transition:all 1.5s ease-out;pointer-events:none;left:50%;top:50%;transform:translate(-50%,-50%)';
+    document.body.appendChild(el);
+    
+    setTimeout(function() {
+        el.style.top = '20%';
+        el.style.opacity = '0';
+        el.style.transform = 'translate(-50%,-50%) scale(2)';
+    }, 50);
+    setTimeout(function() { el.remove(); }, 1600);
+}
+
+// ═══ TRANSITIONS ═══
+
+function showRoundTransition() {
+    var rt = document.getElementById('roundTransition');
+    rt.classList.add('show');
+    document.getElementById('rtTitle').textContent = currentRound === 0 ? 'Finding your first match...' : 'Round ' + (currentRound + 1);
+    document.getElementById('rtMessage').textContent = 'Get ready to meet someone new!';
+    
+    var count = TRANSITION_DELAY;
+    document.getElementById('rtCountdown').textContent = count;
+    var ci = setInterval(function() {
+        count--;
+        document.getElementById('rtCountdown').textContent = count;
+        if (count <= 0) clearInterval(ci);
+    }, 1000);
+}
+
+function hideRoundTransition() {
+    document.getElementById('roundTransition').classList.remove('show');
+}
+
+function showMatchFound() {
+    var name = document.getElementById('remoteName').textContent;
+    document.getElementById('matchMsg').textContent = 'Both you and ' + name + ' liked each other! Connect now?';
+    document.getElementById('matchResult').classList.add('show');
+    playSound('match');
+}
+
+function continueRounds() {
+    document.getElementById('matchResult').classList.remove('show');
+    if (roundsUsedToday >= MAX_FREE_ROUNDS && !isPremium) {
+        showPaywall();
+        return;
+    }
+    startNextRound();
+}
+
+function openChat() {
+    document.getElementById('matchResult').classList.remove('show');
+    toggleAlfredPanel();
+}
+
+// ═══ CONTROLS ═══
+
+function toggleMic() {
+    if (!localStream) return;
+    micOn = !micOn;
+    localStream.getAudioTracks().forEach(function(t) { t.enabled = micOn; });
+    document.getElementById('micToggle').textContent = micOn ? '🎙️ On' : '🎙️ Off';
+    showToast(micOn ? 'Mic on' : 'Mic muted');
+}
+
+function toggleCamera() {
+    if (!localStream) return;
+    cameraOn = !cameraOn;
+    localStream.getVideoTracks().forEach(function(t) { t.enabled = cameraOn; });
+    showToast(cameraOn ? 'Camera on' : 'Camera off');
+}
+
+function endSession() {
+    if (timerInterval) clearInterval(timerInterval);
+    if (aiChatInterval) clearInterval(aiChatInterval);
+    stopCamera();
+    isMatching = false;
+    aiDateMode = false;
+    spectatorMode = false;
+    spectatorPaused = false;
+    currentAIAgent = null;
+    
+    // Hide AI chat bubble
+    var bubble = document.getElementById('aiChatBubble');
+    if (bubble) bubble.classList.remove('show');
+    
+    // Hide spectator badge
+    document.getElementById('spectatorBadge').style.display = 'none';
+    
+    // Remove spectator leave button
+    var specLeave = document.getElementById('spectatorLeaveBtn');
+    if (specLeave) specLeave.remove();
+    
+    // Restore HUD buttons
+    var hudBtns = document.getElementById('dateHud').querySelectorAll('.hud-btn-date');
+    hudBtns.forEach(function(btn) { btn.style.display = ''; });
+    
+    // Restore reaction bar
+    document.getElementById('reactionBar').style.display = '';
+    
+    document.getElementById('dateView').style.display = 'none';
+    document.getElementById('roundTransition').classList.remove('show');
+    document.getElementById('matchResult').classList.remove('show');
+    document.getElementById('lobby').classList.remove('hidden');
+    document.getElementById('walletBar').style.display = 'none';
+}
+
+// ═══ PAYWALL & SUBSCRIPTIONS ═══
+
+function showPaywall() {
+    document.getElementById('paywallModal').classList.add('show');
+}
+
+function closePaywall() {
+    document.getElementById('paywallModal').classList.remove('show');
+    endSession();
+}
+
+function subscribe(plan) {
+    // Create checkout session via GoSiteMe Pay (Stripe)
+    showToast('Redirecting to GoSiteMe Pay...');
+    
+    fetch('/api/stripe.php?action=create_checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
+        body: JSON.stringify({
+            plan: plan,
+            billing_period: plan.includes('annual') ? 'annual' : (plan.includes('weekly') ? 'weekly' : 'monthly'),
+            return_url: window.location.href
+        })
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        if (data.url) {
+            window.location.href = data.url;
+        } else {
+            showToast('Please log in to subscribe');
+            window.location.href = '/dashboard.php?redirect=' + encodeURIComponent(window.location.pathname);
+        }
+    })
+    .catch(function() {
+        showToast('Connection error — try again');
+    });
+}
+
+// ═══ AI DATE CHAT SIMULATION ═══
+
+function showAIChatBubble(agent, text) {
+    var bubble = document.getElementById('aiChatBubble');
+    var nameEl = document.getElementById('aiBubbleName');
+    var textEl = document.getElementById('aiBubbleText');
+    
+    nameEl.textContent = agent.emoji + ' ' + agent.name;
+    textEl.textContent = '';
+    bubble.classList.add('show');
+    
+    // Typewriter effect
+    var i = 0;
+    var typeInterval = setInterval(function() {
+        if (i < text.length) {
+            textEl.textContent += text.charAt(i);
+            i++;
+        } else {
+            clearInterval(typeInterval);
+        }
+    }, 30);
+    
+    // Auto-hide after 7 seconds
+    setTimeout(function() {
+        bubble.classList.remove('show');
+    }, 7000);
+}
+
+function startAIChat() {
+    if (aiChatInterval) clearInterval(aiChatInterval);
+    if (!currentAIAgent) return;
+    
+    var agent = currentAIAgent;
+    var topicIdx = 0;
+    
+    // First message after 3 seconds
+    setTimeout(function() {
+        if (currentAIAgent === agent) {
+            showAIChatBubble(agent, agent.topics[topicIdx]);
+        }
+    }, 3000);
+    
+    // New topic every 20 seconds
+    aiChatInterval = setInterval(function() {
+        topicIdx++;
+        if (topicIdx >= agent.topics.length) topicIdx = 0;
+        if (currentAIAgent === agent) {
+            showAIChatBubble(agent, agent.topics[topicIdx]);
+        }
+    }, 20000);
+}
+
+// ═══ SOL WALLET ═══
+
+function connectWallet() {
+    if (walletAddress) {
+        showToast('Wallet: ' + walletAddress.substring(0, 6) + '...' + walletAddress.substring(walletAddress.length - 4));
+        return;
+    }
+    
+    // Try Phantom
+    if (window.solana && window.solana.isPhantom) {
+        window.solana.connect().then(function(resp) {
+            walletAddress = resp.publicKey.toString();
+            updateWalletUI();
+            showToast('Wallet connected!');
+            
+            // Register with backend
+            fetch('/pay/api/crypto-api.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                credentials: 'same-origin',
+                body: 'action=wallet.connect&wallet_address=' + encodeURIComponent(walletAddress) + '&label=Speed+Dating'
+            }).catch(function() {});
+            
+        }).catch(function() {
+            showToast('Wallet connection cancelled');
+        });
+    }
+    // Try Solflare
+    else if (window.solflare) {
+        window.solflare.connect().then(function() {
+            walletAddress = window.solflare.publicKey.toString();
+            updateWalletUI();
+            showToast('Wallet connected!');
+        }).catch(function() {
+            showToast('Wallet connection cancelled');
+        });
+    }
+    else {
+        showToast('Install Phantom or Solflare wallet extension');
+    }
+}
+
+function updateWalletUI() {
+    if (!walletAddress) return;
+    var label = document.getElementById('walletLabel');
+    label.innerHTML = '<span class="wallet-addr">' + walletAddress.substring(0, 4) + '...' + walletAddress.substring(walletAddress.length - 4) + '</span>';
+    
+    // Fetch balance
+    fetch('/pay/api/crypto-api.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        credentials: 'same-origin',
+        body: 'action=wallet.balance&wallet_address=' + encodeURIComponent(walletAddress)
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        if (data.success && data.balance !== undefined) {
+            label.innerHTML = '<span class="wallet-bal">◎ ' + parseFloat(data.balance).toFixed(2) + '</span> <span class="wallet-addr">' + walletAddress.substring(0, 4) + '...' + walletAddress.substring(walletAddress.length - 4) + '</span>';
+        }
+    })
+    .catch(function() {});
+}
+
+// ═══ UI HELPERS ═══
+
+function updateUsageUI() {
+    var used = Math.min(roundsUsedToday, MAX_FREE_ROUNDS);
+    document.getElementById('roundsUsed').textContent = used + '/' + (isPremium ? '∞' : MAX_FREE_ROUNDS);
+    document.getElementById('usageLabel').textContent = used + ' / ' + (isPremium ? '∞' : MAX_FREE_ROUNDS);
+    document.getElementById('usageFill').style.width = (isPremium ? 0 : (used / MAX_FREE_ROUNDS * 100)) + '%';
+}
+
+function showToast(msg) {
+    var toast = document.getElementById('toast');
+    toast.textContent = msg;
+    toast.classList.add('visible');
+    setTimeout(function() { toast.classList.remove('visible'); }, 2500);
+}
+
+// ═══ AUDIO ═══
+
+function playSound(type) {
+    try {
+        var ctx = new (window.AudioContext || window.webkitAudioContext)();
+        var osc = ctx.createOscillator();
+        var gain = ctx.createGain();
+        osc.connect(gain); gain.connect(ctx.destination);
+        
+        if (type === 'match') {
+            [523,659,784,1047,1319].forEach(function(f,i){
+                var o=ctx.createOscillator(),g=ctx.createGain();
+                o.connect(g);g.connect(ctx.destination);
+                o.frequency.value=f;o.type='sine';g.gain.value=0.1;
+                g.gain.exponentialRampToValueAtTime(0.01,ctx.currentTime+i*0.15+0.3);
+                o.start(ctx.currentTime+i*0.15);o.stop(ctx.currentTime+i*0.15+0.3);
+            });
+        } else if (type === 'tick') {
+            osc.frequency.value = 800; osc.type = 'sine';
+            gain.gain.value = 0.05;
+            gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.05);
+            osc.start(); osc.stop(ctx.currentTime + 0.05);
+        }
+    } catch(e) {}
+}
+
+// ═══ VOICE COMMANDS ═══
+
+var SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+var voiceRecognition = null;
+var voiceActive = false;
+
+function speak(text) {
+    if (!voiceActive) return;
+    try {
+        var u = new SpeechSynthesisUtterance(text);
+        u.rate = 1; u.pitch = 1; u.volume = 0.8;
+        speechSynthesis.speak(u);
+    } catch(e) {}
+}
+
+function updateVoiceCommandsButton() {
+    var btn = document.getElementById('voiceCommandToggle');
+    if (!btn) return;
+    btn.textContent = voiceActive ? '🗣️ Cmd On' : '🗣️ Cmd Off';
+}
+
+function toggleVoiceCommands() {
+    if (!SpeechRec) {
+        showToast('Voice commands not supported in this browser');
+        return;
+    }
+
+    if (voiceActive) {
+        stopVoiceCommands();
+        showToast('Voice commands off');
+    } else {
+        startVoiceCommands();
+        showToast('Voice commands on');
+    }
+}
+
+function startVoiceCommands() {
+    if (!SpeechRec || voiceActive) return;
+    voiceActive = true;
+    updateVoiceCommandsButton();
+    
+    voiceRecognition = new SpeechRec();
+    voiceRecognition.lang = 'en-US';
+    voiceRecognition.continuous = true;
+    voiceRecognition.interimResults = false;
+    
+    voiceRecognition.onresult = function(event) {
+        var transcript = event.results[event.results.length - 1][0].transcript.trim().toLowerCase();
+        handleVoiceCmd(transcript);
+    };
+    voiceRecognition.onend = function() { if (voiceActive) try { voiceRecognition.start(); } catch(e){} };
+    voiceRecognition.onerror = function() { if (voiceActive) setTimeout(function(){ try { voiceRecognition.start(); } catch(e){} }, 500); };
+    
+    try { voiceRecognition.start(); } catch(e) {}
+}
+
+function stopVoiceCommands() {
+    voiceActive = false;
+    if (voiceRecognition) try { voiceRecognition.stop(); } catch(e) {}
+    updateVoiceCommandsButton();
+}
+
+function handleVoiceCmd(cmd) {
+    if (cmd.match(/\b(skip|next|pass)\b/)) { skipPartner(); speak('Skipping to next match'); }
+    else if (cmd.match(/\b(like|love|yes|heart)\b/)) { likePartner(); speak('Liked!'); }
+    else if (cmd.match(/\b(mute|mic off)\b/)) { micOn = true; toggleMic(); speak('Muted'); }
+    else if (cmd.match(/\b(unmute|mic on)\b/)) { micOn = false; toggleMic(); speak('Unmuted'); }
+    else if (cmd.match(/\b(camera off|hide)\b/)) { cameraOn = true; toggleCamera(); }
+    else if (cmd.match(/\b(camera on|show)\b/)) { cameraOn = false; toggleCamera(); }
+    else if (cmd.match(/\b(leave|exit|quit|end)\b/)) { endSession(); speak('Session ended'); }
+    else if (cmd.match(/\bfilter\b.*\b(hearts|heart)\b/)) { setFilter('hearts'); }
+    else if (cmd.match(/\bfilter\b.*\b(sparkle)\b/)) { setFilter('sparkle'); }
+    else if (cmd.match(/\bfilter\b.*\b(glow)\b/)) { setFilter('glow'); }
+    else if (cmd.match(/\bfilter\b.*\b(neon)\b/)) { setFilter('neon'); }
+    else if (cmd.match(/\bfilter\b.*\b(none|off|remove)\b/)) { setFilter('none'); }
+    else if (cmd.match(/\b(time|timer)\b/)) {
+        speak(Math.floor(timerSeconds / 60) + ' minutes and ' + (timerSeconds % 60) + ' seconds remaining');
+    }
+    else if (cmd.match(/\b(help|commands)\b/)) {
+        speak('Commands: skip, like, mute, unmute, camera on, camera off, filter hearts, filter sparkle, filter glow, filter neon, filter none, time, leave, spectate, ai date.');
+    }
+    else if (cmd.match(/\b(spectate|watch|autopilot)\b/)) { startSpectator(); speak('Starting spectator mode'); }
+    else if (cmd.match(/\b(ai date|practice|ai)\b/)) { endSession(); setTimeout(function() { startMatching('ai'); }, 500); speak('Starting AI practice date'); }
+}
+
+// ═══ DAILY USAGE PERSISTENCE ═══
+
+function loadDailyUsage() {
+    try {
+        var stored = localStorage.getItem('gsm_sd_usage');
+        if (stored) {
+            var data = JSON.parse(stored);
+            var today = new Date().toISOString().split('T')[0];
+            if (data.date === today) {
+                roundsUsedToday = data.count;
+            } else {
+                roundsUsedToday = 0;
+            }
+        }
+    } catch(e) { roundsUsedToday = 0; }
+    updateUsageUI();
+}
+
+function saveDailyUsage() {
+    try {
+        localStorage.setItem('gsm_sd_usage', JSON.stringify({
+            date: new Date().toISOString().split('T')[0],
+            count: roundsUsedToday
+        }));
+    } catch(e) {}
+}
+
+// Check subscription status + opt-in bonus
+function checkSubscription() {
+    fetch('/api/stripe.php?action=status', { credentials: 'same-origin' })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        if (data.success) {
+            // Check premium subscription
+            if (data.subscription) {
+                var plan = data.subscription.plan || '';
+                if (plan.indexOf('dating') >= 0 || plan === 'professional' || plan === 'enterprise' || plan === 'enterprise_plus') {
+                    isPremium = true;
+                    updateUsageUI();
+                    showToast('Premium active — unlimited rounds!');
+                }
+            }
+            // Check if user is logged in / opted-in — they get 20 free rounds
+            if (data.logged_in || data.opted_in || data.user_id) {
+                isOptedIn = true;
+                MAX_FREE_ROUNDS = OPTIN_FREE_ROUNDS;
+                updateUsageUI();
+                // Update lobby UI
+                document.getElementById('roundsUsed').textContent = Math.min(roundsUsedToday, MAX_FREE_ROUNDS) + '/' + MAX_FREE_ROUNDS;
+                var badge = document.createElement('span');
+                badge.className = 'opted-in-badge';
+                badge.textContent = '20 FREE';
+                var statEl = document.getElementById('roundsUsed');
+                if (statEl && !statEl.querySelector('.opted-in-badge')) {
+                    statEl.parentNode.appendChild(badge);
+                }
+            }
+        }
+    })
+    .catch(function() {});
+}
+
+// ═══ SIMULATE ONLINE COUNTS ═══
+
+function updateLobbyStats() {
+    document.getElementById('onlineCount').textContent = Math.floor(80 + Math.random() * 120);
+    document.getElementById('matchCount').textContent = Math.floor(500 + Math.random() * 300);
+    setInterval(function() {
+        document.getElementById('onlineCount').textContent = Math.floor(80 + Math.random() * 120);
+    }, 15000);
+}
+
+// ═══ INIT ═══
+
+function init() {
+    loadDailyUsage();
+    updateLobbyStats();
+    checkSubscription();
+    
+    // Auto-connect wallet if previously connected
+    if (window.solana && window.solana.isPhantom && window.solana.isConnected) {
+        window.solana.connect({ onlyIfTrusted: true }).then(function(resp) {
+            walletAddress = resp.publicKey.toString();
+            updateWalletUI();
+        }).catch(function() {});
+    }
+    
+    // Save usage on unload
+    window.addEventListener('beforeunload', saveDailyUsage);
+    
+    // Start voice commands when in a date
+    var origStart = startMatching;
+    startMatching = function(mode) {
+        origStart(mode);
+        updateVoiceCommandsButton();
+    };
+    var origEnd = endSession;
+    endSession = function() {
+        stopVoiceCommands();
+        saveDailyUsage();
+        origEnd();
+    };
+    
+    // Check for autopilot/spectator URL param
+    if (window.location.search.indexOf('autopilot=1') >= 0) {
+        setTimeout(function() { startSpectator(); }, 800);
+    }
+    
+    setTimeout(function() {
+        document.getElementById('loading').classList.add('hidden');
+    }, 600);
+}
+
+// Expose functions
+window.startMatching = startMatching;
+window.setFilter = setFilter;
+window.sendReaction = sendReaction;
+window.likePartner = likePartner;
+window.skipPartner = skipPartner;
+window.toggleMic = toggleMic;
+window.toggleCamera = toggleCamera;
+window.endSession = endSession;
+window.subscribe = subscribe;
+window.connectWallet = connectWallet;
+window.closePaywall = closePaywall;
+window.openChat = openChat;
+window.continueRounds = continueRounds;
+window.startSpectator = startSpectator;
+window.toggleSpectatorPause = toggleSpectatorPause;
+
+// ── Alfred Chat ──────────────────────────────────────────
+var _datingConvId = '';
+window.toggleAlfredPanel = function() {
+    var p = document.getElementById('alfredPanel');
+    var t = document.getElementById('alfredToggle');
+    p.classList.toggle('open');
+    t.style.display = p.classList.contains('open') ? 'none' : '';
+    if (p.classList.contains('open')) document.getElementById('alfredIn').focus();
+};
+window.sendAlfred = function() {
+    var input = document.getElementById('alfredIn');
+    var msg = input.value.trim();
+    if (!msg) return;
+    input.value = '';
+    var msgs = document.getElementById('alfredMsgs');
+    msgs.innerHTML += '<div class="amsg user">' + msg.replace(/</g,'&lt;') + '</div>';
+    msgs.scrollTop = msgs.scrollHeight;
+
+    var ctx = 'Speed Dating app. Round: ' + currentRound + '. Mode: ' + dateMode + '.';
+    if (currentAIAgent) ctx += ' AI date with ' + currentAIAgent.name + ' (' + currentAIAgent.personality + ').';
+    ctx += ' Rounds used today: ' + roundsUsedToday + '/' + MAX_FREE_ROUNDS + '. Premium: ' + isPremium + '.';
+    ctx += ' You are a dating coach — give conversation tips, opening lines, read body language, and boost confidence.';
+
+    msgs.innerHTML += '<div class="amsg alfred" id="alfredTyping">Thinking…</div>';
+    msgs.scrollTop = msgs.scrollHeight;
+
+    fetch('/api/alfred-chat.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
+        body: JSON.stringify({
+            message: msg,
+            agent: 'alfred',
+            context: ctx,
+            page_url: '/vr/speed-dating/',
+            conv_id: _datingConvId || '',
+            model: 'auto'
+        })
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        var el = document.getElementById('alfredTyping');
+        if (el) el.remove();
+        if (data.conv_id) _datingConvId = data.conv_id;
+        var reply = (data.reply || data.response || 'No response').replace(/</g, '&lt;').replace(/\n/g, '<br>');
+        msgs.innerHTML += '<div class="amsg alfred">' + reply + '</div>';
+        msgs.scrollTop = msgs.scrollHeight;
+    })
+    .catch(function() {
+        var el = document.getElementById('alfredTyping');
+        if (el) el.textContent = 'Connection error. Try again.';
+    });
+};
+
+init();
+
+})();
+</script>
+<script src="/assets/js/agent-presence.js" data-game="speed-dating" defer></script>
+<script src="/vr/shared/heartbeat.js"></script>
+</body>
+</html>

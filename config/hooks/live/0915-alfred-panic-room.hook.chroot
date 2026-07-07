@@ -1,0 +1,15 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Alfred Panic Room: Enable SysRq for manual self-destruct
+set +e
+
+echo "[PANIC ROOM] Enabling Kernel SysRq Kill-Switches..."
+mkdir -p /etc/sysctl.d
+cat > /etc/sysctl.d/99-panic.conf << 'EOF'
+# Enable all SysRq functions (1). Use Alt+SysRq+C to trigger a kernel panic and memory dump.
+kernel.sysrq = 1
+EOF
+
+# Note: In a live system, Alt+SysRq+C drops the OS instantly.

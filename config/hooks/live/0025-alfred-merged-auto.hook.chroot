@@ -1,0 +1,64 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+echo "==== ALFRED WAYLAND ENFORCER HOOK ===="
+mkdir -p /etc/sddm.conf.d || true
+
+if [ -f /usr/share/wayland-sessions/plasma.desktop ]; then
+    SESSION_NAME="plasma"
+else
+    SESSION_NAME="plasmawayland"
+fi
+
+cat > /etc/sddm.conf.d/10-wayland.conf << INNEREOF
+[Autologin]
+Session=${SESSION_NAME}
+INNEREOF
+
+if [ -d /usr/share/xsessions ]; then
+    mkdir -p /usr/share/xsessions-disabled || true
+[ -e /usr/share/xsessions/plasma.desktop ] &&     mv /usr/share/xsessions/plasma.desktop /usr/share/xsessions-disabled/ 2>/dev/null || true
+fi
+
+echo "Pure Wayland migration enforced using session: ${SESSION_NAME}"
+
+
+# --- BEGIN MERGED CONTENT FROM: 0025-omega-bypass.hook.chroot ---
+#!/bin/bash
+set -x
+echo "[0999] OMEGA BYPASS: Injecting ZFS DKMS kernel compatibility bypass"
+
+ZFS_SRC="/usr/src/zfs-2.4.3"
+
+if [ -f "$ZFS_SRC/configure" ]; then
+    sed -i 's/kernel build directory is not supported/kernel build directory IS FORGED/' "$ZFS_SRC/configure"
+    sed -i 's/as_fn_error.*ZFS is not designed for 32-bit kernels.*/echo "[0999] BYPASSING ZFS 32-bit kernel trap!"/' "$ZFS_SRC/configure"
+fi
+
+if [ -f "$ZFS_SRC/include/os/linux/spl/sys/kmem.h" ]; then
+    sed -i 's/#error "This version of ZFS is only supported on Linux 3.10 to 6.11"/#warning "OMEGA: Bypassing kernel version check!"/' "$ZFS_SRC/include/os/linux/spl/sys/kmem.h"
+fi
+
+echo "[0999] OMEGA BYPASS: ZFS DKMS bypass injected"
+
+# --- END MERGED CONTENT FROM: 0025-omega-bypass.hook.chroot ---
+
+
+#!/bin/bash
+set -x
+echo "[0999] OMEGA BYPASS: Injecting ZFS DKMS kernel compatibility bypass"
+
+ZFS_SRC="/usr/src/zfs-2.4.3"
+
+if [ -f "$ZFS_SRC/configure" ]; then
+    sed -i 's/kernel build directory is not supported/kernel build directory IS FORGED/' "$ZFS_SRC/configure"
+    sed -i 's/as_fn_error.*ZFS is not designed for 32-bit kernels.*/echo "[0999] BYPASSING ZFS 32-bit kernel trap!"/' "$ZFS_SRC/configure"
+fi
+
+if [ -f "$ZFS_SRC/include/os/linux/spl/sys/kmem.h" ]; then
+    sed -i 's/#error "This version of ZFS is only supported on Linux 3.10 to 6.11"/#warning "OMEGA: Bypassing kernel version check!"/' "$ZFS_SRC/include/os/linux/spl/sys/kmem.h"
+fi
+
+echo "[0999] OMEGA BYPASS: ZFS DKMS bypass injected"

@@ -1,0 +1,103 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Hook 0258 — systemd units for Alfred-LLM + Alfred-Bridge
+set +e
+
+echo "═══════════════════════════════════════════════════════"
+echo "  ALFRED-LLM systemd — auto-start brain on boot"
+echo "═══════════════════════════════════════════════════════"
+
+mkdir -p /etc/systemd/system /etc/alfred-llm || true
+
+# Dedicated low-priv user
+if ! getent passwd alfred-llm >/dev/null; then
+  useradd --system --no-create-home --shell /usr/sbin/nologin alfred-llm || true 2>/dev/null || true
+fi
+chown -R alfred-llm:alfred-llm /opt/alfred-models /etc/alfred-llm 2>/dev/null || true
+
+# llama-server: serves the active model on :8080 (haiku tier)
+cat > /etc/systemd/system/alfred-llm@.service <<'UNIT'
+[Unit]
+Description=Alfred-LLM (%i tier) — local language model server
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=alfred-llm
+Group=alfred-llm
+EnvironmentFile=-/etc/alfred-llm/%i.env
+ExecStart=/usr/local/bin/llama-server-auto \
+  --model /opt/alfred-models/alfred-%i.gguf \
+  --host 127.0.0.1 \
+  --port ${ALFRED_LLM_PORT} \
+  --ctx-size ${ALFRED_LLM_CTX:-8192} \
+  --threads ${ALFRED_LLM_THREADS:-4} \
+  --n-gpu-layers ${ALFRED_LLM_NGL:-0} \
+  --jinja
+Restart=on-failure
+RestartSec=5
+# Hardening
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+ReadWritePaths=/var/log/alfred-llm
+
+[Install]
+WantedBy=multi-user.target
+UNIT
+
+# Per-tier env files (port assignments)
+cat > /etc/alfred-llm/haiku.env  <<'EOF'
+ALFRED_LLM_PORT=8080
+ALFRED_LLM_CTX=8192
+EOF
+cat > /etc/alfred-llm/sonnet.env <<'EOF'
+ALFRED_LLM_PORT=8081
+ALFRED_LLM_CTX=8192
+EOF
+cat > /etc/alfred-llm/opus.env   <<'EOF'
+ALFRED_LLM_PORT=8082
+ALFRED_LLM_CTX=16384
+EOF
+cat > /etc/alfred-llm/opus-iq3.env <<'EOF'
+ALFRED_LLM_PORT=8082
+ALFRED_LLM_CTX=16384
+EOF
+
+# Bridge: LiteLLM Anthropic↔OpenAI on :4000
+cat > /etc/systemd/system/alfred-bridge.service <<'UNIT'
+[Unit]
+Description=Alfred-Bridge — Anthropic compat layer (LiteLLM)
+After=alfred-llm@haiku.service
+Wants=alfred-llm@haiku.service
+
+[Service]
+Type=simple
+User=alfred-llm
+Group=alfred-llm
+ExecStart=/usr/local/bin/litellm --config /etc/alfred-llm/litellm.yaml
+Restart=on-failure
+RestartSec=5
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+
+[Install]
+WantedBy=multi-user.target
+UNIT
+
+mkdir -p /var/log/alfred-llm || true
+chown alfred-llm:alfred-llm /var/log/alfred-llm || true
+
+# Enable Haiku by default (works on every machine), bridge always on
+systemctl enable alfred-llm || true || true@haiku.service 2>/dev/null || true
+systemctl enable alfred-bridge || true || true.service 2>/dev/null || true
+
+echo "[SYSTEMD] alfred-llm@haiku + alfred-bridge enabled for boot"
+
+exit 0

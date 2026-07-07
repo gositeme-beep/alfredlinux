@@ -1,0 +1,73 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <!-- Background gradient: deep navy to royal blue -->
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0f0c29"/>
+      <stop offset="50%" stop-color="#1a1a4e"/>
+      <stop offset="100%" stop-color="#24243e"/>
+    </linearGradient>
+    <!-- Accent gradient: electric blue to cyan -->
+    <linearGradient id="accent" x1="0" y1="0" x2="0.5" y2="1">
+      <stop offset="0%" stop-color="#667eea"/>
+      <stop offset="100%" stop-color="#00d2ff"/>
+    </linearGradient>
+    <!-- Shield inner glow -->
+    <radialGradient id="glow" cx="0.5" cy="0.4" r="0.6">
+      <stop offset="0%" stop-color="#667eea" stop-opacity="0.25"/>
+      <stop offset="100%" stop-color="#0f0c29" stop-opacity="0"/>
+    </radialGradient>
+    <!-- Drop shadow -->
+    <filter id="shadow" x="-10%" y="-10%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="4" stdDeviation="12" flood-color="#000" flood-opacity="0.5"/>
+    </filter>
+    <!-- Inner light -->
+    <filter id="innerLight" x="-5%" y="-5%" width="110%" height="110%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="3" result="blur"/>
+      <feOffset in="blur" dx="0" dy="2" result="offsetBlur"/>
+      <feComposite in="SourceGraphic" in2="offsetBlur" operator="over"/>
+    </filter>
+  </defs>
+
+  <!-- Background rounded square -->
+  <rect x="16" y="16" width="480" height="480" rx="96" ry="96" fill="url(#bg)"/>
+
+  <!-- Subtle inner glow -->
+  <rect x="16" y="16" width="480" height="480" rx="96" ry="96" fill="url(#glow)"/>
+
+  <!-- Globe/compass circle -->
+  <circle cx="256" cy="240" r="130" fill="none" stroke="url(#accent)" stroke-width="3.5" opacity="0.5" filter="url(#shadow)"/>
+
+  <!-- Globe latitude lines -->
+  <ellipse cx="256" cy="240" rx="130" ry="50" fill="none" stroke="url(#accent)" stroke-width="1.8" opacity="0.3"/>
+  <ellipse cx="256" cy="240" rx="130" ry="90" fill="none" stroke="url(#accent)" stroke-width="1.8" opacity="0.25"/>
+
+  <!-- Globe longitude lines -->
+  <ellipse cx="256" cy="240" rx="50" ry="130" fill="none" stroke="url(#accent)" stroke-width="1.8" opacity="0.3"/>
+  <ellipse cx="256" cy="240" rx="90" ry="130" fill="none" stroke="url(#accent)" stroke-width="1.8" opacity="0.25"/>
+
+  <!-- Center equator -->
+  <line x1="126" y1="240" x2="386" y2="240" stroke="url(#accent)" stroke-width="1.8" opacity="0.3"/>
+  <!-- Center meridian -->
+  <line x1="256" y1="110" x2="256" y2="370" stroke="url(#accent)" stroke-width="1.8" opacity="0.3"/>
+
+  <!-- Shield overlay (security symbol) -->
+  <path d="M256 130 L330 170 L330 260 C330 310 296 350 256 370 C216 350 182 310 182 260 L182 170 Z"
+        fill="none" stroke="url(#accent)" stroke-width="4" opacity="0.7" filter="url(#shadow)"/>
+
+  <!-- Shield fill with transparency -->
+  <path d="M256 138 L324 175 L324 258 C324 305 293 342 256 361 C219 342 188 305 188 258 L188 175 Z"
+        fill="url(#accent)" opacity="0.12"/>
+
+  <!-- "A" monogram inside shield -->
+  <text x="256" y="280" font-family="'SF Pro Display', 'Segoe UI', 'Helvetica Neue', Arial, sans-serif"
+        font-size="120" font-weight="800" fill="url(#accent)" text-anchor="middle"
+        letter-spacing="-4" filter="url(#shadow)">A</text>
+
+  <!-- Bottom text: ALFRED -->
+  <text x="256" y="440" font-family="'SF Pro Display', 'Segoe UI', 'Helvetica Neue', Arial, sans-serif"
+        font-size="42" font-weight="700" fill="#ffffff" text-anchor="middle"
+        letter-spacing="14" opacity="0.85">ALFRED</text>
+
+  <!-- Subtle bottom accent line -->
+  <line x1="170" y1="458" x2="342" y2="458" stroke="url(#accent)" stroke-width="2" opacity="0.4" stroke-linecap="round"/>
+</svg>

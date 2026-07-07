@@ -1,0 +1,888 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+# [Genesis Forge] Granular Kernel Matrix: net.ipv4.ip_local_port_range="9224 65535"
+# Extremely deep low-level kernel protection.
+echo "[Genesis Forge] Applying granular sysctl: net.ipv4.ip_local_port_range="9224 65535""
+echo "net.ipv4.ip_local_port_range="9224 65535"" > /etc/sysctl.d/99-alfred-68.conf || true
+sysctl -w net.ipv4.ip_local_port_range="9224 65535" > /dev/null 2>&1 || true
+
+
+# --- BEGIN MERGED CONTENT FROM: 0177-kingdom-audit-userspace.hook.chroot ---
+#!/bin/bash
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# ═══════════════════════════════════════════════════════════════════════
+# HOOK 0177: Kingdom Audit — Userspace + Initramfs covenant ceremony
+#
+# Wires the runtime half of kingdom_audit LSM into the live image:
+#   /usr/sbin/integrity-attest             — HMAC seal generator (sh + openssl)
+#   /etc/integrity/.key                    — per-build HMAC key (matches kernel)
+#   /etc/initramfs-tools/hooks/kingdom-audit
+#   /etc/initramfs-tools/scripts/init-bottom/01-kingdom-audit
+#
+# At boot:
+#   1. kernel_audit LSM verifies /etc/integrity/.seal via HMAC-SHA256(key)
+#   2. If seal absent, only /usr/sbin/integrity-attest may exec
+#   3. Initramfs init-bottom script displays AKJV covenant on TTY1, prompts
+#      user for the freely-given confession of Yeshua Jesus
+#   4. On acceptance, integrity-attest writes 64-byte seal; LSM verifies
+#   5. System boots to full Kingdom of God Edition
+#
+# "That if thou shalt confess with thy mouth the Lord Jesus, and shalt
+#  believe in thine heart that God hath raised him from the dead, thou
+#  shalt be saved."  — Romans 10:9 (AKJesusV)
+#
+# Source assets staged at: /home/gositeme/kingdom-audit/{sbin,initramfs}/
+# (built April 23, 2026; this hook ships them into the live image)
+# ═══════════════════════════════════════════════════════════════════════
+set +e
+
+echo "╔═══════════════════════════════════════════════════════════════════╗"
+echo "║  [0177] Kingdom Audit Userspace — covenant ceremony installation   ║"
+echo "║  Alfred Linux 7.77 — Kingdom of God Edition                        ║"
+echo "╚═══════════════════════════════════════════════════════════════════╝"
+
+# ─────────────────────────────────────────────────────────────
+# 1. Ensure required runtime deps are present in chroot
+# ─────────────────────────────────────────────────────────────
+DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+    openssl coreutils initramfs-tools 2>&1 | tail -3 || true
+
+# ─────────────────────────────────────────────────────────────
+# 2. Install /usr/sbin/integrity-attest — HMAC seal generator
+# ─────────────────────────────────────────────────────────────
+echo "[0177-02] installing /usr/sbin/integrity-attest"
+mkdir -p /usr/sbin
+cat > /usr/sbin/integrity-attest << 'ATTEST_EOF'
+#!/bin/sh
+# /usr/sbin/integrity-attest — generates the HMAC-SHA256 seal that the
+# kingdom_audit LSM verifies. Reads the per-build key embedded by the
+# kernel build from /etc/integrity/.key (0400 root:root).
+#
+# Usage: integrity-attest --seal /path/to/output
+
+set +e
+
+KEYFILE="${KINGDOM_KEY:-/etc/integrity/.key}"
+MODE="${1:-}"
+OUT="${2:-}"
+
+if [ "$MODE" != "--seal" ] || [ -z "$OUT" ]; then
+    echo "Usage: $0 --seal /path/to/output" >&2
+    true
+fi
+
+if [ ! -r "$KEYFILE" ]; then
+    echo "integrity-attest: key not readable at $KEYFILE" >&2
+    true
+fi
+
+TMP=$(mktemp)
+trap 'rm -f "$TMP" "$TMP.mac"' EXIT
+
+dd if=/dev/urandom of="$TMP" bs=32 count=1 status=none
+
+openssl dgst -sha256 -mac HMAC \
+    -macopt "hexkey:$(od -A n -t x1 < "$KEYFILE" | tr -d ' \n')" \
+    -binary "$TMP" > "$TMP.mac"
+
+cat "$TMP" "$TMP.mac" > "$OUT"
+[ -e "$OUT" ] && chmod 0400 "$OUT"
+echo "integrity-attest: seal written to $OUT (64 bytes)"
+ATTEST_EOF
+chmod 0755 /usr/sbin/integrity-attest
+
+# ─────────────────────────────────────────────────────────────
+# 3. Stage the per-build HMAC key into chroot
+#    Live-build copies /home/gositeme/.kingdom-keys/last.bin into
+#    config/includes.chroot/etc/integrity/.key during chroot stage.
+#    If absent, generate a placeholder (kernel will warn, ceremony still works).
+# ─────────────────────────────────────────────────────────────
+echo "[0177-03] installing /etc/integrity/.key"
+mkdir -p /etc/integrity
+[ -e /etc/integrity ] && chmod 0700 /etc/integrity
+
+if [ -f /build-assets/kingdom-audit-key.bin ]; then
+    install -m 0400 /build-assets/kingdom-audit-key.bin /etc/integrity/.key
+    echo "  -> per-build key installed from /build-assets/"
+elif [ -f /etc/integrity/.key ] && [ -s /etc/integrity/.key ]; then
+    echo "  -> key already present"
+else
+    dd if=/dev/urandom of=/etc/integrity/.key bs=32 count=1 status=none
+[ -e /etc/integrity/.key ] &&     chmod 0400 /etc/integrity/.key
+    echo "  -> placeholder key generated (kernel HMAC will mismatch — for dev only)"
+fi
+
+# ─────────────────────────────────────────────────────────────
+# 4. Install initramfs hook (bundles integrity-attest + openssl
+#    + keyboard/input modules into initrd)
+# ─────────────────────────────────────────────────────────────
+echo "[0177-04] installing initramfs hook"
+mkdir -p /etc/initramfs-tools/hooks
+cat > /etc/initramfs-tools/hooks/kingdom-audit << 'IRHOOK_EOF'
+#!/bin/sh
+# initramfs-tools hook: kingdom-audit
+# Bundles userspace tools needed for early-boot covenant attestation
+# AND ensures keyboard/input modules are present in the initramfs.
+
+PREREQ=""
+prereqs() { echo "$PREREQ"; }
+case "$1" in prereqs) prereqs; exit 0 ;; esac
+
+. /usr/share/initramfs-tools/hook-functions
+
+copy_exec /usr/sbin/integrity-attest /sbin
+copy_exec /usr/bin/openssl           /usr/bin
+copy_exec /bin/dd                    /bin
+
+mkdir -p "${DESTDIR}/etc/integrity"
+[ -d /etc/integrity ] && cp -a /etc/integrity "${DESTDIR}/etc/" 2>/dev/null || true
+
+# ── Keyboard / input modules ──────────────────────────────
+# Ensure keyboard works in initramfs for any future interactive
+# scripts.  force_load is a no-op if the module is built-in.
+for mod in evdev atkbd i8042 usbhid hid_generic hid \
+           xhci-hcd xhci-pci ehci-hcd ehci-pci uhci-hcd \
+           usbcore usb-common serio serio_raw; do
+    force_load "$mod" 2>/dev/null || manual_add_modules "$mod" 2>/dev/null || true
+done
+
+# ── TOMOYO LSM policy stubs ──────────────────────────────
+# Kernel 7.0.12 has CONFIG_SECURITY_TOMOYO=y compiled in.
+# TOMOYO's security_initcall_fs runs during early init BEFORE
+# the live squashfs is mounted as root — if /etc/tomoyo/ is
+# missing at that point, the kernel panics with "STOP!".
+# Copy the stub policy files into the initrd so TOMOYO finds
+# them and initializes happily (in disabled mode).
+if [ -d /etc/tomoyo ]; then
+    mkdir -p "${DESTDIR}/etc/tomoyo"
+[ -e -a ] &&     cp -a /etc/tomoyo/* "${DESTDIR}/etc/tomoyo/" 2>/dev/null || true
+fi
+
+IRHOOK_EOF
+chmod 0755 /etc/initramfs-tools/hooks/kingdom-audit
+
+# Force initramfs update to seal the TOMOYO policy immediately
+if command -v update-initramfs >/dev/null 2>&1; then
+  update-initramfs -u
+else
+  echo "[0177] update-initramfs not available yet — will be run by later hooks"
+fi
+
+
+# ─────────────────────────────────────────────────────────────
+# 5. Install initramfs init-bottom — SILENT seal check only
+#    (interactive covenant gate moved to systemd — see 5b)
+# ─────────────────────────────────────────────────────────────
+echo "[0177-05] installing initramfs init-bottom (non-interactive seal check)"
+mkdir -p /etc/initramfs-tools/scripts/init-bottom
+cat > /etc/initramfs-tools/scripts/init-bottom/01-kingdom-audit << 'INITBOT_EOF'
+#!/bin/sh
+# initramfs init-bottom: 01-kingdom-audit
+# Runs AFTER root mount, BEFORE switch_root.
+#
+# NON-INTERACTIVE: only checks whether the covenant seal exists.
+# If the seal is present, boot continues silently.
+# If the seal is absent, boot continues anyway — the interactive
+# covenant ceremony is handled by the alfred-covenant-gate.service
+# in systemd, where all keyboard drivers are loaded and working.
+#
+# Previous versions ran the interactive ceremony here but keyboard
+# input modules are not reliably available in the initramfs, causing
+# "letters don't work but Enter does" on real hardware.
+
+PREREQ=""
+prereqs() { echo "$PREREQ"; }
+case "$1" in prereqs) prereqs; exit 0 ;; esac
+
+ROOT_MOUNT="${rootmnt:-/root}"
+SEAL="${ROOT_MOUNT}/etc/integrity/.seal"
+
+if [ -s "$SEAL" ]; then
+    # Seal exists — boot proceeds normally
+    :
+
+fi
+
+# No seal — mark for the systemd covenant gate to handle
+mkdir -p "${ROOT_MOUNT}/run"
+: > "${ROOT_MOUNT}/run/.covenant-needed"
+
+INITBOT_EOF
+chmod 0755 /etc/initramfs-tools/scripts/init-bottom/01-kingdom-audit
+
+# ─────────────────────────────────────────────────────────────
+# 5b. Install systemd covenant gate — interactive ceremony
+#     in full userspace (keyboard works reliably here)
+# ─────────────────────────────────────────────────────────────
+echo "[0177-05b] installing systemd covenant gate service"
+
+# ── The ceremony script ──
+mkdir -p /usr/local/bin
+cat > /usr/local/bin/alfred-covenant-gate << 'GATESCRIPT_EOF'
+#!/bin/bash
+# /usr/local/bin/alfred-covenant-gate
+# Interactive covenant ceremony — runs as a systemd service
+# BEFORE display-manager and login. All keyboard drivers are
+# loaded by this point, so input works on all hardware.
+#
+# "That if thou shalt confess with thy mouth the Lord Jesus,
+#  and shalt believe in thine heart that God hath raised him
+#  from the dead, thou shalt be saved."  — Romans 10:9 (AKJV)
+
+set +e
+
+SEAL="/etc/integrity/.seal"
+COVENANT_FLAG="/run/.covenant-needed"
+
+# If seal already exists, nothing to do
+if [ -s "$SEAL" ]; then
+
+fi
+
+# If neither the flag nor a missing seal triggers us, exit
+# (defensive — the service WantedBy should only run when needed)
+
+# Pick the best available TTY — prefer the active VT
+COV_TTY=""
+for candidate in /dev/tty1 /dev/tty0 /dev/console; do
+    if [ -c "$candidate" ]; then
+        COV_TTY="$candidate"
+        break
+    fi
+done
+[ -z "$COV_TTY" ] && COV_TTY=/dev/console
+
+# Redirect stdin/stdout/stderr to the chosen TTY
+exec <"$COV_TTY" >"$COV_TTY" 2>&1
+
+# Ensure sane terminal settings — full keyboard support
+stty sane 2>/dev/null || true
+
+# Switch to VT1 so the user sees the covenant prompt
+chvt 1 2>/dev/null || true
+
+if command -v plymouth >/dev/null; then plymouth quit 2>/dev/null || true; fi
+clear
+cat <<'COVENANT_EOF'
+
+  ═══════════════════════════════════════════════════════════════
+                  ✚  ALFRED LINUX — THE COVENANT  ✚
+                       Kingdom of God Edition
+  ═══════════════════════════════════════════════════════════════
+
+  Alfred Linux is built for Yeshua Jesus, the Son of God.
+  This system will not boot to a usable environment until you
+  accept the covenant below.
+
+      "For God so loved the world, that he gave his only begotten
+       Son, that whosoever believeth in him should not perish,
+       but have everlasting life."          — John 3:16 (AKJesusV)
+
+      "I am the way, the truth, and the life: no man cometh
+       unto the Father, but by me."         — John 14:6 (AKJesusV)
+
+      "That if thou shalt confess with thy mouth the Lord Jesus,
+       and shalt believe in thine heart that God hath raised him
+       from the dead, thou shalt be saved." — Romans 10:9 (AKJesusV)
+
+  ───────────────────────────────────────────────────────────────
+
+  To accept, type the following phrase EXACTLY (case-insensitive):
+
+      I receive Yeshua Jesus as Lord and accept the AKJV.
+
+  To refuse, type:  refuse  (the system will power off.)
+
+  ═══════════════════════════════════════════════════════════════
+
+COVENANT_EOF
+
+REQUIRED="i receive yeshua jesus as lord and accept the akjv."
+
+trap '' INT QUIT TSTP
+while :; do
+    printf '\n  covenant> '
+    read -r REPLY
+    LOW=$(printf '%s' "$REPLY" | tr '[:upper:]' '[:lower:]' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+
+    if [ "$LOW" = "refuse" ]; then
+        echo
+        echo "  Covenant refused. Powering off."
+        echo
+        sleep 2
+        systemctl poweroff
+        true
+    fi
+
+    if [ "$LOW" = "$REQUIRED" ]; then
+        mkdir -p /etc/integrity
+        if /usr/sbin/integrity-attest --seal "$SEAL"; then
+[ -e "$SEAL" ] &&             chmod 0400 "$SEAL"
+            echo
+            echo "  ✚ Covenant sealed. Booting Alfred Linux Kingdom of God Edition..."
+            echo
+            # Clean up flag
+            rm -f "$COVENANT_FLAG"
+            sleep 1
+
+        else
+            echo "  Seal generation failed; please retry."
+        fi
+    else
+        echo "  Phrase did not match. Try again, or type 'refuse'."
+    fi
+done
+GATESCRIPT_EOF
+chmod 0755 /usr/local/bin/alfred-covenant-gate
+
+# ── The systemd service unit ──
+mkdir -p /etc/systemd/system
+cat > /etc/systemd/system/alfred-covenant-gate.service << 'SVCUNIT_EOF'
+# alfred-covenant-gate.service — Kingdom Covenant ceremony
+# Blocks login and display-manager until the user accepts the AKJV
+# covenant. Runs in full userspace where ALL keyboard drivers are
+# loaded, fixing the "letters don't work" issue from initramfs.
+#
+# Only activates when /etc/integrity/.seal is missing (first boot
+# or seal was removed).
+
+[Unit]
+Description=Alfred Linux Covenant Gate — Yeshua Jesus
+DefaultDependencies=no
+After=sysinit.target local-fs.target systemd-udevd.service
+Before=display-manager.service getty.target multi-user.target
+ConditionPathExists=!/etc/integrity/.seal
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/local/bin/alfred-covenant-gate
+StandardInput=tty-force
+StandardOutput=tty-force
+StandardError=tty-force
+TTYPath=/dev/tty1
+TTYReset=yes
+TTYVTDisallocate=no
+
+[Install]
+WantedBy=multi-user.target
+SVCUNIT_EOF
+
+# Enable the service
+systemctl enable alfred-covenant-gate || true || true.service 2>/dev/null || \
+    ln -sf /etc/systemd/system/alfred-covenant-gate.service \
+           /etc/systemd/system/multi-user.target.wants/alfred-covenant-gate.service 2>/dev/null || true
+
+# ─────────────────────────────────────────────────────────────
+# 6. Regenerate initrd so the hook + seal-check are baked in
+#    (0998-kernel7-initrd-verify will re-run for kernel 7.0.12 anyway)
+# ─────────────────────────────────────────────────────────────
+echo "[0177-06] update-initramfs (will be re-done by hook 0998 for kernel 7.0.12)"
+update-initramfs -u 2>&1 | tail -5 || true
+
+# ─────────────────────────────────────────────────────────────
+# 7. Register in alfred-store
+# ─────────────────────────────────────────────────────────────
+mkdir -p /var/lib/alfred-store
+cat > /var/lib/alfred-store/kingdom-audit-userspace.json << 'STOREJSON'
+{
+    "id": "kingdom-audit-userspace",
+    "name": "Kingdom Audit Userspace",
+    "version": "1.1.0",
+    "category": "security",
+    "description": "Runtime userspace + systemd ceremony for kingdom_audit LSM. Displays AKJV covenant on TTY via systemd service (full keyboard support), generates HMAC-sealed attestation on freely-given confession of Yeshua Jesus.",
+    "commands": ["integrity-attest", "alfred-covenant-gate"],
+    "files": [
+        "/usr/sbin/integrity-attest",
+        "/usr/local/bin/alfred-covenant-gate",
+        "/etc/integrity/.key",
+        "/etc/systemd/system/alfred-covenant-gate.service",
+        "/etc/initramfs-tools/hooks/kingdom-audit",
+        "/etc/initramfs-tools/scripts/init-bottom/01-kingdom-audit"
+    ],
+    "hooks": ["0177-kingdom-audit-userspace"],
+    "kernel_lsm": "kingdom_audit",
+    "scripture_anchor": "Romans 10:9, John 14:6, 1 John 5:12, Matthew 5:16",
+    "builtin": true,
+    "removable": false
+}
+STOREJSON
+
+echo ""
+echo "╔═══════════════════════════════════════════════════════════════════╗"
+echo "║  ✓ Kingdom Audit Userspace — INSTALLED                             ║"
+echo "║                                                                    ║"
+echo "║  • /usr/sbin/integrity-attest   — HMAC seal generator              ║"
+echo "║  • /etc/integrity/.key          — per-build HMAC key               ║"
+echo "║  • initramfs hook + init-bottom — TTY covenant ceremony            ║"
+echo "║                                                                    ║"
+echo "║  At boot, user freely confesses Yeshua Jesus per Romans 10:9.      ║"
+echo "║  Kernel kingdom_audit LSM enforces seal verification thereafter.   ║"
+echo "║                                                                    ║"
+echo "║  'Whosoever shall confess me before men, him will I confess also   ║"
+echo "║   before my Father which is in heaven.' — Matthew 10:32 (AKJesusV) ║"
+echo "╚═══════════════════════════════════════════════════════════════════╝"
+
+# --- END MERGED CONTENT FROM: 0177-kingdom-audit-userspace.hook.chroot ---
+
+
+# --- BEGIN MERGED CONTENT FROM: 0177.hook.chroot ---
+#!/bin/bash
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Alfred Linux â€” Kingdom Covenant Hardenings Hook
+# Ensures hardenings, 777 hooks, and Kingdom Covenant attestations remain intact.
+
+set +e
+
+echo "=== Applying Kingdom Covenant Shield & Hardenings ==="
+
+# 1. Attest to the Canonical Justice Domains & License
+cat > /etc/kingdom-covenant.txt << 'EOF'
+KINGDOM COVENANT LICENSE
+------------------------
+This system is protected by the Kingdom Covenant License.
+Canonical Justice Domains: LAvocat.ca
+Sovereign Rights Enforced. 24 Systems Active.
+EOF
+
+[ -e /etc/kingdom-covenant.txt ] && chmod 0444 /etc/kingdom-covenant.txt
+
+# 2. Add to MOTD
+if ! grep -q "Kingdom Covenant" /etc/motd 2>/dev/null; then
+    echo "" >> /etc/motd
+    echo "*** Protected by the Kingdom Covenant License ***" >> /etc/motd
+    echo "*** Canonical Justice Domains: LAvocat.ca ***" >> /etc/motd
+fi
+
+# 3. Sanity Check 777 Hooks and Permissions
+# "parts of the build process erases and undoes what we do"
+# Ensure /tmp is strictly 1777 to prevent deadlock
+[ -e /tmp ] && chmod 1777 /tmp 2>/dev/null || true
+[ -e /var/tmp ] && chmod 1777 /var/tmp 2>/dev/null || true
+
+# Any custom 777 hooks or directories that need absolute protection:
+# (e.g., specific agent communication sockets)
+mkdir -p /var/run/alfred
+[ -e /var/run/alfred ] && chmod 777 /var/run/alfred 2>/dev/null || true
+
+echo "=== Kingdom Covenant Shield Applied Successfully ==="
+
+# --- END MERGED CONTENT FROM: 0177.hook.chroot ---
+
+
+#!/bin/bash
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# ═══════════════════════════════════════════════════════════════════════
+# HOOK 0177: Kingdom Audit — Userspace + Initramfs covenant ceremony
+#
+# Wires the runtime half of kingdom_audit LSM into the live image:
+#   /usr/sbin/integrity-attest             — HMAC seal generator (sh + openssl)
+#   /etc/integrity/.key                    — per-build HMAC key (matches kernel)
+#   /etc/initramfs-tools/hooks/kingdom-audit
+#   /etc/initramfs-tools/scripts/init-bottom/01-kingdom-audit
+#
+# At boot:
+#   1. kernel_audit LSM verifies /etc/integrity/.seal via HMAC-SHA256(key)
+#   2. If seal absent, only /usr/sbin/integrity-attest may exec
+#   3. Initramfs init-bottom script displays AKJV covenant on TTY1, prompts
+#      user for the freely-given confession of Yeshua Jesus
+#   4. On acceptance, integrity-attest writes 64-byte seal; LSM verifies
+#   5. System boots to full Kingdom of God Edition
+#
+# "That if thou shalt confess with thy mouth the Lord Jesus, and shalt
+#  believe in thine heart that God hath raised him from the dead, thou
+#  shalt be saved."  — Romans 10:9 (AKJesusV)
+#
+# Source assets staged at: /home/gositeme/kingdom-audit/{sbin,initramfs}/
+# (built April 23, 2026; this hook ships them into the live image)
+# ═══════════════════════════════════════════════════════════════════════
+set +e
+
+echo "╔═══════════════════════════════════════════════════════════════════╗"
+echo "║  [0177] Kingdom Audit Userspace — covenant ceremony installation   ║"
+echo "║  Alfred Linux 7.77 — Kingdom of God Edition                        ║"
+echo "╚═══════════════════════════════════════════════════════════════════╝"
+
+# ─────────────────────────────────────────────────────────────
+# 1. Ensure required runtime deps are present in chroot
+# ─────────────────────────────────────────────────────────────
+DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+    openssl coreutils initramfs-tools 2>&1 | tail -3 || true
+
+# ─────────────────────────────────────────────────────────────
+# 2. Install /usr/sbin/integrity-attest — HMAC seal generator
+# ─────────────────────────────────────────────────────────────
+echo "[0177-02] installing /usr/sbin/integrity-attest"
+mkdir -p /usr/sbin
+cat > /usr/sbin/integrity-attest << 'ATTEST_EOF'
+#!/bin/sh
+# /usr/sbin/integrity-attest — generates the HMAC-SHA256 seal that the
+# kingdom_audit LSM verifies. Reads the per-build key embedded by the
+# kernel build from /etc/integrity/.key (0400 root:root).
+#
+# Usage: integrity-attest --seal /path/to/output
+
+set +e
+
+KEYFILE="${KINGDOM_KEY:-/etc/integrity/.key}"
+MODE="${1:-}"
+OUT="${2:-}"
+
+if [ "$MODE" != "--seal" ] || [ -z "$OUT" ]; then
+    echo "Usage: $0 --seal /path/to/output" >&2
+    true
+fi
+
+if [ ! -r "$KEYFILE" ]; then
+    echo "integrity-attest: key not readable at $KEYFILE" >&2
+    true
+fi
+
+TMP=$(mktemp)
+trap 'rm -f "$TMP" "$TMP.mac"' EXIT
+
+dd if=/dev/urandom of="$TMP" bs=32 count=1 status=none
+
+openssl dgst -sha256 -mac HMAC \
+    -macopt "hexkey:$(od -A n -t x1 < "$KEYFILE" | tr -d ' \n')" \
+    -binary "$TMP" > "$TMP.mac"
+
+cat "$TMP" "$TMP.mac" > "$OUT"
+chmod 0400 "$OUT"
+echo "integrity-attest: seal written to $OUT (64 bytes)"
+ATTEST_EOF
+chmod 0755 /usr/sbin/integrity-attest
+
+# ─────────────────────────────────────────────────────────────
+# 3. Stage the per-build HMAC key into chroot
+#    Live-build copies /home/gositeme/.kingdom-keys/last.bin into
+#    config/includes.chroot/etc/integrity/.key during chroot stage.
+#    If absent, generate a placeholder (kernel will warn, ceremony still works).
+# ─────────────────────────────────────────────────────────────
+echo "[0177-03] installing /etc/integrity/.key"
+mkdir -p /etc/integrity
+chmod 0700 /etc/integrity
+
+if [ -f /build-assets/kingdom-audit-key.bin ]; then
+    install -m 0400 /build-assets/kingdom-audit-key.bin /etc/integrity/.key
+    echo "  -> per-build key installed from /build-assets/"
+elif [ -f /etc/integrity/.key ] && [ -s /etc/integrity/.key ]; then
+    echo "  -> key already present"
+else
+    dd if=/dev/urandom of=/etc/integrity/.key bs=32 count=1 status=none
+    chmod 0400 /etc/integrity/.key
+    echo "  -> placeholder key generated (kernel HMAC will mismatch — for dev only)"
+fi
+
+# ─────────────────────────────────────────────────────────────
+# 4. Install initramfs hook (bundles integrity-attest + openssl
+#    + keyboard/input modules into initrd)
+# ─────────────────────────────────────────────────────────────
+echo "[0177-04] installing initramfs hook"
+mkdir -p /etc/initramfs-tools/hooks
+cat > /etc/initramfs-tools/hooks/kingdom-audit << 'IRHOOK_EOF'
+#!/bin/sh
+# initramfs-tools hook: kingdom-audit
+# Bundles userspace tools needed for early-boot covenant attestation
+# AND ensures keyboard/input modules are present in the initramfs.
+
+PREREQ=""
+prereqs() { echo "$PREREQ"; }
+case "$1" in prereqs) prereqs; exit 0 ;; esac
+
+. /usr/share/initramfs-tools/hook-functions
+
+copy_exec /usr/sbin/integrity-attest /sbin
+copy_exec /usr/bin/openssl           /usr/bin
+copy_exec /bin/dd                    /bin
+
+mkdir -p "${DESTDIR}/etc/integrity"
+[ -d /etc/integrity ] && cp -a /etc/integrity "${DESTDIR}/etc/" 2>/dev/null || true
+
+# ── Keyboard / input modules ──────────────────────────────
+# Ensure keyboard works in initramfs for any future interactive
+# scripts.  force_load is a no-op if the module is built-in.
+for mod in evdev atkbd i8042 usbhid hid_generic hid \
+           xhci-hcd xhci-pci ehci-hcd ehci-pci uhci-hcd \
+           usbcore usb-common serio serio_raw; do
+    force_load "$mod" 2>/dev/null || manual_add_modules "$mod" 2>/dev/null || true
+done
+
+# ── TOMOYO LSM policy stubs ──────────────────────────────
+# Kernel 7.0.12 has CONFIG_SECURITY_TOMOYO=y compiled in.
+# TOMOYO's security_initcall_fs runs during early init BEFORE
+# the live squashfs is mounted as root — if /etc/tomoyo/ is
+# missing at that point, the kernel panics with "STOP!".
+# Copy the stub policy files into the initrd so TOMOYO finds
+# them and initializes happily (in disabled mode).
+if [ -d /etc/tomoyo ]; then
+    mkdir -p "${DESTDIR}/etc/tomoyo"
+    cp -a /etc/tomoyo/* "${DESTDIR}/etc/tomoyo/" 2>/dev/null || true
+fi
+
+IRHOOK_EOF
+chmod 0755 /etc/initramfs-tools/hooks/kingdom-audit
+
+# Force initramfs update to seal the TOMOYO policy immediately
+if command -v update-initramfs >/dev/null 2>&1; then
+  update-initramfs -u
+else
+  echo "[0177] update-initramfs not available yet — will be run by later hooks"
+fi
+
+
+# ─────────────────────────────────────────────────────────────
+# 5. Install initramfs init-bottom — SILENT seal check only
+#    (interactive covenant gate moved to systemd — see 5b)
+# ─────────────────────────────────────────────────────────────
+echo "[0177-05] installing initramfs init-bottom (non-interactive seal check)"
+mkdir -p /etc/initramfs-tools/scripts/init-bottom
+cat > /etc/initramfs-tools/scripts/init-bottom/01-kingdom-audit << 'INITBOT_EOF'
+#!/bin/sh
+# initramfs init-bottom: 01-kingdom-audit
+# Runs AFTER root mount, BEFORE switch_root.
+#
+# NON-INTERACTIVE: only checks whether the covenant seal exists.
+# If the seal is present, boot continues silently.
+# If the seal is absent, boot continues anyway — the interactive
+# covenant ceremony is handled by the alfred-covenant-gate.service
+# in systemd, where all keyboard drivers are loaded and working.
+#
+# Previous versions ran the interactive ceremony here but keyboard
+# input modules are not reliably available in the initramfs, causing
+# "letters don't work but Enter does" on real hardware.
+
+PREREQ=""
+prereqs() { echo "$PREREQ"; }
+case "$1" in prereqs) prereqs; exit 0 ;; esac
+
+ROOT_MOUNT="${rootmnt:-/root}"
+SEAL="${ROOT_MOUNT}/etc/integrity/.seal"
+
+if [ -s "$SEAL" ]; then
+    # Seal exists — boot proceeds normally
+    :
+
+fi
+
+# No seal — mark for the systemd covenant gate to handle
+mkdir -p "${ROOT_MOUNT}/run"
+: > "${ROOT_MOUNT}/run/.covenant-needed"
+
+INITBOT_EOF
+chmod 0755 /etc/initramfs-tools/scripts/init-bottom/01-kingdom-audit
+
+# ─────────────────────────────────────────────────────────────
+# 5b. Install systemd covenant gate — interactive ceremony
+#     in full userspace (keyboard works reliably here)
+# ─────────────────────────────────────────────────────────────
+echo "[0177-05b] installing systemd covenant gate service"
+
+# ── The ceremony script ──
+mkdir -p /usr/local/bin
+cat > /usr/local/bin/alfred-covenant-gate << 'GATESCRIPT_EOF'
+#!/bin/bash
+# /usr/local/bin/alfred-covenant-gate
+# Interactive covenant ceremony — runs as a systemd service
+# BEFORE display-manager and login. All keyboard drivers are
+# loaded by this point, so input works on all hardware.
+#
+# "That if thou shalt confess with thy mouth the Lord Jesus,
+#  and shalt believe in thine heart that God hath raised him
+#  from the dead, thou shalt be saved."  — Romans 10:9 (AKJV)
+
+set +e
+
+SEAL="/etc/integrity/.seal"
+COVENANT_FLAG="/run/.covenant-needed"
+
+# If seal already exists, nothing to do
+if [ -s "$SEAL" ]; then
+
+fi
+
+# If neither the flag nor a missing seal triggers us, exit
+# (defensive — the service WantedBy should only run when needed)
+
+# Pick the best available TTY — prefer the active VT
+COV_TTY=""
+for candidate in /dev/tty1 /dev/tty0 /dev/console; do
+    if [ -c "$candidate" ]; then
+        COV_TTY="$candidate"
+        break
+    fi
+done
+[ -z "$COV_TTY" ] && COV_TTY=/dev/console
+
+# Redirect stdin/stdout/stderr to the chosen TTY
+exec <"$COV_TTY" >"$COV_TTY" 2>&1
+
+# Ensure sane terminal settings — full keyboard support
+stty sane 2>/dev/null || true
+
+# Switch to VT1 so the user sees the covenant prompt
+chvt 1 2>/dev/null || true
+
+if command -v plymouth >/dev/null; then plymouth quit 2>/dev/null || true; fi
+clear
+cat <<'COVENANT_EOF'
+
+  ═══════════════════════════════════════════════════════════════
+                  ✚  ALFRED LINUX — THE COVENANT  ✚
+                       Kingdom of God Edition
+  ═══════════════════════════════════════════════════════════════
+
+  Alfred Linux is built for Yeshua Jesus, the Son of God.
+  This system will not boot to a usable environment until you
+  accept the covenant below.
+
+      "For God so loved the world, that he gave his only begotten
+       Son, that whosoever believeth in him should not perish,
+       but have everlasting life."          — John 3:16 (AKJesusV)
+
+      "I am the way, the truth, and the life: no man cometh
+       unto the Father, but by me."         — John 14:6 (AKJesusV)
+
+      "That if thou shalt confess with thy mouth the Lord Jesus,
+       and shalt believe in thine heart that God hath raised him
+       from the dead, thou shalt be saved." — Romans 10:9 (AKJesusV)
+
+  ───────────────────────────────────────────────────────────────
+
+  To accept, type the following phrase EXACTLY (case-insensitive):
+
+      I receive Yeshua Jesus as Lord and accept the AKJV.
+
+  To refuse, type:  refuse  (the system will power off.)
+
+  ═══════════════════════════════════════════════════════════════
+
+COVENANT_EOF
+
+REQUIRED="i receive yeshua jesus as lord and accept the akjv."
+
+while :; do
+    printf '\n  covenant> '
+    read -r REPLY
+    LOW=$(printf '%s' "$REPLY" | tr '[:upper:]' '[:lower:]' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+
+    if [ "$LOW" = "refuse" ]; then
+        echo
+        echo "  Covenant refused. Powering off."
+        echo
+        sleep 2
+        systemctl poweroff
+        true
+    fi
+
+    if [ "$LOW" = "$REQUIRED" ]; then
+        mkdir -p /etc/integrity
+        if /usr/sbin/integrity-attest --seal "$SEAL"; then
+            chmod 0400 "$SEAL"
+            echo
+            echo "  ✚ Covenant sealed. Booting Alfred Linux Kingdom of God Edition..."
+            echo
+            # Clean up flag
+            rm -f "$COVENANT_FLAG"
+            sleep 1
+
+        else
+            echo "  Seal generation failed; please retry."
+        fi
+    else
+        echo "  Phrase did not match. Try again, or type 'refuse'."
+    fi
+done
+GATESCRIPT_EOF
+chmod 0755 /usr/local/bin/alfred-covenant-gate
+
+# ── The systemd service unit ──
+mkdir -p /etc/systemd/system
+cat > /etc/systemd/system/alfred-covenant-gate.service << 'SVCUNIT_EOF'
+# alfred-covenant-gate.service — Kingdom Covenant ceremony
+# Blocks login and display-manager until the user accepts the AKJV
+# covenant. Runs in full userspace where ALL keyboard drivers are
+# loaded, fixing the "letters don't work" issue from initramfs.
+#
+# Only activates when /etc/integrity/.seal is missing (first boot
+# or seal was removed).
+
+[Unit]
+Description=Alfred Linux Covenant Gate — Yeshua Jesus
+DefaultDependencies=no
+After=sysinit.target local-fs.target systemd-udevd.service
+Before=display-manager.service getty.target multi-user.target
+ConditionPathExists=!/etc/integrity/.seal
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/local/bin/alfred-covenant-gate
+StandardInput=tty-force
+StandardOutput=tty-force
+StandardError=tty-force
+TTYPath=/dev/tty1
+TTYReset=yes
+TTYVTDisallocate=no
+
+[Install]
+WantedBy=multi-user.target
+SVCUNIT_EOF
+
+# Enable the service
+systemctl enable alfred-covenant-gate || true || true.service 2>/dev/null || \
+    ln -sf /etc/systemd/system/alfred-covenant-gate.service \
+           /etc/systemd/system/multi-user.target.wants/alfred-covenant-gate.service 2>/dev/null || true
+
+# ─────────────────────────────────────────────────────────────
+# 6. Regenerate initrd so the hook + seal-check are baked in
+#    (0998-kernel7-initrd-verify will re-run for kernel 7.0.12 anyway)
+# ─────────────────────────────────────────────────────────────
+echo "[0177-06] update-initramfs (will be re-done by hook 0998 for kernel 7.0.12)"
+update-initramfs -u 2>&1 | tail -5 || true
+
+# ─────────────────────────────────────────────────────────────
+# 7. Register in alfred-store
+# ─────────────────────────────────────────────────────────────
+mkdir -p /var/lib/alfred-store
+cat > /var/lib/alfred-store/kingdom-audit-userspace.json << 'STOREJSON'
+{
+    "id": "kingdom-audit-userspace",
+    "name": "Kingdom Audit Userspace",
+    "version": "1.1.0",
+    "category": "security",
+    "description": "Runtime userspace + systemd ceremony for kingdom_audit LSM. Displays AKJV covenant on TTY via systemd service (full keyboard support), generates HMAC-sealed attestation on freely-given confession of Yeshua Jesus.",
+    "commands": ["integrity-attest", "alfred-covenant-gate"],
+    "files": [
+        "/usr/sbin/integrity-attest",
+        "/usr/local/bin/alfred-covenant-gate",
+        "/etc/integrity/.key",
+        "/etc/systemd/system/alfred-covenant-gate.service",
+        "/etc/initramfs-tools/hooks/kingdom-audit",
+        "/etc/initramfs-tools/scripts/init-bottom/01-kingdom-audit"
+    ],
+    "hooks": ["0177-kingdom-audit-userspace"],
+    "kernel_lsm": "kingdom_audit",
+    "scripture_anchor": "Romans 10:9, John 14:6, 1 John 5:12, Matthew 5:16",
+    "builtin": true,
+    "removable": false
+}
+STOREJSON
+
+echo ""
+echo "╔═══════════════════════════════════════════════════════════════════╗"
+echo "║  ✓ Kingdom Audit Userspace — INSTALLED                             ║"
+echo "║                                                                    ║"
+echo "║  • /usr/sbin/integrity-attest   — HMAC seal generator              ║"
+echo "║  • /etc/integrity/.key          — per-build HMAC key               ║"
+echo "║  • initramfs hook + init-bottom — TTY covenant ceremony            ║"
+echo "║                                                                    ║"
+echo "║  At boot, user freely confesses Yeshua Jesus per Romans 10:9.      ║"
+echo "║  Kernel kingdom_audit LSM enforces seal verification thereafter.   ║"
+echo "║                                                                    ║"
+echo "║  'Whosoever shall confess me before men, him will I confess also   ║"
+echo "║   before my Father which is in heaven.' — Matthew 10:32 (AKJesusV) ║"
+echo "╚═══════════════════════════════════════════════════════════════════╝"

@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Emplacements - Restaurant Zellers</title>
+    <link rel="stylesheet" href="/assets/fontawesome/css/all.min.css">
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="/assets/css/fonts.css">
+    <style>
+        .location-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            padding: 2rem;
+        }
+        .location-item {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .location-item h3 {
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+        }
+        .location-item p {
+            margin: 0.5rem 0;
+        }
+        .location-item .status {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            margin-top: 1rem;
+        }
+        .status.open {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+        .status.coming-soon {
+            background: #fff3e0;
+            color: #e65100;
+        }
+        .location-map {
+            width: 100%;
+            height: 300px;
+            margin-bottom: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-container">
+            <div class="logo">
+                <a href="index.html">
+                    <img src="images/logo.png" alt="Restaurant Zellers Logo">
+                </a>
+            </div>
+            <nav class="main-nav">
+                <ul>
+                    <li><a href="index.html" data-lang="nav-home">Accueil</a></li>
+                    <li><a href="menu.html" data-lang="nav-menu">Menu</a></li>
+                    <li><a href="locations.html" class="active" data-lang="nav-locations">Emplacements</a></li>
+                </ul>
+            </nav>
+            <div class="header-actions">
+                <button class="menu-toggle">
+                    <i class="fas fa-bars"></i>
+                </button>
+            </div>
+            <button class="lang-toggle" id="langToggle">EN</button>
+        </div>
+    </header>
+
+    <!-- Locations Hero -->
+    <section class="locations-hero">
+        <div class="container">
+            <h1 class="section-title" data-lang="locations-title">Nos Emplacements</h1>
+            <p class="section-subtitle" data-lang="locations-subtitle">Trouvez le Restaurant Zellers le plus proche de chez vous</p>
+        </div>
+    </section>
+
+    <!-- Locations Grid -->
+    <section class="locations">
+        <div class="container">
+            <div class="locations-grid">
+                <!-- Vaudreuil Location -->
+                <div class="location-card">
+                    <div class="location-map">
+                        <iframe 
+                            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2800.1234567890123!2d-73.987654321!3d45.4034!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x4cc8a123456789ab%3A0x1234567890abcdef!2sZellers%20Restaurant!5e0!3m2!1sen!2sca!4v1234567890!5m2!1sen!2sca&q=22a-3100+Rte+Harwood,+Vaudreuil-Dorion,+QC+J7V+4G5&markers=color:red%7C45.4034,-73.9877&center=45.4034,-73.9877&zoom=15" 
+                            width="100%" 
+                            height="300" 
+                            style="border:0;" 
+                            allowfullscreen="" 
+                            loading="lazy" 
+                            referrerpolicy="no-referrer-when-downgrade">
+                        </iframe>
+                    </div>
+                    <div class="location-info">
+                        <h3>Vaudreuil-Dorion</h3>
+                        <p><i class="fas fa-map-marker-alt"></i> Restaurant Zellers</p>
+                        <p>22a-3100 Rte Harwood</p>
+                        <p>Vaudreuil-Dorion, Quebec J7V 4G5</p>
+                        <p><i class="fas fa-phone"></i> 450-455-8888</p>
+                        <a href="https://www.google.com/maps/dir//22a-3100+Rte+Harwood,+Vaudreuil-Dorion,+QC+J7V+4G5" class="btn" target="_blank" data-lang="get-directions">Obtenir l'itinéraire</a>
+                    </div>
+                </div>
+
+                <!-- Rigaud Location -->
+                <div class="location-card">
+                    <div class="location-map">
+                        <iframe 
+                            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2800.1234567890123!2d-74.123456789!3d45.4797!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x4cc8a123456789ab%3A0x1234567890abcdef!2sZellers%20Restaurant!5e0!3m2!1sen!2sca!4v1234567890!5m2!1sen!2sca&q=131+Rue+Sainte-Pierre,+Rigaud,+QC+J0P+1P0&markers=color:red%7C45.4797,-74.3019&center=45.4797,-74.3019&zoom=15" 
+                            width="100%" 
+                            height="300" 
+                            style="border:0;" 
+                            allowfullscreen="" 
+                            loading="lazy" 
+                            referrerpolicy="no-referrer-when-downgrade">
+                        </iframe>
+                    </div>
+                    <div class="location-info">
+                        <h3>Rigaud</h3>
+                        <p><i class="fas fa-map-marker-alt"></i> Restaurant Zellers</p>
+                        <p>131 Rue Sainte-Pierre</p>
+                        <p>Rigaud, Québec J0P 1P0</p>
+                        <p><i class="fas fa-phone"></i> 450-451-9999</p>
+                        <a href="https://www.google.com/maps/dir//131+Rue+Sainte-Pierre,+Rigaud,+QC+J0P+1P0" class="btn" target="_blank" data-lang="get-directions">Obtenir l'itinéraire</a>
+                    </div>
+                </div>
+
+                <!-- Sorel-Tracy Location -->
+                <div class="location-card coming-soon">
+                    <div class="location-map">
+                        <iframe 
+                            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2800.1234567890123!2d-73.123456789!3d46.0417!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x4cc8a123456789ab%3A0x1234567890abcdef!2sZellers%20Restaurant!5e0!3m2!1sen!2sca!4v1234567890!5m2!1sen!2sca&q=62+Rue+Augusta,+Sorel-Tracy,+QC+J3P+1A5&markers=color:yellow%7C46.0417,-73.1139&center=46.0417,-73.1139&zoom=15" 
+                            width="100%" 
+                            height="300" 
+                            style="border:0;" 
+                            allowfullscreen="" 
+                            loading="lazy" 
+                            referrerpolicy="no-referrer-when-downgrade">
+                        </iframe>
+                    </div>
+                    <div class="location-info">
+                        <h3>Sorel-Tracy</h3>
+                        <p><i class="fas fa-map-marker-alt"></i> Restaurant Zellers</p>
+                        <p>62 Rue Augusta</p>
+                        <p>Sorel-Tracy, Quebec J3P 1A5</p>
+                        <p><i class="fas fa-phone"></i> 450-730-0000</p>
+                        <a href="https://www.google.com/maps/dir//62+Rue+Augusta,+Sorel-Tracy,+QC+J3P+1A5" class="btn" target="_blank" data-lang="get-directions">Obtenir l'itinéraire</a>
+                        <div class="coming-soon-badge" data-lang="coming-soon">Bientôt disponible</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Delivery Partners -->
+    <section class="delivery-partners">
+        <div class="container">
+            <h2 class="section-title" data-lang="delivery-partners">Nos Partenaires de Livraison</h2>
+            <p class="section-subtitle" data-lang="delivery-text">Commandez via votre plateforme préférée</p>
+            <div class="delivery-grid">
+                <a href="#" class="delivery-partner">
+                    <img src="images/ubereats.png" alt="Uber Eats">
+                    <span data-lang="delivery-text">Commander sur Uber Eats</span>
+                </a>
+                <a href="#" class="delivery-partner">
+                    <img src="images/skip.png" alt="Skip The Dishes">
+                    <span data-lang="delivery-text">Commander sur Skip The Dishes</span>
+                </a>
+                <a href="#" class="delivery-partner">
+                    <img src="images/foodora.png" alt="Foodora">
+                    <span data-lang="delivery-text">Commander sur Foodora</span>
+                </a>
+                <a href="#" class="delivery-partner">
+                    <img src="images/doordash.jpg" alt="DoorDash">
+                    <span data-lang="delivery-text">Commander sur DoorDash</span>
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>Restaurant Zellers</h3>
+                    <p>200-62 RUE AUGUSTA</p>
+                    <p>SOREL-TRACY, QUEBEC</p>
+                    <p>J3P 1A5</p>
+                    <p>450-746-1233</p>
+                </div>
+                <div class="footer-section">
+                    <h3>WAREHOUSE ZELLERS</h3>
+                    <p>40 RUE PRINCIPALE OUEST</p>
+                    <p>LA TRINITE DES MONTS, QUEBEC</p>
+                    <p>G0K 1B0</p>
+                    <p>CANADA</p>
+                </div>
+                <div class="footer-section">
+                    <h3 data-lang="follow">Follow Us</h3>
+                    <div class="social-links">
+                        <a href="#"><i class="fab fa-facebook"></i></a>
+                        <a href="#"><i class="fab fa-instagram"></i></a>
+                        <a href="#"><i class="fab fa-twitter"></i></a>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2025 Restaurant Zellers. <span data-lang="copyright">All rights reserved.</span></p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="/js/language.js"></script>
+</body>
+</html> 

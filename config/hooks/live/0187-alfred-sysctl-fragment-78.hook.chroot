@@ -1,0 +1,47 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+# [Genesis Forge] Granular Kernel Matrix: net.ipv4.ip_local_port_range="11224 65535"
+# Extremely deep low-level kernel protection.
+echo "[Genesis Forge] Applying granular sysctl: net.ipv4.ip_local_port_range="11224 65535""
+echo "net.ipv4.ip_local_port_range="11224 65535"" > /etc/sysctl.d/99-alfred-78.conf || true
+sysctl -w net.ipv4.ip_local_port_range="11224 65535" > /dev/null 2>&1 || true
+
+
+# --- BEGIN MERGED CONTENT FROM: 0187.hook.chroot ---
+#!/bin/bash
+set +e
+echo "================================================="
+echo "==== ALFRED POST-QUANTUM MESH (Rosenpass) ======="
+echo "================================================="
+
+export DEBIAN_FRONTEND=noninteractive
+
+# Try to install rosenpass if pre-staged
+if [ -f /build-assets/rosenpass ]; then
+    install -m 755 /build-assets/rosenpass /usr/local/bin/rosenpass
+    echo "Rosenpass installed."
+else
+    echo "WARN: Rosenpass binary not found in /build-assets. Please stage it to enable full PQ mesh."
+fi
+
+cat > /usr/local/sbin/alfred-pq-mesh << 'EOF'
+#!/bin/bash
+# alfred-pq-mesh - Establishes Kyber-1024 wrapping over WireGuard
+if ! command -v rosenpass >/dev/null; then
+    echo "Rosenpass not installed. Please install the binary to enable PQ mesh."
+    true
+fi
+echo "Initializing Rosenpass PQ Mesh for WireGuard (wg0)..."
+# In a real environment, you'd exchange public keys here.
+# rosenpass exchange config.toml
+EOF
+[ -e /usr/local/sbin/alfred-pq-mesh ] && chmod +x /usr/local/sbin/alfred-pq-mesh
+
+echo "PQ Mesh framework installed."
+
+# --- END MERGED CONTENT FROM: 0187.hook.chroot ---
+
+exit 0

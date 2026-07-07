@@ -1,0 +1,207 @@
+/* ══════════════════════════════════════════════════════════
+   Alfred Linux — Shared Navigation CSS v2
+   Grouped dropdowns + 3-language switcher
+   ══════════════════════════════════════════════════════════ */
+nav:not(.bible-sidebar) {
+    position: sticky; top: 0; left: 0; right: 0; z-index: 999999 !important;
+    padding: 0.75rem 2rem;
+    background: rgba(6,6,11,0.92);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    display: flex; align-items: center; justify-content: space-between;
+}
+nav[dir="rtl"] { direction: rtl; }
+nav[dir="rtl"] .nav-links { flex-direction: row-reverse; }
+.nav-brand {
+    display: flex; align-items: center; gap: 0.6rem;
+    font-size: 1.1rem; font-weight: 700; color: #fff;
+    text-decoration: none; flex-shrink: 0;
+}
+.nav-brand:hover { text-decoration: none; }
+.nav-brand .logo-mark {
+    width: 30px; height: 30px; border-radius: 8px;
+    background: linear-gradient(135deg, #D4AF37 0%, #FFD700 50%, #B8860B 100%);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.9rem; font-weight: 900;
+    color: #1a0f00;
+    text-shadow: 0 1px 0 rgba(255,255,255,0.25);
+    box-shadow:
+        0 0 0 1px rgba(212,175,55,0.4),
+        0 2px 8px rgba(255,215,0,0.25),
+        inset 0 1px 0 rgba(255,255,255,0.35);
+}
+/* Drop-in slot for a real gold-penguin SVG: place file at /assets/img/alfred-penguin-gold.svg
+   then change the <div class="logo-mark">A</div> in includes/nav.php (and 404.html) to:
+   <img class="logo-mark" src="/assets/img/alfred-penguin-gold.svg" alt="Alfred Linux">
+   and add: .nav-brand img.logo-mark { background: none; box-shadow: none; padding: 2px; } */
+.nav-links {
+    display: flex; gap: 1rem; align-items: center;
+    flex-wrap: nowrap;
+}
+.nav-links > a, .nav-dropdown-btn {
+    color: #9ca3af; text-decoration: none;
+    font-size: 0.84rem; font-weight: 500;
+    white-space: nowrap;
+    transition: color 0.2s;
+    background: none; border: none; cursor: pointer;
+    font-family: inherit; padding: 0;
+    display: inline-flex; align-items: center; gap: 4px;
+}
+.nav-links > a:hover, .nav-dropdown-btn:hover { color: #fff; text-decoration: none; }
+.nav-links > a.active { color: #fff; font-weight: 600; }
+.chev { font-size: 0.6rem; opacity: 0.5; }
+/* Dropdown container */
+.nav-dropdown {
+    position: relative;
+}
+.nav-dropdown-menu {
+    display: none;
+    position: absolute;
+    top: calc(100% + 10px);
+    left: 50%; transform: translateX(-50%);
+    min-width: 170px;
+    background: rgba(15,15,25,0.97);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 12px;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.5);
+    padding: 6px 0;
+    z-index: 200;
+}
+nav[dir="rtl"] .nav-dropdown-menu { left: auto; right: 50%; transform: translateX(50%); }
+.nav-dropdown.open .nav-dropdown-menu { display: block; }
+.nav-dropdown-menu a {
+    display: block;
+    padding: 9px 18px;
+    color: #c0c0c0;
+    text-decoration: none;
+    font-size: 0.84rem;
+    font-weight: 500;
+    transition: background 0.15s, color 0.15s;
+    white-space: nowrap;
+}
+.nav-dropdown-menu a:hover { background: rgba(255,255,255,0.05); color: #fff; }
+/* Language button — always LTR so it looks the same in every locale */
+.nav-lang { direction: ltr; }
+.nav-lang-btn {
+    direction: ltr !important;
+    padding: 3px 10px !important;
+    border: 1px solid rgba(255,255,255,0.12) !important;
+    border-radius: 6px !important;
+    font-size: 0.78rem !important;
+    font-weight: 600 !important;
+}
+.nav-lang-btn:hover { border-color: rgba(255,255,255,0.25) !important; }
+nav[dir="rtl"] .nav-lang .nav-dropdown-menu,
+.nav-lang .nav-dropdown-menu { direction: ltr; left: 50%; right: auto; transform: translateX(-50%); }
+/* Member sign-in (GoSiteMe → SSO bridge) */
+.nav-signin {
+    color: rgba(255,255,255,0.75) !important;
+    font-size: 0.82rem !important;
+    font-weight: 500 !important;
+    text-decoration: none !important;
+    border: 1px solid rgba(255,255,255,0.12);
+    padding: 0.35rem 0.75rem;
+    border-radius: 8px;
+}
+.nav-signin:hover { color: #fff !important; border-color: rgba(99,102,241,0.5); }
+.nav-signin.active { border-color: rgba(99,102,241,0.55); color: #fff !important; }
+.nav-signout {
+    color: rgba(255,255,255,0.65) !important;
+    font-size: 0.82rem !important;
+    font-weight: 500 !important;
+    text-decoration: none !important;
+}
+.nav-signout:hover { color: #f87171 !important; text-decoration: underline !important; }
+/* Donate + CTA */
+.nav-donate { color: #e74c3c !important; font-size: 0.84rem; }
+.nav-cta {
+    padding: 0.4rem 1rem; border-radius: 8px;
+    background: #6366f1; color: #fff !important;
+    font-weight: 600 !important; font-size: 0.82rem !important;
+    transition: all 0.2s;
+}
+.nav-cta:hover { background: #8b5cf6; transform: translateY(-1px); }
+.nav-toggle {
+    display: none; background: none; border: none;
+    color: #fff; font-size: 1.4rem; cursor: pointer;
+    padding: 0.25rem;
+}
+/* ── Responsive ─────────────────────────── */
+@media (max-width: 900px) {
+    .nav-links { display: none; }
+    .nav-toggle { display: block; }
+    .nav-links.open {
+        display: flex; flex-direction: column;
+        position: absolute; top: 100%; left: 0; right: 0;
+        background: rgba(6,6,11,0.97); padding: 1rem 2rem 1.5rem;
+        border-bottom: 1px solid rgba(255,255,255,0.06);
+        gap: 0.4rem; align-items: flex-start;
+    }
+    .nav-links.open > a, .nav-links.open .nav-dropdown-btn { font-size: 0.95rem; padding: 0.35rem 0; }
+    .nav-dropdown-menu {
+        position: static; transform: none;
+        background: rgba(255,255,255,0.03);
+        border: none; box-shadow: none;
+        border-radius: 8px; margin: 4px 0 4px 12px;
+        min-width: 0;
+    }
+    nav[dir="rtl"] .nav-dropdown-menu { margin: 4px 12px 4px 0; }
+    .nav-cta { text-align: center; margin-top: 0.5rem; }
+}
+
+/* Image-mode override: when logo-mark is an SVG <img>, drop the gold square background */
+.nav-brand img.logo-mark { background: none !important; box-shadow: none !important; padding: 0; object-fit: contain; }
+
+/* Wordmark colors — match al-logo.png lockup: gold "Alfred" + silver "Linux" + gold "Powering the Planet" tagline */
+.nav-brand .brand-stack { display: inline-flex; flex-direction: column; line-height: 1; gap: 2px; }
+.nav-brand .brand-text { display: inline-flex; gap: 0.25em; align-items: baseline; font-weight: 800; letter-spacing: 0.01em; }
+.nav-brand .brand-alfred {
+    background: linear-gradient(180deg, #FFE89C 0%, #FFD700 35%, #D4AF37 70%, #B8860B 100%);
+    -webkit-background-clip: text; background-clip: text;
+    -webkit-text-fill-color: transparent; color: transparent;
+}
+.nav-brand .brand-linux {
+    background: linear-gradient(180deg, #F5F5F5 0%, #C0C0C0 50%, #8A8A8A 100%);
+    -webkit-background-clip: text; background-clip: text;
+    -webkit-text-fill-color: transparent; color: transparent;
+}
+.nav-brand .brand-tagline {
+    font-size: 0.55em;
+    font-weight: 600;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    background: linear-gradient(180deg, #FFE89C 0%, #D4AF37 100%);
+    -webkit-background-clip: text; background-clip: text;
+    -webkit-text-fill-color: transparent; color: transparent;
+    opacity: 0.92;
+    margin-top: 1px;
+}
+@media (max-width: 600px) {
+    .nav-brand .brand-tagline { display: none; }
+}
+
+/* Hero lockup — full Alfred Linux gold/silver penguin + wordmark + tagline image */
+.hero-lockup {
+    display: block;
+    width: 100%;
+    max-width: 900px;
+    margin: 1.5rem auto 1rem;
+    text-align: center;
+    line-height: 0;
+}
+.hero-lockup img {
+    width: 100%;
+    height: auto;
+    max-width: 900px;
+    filter: drop-shadow(0 12px 40px rgba(212, 175, 55, 0.18));
+    transition: filter 0.4s ease, transform 0.4s ease;
+}
+.hero-lockup:hover img {
+    filter: drop-shadow(0 16px 56px rgba(255, 215, 0, 0.32));
+    transform: translateY(-2px);
+}
+@media (max-width: 700px) {
+    .hero-lockup { max-width: 92%; margin: 1rem auto 0.5rem; }
+}
+.nav-dropdown-menu { z-index: 999999 !important; }

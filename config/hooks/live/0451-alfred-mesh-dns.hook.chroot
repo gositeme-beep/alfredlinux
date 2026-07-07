@@ -1,0 +1,30 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+echo "================================================="
+echo "==== ALFRED MESH DNS (Decentralized Naming) ====="
+echo "================================================="
+
+export DEBIAN_FRONTEND=noninteractive
+
+# If custom DNS binary exists, install it
+if [ -f /build-assets/kingdom-dns ]; then
+    install -m 755 /build-assets/kingdom-dns /usr/local/bin/kingdom-dns
+    echo "Custom Kingdom DNS binary installed."
+fi
+
+# Configure systemd-resolved for sovereign domains
+mkdir -p /etc/systemd/resolved.conf.d/ || true
+cat > /etc/systemd/resolved.conf.d/kingdom-mesh.conf << 'EOF'
+[Resolve]
+# Route .kingdom and .alfred domains exclusively over the mesh (wg0)
+# Replace 10.0.0.1 with the actual Kingdom Relay IP
+DNS=10.0.0.1
+Domains=~kingdom ~alfred
+EOF
+
+echo "Mesh DNS configured."
+
+exit 0

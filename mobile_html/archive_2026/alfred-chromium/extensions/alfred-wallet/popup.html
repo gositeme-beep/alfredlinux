@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { width: 360px; min-height: 480px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #06060e; color: #e8e8f0; }
+.header { padding: 16px; background: linear-gradient(135deg, rgba(245,158,11,0.15), rgba(139,92,246,0.15)); border-bottom: 1px solid rgba(255,255,255,0.08); text-align: center; }
+.header h1 { font-size: 16px; }
+.balance { text-align: center; padding: 24px 16px; }
+.balance .amount { font-size: 32px; font-weight: 700; color: #F59E0B; }
+.balance .usd { font-size: 14px; color: #6b6b88; margin-top: 4px; }
+.balance .sol { font-size: 13px; color: #8B5CF6; margin-top: 8px; }
+.actions { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; padding: 0 16px 16px; }
+.action-btn { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 12px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; color: #e8e8f0; cursor: pointer; font-size: 11px; transition: all .2s; }
+.action-btn:hover { background: rgba(255,255,255,0.08); }
+.action-btn i { font-size: 18px; }
+.tx-list { padding: 0 16px 16px; }
+.tx-list h3 { font-size: 12px; color: #6b6b88; text-transform: uppercase; margin-bottom: 8px; }
+.tx { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.04); }
+.tx i { width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 8px; font-size: 14px; }
+.tx .tx-info { flex: 1; }
+.tx .tx-type { font-size: 13px; }
+.tx .tx-time { font-size: 11px; color: #6b6b88; }
+.tx .tx-amount { font-size: 13px; font-weight: 600; }
+.tx .tx-amount.positive { color: #10B981; }
+.connect { padding: 16px; text-align: center; }
+.connect input { width: 100%; padding: 10px 12px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; color: #e8e8f0; font-size: 13px; margin-bottom: 8px; }
+.connect button { width: 100%; padding: 10px; background: #8B5CF6; border: none; border-radius: 10px; color: #fff; font-size: 13px; font-weight: 600; cursor: pointer; }
+.connect button:hover { background: #7C3AED; }
+</style>
+<link rel="stylesheet" href="/assets/vendor/fontawesome/6.5.1/css/all.min.css">
+</head>
+<body>
+  <div class="header">
+    <h1>Alfred Wallet</h1>
+  </div>
+
+  <div class="balance">
+    <div class="amount" id="gsmBalance">0.000 GSM</div>
+    <div class="usd">≈ $<span id="usdValue">0.00</span></div>
+    <div class="sol"><i class="fas fa-gem"></i> <span id="solBalance">0.000</span> SOL</div>
+  </div>
+
+  <div class="actions">
+    <div class="action-btn" onclick="window.open('https://gositeme.com/pay/token-swap')">
+      <i class="fas fa-exchange-alt" style="color:#8B5CF6"></i>
+      <span>Swap</span>
+    </div>
+    <div class="action-btn" onclick="window.open('https://gositeme.com/mine')">
+      <i class="fas fa-bolt" style="color:#F59E0B"></i>
+      <span>Mine</span>
+    </div>
+    <div class="action-btn" onclick="window.open('https://gositeme.com/wallet')">
+      <i class="fas fa-external-link-alt" style="color:#06B6D4"></i>
+      <span>Full Wallet</span>
+    </div>
+  </div>
+
+  <div class="tx-list">
+    <h3>Recent Activity</h3>
+    <div id="txList">
+      <p style="text-align:center;color:#6b6b88;font-size:12px;padding:20px 0;">Loading...</p>
+    </div>
+  </div>
+
+  <div class="connect" id="connectWallet" style="display:none;">
+    <input type="text" id="walletAddress" placeholder="Solana wallet address (base58)">
+    <button onclick="saveWallet()">Connect Wallet</button>
+  </div>
+
+<script>
+async function loadWallet() {
+  try {
+    const res = await fetch('https://gositeme.com/api/mining.php?action=wallet', { credentials: 'include' });
+    const data = await res.json();
+    if (data.success) {
+      document.getElementById('gsmBalance').textContent = (data.balance || 0).toFixed(3) + ' GSM';
+      if (!data.wallet_address) {
+        document.getElementById('connectWallet').style.display = 'block';
+      }
+    }
+  } catch(e) {
+    document.getElementById('txList').innerHTML = '<p style="text-align:center;color:#6b6b88;font-size:12px;padding:20px 0;">Sign in at gositeme.com</p>';
+  }
+
+  try {
+    const res = await fetch('https://gositeme.com/api/mining.php?action=history&limit=5', { credentials: 'include' });
+    const data = await res.json();
+    if (data.success && data.history && data.history.length) {
+      document.getElementById('txList').innerHTML = data.history.map(tx =>
+        `<div class="tx">
+          <i class="fas fa-${tx.type === 'mining' ? 'hammer' : tx.type === 'search' ? 'search' : 'gift'}" style="background:rgba(245,158,11,0.15);color:#F59E0B"></i>
+          <div class="tx-info">
+            <div class="tx-type">${tx.type.charAt(0).toUpperCase() + tx.type.slice(1)} Reward</div>
+            <div class="tx-time">${new Date(tx.created_at).toLocaleDateString()}</div>
+          </div>
+          <div class="tx-amount positive">+${parseFloat(tx.amount).toFixed(4)} GSM</div>
+        </div>`
+      ).join('');
+    } else {
+      document.getElementById('txList').innerHTML = '<p style="text-align:center;color:#6b6b88;font-size:12px;padding:20px 0;">No transactions yet. Start mining!</p>';
+    }
+  } catch(e) {}
+}
+
+async function saveWallet() {
+  const addr = document.getElementById('walletAddress').value.trim();
+  if (!addr || addr.length < 32 || addr.length > 44) {
+    alert('Enter a valid Solana wallet address');
+    return;
+  }
+  try {
+    await fetch('https://gositeme.com/api/mining.php?action=set_wallet', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ wallet_address: addr })
+    });
+    document.getElementById('connectWallet').style.display = 'none';
+  } catch(e) { alert('Error saving wallet'); }
+}
+
+loadWallet();
+</script>
+</body>
+</html>

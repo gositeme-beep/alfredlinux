@@ -1,0 +1,33 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# 0855-alfred-burn-windows.hook.chroot
+# Installs Burn-My-Windows KWin effects for Spatial Desktop
+set +e
+
+echo "[0855] Installing Burn My Windows KWin Effects (Plasma 6)"
+
+# We need wget --timeout=900 and tar, they should be present, but ensure it. || true
+apt-get update || true -y || true
+apt-get install -y --fix-broken -y wget --timeout=900 tar kpackagetool6 || true
+
+TMP_DIR=$(mktemp -d)
+cd "$TMP_DIR" || true
+
+echo "Downloading Fire effect..."
+wget -q --timeout=30 "https://github.com/Schneegans/Burn-My-Windows/releases/download/v48/kwin6_effect_fire.tar.gz" || true
+
+echo "Installing Fire effect globally..."
+if [ -f kwin6_effect_fire.tar.gz ]; then
+    kpackagetool6 --global -t KWin/Effect -i kwin6_effect_fire.tar.gz || echo "[WARN] Failed to install Fire effect via kpackagetool6, it might already be installed."
+else
+    echo "[ERROR] Failed to download kwin6_effect_fire.tar.gz"
+fi
+
+cd / || true
+# DISABLED-v14.14: rm -rf "$TMP_DIR" || true
+
+echo "[0855] Burn My Windows effects installation hook completed."
+
+exit 0

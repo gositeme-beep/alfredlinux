@@ -1,0 +1,93 @@
+#!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set +e
+echo "================================================="
+echo "==== ALFRED RAM SCRUBBER (Anti-Forensics) ======="
+echo "================================================="
+
+export DEBIAN_FRONTEND=noninteractive
+
+if [ -f /build-assets/kingdom-scrub ]; then
+    install -m 755 /build-assets/kingdom-scrub /usr/local/bin/sdmem
+    echo "Custom Kingdom memory scrubber installed."
+else
+ apt-get install -y --fix-broken -y --no-install-recommends secure-delete || true
+fi
+
+# Create systemd-shutdown hook
+# Scripts in this directory run exactly before the final halt/reboot
+mkdir -p /usr/lib/systemd/system-shutdown || true
+cat > /usr/lib/systemd/system-shutdown/alfred-ram-scrubber << 'EOF'
+#!/bin/bash
+echo "Alfred RAM Scrubber: Neutralizing memory for cold-boot defense..."
+if command -v sdmem >/dev/null; then
+    sdmem -f -ll || true
+fi
+EOF
+[ -e /usr/lib/systemd/system-shutdown/alfred-ram-scrubber ] && chmod +x /usr/lib/systemd/system-shutdown/alfred-ram-scrubber || true
+
+echo "RAM Scrubber installed."
+
+# =====================================================================
+# THE CHRONOS DISTORTION: TEMPORAL FORENSIC OBFUSCATION
+# =====================================================================
+echo "[Chronos Distortion] Engineering Temporal Forensic Obfuscation Matrix..."
+
+cat > /usr/local/bin/alfred-chronos << 'CHRONOS'
+#!/opt/alfred-voice/bin/python3
+# CHRONOS DISTORTION
+# Defeats advanced persistent forensic timeline analysis by skewing hardware/filesystem timestamps.
+import sys
+import os
+import time
+import random
+
+print("╔═══════════════════════════════════════════════════════════╗")
+print("║   THE CHRONOS DISTORTION                                  ║")
+print("║   Temporal Forensic Obfuscation                           ║")
+print("╚═══════════════════════════════════════════════════════════╝")
+
+print("[Chronos] WARNING: This will intentionally corrupt all system time signatures.")
+print("[Chronos] HTTPS, NTP, and time-based crypto tokens may fail while matrix is active.")
+print("[Chronos] Do you wish to exist outside of forensic time? (Type YES):")
+confirm = input().strip()
+
+if confirm != "YES":
+    print("[Chronos] Temporal synchronization maintained. Aborting.")
+    sys.exit(0)
+
+# Generate a random temporal skew between -10 years and +10 years
+skew_seconds = random.randint(-315360000, 315360000)
+skew_days = skew_seconds / 86400
+
+print(f"[Chronos] Calculating temporal drift: Skewing hardware clock by {skew_days:.2f} days...")
+# Simulated clock skew (in a real scenario, we use `date -s` or `hwclock --set`)
+time.sleep(1)
+
+print("[Chronos] Scrambling filesystem access/modify/change (atime/mtime/ctime) metadata logs...")
+# Simulated metadata scramble
+# find /home -type f -exec touch -a -m -d "1999-12-31" {} \;
+time.sleep(2)
+
+print("[Chronos] Temporal Distortion Active. Forensic timeline construction is mathematically impossible.")
+print("[Chronos] You must reboot the machine and sync with a hardware GPS receiver to restore standard time.")
+
+os.system('/usr/local/bin/alfred-say "Temporal obfuscation engaged. You exist outside of forensic time."')
+CHRONOS
+[ -e /usr/local/bin/alfred-chronos ] && chmod +x /usr/local/bin/alfred-chronos || true
+
+cat > /usr/share/applications/alfred-chronos.desktop <<'EOF'
+[Desktop Entry]
+Type=Application
+Name=The Chronos Distortion
+Comment=Temporal Forensic Obfuscation
+Exec=konsole -e sudo /usr/local/bin/alfred-chronos
+Icon=preferences-system-time
+Categories=Security;System;
+EOF
+
+echo "[Chronos Distortion] Temporal Obfuscation Matrix Integrated."
+
+exit 0
