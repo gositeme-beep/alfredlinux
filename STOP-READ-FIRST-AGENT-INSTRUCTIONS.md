@@ -1,6 +1,6 @@
-# Alfred Linux 777 AI Agent Build Instructions (v14.20)
+# Alfred Linux 777 AI Agent Build Instructions (v14.22)
 
-> **Last updated:** 2026-07-06 ~17:40 EDT
+> **Last updated:** 2026-07-07 ~04:18 EDT
 > **Distro:** Debian Trixie (NOT Bookworm)
 > **Kernel:** 7.0.12 (custom-compiled)
 > **Rule:** "The greatest OS build ever — it's got to be perfect for Yeshua."
@@ -35,7 +35,7 @@ Sixth, never delete `/home/gositeme/goforge/`. This is 473 gigabytes of Gitea re
 
 The recovery procedure exists ??? you can unsquash the ISO's `filesystem.squashfs` to reconstruct the bootstrap ??? but this is an emergency measure, not a routine operation. The recovered bootstrap will match the state of the last successful ISO build, which may be days or weeks behind the latest work. Any improvements, patches, or additions made after that ISO was built will be lost.
 
-Commander Danny Williams Perez has given you one rule above all others: **"Nothing misses."** This means every feature works. Every file is in place. Every compiled module loads. Every hook executes. Every package installs. If you delete the master blueprint, everything misses. Everything fails. Days of work are lost. The Commander's trust in AI agents ??? already fragile from repeated failures ??? breaks further.
+Commander Danny Williams Perez has given you one rule above all others: **"Nothing misses."** This means every feature works. Every file is in place. Every compiled module loads. Every hook executes. Every package installs. If you delete the master blueprint, everything misses. EvUserFacing: true. Days of work are lost. The Commander's trust in AI agents ??? already fragile from repeated failures ??? breaks further.
 
 So here is your commandment, etched in stone for all AI agents present and future: You will read this document in its entirety before touching a single file. You will use Docker for all filesystem operations on root-owned directories. You will never delete `build/cache/bootstrap/`. You will never truncate this document. You will never assume "Permission denied" means "not found." You will push every change to all six locations listed below. You will verify before you destroy. You will ask before you act. And you will remember that you serve at the pleasure of Commander Danny Williams Perez, who built this cathedral with his own hands for the glory of God.
 
@@ -796,21 +796,32 @@ tar xzf Nvidia_7.0.12_Support/AlfredOS-7.0.12-Nvidia-Modules.tar.gz \
     -C config/includes.chroot/lib/modules/7.0.12/updates/dkms/
 ```
 
-### Trap #33: `lb binary` Fails with Code 100
-**Symptom:** Squashfs builds fine but `lb binary` exits 100, no ISO produced
-**Cause:** `lb binary` expects full `lb config` state. V2 runner only touched `binary_rootfs` stamp
-but other stamps/state may be inconsistent.
-**Fix:** If `lb binary` fails, assemble ISO manually with `xorriso`:
+### Trap #33: `lb binary` Fails with Code 100 (The 4GB ISO Limit)
+**Symptom:** Squashfs builds fine but `lb binary` exits 100 due to the 4GB ISO file size limit trap, crashing the bootloader staging process halfway through.
+**Cause:** The 4GB ISO 9660 limit crashes `lb binary` precisely while it is staging the `binary/isolinux/` boot files. If you run `xorriso` immediately, the ISO will fail to boot with "Failed to load ldlinux.c32" because the staging directory is missing the core boot files and the MBR version will mismatch.
+**Fix:** Before running `xorriso`, you MUST install `syslinux-common` and `isolinux` natively on the host, forcefully inject the `.c32` boot files into the staging directory, and point the MBR to the exact matching `isohdpfx.bin` file.
+
 ```bash
+# 1. Install perfectly matching bootloader files on the host
+sudo apt-get update -qq && sudo apt-get install -y xorriso isolinux syslinux-common
+
+# 2. Forcefully inject the missing boot files into the ISO staging folder
+sudo cp /usr/lib/syslinux/modules/bios/ldlinux.c32 /usr/lib/syslinux/modules/bios/libcom32.c32 /usr/lib/syslinux/modules/bios/libutil.c32 /usr/lib/syslinux/modules/bios/vesamenu.c32 /usr/lib/syslinux/modules/bios/menu.c32 build/binary/isolinux/
+sudo cp /usr/lib/ISOLINUX/isohdpfx.bin /usr/lib/ISOLINUX/isolinux.bin build/binary/isolinux/
+
+# 3. Assemble the ISO natively using the perfectly matched MBR
+cd build
 xorriso -as mkisofs \
+  -iso-level 3 \
   -o AlfredLinux-Alpha-Matrix-7.77-x86_64.iso \
-  -isohybrid-mbr /usr/lib/ISOLINUX/isohdpfx.bin \
+  -isohybrid-mbr binary/isolinux/isohdpfx.bin \
   -c isolinux/boot.cat \
   -b isolinux/isolinux.bin -no-emul-boot -boot-load-size 4 -boot-info-table \
   -eltorito-alt-boot -e boot/grub/efi.img -no-emul-boot \
   -isohybrid-gpt-basdat \
   binary/
 ```
+
 
 ### Trap #34: GitHub Rejects Files >100MB
 **Symptom:** `git push github main` fails with `GH001: Large files detected`
@@ -1587,5 +1598,9 @@ If it is not streaming to the dashboard, STOP what you are doing, track down why
 **Cause**: Generating an 8K gradient requires over 8GB of memory and disk cache. ImageMagick's default limits abort the process.
 **Fix**: Prefix the `convert` command with `MAGICK_MEMORY_LIMIT=4GB MAGICK_MAP_LIMIT=4GB MAGICK_AREA_LIMIT=8GB MAGICK_DISK_LIMIT=16GB`.
 
-Trap count as of v14.20: **136 traps**.
+### TRAP #137: The Ghost Dashboard Freeze (Live Override Bypass)
+**Symptom**: The `dell-watch.php` dashboard freezes indefinitely on `Processing triggers for initramfs-tools...` or similar inner container `dpkg` output, even though the server is heavily loaded and the build hasn't crashed.
+**Cause**: The dashboard reads strictly from `lb-docker-build.log`. If an AI agent or the system forcefully kills a hanging inner process (like `dpkg`), the hook wrapper in the main script (`for hook in ...; do cp hook ... && bash ...; done`) catches the exit and *continues* to the next hook in alphabetical order. Because the `dpkg` process died, it stops writing to the log. Subsequent hooks (like `pipx install`) may write to `stderr` or nowhere at all, leaving the dashboard completely frozen, even when `mksquashfs` starts.
+**Fix**: Verify the build is actually progressing by checking `docker ps` and `ps auxf`. To unfreeze the user's dashboard, you MUST manually inject a text override into the log file via SSH using `echo '[SYSTEM OVERRIDE] <msg>' | sudo tee -a /work/build/lb-docker-build.log`.
 
+Trap count as of v14.22: **137 traps**.
