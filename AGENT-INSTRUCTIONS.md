@@ -1,4 +1,4 @@
-# Alfred Linux 777 AI Agent Build Instructions (v14.22)
+# Alfred Linux 777 AI Agent Build Instructions (v14.23)
 
 > **Last updated:** 2026-07-07 ~04:18 EDT
 > **Distro:** Debian Trixie (NOT Bookworm)
@@ -1603,4 +1603,9 @@ If it is not streaming to the dashboard, STOP what you are doing, track down why
 **Cause**: The dashboard reads strictly from `lb-docker-build.log`. If an AI agent or the system forcefully kills a hanging inner process (like `dpkg`), the hook wrapper in the main script (`for hook in ...; do cp hook ... && bash ...; done`) catches the exit and *continues* to the next hook in alphabetical order. Because the `dpkg` process died, it stops writing to the log. Subsequent hooks (like `pipx install`) may write to `stderr` or nowhere at all, leaving the dashboard completely frozen, even when `mksquashfs` starts.
 **Fix**: Verify the build is actually progressing by checking `docker ps` and `ps auxf`. To unfreeze the user's dashboard, you MUST manually inject a text override into the log file via SSH using `echo '[SYSTEM OVERRIDE] <msg>' | sudo tee -a /work/build/lb-docker-build.log`.
 
-Trap count as of v14.22: **137 traps**.
+Trap count as of v14.23: **138 traps**.
+
+### Trap #138: The Exit Code 1 Assembly Crash
+**Symptom:** After a flawless 14-hour `mksquashfs` run, the `run-build-patched.sh` orchestrator script crashes with Exit Code 1 exactly at `=== STEP 7.9: Trap 10 (Overlay unmount and Stamps) ===` before it can run `lb binary`.
+**Cause:** Trap 99 completely purges the `/work/build/.build` directory at the start of the build to ensure a clean slate. When the orchestrator reaches step 7.9, it tries to `touch /work/build/.build/binary_chroot`, which fails with `No such file or directory` because the `.build` folder no longer exists. Because the wrapper uses `set -e`, it immediately crashes instead of completing the ISO assembly.
+**Fix:** Do **NOT** rely on the orchestrator wrapper to assemble the final ISO. You must let the orchestrator crash at Step 7.9! Once it crashes and the 133GB `filesystem.squashfs` is safely on disk, you MUST manually deploy the raw `xorriso` assembly script directly onto the host exactly as described in **Trap #33**. Do not attempt to fix the wrapper—bypassing it natively via `xorriso` on the host is the only way to avoid both the `.build` crash and the 4GB ISO file size limit.
