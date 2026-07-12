@@ -1,5 +1,9 @@
 ![Alfred Linux — Powering the Planet](assets/img/alfred-logo-banner.png)
 
+<h1 align="center">Alfred Linux 7.77 — The Sovereign OS</h1>
+<p align="center"><b>100% Offline AI-Native Operating System</b></p>
+
+
 <p align="center">
   <!-- Row 1: Core Identity -->
   <a href="https://alfredlinux.com"><img src="https://img.shields.io/badge/Website-alfredlinux.com-blue?style=for-the-badge" alt="Website"/></a>
