@@ -25,3 +25,19 @@ add_lsm_safe() {
 for cfg in "$BIN"/isolinux/live.cfg "$BIN"/isolinux/install.cfg "$BIN"/boot/grub/grub.cfg "$BIN"/boot/grub/live.cfg; do
   add_lsm_safe "$cfg"
 done
+
+# Ensure fonts directory exists and unicode.pf2 is in the right place
+mkdir -p "$BIN/boot/grub/fonts"
+if [ -f "$BIN/boot/grub/unicode.pf2" ]; then
+    mv "$BIN/boot/grub/unicode.pf2" "$BIN/boot/grub/fonts/"
+fi
+
+# Ensure UEFI modules exist
+mkdir -p "$BIN/boot/grub/x86_64-efi"
+if [ -d /usr/lib/grub/x86_64-efi ]; then
+    cp -a /usr/lib/grub/x86_64-efi/* "$BIN/boot/grub/x86_64-efi/"
+elif [ -d /work/build/chroot/usr/lib/grub/x86_64-efi ]; then
+    cp -a /work/build/chroot/usr/lib/grub/x86_64-efi/* "$BIN/boot/grub/x86_64-efi/"
+else
+    echo "WARNING: Could not find x86_64-efi GRUB modules on host or in chroot!"
+fi

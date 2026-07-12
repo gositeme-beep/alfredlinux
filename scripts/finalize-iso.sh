@@ -75,24 +75,41 @@ if ! command -v xorriso &>/dev/null; then
     apt-get install -y xorriso 2>/dev/null || true
 fi
 
-xorriso -as mkisofs \
-    -o "$ISO_OUT" \
-    -iso-level 3 \
-    -full-iso9660-filenames \
-    -volid "ALFREDLINUX_777" \
-    -eltorito-boot boot/grub/bios.img \
-    -no-emul-boot -boot-load-size 4 -boot-info-table \
-    --eltorito-catalog boot/grub/boot.cat \
-    --grub2-boot-info \
-    --grub2-mbr /usr/lib/grub/i386-pc/boot_hybrid.img \
-    -eltorito-alt-boot \
-    -e EFI/boot/bootx64.efi \
-    -no-emul-boot \
-    -append_partition 2 0xef "$BUILD/binary/boot/grub/efi.img" \
-    -appid "Alfred Linux 7.77 — Kingdom of God Edition" \
-    -publisher "GoSiteMe.com — Commander Danny O'Mahon" \
-    "$BUILD/binary/" \
-    2>&1 | tee -a "$LOG"
+# TRAP 33 FIX: Forcefully inject the missing boot files into the ISO staging folder natively on the host
+    log "  Injecting ISOLINUX .c32 files (Trap 33)..."
+    sudo apt-get update -qq && sudo apt-get install -y xorriso isolinux syslinux-common
+    sudo cp /usr/lib/syslinux/modules/bios/ldlinux.c32 /usr/lib/syslinux/modules/bios/libcom32.c32 /usr/lib/syslinux/modules/bios/libutil.c32 /usr/lib/syslinux/modules/bios/vesamenu.c32 /usr/lib/syslinux/modules/bios/menu.c32 "$BUILD/binary/isolinux/"
+    sudo cp /usr/lib/ISOLINUX/isohdpfx.bin /usr/lib/ISOLINUX/isolinux.bin "$BUILD/binary/isolinux/"
+
+    # ULTIMATE FIX: Restore the custom Alfred Linux boot menus and splash screens!
+    # lb binary wiped these out with standard Debian defaults before crashing.
+    log "  Restoring custom Alfred Linux bootloaders..."
+    sudo cp -r /home/gositeme/law/alfredlinux-com-source-live/config/bootloaders/isolinux/* "$BUILD/binary/isolinux/" 2>/dev/null || true
+    sudo cp -r /home/gositeme/law/alfredlinux-com-source-live/config/bootloaders/grub-pc/* "$BUILD/binary/boot/grub/" 2>/dev/null || true
+
+    # TRAP 31 & 36 FIX: Re-apply the boot params because lb binary overwrites live.cfg and grub.cfg
+    log "  Patching bootloader configs (Trap 31 & 36)..."
+    sudo sed -i 's/append boot=live/append boot=live username=alfred user-default-groups=audio,video,render,dialout,sudo,adm,netdev,plugdev quiet nvidia-drm.modeset=1 lsm=lockdown,integrity,tomoyo,apparmor,yama,bpf,landlock/g' "$BUILD/binary/isolinux/live.cfg" 2>/dev/null || true
+    sudo sed -i 's/linux.*boot=live.*/& username=alfred user-default-groups=audio,video,render,dialout,sudo,adm,netdev,plugdev quiet nvidia-drm.modeset=1 lsm=lockdown,integrity,tomoyo,apparmor,yama,bpf,landlock/g' "$BUILD/binary/boot/grub/grub.cfg" 2>/dev/null || true
+    
+    # Trap 36 fallback just in case lb binary used different defaults
+    sudo sed -i "s|components nomodeset|components username=alfred user-default-groups=audio,video,render,dialout,sudo,adm,netdev,plugdev quiet nvidia-drm.modeset=1 lsm=lockdown,integrity,tomoyo,apparmor,yama,bpf,landlock|g" "$BUILD/binary/boot/grub/grub.cfg" 2>/dev/null || true
+    sudo sed -i "s|components quiet$|components username=alfred user-default-groups=audio,video,render,dialout,sudo,adm,netdev,plugdev quiet nvidia-drm.modeset=1 lsm=lockdown,integrity,tomoyo,apparmor,yama,bpf,landlock|g" "$BUILD/binary/boot/grub/grub.cfg" 2>/dev/null || true
+
+    # TRAP 35 FIX: Ensure gositeme can read all files before xorriso
+    sudo chown -R gositeme:gositeme "$BUILD/binary/"
+
+    cd "$BUILD"
+    xorriso -as mkisofs \
+      -iso-level 3 \
+      -o "$ISO_NAME" \
+      -isohybrid-mbr binary/isolinux/isohdpfx.bin \
+      -c isolinux/boot.cat \
+      -b isolinux/isolinux.bin -no-emul-boot -boot-load-size 4 -boot-info-table \
+      -eltorito-alt-boot -e boot/grub/efi.img -no-emul-boot \
+      -isohybrid-gpt-basdat \
+      binary/ \
+      2>&1 | tee -a "$LOG"
 
 ISOSIZE=$(stat -c%s "$ISO_OUT" 2>/dev/null || echo 0)
 log "  ISO created: $(numfmt --to=iec $ISOSIZE)"

@@ -176,17 +176,6 @@ ASCII
 # ── 7. Generate wallpapers via ImageMagick — Multi-resolution (8K/4K/1080p) ──
 mkdir -p /usr/share/wallpapers/Kingdom
 if command -v convert &>/dev/null; then
-    echo "[INFO] Generating multi-resolution wallpaper set (8K, 4K, 1080p)..."
-
-    # --- Helper: generate all 3 resolutions from an 8K source ---
-    # Usage: gen_resolutions <basename>
-    gen_resolutions() {
-        local name="$1"
-        local src="/usr/share/wallpapers/Kingdom/${name}.png"
-        # 4K downscale
-        convert "$src" -resize 3840x2160 -quality 95 \
-            "/usr/share/wallpapers/Kingdom/4k/${name}.png" 2>/dev/null || true
-        # 1080p downscale
         convert "$src" -resize 1920x1080 -quality 95 \
             "/usr/share/wallpapers/Kingdom/1080p/${name}.png" 2>/dev/null || true
     }

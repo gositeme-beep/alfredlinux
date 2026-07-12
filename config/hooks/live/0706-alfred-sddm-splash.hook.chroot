@@ -27,7 +27,7 @@ EOF
 
 # 2. Configure SDDM Background
 # Find the first available wallpaper from build-assets
-WP=$(find /build-assets/wallpapers/ -type f \( -name "*.jpg" -o -name "*.png" \) 2>/dev/null | head -n 1)
+WP=$(find /usr/share/wallpapers/ -type f \( -name "*.jpg" -o -name "*.png" \) 2>/dev/null | head -n 1)
 
 if [ -n "$WP" ]; then
     echo "Found wallpaper $WP, configuring SDDM..."
@@ -64,7 +64,7 @@ EOF
 
     echo "[0815] Custom SDDM background installed successfully."
 else
-    echo "[0815] No wallpapers found in /build-assets/wallpapers/. Skipping SDDM background injection."
+    echo "[0815] No wallpapers found in /usr/share/wallpapers/. Skipping SDDM background injection."
 fi
 
 exit 0

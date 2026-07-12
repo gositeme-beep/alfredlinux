@@ -127,10 +127,10 @@ cp /work/config/bootloaders/grub-pc/* /work/build/binary/boot/grub/ 2>/dev/null 
 
 echo "=== STEP 7.5: Apply Trap Fixes (17, 19, 20, 21, 31) ==="
 # Trap 17: Kernel symlinks
-cd /work/build/binary/live
+cd /home/gositeme/law/alfredlinux-com-source-live/build/binary/live
 ln -sf vmlinuz-7.0.12 vmlinuz
 ln -sf initrd.img-7.0.12 initrd.img
-cd /work/build
+cd /home/gositeme/law/alfredlinux-com-source-live/build
 
 # Trap 19: Missing Boot Binaries
 cp /usr/lib/ISOLINUX/isolinux.bin /work/build/binary/isolinux/ 2>/dev/null || true
