@@ -1,0 +1,6 @@
+# Alfred Linux ??? NVIDIA Hybrid / Optimus Wayland External Monitor Fix
+# Ensure NVIDIA DRM devices wake up on connector hotplug and report KMS state cleanly to KWin Wayland
+ACTION=="add", SUBSYSTEM=="pci", ATTR{vendor}=="0x10de", ATTR{class}=="0x030000", TEST=="power/control", ATTR{power/control}="auto"
+ACTION=="add", SUBSYSTEM=="pci", ATTR{vendor}=="0x10de", ATTR{class}=="0x030200", TEST=="power/control", ATTR{power/control}="auto"
+# Trigger udev change event for DRM cards when NVIDIA driver initializes
+ACTION=="add", SUBSYSTEM=="drm", KERNEL=="card*", DRIVERS=="nvidia", RUN+="/usr/bin/udevadm trigger --subsystem-match=drm --action=change"
