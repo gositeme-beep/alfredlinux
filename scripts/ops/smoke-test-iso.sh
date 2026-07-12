@@ -4,8 +4,8 @@
 # Verifies: ISO is recent, has Alfred content in squashfs, hooks ran.
 set -euo pipefail
 
-SL=/home/root/law/alfredlinux-com-source-live
-ISO=$SL/iso-output/live-image-amd64.hybrid.iso
+SL=/home/gositeme/law/alfredlinux-com-source-live
+ISO=$SL/iso-output/AlfredLinux-Alpha-Matrix-7.77-x86_64.iso
 # Prefer 77ga log if it exists and is non-empty; else fall back to legacy.
 if [ -n "${ALFRED_SMOKE_INNER_LOG:-}" ]; then
   INNER_LOG="$ALFRED_SMOKE_INNER_LOG"

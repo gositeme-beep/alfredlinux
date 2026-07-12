@@ -34877,3 +34877,11 @@ echo "â•šâ•â•â•â•â•â•â•â•â•â�
 
 ) || true
 exit 0
+#!/bin/sh
+set -e
+echo "[0015] Fixing Debian 12 usrmerge missing kernel modules symlink..."
+if [ -d "/lib/modules/7.0.12" ] && [ ! -L "/lib/modules/7.0.12" ] && [ -d "/usr/lib/modules/7.0.12" ]; then
+  rm -rf /lib/modules/7.0.12
+  ln -sf /usr/lib/modules/7.0.12 /lib/modules/7.0.12
+  echo "[0015] Symlink fixed."
+fi

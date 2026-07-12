@@ -4,12 +4,12 @@
 # Run AFTER alfred-lb-build container exits (0) and new ISO appears in iso-output/.
 set -euo pipefail
 
-SL=/home/root/law/alfredlinux-com-source-live
-VHOST=/home/root/domains/alfredlinux.com/public_html
+SL=/home/gositeme/law/alfredlinux-com-source-live
+VHOST=/home/gositeme/domains/alfredlinux.com/public_html
 DOWNLOADS=$VHOST/downloads
 RELEASES=$VHOST/releases/7.77
 GASTATE=$VHOST/includes/ga-release-state.php
-NEW_ISO=$SL/iso-output/live-image-amd64.hybrid.iso
+NEW_ISO=$SL/iso-output/AlfredLinux-Alpha-Matrix-7.77-x86_64.iso
 SUMS=$DOWNLOADS/SHA256SUMS-7.77.txt
 SUMS512=$RELEASES/SHA512SUMS
 SUMSB3=$RELEASES/BLAKE3SUMS
@@ -40,7 +40,7 @@ echo "=== compute strongest-first hashes (slow on multi-GB ISO) ==="
 NEW_SHA512=$(sha512sum "$NEW_ISO" | awk '{print $1}')
 echo "sha512: $NEW_SHA512"
 B3SUM_BIN=""
-for candidate in /usr/local/bin/b3sum /usr/bin/b3sum /home/root/.cargo/bin/b3sum; do
+for candidate in /usr/local/bin/b3sum /usr/bin/b3sum /home/gositeme/.cargo/bin/b3sum; do
     if [[ -x "$candidate" ]]; then B3SUM_BIN="$candidate"; break; fi
 done
 if [[ -z "$B3SUM_BIN" ]] && command -v b3sum >/dev/null 2>&1; then

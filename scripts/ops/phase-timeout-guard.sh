@@ -3,10 +3,10 @@
 # SPDX-FileCopyrightText: 2026 Alfred Trust <alfred@alfredlinux.com>
 # In the name of Yeshua, Jesus Christ of Bethlehem, King of the Universe.
 set -euo pipefail
-STATUS_JSON="${STATUS_JSON:-/home/root/law/alfred-build-control-plane/last-lb-docker.json}"
-EMIT_EVENT="${EMIT_EVENT:-/home/root/law/alfredlinux-com-source-live/scripts/ops/write-ops-event.sh}"
-RECOVER="${RECOVER:-/home/root/law/alfredlinux-com-source-live/scripts/ops/recover-night-shift.sh}"
-LOCK_FILE="${LOCK_FILE:-/home/root/law/alfred-build-control-plane/phase-timeout-guard.cooldown}"
+STATUS_JSON="${STATUS_JSON:-/home/gositeme/law/alfred-build-control-plane/last-lb-docker.json}"
+EMIT_EVENT="${EMIT_EVENT:-/home/gositeme/law/alfredlinux-com-source-live/scripts/ops/write-ops-event.sh}"
+RECOVER="${RECOVER:-/home/gositeme/law/alfredlinux-com-source-live/scripts/ops/recover-night-shift.sh}"
+LOCK_FILE="${LOCK_FILE:-/home/gositeme/law/alfred-build-control-plane/phase-timeout-guard.cooldown}"
 COOLDOWN_SECONDS="${COOLDOWN_SECONDS:-900}"
 DRY_RUN="${DRY_RUN:-0}"
 

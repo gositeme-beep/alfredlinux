@@ -3,9 +3,9 @@
 # SPDX-FileCopyrightText: 2026 Alfred Trust <alfred@alfredlinux.com>
 # In the name of Yeshua, Jesus Christ of Bethlehem, King of the Universe.
 set -euo pipefail
-EVENT_JSON=/home/root/law/alfred-build-control-plane/last-ops-event.json
-STATUS_JSON=/home/root/law/alfred-build-control-plane/last-lb-docker.json
-STATE_DIR=/home/root/law/alfred-build-control-plane/alert-router-state
+EVENT_JSON=/home/gositeme/law/alfred-build-control-plane/last-ops-event.json
+STATUS_JSON=/home/gositeme/law/alfred-build-control-plane/last-lb-docker.json
+STATE_DIR=/home/gositeme/law/alfred-build-control-plane/alert-router-state
 WEBHOOK_URL="${WEBHOOK_URL:-}"
 mkdir -p "$STATE_DIR"
 [[ -f "$EVENT_JSON" ]] || exit 0
@@ -14,7 +14,7 @@ event=$(jq -r '.event // .type // "unknown"' "$EVENT_JSON" 2>/dev/null || echo u
 source=$(jq -r ' .source // "unknown"' "$EVENT_JSON" 2>/dev/null || echo unknown)
 attempt=$(jq -r '.attempt // "unknown"' "$EVENT_JSON" 2>/dev/null || echo unknown)
 phase=$(jq -r '.phase // "unknown"' "$STATUS_JSON" 2>/dev/null || echo unknown)
-container=$(cat /home/root/law/alfredlinux-com-source-live/lb-docker.containername 2>/dev/null || echo unknown)
+container=$(cat /home/gositeme/law/alfredlinux-com-source-live/lb-docker.containername 2>/dev/null || echo unknown)
 
 # skip self-generated alert events to avoid alert recursion/noise
 if [[ "$event" == "alert_dispatched" || "$source" == "alert-router" ]]; then
@@ -42,4 +42,4 @@ if [[ -n "$WEBHOOK_URL" ]]; then
   curl -fsS -X POST "$WEBHOOK_URL" -H "Content-Type: application/json" -d "$payload" >/dev/null || true
 fi
 
-/home/root/law/alfredlinux-com-source-live/scripts/ops/write-ops-event.sh --source alert-router --event alert_dispatched --reason "severity=$severity event=$event" --attempt "$attempt" --container "$container" --phase "$phase" || true
+/home/gositeme/law/alfredlinux-com-source-live/scripts/ops/write-ops-event.sh --source alert-router --event alert_dispatched --reason "severity=$severity event=$event" --attempt "$attempt" --container "$container" --phase "$phase" || true

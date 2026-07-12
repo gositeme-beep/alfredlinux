@@ -3,8 +3,8 @@
 # SPDX-FileCopyrightText: 2026 Alfred Trust <alfred@alfredlinux.com>
 # In the name of Yeshua, Jesus Christ of Bethlehem, King of the Universe.
 set -euo pipefail
-OUT="/home/root/law/alfredlinux-com-source-live/night-shift-logs/ops-events.jsonl"
-SUMMARY_OUT="/home/root/law/alfred-build-control-plane/last-ops-event.json"
+OUT="/home/gositeme/law/alfredlinux-com-source-live/night-shift-logs/ops-events.jsonl"
+SUMMARY_OUT="/home/gositeme/law/alfred-build-control-plane/last-ops-event.json"
 SOURCE=""
 EVENT=""
 REASON=""

@@ -1,12 +1,12 @@
 #!/bin/bash
-# /home/root/bin/iso-status.sh — single-command snapshot of the live build pipeline
+# /home/gositeme/bin/iso-status.sh — single-command snapshot of the live build pipeline
 # In the name of Yeshua, Jesus Christ of Bethlehem, King of the Universe.
 set -uo pipefail
 
-REPO=/home/root/law/alfredlinux-com-source-live
-DST=/home/root/domains/alfredlinux.com/public_html/downloads
-WLOG=/home/root/law/iso-watchdog.log
-PLOG=/home/root/law/iso-publish.log
+REPO=/home/gositeme/law/alfredlinux-com-source-live
+DST=/home/gositeme/domains/alfredlinux.com/public_html/downloads
+WLOG=/home/gositeme/law/iso-watchdog.log
+PLOG=/home/gositeme/law/iso-publish.log
 
 bold(){ printf '\033[1m%s\033[0m\n' "$*"; }
 green(){ printf '\033[32m%s\033[0m' "$*"; }

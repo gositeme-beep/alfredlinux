@@ -1,15 +1,15 @@
 #!/bin/bash
-# /home/root/iso-publish.sh — auto-publish a newly-built ISO
+# /home/gositeme/iso-publish.sh — auto-publish a newly-built ISO
 # Idempotent: safe to re-run; won't double-publish the same ISO.
 # In the name of Yeshua, Jesus Christ of Bethlehem, King of the Universe.
 set -uo pipefail
 
-REPO="/home/root/law/alfredlinux-com-source-live"
+REPO="/home/gositeme/law/alfredlinux-com-source-live"
 SRC_ISO_DIR="$REPO/iso-output"
-DST="/home/root/domains/alfredlinux.com/public_html/downloads"
-LOG="/home/root/law/iso-publish.log"
-STATE="/home/root/law/iso-publish.state"
-KEYID="04426AB7A3988D84559D9B92B3BFEC4C80900BF9"
+DST="/home/gositeme/domains/alfredlinux.com/public_html/downloads"
+LOG="/home/gositeme/law/iso-publish.log"
+STATE="/home/gositeme/law/iso-publish.state"
+KEYID="41E166075B0F95205839E41B32BCEDE8C8DD8B00"
 
 ts() { date '+%Y-%m-%d %H:%M:%S'; }
 log() { echo "[$(ts)] $*" | tee -a "$LOG"; }
@@ -191,7 +191,7 @@ fi
 echo "[$(ts)] published $CANON_NAME sha256=$ISO_HASH" >> "$STATE"
 
 # 11) Self-heal includes/ga-release-state.php
-GA_STATE="/home/root/domains/alfredlinux.com/public_html/includes/ga-release-state.php"
+GA_STATE="/home/gositeme/domains/alfredlinux.com/public_html/includes/ga-release-state.php"
 if [[ -f "$GA_STATE" ]]; then
     BASENAME_NOEXT="${CANON_NAME%.iso}"
     cp -a "$GA_STATE" "$GA_STATE.bak.$(date +%s)" 2>/dev/null
@@ -245,7 +245,7 @@ PY2
 fi
 
 # 12) Self-heal /releases/7.77/ sums (release.php reads from there)
-REL_DIR="/home/root/domains/alfredlinux.com/public_html/releases/7.77"
+REL_DIR="/home/gositeme/domains/alfredlinux.com/public_html/releases/7.77"
 if [[ -d "$REL_DIR" ]]; then
     # SHA256SUMS
     echo "$ISO_HASH  $CANON_NAME" > "$REL_DIR/SHA256SUMS"

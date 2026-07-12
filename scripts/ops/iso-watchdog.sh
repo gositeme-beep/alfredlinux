@@ -3,8 +3,8 @@
 # Runs as a one-shot probe (cron-friendly). Exit 0 = healthy, 1 = problem.
 set -uo pipefail
 
-LOG=/home/root/law/iso-watchdog.log
-STATE=/home/root/law/iso-watchdog.state
+LOG=/home/gositeme/law/iso-watchdog.log
+STATE=/home/gositeme/law/iso-watchdog.state
 ts() { date '+%Y-%m-%d %H:%M:%S'; }
 log() { echo "[$(ts)] $*" | tee -a "$LOG"; }
 
@@ -17,17 +17,17 @@ fi
 
 if [[ -z "$CONTAINER" ]]; then
     # No live container — check if ISO finished
-    LATEST=$(ls -t /home/root/law/alfredlinux-com-source-live/iso-output/*.iso 2>/dev/null | head -1)
+    LATEST=$(ls -t /home/gositeme/law/alfredlinux-com-source-live/iso-output/*.iso 2>/dev/null | head -1)
     if [[ -n "$LATEST" ]]; then
         AGE=$(( $(date +%s) - $(stat -c%Y "$LATEST") ))
         if [[ "$AGE" -lt 600 ]]; then
             SIZE=$(stat -c%s "$LATEST")
             log "BUILD COMPLETE: $(basename "$LATEST") $((SIZE/1024/1024)) MiB"
             log "  → invoking iso-publish.sh"
-            if [[ -x /home/root/iso-publish.sh ]]; then
-                /home/root/iso-publish.sh 2>&1 | tee -a "$LOG"
+            if [[ -x /home/gositeme/iso-publish.sh ]]; then
+                /home/gositeme/iso-publish.sh 2>&1 | tee -a "$LOG"
             else
-                log "  WARN: /home/root/iso-publish.sh missing"
+                log "  WARN: /home/gositeme/iso-publish.sh missing"
             fi
             exit 0
         fi

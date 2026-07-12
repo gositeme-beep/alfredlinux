@@ -4,14 +4,14 @@
 # In the name of Yeshua, Jesus Christ of Bethlehem, King of the Universe.
 set -euo pipefail
 MODE="${1:-enforce}"
-SL=/home/root/law/alfredlinux-com-source-live
-STATUS_JSON=/home/root/law/alfred-build-control-plane/last-lb-docker.json
+SL=/home/gositeme/law/alfredlinux-com-source-live
+STATUS_JSON=/home/gositeme/law/alfred-build-control-plane/last-lb-docker.json
 EVENT_WRITER=$SL/scripts/ops/write-ops-event.sh
-ISO=$SL/iso-output/live-image-amd64.hybrid.iso
+ISO=$SL/iso-output/AlfredLinux-Alpha-Matrix-7.77-x86_64.iso
 LOG=$SL/lb-docker-build.log
-SUMS=/home/root/domains/alfredlinux.com/public_html/downloads/SHA256SUMS-7.77.txt
-MANIFEST=/home/root/domains/alfredlinux.com/public_html/releases/7.77/build-manifest.json
-ATTEMPT=$(cat /home/root/law/night-shift-attempt.txt 2>/dev/null || echo unknown)
+SUMS=/home/gositeme/domains/alfredlinux.com/public_html/downloads/SHA256SUMS-7.77.txt
+MANIFEST=/home/gositeme/domains/alfredlinux.com/public_html/releases/7.77/build-manifest.json
+ATTEMPT=$(cat /home/gositeme/law/night-shift-attempt.txt 2>/dev/null || echo unknown)
 PHASE=$(jq -r '.phase // "unknown"' "$STATUS_JSON" 2>/dev/null || echo unknown)
 CNAME=$(cat "$SL/lb-docker.containername" 2>/dev/null || echo unknown)
 reasons=""
@@ -70,7 +70,7 @@ if [[ -n "$sline" ]] && [[ -f "$LOG" ]]; then
   fi
 fi
 
-smoke=$(ls -1t /home/root/law/night-shift-logs/smoke-a*.log 2>/dev/null | head -n1 || true)
+smoke=$(ls -1t /home/gositeme/law/night-shift-logs/smoke-a*.log 2>/dev/null | head -n1 || true)
 if [[ -z "$smoke" ]]; then
   append_reason "smoke_log_missing"
 elif ! grep -q 'PASS: ISO contains /etc/alfred' "$smoke" 2>/dev/null; then

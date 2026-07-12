@@ -3,7 +3,7 @@
 # SPDX-FileCopyrightText: 2026 Alfred Trust <alfred@alfredlinux.com>
 # In the name of Yeshua, Jesus Christ of Bethlehem, King of the Universe.
 set -euo pipefail
-ROOT=/home/root/law/alfredlinux-com-source-live
+ROOT=/home/gositeme/law/alfredlinux-com-source-live
 LOG=$ROOT/night-shift-logs/public-status-update.log
 mkdir -p "$ROOT/night-shift-logs"
 {

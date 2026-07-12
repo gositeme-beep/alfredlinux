@@ -11,7 +11,7 @@
 # Does NOT stop containers or touch the chroot. Backs up FAIL before removal (see BACKUP_DIR).
 set -euo pipefail
 
-LAW=/home/root/law
+LAW=/home/gositeme/law
 SL=$LAW/alfredlinux-com-source-live
 NAME_FILE=$SL/lb-docker.containername
 FAIL=$LAW/night-shift-FAIL.txt

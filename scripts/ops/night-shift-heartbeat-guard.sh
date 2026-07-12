@@ -4,7 +4,7 @@
 # In the name of Yeshua, Jesus Christ of Bethlehem, King of the Universe.
 set -euo pipefail
 
-LAW=/home/root/law
+LAW=/home/gositeme/law
 SL=$LAW/alfredlinux-com-source-live
 SERVICE=alfred-night-shift
 HEARTBEAT=$SL/.lb-docker-watch.heartbeat

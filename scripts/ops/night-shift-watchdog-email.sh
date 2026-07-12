@@ -10,12 +10,12 @@
 #   NIGHT_SHIFT_WATCHDOG_LOG  append log (default: $LAW/night-shift-watchdog.log)
 #
 # Cron example (root user, every 5 minutes):
-#   */5 * * * * /home/root/law/night-shift-watchdog-email.sh >/dev/null 2>&1
+#   */5 * * * * /home/gositeme/law/night-shift-watchdog-email.sh >/dev/null 2>&1
 
 set -u
 set -o pipefail
 
-LAW=/home/root/law
+LAW=/home/gositeme/law
 DONE_MARKER=$LAW/night-shift-DONE.txt
 FAIL_MARKER=$LAW/night-shift-FAIL.txt
 STATE=$LAW/.night-shift-watchdog.state
