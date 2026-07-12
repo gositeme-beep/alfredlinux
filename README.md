@@ -119,6 +119,18 @@ Installation:
   4,497+ packages. 20 custom apps in /opt. 10 military-grade security tools.
   3,071 binaries. 9,610 shared libraries. 165GB master chroot.
 
+---
+## ??? NATIVE WAYLAND & HYBRID GPU ENGINE (Sovereign Display Architecture)
+
+---
+Alfred Linux features a fully sovereign, tear-free **KDE Plasma 6 Wayland** graphical display pipeline engineered to run flawlessly across bare-metal desktops, NVIDIA Optimus hybrid laptops, and multi-monitor setups:
+
+* **Early Kernel Mode Setting (KMS):** Initial RAM disk (`initramfs-tools/modules`) loads `nvidia`, `nvidia_modeset`, `nvidia_uvm`, and `nvidia_drm` early during boot sequence to guarantee instant KMS readiness before graphical display managers start.
+* **Hybrid Laptop External Display Auto-Detection:** Custom udev KMS hotplug rules (`80-alfred-nvidia-prime-wayland.rules`) and kernel boot flags (`nvidia-drm.modeset=1 nvidia-drm.fbdev=1`) wake up dedicated NVIDIA GPUs when external HDMI or DisplayPort cables are hot-plugged.
+* **Universal Wayland Toolkit Enforcement:** Global environment configuration (`/etc/environment.d/50-alfred-wayland.conf`) forces native Wayland rendering across Web browsers (Firefox), Chromium/Electron apps (`ELECTRON_OZONE_PLATFORM_HINT=auto`), Qt 5/6 applications, GTK 3/4, and SDL media applications.
+* **Zero-Friction Live Administration:** Passwordless sudo access (`01_alfred_nopasswd`) for the live session user alongside masked offline networking timeouts (`NetworkManager-wait-online.service`) to ensure instant desktop responsiveness.
+
+
   It is not a fork. It is not a reskin. It is a complete sovereign ecosystem
   built from the ground up by Commander Danny William Perez and Alfred Perez.
 
