@@ -15,7 +15,7 @@ ts() { date '+%Y-%m-%d %H:%M:%S'; }
 log() { echo "[$(ts)] $*" | tee -a "$LOG"; }
 
 # Find the newest ISO in iso-output/
-LATEST=$(ls -t "$SRC_ISO_DIR"/alfred-linux-7.77-*.iso "$SRC_ISO_DIR"/live-image-amd64.hybrid.iso 2>/dev/null | head -1)
+LATEST=$(ls -t "$SRC_ISO_DIR"/AlfredLinux-Alpha-Matrix-7.77-x86_64.iso "$SRC_ISO_DIR"/alfred-linux-7.77-*.iso "$SRC_ISO_DIR"/live-image-amd64.hybrid.iso 2>/dev/null | head -1)
 if [[ -z "$LATEST" ]]; then
     # Also look in build/ in case it's there
     LATEST=$(ls -t "$REPO/build/binary"*.iso "$REPO/build/"*.hybrid.iso 2>/dev/null | head -1)
