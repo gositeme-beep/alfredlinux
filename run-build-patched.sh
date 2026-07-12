@@ -107,7 +107,10 @@ GRUB_CMDLINE_LINUX_DEFAULT="quiet nvidia-drm.modeset=1"
 GRUB_CMDLINE_LINUX=""
 EOF
 # Trap 29: Root Artifacts
-# DISABLED-v14.14: rm -rf /work/build/chroot/root/.wget-hsts /work/build/chroot/root/.cache/* /work/build/chroot/root/.ssh /work/build/chroot/root/custom-packages /work/build/chroot/root/masterstroke_kernel
+rm -rf /work/build/chroot/root/.wget-hsts /work/build/chroot/root/.cache/* /work/build/chroot/root/.ssh /work/build/chroot/root/custom-packages /work/build/chroot/root/masterstroke_kernel
+# Also clean build artifacts that don't belong in the live image
+rm -rf /work/build/chroot/build-assets /work/build/chroot/var/log/*.log /work/build/chroot/var/tmp/* /work/build/chroot/tmp/*
+apt-get clean -y 2>/dev/null || chroot /work/build/chroot apt-get clean -y 2>/dev/null || true
 
 echo "=== STEP 4: Setup binary/live ==="
 mkdir -p /work/build/binary/live
@@ -119,11 +122,17 @@ echo "=== STEP 5: MKSQUASHFS (the big one) ==="
 echo "Compressing chroot → filesystem.squashfs..."
 echo "This will take several hours. Started at $(date)"
 mksquashfs /work/build/chroot /work/build/binary/live/filesystem.squashfs \
-  -noappend -noI -noD -noF -noX \
-  -mem 14G \
+  -comp xz -Xbcj x86 -b 1M \
   -noappend \
+  -mem 14G \
   -e boot/vmlinuz-7.0.12 boot/initrd.img-7.0.12 \
-  -wildcards -e "var/cache/apt/archives/*.deb" "var/cache/apt/*.bin" \
+  -wildcards \
+  -e "var/cache/apt/archives/*.deb" "var/cache/apt/*.bin" \
+  -e "var/log/*" "var/tmp/*" "tmp/*" \
+  -e "root/.cache/*" "root/.wget-hsts" "root/.ssh" \
+  -e "root/custom-packages" "root/masterstroke_kernel" \
+  -e "build-assets/*" \
+  -e "usr/share/doc/*" "usr/share/man/*" \
   -progress
 echo "mksquashfs finished at $(date)"
 echo "Squashfs size: $(ls -lh /work/build/binary/live/filesystem.squashfs | awk "{print \$5}")"
