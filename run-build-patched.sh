@@ -186,8 +186,8 @@ ISOSIZE=$(stat -c%s /work/build/binary/live/filesystem.squashfs 2>/dev/null || e
 echo $ISOSIZE > /work/build/binary/live/filesystem.size
 
 
-echo "=== STEP 7.9: Trap 10 (Overlay unmount and Stamps) ==="
-umount /work/build/chroot 2>/dev/null || true
+echo "=== STEP 7.9: Trap 10 (Stamps for lb binary) ==="
+# DO NOT unmount chroot here - lb binary still needs it for dpkg operations
 touch /work/build/.build/binary_chroot
 touch /work/build/.build/binary_linux-image
 
@@ -195,7 +195,14 @@ echo "=== STEP 8: Run lb binary for ISO assembly (with chroot already squashed) 
 # Touch the binary_rootfs stamp so lb binary skips mksquashfs
 touch /work/build/.build/binary_rootfs
 # Now lb binary will just do grub + xorriso
+# Ensure /usr/bin/env exists in chroot (lb binary needs it)
+if [ ! -f /work/build/chroot/usr/bin/env ]; then
+  cp /usr/bin/env /work/build/chroot/usr/bin/env 2>/dev/null || true
+fi
 lb binary || echo "lb binary exited with code $? — checking if ISO exists anyway"
+
+# NOW unmount the overlay chroot after lb binary is done
+umount /work/build/chroot 2>/dev/null || true
 
 echo "=== STEP 9: Check results ==="
 if [ -f /work/build/live-image-amd64.hybrid.iso ]; then
