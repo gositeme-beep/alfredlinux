@@ -36,7 +36,7 @@ mkdir -p /opt/alvr
 # Download ALVR (using latest release logic, or a specific known good version)
 for i in {1..10}; do
     echo "Downloading ALVR (Attempt $i)..."
-    cp /root/custom-packages/alvr_streamer_linux.tar.gz /tmp/alvr_streamer_linux.tar.gz 2>/dev/null || wget -c -qO /tmp/alvr_streamer_linux.tar.gz https://github.com/alvr-org/ALVR/releases/download/v20.14.1/alvr_streamer_linux.tar.gz
+    cp /build-assets/alvr_streamer_linux.tar.gz /tmp/alvr_streamer_linux.tar.gz 2>/dev/null || cp /root/custom-packages/alvr_streamer_linux.tar.gz /tmp/alvr_streamer_linux.tar.gz 2>/dev/null || wget -c -qO /tmp/alvr_streamer_linux.tar.gz https://github.com/alvr-org/ALVR/releases/download/v20.14.1/alvr_streamer_linux.tar.gz
     if tar -xzf /tmp/alvr_streamer_linux.tar.gz -C /opt/alvr --strip-components=1; then
         echo "ALVR Extracted successfully."
 
@@ -121,7 +121,7 @@ mkdir -p /opt/alvr
 # Download ALVR (using latest release logic, or a specific known good version)
 for i in {1..10}; do
     echo "Downloading ALVR (Attempt $i)..."
-    cp /root/custom-packages/alvr_streamer_linux.tar.gz /tmp/alvr_streamer_linux.tar.gz 2>/dev/null || wget -c -qO /tmp/alvr_streamer_linux.tar.gz https://github.com/alvr-org/ALVR/releases/download/v20.14.1/alvr_streamer_linux.tar.gz
+    cp /build-assets/alvr_streamer_linux.tar.gz /tmp/alvr_streamer_linux.tar.gz 2>/dev/null || cp /root/custom-packages/alvr_streamer_linux.tar.gz /tmp/alvr_streamer_linux.tar.gz 2>/dev/null || wget -c -qO /tmp/alvr_streamer_linux.tar.gz https://github.com/alvr-org/ALVR/releases/download/v20.14.1/alvr_streamer_linux.tar.gz
     if tar -xzf /tmp/alvr_streamer_linux.tar.gz -C /opt/alvr --strip-components=1; then
         echo "ALVR Extracted successfully."
 
