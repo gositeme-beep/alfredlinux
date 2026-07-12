@@ -8,7 +8,7 @@
 set -uo pipefail
 ISO="${1:-}"
 [[ -z "$ISO" || ! -f "$ISO" ]] && { echo "Usage: $0 <iso>"; exit 1; }
-SRC="/home/root/law/alfredlinux-com-source-live"
+SRC="/home/gositeme/law/alfredlinux-com-source-live"
 KDEB=$(ls "$SRC/config/packages.chroot/linux-image-"*.deb 2>/dev/null | head -1)
 [[ -z "$KDEB" ]] && { echo "✗ no kernel deb in packages.chroot/"; exit 1; }
 echo "[SWAP] Plan:"

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Same as /home/root/law/alfred-kernel-docker-bindeb.sh — Docker Trixie, no host sudo.
+# Same as /home/gositeme/law/alfred-kernel-docker-bindeb.sh — Docker Trixie, no host sudo.
 # KERNEL_WORK default: <repo>/../kernel-7.0.12-work
 set -euo pipefail
 REPO="$(cd "$(dirname "$0")/.." && pwd)"

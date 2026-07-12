@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # audit-law-wrappers.sh — supply-chain + SSH footgun grep on **runtime** shells under LAW_ROOT.
-# Intended for /home/root/law (installed copies of ops scripts + alfred-* helpers), not the
+# Intended for /home/gositeme/law (installed copies of ops scripts + alfred-* helpers), not the
 # full kernel tree. Scans only:
 #   - $LAW_ROOT/*.sh
 #   - $LAW_ROOT/alfred-build-control-plane/*.sh (if that directory exists)
@@ -25,7 +25,7 @@
 set -euo pipefail
 shopt -s nullglob
 
-LAW_ROOT=${LAW_ROOT:-/home/root/law}
+LAW_ROOT=${LAW_ROOT:-/home/gositeme/law}
 FAIL=0
 WARN=0
 # Avoid embedding literals that scripts/security-audit.sh greps for (http://, curl|…|sh,

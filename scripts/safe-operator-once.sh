@@ -13,7 +13,7 @@ apt-get update -qq
 apt-get install -y --no-install-recommends shellcheck
 
 SRC="$ROOT/build-assets/forge/docs/index.html"
-DST="/home/root/domains/alfredlinux.com/public_html/forge/docs/index.html"
+DST="/home/gositeme/domains/alfredlinux.com/public_html/forge/docs/index.html"
 if [[ -f "$SRC" ]]; then
   install -D -m0644 -o apache -g apache "$SRC" "$DST"
   echo "OK: installed GoForge docs to $DST"
@@ -21,7 +21,7 @@ else
   echo "warn: missing $SRC (skip docs install)" >&2
 fi
 
-FORGE_DIR="/home/root/domains/alfredlinux.com/public_html/forge"
+FORGE_DIR="/home/gositeme/domains/alfredlinux.com/public_html/forge"
 if [[ -d "$FORGE_DIR" ]]; then
   chown -R root:root "$FORGE_DIR" 2>/dev/null || chown -R apache:apache "$FORGE_DIR" || true
   find "$FORGE_DIR" -type d -exec chmod 0755 {} \;

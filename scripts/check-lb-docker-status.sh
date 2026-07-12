@@ -6,12 +6,12 @@ set -euo pipefail
 REPO="$(cd "$(dirname "$0")/.." && pwd)"
 NAME_FILE="$REPO/lb-docker.containername"
 LOG="$REPO/lb-docker-build.log"
-STATUS_JSON="${1:-${NAP_STATUS_JSON:-/home/root/law/alfred-build-control-plane/last-lb-docker.json}}"
+STATUS_JSON="${1:-${NAP_STATUS_JSON:-/home/gositeme/law/alfred-build-control-plane/last-lb-docker.json}}"
 
 echo "=== check-lb-docker-status $(date -Is) ==="
 echo "repo: $REPO"
 
-LAW=/home/root/law
+LAW=/home/gositeme/law
 for f in "$LAW/night-shift-state.txt" "$LAW/night-shift-DONE.txt" "$LAW/night-shift-FAIL.txt"; do
   if [[ -f "$f" ]]; then
     echo "--- $(basename "$f") (first line) ---"

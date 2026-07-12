@@ -7,7 +7,7 @@
 # In the name of Yeshua, Jesus Christ of Bethlehem, King of the Universe.
 set -uo pipefail
 
-SRC="${SRC:-/home/root/law/alfredlinux-com-source-live}"
+SRC="${SRC:-/home/gositeme/law/alfredlinux-com-source-live}"
 OUT="${1:-$SRC/BUILD-MANIFEST.json}"
 TS=$(date -u +%Y-%m-%dT%H:%M:%SZ)
 GIT_HEAD=$(cd "$SRC" && git rev-parse HEAD 2>/dev/null || echo unknown)

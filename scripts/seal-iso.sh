@@ -13,8 +13,8 @@ if [[ -z "$ISO" || ! -f "$ISO" ]]; then
     exit 1
 fi
 
-SRC="/home/root/law/alfredlinux-com-source-live"
-WEB="/home/root/domains/alfredlinux.com/public_html"
+SRC="/home/gositeme/law/alfredlinux-com-source-live"
+WEB="/home/gositeme/domains/alfredlinux.com/public_html"
 CHAIN="$WEB/covenant-chain.log"
 MANIFEST="$SRC/BUILD-MANIFEST.json"
 TS=$(date -u +%Y-%m-%dT%H:%M:%SZ)
