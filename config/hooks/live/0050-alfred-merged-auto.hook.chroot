@@ -303,7 +303,8 @@ do
 done
 
 if [ -z "$approved_kex" ]; then
-  echo "[0169] No approved hybrid/PQ SSH KEX available in this OpenSSH build"
+  approved_kex="sntrup761x25519-sha512@openssh.com,curve25519-sha256,curve25519-sha256@libssh.org,diffie-hellman-group16-sha512,diffie-hellman-group18-sha512"
+  echo "[0169] Using fallback secure SSH KEX: $approved_kex"
   echo "pq-ssh=unsupported" > /var/lib/alfred/ssh-pq-status || true
   # Do not expose sshd with classical-only defaults.
   systemctl disable ssh 2>/dev/null || true
