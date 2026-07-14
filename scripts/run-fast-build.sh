@@ -26,6 +26,7 @@ sudo bash -c 'while true; do echo 3 > /proc/sys/vm/drop_caches; sleep 15; done' 
 CACHE_DROPPER_PID=$!
 echo "[runner] Cache-dropper daemon started (PID $CACHE_DROPPER_PID)"
 
+docker rm -f alfred-lb-runner-v3 2>/dev/null || true
 docker run \
   --rm --name alfred-lb-runner-v3 \
   --privileged \
