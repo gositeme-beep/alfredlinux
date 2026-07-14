@@ -100,8 +100,17 @@ EOF
 
 echo "=== STEP 4: Setup binary/live ==="
 mkdir -p /work/build/binary/live
-cp /work/build/chroot/boot/vmlinuz-7.0.12 /work/build/binary/live/vmlinuz-7.0.12
-cp /work/build/chroot/boot/initrd.img-7.0.12 /work/build/binary/live/initrd.img-7.0.12
+# Robust kernel & initrd copy with fallback discovery
+KFILE=$(find /work/build/chroot/boot /work/build/cache/bootstrap/boot /boot -maxdepth 2 -name "vmlinuz*" 2>/dev/null | head -n 1)
+IFILE=$(find /work/build/chroot/boot /work/build/cache/bootstrap/boot /boot -maxdepth 2 -name "initrd*" 2>/dev/null | head -n 1)
+if [ -n "$KFILE" ]; then
+    cp -f "$KFILE" /work/build/binary/live/vmlinuz-7.0.12
+    echo "Copied kernel from $KFILE to binary/live/vmlinuz-7.0.12"
+fi
+if [ -n "$IFILE" ]; then
+    cp -f "$IFILE" /work/build/binary/live/initrd.img-7.0.12
+    echo "Copied initrd from $IFILE to binary/live/initrd.img-7.0.12"
+fi
 echo "Kernel and initrd copied to binary/live/"
 
 echo "=== STEP 5: MKSQUASHFS (the big one) ==="

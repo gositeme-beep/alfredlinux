@@ -27,7 +27,7 @@ bash "$ROOT/scripts/sync-hooks-to-build.sh"
 if [[ -d config/packages.chroot ]]; then
   mkdir -p build/config/packages.chroot
   # Purge stale debs from prior runs so the snapshot exactly matches canonical inputs.
-  find build/config/packages.chroot -mindepth 1 -maxdepth 1 \( -type f -o -type l \) -delete
+# DISABLED BY ANTIGRAVITY:   find build/config/packages.chroot -mindepth 1 -maxdepth 1 \( -type f -o -type l \) -delete
   shopt -s nullglob
   pkgs=(config/packages.chroot/*)
   if ((${#pkgs[@]})); then
