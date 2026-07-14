@@ -66,7 +66,6 @@ if [ $? -ne 0 ]; then
 fi
 echo "Overlay mounted. chroot contents:"
 ls /work/build/chroot/ | head -5
-echo "chroot size: $(du -sh /work/build/chroot/ 2>/dev/null | cut -f1)"
 
 # =============================================================
 # STEP 2.1: FIX CRYPTSETUP DANGLING SYMLINK (Trap 30)
@@ -100,7 +99,6 @@ mkdir -p /work/build/chroot/usr/share/ollama/.ollama/models/manifests
 cp -r /models/blobs/* /work/build/chroot/usr/share/ollama/.ollama/models/blobs/ 2>/dev/null || true
 cp -r /models/manifests/* /work/build/chroot/usr/share/ollama/.ollama/models/manifests/ 2>/dev/null || true
 chown -R 1000:1000 /work/build/chroot/usr/share/ollama/.ollama
-echo "AI Models seeded. Blobs size: $(du -sh /work/build/chroot/usr/share/ollama/.ollama/models/blobs/ 2>/dev/null | cut -f1)"
 
 
 echo "=== STEP 3: Verify chroot has everything ==="
@@ -268,36 +266,6 @@ if [ -f /work/build/live-image-amd64.hybrid.iso ]; then
   touch /work/iso-output/build-complete.marker
   echo "BUILD COMPLETE"
 
-echo "=== STEP 10: Generate hashes and sync to website ==="
-WEBDL=/home/gositeme/domains/alfredlinux.com/public_html/downloads
-cd /work/iso-output
-echo "Generating MD5..."
-md5sum AlfredLinux-Alpha-Matrix-7.77-x86_64.iso | awk '{print $1}' > md5.txt
-echo "Generating SHA1..."
-sha1sum AlfredLinux-Alpha-Matrix-7.77-x86_64.iso | awk '{print $1}' > sha1.txt
-echo "Generating SHA256..."
-sha256sum AlfredLinux-Alpha-Matrix-7.77-x86_64.iso | awk '{print $1}' > sha256.txt
-echo "Generating SHA512..."
-sha512sum AlfredLinux-Alpha-Matrix-7.77-x86_64.iso | awk '{print $1}' > sha512.txt
-echo "Generating BLAKE3..."
-/home/gositeme/.cargo/bin/b3sum AlfredLinux-Alpha-Matrix-7.77-x86_64.iso | awk '{print $1}' > blake3.txt 2>/dev/null || echo "b3sum not available"
-echo "Copying hashes to website downloads directory..."
-cp -f md5.txt sha1.txt sha256.txt sha512.txt blake3.txt "$WEBDL/"
-chown gositeme:gositeme "$WEBDL"/md5.txt "$WEBDL"/sha1.txt "$WEBDL"/sha256.txt "$WEBDL"/sha512.txt "$WEBDL"/blake3.txt 2>/dev/null
-echo "All 5 hashes synced to $WEBDL/"
-
-echo "=== STEP 11: Generate .torrent file ==="
-cd /work/iso-output
-rm -f alfredlinux-latest.iso.torrent
-transmission-create -o alfredlinux-latest.iso.torrent \
-  -t udp://tracker.opentrackr.org:1337/announce \
-  -t udp://tracker.openbittorrent.com:6969/announce \
-  AlfredLinux-Alpha-Matrix-7.77-x86_64.iso
-WEBDL=/home/gositeme/domains/alfredlinux.com/public_html/downloads
-cp -f alfredlinux-latest.iso.torrent "$WEBDL/alfredlinux-latest.iso.torrent"
-cp -f alfredlinux-latest.iso.torrent "$WEBDL/AlfredLinux-Alpha-Matrix-7.77-x86_64.iso.torrent"
-chown gositeme:gositeme "$WEBDL"/alfredlinux-latest.iso.torrent "$WEBDL"/AlfredLinux-Alpha-Matrix-7.77-x86_64.iso.torrent 2>/dev/null
-echo "Torrent generated and synced to $WEBDL/"
   echo "[inner] lb build finished ... exit=0"
   echo "DONE ON ATTEMPT 1" > /work/night-shift-state.txt
   echo "Build completed successfully via V2 runner." > /work/night-shift-DONE.txt
@@ -313,4 +281,42 @@ echo "=== DONE at $(date) ==="
 kill $CACHE_DROPPER_PID 2>/dev/null || true
 
 echo "[runner] Docker exited with code $?"
+
+echo "=== STEP 10: Generate hashes and sync to website ==="
+WEBDL=/home/gositeme/domains/alfredlinux.com/public_html/downloads
+if [ -d "/home/gositeme/law/alfredlinux-com-source-live/iso-output" ]; then
+  cd /home/gositeme/law/alfredlinux-com-source-live/iso-output
+  if [ -f "AlfredLinux-Alpha-Matrix-7.77-x86_64.iso" ]; then
+    echo "Generating MD5..."
+    md5sum AlfredLinux-Alpha-Matrix-7.77-x86_64.iso | awk '{print $1}' > md5.txt
+    echo "Generating SHA1..."
+    sha1sum AlfredLinux-Alpha-Matrix-7.77-x86_64.iso | awk '{print $1}' > sha1.txt
+    echo "Generating SHA256..."
+    sha256sum AlfredLinux-Alpha-Matrix-7.77-x86_64.iso | awk '{print $1}' > sha256.txt
+    echo "Generating SHA512..."
+    sha512sum AlfredLinux-Alpha-Matrix-7.77-x86_64.iso | awk '{print $1}' > sha512.txt
+    echo "Generating BLAKE3..."
+    /home/gositeme/.cargo/bin/b3sum AlfredLinux-Alpha-Matrix-7.77-x86_64.iso | awk '{print $1}' > blake3.txt 2>/dev/null || echo "b3sum not available"
+    echo "Copying hashes to website downloads directory..."
+    mkdir -p "$WEBDL"
+    cp -f md5.txt sha1.txt sha256.txt sha512.txt blake3.txt "$WEBDL/" 2>/dev/null || true
+    chown gositeme:gositeme "$WEBDL"/md5.txt "$WEBDL"/sha1.txt "$WEBDL"/sha256.txt "$WEBDL"/sha512.txt "$WEBDL"/blake3.txt 2>/dev/null || true
+    echo "All 5 hashes synced to $WEBDL/"
+
+    echo "=== STEP 11: Generate .torrent file ==="
+    rm -f alfredlinux-latest.iso.torrent
+    transmission-create -o alfredlinux-latest.iso.torrent \
+      -t udp://tracker.opentrackr.org:1337/announce \
+      -t udp://tracker.openbittorrent.com:6969/announce \
+      AlfredLinux-Alpha-Matrix-7.77-x86_64.iso 2>/dev/null || echo "transmission-create failed"
+    cp -f alfredlinux-latest.iso.torrent "$WEBDL/alfredlinux-latest.iso.torrent" 2>/dev/null || true
+    cp -f alfredlinux-latest.iso.torrent "$WEBDL/AlfredLinux-Alpha-Matrix-7.77-x86_64.iso.torrent" 2>/dev/null || true
+    chown gositeme:gositeme "$WEBDL"/alfredlinux-latest.iso.torrent "$WEBDL"/AlfredLinux-Alpha-Matrix-7.77-x86_64.iso.torrent 2>/dev/null || true
+    echo "Torrent generated and synced to $WEBDL/"
+    chown -R gositeme:gositeme /home/gositeme/law/alfredlinux-com-source-live/iso-output 2>/dev/null || true
+  else
+    echo "No ISO found in iso-output, skipping hash generation."
+  fi
+fi
+
 echo "[runner] Finished at $(date)"

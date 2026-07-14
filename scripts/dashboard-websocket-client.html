@@ -21,7 +21,7 @@
             <span id="usb-status" class="status">Checking status...</span>
         </div>
         <div class="row">
-            <button id="btnTogggleBT">Toggle Bluetooth Air-Gap</button>
+            <button id="btnToggleBT">Toggle Bluetooth Air-Gap</button>
             <span id="bt-status" class="status">Checking status...</span>
         </div>
         <div class="row">
@@ -29,7 +29,7 @@
             <span id="webcam-status" class="status">Checking status...</span>
         </div>
         <div class="row">
-            <button id="btnTogggleMic">Toggle Microphone Air-Gap</button>
+            <button id="btnToggleMic">Toggle Microphone Air-Gap</button>
             <span id="mic-status" class="status">Checking status...</span>
         </div>
         
@@ -80,7 +80,7 @@
         document.getElementById('btnToggleBT').onclick = () => {
             if(wsCommand.readyState === WebSocket.OPEN) wsCommand.send(JSON.stringify({action: 'toggle_bt'}));
         };
-        document.getElementById('btnToggheWebcam').onclick = () => {
+        document.getElementById('btnToggleWebcam').onclick = () => {
             if(wsCommand.readyState === WebSocket.OPEN) wsCommand.send(JSON.stringify({action: 'toggle_webcam'}));
         };
         document.getElementById('btnToggleMic').onclick = () => {
