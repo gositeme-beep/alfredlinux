@@ -11,7 +11,7 @@
   <img src="https://img.shields.io/badge/Kernel-7.0.12-orange?style=for-the-badge" alt="Kernel"/>
   <img src="https://img.shields.io/badge/Base-Debian%20Trixie-red?style=for-the-badge" alt="Debian Trixie"/>
   <img src="https://img.shields.io/badge/Hooks-1,335-gold?style=for-the-badge" alt="Hooks"/>
-  <img src="https://img.shields.io/badge/ISO-98GB-purple?style=for-the-badge" alt="ISO Size"/>
+  <img src="https://img.shields.io/badge/ISO-73GB-purple?style=for-the-badge" alt="ISO Size"/>
 </p>
 
 <p align="center">
@@ -59,14 +59,14 @@
 ---
 
 DISTRIBUTION NOTICE:
-The compiled 98GB Operating System (ISO) is not hosted directly on this repository.
+The compiled 73GB Operating System (ISO) is not hosted directly on this repository.
 To download and install the OS, use the official BitTorrent link below.
 
 Torrent Download Link: https://alfredlinux.com/downloads/alfredlinux-latest.iso.torrent
 
 Installation:
 1. Download the .torrent file using the link above.
-2. Open the file in a standard BitTorrent client to download the 98GB ISO.
+2. Open the file in a standard BitTorrent client to download the 73GB ISO.
 3. Flash the ISO to a 128GB+ USB drive using Ventoy or dd.
 4. Boot into the Operating System.
 
@@ -100,7 +100,7 @@ Installation:
   ZSH God-Tier Terminal. Wine/Lutris Windows compatibility. Meta Quest 3
   wireless VR streaming via ALVR. Unreal Engine 5 (142GB). And 178GB of
   elite offline AI models — FLUX.2, CogVideoX 5B, Whisper V3, XTTS-v2 —
-  all baked directly into the 98GB ISO.
+  all baked directly into the 73GB ISO.
 
   Based on Debian Trixie (13). Zero telemetry. Zero tracking. The most
   comprehensive security hardening stack ever assembled in a desktop OS:
@@ -829,7 +829,7 @@ Alfred Linux features a fully sovereign, tear-free **KDE Plasma 6 Wayland** grap
   and Spatial OS performance without ever compromising the pristine security
   of the 7.0.12 kernel. Modules are pre-compiled and baked into the master chroot at /Nvidia_7.0.12_Support/ with KMS modesetting enabled (nvidia-drm.modeset=1).
 
-## [3] INTEGRATED AI MODELS (100GB+ PAYLOAD)
+## [3] INTEGRATED AI MODELS (73GB PAYLOAD)
   The final OS seamlessly hooks into the Alfred Ecosystem's neural net:
   - Alfred-Opus & Alfred-Sonnet (Ultra-fast contextual LLMs)
   - CogVideoX 5B (Text-to-Video generation model)
