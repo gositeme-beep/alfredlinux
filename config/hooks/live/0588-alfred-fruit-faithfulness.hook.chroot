@@ -29,7 +29,7 @@ echo "[0732-fruit-faithfulness] done"
 echo "[Eden Protocol] Engineering Offline Botanical & Crop-Disease Diagnostic Engine..."
 
 # Install computer vision libraries and botanical dataset dependencies
-DEBIAN_FRONTEND=noninteractive apt-get install -y --fix-broken -y --no-install-recommends python3-opencv || true
+DEBIAN_FRONTEND=noninteractive eatmydata apt-get install -y --fix-broken -y --no-install-recommends python3-opencv || true
 
 cat > /usr/local/bin/alfred-eden << 'EDEN'
 #!/opt/alfred-voice/bin/python3
@@ -81,7 +81,7 @@ echo "[Solomon Protocol] Engineering Offline Mesh Blockchain Matrix..."
 
 # Install k3s for lightweight container orchestration and geth for Ethereum blockchain nodes
 # (Simulated install for blueprint purposes; in reality, k3s and geth binaries are fetched)
-DEBIAN_FRONTEND=noninteractive apt-get install -y --fix-broken -y --no-install-recommends curl -m 900 jq || true
+DEBIAN_FRONTEND=noninteractive eatmydata apt-get install -y --fix-broken -y --no-install-recommends curl -m 900 jq || true
 
 cat > /usr/local/bin/alfred-solomon << 'SOLOMON'
 #!/bin/bash

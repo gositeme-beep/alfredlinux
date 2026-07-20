@@ -35,7 +35,7 @@ apt_update_nonfatal() {
 apt_nonfatal() {
     local tag="$1"; shift
     mkdir -p /var/lib/alfred/build-flags || true
- if ! DEBIAN_FRONTEND=noninteractive apt-get install -y --fix-broken -y --no-install-recommends "$@" 2>/dev/null; then
+ if ! DEBIAN_FRONTEND=noninteractive eatmydata apt-get install -y --fix-broken -y --no-install-recommends "$@" 2>/dev/null; then
         echo "[WARN] ${tag} install failed (nonfatal)" >&2 || true
         echo "${tag}_install_failed=$(date -Is)" >> /var/lib/alfred/build-flags/${tag}-apt-failed || true
     fi
@@ -44,7 +44,7 @@ ARCH=$(dpkg --print-architecture)
 
 # ── 1. Podman — Rootless containers (more secure than Docker) ──
 echo "[CLOUD] Installing Podman..."
-apt-get install -y --fix-broken -y --no-install-recommends \
+eatmydata apt-get install -y --fix-broken -y --no-install-recommends \
     podman \
     buildah \
     skopeo \
@@ -150,7 +150,7 @@ if [[ "${ALFRED_ALLOW_HOOK_NETWORK_DOWNLOADS:-}" == "1" ]]; then
         echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com trixie main" \
             | tee /etc/apt/sources.list.d/hashicorp.list > /dev/null
         apt_update_nonfatal containers-terraform
- apt-get install -y --fix-broken -y --no-install-recommends terraform || true
+ eatmydata apt-get install -y --fix-broken -y --no-install-recommends terraform || true
     ) || echo "[CLOUD] Terraform install failed (non-fatal)"
 else
     echo "[CLOUD] WARN: skipping Terraform Hashicorp repo (set ALFRED_ALLOW_HOOK_NETWORK_DOWNLOADS=1)." >&2 || true

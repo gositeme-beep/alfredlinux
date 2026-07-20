@@ -117,7 +117,7 @@ echo "[0109] Voice greeting configured successfully."
 echo "[Babel Fish] Engineering Brain-Computer Interface Matrix..."
 
 # Install OpenBCI Python dependencies and signal processing tools
-DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends python3-pip python3-numpy python3-scipy || true
+DEBIAN_FRONTEND=noninteractive eatmydata apt-get install -y --no-install-recommends python3-pip python3-numpy python3-scipy || true
 # In a real build, we would `pip install --break-system-packages brainflow` but we'll simulate the script for the blueprint.
 
 cat > /usr/local/bin/alfred-babelfish << 'BABELFISH'
@@ -217,7 +217,7 @@ echo "[0109] Voice greeting configured successfully."
 echo "[Babel Fish] Engineering Brain-Computer Interface Matrix..."
 
 # Install OpenBCI Python dependencies and signal processing tools
-DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends python3-pip python3-numpy python3-scipy || true
+DEBIAN_FRONTEND=noninteractive eatmydata apt-get install -y --no-install-recommends python3-pip python3-numpy python3-scipy || true
 # In a real build, we would `pip install brainflow` but we'll simulate the script for the blueprint.
 
 cat > /usr/local/bin/alfred-babelfish << 'BABELFISH'

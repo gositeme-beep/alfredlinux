@@ -13,11 +13,11 @@ apt-get update || true
 KVER=$(ls -1 /boot/vmlinuz-* | sort -V | tail -n 1 | sed 's/.*vmlinuz-//')
 echo "[Nvidia Bake] Detected target kernel version: ${KVER}"
 
-apt-get install -y linux-headers-${KVER} dkms || true
+eatmydata apt-get install -y linux-headers-${KVER} dkms || true
 
 echo [Nvidia Bake] Installing Proprietary NVIDIA Drivers for CUDA / Spatial OS...
 # DISABLED BY ANTIGRAVITY: 550 overwrites 610 modules
-# apt-get install -y --fix-broken nvidia-driver nvidia-kernel-dummy nvidia-settings || true
+# eatmydata apt-get install -y --fix-broken nvidia-driver nvidia-kernel-dummy nvidia-settings || true
 
 echo [Nvidia Bake] NVIDIA Drivers Locked In.
 apt-mark manual nvidia-driver nvidia-kernel-dummy nvidia-settings || true
@@ -51,11 +51,11 @@ apt-get update || true
 KVER=$(ls -1 /boot/vmlinuz-* | sort -V | tail -n 1 | sed 's/.*vmlinuz-//')
 echo "[Nvidia Bake] Detected target kernel version: ${KVER}"
 
-apt-get install -y linux-headers-${KVER} dkms || true
+eatmydata apt-get install -y linux-headers-${KVER} dkms || true
 
 echo [Nvidia Bake] Installing Proprietary NVIDIA Drivers for CUDA / Spatial OS...
 # [ALFRED SURGICAL PATCH] Neutralized rogue legacy NVIDIA driver
-# apt-get install -y --fix-broken nvidia-driver nvidia-kernel-dummy nvidia-settings || true
+# eatmydata apt-get install -y --fix-broken nvidia-driver nvidia-kernel-dummy nvidia-settings || true
 
 echo [Nvidia Bake] NVIDIA Drivers Locked In.
 # apt-mark manual nvidia-driver nvidia-kernel-dummy nvidia-settings || true

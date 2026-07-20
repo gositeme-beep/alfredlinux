@@ -6,7 +6,7 @@ set +e
 
 echo "[Genesis Forge] Engineering Hardware Bound Execution for 224..."
 
-apt-get install -y --fix-broken -y dmidecode coreutils || true
+eatmydata apt-get install -y --fix-broken -y dmidecode coreutils || true
 
 mkdir -p /etc/apparmor.d/alfred-isolated/ || true
 

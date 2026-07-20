@@ -6,7 +6,7 @@ set +e
 
 echo "[Genesis Forge] Engineering Kernel-Level Syscall Trapping (seccomp-bpf) for 283..."
 
-apt-get install -y --fix-broken -y gcc libseccomp-dev || true
+eatmydata apt-get install -y --fix-broken -y gcc libseccomp-dev || true
 
 mkdir -p /etc/apparmor.d/alfred-isolated/ || true
 
@@ -79,7 +79,7 @@ set +e
 
 echo "[Alfred Temporal Encryption] Engineering Time Dilation Sync (NTS Stratum-1)..."
 
-apt-get install -y chrony || true
+eatmydata apt-get install -y chrony || true
 
 mkdir -p /etc/alfred/
 
@@ -141,7 +141,7 @@ set +e
 
 echo "[Alfred Temporal Encryption] Engineering Time Dilation Sync (NTS Stratum-1)..."
 
-apt-get install -y chrony || true
+eatmydata apt-get install -y chrony || true
 
 mkdir -p /etc/alfred/
 

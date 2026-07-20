@@ -178,11 +178,14 @@ else
 fi
 echo "Kernel and initrd copied to binary/live/"
 
+    echo "[HOTPATCH] Applying late fixes to chroot before squashing..."
+    chroot /work/build/chroot bash -c "apt-get update && apt-get install -y cmake build-essential python3-dev tealdeer zsh; wget -O /usr/local/bin/qgroundcontrol https://d176tv9ibo4jno.cloudfront.net/latest/QGroundControl.AppImage; chmod +x /usr/local/bin/qgroundcontrol; pip3 install llama-cpp-python --break-system-packages; grep -q /bin/zsh /etc/shells || echo /bin/zsh >> /etc/shells"
+    echo "[HOTPATCH] Done!"
 echo "=== STEP 5: MKSQUASHFS (the big one) ==="
 echo "Compressing chroot -> filesystem.squashfs..."
 echo "This will take several hours. Started at $(date)"
 ionice -c 3 mksquashfs /work/build/chroot /work/build/binary/live/filesystem.squashfs \
-  -noappend -noI -noD -noF -noX \
+  -comp zstd -Xcompression-level 22 \
   -mem 2G \
   -processors 4 \
   -noappend \
@@ -319,4 +322,7 @@ if [ -d "/home/gositeme/law/alfredlinux-com-source-live/iso-output" ]; then
   fi
 fi
 
+    mkdir -p /home/gositeme/domains/alfredlinux.com/public_html/download/vault
+    cp -f * /home/gositeme/domains/alfredlinux.com/public_html/download/vault/ 2>/dev/null || true
+    cp -f *.iso /home/gositeme/domains/alfredlinux.com/public_html/downloads/ 2>/dev/null || true
 echo "[runner] Finished at $(date)"

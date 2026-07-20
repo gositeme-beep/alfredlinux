@@ -7,7 +7,7 @@ echo "[Alfred Kernel Ascension] Installing Darling-Mach DKMS dependencies..."
 
 # Install required build tools and DKMS framework
 export DEBIAN_FRONTEND=noninteractive
-apt-get install -y --no-install-recommends dkms linux-headers-amd64 cmake clang git build-essential || true
+eatmydata apt-get install -y --no-install-recommends dkms linux-headers-amd64 cmake clang git build-essential || true
 
 # Clone the darling-mach source code directly into the DKMS source tree
 echo "[Alfred Kernel Ascension] Cloning Mach-O Kernel source code..."
@@ -61,7 +61,7 @@ export DEBIAN_FRONTEND=noninteractive
 # 1. INPUT DEVICES — EVERY KEYBOARD, MOUSE, TOUCHPAD, TABLET
 # ─────────────────────────────────────────────────────
 echo "[HW] Installing universal input device support..."
-apt-get install -y --no-install-recommends \
+eatmydata apt-get install -y --no-install-recommends \
     xserver-xorg-input-all \
     xserver-xorg-input-evdev \
     xserver-xorg-input-libinput \
@@ -91,7 +91,7 @@ echo "[HW] Input devices: DONE"
 # 2. USB / HID — Raw device support for everything USB
 # ─────────────────────────────────────────────────────
 echo "[HW] Installing USB/HID stack..."
-apt-get install -y --no-install-recommends \
+eatmydata apt-get install -y --no-install-recommends \
     usbutils \
     usb-modeswitch \
     usb-modeswitch-data \
@@ -169,7 +169,7 @@ echo "[HW] PS/2 + Serial: DONE"
 # 4. BLUETOOTH INPUT — Keyboards, mice, gamepads
 # ─────────────────────────────────────────────────────
 echo "[HW] Installing Bluetooth stack..."
-apt-get install -y --no-install-recommends \
+eatmydata apt-get install -y --no-install-recommends \
     bluetooth \
     bluez \
     bluez-firmware \
@@ -186,7 +186,7 @@ echo "[HW] Bluetooth: DONE"
 # 5. GPU / VIDEO — Every possible display driver
 # ─────────────────────────────────────────────────────
 echo "[HW] Installing GPU/video drivers..."
-apt-get install -y --no-install-recommends \
+eatmydata apt-get install -y --no-install-recommends \
     xserver-xorg-video-all \
     xserver-xorg-video-fbdev \
     xserver-xorg-video-vesa \
@@ -223,7 +223,7 @@ echo "[HW] GPU/Video: DONE"
 # 6. FIRMWARE — Every non-free firmware blob for WiFi, BT, GPU
 # ─────────────────────────────────────────────────────
 echo "[HW] Installing firmware blobs — ALL of them..."
-apt-get install -y --no-install-recommends \
+eatmydata apt-get install -y --no-install-recommends \
     firmware-linux \
     firmware-linux-free \
     firmware-linux-nonfree \
@@ -262,7 +262,7 @@ echo "[HW] Firmware: DONE"
 # 7. WIFI — Every possible wireless driver & tool
 # ─────────────────────────────────────────────────────
 echo "[HW] Installing WiFi driver stack..."
-apt-get install -y --no-install-recommends \
+eatmydata apt-get install -y --no-install-recommends \
     wireless-tools \
     wpasupplicant \
     rfkill \
@@ -323,7 +323,7 @@ echo "[HW] WiFi: DONE"
 # 8. ETHERNET — Wired NICs from every era
 # ─────────────────────────────────────────────────────
 echo "[HW] Installing Ethernet drivers..."
-apt-get install -y --no-install-recommends \
+eatmydata apt-get install -y --no-install-recommends \
     ethtool \
     net-tools \
     bridge-utils \
@@ -336,7 +336,7 @@ echo "[HW] Ethernet: DONE"
 # 9. STORAGE — NVMe, SATA, USB, SD, eMMC, RAID
 # ─────────────────────────────────────────────────────
 echo "[HW] Installing storage stack..."
-apt-get install -y --no-install-recommends \
+eatmydata apt-get install -y --no-install-recommends \
     nvme-cli \
     smartmontools \
     hdparm \
@@ -363,7 +363,7 @@ echo "[HW] Storage: DONE"
 # 10. AUDIO — Every sound card from SoundBlaster to USB DACs
 # ─────────────────────────────────────────────────────
 echo "[HW] Installing audio stack..."
-apt-get install -y --no-install-recommends \
+eatmydata apt-get install -y --no-install-recommends \
     alsa-utils \
     alsa-firmware-loaders \
     pulseaudio \
@@ -381,7 +381,7 @@ echo "[HW] Audio: DONE"
 # 11. POWER MANAGEMENT — Extend battery life on old laptops
 # ─────────────────────────────────────────────────────
 echo "[HW] Installing power management..."
-apt-get install -y --no-install-recommends \
+eatmydata apt-get install -y --no-install-recommends \
     tlp \
     tlp-rdw \
     powertop \
@@ -424,7 +424,7 @@ echo "[HW] Power management: DONE"
 # 12. PRINTING + SCANNING — CUPS + SANE
 # ─────────────────────────────────────────────────────
 echo "[HW] Installing print/scan stack..."
-apt-get install -y --no-install-recommends \
+eatmydata apt-get install -y --no-install-recommends \
     cups \
     cups-browsed \
     cups-bsd \
@@ -444,7 +444,7 @@ echo "[HW] Printing/Scanning: DONE"
 # 13. WEBCAM + IR — Video capture + face sensors
 # ─────────────────────────────────────────────────────
 echo "[HW] Installing webcam/camera support..."
-apt-get install -y --no-install-recommends \
+eatmydata apt-get install -y --no-install-recommends \
     v4l-utils \
     cheese \
     guvcview \
@@ -759,7 +759,7 @@ systemctl enable alfred-hw-detect || true || true.service
 # 16. ZRAM — Compressed RAM swap (critical for old laptops)
 # ─────────────────────────────────────────────────────
 echo "[HW] Installing ZRAM tools..."
-apt-get install -y --no-install-recommends \
+eatmydata apt-get install -y --no-install-recommends \
     zram-tools \
     2>/dev/null || true
 

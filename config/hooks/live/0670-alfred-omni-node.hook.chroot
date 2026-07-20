@@ -8,7 +8,7 @@ echo "[*] Hook 0800: Initializing The Omni-Node Mesh (IPFS + Yggdrasil)"
 
 # 1. Install Dependencies
 apt-get update || true || true
-DEBIAN_FRONTEND=noninteractive apt-get install -y --fix-broken -y --no-install-recommends dirmngr wget --timeout=900 curl -m 900 tar yggdrasil || true
+DEBIAN_FRONTEND=noninteractive eatmydata apt-get install -y --fix-broken -y --no-install-recommends dirmngr wget --timeout=900 curl -m 900 tar yggdrasil || true
 
 # 2. InterPlanetary File System (IPFS)
 echo "[+] Installing IPFS (Kubo)..."

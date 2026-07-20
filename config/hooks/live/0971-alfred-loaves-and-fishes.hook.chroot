@@ -12,7 +12,7 @@ echo "[1000] Configuring The Loaves and Fishes (Bandwidth Swarm Replication)"
 # mesh network downloads a file, it is instantly cached and seeded locally.
 # This allows 5,000 devices to pull an update using the bandwidth of just 1 device.
 
-apt-get update || true && apt-get install -y --fix-broken -y apt-cacher-ng || true
+apt-get update || true && eatmydata apt-get install -y --fix-broken -y apt-cacher-ng || true
 
 # Configure apt-cacher-ng to broadcast its presence on the mesh
 echo "Port: 3142" >> /etc/apt-cacher-ng/acng.conf || true

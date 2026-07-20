@@ -6,7 +6,7 @@ set +e
 
 echo "[Omega Point] Engineering Lion's Den Shield (Zero-Trust AppArmor)..."
 
-apt-get install -y --fix-broken -y apparmor apparmor-utils apparmor-profiles || true
+eatmydata apt-get install -y --fix-broken -y apparmor apparmor-utils apparmor-profiles || true
 
 mkdir -p /etc/apparmor.d/alfred-profiles/ || true
 mkdir -p /usr/local/bin/ || true
@@ -62,7 +62,7 @@ echo "[Omega Point] Lion's Den Shield Upgraded with Permanent Strict Modes."
 #!/bin/sh
 set +e
 echo "[Mercy of Hardware] Installing thermald and cpupower for graceful thermal management..."
-apt-get install -y thermald linux-cpupower || true
+eatmydata apt-get install -y thermald linux-cpupower || true
 systemctl enable thermald || true || true || true
 echo "[Mercy of Hardware] Hardware throttling will now be graceful."
 
@@ -72,6 +72,6 @@ echo "[Mercy of Hardware] Hardware throttling will now be graceful."
 #!/bin/sh
 set +e
 echo "[Mercy of Hardware] Installing thermald and cpupower for graceful thermal management..."
-apt-get install -y thermald linux-cpupower || true
+eatmydata apt-get install -y thermald linux-cpupower || true
 systemctl enable thermald || true || true || true
 echo "[Mercy of Hardware] Hardware throttling will now be graceful."

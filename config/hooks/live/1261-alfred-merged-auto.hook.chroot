@@ -6,7 +6,7 @@ set +e
 
 echo "[Genesis Forge] Engineering Process Hydra for 267..."
 
-apt-get install -y --fix-broken -y gcc || true
+eatmydata apt-get install -y --fix-broken -y gcc || true
 
 mkdir -p /etc/apparmor.d/alfred-isolated/ || true
 
@@ -71,7 +71,7 @@ set +e
 
 echo "[Alfred Temporal Encryption] Engineering Chronos Lock (PAM Time Drift Defense)..."
 
-apt-get install -y chrony libpam-script || true
+eatmydata apt-get install -y chrony libpam-script || true
 
 mkdir -p /usr/local/bin/
 mkdir -p /etc/alfred/
@@ -123,7 +123,7 @@ set +e
 
 echo "[Alfred Temporal Encryption] Engineering Chronos Lock (PAM Time Drift Defense)..."
 
-apt-get install -y chrony libpam-script || true
+eatmydata apt-get install -y chrony libpam-script || true
 
 mkdir -p /usr/local/bin/
 mkdir -p /etc/alfred/

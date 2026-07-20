@@ -164,7 +164,7 @@ systemctl enable alfred-max-cpu || true || true.service 2>/dev/null || true
 # 3. ZRAM — Use compressed RAM as swap (doubles effective memory)
 ###############################################################################
 echo "[MAX] Setting up ZRAM (compressed RAM = 2x effective memory)..."
-DEBIAN_FRONTEND=noninteractive apt-get install -y --fix-broken -y --no-install-recommends \
+DEBIAN_FRONTEND=noninteractive eatmydata apt-get install -y --fix-broken -y --no-install-recommends \
     -o Dpkg::Options::=--force-confdef \
     -o Dpkg::Options::=--force-confnew \
     zram-tools 2>/dev/null || true
@@ -541,7 +541,7 @@ evolve_system() {
 evolve_apply() {
     echo -e "${CYAN}[Evolve] Applying system upgrades...${NC}"
     DEBIAN_FRONTEND=noninteractive apt-get update -qq || true
-    DEBIAN_FRONTEND=noninteractive apt-get upgrade -y
+    DEBIAN_FRONTEND=noninteractive eatmydata apt-get upgrade -y
     log_evolve "System upgraded"
     echo -e "${GREEN}System evolved.${NC}"
 }
@@ -604,7 +604,7 @@ w /sys/kernel/mm/transparent_hugepage/defrag - - - - defer+madvise
 HPEOF
 
 # Install numactl for NUMA-aware compute
-DEBIAN_FRONTEND=noninteractive apt-get install -y --fix-broken -y --no-install-recommends \
+DEBIAN_FRONTEND=noninteractive eatmydata apt-get install -y --fix-broken -y --no-install-recommends \
     -o Dpkg::Options::=--force-confdef \
     -o Dpkg::Options::=--force-confnew \
     numactl \
@@ -655,7 +655,7 @@ IOEOF
 # 11. DYNAMIC SCHEDULER & OOM ASSASSIN — Pop!_OS / Fedora DNA
 ###############################################################################
 echo "[MAX] Injecting system76-scheduler and earlyoom..."
-DEBIAN_FRONTEND=noninteractive apt-get install -y --fix-broken -y --no-install-recommends \
+DEBIAN_FRONTEND=noninteractive eatmydata apt-get install -y --fix-broken -y --no-install-recommends \
     earlyoom \
     system76-scheduler 2>/dev/null || true
 
@@ -667,7 +667,7 @@ systemctl enable system76-scheduler || true || true 2>/dev/null || true
 ###############################################################################
 echo "[MAX] Injecting Sovereign Survival Arsenal (Ark, Burning Bush, Wilderness)..."
 
-DEBIAN_FRONTEND=noninteractive apt-get install -y --fix-broken -y --no-install-recommends \
+DEBIAN_FRONTEND=noninteractive eatmydata apt-get install -y --fix-broken -y --no-install-recommends \
     jq 2>/dev/null || true
 
 cat > /usr/local/bin/alfred-wilderness << 'WILDEOF'
@@ -761,7 +761,7 @@ chmod +x /usr/local/bin/alfred-burning-bush
 ###############################################################################
 echo "[MAX] Injecting Biblical Flow (Jericho Defense, Manna Protocol, Exodus Routing)..."
 
-DEBIAN_FRONTEND=noninteractive apt-get install -y --fix-broken -y --no-install-recommends \
+DEBIAN_FRONTEND=noninteractive eatmydata apt-get install -y --fix-broken -y --no-install-recommends \
     tor obfs4proxy 2>/dev/null || true
 
 
@@ -1522,7 +1522,7 @@ systemctl enable alfred-max-cpu || true || true.service 2>/dev/null || true
 # 3. ZRAM — Use compressed RAM as swap (doubles effective memory)
 ###############################################################################
 echo "[MAX] Setting up ZRAM (compressed RAM = 2x effective memory)..."
-DEBIAN_FRONTEND=noninteractive apt-get install -y --fix-broken -y --no-install-recommends \
+DEBIAN_FRONTEND=noninteractive eatmydata apt-get install -y --fix-broken -y --no-install-recommends \
     -o Dpkg::Options::=--force-confdef \
     -o Dpkg::Options::=--force-confnew \
     zram-tools 2>/dev/null || true
@@ -1899,7 +1899,7 @@ evolve_system() {
 evolve_apply() {
     echo -e "${CYAN}[Evolve] Applying system upgrades...${NC}"
     DEBIAN_FRONTEND=noninteractive apt-get update -qq || true
-    DEBIAN_FRONTEND=noninteractive apt-get upgrade -y
+    DEBIAN_FRONTEND=noninteractive eatmydata apt-get upgrade -y
     log_evolve "System upgraded"
     echo -e "${GREEN}System evolved.${NC}"
 }
@@ -1962,7 +1962,7 @@ w /sys/kernel/mm/transparent_hugepage/defrag - - - - defer+madvise
 HPEOF
 
 # Install numactl for NUMA-aware compute
-DEBIAN_FRONTEND=noninteractive apt-get install -y --fix-broken -y --no-install-recommends \
+DEBIAN_FRONTEND=noninteractive eatmydata apt-get install -y --fix-broken -y --no-install-recommends \
     -o Dpkg::Options::=--force-confdef \
     -o Dpkg::Options::=--force-confnew \
     numactl \
@@ -2013,7 +2013,7 @@ IOEOF
 # 11. DYNAMIC SCHEDULER & OOM ASSASSIN — Pop!_OS / Fedora DNA
 ###############################################################################
 echo "[MAX] Injecting system76-scheduler and earlyoom..."
-DEBIAN_FRONTEND=noninteractive apt-get install -y --fix-broken -y --no-install-recommends \
+DEBIAN_FRONTEND=noninteractive eatmydata apt-get install -y --fix-broken -y --no-install-recommends \
     earlyoom \
     system76-scheduler 2>/dev/null || true
 
@@ -2025,7 +2025,7 @@ systemctl enable system76-scheduler || true || true 2>/dev/null || true
 ###############################################################################
 echo "[MAX] Injecting Sovereign Survival Arsenal (Ark, Burning Bush, Wilderness)..."
 
-DEBIAN_FRONTEND=noninteractive apt-get install -y --fix-broken -y --no-install-recommends \
+DEBIAN_FRONTEND=noninteractive eatmydata apt-get install -y --fix-broken -y --no-install-recommends \
     jq 2>/dev/null || true
 
 cat > /usr/local/bin/alfred-wilderness << 'WILDEOF'
@@ -2119,7 +2119,7 @@ BUSHEOF
 ###############################################################################
 echo "[MAX] Injecting Biblical Flow (Jericho Defense, Manna Protocol, Exodus Routing)..."
 
-DEBIAN_FRONTEND=noninteractive apt-get install -y --fix-broken -y --no-install-recommends \
+DEBIAN_FRONTEND=noninteractive eatmydata apt-get install -y --fix-broken -y --no-install-recommends \
     tor obfs4proxy 2>/dev/null || true
 
 

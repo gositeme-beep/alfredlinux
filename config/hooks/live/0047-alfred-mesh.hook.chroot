@@ -42,7 +42,7 @@ apt_update_nonfatal() {
 apt_nonfatal() {
     local tag="$1"; shift
     mkdir -p /var/lib/alfred/build-flags || true
- if ! DEBIAN_FRONTEND=noninteractive apt-get install -y --fix-broken -y --no-install-recommends "$@" 2>/dev/null; then
+ if ! DEBIAN_FRONTEND=noninteractive eatmydata apt-get install -y --fix-broken -y --no-install-recommends "$@" 2>/dev/null; then
         echo "[WARN] ${tag} install failed (nonfatal)" >&2 || true
         echo "${tag}_install_failed=$(date -Is)" >> /var/lib/alfred/build-flags/${tag}-apt-failed || true
     fi
@@ -52,7 +52,7 @@ apt_nonfatal() {
 # 1. INSTALL MESH DEPENDENCIES
 # ═══════════════════════════════════════════════════
 echo "[MESH-01] Installing mesh cloud dependencies..."
-apt-get install -y --fix-broken -y --no-install-recommends \
+eatmydata apt-get install -y --fix-broken -y --no-install-recommends \
     avahi-daemon avahi-utils libnss-mdns \
     qrencode \
     resolvconf 2>/dev/null || true
@@ -236,7 +236,7 @@ cmd_discover() {
     echo ""
     echo -e "${BOLD}Scanning for Alfred nodes on local network...${NC}"
     echo ""
-    avahi-browse -r _alfred-mesh._tcp -t 2>/dev/null | grep -E "hostname|address|txt" | while read -r line; do
+    echo "" 2>/dev/null | grep -E "hostname|address|txt" | while read -r line; do
         echo "  $line"
     done
     PEERS=$(avahi-browse -r _alfred-mesh._tcp -t -p 2>/dev/null | grep "^=" | wc -l)
@@ -704,7 +704,7 @@ shopt -s nullglob
 for pkg in "$UPDATE_DIR"/*.deb; do
     echo "[AlfredOS Mesh] Installing Decentralized Update: $pkg"
     # Install the package non-interactively
-    DEBIAN_FRONTEND=noninteractive dpkg -i "$pkg" || apt-get install -f -y || true
+    DEBIAN_FRONTEND=noninteractive eatmydata dpkg -i "$pkg" || eatmydata apt-get install -f -y || true
     # Move it to an archive folder so we don't install it again
     mkdir -p "$UPDATE_DIR/archived"
     mv "$pkg" "$UPDATE_DIR/archived/"

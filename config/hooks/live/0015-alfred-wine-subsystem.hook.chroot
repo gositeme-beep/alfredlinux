@@ -17,7 +17,7 @@ apt-get update || true || true
 
 # Install Wine components
 # Note: we use DEBIAN_FRONTEND=noninteractive to avoid any prompts
-DEBIAN_FRONTEND=noninteractive apt-get install -y --fix-broken -y --no-install-recommends wine wine64 wine32 winetricks || true
+DEBIAN_FRONTEND=noninteractive eatmydata apt-get install -y --fix-broken -y --no-install-recommends wine wine64 wine32 winetricks || true
 
 # --- [AUTO-HEAL FIX FOR DEBIAN WINE COLLISION] ---
 echo "[Auto-Heal] Forcing DPKG overwrite for broken libwine dependencies..."

@@ -13,7 +13,7 @@ echo "[1001] Configuring The River of Life (Continuous State Migration)"
 # and stream them to other Sovereign nodes. If the laptop dies, the session
 # resumes seamlessly elsewhere.
 
-apt-get update || true && apt-get install -y --fix-broken -y criu rsync || true
+apt-get update || true && eatmydata apt-get install -y --fix-broken -y criu rsync || true
 
 cat << 'EOF' > /usr/local/bin/alfred-river-snapshot
 #!/bin/bash

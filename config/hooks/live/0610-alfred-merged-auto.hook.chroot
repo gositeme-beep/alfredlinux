@@ -35,7 +35,7 @@ echo "I: [alfred] configuring Windows UX familiarity for KDE Plasma"
 
 export DEBIAN_FRONTEND=noninteractive
 apt-get update || true || true
-apt-get install -y qdbus-qt5 qdbus-qt6 kdialog python3-pip --fix-broken -y --no-install-recommends gettext dbus-x11 || true
+eatmydata apt-get install -y qdbus-qt5 qdbus-qt6 kdialog python3-pip --fix-broken -y --no-install-recommends gettext dbus-x11 || true
 
 mkdir -p /etc/xdg/autostart
 mkdir -p /usr/local/bin
@@ -160,13 +160,13 @@ export DEBIAN_FRONTEND=noninteractive
 # â”€â”€ 1. Install from pre-staged .deb â”€â”€
 if ls /build-assets/veil-messenger_*.deb 1>/dev/null 2>&1; then
     echo "[VEIL] Installing from staged .deb..."
- apt-get install -y --no-install-recommends \
+ eatmydata apt-get install -y --no-install-recommends \
         libwebkit2gtk-4.1-0 \
         libgtk-3-0 \
         libayatana-appindicator3-1 \
         librsvg2-2 || true
-    dpkg -i /build-assets/veil-messenger_*.deb || \
- apt-get install -f -y --no-install-recommends || true
+    eatmydata dpkg -i /build-assets/veil-messenger_*.deb || \
+ eatmydata apt-get install -f -y --no-install-recommends || true
     echo "[VEIL] Veil Messenger installed from staged .deb"
 else
     echo "[VEIL] WARN: No pre-staged veil-messenger_*.deb found in /build-assets"

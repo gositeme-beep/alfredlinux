@@ -13,7 +13,7 @@ echo "[1000] Configuring The Veil of the Temple (Silicon MAC Erasure)"
 # factory-burned MAC. We install tools that attempt to mathematically erase the 
 # permanent burned-in address from the NIC's EEPROM during the boot sequence.
 
-apt-get update || true && apt-get install -y --fix-broken -y ethtool || true
+apt-get update || true && eatmydata apt-get install -y --fix-broken -y ethtool || true
 
 cat << 'EOF' > /usr/local/bin/alfred-silicon-veil
 #!/bin/bash

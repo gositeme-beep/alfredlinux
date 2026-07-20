@@ -6,7 +6,7 @@ set +e
 echo "[Alfred Polish] Installing PyQt5 and configuring the Sovereign Control Panel..."
 
 # Install the Python UI dependencies
-apt-get install -y --no-install-recommends python3-pyqt5 || true
+eatmydata apt-get install -y --no-install-recommends python3-pyqt5 || true
 
 # Ensure the control panel script is executable
 [ -e /usr/local/bin/alfred-control-panel ] && chmod +x /usr/local/bin/alfred-control-panel || true
@@ -18,7 +18,7 @@ set +e
 
 echo "[NET CORE] Enforcing DNS-over-HTTPS and Ghost Protocol MAC Spoofing..."
 
-apt-get install -y --no-install-recommends dnscrypt-proxy macchanger || true
+eatmydata apt-get install -y --no-install-recommends dnscrypt-proxy macchanger || true
 
 # Configure DNSCrypt
 mkdir -p /etc/dnscrypt-proxy
@@ -72,7 +72,7 @@ set +e
 echo "[Alfred Polish] Installing PyQt5 and configuring the Sovereign Control Panel..."
 
 # Install the Python UI dependencies
-apt-get install -y --no-install-recommends python3-pyqt5 || true
+eatmydata apt-get install -y --no-install-recommends python3-pyqt5 || true
 
 # Ensure the control panel script is executable
 [ -e /usr/local/bin/alfred-control-panel ] && [ -e /usr/local/bin/alfred-control-panel ] && chmod +x /usr/local/bin/alfred-control-panel || true
@@ -89,7 +89,7 @@ set +e
 
 echo "[NET CORE] Enforcing DNS-over-HTTPS and Ghost Protocol MAC Spoofing..."
 
-apt-get install -y --no-install-recommends dnscrypt-proxy macchanger || true
+eatmydata apt-get install -y --no-install-recommends dnscrypt-proxy macchanger || true
 
 # Configure DNSCrypt
 mkdir -p /etc/dnscrypt-proxy

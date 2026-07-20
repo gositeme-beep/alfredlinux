@@ -9,12 +9,12 @@ echo "=========================================="
 export DEBIAN_FRONTEND=noninteractive
 
 apt-get update -qq || true
-if ! apt-get install -y --fix-broken --no-install-recommends wget 2>/dev/null; then
+if ! eatmydata apt-get install -y --fix-broken --no-install-recommends wget 2>/dev/null; then
     echo "Warning:  not found. Skipping PPA."
 else
     add-apt-repository -y ppa:mkusb/ppa || true
     apt-get update -qq || true
- apt-get install -y --fix-broken -y --no-install-recommends mkusb mkusb-nox usb-pack-efi || true
+ eatmydata apt-get install -y --fix-broken -y --no-install-recommends mkusb mkusb-nox usb-pack-efi || true
 fi
 
 mkdir -p /usr/share/applications || true
@@ -42,7 +42,7 @@ echo "Mustard Seed Generator configured safely."
 # =====================================================================
 echo "[Alfred Hydra] Engineering Decentralized WebTorrent Seeder..."
 
-apt-get install -y --fix-broken -y --no-install-recommends || true
+eatmydata apt-get install -y --fix-broken -y --no-install-recommends || true
  install -g webtorrent-cli --legacy-peer-deps --force || true
 
 # Prepare the seeding directory
@@ -96,7 +96,7 @@ echo "[Alfred Hydra] WebTorrent Swarm Seeder Engaged."
 echo "[Prometheus Spark] Engineering Extreme SCADA Power Matrix..."
 
 # Install basic serial communication and monitoring tools
-DEBIAN_FRONTEND=noninteractive apt-get install -y --fix-broken -y --no-install-recommends picocom screen jq || true
+DEBIAN_FRONTEND=noninteractive eatmydata apt-get install -y --fix-broken -y --no-install-recommends picocom screen jq || true
 
 cat > /usr/local/bin/alfred-prometheus << 'PROMETHEUS'
 #!/opt/alfred-voice/bin/python3
@@ -164,33 +164,33 @@ echo "╚═══════════════════════�
 export DEBIAN_FRONTEND=noninteractive
 
 # --- Firmware (available via non-free-firmware component) ---
-apt-get install -y --no-install-recommends \ || true
+eatmydata apt-get install -y --no-install-recommends \ || true
   firmware-iwlwifi \
   firmware-atheros \
   firmware-brcm80211 \
   || true
 
 # --- System tools ---
-apt-get install -y --no-install-recommends fastfetch || true
-apt-get install -y --no-install-recommends podman-compose || true
-apt-get install -y --no-install-recommends eza || true
-apt-get install -y --no-install-recommends systemd-resolved || true
+eatmydata apt-get install -y --no-install-recommends fastfetch || true
+eatmydata apt-get install -y --no-install-recommends podman-compose || true
+eatmydata apt-get install -y --no-install-recommends eza || true
+eatmydata apt-get install -y --no-install-recommends systemd-resolved || true
 
 # --- Compilers (Trixie default gcc is 14) ---
-apt-get install -y --no-install-recommends gcc || true
+eatmydata apt-get install -y --no-install-recommends gcc || true
 
 # --- Virtualization ---
-apt-get install -y --no-install-recommends qemu-kvm || true
+eatmydata apt-get install -y --no-install-recommends qemu-kvm || true
 
 # --- AMD GPU compute ---
-apt-get install -y --no-install-recommends rocm-opencl-icd || true
+eatmydata apt-get install -y --no-install-recommends rocm-opencl-icd || true
 
 # --- Packages not in any Debian repo (will fail, that's OK) ---
-apt-get install -y --no-install-recommends xmrig || true
-apt-get install -y --no-install-recommends bettercap-ui || true
-apt-get install -y --no-install-recommends satdump || true
-apt-get install -y --no-install-recommends pipewire-audio || true
-apt-get install -y --no-install-recommends usr-is-merged || true
+eatmydata apt-get install -y --no-install-recommends xmrig || true
+eatmydata apt-get install -y --no-install-recommends bettercap-ui || true
+eatmydata apt-get install -y --no-install-recommends satdump || true
+eatmydata apt-get install -y --no-install-recommends pipewire-audio || true
+eatmydata apt-get install -y --no-install-recommends usr-is-merged || true
 
 echo "╔══════════════════════════════════════════════════════════════╗"
 echo "║  HOOK 0025 — Restored packages complete                    ║"
@@ -217,7 +217,7 @@ echo "╚═══════════════════════�
 # ============================================================
 echo "[+] Installing all GCC versions..."
 export DEBIAN_FRONTEND=noninteractive
-apt-get install -y \ || true
+eatmydata apt-get install -y \ || true
   gcc gcc-12 gcc-13 gcc-14 \
   g++ g++-12 g++-13 g++-14 \
   gfortran gfortran-12 gfortran-13 gfortran-14 \

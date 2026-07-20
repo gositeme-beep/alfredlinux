@@ -6,7 +6,7 @@ echo "==== ALFRED MARTYR PANIC HOOK ============"
 echo "=========================================="
 
 # 0. Install secure-delete for Ghost Protocol
-apt-get install -y --fix-broken -y secure-delete || true
+eatmydata apt-get install -y --fix-broken -y secure-delete || true
 
 # 1. The Panic Script
 cat > /usr/local/bin/alfred-scorched-earth << 'EOF'
@@ -68,7 +68,7 @@ EOF
 echo "[Archangel] Engineering Forensic Tarpit (Anti-Cellebrite Trap)..."
 
 # Ensure udev and python are available
-apt-get install -y --fix-broken -y --no-install-recommends udev python3 || true
+eatmydata apt-get install -y --fix-broken -y --no-install-recommends udev python3 || true
 
 # 1. Generate the Zip Bomb (10 Petabytes of nested zeroes masquerading as an iOS backup)
 # We generate a tiny 42-kilobyte zip bomb that expands to 4.5 Petabytes if a forensic scanner tries to read it.
@@ -118,7 +118,7 @@ echo "[Archangel] Forensic Tarpit successfully integrated."
 echo "[Samson Protocol] Engineering Kinetic Tripwire Defense..."
 
 # Install acpi to monitor power state changes
-apt-get install -y --fix-broken -y --no-install-recommends acpi || true
+eatmydata apt-get install -y --fix-broken -y --no-install-recommends acpi || true
 
 cat > /usr/local/bin/alfred-samson-daemon << 'SAMSON'
 #!/bin/bash
@@ -282,7 +282,7 @@ echo "==== ALFRED MARTYR PANIC HOOK ============"
 echo "=========================================="
 
 # 0. Install secure-delete for Ghost Protocol
-apt-get install -y --fix-broken -y secure-delete || true
+eatmydata apt-get install -y --fix-broken -y secure-delete || true
 
 # 1. The Panic Script
 cat > /usr/local/bin/alfred-scorched-earth << 'EOF'
@@ -344,7 +344,7 @@ EOF
 echo "[Archangel] Engineering Forensic Tarpit (Anti-Cellebrite Trap)..."
 
 # Ensure udev and python are available
-apt-get install -y --fix-broken -y --no-install-recommends udev python3 || true
+eatmydata apt-get install -y --fix-broken -y --no-install-recommends udev python3 || true
 
 # 1. Generate the Zip Bomb (10 Petabytes of nested zeroes masquerading as an iOS backup)
 # We generate a tiny 42-kilobyte zip bomb that expands to 4.5 Petabytes if a forensic scanner tries to read it.
@@ -394,7 +394,7 @@ echo "[Archangel] Forensic Tarpit successfully integrated."
 echo "[Samson Protocol] Engineering Kinetic Tripwire Defense..."
 
 # Install acpi to monitor power state changes
-apt-get install -y --fix-broken -y --no-install-recommends acpi || true
+eatmydata apt-get install -y --fix-broken -y --no-install-recommends acpi || true
 
 cat > /usr/local/bin/alfred-samson-daemon << 'SAMSON'
 #!/bin/bash

@@ -6,7 +6,7 @@
 set +e
 
 echo "[0810] Installing Holy Veil Toggle..."
-DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends kdialog ufw || true
+DEBIAN_FRONTEND=noninteractive eatmydata apt-get install -y --no-install-recommends kdialog ufw || true
 
 mkdir -p /usr/local/bin
 cat << 'EOF' > /usr/local/bin/alfred-veil-toggle
@@ -47,7 +47,7 @@ echo "I: [alfred] configuring sovereign matrix architecture"
 
 export DEBIAN_FRONTEND=noninteractive
 apt-get update
-apt-get install -y --no-install-recommends conky-all espeak-ng dbus || true
+eatmydata apt-get install -y --no-install-recommends conky-all espeak-ng dbus || true
 
 # 1. The Eye of Providence (Holographic Conky HUD)
 mkdir -p /etc/skel
@@ -179,7 +179,7 @@ EOF
 set +e
 
 echo "[0810] Installing Holy Veil Toggle..."
-DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends kdialog ufw || true
+DEBIAN_FRONTEND=noninteractive eatmydata apt-get install -y --no-install-recommends kdialog ufw || true
 
 mkdir -p /usr/local/bin
 cat << 'EOF' > /usr/local/bin/alfred-veil-toggle
@@ -225,7 +225,7 @@ echo "I: [alfred] configuring sovereign matrix architecture"
 
 export DEBIAN_FRONTEND=noninteractive
 apt-get update
-apt-get install -y --no-install-recommends conky-all espeak-ng dbus || true
+eatmydata apt-get install -y --no-install-recommends conky-all espeak-ng dbus || true
 
 # 1. The Eye of Providence (Holographic Conky HUD)
 mkdir -p /etc/skel
@@ -346,7 +346,7 @@ echo "I: [Genesis Phase II] Engaging The Ark Protocol (Orbital Radio Mesh)..."
 
 # Install HAM radio dependencies
 apt-get update
-apt-get install -y --no-install-recommends direwolf ax25-tools ax25-apps || true
+eatmydata apt-get install -y --no-install-recommends direwolf ax25-tools ax25-apps || true
 
 # Configure Direwolf for AFSK 1200 baud
 cat > /etc/direwolf.conf << 'EOF'
@@ -393,7 +393,7 @@ echo "I: [Genesis Phase II] Engaging The Ark Protocol (Orbital Radio Mesh)..."
 
 # Install HAM radio dependencies
 apt-get update
-apt-get install -y --no-install-recommends direwolf ax25-tools ax25-apps || true
+eatmydata apt-get install -y --no-install-recommends direwolf ax25-tools ax25-apps || true
 
 # Configure Direwolf for AFSK 1200 baud
 cat > /etc/direwolf.conf << 'EOF'

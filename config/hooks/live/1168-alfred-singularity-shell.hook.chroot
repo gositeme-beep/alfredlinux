@@ -7,7 +7,7 @@ set +e
 echo "[Singularity] Forging The Singularity Agentic Shell (Hook 1115)"
 
 # Ensure python3 and required packages are installed
-apt-get install -y --fix-broken -y python3-pip python3-venv libasound2-dev || true
+eatmydata apt-get install -y --fix-broken -y python3-pip python3-venv libasound2-dev || true
 
 # Create the agentic shell directory
 mkdir -p /opt/alfred-singularity || true
@@ -56,7 +56,7 @@ def execute_intent(intent):
         print(f"\033[1;32m[Agent] Executing:\033[0m {cmd}")
         subprocess.run(cmd, shell=True)
     elif "update" in intent.lower() or "upgrade" in intent.lower():
-        cmd = "apt-get update || true && apt-get upgrade -y"
+        cmd = "apt-get update || true && eatmydata apt-get upgrade -y"
         print(f"\033[1;32m[Agent] Executing:\033[0m {cmd}")
         subprocess.run(cmd, shell=True)
     elif "clear" in intent.lower():

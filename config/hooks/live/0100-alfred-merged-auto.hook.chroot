@@ -13,7 +13,7 @@ set +e
 echo "[Alfred Linux 4.0] Applying customizations...
 # [FIX 2026-06-23] Install ImageMagick early so wallpaper generation works
 echo "[Alfred Linux 4.0] Installing ImageMagick for wallpaper generation..."
-apt-get install -y --no-install-recommends imagemagick 2>/dev/null || true
+eatmydata apt-get install -y --no-install-recommends imagemagick 2>/dev/null || true
 
 "
 
@@ -175,10 +175,11 @@ ASCII
 
 # ── 7. Generate wallpapers via ImageMagick — Multi-resolution (8K/4K/1080p) ──
 mkdir -p /usr/share/wallpapers/Kingdom
-if command -v convert &>/dev/null; then
-        convert "$src" -resize 1920x1080 -quality 95 \
-            "/usr/share/wallpapers/Kingdom/1080p/${name}.png" 2>/dev/null || true
-    }
+gen_resolutions() {
+    local name=\n    local src=" /usr/share/wallpapers/Kingdom/.png\n if command -v convert &>/dev/null; then
+ convert \ -resize 1920x1080 -quality 95 /usr/share/wallpapers/Kingdom/1080p/.png 2>/dev/null || true
+ fi
+}
 
     # ── default.png — Deep sovereign gradient with golden accent ──
     convert -size 7680x4320 \
@@ -621,7 +622,7 @@ curl -fsSL https://repo.jellyfin.org/jellyfin_team.gpg.key | gpg --dearmor --yes
 # jellyfin repo removed
 
 apt-get update
-# apt-get install -y jellyfin
+# eatmydata apt-get install -y jellyfin
 
 # Download AppImages to /opt for OpenCut and Jami
 mkdir -p /opt/AppImages
@@ -704,7 +705,7 @@ echo "[*] VANGUARD OVERRIDE: FORCING INSTALLATION OF 7.0.12 KERNEL..."
 
 # live-build creates a local repository for packages.chroot files.
 # We must explicitly force apt to install them because the default Debian dependency tree ignores them.
-DEBIAN_FRONTEND=noninteractive apt-get install -y --allow-unauthenticated linux-image-7.0.12 linux-headers-7.0.12 linux-libc-dev || true
+DEBIAN_FRONTEND=noninteractive eatmydata apt-get install -y --allow-unauthenticated linux-image-7.0.12 linux-headers-7.0.12 linux-libc-dev || true
 
 # Verify if installation succeeded
 if dpkg -l | grep -q "linux-image-7.0.12"; then
@@ -712,8 +713,8 @@ if dpkg -l | grep -q "linux-image-7.0.12"; then
 else
     echo "[!] APT FAILED TO INSTALL FROM LOCAL REPO. FALLING BACK TO DIRECT DPKG INSTALLATION..."
     # If the local repo isn't accessible, we find the debs in the live-build cache/archives
-    find /var/cache/apt/archives /root -name "linux-*7.0.12*.deb" -exec dpkg -i --force-all {} \; || true
- DEBIAN_FRONTEND=noninteractive apt-get install -f -y || true
+    find /var/cache/apt/archives /root -name "linux-*7.0.12*.deb" -exec eatmydata dpkg -i --force-all {} \; || true
+ DEBIAN_FRONTEND=noninteractive eatmydata apt-get install -f -y || true
 fi
 
 echo "[*] KERNEL 7.0.12 INJECTION COMPLETE."
@@ -733,10 +734,10 @@ echo "[*] VANGUARD OVERRIDE: PHYSICAL PACKAGE INJECTION..."
 
 if ls /root/custom-packages/*.deb >/dev/null 2>&1; then
     echo "[*] Found custom packages. Forcing raw dpkg installation..."
-    dpkg -i --force-all /root/custom-packages/*.deb || true
+    eatmydata dpkg -i --force-all /root/custom-packages/*.deb || true
     
     echo "[*] Resolving dependency graph..."
- DEBIAN_FRONTEND=noninteractive apt-get install -f -y || true
+ DEBIAN_FRONTEND=noninteractive eatmydata apt-get install -f -y || true
     
     echo "[*] INJECTION COMPLETE. The kernel and all custom assets are secured."
 else
@@ -754,7 +755,7 @@ echo "[*] VANGUARD OVERRIDE: FORCING INSTALLATION OF 7.0.12 KERNEL..."
 
 # live-build creates a local repository for packages.chroot files.
 # We must explicitly force apt to install them because the default Debian dependency tree ignores them.
-DEBIAN_FRONTEND=noninteractive apt-get install -y --allow-unauthenticated linux-image-7.0.12 linux-headers-7.0.12 linux-libc-dev || true
+DEBIAN_FRONTEND=noninteractive eatmydata apt-get install -y --allow-unauthenticated linux-image-7.0.12 linux-headers-7.0.12 linux-libc-dev || true
 
 # Verify if installation succeeded
 if dpkg -l | grep -q "linux-image-7.0.12"; then
@@ -762,8 +763,8 @@ if dpkg -l | grep -q "linux-image-7.0.12"; then
 else
     echo "[!] APT FAILED TO INSTALL FROM LOCAL REPO. FALLING BACK TO DIRECT DPKG INSTALLATION..."
     # If the local repo isn't accessible, we find the debs in the live-build cache/archives
-    find /var/cache/apt/archives /root -name "linux-*7.0.12*.deb" -exec dpkg -i --force-all {} \; || true
-    apt-get install -f -y || true
+    find /var/cache/apt/archives /root -name "linux-*7.0.12*.deb" -exec eatmydata dpkg -i --force-all {} \; || true
+    eatmydata apt-get install -f -y || true
 fi
 
 echo "[*] KERNEL 7.0.12 INJECTION COMPLETE."
@@ -775,8 +776,8 @@ echo "[*] VANGUARD OVERRIDE: FORCING DIRECT DPKG INSTALLATION OF 7.0.12 KERNEL..
 # Bypass live-build's local repository entirely and install directly from the includes.chroot payload.
 if ls /root/masterstroke_kernel/*.deb 1> /dev/null 2>&1; then
     echo "[*] Found custom kernel payload in /root/masterstroke_kernel. Installing..."
-    dpkg -i --force-all /root/masterstroke_kernel/*.deb || true
-    DEBIAN_FRONTEND=noninteractive apt-get install -f -y --allow-unauthenticated || true
+    eatmydata dpkg -i --force-all /root/masterstroke_kernel/*.deb || true
+    DEBIAN_FRONTEND=noninteractive eatmydata apt-get install -f -y --allow-unauthenticated || true
 else
     echo "[!] FATAL ERROR: /root/masterstroke_kernel/*.deb not found!"
 fi
@@ -796,11 +797,11 @@ echo "=========================================="
 export DEBIAN_FRONTEND=noninteractive
 
 # Ensure headers and DKMS framework are ready
-apt-get install -y --no-install-recommends dkms || true
+eatmydata apt-get install -y --no-install-recommends dkms || true
 
 # Install ZFS and Wireguard DKMS modules 
 # (This runs AFTER the custom kernel is installed and AFTER the ZFS 32-bit trap is patched)
-apt-get install -y zfs-dkms zfsutils-linux wireguard-tools || true
+eatmydata apt-get install -y zfs-dkms zfsutils-linux wireguard-tools || true
 
 echo "[*] DKMS Module Installation Complete."#!/bin/bash
 set +e
@@ -813,10 +814,10 @@ echo "[*] VANGUARD OVERRIDE: PHYSICAL PACKAGE INJECTION..."
 
 if ls /root/custom-packages/*.deb >/dev/null 2>&1; then
     echo "[*] Found custom packages. Forcing raw dpkg installation..."
-    dpkg -i --force-all /root/custom-packages/*.deb || true
+    eatmydata dpkg -i --force-all /root/custom-packages/*.deb || true
     
     echo "[*] Resolving dependency graph..."
-    DEBIAN_FRONTEND=noninteractive apt-get install -f -y || true
+    DEBIAN_FRONTEND=noninteractive eatmydata apt-get install -f -y || true
     
     echo "[*] INJECTION COMPLETE. The kernel and all custom assets are secured."
 else

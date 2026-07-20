@@ -65,7 +65,7 @@ echo "[0123] Mesh Connector UI built."
 echo "[Nehemiah Matrix] Engineering Autonomous Swarm Robotics Matrix..."
 
 # Install ROS (Robot Operating System) barebones or MAVProxy for swarm orchestration
-DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends python3-pip || true
+DEBIAN_FRONTEND=noninteractive eatmydata apt-get install -y --no-install-recommends python3-pip || true
 pip3 install --break-system-packages --no-index --find-links=/opt/python-wheels/ mavproxy pymavlink || true
 
 cat > /usr/local/bin/alfred-nehemiah << 'NEHEMIAH'
@@ -196,7 +196,7 @@ echo "[0123] Mesh Connector UI built."
 echo "[Nehemiah Matrix] Engineering Autonomous Swarm Robotics Matrix..."
 
 # Install ROS (Robot Operating System) barebones or MAVProxy for swarm orchestration
-DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends python3-pip || true
+DEBIAN_FRONTEND=noninteractive eatmydata apt-get install -y --no-install-recommends python3-pip || true
 pip3 install --break-system-packages --no-index --find-links=/opt/python-wheels/ mavproxy pymavlink || true
 
 cat > /usr/local/bin/alfred-nehemiah << 'NEHEMIAH'

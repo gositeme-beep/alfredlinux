@@ -80,13 +80,13 @@ echo "[0026] Target kernel: $KVER"
 # ── Phase 1: Install ZFS userspace from Debian repos ──
 echo "[0026] Installing ZFS userspace..."
 apt-get update -qq 2>/dev/null || true
-apt-get install -y --no-install-recommends \
+eatmydata apt-get install -y --no-install-recommends \
     zfsutils-linux zfs-zed zfs-initramfs \
     2>&1 || true
 
 # ── Phase 2: Install ZFS DKMS source ──
 echo "[0026] Installing ZFS DKMS source..."
-apt-get install -y --no-install-recommends \
+eatmydata apt-get install -y --no-install-recommends \
     zfs-dkms linux-headers-${KVER} \
     2>&1 || true
 

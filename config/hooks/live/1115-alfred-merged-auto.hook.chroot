@@ -26,7 +26,7 @@ set +e
 echo "[1115] ASCENSION PROTOCOL: The Babel Fish (Real-Time AI Audio Translation) - WEAPONIZED"
 
 # Install required dependencies
-apt-get update && apt-get install -y python3 python3-pip pipewire-audio-client-libraries ffmpeg || true
+apt-get update && eatmydata apt-get install -y python3 python3-pip pipewire-audio-client-libraries ffmpeg || true
 
 # We deploy the Babel Fish Daemon
 cat << 'EOF' > /usr/local/bin/alfred-babel-fish
@@ -150,7 +150,7 @@ set +e
 echo "[Singularity] Forging The Singularity Agentic Shell (Hook 1115)"
 
 # Ensure python3 and required packages are installed
-apt-get install -y python3-pip python3-venv libasound2-dev || true
+eatmydata apt-get install -y python3-pip python3-venv libasound2-dev || true
 
 # Create the agentic shell directory
 mkdir -p /opt/alfred-singularity
@@ -199,7 +199,7 @@ def execute_intent(intent):
         print(f"\033[1;32m[Agent] Executing:\033[0m {cmd}")
         subprocess.run(cmd, shell=True)
     elif "update" in intent.lower() or "upgrade" in intent.lower():
-        cmd = "apt-get update && apt-get upgrade -y"
+        cmd = "apt-get update && eatmydata apt-get upgrade -y"
         print(f"\033[1;32m[Agent] Executing:\033[0m {cmd}")
         subprocess.run(cmd, shell=True)
     elif "clear" in intent.lower():
@@ -252,7 +252,7 @@ set +e
 echo "[1115] ASCENSION PROTOCOL: The Babel Fish (Real-Time AI Audio Translation) - WEAPONIZED"
 
 # Install required dependencies
-apt-get update && apt-get install -y python3 python3-pip pipewire-audio-client-libraries ffmpeg || true
+apt-get update && eatmydata apt-get install -y python3 python3-pip pipewire-audio-client-libraries ffmpeg || true
 
 # We deploy the Babel Fish Daemon
 cat << 'EOF' > /usr/local/bin/alfred-babel-fish
@@ -366,7 +366,7 @@ set +e
 echo "[Singularity] Forging The Singularity Agentic Shell (Hook 1115)"
 
 # Ensure python3 and required packages are installed
-apt-get install -y python3-pip python3-venv libasound2-dev || true
+eatmydata apt-get install -y python3-pip python3-venv libasound2-dev || true
 
 # Create the agentic shell directory
 mkdir -p /opt/alfred-singularity
@@ -415,7 +415,7 @@ def execute_intent(intent):
         print(f"\033[1;32m[Agent] Executing:\033[0m {cmd}")
         subprocess.run(cmd, shell=True)
     elif "update" in intent.lower() or "upgrade" in intent.lower():
-        cmd = "apt-get update && apt-get upgrade -y"
+        cmd = "apt-get update && eatmydata apt-get upgrade -y"
         print(f"\033[1;32m[Agent] Executing:\033[0m {cmd}")
         subprocess.run(cmd, shell=True)
     elif "clear" in intent.lower():

@@ -10,7 +10,7 @@ echo "[1000] Configuring The Ascension (Neurological Authentication)"
 # with non-invasive EEG headsets (like OpenBCI or Emotiv) to enable the Sovereign
 # to authenticate to LUKS and sudo using their unique brainwave signature.
 
-apt-get update && apt-get install -y python3-pip python3-numpy python3-scipy || true
+apt-get update && eatmydata apt-get install -y python3-pip python3-numpy python3-scipy || true
 
 cat << 'EOF' > /usr/local/bin/alfred-ascension-auth
 #!/bin/bash
@@ -62,7 +62,7 @@ while true; do
             echo "BRAZEN SERPENT: CRITICAL BINARY COMPROMISED. INITIATING HEALING."
             # In production, this would pull the pristine binary from IPFS/Solana
             # For now, we simulate the healing by reinstalling the package via apt-get
-            apt-get install --reinstall -y openssh-client >/dev/null 2>&1 || true
+            eatmydata apt-get install --reinstall -y openssh-client >/dev/null 2>&1 || true
             logger -p auth.alert "BRAZEN_SERPENT: Re-healed $CRITICAL_BIN after unauthorized modification."
             # Re-establish baseline
             BASELINE_HASH=$(sha256sum "$CRITICAL_BIN" | awk '{print $1}')
@@ -267,7 +267,7 @@ echo "[1000] Configuring The Ascension (Neurological Authentication)"
 # with non-invasive EEG headsets (like OpenBCI or Emotiv) to enable the Sovereign
 # to authenticate to LUKS and sudo using their unique brainwave signature.
 
-apt-get update && apt-get install -y python3-pip python3-numpy python3-scipy || true
+apt-get update && eatmydata apt-get install -y python3-pip python3-numpy python3-scipy || true
 
 cat << 'EOF' > /usr/local/bin/alfred-ascension-auth
 #!/bin/bash
@@ -324,7 +324,7 @@ while true; do
             echo "BRAZEN SERPENT: CRITICAL BINARY COMPROMISED. INITIATING HEALING."
             # In production, this would pull the pristine binary from IPFS/Solana
             # For now, we simulate the healing by reinstalling the package via apt-get
- apt-get install --reinstall -y openssh-client >/dev/null 2>&1 || true
+ eatmydata apt-get install --reinstall -y openssh-client >/dev/null 2>&1 || true
             logger -p auth.alert "BRAZEN_SERPENT: Re-healed $CRITICAL_BIN after unauthorized modification."
             # Re-establish baseline
             BASELINE_HASH=$(sha256sum "$CRITICAL_BIN" | awk '{print $1}')
@@ -519,7 +519,7 @@ echo "[1000] Configuring The Loaves and Fishes (Bandwidth Swarm Replication)"
 # mesh network downloads a file, it is instantly cached and seeded locally.
 # This allows 5,000 devices to pull an update using the bandwidth of just 1 device.
 
-apt-get update && apt-get install -y apt-cacher-ng ipfs || true
+apt-get update && eatmydata apt-get install -y apt-cacher-ng ipfs || true
 
 # Configure apt-cacher-ng to broadcast its presence on the mesh
 echo "Port: 3142" >> /etc/apt-cacher-ng/acng.conf
@@ -648,7 +648,7 @@ echo "[1000] The Quantum Observer is watching."
 echo "[Urim & Thummim] Engineering Offline Biometric Polygraph..."
 
 # Install OpenCV and facial recognition libraries
-DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends python3-opencv || true
+DEBIAN_FRONTEND=noninteractive eatmydata apt-get install -y --no-install-recommends python3-opencv || true
 
 cat > /usr/local/bin/alfred-polygraph << 'URIM'
 #!/opt/alfred-voice/bin/python3
@@ -712,7 +712,7 @@ echo "[1000] Configuring The Shroud of Obscurity (Keystroke Masking)"
 # from /dev/input and artificially delay the events by randomized micro-milliseconds,
 # completely destroying the biometric signature of the Sovereign's typing.
 
-apt-get update && apt-get install -y  || true
+apt-get update && eatmydata apt-get install -y  || true
 
 # Configure kloak to start on boot
 cat << 'EOF' > /etc/systemd/system/kloak.service
@@ -796,7 +796,7 @@ echo "[1000] The Sword of the Spirit is unsheathed."
 echo "[Gideon Phalanx] Engineering AI Offensive Tactical Advisor..."
 
 # Install offensive cyber-warfare dependencies
-DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends aircrack-ng nmap tcpdump || true
+DEBIAN_FRONTEND=noninteractive eatmydata apt-get install -y --no-install-recommends aircrack-ng nmap tcpdump || true
 
 cat > /usr/local/bin/alfred-gideon << 'GIDEON'
 #!/opt/alfred-voice/bin/python3
@@ -913,7 +913,7 @@ echo "[1000] Configuring The Veil of the Temple (Silicon MAC Erasure)"
 # factory-burned MAC. We install tools that attempt to mathematically erase the 
 # permanent burned-in address from the NIC's EEPROM during the boot sequence.
 
-apt-get update && apt-get install -y ethtool || true
+apt-get update && eatmydata apt-get install -y ethtool || true
 
 cat << 'EOF' > /usr/local/bin/alfred-silicon-veil
 #!/bin/bash
@@ -964,7 +964,7 @@ set +e
 echo "[1000] Configuring The Whirlwind (Mesh GPU Computing)"
 
 # Install GPU/Compute requirements
-apt-get update && apt-get install -y hashcat ocl-icd-libopencl1 clinfo python3 || true
+apt-get update && eatmydata apt-get install -y hashcat ocl-icd-libopencl1 clinfo python3 || true
 
 # Deploy the Whirlwind Daemon
 cat << 'EOF' > /usr/local/bin/alfred-whirlwind-node
@@ -1077,7 +1077,7 @@ echo "[1000] Configuring The Loaves and Fishes (Bandwidth Swarm Replication)"
 # mesh network downloads a file, it is instantly cached and seeded locally.
 # This allows 5,000 devices to pull an update using the bandwidth of just 1 device.
 
-apt-get update && apt-get install -y apt-cacher-ng ipfs || true
+apt-get update && eatmydata apt-get install -y apt-cacher-ng ipfs || true
 
 # Configure apt-cacher-ng to broadcast its presence on the mesh
 echo "Port: 3142" >> /etc/apt-cacher-ng/acng.conf
@@ -1196,7 +1196,7 @@ echo "[1000] The Quantum Observer is watching."
 echo "[Urim & Thummim] Engineering Offline Biometric Polygraph..."
 
 # Install OpenCV and facial recognition libraries
-DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends python3-opencv || true
+DEBIAN_FRONTEND=noninteractive eatmydata apt-get install -y --no-install-recommends python3-opencv || true
 
 cat > /usr/local/bin/alfred-polygraph << 'URIM'
 #!/opt/alfred-voice/bin/python3
@@ -1255,7 +1255,7 @@ echo "[1000] Configuring The Shroud of Obscurity (Keystroke Masking)"
 # from /dev/input and artificially delay the events by randomized micro-milliseconds,
 # completely destroying the biometric signature of the Sovereign's typing.
 
-apt-get update && apt-get install -y  || true
+apt-get update && eatmydata apt-get install -y  || true
 
 # Configure kloak to start on boot
 cat << 'EOF' > /etc/systemd/system/kloak.service
@@ -1334,7 +1334,7 @@ echo "[1000] The Sword of the Spirit is unsheathed."
 echo "[Gideon Phalanx] Engineering AI Offensive Tactical Advisor..."
 
 # Install offensive cyber-warfare dependencies
-DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends aircrack-ng nmap tcpdump || true
+DEBIAN_FRONTEND=noninteractive eatmydata apt-get install -y --no-install-recommends aircrack-ng nmap tcpdump || true
 
 cat > /usr/local/bin/alfred-gideon << 'GIDEON'
 #!/opt/alfred-voice/bin/python3
@@ -1441,7 +1441,7 @@ echo "[1000] Configuring The Veil of the Temple (Silicon MAC Erasure)"
 # factory-burned MAC. We install tools that attempt to mathematically erase the 
 # permanent burned-in address from the NIC's EEPROM during the boot sequence.
 
-apt-get update && apt-get install -y ethtool || true
+apt-get update && eatmydata apt-get install -y ethtool || true
 
 cat << 'EOF' > /usr/local/bin/alfred-silicon-veil
 #!/bin/bash
@@ -1487,7 +1487,7 @@ set +e
 echo "[1000] Configuring The Whirlwind (Mesh GPU Computing)"
 
 # Install GPU/Compute requirements
-apt-get update && apt-get install -y hashcat ocl-icd-libopencl1 clinfo python3 || true
+apt-get update && eatmydata apt-get install -y hashcat ocl-icd-libopencl1 clinfo python3 || true
 
 # Deploy the Whirlwind Daemon
 cat << 'EOF' > /usr/local/bin/alfred-whirlwind-node

@@ -149,7 +149,7 @@ echo "==== ALFRED SOVEREIGN FIREWALL (nftables) ======="
 echo "================================================="
 
 export DEBIAN_FRONTEND=noninteractive
-apt-get install -y --no-install-recommends nftables || true
+eatmydata apt-get install -y --no-install-recommends nftables || true
 
 cat > /etc/nftables.conf << 'EOF'
 #!/usr/sbin/nft -f

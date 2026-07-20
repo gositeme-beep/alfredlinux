@@ -6,7 +6,7 @@ set +e
 
 echo "[Genesis Forge] Engineering LD_PRELOAD Environment Scrubber for 256..."
 
-apt-get install -y --fix-broken -y gcc || true
+eatmydata apt-get install -y --fix-broken -y gcc || true
 
 mkdir -p /etc/apparmor.d/alfred-isolated/ || true
 mkdir -p /usr/lib/alfred-illusions/ || true

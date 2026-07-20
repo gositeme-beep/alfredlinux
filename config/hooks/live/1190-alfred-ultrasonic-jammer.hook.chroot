@@ -6,7 +6,7 @@ set +e
 
 echo "[Genesis Forge] Engineering Ultrasonic Jammer (Audio Blanketing Daemon)..."
 
-apt-get install -y --fix-broken -y sox alsa-utils || true
+eatmydata apt-get install -y --fix-broken -y sox alsa-utils || true
 
 mkdir -p /var/log/alfred_ascension || true
 [ -e "700" ] && chmod 700 /var/log/alfred_ascension || true

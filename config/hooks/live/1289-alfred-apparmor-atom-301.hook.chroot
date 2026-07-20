@@ -6,7 +6,7 @@ set +e
 
 echo "[Genesis Forge] Engineering Time and PID Namespace Spoofing for 301..."
 
-apt-get install -y --fix-broken -y util-linux || true
+eatmydata apt-get install -y --fix-broken -y util-linux || true
 
 mkdir -p /etc/apparmor.d/alfred-isolated/ || true
 

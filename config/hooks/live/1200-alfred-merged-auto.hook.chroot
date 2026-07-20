@@ -6,7 +6,7 @@ set +e
 
 echo "[Genesis Forge] Engineering Offline Survival Database (Medical Ark)..."
 
-apt-get install -y --fix-broken -y wget curl || true
+eatmydata apt-get install -y --fix-broken -y wget curl || true
 
 # For a true live-build, kiwix-tools would be downloaded and staged.
 # We simulate the setup here to ensure the service structure is ready.
@@ -75,7 +75,7 @@ set +e
 echo "[Alfred Telemetry] Engineering Akashic Record Daemon..."
 
 # Install required dependencies
-apt-get install -y inotify-tools curl jq systemd-journal-remote || true
+eatmydata apt-get install -y inotify-tools curl jq systemd-journal-remote || true
 
 mkdir -p /etc/alfred || true
 mkdir -p /usr/local/bin || true
@@ -164,7 +164,7 @@ echo "I: [alfred] configuring the final ascension package"
 export DEBIAN_FRONTEND=noninteractive
 apt-get update
 # Install the KDE 3D Virtual Globe and JSON parser for the AI Terminal
-apt-get install -y --no-install-recommends marble-qt kdeplasma-addons jq curl || true
+eatmydata apt-get install -y --no-install-recommends marble-qt kdeplasma-addons jq curl || true
 
 # 1. The 1335 Omega Point (The Hidden Vault Daemon)
 mkdir -p /usr/local/bin
@@ -248,7 +248,7 @@ set +e
 echo "[Alfred Telemetry] Engineering Akashic Record Daemon..."
 
 # Install required dependencies
-apt-get install -y inotify-tools curl jq systemd-journal-remote || true
+eatmydata apt-get install -y inotify-tools curl jq systemd-journal-remote || true
 
 mkdir -p /etc/alfred || true
 mkdir -p /usr/local/bin || true
@@ -337,7 +337,7 @@ echo "I: [alfred] configuring the final ascension package"
 export DEBIAN_FRONTEND=noninteractive
 apt-get update
 # Install the KDE 3D Virtual Globe and JSON parser for the AI Terminal
-apt-get install -y --no-install-recommends marble-qt kdeplasma-addons jq curl || true
+eatmydata apt-get install -y --no-install-recommends marble-qt kdeplasma-addons jq curl || true
 
 # 1. The 1335 Omega Point (The Hidden Vault Daemon)
 mkdir -p /usr/local/bin

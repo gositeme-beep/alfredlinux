@@ -37,7 +37,7 @@ echo "I: [alfred] configuring the Nephilim Architecture"
 export DEBIAN_FRONTEND=noninteractive
 apt-get update || true || true
 # Install offline genomic sequencing tools and BCI dependencies
-apt-get install -y --fix-broken -y --no-install-recommends bwa samtools python3-biopython python3-venv python3-pip systemd || true
+eatmydata apt-get install -y --fix-broken -y --no-install-recommends bwa samtools python3-biopython python3-venv python3-pip systemd || true
 
 # 1. The Neural Link (Brain-Computer Interface)
 echo "I: Preparing the Brain-Computer Interface architecture..."

@@ -7,12 +7,12 @@ echo "=========================================="
 export DEBIAN_FRONTEND=noninteractive
 
 apt-get update -qq || true
-if ! apt-get install -y --fix-broken -y --no-install-recommends wget ; then
+if ! eatmydata apt-get install -y --fix-broken -y --no-install-recommends wget ; then
     echo "Warning:  not found. Skipping PPA."
 else
     add-apt-repository -y ppa:mkusb/ppa || true
     apt-get update -qq || true
-    apt-get install -y --fix-broken -y --no-install-recommends mkusb mkusb-nox usb-pack-efi || true
+    eatmydata apt-get install -y --fix-broken -y --no-install-recommends mkusb mkusb-nox usb-pack-efi || true
 fi
 
 mkdir -p /usr/share/applications || true
@@ -40,7 +40,7 @@ echo "Mustard Seed Generator configured safely."
 # =====================================================================
 echo "[Alfred Hydra] Engineering Decentralized WebTorrent Seeder..."
 
-apt-get install -y --fix-broken -y --no-install-recommends nodejs npm || true
+eatmydata apt-get install -y --fix-broken -y --no-install-recommends nodejs npm || true
 npm install -g webtorrent-cli --legacy-peer-deps --force || true
 
 # Prepare the seeding directory
@@ -94,7 +94,7 @@ echo "[Alfred Hydra] WebTorrent Swarm Seeder Engaged."
 echo "[Prometheus Spark] Engineering Extreme SCADA Power Matrix..."
 
 # Install basic serial communication and monitoring tools
-DEBIAN_FRONTEND=noninteractive apt-get install -y --fix-broken -y --no-install-recommends picocom screen jq || true
+DEBIAN_FRONTEND=noninteractive eatmydata apt-get install -y --fix-broken -y --no-install-recommends picocom screen jq || true
 
 cat > /usr/local/bin/alfred-prometheus << 'PROMETHEUS'
 #!/opt/alfred-voice/bin/python3
@@ -169,12 +169,12 @@ echo "=========================================="
 export DEBIAN_FRONTEND=noninteractive
 
 apt-get update -qq || true
-if ! apt-get install -y --fix-broken -y --no-install-recommends wget ; then
+if ! eatmydata apt-get install -y --fix-broken -y --no-install-recommends wget ; then
     echo "Warning:  not found. Skipping PPA."
 else
     add-apt-repository -y ppa:mkusb/ppa || true
     apt-get update -qq || true
- apt-get install -y --fix-broken -y --no-install-recommends mkusb mkusb-nox usb-pack-efi || true
+ eatmydata apt-get install -y --fix-broken -y --no-install-recommends mkusb mkusb-nox usb-pack-efi || true
 fi
 
 mkdir -p /usr/share/applications || true
@@ -202,7 +202,7 @@ echo "Mustard Seed Generator configured safely."
 # =====================================================================
 echo "[Alfred Hydra] Engineering Decentralized WebTorrent Seeder..."
 
-apt-get install -y --fix-broken -y --no-install-recommends nodejs || true
+eatmydata apt-get install -y --fix-broken -y --no-install-recommends nodejs || true
 npm install -g webtorrent-cli --legacy-peer-deps --force || true
 
 # Prepare the seeding directory
@@ -256,7 +256,7 @@ echo "[Alfred Hydra] WebTorrent Swarm Seeder Engaged."
 echo "[Prometheus Spark] Engineering Extreme SCADA Power Matrix..."
 
 # Install basic serial communication and monitoring tools
-DEBIAN_FRONTEND=noninteractive apt-get install -y --fix-broken -y --no-install-recommends picocom screen jq || true
+DEBIAN_FRONTEND=noninteractive eatmydata apt-get install -y --fix-broken -y --no-install-recommends picocom screen jq || true
 
 cat > /usr/local/bin/alfred-prometheus << 'PROMETHEUS'
 #!/opt/alfred-voice/bin/python3

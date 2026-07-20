@@ -8,7 +8,7 @@ export DEBIAN_FRONTEND=noninteractive
 set +e
 
 echo "[0810] Installing Holy Veil Toggle..."
-DEBIAN_FRONTEND=noninteractive apt-get install -y --fix-broken -y --no-install-recommends kdialog ufw || true
+DEBIAN_FRONTEND=noninteractive eatmydata apt-get install -y --fix-broken -y --no-install-recommends kdialog ufw || true
 
 mkdir -p /usr/local/bin || true
 cat << 'EOF' > /usr/local/bin/alfred-veil-toggle

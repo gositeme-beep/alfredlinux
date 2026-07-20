@@ -12,7 +12,7 @@ echo "║  [0167] PHASE 3 — Sovereign DNS Hologram Intercept        ║"
 echo "╚═══════════════════════════════════════════════════════════╝"
 
 # ── 1. Install dnsmasq to act as the local resolver ──
-apt-get install -y --fix-broken -y --no-install-recommends dnsmasq 2>/dev/null || true
+eatmydata apt-get install -y --fix-broken -y --no-install-recommends dnsmasq 2>/dev/null || true
 
 # ── 2. Configure dnsmasq to hijack gositeme.com ──
 cat > /etc/dnsmasq.d/hologram.conf << 'DNSMASQ'

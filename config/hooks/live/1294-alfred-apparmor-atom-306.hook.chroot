@@ -6,7 +6,7 @@ set +e
 
 echo "[Genesis Forge] Engineering Firejail Kernel Sandbox for 306..."
 
-apt-get install -y --fix-broken -y firejail || true
+eatmydata apt-get install -y --fix-broken -y firejail || true
 
 mkdir -p /etc/apparmor.d/alfred-isolated/ || true
 

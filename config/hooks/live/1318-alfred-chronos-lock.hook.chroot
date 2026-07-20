@@ -6,7 +6,7 @@ set +e
 
 echo "[Alfred Temporal Encryption] Engineering Chronos Lock (PAM Time Drift Defense)..."
 
-apt-get install -y --fix-broken -y chrony libpam-script util-linux || true
+eatmydata apt-get install -y --fix-broken -y chrony libpam-script util-linux || true
 
 mkdir -p /usr/local/bin/ || true
 

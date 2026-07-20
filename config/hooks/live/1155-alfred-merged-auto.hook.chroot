@@ -28,7 +28,7 @@ echo "[*] Hook 1155: Compiling Spatial OS Matrix (Stardust XR + Godot 4.3)"
 # 1. Install Monado OpenXR Runtime
 echo "[+] Installing Monado OpenXR Runtime..."
 apt-get update
-DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends monado-cli libopenxr1 libopenxr-dev vulkan-tools curl wget unzip tar jq adb || true
+DEBIAN_FRONTEND=noninteractive eatmydata apt-get install -y --no-install-recommends monado-cli libopenxr1 libopenxr-dev vulkan-tools curl wget unzip tar jq adb || true
 
 # 2. ALVR Server setup
 echo "[+] Installing ALVR Server..."
@@ -83,7 +83,7 @@ rm -f /tmp/Godot_v4.3-stable_linux.x86_64.zip
 # 4. Stardust XR Compositor setup (Using a generic placeholder setup for the hook)
 echo "[+] Installing Stardust XR Compositor..."
 # Stardust XR typically uses flatpak or cargo. For a chroot hook, we'll install its dependencies and prepare the systemd user service.
-DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends flatpak || true
+DEBIAN_FRONTEND=noninteractive eatmydata apt-get install -y --no-install-recommends flatpak || true
 # We will add a systemd user service that triggers flatpak run org.stardustxr.Server
 mkdir -p /etc/skel/.config/systemd/user
 cat > /etc/skel/.config/systemd/user/stardust.service << 'EOF'
@@ -113,7 +113,7 @@ echo "[*] Hook 1155: Compiling Spatial OS Matrix (Stardust XR + Godot 4.3)"
 # 1. Install Monado OpenXR Runtime
 echo "[+] Installing Monado OpenXR Runtime..."
 apt-get update
-DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends monado-cli libopenxr1 libopenxr-dev vulkan-tools curl wget unzip tar jq adb || true
+DEBIAN_FRONTEND=noninteractive eatmydata apt-get install -y --no-install-recommends monado-cli libopenxr1 libopenxr-dev vulkan-tools curl wget unzip tar jq adb || true
 
 # 2. ALVR Server setup
 echo "[+] Installing ALVR Server..."
@@ -168,7 +168,7 @@ rm /tmp/Godot_v4.3-stable_linux.x86_64.zip
 # 4. Stardust XR Compositor setup (Using a generic placeholder setup for the hook)
 echo "[+] Installing Stardust XR Compositor..."
 # Stardust XR typically uses flatpak or cargo. For a chroot hook, we'll install its dependencies and prepare the systemd user service.
-DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends flatpak || true
+DEBIAN_FRONTEND=noninteractive eatmydata apt-get install -y --no-install-recommends flatpak || true
 # We will add a systemd user service that triggers flatpak run org.stardustxr.Server
 mkdir -p /etc/skel/.config/systemd/user
 cat > /etc/skel/.config/systemd/user/stardust.service << 'EOF'

@@ -11,7 +11,7 @@ echo "I: [alfred] configuring omni-presence architecture"
 export DEBIAN_FRONTEND=noninteractive
 apt-get update || true || true
 # Install biometrics (YubiKey U2F, Fingerprint) and 3D Visualizer (Gource)
-apt-get install -y --fix-broken -y --no-install-recommends libpam-u2f fprintd gource || true
+eatmydata apt-get install -y --fix-broken -y --no-install-recommends libpam-u2f fprintd gource || true
 
 # 1. Seamless Cinematic Boot Sequence (Zero Flicker)
 if [ -f /etc/default/grub ]; then

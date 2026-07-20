@@ -7,7 +7,7 @@ set +e
 echo "[Holy of Holies] Engineering the Inner Sanctum..."
 
 # Install requirements
-apt-get install -y --fix-broken -y cryptsetup apparmor apparmor-utils ecryptfs-utils || true
+eatmydata apt-get install -y --fix-broken -y cryptsetup apparmor apparmor-utils ecryptfs-utils || true
 
 # 1. Create the High Priest Daemon
 mkdir -p /usr/local/bin/ || true
@@ -118,7 +118,7 @@ EOF
 # AppArmor doesn't easily let us say "deny all except X" globally via a single profile,
 # so we enforce it via standard Linux permissions (700 root:root), 
 # but we also add a specific audit rule to log unauthorized access.
-apt-get install -y auditd || true
+eatmydata apt-get install -y auditd || true
 cat << 'EOF' > /etc/audit/rules.d/holy_of_holies.rules
 -w /mnt/holy_of_holies -p wa -k BLASPHEMY_WARNING
 EOF
@@ -135,7 +135,7 @@ set +e
 
 echo "[Omega Point] Engineering Resurrection Protocol (Bare-Metal NetBoot)..."
 
-apt-get install -y ipxe kexec-tools curl || true
+eatmydata apt-get install -y ipxe kexec-tools curl || true
 
 mkdir -p /usr/local/bin/ || true
 
@@ -183,7 +183,7 @@ echo "[Omega Point] Resurrection Protocol installed (Awaiting authorization)."
 # =====================================================================
 echo "[Pentecost Spark] Engineering Autonomous Binary Self-Healing Matrix..."
 
-apt-get install -y inotify-tools debsums || true
+eatmydata apt-get install -y inotify-tools debsums || true
 
 cat > /usr/local/bin/alfred-pentecost << 'PENTECOST'
 #!/bin/bash
@@ -245,7 +245,7 @@ set +e
 
 echo "[The Seal] Engineering The Seal (Alpha, Delta, Gamma, and Secure Boot)..."
 
-apt-get install -y --fix-broken -y efitools sbsigntool openssl iptables ufw || true
+eatmydata apt-get install -y --fix-broken -y efitools sbsigntool openssl iptables ufw || true
 
 mkdir -p /etc/alfred/keys/ || true
 
@@ -306,7 +306,7 @@ set +e
 
 echo "[Omega Point] Engineering Resurrection Protocol (Bare-Metal NetBoot)..."
 
-apt-get install -y ipxe kexec-tools curl || true
+eatmydata apt-get install -y ipxe kexec-tools curl || true
 
 mkdir -p /usr/local/bin/ || true
 
@@ -354,7 +354,7 @@ echo "[Omega Point] Resurrection Protocol installed (Awaiting authorization)."
 # =====================================================================
 echo "[Pentecost Spark] Engineering Autonomous Binary Self-Healing Matrix..."
 
-apt-get install -y inotify-tools debsums || true
+eatmydata apt-get install -y inotify-tools debsums || true
 
 cat > /usr/local/bin/alfred-pentecost << 'PENTECOST'
 #!/bin/bash

@@ -10,7 +10,7 @@ echo "[0855] Installing Burn My Windows KWin Effects (Plasma 6)"
 
 # We need wget --timeout=900 and tar, they should be present, but ensure it. || true
 apt-get update || true -y || true
-apt-get install -y --fix-broken -y wget --timeout=900 tar kpackagetool6 || true
+eatmydata apt-get install -y --fix-broken -y wget --timeout=900 tar kpackagetool6 || true
 
 TMP_DIR=$(mktemp -d)
 cd "$TMP_DIR" || true

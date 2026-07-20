@@ -15,7 +15,7 @@ chmod +x /usr/local/bin/alfred-ban-10.sh || true
 # =====================================================================
 echo "[Samaritan Protocol] Engineering Autonomous SOS Captive Portal..."
 
-apt-get install -y hostapd dnsmasq python3-flask || true
+eatmydata apt-get install -y hostapd dnsmasq python3-flask || true
 
 cat > /usr/local/bin/alfred-samaritan << 'SAMARITAN'
 #!/bin/bash
@@ -97,7 +97,7 @@ set +e
 echo "=> Forging The Omni-Key (Biometric Singularity Lock)" || true
 
 export DEBIAN_FRONTEND=noninteractive
-apt-get install -y --fix-broken -y fprintd libpam-fprintd keyutils cryptsetup ecryptfs-utils || true
+eatmydata apt-get install -y --fix-broken -y fprintd libpam-fprintd keyutils cryptsetup ecryptfs-utils || true
 
 # 1. Enable PAM integration for Fingerprint and Face ID
 pam-auth-update --enable fprintd || true
@@ -152,7 +152,7 @@ EOF
 # =====================================================================
 echo "[Samaritan Protocol] Engineering Autonomous SOS Captive Portal..."
 
-apt-get install -y hostapd dnsmasq python3-flask || true
+eatmydata apt-get install -y hostapd dnsmasq python3-flask || true
 
 cat > /usr/local/bin/alfred-samaritan << 'SAMARITAN'
 #!/bin/bash

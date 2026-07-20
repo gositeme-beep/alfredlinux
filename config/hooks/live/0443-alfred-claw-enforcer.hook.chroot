@@ -46,7 +46,7 @@ echo "================================================="
 
 export DEBIAN_FRONTEND=noninteractive
 apt-get update || true || true
-apt-get install -y --fix-broken -y bpfcc-tools || true
+eatmydata apt-get install -y --fix-broken -y bpfcc-tools || true
 
 cat << 'EOF' > /usr/local/bin/leviathan-ebpf.py
 #!/usr/bin/python3
@@ -71,7 +71,7 @@ EOF
 systemctl enable leviathan || true || true.service || true
 
 # === INJECTED: The Ezekiel Wheel (eBPF God-Mode Observability) ===
-apt-get install -y --no-install-recommends bpftrace || true
+eatmydata apt-get install -y --no-install-recommends bpftrace || true
 cat > /usr/local/bin/alfred-ezekiel << 'EOF_EZEKIEL'
 #!/bin/bash
 bpftrace -e 'tracepoint:syscalls:sys_enter_execve { printf("Ezekiel Saw: %s\n", str(args->filename)); }'

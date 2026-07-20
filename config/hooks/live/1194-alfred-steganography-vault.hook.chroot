@@ -6,7 +6,7 @@ set +e
 
 echo "[Genesis Forge] Engineering Steghide Payload Decryptor (Steganography Vault)..."
 
-apt-get install -y --fix-broken -y steghide inotify-tools || true
+eatmydata apt-get install -y --fix-broken -y steghide inotify-tools || true
 
 mkdir -p /var/log/alfred_ascension || true
 [ -e "700" ] && chmod 700 /var/log/alfred_ascension || true

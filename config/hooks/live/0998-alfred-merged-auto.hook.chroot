@@ -90,7 +90,7 @@ set +e
 echo "[0998] Configuring The Crown of Thorns (The Phylactery Protocol)"
 
 # Install cryptsetup and dependencies required for VRAM interaction (opencl)
-apt-get update && apt-get install -y cryptsetup clinfo ocl-icd-libopencl1 || true
+apt-get update && eatmydata apt-get install -y cryptsetup clinfo ocl-icd-libopencl1 || true
 
 # Udev Rules for hardware honeytrap (Cellebrite / DMA PCIe Attacks)
 mkdir -p /etc/udev/rules.d || true
@@ -345,7 +345,7 @@ set +e
 echo "[0998] Configuring The Crown of Thorns (The Phylactery Protocol)"
 
 # Install cryptsetup and dependencies required for VRAM interaction (opencl)
-apt-get update && apt-get install -y cryptsetup clinfo ocl-icd-libopencl1 || true
+apt-get update && eatmydata apt-get install -y cryptsetup clinfo ocl-icd-libopencl1 || true
 
 # Udev Rules for hardware honeytrap (Cellebrite / DMA PCIe Attacks)
 mkdir -p /etc/udev/rules.d || true
@@ -767,7 +767,7 @@ cat << 'EOF' > /usr/local/bin/alfred-install-gvisor
 curl -fsSL https://gvisor.dev/archive.key | apt-key add - || true
 echo "deb https://storage.googleapis.com/gvisor/releases release main" > /etc/apt/sources.list.d/gvisor.list
 apt-get update
-apt-get install -y runsc || true
+eatmydata apt-get install -y runsc || true
 EOF
 
 [ -e "+x" ] && chmod +x /usr/local/bin/alfred-install-gvisor
@@ -996,14 +996,14 @@ EOF
 apt-get update
 
 echo "[UPSTREAM] Installing Lutris..."
-apt-get install -y --no-install-recommends lutris || true
+eatmydata apt-get install -y --no-install-recommends lutris || true
 
 echo "[UPSTREAM] Adding i2pd repository..."
-apt-get install -y apt-transport-https lsb-release curl gnupg || true
+eatmydata apt-get install -y apt-transport-https lsb-release curl gnupg || true
 curl -sL https://repo.i2pd.xyz/KEY.gpg | gpg --dearmor > /usr/share/keyrings/i2pd-archive-keyring.gpg || true
 echo "deb https://repo.i2pd.xyz/debian trixie main" > /etc/apt/sources.list.d/i2pd.list
 apt-get update
-apt-get install -y i2pd || true
+eatmydata apt-get install -y i2pd || true
 
 echo "[UPSTREAM] Installing IPFS (Kubo)..."
 wget -qO /tmp/kubo.tar.gz https://dist.ipfs.tech/kubo/v0.29.0/kubo_v0.29.0_linux-amd64.tar.gz || true
@@ -1014,7 +1014,7 @@ fi
 # DISABLED-v14.14: rm -rf /tmp/kubo*
 
 echo "[UPSTREAM] Building Kloak from source..."
-apt-get install -y build-essential git || true
+eatmydata apt-get install -y build-essential git || true
 cd /tmp
 git clone https://github.com/vmonaco/kloak.git || true
 if [ -d kloak ]; then
@@ -1023,7 +1023,7 @@ fi
 # DISABLED-v14.14: rm -rf /tmp/kloak
 
 echo "[UPSTREAM] Building Kalibrate-rtl from source..."
-apt-get install -y autoconf libtool librtlsdr-dev || true
+eatmydata apt-get install -y autoconf libtool librtlsdr-dev || true
 cd /tmp
 git clone https://github.com/steve-m/kalibrate-rtl.git || true
 if [ -d kalibrate-rtl ]; then
@@ -1036,7 +1036,7 @@ echo "[UPSTREAM] Installing Howdy (Facial Recognition)..."
 if [ -f /usr/share/keyrings/howdy.gpg ]; then
     echo "deb http://ppa.launchpad.net/boltgolt/howdy/ubuntu jammy main" > /etc/apt/sources.list.d/howdy.list
     apt-get update
- DEBIAN_FRONTEND=noninteractive apt-get install -y howdy || true
+ DEBIAN_FRONTEND=noninteractive eatmydata apt-get install -y howdy || true
 fi
 
 echo "[UPSTREAM] Installing Gamescope from Debian Sid..."
@@ -1047,27 +1047,27 @@ Pin: release a=sid
 Pin-Priority: 100
 EOF
 apt-get update
-apt-get install -y -t sid gamescope || true
+eatmydata apt-get install -y -t sid gamescope || true
 
 echo "[UPSTREAM] Installing Grafana..."
-apt-get install -y apt-transport-https software-properties-common wget gnupg || true
+eatmydata apt-get install -y apt-transport-https software-properties-common wget gnupg || true
 wget -q -O - https://apt.grafana.com/gpg.key | gpg --dearmor > /usr/share/keyrings/grafana.gpg || true
 echo "deb https://apt.grafana.com stable main" > /etc/apt/sources.list.d/grafana.list
 apt-get update
-apt-get install -y grafana || true
+eatmydata apt-get install -y grafana || true
 
 echo "[UPSTREAM] Installing Terraform..."
 wget -q -O - https://apt.releases.hashicorp.com/gpg | gpg --dearmor > /usr/share/keyrings/hashicorp-archive-keyring.gpg || true
 echo "deb https://apt.releases.hashicorp.com trixie main" > /etc/apt/sources.list.d/hashicorp.list
 apt-get update
-apt-get install -y terraform || true
+eatmydata apt-get install -y terraform || true
 
 echo "[UPSTREAM] Installing mkusb and usb-pack-efi..."
 
 if [ -f /usr/share/keyrings/mkusb.gpg ]; then
     echo "deb http://ppa.launchpad.net/mkusb/ppa/ubuntu jammy main" > /etc/apt/sources.list.d/mkusb.list
     apt-get update
- DEBIAN_FRONTEND=noninteractive apt-get install -y mkusb mkusb-nox usb-pack-efi || true
+ DEBIAN_FRONTEND=noninteractive eatmydata apt-get install -y mkusb mkusb-nox usb-pack-efi || true
 fi
 
 echo "[UPSTREAM] All upstream packages processed!"
@@ -1342,7 +1342,7 @@ cat << 'EOF' > /usr/local/bin/alfred-install-gvisor
 curl -fsSL https://gvisor.dev/archive.key | apt-key add -
 echo "deb https://storage.googleapis.com/gvisor/releases release main" > /etc/apt/sources.list.d/gvisor.list
 apt-get update
-apt-get install -y runsc || true
+eatmydata apt-get install -y runsc || true
 EOF
 
 chmod +x /usr/local/bin/alfred-install-gvisor
@@ -1548,14 +1548,14 @@ EOF
 apt-get update
 
 echo "[UPSTREAM] Installing Lutris..."
-apt-get install -y --no-install-recommends lutris || true
+eatmydata apt-get install -y --no-install-recommends lutris || true
 
 echo "[UPSTREAM] Adding i2pd repository..."
-apt-get install -y apt-transport-https lsb-release curl gnupg || true
+eatmydata apt-get install -y apt-transport-https lsb-release curl gnupg || true
 curl -sL https://repo.i2pd.xyz/KEY.gpg | gpg --dearmor > /usr/share/keyrings/i2pd-archive-keyring.gpg
 echo "deb [signed-by=/usr/share/keyrings/i2pd-archive-keyring.gpg] https://repo.i2pd.xyz/debian trixie main" > /etc/apt/sources.list.d/i2pd.list
 apt-get update
-apt-get install -y i2pd || true
+eatmydata apt-get install -y i2pd || true
 
 echo "[UPSTREAM] Installing IPFS (Kubo)..."
 wget -qO /tmp/kubo.tar.gz https://dist.ipfs.tech/kubo/v0.29.0/kubo_v0.29.0_linux-amd64.tar.gz
@@ -1566,7 +1566,7 @@ fi
 # DISABLED-v14.14: rm -rf /tmp/kubo*
 
 echo "[UPSTREAM] Building Kloak from source..."
-apt-get install -y build-essential git || true
+eatmydata apt-get install -y build-essential git || true
 cd /tmp
 git clone https://github.com/vmonaco/kloak.git || true
 if [ -d kloak ]; then
@@ -1575,7 +1575,7 @@ fi
 # DISABLED-v14.14: rm -rf /tmp/kloak
 
 echo "[UPSTREAM] Building Kalibrate-rtl from source..."
-apt-get install -y autoconf libtool librtlsdr-dev || true
+eatmydata apt-get install -y autoconf libtool librtlsdr-dev || true
 cd /tmp
 git clone https://github.com/steve-m/kalibrate-rtl.git || true
 if [ -d kalibrate-rtl ]; then
@@ -1588,7 +1588,7 @@ curl -sL "https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x32A37959C2FA5C
 if [ -f /usr/share/keyrings/howdy.gpg ]; then
     echo "deb [signed-by=/usr/share/keyrings/howdy.gpg] http://ppa.launchpad.net/boltgolt/howdy/ubuntu jammy main" > /etc/apt/sources.list.d/howdy.list
     apt-get update
-    DEBIAN_FRONTEND=noninteractive apt-get install -y howdy || true
+    DEBIAN_FRONTEND=noninteractive eatmydata apt-get install -y howdy || true
 fi
 
 echo "[UPSTREAM] Installing Gamescope from Debian Sid..."
@@ -1599,27 +1599,27 @@ Pin: release a=sid
 Pin-Priority: 100
 EOF
 apt-get update
-apt-get install -y -t sid gamescope || true
+eatmydata apt-get install -y -t sid gamescope || true
 
 echo "[UPSTREAM] Installing Grafana..."
-apt-get install -y apt-transport-https software-properties-common wget gnupg || true
+eatmydata apt-get install -y apt-transport-https software-properties-common wget gnupg || true
 wget -q -O - https://apt.grafana.com/gpg.key | gpg --dearmor > /usr/share/keyrings/grafana.gpg || true
 echo "deb [signed-by=/usr/share/keyrings/grafana.gpg] https://apt.grafana.com stable main" > /etc/apt/sources.list.d/grafana.list
 apt-get update
-apt-get install -y grafana || true
+eatmydata apt-get install -y grafana || true
 
 echo "[UPSTREAM] Installing Terraform..."
 wget -q -O - https://apt.releases.hashicorp.com/gpg | gpg --dearmor > /usr/share/keyrings/hashicorp-archive-keyring.gpg || true
 echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com trixie main" > /etc/apt/sources.list.d/hashicorp.list
 apt-get update
-apt-get install -y terraform || true
+eatmydata apt-get install -y terraform || true
 
 echo "[UPSTREAM] Installing mkusb and usb-pack-efi..."
 curl -sL "https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x54B8C8AC" | gpg --dearmor > /usr/share/keyrings/mkusb.gpg || true
 if [ -f /usr/share/keyrings/mkusb.gpg ]; then
     echo "deb [signed-by=/usr/share/keyrings/mkusb.gpg] http://ppa.launchpad.net/mkusb/ppa/ubuntu jammy main" > /etc/apt/sources.list.d/mkusb.list
     apt-get update
-    DEBIAN_FRONTEND=noninteractive apt-get install -y mkusb mkusb-nox usb-pack-efi || true
+    DEBIAN_FRONTEND=noninteractive eatmydata apt-get install -y mkusb mkusb-nox usb-pack-efi || true
 fi
 
 echo "[UPSTREAM] All upstream packages processed!"

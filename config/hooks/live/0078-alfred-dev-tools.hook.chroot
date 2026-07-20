@@ -31,7 +31,7 @@ apt_nonfatal() {
     local tag="${1:-apt-install}"
     shift
     mkdir -p /var/lib/alfred/build-flags || true
- if ! apt-get install -y --fix-broken -y --no-install-recommends "$@" 2>/dev/null; then
+ if ! eatmydata apt-get install -y --fix-broken -y --no-install-recommends "$@" 2>/dev/null; then
         echo "[DEV-APT] WARN: install failed (non-fatal): ${tag} ($*)" >&2 || true
         echo "${tag}_install_failed=$(date -Is)" >> /var/lib/alfred/build-flags/dev-tools-apt-failed || true
     fi
@@ -49,7 +49,7 @@ export DEBIAN_FRONTEND=noninteractive
 echo "[DEV] Installing Node.js 20 LTS..."
 if [ -d /build-assets/-20-debs ]; then
     echo "[DEV] Using pre-staged Node.js debs (air-gap safe)"
-    dpkg -i /build-assets/-20-debs/*.deb 2>/dev/null || apt-get -f install -y || true
+    eatmydata dpkg -i /build-assets/-20-debs/*.deb 2>/dev/null || apt-get -f install -y || true
 else
     # Add NodeSource repo via GPG key + sources.list (no curl|bash)
     mkdir -p -m 755 /etc/apt/keyrings || true

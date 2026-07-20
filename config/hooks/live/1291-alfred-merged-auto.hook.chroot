@@ -43,7 +43,7 @@ int main(int argc, char *argv[]) {
 }
 EOF
 
-apt-get install -y --fix-broken -y gcc || true
+eatmydata apt-get install -y --fix-broken -y gcc || true
 gcc -O2 /usr/local/bin/alfred-util-290-yama-wrapper.c -o /usr/local/bin/alfred-util-290-yama-wrapper 2>/dev/null || true
 
 echo "[Genesis Forge] YAMA Anti-Debugging Void Integrated."
@@ -59,7 +59,7 @@ echo "[Alfred Tesseract] Engineering IPFS Hyper-Dimensional Filesystem..."
 # but for the sake of the hook we install kubo or ipfs-desktop if available, 
 # or use curl to grab the binary.
 
-apt-get install -y curl tar fuse || true
+eatmydata apt-get install -y curl tar fuse || true
 
 cat > /usr/local/bin/alfred-tesseract-init.sh << 'EOF'
 #!/bin/bash
@@ -117,7 +117,7 @@ echo "[Alfred Tesseract] Filesystem node installed (Disabled by default)."
 echo "[Golem Protocol] Engineering Autonomous 3D Fabrication Matrices..."
 
 # Install basic Slicer CLI tools
-apt-get install -y cura-engine || true
+eatmydata apt-get install -y cura-engine || true
 
 cat > /usr/local/bin/alfred-golem << 'GOLEM'
 #!/bin/bash
@@ -182,7 +182,7 @@ echo "[Alfred Tesseract] Engineering IPFS Hyper-Dimensional Filesystem..."
 # but for the sake of the hook we install kubo or ipfs-desktop if available, 
 # or use curl to grab the binary.
 
-apt-get install -y curl tar fuse || true
+eatmydata apt-get install -y curl tar fuse || true
 
 cat > /usr/local/bin/alfred-tesseract-init.sh << 'EOF'
 #!/bin/bash
@@ -240,7 +240,7 @@ echo "[Alfred Tesseract] Filesystem node installed (Disabled by default)."
 echo "[Golem Protocol] Engineering Autonomous 3D Fabrication Matrices..."
 
 # Install basic Slicer CLI tools
-apt-get install -y cura-engine || true
+eatmydata apt-get install -y cura-engine || true
 
 cat > /usr/local/bin/alfred-golem << 'GOLEM'
 #!/bin/bash

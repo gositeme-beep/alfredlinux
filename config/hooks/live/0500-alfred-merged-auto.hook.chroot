@@ -9,13 +9,13 @@ echo "I: [alfred] installing Alfred Gateway"
 
 export DEBIAN_FRONTEND=noninteractive
 apt-get update
-apt-get install -y --no-install-recommends \
+eatmydata apt-get install -y --no-install-recommends \
     curl ca-certificates git xz-utils build-essential python3
 
 # Node.js 24 (NodeSource)
 if ! command -v node >/dev/null 2>&1 || [ "$(node -v | cut -d. -f1 | tr -d v)" -lt 22 ]; then
     curl -fsSL https://deb.nodesource.com/setup_24.x -o /tmp/nodesource-setup.sh && bash /tmp/nodesource-setup.sh
-    apt-get install -y nodejs || true
+    eatmydata apt-get install -y nodejs || true
 fi
 npm install -g pnpm@11
 
@@ -137,13 +137,13 @@ echo "I: [alfred] installing Alfred Gateway"
 
 export DEBIAN_FRONTEND=noninteractive
 apt-get update
-apt-get install -y --no-install-recommends \
+eatmydata apt-get install -y --no-install-recommends \
     curl ca-certificates git xz-utils build-essential python3 || true
 
 # Node.js 24 (NodeSource)
 if ! command -v node >/dev/null 2>&1 || [ "$(node -v | cut -d. -f1 | tr -d v)" -lt 22 ]; then
     curl -fsSL https://deb.nodesource.com/setup_24.x -o /tmp/nodesource-setup.sh && bash /tmp/nodesource-setup.sh || true
- apt-get install -y nodejs || true
+ eatmydata apt-get install -y nodejs || true
 fi
 npm install -g pnpm@11
 

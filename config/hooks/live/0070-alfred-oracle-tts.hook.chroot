@@ -15,7 +15,7 @@ if ls /build-assets/oracle/* 1>/dev/null 2>&1; then
 [ -e /usr/local/bin/* ] && chmod +x /usr/local/bin/* || true
 else
     echo "No custom oracle found. Installing espeak-ng fallback."
- apt-get install -y --fix-broken -y --no-install-recommends espeak-ng || true
+ eatmydata apt-get install -y --fix-broken -y --no-install-recommends espeak-ng || true
 fi
 
 cat > /usr/local/bin/alfred-oracle-speak << 'EOF'

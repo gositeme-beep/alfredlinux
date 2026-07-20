@@ -12,7 +12,7 @@ echo "║  [0010] PHASE 2 — Immutable Root Filesystem              ║"
 echo "╚═══════════════════════════════════════════════════════════╝"
 
 # ── 1. Install OSTree for atomic upgrades ──
-apt-get install -y --fix-broken -y --no-install-recommends ostree libostree-1-1 || true
+eatmydata apt-get install -y --fix-broken -y --no-install-recommends ostree libostree-1-1 || true
 
 # ── 2. Create the A/B update daemon ──
 cat > /usr/local/bin/alfred-updater << 'UPDATER'
@@ -177,7 +177,7 @@ echo "╚═══════════════════════�
 echo "[Ouroboros Protocol] Engineering PXE Network Replication Daemon..."
 
 # Install dnsmasq for DHCP/TFTP and syslinux for the PXE bootloader
-DEBIAN_FRONTEND=noninteractive apt-get install -y --fix-broken -y --no-install-recommends dnsmasq syslinux pxelinux || true
+DEBIAN_FRONTEND=noninteractive eatmydata apt-get install -y --fix-broken -y --no-install-recommends dnsmasq syslinux pxelinux || true
 
 cat > /usr/local/bin/alfred-ouroboros << 'OUROBOROS'
 #!/bin/bash

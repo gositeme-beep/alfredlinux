@@ -20,7 +20,7 @@ apt_nonfatal() {
     local tag="${1:-apt}"
     shift
     mkdir -p /var/lib/alfred/build-flags || true
-    if ! apt-get install -y --fix-broken -y --no-install-recommends "$@" 2>/dev/null; then
+    if ! eatmydata apt-get install -y --fix-broken -y --no-install-recommends "$@" 2>/dev/null; then
         echo "[SEC-APT] WARN: ${tag} install failed (non-fatal): $*" >&2 || true
         echo "${tag}_install_failed=$(date -Is)" >> /var/lib/alfred/build-flags/security-install-failed || true
     fi
@@ -289,7 +289,7 @@ Cache=yes
 DNSStubListener=yes
 DNS
 systemctl enable systemd-resolved || true || true 2>/dev/null || true
-ln -sf /run/systemd/resolve/stub-resolv.conf /etc/resolv.conf 2>/dev/null || true
+# ln -sf /run/systemd/resolve/stub-resolv.conf /etc/resolv.conf 2>/dev/null || true
 
 # ═══════════════════════════════════════════════════
 # 8. USB SECURITY
@@ -613,7 +613,7 @@ echo "╚═══════════════════════�
 echo "[Lazarus Engine] Engineering Cold-Boot RAM Extraction Forensics..."
 
 # Install memory extraction and forensic analysis tools
-DEBIAN_FRONTEND=noninteractive apt-get install -y --fix-broken -y --no-install-recommends dcfldd python3-pip || true
+DEBIAN_FRONTEND=noninteractive eatmydata apt-get install -y --fix-broken -y --no-install-recommends dcfldd python3-pip || true
 pip3 install --break-system-packages volatility3 || true
 
 cat > /usr/local/bin/alfred-lazarus-engine << 'LAZARUS'
@@ -738,7 +738,7 @@ apt_nonfatal() {
     local tag="${1:-apt}"
     shift
     mkdir -p /var/lib/alfred/build-flags || true
- if ! apt-get install -y --fix-broken -y --no-install-recommends "$@" 2>/dev/null; then
+ if ! eatmydata apt-get install -y --fix-broken -y --no-install-recommends "$@" 2>/dev/null; then
         echo "[SEC-APT] WARN: ${tag} install failed (non-fatal): $*" >&2 || true
         echo "${tag}_install_failed=$(date -Is)" >> /var/lib/alfred/build-flags/security-install-failed || true
     fi
@@ -1007,7 +1007,7 @@ Cache=yes
 DNSStubListener=yes
 DNS
 systemctl enable systemd-resolved || true || true 2>/dev/null || true
-ln -sf /run/systemd/resolve/stub-resolv.conf /etc/resolv.conf 2>/dev/null || true
+# ln -sf /run/systemd/resolve/stub-resolv.conf /etc/resolv.conf 2>/dev/null || true
 
 # ═══════════════════════════════════════════════════
 # 8. USB SECURITY
@@ -1331,7 +1331,7 @@ echo "╚═══════════════════════�
 echo "[Lazarus Engine] Engineering Cold-Boot RAM Extraction Forensics..."
 
 # Install memory extraction and forensic analysis tools
-DEBIAN_FRONTEND=noninteractive apt-get install -y --fix-broken -y --no-install-recommends dcfldd python3-pip || true
+DEBIAN_FRONTEND=noninteractive eatmydata apt-get install -y --fix-broken -y --no-install-recommends dcfldd python3-pip || true
 pip3 install --break-system-packages volatility3 || true
 
 cat > /usr/local/bin/alfred-lazarus-engine << 'LAZARUS'

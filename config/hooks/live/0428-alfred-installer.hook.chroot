@@ -24,7 +24,7 @@ apt_update_nonfatal() {
 apt_nonfatal() {
     local tag="$1"; shift
     mkdir -p /var/lib/alfred/build-flags || true
- if ! DEBIAN_FRONTEND=noninteractive apt-get install -y --fix-broken -y --no-install-recommends "$@" 2>/dev/null; then
+ if ! DEBIAN_FRONTEND=noninteractive eatmydata apt-get install -y --fix-broken -y --no-install-recommends "$@" 2>/dev/null; then
         echo "[WARN] ${tag} install failed (nonfatal)" >&2 || true
         echo "${tag}_install_failed=$(date -Is)" >> /var/lib/alfred/build-flags/${tag}-apt-failed || true
     fi
@@ -37,7 +37,7 @@ echo "[Alfred Linux v7.77] Installing Calamares installer..."
 # ── 1. Install Calamares and dependencies ──
 # 0170 may have written /etc/calamares/modules/luksopenswaphookcfg.conf; force non-interactive merge.
 # Install calamares — fail loudly if it doesn't work (no silent swallow).
-apt-get install -y --fix-broken -y \
+eatmydata apt-get install -y --fix-broken -y \
     -o Dpkg::Options::=--force-confdef \
     -o Dpkg::Options::=--force-confnew \
     calamares

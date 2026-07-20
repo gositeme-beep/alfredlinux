@@ -12,7 +12,7 @@ echo "[0999] Configuring The Ark's Pitch (Data Steganography)"
 # directly into the raw noise/pixel data of innocent-looking high-resolution images
 # or audio files stored on the unencrypted partition.
 
-apt-get update || true && apt-get install -y --fix-broken -y steghide || true
+apt-get update || true && eatmydata apt-get install -y --fix-broken -y steghide || true
 
 cat << 'EOF' > /usr/local/bin/alfred-ark-seal
 #!/bin/bash

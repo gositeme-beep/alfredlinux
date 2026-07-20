@@ -30,7 +30,7 @@ export DEBIAN_FRONTEND=noninteractive
 # 1. CORE ACCESSIBILITY PACKAGES
 # â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 echo "[A11Y-01] Installing accessibility tools..."
-apt-get install -y --fix-broken -y --no-install-recommends \
+eatmydata apt-get install -y --fix-broken -y --no-install-recommends \
     orca \
     at-spi2-core \
     espeak-ng \
@@ -47,7 +47,7 @@ apt-get install -y --fix-broken -y --no-install-recommends \
 # 2. HIGH CONTRAST THEME
 # â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 echo "[A11Y-02] Installing high-contrast theme..."
-apt-get install -y --fix-broken -y --no-install-recommends \
+eatmydata apt-get install -y --fix-broken -y --no-install-recommends \
     high-contrast-icon-theme \
     gnome-accessibility-themes \
     2>/dev/null || true

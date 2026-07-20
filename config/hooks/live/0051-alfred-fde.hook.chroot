@@ -24,12 +24,12 @@ echo "╚═══════════════════════�
 # 1. INSTALL CRYPTOGRAPHIC PACKAGES
 # ═══════════════════════════════════════════════════
 echo "[FDE-01] Installing encryption packages..."
-apt-get install -y --fix-broken -y --no-install-recommends \
+eatmydata apt-get install -y --fix-broken -y --no-install-recommends \
     cryptsetup \
     cryptsetup-initramfs \
     keyutils \
     libblockdev-crypto3 \
- 2>/dev/null || apt-get install -y --fix-broken -y --no-install-recommends \
+ 2>/dev/null || eatmydata apt-get install -y --fix-broken -y --no-install-recommends \
     cryptsetup \
     cryptsetup-initramfs \
     keyutils \

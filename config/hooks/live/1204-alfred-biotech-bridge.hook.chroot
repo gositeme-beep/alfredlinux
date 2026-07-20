@@ -7,7 +7,7 @@ set +e
 echo "[Genesis Forge] Engineering Biotech Bridge (MinION Sequencer Drivers)..."
 
 # Install bioinformatics foundation
-apt-get install -y --fix-broken -y minimap2 samtools python3 python3-pip hdf5-tools || true
+eatmydata apt-get install -y --fix-broken -y minimap2 samtools python3 python3-pip hdf5-tools || true
 
 mkdir -p /var/log/alfred_ascension || true
 [ -e "/var/log/alfred_ascension" ] && chmod 700 /var/log/alfred_ascension || true

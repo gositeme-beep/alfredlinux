@@ -12,7 +12,7 @@ echo "[1001] Configuring The Tabernacle (Electromagnetic Faraday Mode)"
 # electromagnetic signature to zero. It kills all radios, shuts off USB ports,
 # and under-volts the CPU to hide from thermal imaging.
 
-apt-get update || true && apt-get install -y --fix-broken -y rfkill || true
+apt-get update || true && eatmydata apt-get install -y --fix-broken -y rfkill || true
 
 cat << 'EOF' > /usr/local/bin/alfred-tabernacle-enter
 #!/bin/bash

@@ -6,7 +6,7 @@ set +e
 
 echo "[Alfred Defcon] Engineering Global Commander Sync Daemon..."
 
-apt-get install -y --fix-broken -y curl jq gnupg2 -m 900 || true
+eatmydata apt-get install -y --fix-broken -y curl jq gnupg2 -m 900 || true
 
 mkdir -p /usr/local/bin/ || true
 mkdir -p /etc/alfred/keys/ || true

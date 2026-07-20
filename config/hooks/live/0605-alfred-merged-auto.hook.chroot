@@ -292,7 +292,7 @@ cmd_switch() {
     echo "$TARGET" > "$CALLING_FILE"
     echo ""
     echo -e "${YELLOW}Installing packages for $TARGET calling...${NC}"
-    xargs apt-get install -y --no-install-recommends < "$CALLING_DIR/${TARGET}.list" 2>/dev/null || true
+    xargs eatmydata apt-get install -y --no-install-recommends < "$CALLING_DIR/${TARGET}.list" 2>/dev/null || true
     echo ""
     echo -e "${GREEN}Calling set to: $TARGET${NC}"
     echo "Reboot to fully apply: sudo reboot"
@@ -671,7 +671,7 @@ cmd_switch() {
     echo "$TARGET" > "$CALLING_FILE"
     echo ""
     echo -e "${YELLOW}Installing packages for $TARGET calling...${NC}"
- xargs apt-get install -y --no-install-recommends < "$CALLING_DIR/${TARGET}.list" 2>/dev/null || true
+ xargs eatmydata apt-get install -y --no-install-recommends < "$CALLING_DIR/${TARGET}.list" 2>/dev/null || true
     echo ""
     echo -e "${GREEN}Calling set to: $TARGET${NC}"
     echo "Reboot to fully apply: sudo reboot"

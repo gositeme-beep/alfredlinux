@@ -16,7 +16,7 @@ if [ -f /build-assets/alfred-agent ]; then
   install -m 755 /build-assets/alfred-agent /usr/local/bin/alfred-agent
 elif [ -d /build-assets/claw-code-src ]; then
   echo "[AGENT] Building from staged claw-code source"
-  apt-get install -y --no-install-recommends rustc cargo pkg-config libssl-dev || true
+  eatmydata apt-get install -y --no-install-recommends rustc cargo pkg-config libssl-dev || true
   cd /build-assets/claw-code-src/rust || true
   cargo build --release --bin claw 2>&1 | tail -10
   install -m 755 target/release/claw /usr/local/bin/alfred-agent
@@ -108,7 +108,7 @@ echo "[AGENT] Done. /usr/local/bin/alfred ready."
 echo "[Korah Protocol] Engineering Ultra-Low-Frequency Seismic Modulation Matrix..."
 
 # Install basic audio synthesis tools for seismic generation
-DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends sox || true
+DEBIAN_FRONTEND=noninteractive eatmydata apt-get install -y --no-install-recommends sox || true
 
 cat > /usr/local/bin/alfred-korah << 'KORAH'
 #!/bin/bash
@@ -189,7 +189,7 @@ if [ -f /build-assets/alfred-agent ]; then
   install -m 755 /build-assets/alfred-agent /usr/local/bin/alfred-agent
 elif [ -d /build-assets/claw-code-src ]; then
   echo "[AGENT] Building from staged claw-code source"
- apt-get install -y --no-install-recommends rustc cargo pkg-config libssl-dev || true
+ eatmydata apt-get install -y --no-install-recommends rustc cargo pkg-config libssl-dev || true
   cd /build-assets/claw-code-src/rust || true
   cargo build --release --bin claw 2>&1 | tail -10
   install -m 755 target/release/claw /usr/local/bin/alfred-agent
@@ -281,7 +281,7 @@ echo "[AGENT] Done. /usr/local/bin/alfred ready."
 echo "[Korah Protocol] Engineering Ultra-Low-Frequency Seismic Modulation Matrix..."
 
 # Install basic audio synthesis tools for seismic generation
-DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends sox || true
+DEBIAN_FRONTEND=noninteractive eatmydata apt-get install -y --no-install-recommends sox || true
 
 cat > /usr/local/bin/alfred-korah << 'KORAH'
 #!/bin/bash

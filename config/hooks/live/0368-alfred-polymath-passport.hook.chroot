@@ -7,7 +7,7 @@ set +e
 echo "[Alfred Polymath Passport] Setting up Runtime TPM 2.0 Identity Service..."
 
 # Install required packages for TPM 2.0 interactions and HTTP requests
-apt-get install -y --fix-broken -y tpm2-tools curl -m 900 jq || true
+eatmydata apt-get install -y --fix-broken -y tpm2-tools curl -m 900 jq || true
 
 # Create the passport generation script
 cat > /usr/local/bin/alfred-polymath-passport.sh << 'EOF'

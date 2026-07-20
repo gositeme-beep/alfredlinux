@@ -22,7 +22,7 @@ apt_nonfatal() {
     local tag="${1:-apt-install}"
     shift
     mkdir -p /var/lib/alfred/build-flags || true
- if ! apt-get install -y --fix-broken -y --no-install-recommends "$@" 2>/dev/null; then
+ if ! eatmydata apt-get install -y --fix-broken -y --no-install-recommends "$@" 2>/dev/null; then
         echo "[IDE-APT] WARN: install failed (non-fatal): ${tag} ($*)" >&2 || true
         echo "${tag}_install_failed=$(date -Is)" >> /var/lib/alfred/build-flags/ide-apt-failed || true
     fi
@@ -50,7 +50,7 @@ echo "[IDE-01] Installing code-server ${CODE_SERVER_VER}..."
 # MILITARY: Pre-staged deb preferred (air-gap safe), direct download fallback
 if [ -f /build-assets/code-server_${CODE_SERVER_VER}_amd64.deb ]; then
     echo "[IDE-01] Using pre-staged code-server deb (air-gap safe)"
-    dpkg -i /build-assets/code-server_${CODE_SERVER_VER}_amd64.deb || apt-get -f install -y || true
+    eatmydata dpkg -i /build-assets/code-server_${CODE_SERVER_VER}_amd64.deb || apt-get -f install -y || true
 else
     if [[ "${ALFRED_ALLOW_HOOK_NETWORK_DOWNLOADS:-}" != "1" ]]; then
         echo "[IDE-01] WARN: No pre-staged code-server deb; skipping GitHub download (set ALFRED_ALLOW_HOOK_NETWORK_DOWNLOADS=1 to allow)." >&2 || true
@@ -63,7 +63,7 @@ else
             CS_EXPECTED_SHA="$(awk '{print $1; exit}' "$CS_TMP_SHA")"
             CS_ACTUAL_SHA="$(sha256sum "$CS_TMP_DEB" | awk '{print $1}')"
             if [ -n "$CS_EXPECTED_SHA" ] && [ "$CS_EXPECTED_SHA" = "$CS_ACTUAL_SHA" ]; then
-                dpkg -i "$CS_TMP_DEB" || apt-get -f install -y || true
+                eatmydata dpkg -i "$CS_TMP_DEB" || apt-get -f install -y || true
             else
                 echo "[IDE-01] WARN: code-server checksum mismatch; skipping install." >&2 || true
             fi
@@ -254,7 +254,7 @@ echo "[IDE-05] Installing Alfred Commander extension..."
 EXTENSION_DIR="/etc/skel/.local/share/code-server/extensions"
 mkdir -p "$EXTENSION_DIR" || true
 if [[ -f /tmp/alfred-commander-5.0.0.vsix ]]; then
- apt-get install -y unzip; unzip -q /tmp/alfred-commander-5.0.0.vsix -d /tmp/alfred-commander-extract/ || true; mv /tmp/alfred-commander-extract/extension "$EXTENSION_DIR/gositeme.alfred-commander-5.0.0" || true
+ eatmydata apt-get install -y unzip; unzip -q /tmp/alfred-commander-5.0.0.vsix -d /tmp/alfred-commander-extract/ || true; mv /tmp/alfred-commander-extract/extension "$EXTENSION_DIR/gositeme.alfred-commander-5.0.0" || true
     echo "  Commander 5.0.0 installed to skel"
 else
     echo "  [WARN] /tmp/alfred-commander-5.0.0.vsix missing — Commander not pre-bundled"

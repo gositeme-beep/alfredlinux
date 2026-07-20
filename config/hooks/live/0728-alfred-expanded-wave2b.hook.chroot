@@ -18,7 +18,7 @@ APT_PACKAGES="docker.io docker-compose-v2 docker-compose-plugin podman buildah s
 for pkg in $APT_PACKAGES; do
   if apt-cache show "$pkg" >/dev/null 2>&1; then
     echo "[wave2b] installing $pkg"
-    apt-get install -y --fix-broken -y --no-install-recommends "$pkg" || echo "[wave2b] warn: failed apt install $pkg" || true
+    eatmydata apt-get install -y --fix-broken -y --no-install-recommends "$pkg" || echo "[wave2b] warn: failed apt install $pkg" || true
   else
     echo "[wave2b] skip: not available in repo metadata -> $pkg" || true
   fi

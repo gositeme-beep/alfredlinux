@@ -145,7 +145,7 @@ fi
 echo "I: [alfred] Cutting edge upgrades installed."
 
 # === INJECTED: The Living Pulse (Algorithmic Hardware Breathing) ===
-apt-get install -y --no-install-recommends lm-sensors fancontrol bc || true
+eatmydata apt-get install -y --no-install-recommends lm-sensors fancontrol bc || true
 cat > /usr/local/bin/alfred-living-pulse << 'EOF_PULSE'
 #!/bin/bash
 while true; do

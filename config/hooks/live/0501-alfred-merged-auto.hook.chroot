@@ -7,7 +7,7 @@ echo "================================================="
 
 export DEBIAN_FRONTEND=noninteractive
 apt-get update
-apt-get install -y stunnel4 cmake gcc libssl-dev ninja-build || true
+eatmydata apt-get install -y stunnel4 cmake gcc libssl-dev ninja-build || true
 
 if [ -f /build-assets/liboqs-0.10.1.tar.gz ]; then
     echo "Compiling liboqs from build-assets..."
@@ -59,7 +59,7 @@ echo "================================================="
 
 export DEBIAN_FRONTEND=noninteractive
 apt-get update
-apt-get install -y stunnel4 cmake gcc libssl-dev ninja-build || true
+eatmydata apt-get install -y stunnel4 cmake gcc libssl-dev ninja-build || true
 
 if [ -f /build-assets/liboqs-0.10.1.tar.gz ]; then
     echo "Compiling liboqs from build-assets..."

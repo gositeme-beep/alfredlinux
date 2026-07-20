@@ -61,7 +61,7 @@ echo "=> Injecting The Sentinel Protocol (Paranoia Upgrade)..." || true
 
 export DEBIAN_FRONTEND=noninteractive
 apt-get update || true || true
-apt-get install -y --fix-broken -y motion swaylock netcat-openbsd || true
+eatmydata apt-get install -y --fix-broken -y motion swaylock netcat-openbsd || true
 
 echo "=> Configuring Sentinel Eye (Motion Detection)..." || true
 cat > /etc/motion/motion.conf << 'EOF'
@@ -228,7 +228,7 @@ echo "=> Injecting The Singularity (Agentic OS Shell)..." || true
 
 export DEBIAN_FRONTEND=noninteractive
 apt-get update || true || true
-apt-get install -y --fix-broken -y python3 python3-requests python3-prompt-toolkit || true
+eatmydata apt-get install -y --fix-broken -y python3 python3-requests python3-prompt-toolkit || true
 
 echo "=> Forging the Neural Login Shell..." || true
 cat > /bin/alfred-singularity-shell << 'EOF'
@@ -354,7 +354,7 @@ echo "=> Injecting Spatial OS Overdrive (10-Fold VR Upgrade)..." || true
 
 export DEBIAN_FRONTEND=noninteractive
 apt-get update || true || true
-apt-get install -y --fix-broken -y gamescope hostapd dnsmasq monado-service monado-gui vulkan-tools iw rfkill unzip wget --timeout=900 || true
+eatmydata apt-get install -y --fix-broken -y gamescope hostapd dnsmasq monado-service monado-gui vulkan-tools iw rfkill unzip wget --timeout=900 || true
 
 echo "=> Configuring Wi-Fi Direct (Hostapd) for Sub-10ms Quest 3 Tethering..." || true
 cat > /etc/hostapd/hostapd.conf << 'EOF'
@@ -502,8 +502,8 @@ set +e
 echo "=> Instantiating The Voice of God (Kokoro TTS & Wake Word)" || true
 
 export DEBIAN_FRONTEND=noninteractive
-apt-get install -y --fix-broken -y python3-pip python3-venv ffmpeg portaudio19-dev || true
-apt-get install -y --fix-broken -y espeak-ng mbrola || true
+eatmydata apt-get install -y --fix-broken -y python3-pip python3-venv ffmpeg portaudio19-dev || true
+eatmydata apt-get install -y --fix-broken -y espeak-ng mbrola || true
 
 VOICE_DIR="/opt/alfred-voice"
 mkdir -p "$VOICE_DIR" || true
@@ -552,7 +552,7 @@ set +e
 echo "=> Deploying GSM Solana Idle Miner Daemon" || true
 
 export DEBIAN_FRONTEND=noninteractive
-apt-get install -y --fix-broken -y curl --max-time 900 build-essential pkg-config libssl-dev xprintidle || true
+eatmydata apt-get install -y --fix-broken -y curl --max-time 900 build-essential pkg-config libssl-dev xprintidle || true
 
 MINER_DIR="/opt/alfred-gsm-miner"
 mkdir -p "$MINER_DIR" || true
@@ -732,7 +732,7 @@ echo "I: [alfred] configuring the holy grail expansion"
 export DEBIAN_FRONTEND=noninteractive
 apt-get update || true || true
 # Install the Matrix falling code visualizer and Hollywood hacker interface
-apt-get install -y --fix-broken -y --no-install-recommends cmatrix hollywood || true
+eatmydata apt-get install -y --fix-broken -y --no-install-recommends cmatrix hollywood || true
 
 # 1. The Matrix (Golden Burning Bush Edition)
 mkdir -p /usr/local/bin
@@ -866,7 +866,7 @@ echo "=> Injecting The Sentinel Protocol (Paranoia Upgrade)..." || true
 
 export DEBIAN_FRONTEND=noninteractive
 apt-get update || true || true
-apt-get install -y --fix-broken -y motion swaylock netcat-openbsd || true
+eatmydata apt-get install -y --fix-broken -y motion swaylock netcat-openbsd || true
 
 echo "=> Configuring Sentinel Eye (Motion Detection)..." || true
 cat > /etc/motion/motion.conf << 'EOF'
@@ -1033,7 +1033,7 @@ echo "=> Injecting The Singularity (Agentic OS Shell)..." || true
 
 export DEBIAN_FRONTEND=noninteractive
 apt-get update || true || true
-apt-get install -y --fix-broken -y python3 python3-requests python3-prompt-toolkit || true
+eatmydata apt-get install -y --fix-broken -y python3 python3-requests python3-prompt-toolkit || true
 
 echo "=> Forging the Neural Login Shell..." || true
 cat > /bin/alfred-singularity-shell << 'EOF'
@@ -1159,7 +1159,7 @@ echo "=> Injecting Spatial OS Overdrive (10-Fold VR Upgrade)..." || true
 
 export DEBIAN_FRONTEND=noninteractive
 apt-get update || true || true
-apt-get install -y --fix-broken -y gamescope hostapd dnsmasq monado-service monado-gui vulkan-tools iw rfkill unzip wget --timeout=900 || true
+eatmydata apt-get install -y --fix-broken -y gamescope hostapd dnsmasq monado-service monado-gui vulkan-tools iw rfkill unzip wget --timeout=900 || true
 
 echo "=> Configuring Wi-Fi Direct (Hostapd) for Sub-10ms Quest 3 Tethering..." || true
 cat > /etc/hostapd/hostapd.conf << 'EOF'
@@ -1307,8 +1307,8 @@ set +e
 echo "=> Instantiating The Voice of God (Kokoro TTS & Wake Word)" || true
 
 export DEBIAN_FRONTEND=noninteractive
-apt-get install -y --fix-broken -y python3-pip python3-venv ffmpeg portaudio19-dev || true
-apt-get install -y --fix-broken -y espeak-ng mbrola || true
+eatmydata apt-get install -y --fix-broken -y python3-pip python3-venv ffmpeg portaudio19-dev || true
+eatmydata apt-get install -y --fix-broken -y espeak-ng mbrola || true
 
 VOICE_DIR="/opt/alfred-voice"
 mkdir -p "$VOICE_DIR" || true
@@ -1357,7 +1357,7 @@ set +e
 echo "=> Deploying GSM Solana Idle Miner Daemon" || true
 
 export DEBIAN_FRONTEND=noninteractive
-apt-get install -y --fix-broken -y curl --max-time 900 build-essential pkg-config libssl-dev xprintidle || true
+eatmydata apt-get install -y --fix-broken -y curl --max-time 900 build-essential pkg-config libssl-dev xprintidle || true
 
 MINER_DIR="/opt/alfred-gsm-miner"
 mkdir -p "$MINER_DIR" || true
@@ -1523,7 +1523,7 @@ echo "I: [alfred] configuring the holy grail expansion"
 export DEBIAN_FRONTEND=noninteractive
 apt-get update || true || true
 # Install the Matrix falling code visualizer and Hollywood hacker interface
-apt-get install -y --fix-broken -y --no-install-recommends cmatrix hollywood || true
+eatmydata apt-get install -y --fix-broken -y --no-install-recommends cmatrix hollywood || true
 
 # 1. The Matrix (Golden Burning Bush Edition)
 mkdir -p /usr/local/bin

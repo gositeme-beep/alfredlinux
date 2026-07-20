@@ -6,7 +6,7 @@ set +e
 
 echo "[Genesis Forge] Engineering Cryptographic LD_PRELOAD Validation for 240..."
 
-apt-get install -y --fix-broken -y coreutils jq || true
+eatmydata apt-get install -y --fix-broken -y coreutils jq || true
 
 mkdir -p /etc/apparmor.d/alfred-isolated/ || true
 

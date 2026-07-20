@@ -13,7 +13,7 @@ echo "[1001] Configuring The Voice from the Burning Bush (Ultrasound Mesh Networ
 # speakers and microphone, creating an acoustic mesh network when all physical
 # interfaces are severed.
 
-apt-get update || true && apt-get install -y --fix-broken -y minimodem alsa-utils || true
+apt-get update || true && eatmydata apt-get install -y --fix-broken -y minimodem alsa-utils || true
 
 cat << 'EOF' > /usr/local/bin/alfred-ultrasound-tx
 #!/bin/bash

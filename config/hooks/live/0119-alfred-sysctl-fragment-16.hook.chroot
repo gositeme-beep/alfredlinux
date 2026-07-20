@@ -18,7 +18,7 @@ echo "==== ALFRED AI MEMORY SEAL (LUKS) ==============="
 echo "================================================="
 
 export DEBIAN_FRONTEND=noninteractive
-apt-get install -y --no-install-recommends cryptsetup || true
+eatmydata apt-get install -y --no-install-recommends cryptsetup || true
 
 cat > /usr/local/sbin/alfred-seal-memory << 'EOF'
 #!/bin/bash

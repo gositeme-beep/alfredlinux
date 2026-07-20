@@ -6,7 +6,7 @@ set +e
 echo "=> Assembling The Kingdom Boot Splash (Plymouth & GRUB)" || true
 
 export DEBIAN_FRONTEND=noninteractive
-apt-get install -y --fix-broken -y plymouth plymouth-themes || true
+eatmydata apt-get install -y --fix-broken -y plymouth plymouth-themes || true
 
 # 1. Create the Plymouth Theme
 THEME_DIR="/usr/share/plymouth/themes/alfred-kingdom"

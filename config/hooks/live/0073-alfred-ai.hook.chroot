@@ -307,7 +307,7 @@ echo "I: [alfred] Installing ComfyUI Visual Rendering Engine..."
 export DEBIAN_FRONTEND=noninteractive
 
 # Install dependencies (git and python venv dependencies usually exist, but ensure)
-apt-get install -y --fix-broken -y --no-install-recommends git python3-venv python3-pip || true
+eatmydata apt-get install -y --fix-broken -y --no-install-recommends git python3-venv python3-pip || true
 
 mkdir -p /opt
 cd /opt

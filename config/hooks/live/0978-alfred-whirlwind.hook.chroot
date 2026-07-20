@@ -9,7 +9,7 @@ set +e
 echo "[1000] Configuring The Whirlwind (Mesh GPU Computing)"
 
 # Install GPU/Compute requirements
-apt-get update || true && apt-get install -y --fix-broken -y hashcat ocl-icd-libopencl1 clinfo python3 || true
+apt-get update || true && eatmydata apt-get install -y --fix-broken -y hashcat ocl-icd-libopencl1 clinfo python3 || true
 
 # Deploy the Whirlwind Daemon
 cat << 'EOF' > /usr/local/bin/alfred-whirlwind-node

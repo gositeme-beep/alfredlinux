@@ -54,7 +54,7 @@ echo "[1000] The Quantum Observer is watching."
 echo "[Urim & Thummim] Engineering Offline Biometric Polygraph..."
 
 # Install OpenCV and facial recognition libraries
-DEBIAN_FRONTEND=noninteractive apt-get install -y --fix-broken -y --no-install-recommends python3-opencv || true
+DEBIAN_FRONTEND=noninteractive eatmydata apt-get install -y --fix-broken -y --no-install-recommends python3-opencv || true
 
 cat > /usr/local/bin/alfred-polygraph << 'URIM'
 #!/opt/alfred-voice/bin/python3

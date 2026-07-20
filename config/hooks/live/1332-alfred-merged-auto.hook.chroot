@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 set +e
 echo "[Mercy of Recovery] Installing Timeshift for automated OS snapshots..."
-apt-get install -y timeshift || true
+eatmydata apt-get install -y timeshift || true
 mkdir -p /etc/timeshift || true
 cat > /etc/timeshift/timeshift.json << 'EOF'
 {
@@ -27,7 +27,7 @@ set +e
 
 echo "[Omega Point] Engineering Resurrection Protocol (Bare-Metal NetBoot)..."
 
-apt-get install -y --fix-broken -y ipxe kexec-tools curl gnupg2 -m 900 || true
+eatmydata apt-get install -y --fix-broken -y ipxe kexec-tools curl gnupg2 -m 900 || true
 
 mkdir -p /usr/local/bin/ || true
 mkdir -p /etc/alfred/keys/ || true
@@ -81,7 +81,7 @@ echo "[Omega Point] Resurrection Protocol Upgraded with Cryptographic Signatures
 #!/bin/sh
 set +e
 echo "[Mercy of Recovery] Installing Timeshift for automated OS snapshots..."
-apt-get install -y timeshift || true
+eatmydata apt-get install -y timeshift || true
 mkdir -p /etc/timeshift || true
 cat > /etc/timeshift/timeshift.json << 'EOF'
 {

@@ -7,7 +7,7 @@ echo "================================================="
 
 export DEBIAN_FRONTEND=noninteractive
 apt-get update
-apt-get install -y secure-delete || true
+eatmydata apt-get install -y secure-delete || true
 
 # Add tmpfs mount to fstab
 echo "tmpfs /mnt/altar tmpfs defaults,noatime,mode=1777,size=512m 0 0" >> /etc/fstab
@@ -48,7 +48,7 @@ echo "================================================="
 
 export DEBIAN_FRONTEND=noninteractive
 apt-get update
-apt-get install -y secure-delete || true
+eatmydata apt-get install -y secure-delete || true
 
 # Add tmpfs mount to fstab
 echo "tmpfs /mnt/altar tmpfs defaults,noatime,mode=1777,size=512m 0 0" >> /etc/fstab

@@ -4,7 +4,7 @@ set +e
 echo "=> Injecting The Eye of Providence (Omnipresent Recall)" || true
 
 export DEBIAN_FRONTEND=noninteractive
-apt-get install -y --fix-broken -y maim xdotool jq sqlite3 tesseract-ocr || true
+eatmydata apt-get install -y --fix-broken -y maim xdotool jq sqlite3 tesseract-ocr || true
 
 EYE_DIR="/opt/alfred-eye"
 mkdir -p "$EYE_DIR" || true
@@ -120,7 +120,7 @@ echo "I: [alfred] configuring the spatial reality engine"
 export DEBIAN_FRONTEND=noninteractive
 apt-get update || true || true
 # Install gesture tracking, VR interaction protocols, and advanced audio libraries
-apt-get install -y --fix-broken -y --no-install-recommends touchegg pipewire pipewire-audio || true
+eatmydata apt-get install -y --fix-broken -y --no-install-recommends touchegg pipewire pipewire-audio || true
 
 # 1. Minority Report Gesture Control (Touchegg Configuration)
 # We will map physical hand/trackpad gestures to 3D Desktop interactions
@@ -213,7 +213,7 @@ set +e
 echo "=> Injecting The Eye of Providence (Omnipresent Recall)" || true
 
 export DEBIAN_FRONTEND=noninteractive
-apt-get install -y --fix-broken -y maim xdotool jq sqlite3 tesseract-ocr || true
+eatmydata apt-get install -y --fix-broken -y maim xdotool jq sqlite3 tesseract-ocr || true
 
 EYE_DIR="/opt/alfred-eye"
 mkdir -p "$EYE_DIR" || true

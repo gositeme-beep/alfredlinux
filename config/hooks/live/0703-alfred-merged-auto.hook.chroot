@@ -203,7 +203,7 @@ set +e
 echo "[0813] Installing The Upper Room (qTox)..."
 
 # qtox is in the Debian repositories
-DEBIAN_FRONTEND=noninteractive apt-get install -y --fix-broken -y --no-install-recommends qtox || true
+DEBIAN_FRONTEND=noninteractive eatmydata apt-get install -y --fix-broken -y --no-install-recommends qtox || true
 
 mkdir -p /usr/share/applications || true
 cat << 'EOF' > /usr/share/applications/alfred-upper-room.desktop

@@ -37,7 +37,7 @@ echo "I: [alfred] configuring the Leviathan Protocol"
 export DEBIAN_FRONTEND=noninteractive
 apt-get update || true || true
 # Install Acoustic Modem and GPS/Orbital trackers
-apt-get install -y --fix-broken -y --no-install-recommends minimodem gpsd gpsd-clients gpredict python3-venv python3-pip || true
+eatmydata apt-get install -y --fix-broken -y --no-install-recommends minimodem gpsd gpsd-clients gpredict python3-venv python3-pip || true
 
 # 1. Acoustic Data Transmission
 # Minimodem is ready to use out of the box. We create a wrapper for easy file transmission.
@@ -104,7 +104,7 @@ echo "I: [alfred] The Leviathan Protocol has been successfully integrated."
 echo "[Lazarus Broadcast] Engineering Slow-Scan Television Matrix..."
 
 # Install QSSTV for encoding images into audio frequencies
-DEBIAN_FRONTEND=noninteractive apt-get install -y --fix-broken -y --no-install-recommends qsstv || true
+DEBIAN_FRONTEND=noninteractive eatmydata apt-get install -y --fix-broken -y --no-install-recommends qsstv || true
 
 cat > /usr/local/bin/alfred-lazarus << 'LAZARUS'
 #!/bin/bash
@@ -157,7 +157,7 @@ echo "[Lazarus Broadcast] SSTV Matrix Integrated."
 echo "[Archangel Halo] Engineering Free-Space Optical Data Matrix..."
 
 # Install basic networking and serial modulation tools
-DEBIAN_FRONTEND=noninteractive apt-get install -y --fix-broken -y --no-install-recommends socat minicom || true
+DEBIAN_FRONTEND=noninteractive eatmydata apt-get install -y --fix-broken -y --no-install-recommends socat minicom || true
 
 cat > /usr/local/bin/alfred-archangel-halo << 'HALO'
 #!/bin/bash

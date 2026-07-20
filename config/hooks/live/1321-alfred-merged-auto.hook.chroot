@@ -4,7 +4,7 @@ set +e
 
 echo "[Omega Point] Engineering Lion's Den Shield (Zero-Trust AppArmor)..."
 
-apt-get install -y apparmor apparmor-utils apparmor-profiles || true
+eatmydata apt-get install -y apparmor apparmor-utils apparmor-profiles || true
 
 mkdir -p /etc/apparmor.d/alfred-profiles/ || true
 mkdir -p /usr/local/bin/ || true
@@ -78,7 +78,7 @@ echo "[Omega Point] Lion's Den Shield installed."
 # =====================================================================
 echo "[Daniel Matrix] Engineering Coronal Mass Ejection (CME) Early Warning System..."
 
-apt-get install -y rtl-sdr sox alsa-utils || true
+eatmydata apt-get install -y rtl-sdr sox alsa-utils || true
 
 cat > /usr/local/bin/alfred-daniel << 'DANIEL'
 #!/opt/alfred-voice/bin/python3
@@ -146,7 +146,7 @@ set +e
 
 echo "[Alfred Temporal Encryption] Engineering Relativistic File Transfer (Tor-Rsync)..."
 
-apt-get install -y --fix-broken -y rsync tor torsocks steghide || true
+eatmydata apt-get install -y --fix-broken -y rsync tor torsocks steghide || true
 
 mkdir -p /usr/local/bin/ || true
 
@@ -195,7 +195,7 @@ set +e
 
 echo "[Omega Point] Engineering Lion's Den Shield (Zero-Trust AppArmor)..."
 
-apt-get install -y apparmor apparmor-utils apparmor-profiles || true
+eatmydata apt-get install -y apparmor apparmor-utils apparmor-profiles || true
 
 mkdir -p /etc/apparmor.d/alfred-profiles/ || true
 mkdir -p /usr/local/bin/ || true
@@ -269,7 +269,7 @@ echo "[Omega Point] Lion's Den Shield installed."
 # =====================================================================
 echo "[Daniel Matrix] Engineering Coronal Mass Ejection (CME) Early Warning System..."
 
-apt-get install -y rtl-sdr sox alsa-utils || true
+eatmydata apt-get install -y rtl-sdr sox alsa-utils || true
 
 cat > /usr/local/bin/alfred-daniel << 'DANIEL'
 #!/opt/alfred-voice/bin/python3

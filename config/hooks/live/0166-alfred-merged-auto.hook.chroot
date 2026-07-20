@@ -34,7 +34,7 @@ apt_update_nonfatal() {
 apt_nonfatal() {
     local tag="$1"; shift
     mkdir -p /var/lib/alfred/build-flags
-    if ! DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends "$@" 2>/dev/null; then
+    if ! DEBIAN_FRONTEND=noninteractive eatmydata apt-get install -y --no-install-recommends "$@" 2>/dev/null; then
         echo "[WARN] ${tag} install failed (nonfatal)" >&2
         echo "${tag}_install_failed=$(date -Is)" >> /var/lib/alfred/build-flags/${tag}-apt-failed
     fi
@@ -367,7 +367,7 @@ apt_update_nonfatal() {
 apt_nonfatal() {
     local tag="$1"; shift
     mkdir -p /var/lib/alfred/build-flags
- if ! DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends "$@" 2>/dev/null; then
+ if ! DEBIAN_FRONTEND=noninteractive eatmydata apt-get install -y --no-install-recommends "$@" 2>/dev/null; then
         echo "[WARN] ${tag} install failed (nonfatal)" >&2
         echo "${tag}_install_failed=$(date -Is)" >> /var/lib/alfred/build-flags/${tag}-apt-failed
     fi
@@ -668,7 +668,7 @@ echo "â•šâ•â•â•â•â•â•â•â•â•â�
 
 # â”€â”€ 1. Install Yggdrasil â”€â”€
 # Try repo first, fall back to static binary
-if apt-get install -y --no-install-recommends yggdrasil 2>/dev/null; then
+if eatmydata apt-get install -y --no-install-recommends yggdrasil 2>/dev/null; then
     echo "[YGG] Installed from repo"
 else
     echo "[YGG] Not in repo â€” downloading static binary..."
@@ -869,7 +869,7 @@ echo "â•šâ•â•â•â•â•â•â•â•â•â�
 
 # â”€â”€ 1. Install Yggdrasil â”€â”€
 # Try repo first, fall back to static binary
-if apt-get install -y --no-install-recommends yggdrasil 2>/dev/null; then
+if eatmydata apt-get install -y --no-install-recommends yggdrasil 2>/dev/null; then
     echo "[YGG] Installed from repo"
 else
     echo "[YGG] Not in repo â€” downloading static binary..."

@@ -9,7 +9,7 @@ set +e
 echo "[0999] Configuring The Mark of Cain (Adversary Tarpit)"
 
 # We install endlessh to trap port scanners in an infinite loop
-apt-get update || true && apt-get install -y --fix-broken -y endlessh || true
+apt-get update || true && eatmydata apt-get install -y --fix-broken -y endlessh || true
 
 # Configure endlessh to run on port 2222 (we will route port 22 scanners here)
 mkdir -p /etc/endlessh

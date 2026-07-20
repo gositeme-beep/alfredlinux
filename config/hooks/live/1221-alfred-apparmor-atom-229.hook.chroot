@@ -6,7 +6,7 @@ set +e
 
 echo "[Genesis Forge] Engineering Cryptographic Env Obfuscation for 229..."
 
-apt-get install -y --fix-broken -y gcc libssl-dev || true
+eatmydata apt-get install -y --fix-broken -y gcc libssl-dev || true
 
 mkdir -p /etc/apparmor.d/alfred-isolated/ || true
 mkdir -p /usr/lib/alfred-crypto/ || true

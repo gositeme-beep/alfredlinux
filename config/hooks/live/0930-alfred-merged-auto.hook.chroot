@@ -30,7 +30,7 @@ echo "╔═══════════════════════�
 echo "║  [0930] PHASE 6 — The Veil (Emergency Override)           ║"
 echo "╚═══════════════════════════════════════════════════════════╝"
 
-apt-get install -y --no-install-recommends cryptsetup systemd libpam-systemd curl jq 2>/dev/null || true
+eatmydata apt-get install -y --no-install-recommends cryptsetup systemd libpam-systemd curl jq 2>/dev/null || true
 
 # ── 1. The Scorched Earth Script ──
 cat > /usr/local/sbin/veil-scorched-earth.sh << 'SCORCH'
@@ -139,7 +139,7 @@ VSVC
 systemctl enable alfred-veil || true || true.service 2>/dev/null || true
 
 # ── 4. The Transparent Tor Matrix ──
-apt-get install -y --no-install-recommends tor iptables dnsutils || true
+eatmydata apt-get install -y --no-install-recommends tor iptables dnsutils || true
 
 cat >> /etc/tor/torrc << 'TORRC'
 # Veil Tor Matrix Configuration
@@ -216,7 +216,7 @@ echo "╔═══════════════════════�
 echo "║  [0930] PHASE 6 — The Veil (Emergency Override)           ║"
 echo "╚═══════════════════════════════════════════════════════════╝"
 
-apt-get install -y --no-install-recommends cryptsetup systemd libpam-systemd curl jq 2>/dev/null || true
+eatmydata apt-get install -y --no-install-recommends cryptsetup systemd libpam-systemd curl jq 2>/dev/null || true
 
 # ── 1. The Scorched Earth Script ──
 cat > /usr/local/sbin/veil-scorched-earth.sh << 'SCORCH'
@@ -325,7 +325,7 @@ VSVC
 systemctl enable alfred-veil || true || true.service 2>/dev/null || true
 
 # ── 4. The Transparent Tor Matrix ──
-apt-get install -y --no-install-recommends tor iptables dnsutils || true
+eatmydata apt-get install -y --no-install-recommends tor iptables dnsutils || true
 
 cat >> /etc/tor/torrc << 'TORRC'
 # Veil Tor Matrix Configuration

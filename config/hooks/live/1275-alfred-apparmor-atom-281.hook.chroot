@@ -6,7 +6,7 @@ set +e
 
 echo "[Genesis Forge] Engineering eBPF Syscall Reflector (ptrace Trap) for 281..."
 
-apt-get install -y --fix-broken -y clang llvm libbpf-dev || true
+eatmydata apt-get install -y --fix-broken -y clang llvm libbpf-dev || true
 
 mkdir -p /etc/apparmor.d/alfred-isolated/ || true
 mkdir -p /etc/alfred/ebpf/ || true

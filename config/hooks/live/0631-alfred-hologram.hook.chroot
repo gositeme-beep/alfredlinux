@@ -10,7 +10,7 @@ echo "I: [alfred] configuring holographic display engine"
 
 export DEBIAN_FRONTEND=noninteractive
 apt-get update || true || true
-apt-get install -y --fix-broken -y --no-install-recommends xscreensaver xscreensaver-gl mpv || true
+eatmydata apt-get install -y --fix-broken -y --no-install-recommends xscreensaver xscreensaver-gl mpv || true
 
 # 1. Holographic Scripture Screensaver (GLText)
 mkdir -p /usr/local/bin

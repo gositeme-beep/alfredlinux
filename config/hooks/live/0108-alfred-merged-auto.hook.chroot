@@ -8,7 +8,7 @@ set +e
 echo "[0108] Configuring Plymouth Boot Animation..."
 
 # Install Plymouth and standard themes
-DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends plymouth plymouth-themes || true
+DEBIAN_FRONTEND=noninteractive eatmydata apt-get install -y --no-install-recommends plymouth plymouth-themes || true
 
 # Set default theme to 'bgrt' which uses the OEM logo for a very clean look
 if plymouth-set-default-theme -l | grep -q bgrt; then
@@ -47,7 +47,7 @@ set +e
 echo "[0108] Configuring Plymouth Boot Animation..."
 
 # Install Plymouth and standard themes
-DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends plymouth plymouth-themes || true
+DEBIAN_FRONTEND=noninteractive eatmydata apt-get install -y --no-install-recommends plymouth plymouth-themes || true
 
 # Set default theme to 'bgrt' which uses the OEM logo for a very clean look
 if plymouth-set-default-theme -l | grep -q bgrt; then

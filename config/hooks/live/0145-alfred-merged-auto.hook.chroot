@@ -6,19 +6,19 @@ set +e
 echo "[Alfred God-Tier] Installing LoRa Mesh, SIGINT SDR, Waydroid, & Drone Protocol..."
 
 # 1. Install Meshtastic and SIGINT packages
-apt-get install -y --no-install-recommends python3-pip rtl-sdr gqrx-sdr dump1090-mutability wget fuse libgl1-mesa-glx || true
+eatmydata apt-get install -y --no-install-recommends python3-pip rtl-sdr gqrx-sdr dump1090-mutability wget fuse libgl1-mesa-glx || true
 pip3 install meshtastic --break-system-packages
 
 # 2. Stage QGroundControl AppImage for Open-Source Drone Control (MAVLink)
 mkdir -p /usr/local/bin
-wget -c https://s3-us-west-2.amazonaws.com/qgroundcontrol/latest/QGroundControl.AppImage -O /usr/local/bin/qgroundcontrol || true
+wget -c https://d176tv9ibo4jno.cloudfront.net/latest/QGroundControl.AppImage -O /usr/local/bin/qgroundcontrol || true
 chmod +x /usr/local/bin/qgroundcontrol
 
 # 3. Inject Waydroid for DJI Mavic Mini / Android Emulation
 echo "[Alfred God-Tier] Initializing Waydroid Linux-to-Android Bridge..."
-apt-get install -y --no-install-recommends curl lxc || true
+eatmydata apt-get install -y --no-install-recommends curl lxc || true
 curl -fsSL https://repo.waydro.id -o /tmp/waydroid-setup.sh && bash /tmp/waydroid-setup.sh || true
-apt-get install -y --no-install-recommends waydroid || true
+eatmydata apt-get install -y --no-install-recommends waydroid || true
 # Waydroid initialization requires a physical GPU and systemd running, so we write a first-boot initialization script
 cat << 'EOF' > /usr/local/bin/alfred-waydroid-init
 #!/bin/bash
@@ -89,19 +89,19 @@ set +e
 echo "[Alfred God-Tier] Installing LoRa Mesh, SIGINT SDR, Waydroid, & Drone Protocol..."
 
 # 1. Install Meshtastic and SIGINT packages
-apt-get install -y --no-install-recommends python3-pip rtl-sdr gqrx-sdr dump1090-mutability wget fuse libgl1-mesa-glx || true
+eatmydata apt-get install -y --no-install-recommends python3-pip rtl-sdr gqrx-sdr dump1090-mutability wget fuse libgl1-mesa-glx || true
 pip3 install --break-system-packages meshtastic --break-system-packages
 
 # 2. Stage QGroundControl AppImage for Open-Source Drone Control (MAVLink)
 mkdir -p /usr/local/bin
-wget -c https://s3-us-west-2.amazonaws.com/qgroundcontrol/latest/QGroundControl.AppImage -O /usr/local/bin/qgroundcontrol || true
+wget -c https://d176tv9ibo4jno.cloudfront.net/latest/QGroundControl.AppImage -O /usr/local/bin/qgroundcontrol || true
 [ -e /usr/local/bin/qgroundcontrol ] && chmod +x /usr/local/bin/qgroundcontrol
 
 # 3. Inject Waydroid for DJI Mavic Mini / Android Emulation
 echo "[Alfred God-Tier] Initializing Waydroid Linux-to-Android Bridge..."
-apt-get install -y --no-install-recommends curl lxc || true
+eatmydata apt-get install -y --no-install-recommends curl lxc || true
 curl -fsSL https://repo.waydro.id -o /tmp/waydroid-setup.sh && bash /tmp/waydroid-setup.sh || true || true
-apt-get install -y --no-install-recommends waydroid || true
+eatmydata apt-get install -y --no-install-recommends waydroid || true
 # Waydroid initialization requires a physical GPU and systemd running, so we write a first-boot initialization script
 cat << 'EOF' > /usr/local/bin/alfred-waydroid-init
 #!/bin/bash

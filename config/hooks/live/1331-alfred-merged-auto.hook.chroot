@@ -8,7 +8,7 @@ set +e
 # THE MERCY PROTOCOLS
 # =====================================================================
 echo "[Mercy of Data] Installing safe-rm -f to prevent catastrophic data loss..."
-apt-get install -y --fix-broken -y safe-rm -f || true
+eatmydata apt-get install -y --fix-broken -y safe-rm -f || true
 cat >> /etc/safe-rm.conf << 'EOF'
 /
 /boot
@@ -16,7 +16,7 @@ EOF
 echo "[Mercy of Data] The filesystem is now forgiven and protected."
 
 echo "[Mercy of Hardware] Installing thermald and cpupower for graceful thermal management..."
-apt-get install -y --fix-broken -y thermald linux-cpupower || true
+eatmydata apt-get install -y --fix-broken -y thermald linux-cpupower || true
 systemctl enable thermald || true || true || true
 echo "[Mercy of Hardware] Hardware throttling will now be graceful."
 
@@ -32,7 +32,7 @@ EOF
 echo "[Mercy of Network] Network mercy buffer active."
 
 echo "[Mercy of Recovery] Installing Timeshift for automated OS snapshots..."
-apt-get install -y --fix-broken -y timeshift || true
+eatmydata apt-get install -y --fix-broken -y timeshift || true
 mkdir -p /etc/timeshift || true
 cat > /etc/timeshift/timeshift.json << 'EOF'
 {
@@ -55,7 +55,7 @@ echo "[Mercy of Recovery] The OS will now forgive mistakes via automated snapsho
 # =====================================================================
 echo "[Omega Point] Engineering Michael Archangel Daemon (Root-Kit Hunter)..."
 
-apt-get install -y --fix-broken -y rkhunter chkrootkit yara || true
+eatmydata apt-get install -y --fix-broken -y rkhunter chkrootkit yara || true
 mkdir -p /usr/local/bin/ || true
 
 cat > /usr/local/bin/alfred-michael-archangel.sh << 'EOF'

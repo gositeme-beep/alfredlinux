@@ -11,7 +11,7 @@ echo "╔═══════════════════════�
 echo "║  [0920] PHASE 4 — Justice Engine (Automated Execution)    ║"
 echo "╚═══════════════════════════════════════════════════════════╝"
 
-apt-get install -y --fix-broken -y --no-install-recommends nftables jq curl -m 900 2>/dev/null || true
+eatmydata apt-get install -y --fix-broken -y --no-install-recommends nftables jq curl -m 900 2>/dev/null || true
 
 # ── 1. Initialize nftables set for blocked actors ──
 cat > /etc/nftables.conf << 'NFT'

@@ -295,7 +295,7 @@ cmd_switch() {
     echo "$TARGET" > "$CALLING_FILE" || true
     echo ""
     echo -e "${YELLOW}Installing packages for $TARGET calling...${NC}"
- xargs apt-get install -y --fix-broken -y --no-install-recommends < "$CALLING_DIR/${TARGET}.list" 2>/dev/null || true
+ xargs eatmydata apt-get install -y --fix-broken -y --no-install-recommends < "$CALLING_DIR/${TARGET}.list" 2>/dev/null || true
     echo ""
     echo -e "${GREEN}Calling set to: $TARGET${NC}"
     echo "Reboot to fully apply: sudo reboot"

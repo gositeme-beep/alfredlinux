@@ -5,6 +5,7 @@ export NEEDRESTART_MODE=a
 export NEEDRESTART_SUSPEND=1
 apt-get remove -y needrestart || true
 apt-get purge -y needrestart || true
+apt-get install -y eatmydata
 echo '[*] needrestart proactively purged.'
 
 # Trap 119 and 129 fixes
@@ -14,5 +15,5 @@ ln -sf /usr/lib/udev/cdrom_id /lib/udev/cdrom_id
 ln -sf /usr/lib/udev/scsi_id /lib/udev/scsi_id
 ln -sf /usr/lib/udev/v4l_id /lib/udev/v4l_id
 ln -sf /usr/lib/ufw/ufw-init /lib/ufw/ufw-init
-ln -sf /usr/lib/cryptsetup/functions /lib/cryptsetup/functions
+mkdir -p /lib/cryptsetup \ln -sf /usr/lib/cryptsetup/functions /lib/cryptsetup/functions\ln -sf /usr/lib/cryptsetup/functions /lib/cryptsetup/functions touch /usr/lib/cryptsetup/functions \ln -sf /usr/lib/cryptsetup/functions /lib/cryptsetup/functions\ln -sf /usr/lib/cryptsetup/functions /lib/cryptsetup/functions ln -sf /usr/lib/cryptsetup/functions /lib/cryptsetup/functions
 ln -sf /usr/lib/runit-helper/runit-helper /lib/runit-helper/runit-helper

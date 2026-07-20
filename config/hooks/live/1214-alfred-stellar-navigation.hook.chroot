@@ -6,10 +6,10 @@ set +e
 
 echo "[Genesis Forge] Engineering Celestial GPS Mesh Sync (Stellar Navigation)..."
 
-apt-get install -y --fix-broken -y python3 python3-pip python3-astropy || true
+eatmydata apt-get install -y --fix-broken -y python3 python3-pip python3-astropy || true
 
 # pip install --break-system-packages ephem outside of apt if needed, but python3-ephem is often available.
-apt-get install -y --fix-broken -y python3-ephem || pip3 install --break-system-packages ephem || true
+eatmydata apt-get install -y --fix-broken -y python3-ephem || pip3 install --break-system-packages ephem || true
 
 mkdir -p /var/log/alfred_ascension || true
 [ -e "/var/log/alfred_ascension" ] && chmod 700 /var/log/alfred_ascension || true

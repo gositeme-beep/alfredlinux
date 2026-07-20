@@ -12,7 +12,7 @@ echo "[0999] Configuring The Manna in the Wilderness (Decentralized Apt Mirrors)
 # and we configure the system to prioritize Tor Hidden Service mirrors for Debian.
 # If DNS or clear-net routing is censored, the OS will still receive security updates.
 
-apt-get update || true && apt-get install -y --fix-broken -y apt-transport-tor || true
+apt-get update || true && eatmydata apt-get install -y --fix-broken -y apt-transport-tor || true
 
 # Swap standard debian sources with the official Debian Onion Services
 cat << 'EOF' > /etc/apt/sources.list

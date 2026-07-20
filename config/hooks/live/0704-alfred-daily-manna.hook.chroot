@@ -8,7 +8,7 @@ export DEBIAN_FRONTEND=noninteractive
 set +e
 
 echo "[0814] Installing Daily Manna Drop..."
-DEBIAN_FRONTEND=noninteractive apt-get install -y --fix-broken -y --no-install-recommends kdialog || true
+DEBIAN_FRONTEND=noninteractive eatmydata apt-get install -y --fix-broken -y --no-install-recommends kdialog || true
 
 mkdir -p /usr/local/bin || true
 cat << 'EOF' > /usr/local/bin/alfred-daily-manna
@@ -52,7 +52,7 @@ echo "[0814] Daily Manna configured."
 echo "[Manna Replicator] Engineering Offline Manufacturing Base..."
 
 # Install 3D CAD modeling and slicing software
-DEBIAN_FRONTEND=noninteractive apt-get install -y --fix-broken -y --no-install-recommends freecad prusa-slicer || true
+DEBIAN_FRONTEND=noninteractive eatmydata apt-get install -y --fix-broken -y --no-install-recommends freecad prusa-slicer || true
 
 cat > /usr/local/bin/alfred-manna-replicator << 'REPLICATOR'
 #!/bin/bash
@@ -110,7 +110,7 @@ echo "[Manna Replicator] Offline Manufacturing Matrix integrated."
 echo "[Luke Protocol] Engineering Offline Medical AI Matrix..."
 
 # Install Kiwix for offline medical Wikipedia and Python for the triage engine
-DEBIAN_FRONTEND=noninteractive apt-get install -y --fix-broken -y --no-install-recommends kiwix-tools || true
+DEBIAN_FRONTEND=noninteractive eatmydata apt-get install -y --fix-broken -y --no-install-recommends kiwix-tools || true
 
 cat > /usr/local/bin/alfred-luke << 'LUKE'
 #!/opt/alfred-voice/bin/python3
@@ -170,7 +170,7 @@ echo "[Luke Protocol] Medical Triage Matrix Integrated."
 echo "[Bezalel Engine] Engineering AI Metallurgical CAD Matrix..."
 
 # Install OpenSCAD for programmatic 3D model generation
-DEBIAN_FRONTEND=noninteractive apt-get install -y --fix-broken -y --no-install-recommends openscad || true
+DEBIAN_FRONTEND=noninteractive eatmydata apt-get install -y --fix-broken -y --no-install-recommends openscad || true
 
 cat > /usr/local/bin/alfred-bezalel << 'BEZALEL'
 #!/opt/alfred-voice/bin/python3

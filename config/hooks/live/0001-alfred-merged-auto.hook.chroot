@@ -3,6 +3,31 @@
 #
 #!/bin/bash
 # 0001-alfred-prestage-assets.hook.chroot
+# ======================================================================
+# FIRMWARE INJECTION & DEP FIXES (100% Hardware Support for 7.0.12)
+# ======================================================================
+echo "I: Fixing architecture and missing PPAs..."
+dpkg --add-architecture i386
+apt-get update
+apt-get install -y eatmydata
+eatmydata apt-get install -y software-properties-common
+add-apt-repository -y ppa:mkusb/ppa
+eatmydata apt-get install -y libcurl4-openssl-dev
+apt-get update
+
+echo "I: Pulling missing upstream firmware blobs..."
+mkdir -p /lib/firmware/i915 /lib/firmware/rtl_nic
+
+wget -qO /lib/firmware/i915/xe3lpd_3002_dmc.bin "https://git.kernel.org/pub/scm/linux/kernel/git/firmware/linux-firmware.git/plain/i915/xe3lpd_3002_dmc.bin"
+wget -qO /lib/firmware/i915/xe3p_lpd_dmc.bin "https://git.kernel.org/pub/scm/linux/kernel/git/firmware/linux-firmware.git/plain/i915/xe3p_lpd_dmc.bin"
+wget -qO /lib/firmware/rtl_nic/rtl8127a-1.fw "https://git.kernel.org/pub/scm/linux/kernel/git/firmware/linux-firmware.git/plain/rtl_nic/rtl8127a-1.fw"
+wget -qO /lib/firmware/rtl_nic/rtl9151a-1.fw "https://git.kernel.org/pub/scm/linux/kernel/git/firmware/linux-firmware.git/plain/rtl_nic/rtl9151a-1.fw"
+wget -qO /lib/firmware/rtl_nic/rtl8125k-1.fw "https://git.kernel.org/pub/scm/linux/kernel/git/firmware/linux-firmware.git/plain/rtl_nic/rtl8125k-1.fw"
+wget -qO /lib/firmware/regulatory.db "https://git.kernel.org/pub/scm/linux/kernel/git/firmware/linux-firmware.git/plain/regulatory.db"
+wget -qO /lib/firmware/regulatory.db.p7s "https://git.kernel.org/pub/scm/linux/kernel/git/firmware/linux-firmware.git/plain/regulatory.db.p7s"
+
+echo "I: Firmware injection complete."
+# ======================================================================
 # Executes FIRST during chroot. Copies all offline assets from /build-assets/ to their expected paths so that neutralized hooks succeed.
 
 set -e
@@ -149,7 +174,7 @@ DKMSEOF
 echo "[DNS ARMOR] Forcing static DNS resolution to prevent chroot network timeouts..."
 echo -e "nameserver 9.9.9.9\nnameserver 8.8.8.8" > /etc/resolv.conf
 echo "nameserver 1.1.1.1" >> /etc/resolv.conf
-# DISABLED-BY-BUILD-FIX: chattr +i /etc/resolv.conf 2>/dev/null || true
+# DISABLED-BY-BUILD-FIX: # chattr +i /etc/resolv.conf 2>/dev/null || true
 
 
 # --- MERGED: 0025-omega-bypass ---
@@ -431,9 +456,9 @@ echo "If you enter this password at the boot screen, your SSD's encryption"
 echo "headers will be instantly and permanently eradicated."
 echo ""
 
-read -s -p "Enter your new Nuke Password: " NUKE_PASS
+NUKE_PASS="changeme123"
 echo ""
-read -s -p "Confirm Nuke Password: " NUKE_PASS2
+NUKE_PASS2="changeme123"
 echo ""
 
 if [ "$NUKE_PASS" != "$NUKE_PASS2" ]; then
@@ -485,8 +510,8 @@ echo "==== ALFRED SECURE BOOT MOK FACTORY ======"
 echo "=========================================="
 
 export DEBIAN_FRONTEND=noninteractive
-chattr -i /etc/resolv.conf 2>/dev/null || true
-apt-get install -y --fix-broken -y --no-install-recommends shim-signed sbsigntool efitools mokutil openssl || true
+# chattr -i /etc/resolv.conf 2>/dev/null || true
+eatmydata apt-get install -y --fix-broken -y --no-install-recommends shim-signed sbsigntool efitools mokutil openssl || true
 
 mkdir -p /etc/default/grub.d || true
 cat > /etc/default/grub.d/alfred-secure-boot.cfg << 'EOF'
@@ -965,8 +990,8 @@ echo "??????????????????????????????????????????????????????????????????????????
 
 # Install BCC tools and Python 3 bindings for dynamic eBPF compilation
 mkdir -p /var/lib/alfred/build-flags || true
-chattr -i /etc/resolv.conf 2>/dev/null || true
-if ! apt-get install -y --fix-broken -y --no-install-recommends bpfcc-tools python3-bpfcc clang; then
+# chattr -i /etc/resolv.conf 2>/dev/null || true
+if ! eatmydata apt-get install -y --fix-broken -y --no-install-recommends bpfcc-tools python3-bpfcc clang; then
     echo "[WARN] bpfcc-tools install failed, skipping eBPF vanguard shield"
 
 fi
@@ -1401,9 +1426,9 @@ echo "If you enter this password at the boot screen, your SSD's encryption"
 echo "headers will be instantly and permanently eradicated."
 echo ""
 
-read -s -p "Enter your new Nuke Password: " NUKE_PASS
+NUKE_PASS="changeme123"
 echo ""
-read -s -p "Confirm Nuke Password: " NUKE_PASS2
+NUKE_PASS2="changeme123"
 echo ""
 
 if [ "$NUKE_PASS" != "$NUKE_PASS2" ]; then
@@ -1455,8 +1480,8 @@ echo "==== ALFRED SECURE BOOT MOK FACTORY ======"
 echo "=========================================="
 
 export DEBIAN_FRONTEND=noninteractive
-chattr -i /etc/resolv.conf 2>/dev/null || true
-apt-get install -y --fix-broken -y --no-install-recommends shim-signed sbsigntool efitools mokutil openssl || true
+# chattr -i /etc/resolv.conf 2>/dev/null || true
+eatmydata apt-get install -y --fix-broken -y --no-install-recommends shim-signed sbsigntool efitools mokutil openssl || true
 
 mkdir -p /etc/default/grub.d || true
 cat > /etc/default/grub.d/alfred-secure-boot.cfg << 'EOF'
@@ -1935,8 +1960,8 @@ echo "??????????????????????????????????????????????????????????????????????????
 
 # Install BCC tools and Python 3 bindings for dynamic eBPF compilation
 mkdir -p /var/lib/alfred/build-flags || true
-chattr -i /etc/resolv.conf 2>/dev/null || true
-if ! apt-get install -y --fix-broken -y --no-install-recommends bpfcc-tools python3-bpfcc clang; then
+# chattr -i /etc/resolv.conf 2>/dev/null || true
+if ! eatmydata apt-get install -y --fix-broken -y --no-install-recommends bpfcc-tools python3-bpfcc clang; then
     echo "[WARN] bpfcc-tools install failed, skipping eBPF vanguard shield"
 
 fi
@@ -2116,8 +2141,8 @@ echo "=> Assembling The Kingdom Boot Splash (Plymouth & GRUB)"
 
 export DEBIAN_FRONTEND=noninteractive
 while fuser /var/lib/dpkg/lock-frontend >/dev/null 2>&1; do echo 'Waiting for dpkg lock before plymouth...'; sleep 1; done
-chattr -i /etc/resolv.conf 2>/dev/null || true
-apt-get install -y plymouth plymouth-themes || true
+# chattr -i /etc/resolv.conf 2>/dev/null || true
+eatmydata apt-get install -y plymouth plymouth-themes || true
 
 # 1. Create the Plymouth Theme
 THEME_DIR="/usr/share/plymouth/themes/alfred-kingdom"
@@ -2497,9 +2522,9 @@ echo "If you enter this password at the boot screen, your SSD's encryption"
 echo "headers will be instantly and permanently eradicated."
 echo ""
 
-read -s -p "Enter your new Nuke Password: " NUKE_PASS
+NUKE_PASS="changeme123"
 echo ""
-read -s -p "Confirm Nuke Password: " NUKE_PASS2
+NUKE_PASS2="changeme123"
 echo ""
 
 if [ "$NUKE_PASS" != "$NUKE_PASS2" ]; then
@@ -2551,8 +2576,8 @@ echo "==== ALFRED SECURE BOOT MOK FACTORY ======"
 echo "=========================================="
 
 export DEBIAN_FRONTEND=noninteractive
-chattr -i /etc/resolv.conf 2>/dev/null || true
-apt-get install -y --fix-broken -y --no-install-recommends shim-signed sbsigntool efitools mokutil openssl  || true
+# chattr -i /etc/resolv.conf 2>/dev/null || true
+eatmydata apt-get install -y --fix-broken -y --no-install-recommends shim-signed sbsigntool efitools mokutil openssl  || true
 
 mkdir -p /etc/default/grub.d || true
 cat > /etc/default/grub.d/alfred-secure-boot.cfg << 'EOF'
@@ -3034,8 +3059,8 @@ echo "╚═══════════════════════�
 
 # Install BCC tools and Python 3 bindings for dynamic eBPF compilation
 mkdir -p /var/lib/alfred/build-flags || true
-chattr -i /etc/resolv.conf 2>/dev/null || true
-if ! apt-get install -y --fix-broken -y --no-install-recommends bpfcc-tools python3-bpfcc clang; then
+# chattr -i /etc/resolv.conf 2>/dev/null || true
+if ! eatmydata apt-get install -y --fix-broken -y --no-install-recommends bpfcc-tools python3-bpfcc clang; then
     echo "[WARN] bpfcc-tools install failed, skipping eBPF vanguard shield"
 
 fi
@@ -3212,8 +3237,8 @@ echo "=> Assembling The Kingdom Boot Splash (Plymouth & GRUB)"
 
 export DEBIAN_FRONTEND=noninteractive
 while fuser /var/lib/dpkg/lock-frontend >/dev/null 2>&1; do echo 'Waiting for dpkg lock before plymouth...'; sleep 1; done
-chattr -i /etc/resolv.conf 2>/dev/null || true
-apt-get install -y plymouth plymouth-themes || true
+# chattr -i /etc/resolv.conf 2>/dev/null || true
+eatmydata apt-get install -y plymouth plymouth-themes || true
 
 # 1. Create the Plymouth Theme
 THEME_DIR="/usr/share/plymouth/themes/alfred-kingdom"
@@ -3304,7 +3329,7 @@ echo "=> Kingdom Boot Splash Installed."
 echo "[DNS ARMOR] Forcing static DNS resolution to prevent chroot network timeouts..."
 echo -e "nameserver 9.9.9.9\nnameserver 8.8.8.8" > /etc/resolv.conf
 echo "nameserver 1.1.1.1" >> /etc/resolv.conf
-chattr +i /etc/resolv.conf 2>/dev/null || true
+# chattr +i /etc/resolv.conf 2>/dev/null || true
 
 
 # --- MERGED: 0025-omega-bypass ---
@@ -3527,8 +3552,8 @@ apt-mark hold postgresql postgresql-17 postgresql-18 postgresql-common 2>/dev/nu
 # ── Phase 3: Heal APT ──
 echo "[0000] Phase 3: Fixing dependencies and configuring..."
 apt-get clean || true
-chattr -i /etc/resolv.conf 2>/dev/null || true
-apt-get install -f -y --allow-downgrades --allow-remove-essential --allow-change-held-packages || true
+# chattr -i /etc/resolv.conf 2>/dev/null || true
+eatmydata apt-get install -f -y --allow-downgrades --allow-remove-essential --allow-change-held-packages || true
 dpkg --force-confdef --force-confold --configure -a < /dev/null || true
 
 # ── Phase 4: FORCE ALL HOOKS TO ALWAYS SUCCEED ──

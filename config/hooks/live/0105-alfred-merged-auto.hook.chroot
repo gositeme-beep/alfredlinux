@@ -6,7 +6,7 @@ set +e
 echo "[Alfred Polish] Enforcing the cinematic Plymouth boot splash..."
 
 # Ensure Plymouth is installed
-apt-get install -y --no-install-recommends plymouth plymouth-x11 || true
+eatmydata apt-get install -y --no-install-recommends plymouth plymouth-x11 || true
 
 # Set the Alfred Kingdom theme as the absolute default
 plymouth-set-default-theme -R alfred-kingdom
@@ -38,7 +38,7 @@ set +e
 echo "[Alfred Polish] Enforcing the cinematic Plymouth boot splash..."
 
 # Ensure Plymouth is installed
-apt-get install -y --no-install-recommends plymouth plymouth-x11 || true
+eatmydata apt-get install -y --no-install-recommends plymouth plymouth-x11 || true
 
 # Set the Alfred Kingdom theme as the absolute default
 plymouth-set-default-theme -R alfred-kingdom
@@ -71,7 +71,7 @@ apt-get update
 
 # Install Wine components
 # Note: we use DEBIAN_FRONTEND=noninteractive to avoid any prompts
-DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends wine wine64 wine32 winetricks || true
+DEBIAN_FRONTEND=noninteractive eatmydata apt-get install -y --no-install-recommends wine wine64 wine32 winetricks || true
 
 # Create a showcase Windows app (PuTTY) on the default desktop
 mkdir -p "/etc/skel/Desktop/Windows Apps"
@@ -114,7 +114,7 @@ apt-get update
 
 # Install Wine components
 # Note: we use DEBIAN_FRONTEND=noninteractive to avoid any prompts
-DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends wine wine64 wine32 winetricks || true
+DEBIAN_FRONTEND=noninteractive eatmydata apt-get install -y --no-install-recommends wine wine64 wine32 winetricks || true
 
 # Create a showcase Windows app (PuTTY) on the default desktop
 mkdir -p "/etc/skel/Desktop/Windows Apps"

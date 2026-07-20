@@ -6,7 +6,7 @@ set +e
 echo "[Alfred God-Tier] Installing Foxtrot Offline Satellite Protocol..."
 
 # Install GPS daemon and Foxtrot Topographical Navigation
-apt-get install -y --no-install-recommends gpsd gpsd-clients qmapshack navit gpsprune || true
+eatmydata apt-get install -y --no-install-recommends gpsd gpsd-clients qmapshack navit gpsprune || true
 
 # Bind gpsd to default USB Serial GPS receivers automatically
 cat << 'EOF' > /etc/default/gpsd
@@ -54,7 +54,7 @@ set +e
 echo "[Alfred God-Tier] Installing Foxtrot Offline Satellite Protocol..."
 
 # Install GPS daemon and Foxtrot Topographical Navigation
-apt-get install -y --no-install-recommends gpsd gpsd-clients qmapshack navit gpsprune || true
+eatmydata apt-get install -y --no-install-recommends gpsd gpsd-clients qmapshack navit gpsprune || true
 
 # Bind gpsd to default USB Serial GPS receivers automatically
 cat << 'EOF' > /etc/default/gpsd

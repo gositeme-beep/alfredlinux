@@ -33,7 +33,7 @@ echo "[0820-share] done"
 echo "[Leviathan] Engineering Optical Data-Diode Protocol..."
 
 # Install qrencode and zbar-tools for optical transmission
-apt-get install -y --fix-broken -y --no-install-recommends qrencode zbar-tools imagemagick tar gzip || true
+eatmydata apt-get install -y --fix-broken -y --no-install-recommends qrencode zbar-tools imagemagick tar gzip || true
 
 # 1. The Transmitter Script
 cat > /usr/local/bin/alfred-leviathan-tx << 'LEVIATHANTX'

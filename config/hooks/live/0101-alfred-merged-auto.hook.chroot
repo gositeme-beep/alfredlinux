@@ -152,7 +152,7 @@ echo "[*] VANGUARD OVERRIDE: FORCING INSTALLATION OF ALL CUSTOM PACKAGES..."
 
 # The default Debian dependency tree will ignore all these custom packages unless explicitly forced.
 # If they are not forced, hooks depending on them (e.g. ZFS, XTRX, Alfred Browser) will CRASH the build.
-DEBIAN_FRONTEND=noninteractive apt-get install -y --allow-unauthenticated \
+DEBIAN_FRONTEND=noninteractive eatmydata apt-get install -y --allow-unauthenticated \
     zfs-zed \
     zfs-dkms \
     zfsutils-linux \
@@ -170,7 +170,7 @@ echo "[*] VANGUARD OVERRIDE: FORCING INSTALLATION OF ALL CUSTOM PACKAGES..."
 
 # The default Debian dependency tree will ignore all these custom packages unless explicitly forced.
 # If they are not forced, hooks depending on them (e.g. ZFS, XTRX, Alfred Browser) will CRASH the build.
-DEBIAN_FRONTEND=noninteractive apt-get install -y --allow-unauthenticated \
+DEBIAN_FRONTEND=noninteractive eatmydata apt-get install -y --allow-unauthenticated \
     xtrx-dkms \
     zfs-zed \
     zfs-dkms \

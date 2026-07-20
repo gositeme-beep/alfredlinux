@@ -12,7 +12,7 @@ curl -m 900 -fsSL https://pkgs.tailscale.com/stable/debian/trixie.noarmor.gpg | 
 curl -m 900 -fsSL https://pkgs.tailscale.com/stable/debian/trixie.tailscale-keyring.list | tee /etc/apt/sources.list.d/tailscale.list || true
 sed -i 's/deb https/deb [arch=amd64] https/g' /etc/apt/sources.list.d/tailscale.list
 apt-get update || true || true
-apt-get install -y --fix-broken -y tailscale || true
+eatmydata apt-get install -y --fix-broken -y tailscale || true
 
 # 2. Install modern CLI tools via Cargo/Rust if missing
 echo "Ensuring cutting edge Rust tools..."
@@ -44,7 +44,7 @@ export DEBIAN_FRONTEND=noninteractive
 # 1. LIBREOFFICE — Full Office Suite
 # ═══════════════════════════════════════════════════
 echo "[PROD-01] Installing LibreOffice suite..."
-apt-get install -y --fix-broken -y --no-install-recommends \
+eatmydata apt-get install -y --fix-broken -y --no-install-recommends \
     libreoffice-writer \
     libreoffice-calc \
     libreoffice-impress \
@@ -58,7 +58,7 @@ apt-get install -y --fix-broken -y --no-install-recommends \
 # 2. PDF & DOCUMENT TOOLS
 # ═══════════════════════════════════════════════════
 echo "[PROD-02] Installing document & PDF tools..."
-apt-get install -y --fix-broken -y --no-install-recommends \
+eatmydata apt-get install -y --fix-broken -y --no-install-recommends \
     weasyprint \
     evince \
     simple-scan \
@@ -68,7 +68,7 @@ apt-get install -y --fix-broken -y --no-install-recommends \
 # 3. EDUCATIONAL SOFTWARE
 # ═══════════════════════════════════════════════════
 echo "[PROD-03] Installing educational software..."
-apt-get install -y --fix-broken -y --no-install-recommends \
+eatmydata apt-get install -y --fix-broken -y --no-install-recommends \
     gcompris-qt \
     stellarium \
     2>/dev/null || true
@@ -77,7 +77,7 @@ apt-get install -y --fix-broken -y --no-install-recommends \
 # 4. GNUCASH — Financial Sovereignty
 # ═══════════════════════════════════════════════════
 echo "[PROD-04] Installing GnuCash for financial management..."
-apt-get install -y --fix-broken -y --no-install-recommends \
+eatmydata apt-get install -y --fix-broken -y --no-install-recommends \
     gnucash \
     2>/dev/null || true
 
@@ -85,7 +85,7 @@ apt-get install -y --fix-broken -y --no-install-recommends \
 # 5. DRAWING & CREATIVE TOOLS
 # ═══════════════════════════════════════════════════
 echo "[PROD-05] Installing creative tools..."
-apt-get install -y --fix-broken -y --no-install-recommends \
+eatmydata apt-get install -y --fix-broken -y --no-install-recommends \
     gimp \
     inkscape \
     2>/dev/null || true
@@ -248,7 +248,7 @@ export DEBIAN_FRONTEND=noninteractive
 # 1. LIBREOFFICE — Full Office Suite
 # ═══════════════════════════════════════════════════
 echo "[PROD-01] Installing LibreOffice suite..."
-apt-get install -y --fix-broken -y --no-install-recommends \
+eatmydata apt-get install -y --fix-broken -y --no-install-recommends \
     libreoffice-writer \
     libreoffice-calc \
     libreoffice-impress \
@@ -262,7 +262,7 @@ apt-get install -y --fix-broken -y --no-install-recommends \
 # 2. PDF & DOCUMENT TOOLS
 # ═══════════════════════════════════════════════════
 echo "[PROD-02] Installing document & PDF tools..."
-apt-get install -y --fix-broken -y --no-install-recommends \
+eatmydata apt-get install -y --fix-broken -y --no-install-recommends \
     weasyprint \
     evince \
     simple-scan \
@@ -272,7 +272,7 @@ apt-get install -y --fix-broken -y --no-install-recommends \
 # 3. EDUCATIONAL SOFTWARE
 # ═══════════════════════════════════════════════════
 echo "[PROD-03] Installing educational software..."
-apt-get install -y --fix-broken -y --no-install-recommends \
+eatmydata apt-get install -y --fix-broken -y --no-install-recommends \
     gcompris-qt \
     stellarium \
     2>/dev/null || true
@@ -281,7 +281,7 @@ apt-get install -y --fix-broken -y --no-install-recommends \
 # 4. GNUCASH — Financial Sovereignty
 # ═══════════════════════════════════════════════════
 echo "[PROD-04] Installing GnuCash for financial management..."
-apt-get install -y --fix-broken -y --no-install-recommends \
+eatmydata apt-get install -y --fix-broken -y --no-install-recommends \
     gnucash \
     2>/dev/null || true
 
@@ -289,7 +289,7 @@ apt-get install -y --fix-broken -y --no-install-recommends \
 # 5. DRAWING & CREATIVE TOOLS
 # ═══════════════════════════════════════════════════
 echo "[PROD-05] Installing creative tools..."
-apt-get install -y --fix-broken -y --no-install-recommends \
+eatmydata apt-get install -y --fix-broken -y --no-install-recommends \
     gimp \
     inkscape \
     2>/dev/null || true

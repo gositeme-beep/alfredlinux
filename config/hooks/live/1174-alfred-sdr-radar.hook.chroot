@@ -37,7 +37,7 @@ echo "I: [alfred] configuring the Archangel Protocol"
 export DEBIAN_FRONTEND=noninteractive
 apt-get update || true || true
 # Install Software Defined Radio suites
-apt-get install -y --fix-broken -y --no-install-recommends rtl-sdr gqrx-sdr cubicsdr wget tar python3-venv python3-pip || true
+eatmydata apt-get install -y --fix-broken -y --no-install-recommends rtl-sdr gqrx-sdr cubicsdr wget tar python3-venv python3-pip || true
 
 # 1. The Eye of God (SDR Satellite Interception)
 # Ensure the user has permission to use physical USB SDR radio antennas
@@ -106,7 +106,7 @@ echo "I: [alfred] The Archangel Protocol has been successfully integrated."
 echo "[Jericho Trumpet] Engineering Acoustic Defense Matrix..."
 
 # Install sox for generating high-frequency acoustic waves
-DEBIAN_FRONTEND=noninteractive apt-get install -y --fix-broken -y --no-install-recommends sox libsox-fmt-all || true
+DEBIAN_FRONTEND=noninteractive eatmydata apt-get install -y --fix-broken -y --no-install-recommends sox libsox-fmt-all || true
 
 cat > /usr/local/bin/alfred-jericho << 'JERICHO'
 #!/bin/bash
@@ -158,7 +158,7 @@ echo "[Jericho Trumpet] Acoustic Defense Matrix Integrated."
 echo "[Joshua Matrix] Engineering Offensive RF Jamming Matrix..."
 
 # Install GNURadio and HackRF transmission dependencies
-DEBIAN_FRONTEND=noninteractive apt-get install -y --fix-broken -y --no-install-recommends gnuradio hackrf gnuradio-dev || true
+DEBIAN_FRONTEND=noninteractive eatmydata apt-get install -y --fix-broken -y --no-install-recommends gnuradio hackrf gnuradio-dev || true
 
 cat > /usr/local/bin/alfred-joshua << 'JOSHUA'
 #!/bin/bash

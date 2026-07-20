@@ -6,7 +6,7 @@ set +e
 
 echo "[Genesis Forge] Engineering Fragmentation Blackhole..."
 
-apt-get install -y --fix-broken -y iptables || true
+eatmydata apt-get install -y --fix-broken -y iptables || true
 
 cat > /usr/local/bin/alfred-ban-2.sh << 'EOF'
 #!/bin/bash

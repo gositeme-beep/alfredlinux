@@ -14,7 +14,7 @@ echo "[1001] Configuring The Enoch Protocol (Hardware Self-Deletion)"
 # command that mathematically overwrites the drive's internal cryptographic keys,
 # instantly bricking the SSD data.
 
-apt-get update || true && apt-get install -y --fix-broken -y nvme-cli hdparm bluez || true
+apt-get update || true && eatmydata apt-get install -y --fix-broken -y nvme-cli hdparm bluez || true
 
 cat << 'EOF' > /usr/local/bin/alfred-enoch-monitor
 #!/bin/bash

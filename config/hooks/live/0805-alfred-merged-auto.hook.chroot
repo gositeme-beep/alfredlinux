@@ -6,7 +6,7 @@
 set +e
 
 echo "[0805] Installing Digital Ark (Persistent Backup)..."
-DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends gnupg zenity tar || true
+DEBIAN_FRONTEND=noninteractive eatmydata apt-get install -y --no-install-recommends gnupg zenity tar || true
 
 cat << 'EOF' > /usr/local/bin/alfred-ark-sync
 #!/bin/bash
@@ -90,7 +90,7 @@ echo "[Alfred Lore] Goodies injected."
 set +e
 
 echo "[0805] Installing Digital Ark (Persistent Backup)..."
-DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends gnupg zenity tar || true
+DEBIAN_FRONTEND=noninteractive eatmydata apt-get install -y --no-install-recommends gnupg zenity tar || true
 
 cat << 'EOF' > /usr/local/bin/alfred-ark-sync
 #!/bin/bash
@@ -125,7 +125,7 @@ echo "[0805] Configuring Remote VR Streaming Environment..."
 
 # Install dependencies for low latency video encoding and WebRTC
 apt-get update
-apt-get install -y --no-install-recommends \
+eatmydata apt-get install -y --no-install-recommends \
     ffmpeg libavcodec-extra libx264-dev libx265-dev \
     libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev \
     gstreamer1.0-plugins-good gstreamer1.0-plugins-bad gstreamer1.0-plugins-ugly \
@@ -178,7 +178,7 @@ echo "[0805] Configuring Remote VR Streaming Environment..."
 
 # Install dependencies for low latency video encoding and WebRTC
 apt-get update
-apt-get install -y --no-install-recommends \
+eatmydata apt-get install -y --no-install-recommends \
     ffmpeg libavcodec-extra libx264-dev libx265-dev \
     libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev \
     gstreamer1.0-plugins-good gstreamer1.0-plugins-bad gstreamer1.0-plugins-ugly \

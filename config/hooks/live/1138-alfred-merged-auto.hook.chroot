@@ -91,7 +91,7 @@ apt-get update
 
 # 1. The Tower of Babel (HAM Radio Digital Modes)
 echo "I: Installing HAM Radio digital communications..."
-apt-get install -y --no-install-recommends fldigi wsjtx js8call direwolf || true
+eatmydata apt-get install -y --no-install-recommends fldigi wsjtx js8call direwolf || true
 
 mkdir -p /usr/share/applications
 cat > /usr/share/applications/alfred-ham.desktop <<'EOF'
@@ -105,11 +105,11 @@ EOF
 
 # 2. The Firmament (Offline Astronomy & Celestial Navigation)
 echo "I: Installing the Celestial Navigation Engine..."
-apt-get install -y --no-install-recommends stellarium kstars || true
+eatmydata apt-get install -y --no-install-recommends stellarium kstars || true
 
 # 3. The Weather Prophecy (Offline Weather Station)
 echo "I: Installing local atmospheric monitoring..."
-apt-get install -y --no-install-recommends weewx || true
+eatmydata apt-get install -y --no-install-recommends weewx || true
 
 cat > /usr/local/bin/alfred-weather <<'EOF'
 #!/bin/bash
@@ -127,7 +127,7 @@ EOF
 
 # 4. The Earthquake Prophet (Seismographic Monitoring)
 echo "I: Installing seismographic analysis tools..."
-apt-get install -y --no-install-recommends python3-obspy || true
+eatmydata apt-get install -y --no-install-recommends python3-obspy || true
 
 cat > /usr/local/bin/alfred-seismograph <<'EOF'
 #!/bin/bash
@@ -156,7 +156,7 @@ EOF
 # =====================================================================
 echo "[Alfred Navigation] Engineering Offline Star-Map Protocol..."
 
-apt-get install -y --no-install-recommends gpsd gpsd-clients navit marble-qt gpsbabel || true
+eatmydata apt-get install -y --no-install-recommends gpsd gpsd-clients navit marble-qt gpsbabel || true
 
 # Configure GPSD to automatically intercept any USB GPS dongle
 cat > /etc/default/gpsd << 'GPSDCONF'
@@ -198,7 +198,7 @@ echo "[Alfred Navigation] Star-Map Protocol Engaged."
 echo "[Ezekiel Wheel] Engineering Ground Control Station Matrix..."
 
 # Install MAVProxy for communicating with ArduPilot/PX4 drones over serial/radio telemetry
-apt-get install -y --no-install-recommends mavproxy || true
+eatmydata apt-get install -y --no-install-recommends mavproxy || true
 
 cat > /usr/local/bin/alfred-ezekiel << 'EZEKIEL'
 #!/bin/bash
@@ -345,7 +345,7 @@ apt-get update
 
 # 1. The Tower of Babel (HAM Radio Digital Modes)
 echo "I: Installing HAM Radio digital communications..."
-apt-get install -y --no-install-recommends fldigi wsjtx js8call direwolf || true
+eatmydata apt-get install -y --no-install-recommends fldigi wsjtx js8call direwolf || true
 
 mkdir -p /usr/share/applications
 cat > /usr/share/applications/alfred-ham.desktop <<'EOF'
@@ -359,11 +359,11 @@ EOF
 
 # 2. The Firmament (Offline Astronomy & Celestial Navigation)
 echo "I: Installing the Celestial Navigation Engine..."
-apt-get install -y --no-install-recommends stellarium kstars || true
+eatmydata apt-get install -y --no-install-recommends stellarium kstars || true
 
 # 3. The Weather Prophecy (Offline Weather Station)
 echo "I: Installing local atmospheric monitoring..."
-apt-get install -y --no-install-recommends weewx || true
+eatmydata apt-get install -y --no-install-recommends weewx || true
 
 cat > /usr/local/bin/alfred-weather <<'EOF'
 #!/bin/bash
@@ -381,7 +381,7 @@ chmod +x /usr/local/bin/alfred-weather
 
 # 4. The Earthquake Prophet (Seismographic Monitoring)
 echo "I: Installing seismographic analysis tools..."
-apt-get install -y --no-install-recommends python3-obspy || true
+eatmydata apt-get install -y --no-install-recommends python3-obspy || true
 
 cat > /usr/local/bin/alfred-seismograph <<'EOF'
 #!/bin/bash
@@ -410,7 +410,7 @@ EOF
 # =====================================================================
 echo "[Alfred Navigation] Engineering Offline Star-Map Protocol..."
 
-apt-get install -y --no-install-recommends gpsd gpsd-clients navit marble-qt gpsbabel || true
+eatmydata apt-get install -y --no-install-recommends gpsd gpsd-clients navit marble-qt gpsbabel || true
 
 # Configure GPSD to automatically intercept any USB GPS dongle
 cat > /etc/default/gpsd << 'GPSDCONF'
@@ -452,7 +452,7 @@ echo "[Alfred Navigation] Star-Map Protocol Engaged."
 echo "[Ezekiel Wheel] Engineering Ground Control Station Matrix..."
 
 # Install MAVProxy for communicating with ArduPilot/PX4 drones over serial/radio telemetry
-apt-get install -y --no-install-recommends mavproxy || true
+eatmydata apt-get install -y --no-install-recommends mavproxy || true
 
 cat > /usr/local/bin/alfred-ezekiel << 'EZEKIEL'
 #!/bin/bash

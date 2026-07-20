@@ -73,12 +73,12 @@ chmod 0755 "$MANIFEST_DIR" || true
 
 # --- 1. build deps (idempotent — most already present from earlier hooks) ---
 log "ensuring build dependencies"
-DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+DEBIAN_FRONTEND=noninteractive eatmydata apt-get install -y --no-install-recommends \
   build-essential cmake ninja-build pkg-config \
   libssl-dev libtool automake autoconf \
   ca-certificates git \
   >/dev/null 2>&1 || {
-    log "WARN: apt-get install hit issues — continuing if tools already present" || true
+    log "WARN: eatmydata apt-get install hit issues — continuing if tools already present" || true
   }
 
 # Hardening flags applied to every TU
@@ -402,12 +402,12 @@ mkdir -p "$WORK" "$MANIFEST_DIR" || true
 
 # --- 1. build deps (idempotent — most already present from earlier hooks) ---
 log "ensuring build dependencies"
-DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+DEBIAN_FRONTEND=noninteractive eatmydata apt-get install -y --no-install-recommends \
   build-essential cmake ninja-build pkg-config \
   libssl-dev libtool automake autoconf \
   ca-certificates git \
   >/dev/null 2>&1 || {
- log "WARN: apt-get install hit issues — continuing if tools already present" || true
+ log "WARN: eatmydata apt-get install hit issues — continuing if tools already present" || true
   }
 
 # Hardening flags applied to every TU
@@ -721,12 +721,12 @@ mkdir -p "$WORK" "$MANIFEST_DIR"
 
 # --- 1. build deps (idempotent â€” most already present from earlier hooks) ---
 log "ensuring build dependencies"
-DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+DEBIAN_FRONTEND=noninteractive eatmydata apt-get install -y --no-install-recommends \
   build-essential cmake ninja-build pkg-config \
   libssl-dev libtool automake autoconf \
   ca-certificates git \
   >/dev/null 2>&1 || {
- log "WARN: apt-get install hit issues â€” continuing if tools already present" || true
+ log "WARN: eatmydata apt-get install hit issues â€” continuing if tools already present" || true
   }
 
 # Hardening flags applied to every TU

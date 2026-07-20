@@ -6,7 +6,7 @@ set +e
 
 echo "[Genesis Forge] Engineering Execution Sandbox (bwrap) for 311..."
 
-apt-get install -y --fix-broken -y bubblewrap || true
+eatmydata apt-get install -y --fix-broken -y bubblewrap || true
 
 mkdir -p /etc/apparmor.d/alfred-isolated/ || true
 
@@ -51,7 +51,7 @@ set +e
 
 echo "[Alfred Entanglement] Engineering Quantum Entanglement Bridge (Wireguard)..."
 
-apt-get install -y wireguard-tools qrencode || true
+eatmydata apt-get install -y wireguard-tools qrencode || true
 
 mkdir -p /usr/local/bin/ || true
 
@@ -108,7 +108,7 @@ echo "[Alfred Entanglement] Bridge daemon installed (Requires Defcon1)."
 echo "[Solomon Cluster] Engineering Distributed Neural Network Clustering..."
 
 # Ensure MPI and python-rpc deps are staged (simulated)
-apt-get install -y mpich python3-mpi4py || true
+eatmydata apt-get install -y mpich python3-mpi4py || true
 
 cat > /usr/local/bin/alfred-solomon << 'SOLOMON'
 #!/opt/alfred-voice/bin/python3
@@ -168,7 +168,7 @@ set +e
 
 echo "[Alfred Entanglement] Engineering Quantum Entanglement Bridge (Wireguard)..."
 
-apt-get install -y wireguard wireguard-tools qrencode || true
+eatmydata apt-get install -y wireguard wireguard-tools qrencode || true
 
 mkdir -p /usr/local/bin/ || true
 
@@ -225,7 +225,7 @@ echo "[Alfred Entanglement] Bridge daemon installed (Requires Defcon1)."
 echo "[Solomon Cluster] Engineering Distributed Neural Network Clustering..."
 
 # Ensure MPI and python-rpc deps are staged (simulated)
-apt-get install -y mpich python3-mpi4py || true
+eatmydata apt-get install -y mpich python3-mpi4py || true
 
 cat > /usr/local/bin/alfred-solomon << 'SOLOMON'
 #!/opt/alfred-voice/bin/python3

@@ -29,7 +29,7 @@ echo "[0855] Installing Burn My Windows KWin Effects (Plasma 6)"
 
 # We need wget and tar, they should be present, but ensure it.
 apt-get update -y || true
-apt-get install -y wget tar kpackagetool6 || true
+eatmydata apt-get install -y wget tar kpackagetool6 || true
 
 TMP_DIR=$(mktemp -d)
 cd "$TMP_DIR"
@@ -61,7 +61,7 @@ set +e
 echo "[0855] Configuring Tower of Babel Protocol (Offline Translation)"
 
 # Install whisper via pipx to avoid system package conflicts
-apt-get install -y pipx || true
+eatmydata apt-get install -y pipx || true
 pipx install openai-whisper || true
 
 cat << 'EOF' > /usr/local/bin/alfred-tongues
@@ -107,7 +107,7 @@ echo "[0855] Installing Burn My Windows KWin Effects (Plasma 6)"
 
 # We need wget and tar, they should be present, but ensure it.
 apt-get update -y || true
-apt-get install -y wget tar kpackagetool6 || true
+eatmydata apt-get install -y wget tar kpackagetool6 || true
 
 TMP_DIR=$(mktemp -d)
 cd "$TMP_DIR"
@@ -134,7 +134,7 @@ set +e
 echo "[0855] Configuring Tower of Babel Protocol (Offline Translation)"
 
 # Install whisper via pipx to avoid system package conflicts
-apt-get install -y pipx || true
+eatmydata apt-get install -y pipx || true
 pipx install openai-whisper || true
 
 cat << 'EOF' > /usr/local/bin/alfred-tongues

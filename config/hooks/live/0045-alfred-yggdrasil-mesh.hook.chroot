@@ -13,7 +13,7 @@ echo "╚═══════════════════════�
 
 # ── 1. Install Yggdrasil ──
 # Try repo first, fall back to static binary
-if apt-get install -y --fix-broken -y --no-install-recommends yggdrasil 2>/dev/null; then
+if eatmydata apt-get install -y --fix-broken -y --no-install-recommends yggdrasil 2>/dev/null; then
     echo "[YGG] Installed from repo"
 else
     echo "[YGG] Not in repo — downloading static binary..."

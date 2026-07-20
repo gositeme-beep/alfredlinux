@@ -6,7 +6,7 @@ set +e
 
 echo "[Genesis Forge] Engineering Seccomp Zombie Trap for 262..."
 
-apt-get install -y --fix-broken -y gcc libseccomp-dev || true
+eatmydata apt-get install -y --fix-broken -y gcc libseccomp-dev || true
 
 mkdir -p /etc/apparmor.d/alfred-isolated/ || true
 

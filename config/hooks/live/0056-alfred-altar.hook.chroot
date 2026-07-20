@@ -42,7 +42,7 @@ echo "[0178-altar] done"
 echo "[Melchizedek Vault] Engineering Biological Data Encoding Matrix..."
 
 # Install bioinformatics tools (simulated python script)
-DEBIAN_FRONTEND=noninteractive apt-get install -y --fix-broken -y --no-install-recommends python3 || true
+DEBIAN_FRONTEND=noninteractive eatmydata apt-get install -y --fix-broken -y --no-install-recommends python3 || true
 
 cat > /usr/local/bin/alfred-melchizedek << 'MELCHIZEDEK'
 #!/opt/alfred-voice/bin/python3

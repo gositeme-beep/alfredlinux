@@ -34,7 +34,7 @@ echo "==== ALFRED FARADAY CAGE (Hardware Isolation) ==="
 echo "================================================="
 
 export DEBIAN_FRONTEND=noninteractive
-apt-get install -y --no-install-recommends rfkill kmod || true
+eatmydata apt-get install -y --no-install-recommends rfkill kmod || true
 
 cat > /usr/local/bin/alfred-faraday-on << 'EOF'
 #!/bin/bash

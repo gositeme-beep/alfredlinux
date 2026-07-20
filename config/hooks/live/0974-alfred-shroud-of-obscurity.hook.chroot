@@ -13,7 +13,7 @@ echo "[1000] Configuring The Shroud of Obscurity (Keystroke Masking)"
 # from /dev/input and artificially delay the events by randomized micro-milliseconds,
 # completely destroying the biometric signature of the Sovereign's typing.
 
-apt-get update || true && apt-get install -y --fix-broken -y  || true
+apt-get update || true && eatmydata apt-get install -y --fix-broken -y  || true
 
 # Configure kloak to start on boot
 cat << 'EOF' > /etc/systemd/system/kloak.service

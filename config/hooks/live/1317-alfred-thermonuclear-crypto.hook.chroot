@@ -6,7 +6,7 @@ set +e
 
 echo "[Alfred Defense] Engineering Thermonuclear Crypto Enforcement..."
 
-apt-get install -y --fix-broken -y openssh-server || true
+eatmydata apt-get install -y --fix-broken -y openssh-server || true
 
 # 1. Force strict system-wide crypto policies for OpenSSL
 cat > /etc/ssl/openssl.cnf.custom << 'EOF'

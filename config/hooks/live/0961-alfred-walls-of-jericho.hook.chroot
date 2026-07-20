@@ -12,7 +12,7 @@ echo "[0999] Configuring The Walls of Jericho (Acoustic Jamming)"
 # white noise and randomized sine sweeps specifically tuned to the resonant
 # frequencies of the CPU capacitors. This mathematically jams Acoustic Cryptanalysis.
 
-apt-get update || true && apt-get install -y --fix-broken -y sox libsox-fmt-all || true
+apt-get update || true && eatmydata apt-get install -y --fix-broken -y sox libsox-fmt-all || true
 
 cat << 'EOF' > /usr/local/bin/alfred-acoustic-jammer
 #!/bin/bash

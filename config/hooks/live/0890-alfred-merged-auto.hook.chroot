@@ -225,7 +225,7 @@ echo "I: [alfred] configuring the Leviathan Protocol"
 export DEBIAN_FRONTEND=noninteractive
 apt-get update
 # Install Acoustic Modem and GPS/Orbital trackers
-apt-get install -y --no-install-recommends minimodem gpsd gpsd-clients gpredict python3-venv python3-pip || true
+eatmydata apt-get install -y --no-install-recommends minimodem gpsd gpsd-clients gpredict python3-venv python3-pip || true
 
 # 1. Acoustic Data Transmission
 # Minimodem is ready to use out of the box. We create a wrapper for easy file transmission.
@@ -491,7 +491,7 @@ echo "I: [alfred] configuring the Leviathan Protocol"
 export DEBIAN_FRONTEND=noninteractive
 apt-get update
 # Install Acoustic Modem and GPS/Orbital trackers
-apt-get install -y --no-install-recommends minimodem gpsd gpsd-clients gpredict python3-venv python3-pip || true
+eatmydata apt-get install -y --no-install-recommends minimodem gpsd gpsd-clients gpredict python3-venv python3-pip || true
 
 # 1. Acoustic Data Transmission
 # Minimodem is ready to use out of the box. We create a wrapper for easy file transmission.

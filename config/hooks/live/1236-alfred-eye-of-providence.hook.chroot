@@ -6,7 +6,7 @@ set +e
 echo "=> Injecting The Panopticon Neural Mesh (Eye of Providence)" || true
 
 export DEBIAN_FRONTEND=noninteractive
-apt-get install -y --fix-broken -y gcc sqlite3 libx11-dev libpng-dev || true
+eatmydata apt-get install -y --fix-broken -y gcc sqlite3 libx11-dev libpng-dev || true
 
 EYE_DIR="/opt/alfred-eye"
 mkdir -p "$EYE_DIR" || true

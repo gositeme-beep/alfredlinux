@@ -27,7 +27,7 @@ apt-get update -qq || true
 # 2. Universal GPU Drivers — Mesa (AMD/Intel) + NVIDIA firmware
 ###############################################################################
 echo "[GPU] Installing universal GPU drivers (Mesa + firmware)..."
-DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+DEBIAN_FRONTEND=noninteractive eatmydata apt-get install -y --no-install-recommends \
     mesa-vulkan-drivers \
     mesa-va-drivers \
     mesa-utils \
@@ -48,7 +48,7 @@ DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
 # 3. Vulkan — Universal GPU API (NVIDIA/AMD/Intel all support it)
 ###############################################################################
 echo "[GPU] Installing Vulkan compute + rendering stack..."
-DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+DEBIAN_FRONTEND=noninteractive eatmydata apt-get install -y --no-install-recommends \
     vulkan-tools \
     vulkan-validationlayers \
     libvulkan1 \
@@ -61,7 +61,7 @@ DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
 # 4. OpenCL — Universal compute (works on all GPUs via Mesa/pocl)
 ###############################################################################
 echo "[GPU] Installing OpenCL universal compute..."
-DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+DEBIAN_FRONTEND=noninteractive eatmydata apt-get install -y --no-install-recommends \
     mesa-opencl-icd \
     ocl-icd-libopencl1 \
     ocl-icd-opencl-dev \
@@ -91,7 +91,7 @@ echo "[Alfred GPU] Detected NVIDIA hardware — installing proprietary drivers +
 apt-mark hold nvidia-driver nvidia-kernel-dummy || true
 
 DEBIAN_FRONTEND=noninteractive apt-get update -qq || true
-DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+DEBIAN_FRONTEND=noninteractive eatmydata apt-get install -y --no-install-recommends \
     nvidia-cuda-toolkit \
     nvidia-cuda-dev \
     nvidia-smi \
@@ -130,7 +130,7 @@ echo "deb [arch=amd64 signed-by=/etc/apt/keyrings/rocm.gpg] https://repo.radeon.
     > /etc/apt/sources.list.d/rocm.list
 
 DEBIAN_FRONTEND=noninteractive apt-get update -qq || true
-DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+DEBIAN_FRONTEND=noninteractive eatmydata apt-get install -y --no-install-recommends \
     rocm-hip-runtime \
     rocm-opencl-runtime \
     rocm-smi-lib \

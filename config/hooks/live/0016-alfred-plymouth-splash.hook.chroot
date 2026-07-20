@@ -10,7 +10,7 @@ set +e
 echo "[0108] Configuring Plymouth Boot Animation..."
 
 # Install Plymouth and standard themes
-DEBIAN_FRONTEND=noninteractive apt-get install -y --fix-broken -y --no-install-recommends plymouth plymouth-themes || true
+DEBIAN_FRONTEND=noninteractive eatmydata apt-get install -y --fix-broken -y --no-install-recommends plymouth plymouth-themes || true
 
 # Use the spinner theme as a base
 plymouth-set-default-theme -R spinner || true

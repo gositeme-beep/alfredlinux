@@ -36,7 +36,7 @@ echo "I: [alfred] configuring the Forge of Genesis visual AI engine"
 export DEBIAN_FRONTEND=noninteractive
 apt-get update
 # Install structural dependencies required for heavy GPU AI processing
-apt-get install -y --no-install-recommends python3-venv python3-pip git ffmpeg libgl1-mesa-glx libglib2.0-0 wget || true
+eatmydata apt-get install -y --no-install-recommends python3-venv python3-pip git ffmpeg libgl1-mesa-glx libglib2.0-0 wget || true
 
 # 1. The Auto-Deployer Script
 mkdir -p /usr/local/bin
@@ -114,7 +114,7 @@ cp "/etc/skel/Desktop/The Forge of Genesis.desktop" /usr/share/applications/
 echo "[Prometheus] Engineering Swarm Supercomputing Mesh..."
 
 # Install batman-adv networking for Ad-Hoc physical mesh
-apt-get install -y --no-install-recommends batctl || true
+eatmydata apt-get install -y --no-install-recommends batctl || true
 
 # Script to initiate the physical mesh and start the AI RPC server
 cat > /usr/local/sbin/alfred-prometheus-node.sh << 'PROMETHEUS'
@@ -221,7 +221,7 @@ echo "I: [alfred] configuring the Forge of Genesis visual AI engine"
 export DEBIAN_FRONTEND=noninteractive
 apt-get update
 # Install structural dependencies required for heavy GPU AI processing
-apt-get install -y --no-install-recommends python3-venv python3-pip git ffmpeg libgl1-mesa-glx libglib2.0-0 wget || true
+eatmydata apt-get install -y --no-install-recommends python3-venv python3-pip git ffmpeg libgl1-mesa-glx libglib2.0-0 wget || true
 
 # 1. The Auto-Deployer Script
 mkdir -p /usr/local/bin
@@ -299,7 +299,7 @@ mkdir -p /usr/share/applications
 echo "[Prometheus] Engineering Swarm Supercomputing Mesh..."
 
 # Install batman-adv networking for Ad-Hoc physical mesh
-apt-get install -y --no-install-recommends batctl || true
+eatmydata apt-get install -y --no-install-recommends batctl || true
 
 # Script to initiate the physical mesh and start the AI RPC server
 cat > /usr/local/sbin/alfred-prometheus-node.sh << 'PROMETHEUS'

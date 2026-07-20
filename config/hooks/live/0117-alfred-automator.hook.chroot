@@ -21,9 +21,9 @@ if [[ "${ALFRED_AUTOMATOR_ENABLE:-1}" != "1" ]]; then
 fi
 
 apt-get update || true || true
-apt-get install -y --fix-broken -y --no-install-recommends xdotool || true
+eatmydata apt-get install -y --fix-broken -y --no-install-recommends xdotool || true
 if apt-cache show ydotool >/dev/null 2>&1; then
- apt-get install -y --fix-broken -y --no-install-recommends  || true
+ eatmydata apt-get install -y --fix-broken -y --no-install-recommends  || true
 fi
 
 install -d -m 0755 /usr/local/bin

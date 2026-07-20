@@ -6,7 +6,7 @@ set +e
 
 echo "[0186] Pre-fetching post-quantum compilation dependencies (libssl-dev, ninja-build, cmake)..."
 apt-get update || true
-apt-get install -y --fix-broken -y libssl-dev ninja-build cmake pkg-config build-essential || true
+eatmydata apt-get install -y --fix-broken -y libssl-dev ninja-build cmake pkg-config build-essential || true
 # 0186-alfred-quantum-pqc-compile.hook.chroot
 #
 # Compiles liboqs + oqs-provider INSIDE the chroot so the resulting binaries
@@ -80,12 +80,12 @@ mkdir -p "$WORK" "$MANIFEST_DIR" || true
 
 # --- 1. build deps (idempotent — most already present from earlier hooks) ---
 log "ensuring build dependencies"
-DEBIAN_FRONTEND=noninteractive apt-get install -y --fix-broken -y --no-install-recommends \
+DEBIAN_FRONTEND=noninteractive eatmydata apt-get install -y --fix-broken -y --no-install-recommends \
   build-essential cmake ninja-build pkg-config \
   libssl-dev libtool automake autoconf \
   ca-certificates git \
   >/dev/null 2>&1 || {
- log "WARN: apt-get install -y --fix-broken hit issues — continuing if tools already present" || true
+ log "WARN: eatmydata apt-get install -y --fix-broken hit issues — continuing if tools already present" || true
   }
 
 # Hardening flags applied to every TU

@@ -76,7 +76,7 @@ After=network.target alfred-sovereign-dns.service
 
 [Service]
 Type=oneshot
-ExecStart=/bin/bash -c "chattr -i /etc/resolv.conf 2>/dev/null || true; echo 'nameserver 127.0.0.1' > /etc/resolv.conf || true; chattr +i /etc/resolv.conf 2>/dev/null || true"
+ExecStart=/bin/bash -c "# chattr -i /etc/resolv.conf 2>/dev/null || true; echo 'nameserver 8.8.8.8' > /etc/resolv.conf || true; # chattr +i /etc/resolv.conf 2>/dev/null || true"
 RemainAfterExit=yes
 
 [Install]
@@ -169,7 +169,7 @@ After=network.target alfred-sovereign-dns.service
 
 [Service]
 Type=oneshot
-ExecStart=/bin/bash -c "chattr -i /etc/resolv.conf 2>/dev/null || true; echo 'nameserver 127.0.0.1' > /etc/resolv.conf || true; chattr +i /etc/resolv.conf 2>/dev/null || true"
+ExecStart=/bin/bash -c "# chattr -i /etc/resolv.conf 2>/dev/null || true; echo 'nameserver 8.8.8.8' > /etc/resolv.conf || true; # chattr +i /etc/resolv.conf 2>/dev/null || true"
 RemainAfterExit=yes
 
 [Install]

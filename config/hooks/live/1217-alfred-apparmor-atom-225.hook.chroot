@@ -6,7 +6,7 @@ set +e
 
 echo "[Genesis Forge] Engineering Time-To-Live (TTL) Process Decay for 225..."
 
-apt-get install -y --fix-broken -y cgroup-tools || true
+eatmydata apt-get install -y --fix-broken -y cgroup-tools || true
 
 mkdir -p /etc/apparmor.d/alfred-isolated/ || true
 

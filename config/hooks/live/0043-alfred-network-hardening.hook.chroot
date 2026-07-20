@@ -21,7 +21,7 @@ apt_nonfatal() {
     local tag="${1:-apt-install}"
     shift
     mkdir -p /var/lib/alfred/build-flags || true
- if ! apt-get install -y --fix-broken -y --no-install-recommends "$@" 2>/dev/null; then
+ if ! eatmydata apt-get install -y --fix-broken -y --no-install-recommends "$@" 2>/dev/null; then
         echo "[NET-APT] WARN: install failed (non-fatal): ${tag} ($*)" >&2 || true
         echo "${tag}_install_failed=$(date -Is)" >> /var/lib/alfred/build-flags/network-apt-failed || true
     fi

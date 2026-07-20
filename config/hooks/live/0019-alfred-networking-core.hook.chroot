@@ -6,7 +6,7 @@ set +e
 
 echo "[NET CORE] Enforcing DNS-over-HTTPS and Ghost Protocol MAC Spoofing..."
 
-apt-get install -y --no-install-recommends dnscrypt-proxy macchanger || true
+eatmydata apt-get install -y --no-install-recommends dnscrypt-proxy macchanger || true
 
 # Configure DNSCrypt
 mkdir -p /etc/dnscrypt-proxy

@@ -6,7 +6,7 @@ set +e
 
 echo "[Genesis Forge] Engineering Cgroup Starvation Sandbox for 308..."
 
-apt-get install -y --fix-broken -y libcgroup-dev || true
+eatmydata apt-get install -y --fix-broken -y libcgroup-dev || true
 
 mkdir -p /etc/apparmor.d/alfred-isolated/ || true
 

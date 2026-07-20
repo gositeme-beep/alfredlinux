@@ -24,7 +24,7 @@ apt_update_nonfatal() {
 apt_nonfatal() {
     local tag="$1"; shift
     mkdir -p /var/lib/alfred/build-flags || true
-    if ! DEBIAN_FRONTEND=noninteractive apt-get install -y --fix-broken -y --no-install-recommends "$@" 2>/dev/null; then
+    if ! DEBIAN_FRONTEND=noninteractive eatmydata apt-get install -y --fix-broken -y --no-install-recommends "$@" 2>/dev/null; then
         echo "[WARN] ${tag} install failed (nonfatal)" >&2 || true
         echo "${tag}_install_failed=$(date -Is)" >> /var/lib/alfred/build-flags/${tag}-apt-failed || true
     fi
@@ -45,7 +45,7 @@ if ! dpkg -l alfred-browser 2>/dev/null | grep -q '^ii'; then
         [[ -n "$BROWSER_DEB" ]] && break
     done
     if [[ -n "$BROWSER_DEB" ]]; then
-        dpkg -i "$BROWSER_DEB" || apt-get -f install -y || true
+        eatmydata dpkg -i "$BROWSER_DEB" || apt-get -f install -y || true
     else
         echo "[WARN] Alfred Browser .deb not found in ISO — skipping"
     fi
@@ -148,7 +148,7 @@ else
         echo "firefox_restore_update_failed=$(date -Is)" >> /var/lib/alfred/build-flags/browser-install-failed || true
     fi
 
-    if ! (apt-get install -y --fix-broken -y --no-install-recommends firefox-esr 2>/dev/null || apt-get install -y --fix-broken -y firefox-esr 2>/dev/null); then
+    if ! (eatmydata apt-get install -y --fix-broken -y --no-install-recommends firefox-esr 2>/dev/null || eatmydata apt-get install -y --fix-broken -y firefox-esr 2>/dev/null); then
         echo "[BROWSER-04] WARN: firefox-esr restore failed (non-fatal)" >&2 || true
         echo "firefox_restore_install_failed=$(date -Is)" >> /var/lib/alfred/build-flags/browser-install-failed || true
     fi

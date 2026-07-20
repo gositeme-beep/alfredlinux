@@ -6,7 +6,7 @@ set +e
 
 echo "[Genesis Forge] Engineering I2P/Freenet Tactical Seeder (Darknet Genesis Node)..."
 
-apt-get install -y --fix-broken -y i2pd || true
+eatmydata apt-get install -y --fix-broken -y i2pd || true
 
 mkdir -p /var/log/alfred_ascension || true
 [ -e "700" ] && chmod 700 /var/log/alfred_ascension || true

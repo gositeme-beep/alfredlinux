@@ -27,13 +27,13 @@ export DEBIAN_FRONTEND=noninteractive
 # ── 1. Install from pre-staged .deb ──
 if ls /build-assets/veil-messenger_*.deb 1>/dev/null 2>&1; then
     echo "[VEIL] Installing from staged .deb..."
- apt-get install -y --fix-broken -y --no-install-recommends \
+ eatmydata apt-get install -y --fix-broken -y --no-install-recommends \
         libwebkit2gtk-4.1-0 \
         libgtk-3-0 \
         libayatana-appindicator3-1 \
         librsvg2-2
-    dpkg -i /build-assets/veil-messenger_*.deb || \
- apt-get install -y --fix-broken -f -y --no-install-recommends || true
+    eatmydata dpkg -i /build-assets/veil-messenger_*.deb || \
+ eatmydata apt-get install -y --fix-broken -f -y --no-install-recommends || true
     echo "[VEIL] Veil Messenger installed from staged .deb"
 else
     echo "[VEIL] WARN: No pre-staged veil-messenger_*.deb found in /build-assets"

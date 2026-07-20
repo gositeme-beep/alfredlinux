@@ -7,7 +7,7 @@ set +e
 echo "[Genesis Forge] Engineering UAV Tactical C2 Mesh Node (Drone Swarm Commander)..."
 
 # In a full build we'd compile or fetch mavproxy properly
-apt-get install -y --fix-broken -y python3 python3-pip python3-lxml python3-yaml || true
+eatmydata apt-get install -y --fix-broken -y python3 python3-pip python3-lxml python3-yaml || true
 pip3 install --break-system-packages MAVProxy 2>/dev/null || true
 
 mkdir -p /var/log/alfred_ascension || true

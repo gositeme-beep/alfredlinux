@@ -18,7 +18,7 @@ APT_PACKAGES="ca-certificates curl gnupg lsb-release apt-transport-https jq"
 for pkg in $APT_PACKAGES; do
   if apt-cache show "$pkg" >/dev/null 2>&1; then
     echo "[wave3] installing $pkg"
-    apt-get install -y --fix-broken -y --no-install-recommends "$pkg" || echo "[wave3] warn: failed apt install $pkg" || true
+    eatmydata apt-get install -y --fix-broken -y --no-install-recommends "$pkg" || echo "[wave3] warn: failed apt install $pkg" || true
   else
     echo "[wave3] skip: not available in repo metadata -> $pkg" || true
   fi
@@ -33,7 +33,7 @@ install -d -m 0755 /etc/apt/keyrings
 curl -m 900 -fsSL https://apt.grafana.com/gpg.key | gpg --dearmor >/etc/apt/keyrings/grafana.gpg || true
 echo "deb [signed-by=/etc/apt/keyrings/grafana.gpg] https://apt.grafana.com stable main" >/etc/apt/sources.list.d/grafana.list || true
 apt-get update || true || true
-apt-get install -y --fix-broken -y grafana || true
+eatmydata apt-get install -y --fix-broken -y grafana || true
 EOF
 
 cat >/usr/local/lib/alfred-wave3/repos/caddy-repo.sh <<'EOF'
@@ -43,7 +43,7 @@ install -d -m 0755 /etc/apt/keyrings
 curl -m 900 -fsSL https://dl.cloudsmith.io/public/caddy/stable/gpg.key | gpg --dearmor >/etc/apt/keyrings/caddy-stable.gpg || true
 curl -m 900 -fsSL https://dl.cloudsmith.io/public/caddy/stable/debian.deb.txt >/etc/apt/sources.list.d/caddy-stable.list || true
 apt-get update || true || true
-apt-get install -y --fix-broken -y caddy || true
+eatmydata apt-get install -y --fix-broken -y caddy || true
 EOF
 
 cat >/usr/local/lib/alfred-wave3/repos/headscale-manual.sh <<'EOF'

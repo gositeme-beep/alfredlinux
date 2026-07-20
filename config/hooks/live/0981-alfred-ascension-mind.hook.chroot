@@ -13,7 +13,7 @@ echo "[1001] Configuring The Ascension of the Mind (Neural Interface Control)"
 # (Brain-Computer Interface) and translate them directly into keystrokes and
 # mouse movements, allowing the Sovereign to code and navigate purely by thought.
 
-apt-get update || true && apt-get install -y --fix-broken -y  python3-mne || true
+apt-get update || true && eatmydata apt-get install -y --fix-broken -y  python3-mne || true
 
 cat << 'EOF' > /usr/local/bin/alfred-neural-compositor
 #!/bin/bash

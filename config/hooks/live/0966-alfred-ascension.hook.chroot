@@ -12,7 +12,7 @@ echo "[1000] Configuring The Ascension (Neurological Authentication)"
 # with non-invasive EEG headsets (like OpenBCI or Emotiv) to enable the Sovereign
 # to authenticate to LUKS and sudo using their unique brainwave signature.
 
-apt-get update || true && apt-get install -y --fix-broken -y python3-pip python3-numpy python3-scipy || true
+apt-get update || true && eatmydata apt-get install -y --fix-broken -y python3-pip python3-numpy python3-scipy || true
 
 cat << 'EOF' > /usr/local/bin/alfred-ascension-auth
 #!/bin/bash

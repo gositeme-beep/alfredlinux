@@ -13,7 +13,7 @@ if ls /build-assets/treasury/* 1>/dev/null 2>&1; then
     chmod +x /usr/local/bin/* || true
 else
     echo "No custom treasury binaries found in /build-assets. Installing fallbacks."
-    apt-get install -y --fix-broken -y --no-install-recommends electrum || true
+    eatmydata apt-get install -y --fix-broken -y --no-install-recommends electrum || true
 fi
 
 cat > /usr/local/sbin/alfred-treasury << 'EOF'
@@ -35,7 +35,7 @@ echo "==== THE SEVEN-SABBATH PATH: NATIVE HARDWARE ===="
 echo "================================================="
 
 # 1. Install prerequisites
-apt-get install -y curl pcscd libusb-1.0-0-dev libudev-dev jq || true
+eatmydata apt-get install -y curl pcscd libusb-1.0-0-dev libudev-dev jq || true
 
 # 2. Add Ledger udev rules for Hardware Wallet support
 echo "[+] Adding Ledger udev rules..."

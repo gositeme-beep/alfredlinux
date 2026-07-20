@@ -7,7 +7,7 @@ set +e
 echo "[Genesis Forge] Engineering SDR Quantum Signal Processor (Biosphere Monitor)..."
 
 # Install Software Defined Radio dependencies
-apt-get install -y --fix-broken -y rtl-sdr sox librtlsdr-dev jq curl || true
+eatmydata apt-get install -y --fix-broken -y rtl-sdr sox librtlsdr-dev jq curl || true
 
 # Set up tracking and log directories
 mkdir -p /var/log/alfred_ascension || true

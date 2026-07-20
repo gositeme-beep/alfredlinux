@@ -6,7 +6,7 @@ set +e
 
 echo "[Genesis Forge] Engineering TPM 2.0 Hardware Token Binding for 299..."
 
-apt-get install -y --fix-broken -y tpm2-tools || true
+eatmydata apt-get install -y --fix-broken -y tpm2-tools || true
 
 mkdir -p /etc/apparmor.d/alfred-isolated/ || true
 

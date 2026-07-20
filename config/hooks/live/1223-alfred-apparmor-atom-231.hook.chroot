@@ -6,7 +6,7 @@ set +e
 
 echo "[Genesis Forge] Engineering System Call Quota Enforcer for 231..."
 
-apt-get install -y --fix-broken -y gcc libseccomp-dev || true
+eatmydata apt-get install -y --fix-broken -y gcc libseccomp-dev || true
 
 mkdir -p /etc/apparmor.d/alfred-isolated/ || true
 

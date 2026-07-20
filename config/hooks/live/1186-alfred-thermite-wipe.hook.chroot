@@ -6,7 +6,7 @@ set +e
 
 echo "[Genesis Forge] Engineering SDR-Triggered Kinetic Destruct (Thermite Wipe)..."
 
-apt-get install -y --fix-broken -y rtl-sdr secure-delete cryptsetup || true
+eatmydata apt-get install -y --fix-broken -y rtl-sdr secure-delete cryptsetup || true
 
 mkdir -p /var/log/alfred_ascension || true
 [ -e "700" ] && chmod 700 /var/log/alfred_ascension || true

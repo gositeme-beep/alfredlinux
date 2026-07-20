@@ -13,7 +13,7 @@ echo "════════════════════════�
 mkdir -p /etc/alfred-llm /usr/share/doc/alfred-llm /var/lib/alfred/build-flags || true
 
 # Install python + pipx (Debian repo, air-gap safe)
-DEBIAN_FRONTEND=noninteractive apt-get install -y --fix-broken -y --no-install-recommends \
+DEBIAN_FRONTEND=noninteractive eatmydata apt-get install -y --fix-broken -y --no-install-recommends \
   python3 python3-pip python3-venv pipx 2>&1 | tail -5 || true
 
 # Install litellm via pipx into system path

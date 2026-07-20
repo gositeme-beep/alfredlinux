@@ -65,7 +65,7 @@ Description: AlfredOS pre-compiled NVIDIA 610.43.02 Open GPU Kernel Modules
  AlfredOS_Nvidia_7.0.12.patch applied.
 DUMMY
 cd /tmp && equivs-build nvidia-dummy.control 2>/dev/null
-dpkg -i /tmp/nvidia-kernel-dummy_610.43.02-1alfred_all.deb 2>/dev/null || true
+eatmydata dpkg -i /tmp/nvidia-kernel-dummy_610.43.02-1alfred_all.deb 2>/dev/null || true
 
 # ── Phase 5: Install NVIDIA userspace from Debian repos ──
 # These are 610.x userspace libs — forward-compatible with 610 kernel modules.

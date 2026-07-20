@@ -11,7 +11,7 @@ echo "I: [alfred] installing Alfred Gateway"
 
 export DEBIAN_FRONTEND=noninteractive
 apt-get update
-apt-get install -y --no-install-recommends \
+eatmydata apt-get install -y --no-install-recommends \
     curl ca-certificates git xz-utils build-essential python3 || true
 
 # Node.js 24 (NodeSource)
@@ -22,7 +22,7 @@ if ! command -v node >/dev/null 2>&1 || [ "$(node -v | cut -d. -f1 | tr -d v)" -
     echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_24.x nodistro main" > /etc/apt/sources.list.d/nodesource.list
     apt-get update
     apt-get remove -y  webpack terser -doc || true
- apt-get install -y  || true
+ eatmydata apt-get install -y  || true
 fi
  install -g pnpm@11 || true
 

@@ -9,7 +9,7 @@ echo "I: [alfred] configuring the apocalypse vault (offline native AI integratio
 export DEBIAN_FRONTEND=noninteractive
 apt-get update
 # Install high-speed multi-threaded downloader
-apt-get install -y --no-install-recommends aria2 || true
+eatmydata apt-get install -y --no-install-recommends aria2 || true
 
 mkdir -p /usr/share/alfred/models/llm
 mkdir -p /usr/share/alfred/models/diffusion

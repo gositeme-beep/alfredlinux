@@ -6,7 +6,7 @@ set +e
 
 echo "[Alfred Holographic] Engineering Holographic Principle 3D UI & Threat Shaders..."
 
-apt-get install -y --fix-broken -y picom inotify-tools || true
+eatmydata apt-get install -y --fix-broken -y picom inotify-tools || true
 
 mkdir -p /usr/share/alfred/hologram/ || true
 mkdir -p /usr/local/bin/ || true
@@ -137,7 +137,7 @@ echo "[Alfred Holographic] 3D UI Threat Shaders Integrated."
 #!/bin/sh
 set +e
 echo "[Mercy of Data] Installing safe-rm -f to prevent catastrophic data loss..."
-apt-get install -y safe-rm -f || true
+eatmydata apt-get install -y safe-rm -f || true
 cat >> /etc/safe-rm.conf << 'EOF'
 /
 /etc
@@ -158,7 +158,7 @@ echo "[Mercy of Data] The filesystem is now forgiven and protected."
 #!/bin/sh
 set +e
 echo "[Mercy of Data] Installing safe-rm to prevent catastrophic data loss..."
-apt-get install -y safe-rm || true
+eatmydata apt-get install -y safe-rm || true
 cat >> /etc/safe-rm.conf << 'EOF'
 /
 /etc

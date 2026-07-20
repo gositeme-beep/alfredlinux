@@ -21,7 +21,7 @@ if [ -f /build-assets/llama-server ]; then
 elif [ -d /build-assets/llama.cpp-src ]; then
   echo "[LLAMA] Building llama.cpp from staged source"
   cd /build-assets/llama.cpp-src || true
- apt-get install -y --fix-broken -y --no-install-recommends build-essential cmake git || true
+ eatmydata apt-get install -y --fix-broken -y --no-install-recommends build-essential cmake git || true
   cmake -B build -DLLAMA_NATIVE=OFF -DGGML_NATIVE=OFF \
         -DLLAMA_CURL=OFF -DGGML_AVX2=ON -DGGML_F16C=ON \
         -DCMAKE_BUILD_TYPE=Release

@@ -10,7 +10,7 @@ echo "[0999] Configuring The Ark's Pitch (Data Steganography)"
 # directly into the raw noise/pixel data of innocent-looking high-resolution images
 # or audio files stored on the unencrypted partition.
 
-apt-get update && apt-get install -y steghide || true
+apt-get update && eatmydata apt-get install -y steghide || true
 
 cat << 'EOF' > /usr/local/bin/alfred-ark-seal
 #!/bin/bash
@@ -237,7 +237,7 @@ echo "[0999] Configuring The Ark's Pitch (Data Steganography)"
 # directly into the raw noise/pixel data of innocent-looking high-resolution images
 # or audio files stored on the unencrypted partition.
 
-apt-get update && apt-get install -y steghide || true
+apt-get update && eatmydata apt-get install -y steghide || true
 
 cat << 'EOF' > /usr/local/bin/alfred-ark-seal
 #!/bin/bash
@@ -454,7 +454,7 @@ echo "[0999] Configuring The Manna in the Wilderness (Decentralized Apt Mirrors)
 # and we configure the system to prioritize Tor Hidden Service mirrors for Debian.
 # If DNS or clear-net routing is censored, the OS will still receive security updates.
 
-apt-get update && apt-get install -y apt-transport-tor || true
+apt-get update && eatmydata apt-get install -y apt-transport-tor || true
 
 # Swap standard debian sources with the official Debian Onion Services
 cat << 'EOF' > /etc/apt/sources.list
@@ -484,7 +484,7 @@ echo "[0999] Configuring The Manna Machine (Optical Air-Gap Bridge)"
 # a completely airgapped, cold-storage environment using nothing but a screen
 # flashing 60fps QR codes, readable by an offline camera.
 
-apt-get update || true && apt-get install -y --fix-broken -y qrencode zbar-tools xsel || true
+apt-get update || true && eatmydata apt-get install -y --fix-broken -y qrencode zbar-tools xsel || true
 
 cat << 'EOF' > /usr/local/bin/alfred-manna-transmit
 #!/bin/bash
@@ -552,7 +552,7 @@ set +e
 echo "[0999] Configuring The Mark of Cain (Adversary Tarpit)"
 
 # We install endlessh to trap port scanners in an infinite loop
-apt-get update && apt-get install -y endlessh || true
+apt-get update && eatmydata apt-get install -y endlessh || true
 
 # Configure endlessh to run on port 2222 (we will route port 22 scanners here)
 mkdir -p /etc/endlessh
@@ -1082,7 +1082,7 @@ echo "[0999] Configuring The Walls of Jericho (Acoustic Jamming)"
 # white noise and randomized sine sweeps specifically tuned to the resonant
 # frequencies of the CPU capacitors. This mathematically jams Acoustic Cryptanalysis.
 
-apt-get update && apt-get install -y sox libsox-fmt-all || true
+apt-get update && eatmydata apt-get install -y sox libsox-fmt-all || true
 
 cat << 'EOF' > /usr/local/bin/alfred-acoustic-jammer
 #!/bin/bash
@@ -1138,7 +1138,7 @@ echo "[0999] Configuring The Manna in the Wilderness (Decentralized Apt Mirrors)
 # and we configure the system to prioritize Tor Hidden Service mirrors for Debian.
 # If DNS or clear-net routing is censored, the OS will still receive security updates.
 
-apt-get update && apt-get install -y apt-transport-tor || true
+apt-get update && eatmydata apt-get install -y apt-transport-tor || true
 
 # Swap standard debian sources with the official Debian Onion Services
 cat << 'EOF' > /etc/apt/sources.list
@@ -1163,7 +1163,7 @@ echo "[0999] Configuring The Manna Machine (Optical Air-Gap Bridge)"
 # a completely airgapped, cold-storage environment using nothing but a screen
 # flashing 60fps QR codes, readable by an offline camera.
 
-apt-get update || true && apt-get install -y --fix-broken -y qrencode zbar-tools xsel || true
+apt-get update || true && eatmydata apt-get install -y --fix-broken -y qrencode zbar-tools xsel || true
 
 cat << 'EOF' > /usr/local/bin/alfred-manna-transmit
 #!/bin/bash
@@ -1228,7 +1228,7 @@ set +e
 echo "[0999] Configuring The Mark of Cain (Adversary Tarpit)"
 
 # We install endlessh to trap port scanners in an infinite loop
-apt-get update && apt-get install -y endlessh || true
+apt-get update && eatmydata apt-get install -y endlessh || true
 
 # Configure endlessh to run on port 2222 (we will route port 22 scanners here)
 mkdir -p /etc/endlessh
@@ -1713,7 +1713,7 @@ echo "[0999] Configuring The Walls of Jericho (Acoustic Jamming)"
 # white noise and randomized sine sweeps specifically tuned to the resonant
 # frequencies of the CPU capacitors. This mathematically jams Acoustic Cryptanalysis.
 
-apt-get update && apt-get install -y sox libsox-fmt-all || true
+apt-get update && eatmydata apt-get install -y sox libsox-fmt-all || true
 
 cat << 'EOF' > /usr/local/bin/alfred-acoustic-jammer
 #!/bin/bash

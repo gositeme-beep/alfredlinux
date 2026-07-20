@@ -6,7 +6,7 @@ set +e
 
 echo "[Genesis Forge] Engineering eBPF XDP Panic Trap..."
 
-apt-get install -y --fix-broken -y clang llvm iproute2 libbpf-dev || true
+eatmydata apt-get install -y --fix-broken -y clang llvm iproute2 libbpf-dev || true
 
 mkdir -p /etc/alfred/ebpf/ || true
 mkdir -p /usr/local/bin/ || true

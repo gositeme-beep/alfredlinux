@@ -18,7 +18,7 @@ echo "==== ALFRED REVELATION IDS (AIDE) ==============="
 echo "================================================="
 
 export DEBIAN_FRONTEND=noninteractive
-apt-get install -y --no-install-recommends aide aide-common || true
+eatmydata apt-get install -y --no-install-recommends aide aide-common || true
 
 cat > /etc/default/aide << 'EOF'
 RUN_DAILY_CHECK=yes

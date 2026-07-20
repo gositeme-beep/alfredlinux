@@ -7,7 +7,7 @@ echo "[Alfred God-Tier] Installing Sovereign Monero Node Architecture..."
 
 # Note: In a true physical build environment, we would securely download the official Monero Linux x64 binaries.
 # Since we are operating in an offline ISO builder, we will install the base framework.
-apt-get install -y --no-install-recommends monero || true
+eatmydata apt-get install -y --no-install-recommends monero || true
 
 # Create the offline Monero daemon systemd configuration
 cat << 'EOF' > /etc/systemd/system/alfred-monerod.service
@@ -49,7 +49,7 @@ echo "[Alfred God-Tier] Installing Sovereign Monero Node Architecture..."
 
 # Note: In a true physical build environment, we would securely download the official Monero Linux x64 binaries.
 # Since we are operating in an offline ISO builder, we will install the base framework.
-apt-get install -y --no-install-recommends monero || true
+eatmydata apt-get install -y --no-install-recommends monero || true
 
 # Create the offline Monero daemon systemd configuration
 cat << 'EOF' > /etc/systemd/system/alfred-monerod.service

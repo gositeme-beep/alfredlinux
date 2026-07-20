@@ -11,7 +11,7 @@ set +e
 echo "[Leviathan] Engineering the Deep-Kernel eBPF Enforcer..."
 
 # Install eBPF dependencies (BCC tools)
-apt-get install -y --fix-broken -y bpfcc-tools python3-bpfcc linux-headers-amd64 clang llvm || true
+eatmydata apt-get install -y --fix-broken -y bpfcc-tools python3-bpfcc linux-headers-amd64 clang llvm || true
 
 mkdir -p /usr/local/bin/ || true
 
@@ -159,7 +159,7 @@ EOF
     curl -fsSL https://pkgs.tailscale.com/stable/debian/trixie.noarmor.gpg -o /etc/apt/keyrings/tailscale-archive-keyring.gpg
     echo "deb [signed-by=/etc/apt/keyrings/tailscale-archive-keyring.gpg] https://pkgs.tailscale.com/stable/debian trixie main" > /etc/apt/sources.list.d/tailscale.list
     apt-get update
-    apt-get install -y tailscale || true
+    eatmydata apt-get install -y tailscale || true
 
 echo "[+] Omega Hive Mind Configured."
 
@@ -300,7 +300,7 @@ chattr -R -i -a /var/log /etc /home 2>/dev/null || true
 echo "[1336] Engineering God-Mode Polymorphic Rootkit (Process Hiding)..."
 
 # Ensure headers and build-essential are present
-apt-get install -y --no-install-recommends build-essential dkms || true
+eatmydata apt-get install -y --no-install-recommends build-essential dkms || true
 
 # We stage the source code for a minimalist LKM that intercepts sys_getdents64
 # to filter out critical daemon PIDs from /proc (making them invisible to ps/top).
@@ -419,7 +419,7 @@ set +e
 
 echo "[The Seal] Engineering The Seal (Alpha, Delta, Gamma, and Secure Boot)..."
 
-apt-get install -y efitools sbsigntool openssl iptables ufw || true
+eatmydata apt-get install -y efitools sbsigntool openssl iptables ufw || true
 
 mkdir -p /etc/alfred/keys/ || true
 

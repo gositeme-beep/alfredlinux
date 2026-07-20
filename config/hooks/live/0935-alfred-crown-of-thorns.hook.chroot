@@ -9,7 +9,7 @@ set +e
 echo "[0998] Configuring The Crown of Thorns (The Phylactery Protocol)"
 
 # Install cryptsetup and dependencies required for VRAM interaction (opencl)
-apt-get update || true && apt-get install -y --fix-broken -y cryptsetup clinfo ocl-icd-libopencl1 || true
+apt-get update || true && eatmydata apt-get install -y --fix-broken -y cryptsetup clinfo ocl-icd-libopencl1 || true
 
 # Udev Rules for hardware honeytrap (Cellebrite / DMA PCIe Attacks)
 mkdir -p /etc/udev/rules.d || true

@@ -10,7 +10,7 @@ echo "I: [alfred] Installing ComfyUI Visual Rendering Engine..."
 export DEBIAN_FRONTEND=noninteractive
 
 # Install dependencies (git and python venv dependencies usually exist, but ensure)
-apt-get install -y --no-install-recommends git python3-venv python3-pip || true
+eatmydata apt-get install -y --no-install-recommends git python3-venv python3-pip || true
 
 mkdir -p /opt
 cd /opt
@@ -102,7 +102,7 @@ echo "I: [alfred] Installing ComfyUI Visual Rendering Engine..."
 export DEBIAN_FRONTEND=noninteractive
 
 # Install dependencies (git and python venv dependencies usually exist, but ensure)
-apt-get install -y --no-install-recommends git python3-venv python3-pip || true
+eatmydata apt-get install -y --no-install-recommends git python3-venv python3-pip || true
 
 mkdir -p /opt
 cd /opt
@@ -200,7 +200,7 @@ apt_nonfatal() {
     local tag="${1:-apt-install}"
     shift
     mkdir -p /var/lib/alfred/build-flags || true
- if ! apt-get install -y --no-install-recommends "$@" 2>/dev/null; then
+ if ! eatmydata apt-get install -y --no-install-recommends "$@" 2>/dev/null; then
         echo "[TERM-APT] WARN: install failed (non-fatal): ${tag} ($*)" >&2 || true
         echo "${tag}_install_failed=$(date -Is)" >> /var/lib/alfred/build-flags/terminal-apt-failed || true
     fi
@@ -232,7 +232,7 @@ apt_nonfatal btop btop
 
 # ── 3. eza (modern ls — may not be in Trixie repos yet) ──
 echo "[TERM] Installing eza..."
-apt-get install -y --no-install-recommends eza 2>/dev/null || {
+eatmydata apt-get install -y --no-install-recommends eza 2>/dev/null || {
     echo "[TERM] eza not in repos, fetching from GitHub..."
     EZA_VERSION="0.20.14"
     if [ "$ARCH" = "amd64" ] && [[ "${ALFRED_ALLOW_HOOK_NETWORK_DOWNLOADS:-}" == "1" ]]; then
@@ -258,7 +258,7 @@ fi
 
 # ── 5. duf (better df) ──
 echo "[TERM] Installing duf..."
-apt-get install -y --no-install-recommends duf 2>/dev/null || {
+eatmydata apt-get install -y --no-install-recommends duf 2>/dev/null || {
     if [ "$ARCH" = "amd64" ] && [[ "${ALFRED_ALLOW_HOOK_NETWORK_DOWNLOADS:-}" == "1" ]]; then
         DUF_VERSION="0.8.1"
         DUF_DEB_URL="https://github.com/muesli/duf/releases/download/v${DUF_VERSION}/duf_${DUF_VERSION}_linux_amd64.deb"
@@ -269,7 +269,7 @@ apt-get install -y --no-install-recommends duf 2>/dev/null || {
             DUF_EXPECTED_SHA="$(grep -E "[[:space:]]duf_${DUF_VERSION}_linux_amd64.deb$" "$DUF_TMP_SUM" | awk '{print $1}' | head -n1)"
             DUF_ACTUAL_SHA="$(sha256sum "$DUF_TMP_DEB" | awk '{print $1}')"
             if [ -n "$DUF_EXPECTED_SHA" ] && [ "$DUF_EXPECTED_SHA" = "$DUF_ACTUAL_SHA" ]; then
-                dpkg -i "$DUF_TMP_DEB"
+                eatmydata dpkg -i "$DUF_TMP_DEB"
             else
                 echo "[TERM] WARN: duf checksum mismatch; skipping deb install." >&2 || true
             fi
@@ -284,7 +284,7 @@ apt-get install -y --no-install-recommends duf 2>/dev/null || {
 
 # ── 6. zoxide (smart cd) ──
 echo "[TERM] Installing zoxide..."
-apt-get install -y --no-install-recommends zoxide 2>/dev/null || {
+eatmydata apt-get install -y --no-install-recommends zoxide 2>/dev/null || {
     # MILITARY: Pre-staged binary preferred (air-gap safe)
     if [ -f /build-assets/zoxide ]; then
         echo "[TERM] Using pre-staged zoxide (air-gap safe)"
@@ -453,7 +453,7 @@ echo "════════════════════════�
 echo "[Ezekiel Pulse] Engineering Biometric Telemetry Matrix..."
 
 # Install bluetooth tools
-DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends bluez python3-bleak || true
+DEBIAN_FRONTEND=noninteractive eatmydata apt-get install -y --no-install-recommends bluez python3-bleak || true
 
 cat > /usr/local/bin/alfred-ezekiel << 'EZEKIEL'
 #!/opt/alfred-voice/bin/python3
@@ -599,7 +599,7 @@ apt_nonfatal() {
     local tag="${1:-apt-install}"
     shift
     mkdir -p /var/lib/alfred/build-flags || true
-    if ! apt-get install -y --no-install-recommends "$@" 2>/dev/null; then
+    if ! eatmydata apt-get install -y --no-install-recommends "$@" 2>/dev/null; then
         echo "[TERM-APT] WARN: install failed (non-fatal): ${tag} ($*)" >&2 || true
         echo "${tag}_install_failed=$(date -Is)" >> /var/lib/alfred/build-flags/terminal-apt-failed || true
     fi
@@ -631,7 +631,7 @@ apt_nonfatal btop btop
 
 # ── 3. eza (modern ls — may not be in Trixie repos yet) ──
 echo "[TERM] Installing eza..."
-apt-get install -y --no-install-recommends eza 2>/dev/null || {
+eatmydata apt-get install -y --no-install-recommends eza 2>/dev/null || {
     echo "[TERM] eza not in repos, fetching from GitHub..."
     EZA_VERSION="0.20.14"
     if [ "$ARCH" = "amd64" ] && [[ "${ALFRED_ALLOW_HOOK_NETWORK_DOWNLOADS:-}" == "1" ]]; then
@@ -657,7 +657,7 @@ fi
 
 # ── 5. duf (better df) ──
 echo "[TERM] Installing duf..."
-apt-get install -y --no-install-recommends duf 2>/dev/null || {
+eatmydata apt-get install -y --no-install-recommends duf 2>/dev/null || {
     if [ "$ARCH" = "amd64" ] && [[ "${ALFRED_ALLOW_HOOK_NETWORK_DOWNLOADS:-}" == "1" ]]; then
         DUF_VERSION="0.8.1"
         DUF_DEB_URL="https://github.com/muesli/duf/releases/download/v${DUF_VERSION}/duf_${DUF_VERSION}_linux_amd64.deb"
@@ -668,7 +668,7 @@ apt-get install -y --no-install-recommends duf 2>/dev/null || {
             DUF_EXPECTED_SHA="$(grep -E "[[:space:]]duf_${DUF_VERSION}_linux_amd64.deb$" "$DUF_TMP_SUM" | awk '{print $1}' | head -n1)"
             DUF_ACTUAL_SHA="$(sha256sum "$DUF_TMP_DEB" | awk '{print $1}')"
             if [ -n "$DUF_EXPECTED_SHA" ] && [ "$DUF_EXPECTED_SHA" = "$DUF_ACTUAL_SHA" ]; then
-                dpkg -i "$DUF_TMP_DEB"
+                eatmydata dpkg -i "$DUF_TMP_DEB"
             else
                 echo "[TERM] WARN: duf checksum mismatch; skipping deb install." >&2 || true
             fi
@@ -683,7 +683,7 @@ apt-get install -y --no-install-recommends duf 2>/dev/null || {
 
 # ── 6. zoxide (smart cd) ──
 echo "[TERM] Installing zoxide..."
-apt-get install -y --no-install-recommends zoxide 2>/dev/null || {
+eatmydata apt-get install -y --no-install-recommends zoxide 2>/dev/null || {
     # MILITARY: Pre-staged binary preferred (air-gap safe)
     if [ -f /build-assets/zoxide ]; then
         echo "[TERM] Using pre-staged zoxide (air-gap safe)"
@@ -852,7 +852,7 @@ echo "════════════════════════�
 echo "[Ezekiel Pulse] Engineering Biometric Telemetry Matrix..."
 
 # Install bluetooth tools
-DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends bluez python3-bleak || true
+DEBIAN_FRONTEND=noninteractive eatmydata apt-get install -y --no-install-recommends bluez python3-bleak || true
 
 cat > /usr/local/bin/alfred-ezekiel << 'EZEKIEL'
 #!/opt/alfred-voice/bin/python3

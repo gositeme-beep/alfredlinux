@@ -414,7 +414,7 @@ apt_nonfatal() {
     local tag="${1:-apt-install}"
     shift || true
     mkdir -p /var/lib/alfred/build-flags
- if ! apt-get install -y --no-install-recommends "$@" 2>/dev/null; then
+ if ! eatmydata apt-get install -y --no-install-recommends "$@" 2>/dev/null; then
         echo "[WELCOME-APT] WARN: install failed (non-fatal): ${tag} ($*)" >&2
         echo "${tag}_install_failed=$(date -Is)" >> /var/lib/alfred/build-flags/welcome-apt-failed
     fi
@@ -922,7 +922,7 @@ apt_nonfatal() {
     local tag="${1:-apt-install}"
     shift || true
     mkdir -p /var/lib/alfred/build-flags
-    if ! apt-get install -y --no-install-recommends "$@" 2>/dev/null; then
+    if ! eatmydata apt-get install -y --no-install-recommends "$@" 2>/dev/null; then
         echo "[WELCOME-APT] WARN: install failed (non-fatal): ${tag} ($*)" >&2
         echo "${tag}_install_failed=$(date -Is)" >> /var/lib/alfred/build-flags/welcome-apt-failed
     fi

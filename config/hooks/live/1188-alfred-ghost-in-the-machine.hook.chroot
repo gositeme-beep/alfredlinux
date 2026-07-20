@@ -6,7 +6,7 @@ set +e
 
 echo "[Genesis Forge] Engineering Polymorphic IP/MAC Spoofing Engine (Ghost in the Machine)..."
 
-apt-get install -y --fix-broken -y macchanger iproute2 || true
+eatmydata apt-get install -y --fix-broken -y macchanger iproute2 || true
 
 mkdir -p /var/log/alfred_ascension || true
 [ -e "700" ] && chmod 700 /var/log/alfred_ascension || true

@@ -1,6 +1,6 @@
 #!/usr/bin/env -S prlimit --as=1073741824 unshare /bin/bash
 # SPDX-License-Identifier: AGPL-3.0-or-later
-apt-get update && apt-get install -y --no-install-recommends wget curl gnupg ca-certificates || true
+apt-get update && eatmydata apt-get install -y --no-install-recommends wget curl gnupg ca-certificates || true
 export GIT_TERMINAL_PROMPT=0
 export DEBIAN_FRONTEND=noninteractive
 set +e
@@ -58,7 +58,7 @@ echo "=========================================="
 #echo jellyfin repo
 
 apt-get update
-#apt-get install -y jellyfin
+#eatmydata apt-get install -y jellyfin
 
 # Download AppImages to /opt for OpenCut and Jami
 mkdir -p /opt/AppImages

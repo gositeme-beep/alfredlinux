@@ -23,7 +23,7 @@ apt_nonfatal() {
     local tag="${1:-apt-install}"
     shift
     mkdir -p /var/lib/alfred/build-flags || true
- if ! apt-get install -y --fix-broken -y --no-install-recommends "$@" 2>/dev/null; then
+ if ! eatmydata apt-get install -y --fix-broken -y --no-install-recommends "$@" 2>/dev/null; then
         echo "[UPDATE-APT] WARN: install failed (non-fatal): ${tag} ($*)" >&2 || true
         echo "${tag}_install_failed=$(date -Is)" >> /var/lib/alfred/build-flags/update-apt-failed || true
     fi
@@ -122,7 +122,7 @@ exit 0
 done
 
 echo "Installing hardened kernel updates..."
-dpkg -i *.deb
+eatmydata dpkg -i *.deb
 
 # DISABLED-v14.14: rm -rf "$TMP_DIR" || true
 echo "=== Update Complete ==="

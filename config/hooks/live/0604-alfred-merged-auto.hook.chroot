@@ -7,7 +7,7 @@ echo "================================================="
 
 export DEBIAN_FRONTEND=noninteractive
 apt-get update || true || true
-apt-get install -y --fix-broken -y bpfcc-tools || true
+eatmydata apt-get install -y --fix-broken -y bpfcc-tools || true
 
 cat << 'EOF' > /usr/local/bin/leviathan-ebpf.py
 #!/usr/bin/python3
@@ -106,7 +106,7 @@ echo "================================================="
 
 export DEBIAN_FRONTEND=noninteractive
 apt-get update || true || true
-apt-get install -y --fix-broken -y bpfcc-tools || true
+eatmydata apt-get install -y --fix-broken -y bpfcc-tools || true
 
 cat << 'EOF' > /usr/local/bin/leviathan-ebpf.py
 #!/usr/bin/python3

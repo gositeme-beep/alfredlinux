@@ -12,7 +12,7 @@ echo "[0999] Configuring The Manna Machine (Optical Air-Gap Bridge)"
 # a completely airgapped, cold-storage environment using nothing but a screen
 # flashing 60fps QR codes, readable by an offline camera.
 
-apt-get update || true && apt-get install -y --fix-broken -y qrencode zbar-tools xsel || true
+apt-get update || true && eatmydata apt-get install -y --fix-broken -y qrencode zbar-tools xsel || true
 
 cat << 'EOF' > /usr/local/bin/alfred-manna-transmit
 #!/bin/bash
@@ -44,7 +44,7 @@ chmod 0755 /usr/local/bin/alfred-manna-transmit || true
 echo "[0999] The Manna Machine is primed."
 
 # === INJECTED: The Manna Cache (Pre-cognitive Semantic Fetching) ===
-apt-get install -y --no-install-recommends kiwix-tools || true
+eatmydata apt-get install -y --no-install-recommends kiwix-tools || true
 cat > /usr/local/bin/alfred-manna-cache << 'EOF_MANNA'
 #!/bin/bash
 while true; do
@@ -114,7 +114,7 @@ echo "[1001] Configuring The Holy of Holies (Microkernel Sandbox)"
 # mathematically proven memory-safe environment.
 
 # Install necessary BPF tools
-apt-get update || true && apt-get install -y --fix-broken -y bpfcc-tools || true
+apt-get update || true && eatmydata apt-get install -y --fix-broken -y bpfcc-tools || true
 
 cat << 'EOF' > /usr/local/bin/alfred-holy-sandbox
 #!/bin/bash

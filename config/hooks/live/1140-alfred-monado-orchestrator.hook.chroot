@@ -7,7 +7,7 @@ set +e
 echo "[Metadome] Forging Monado Orchestrator (Hook 1101)"
 
 # Install Monado OpenXR runtime and dependencies
-apt-get install -y --fix-broken -y monado-service monado-gui libopenxr-utils xr-hardware || true
+eatmydata apt-get install -y --fix-broken -y monado-service monado-gui libopenxr-utils xr-hardware || true
 
 # Configure OpenXR environment globally
 cat > /etc/profile.d/monado.sh << 'EOF'
